@@ -1,0 +1,10 @@
+{
+  "name": "my-app",
+  "scripts": {
+    "dev": "serve www",
+    "start": "serve www"
+  },
+  "dependencies": {
+    "serve": "^14.2.0"
+  }
+}
