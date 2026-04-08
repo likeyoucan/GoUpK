@@ -276,7 +276,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // 4. СИСТЕМНАЯ ИНТЕГРАЦИЯ ANDROID (ПРО-УРОВЕНЬ)
   // =========================================
   if (window.Capacitor && window.Capacitor.isNativePlatform()) {
-    const { App, StatusBar, ForegroundService } = window.Capacitor.Plugins;
+    const { App, StatusBar, AndroidForegroundService } = window.Capacitor.Plugins;
 
     // 1. Прозрачный статус-бар (Безрамочный дизайн)
     if (StatusBar) {
@@ -319,7 +319,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // 3. ЖИВАЯ ФОНОВАЯ СЛУЖБА (FOREGROUND SERVICE)
-    if (App && ForegroundService) {
+    if (App && AndroidForegroundService) {
       let fgInterval = null; // Интервал для обновления шторки
 
       // Функция обновления текста в шторке
@@ -347,12 +347,12 @@ document.addEventListener("DOMContentLoaded", () => {
         } else {
           // Если ничего не работает — убиваем службу
           if (fgInterval) clearInterval(fgInterval);
-          await ForegroundService.stop();
+          await AndroidForegroundService.stop();
           return;
         }
 
         // Обновляем (или создаем) системную службу
-        await ForegroundService.start({
+        await AndroidForegroundService.start({
           id: 101, // Фиксированный ID
           title: title,
           body: body,
@@ -384,7 +384,7 @@ document.addEventListener("DOMContentLoaded", () => {
             clearInterval(fgInterval);
             fgInterval = null;
           }
-          await ForegroundService.stop().catch(() => {});
+          await AndroidForegroundService.stop().catch(() => {});
         }
       });
     }
