@@ -1,0 +1,50 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ "main", "master" ] # Сборка при каждом сохранении
+  workflow_dispatch: # Кнопка для ручного запуска
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 📥 Скачивание кода
+      uses: actions/checkout@v4
+
+    - name: ⚙️ Настройка Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: 🎨 Сборка стилей Tailwind CSS v4
+      run: |
+        npm install @tailwindcss/cli
+        npx @tailwindcss/cli -i ./input.css -o ./www/styles.css --minify
+
+    - name: 📱 Превращение сайта в приложение (Capacitor)
+      run: |
+        npm install @capacitor/core @capacitor/cli @capacitor/android
+        # Создаем конфиг на лету
+        npx cap init "My App" "com.example.myapp" --web-dir=www
+        npx cap add android
+        npx cap sync android
+
+    - name: ☕ Настройка Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: 🔨 Сборка файла APK
+      working-directory: ./android
+      run: |
+        chmod +x ./gradlew
+        ./gradlew assembleDebug
+
+    - name: 📦 Сохранение готового APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: my-app-apk
+        path: android/app/build/outputs/apk/debug/app-debug.apk
