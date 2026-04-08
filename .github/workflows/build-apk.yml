@@ -2,8 +2,12 @@ name: Build Android APK
 
 on:
   push:
-    branches: [ "main", "master" ] # Сборка при каждом сохранении
-  workflow_dispatch: # Кнопка для ручного запуска
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+# Это дает роботу право сохранять файлы обратно в ваш репозиторий
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -18,18 +22,27 @@ jobs:
       with:
         node-version: '22'
 
-    - name: 🎨 Сборка стилей Tailwind CSS v4
+    - name: 🎨 Сборка стилей Tailwind
       run: |
         npm install @tailwindcss/cli
         npx @tailwindcss/cli -i ./input.css -o ./www/styles.css --minify
 
-    - name: 📱 Превращение сайта в приложение (Capacitor)
+    - name: 📱 Создание папки Android
       run: |
         npm install @capacitor/core @capacitor/cli @capacitor/android
-        # Создаем конфиг на лету
+        # Инициализируем проект, если его нет
         npx cap init "My App" "com.example.myapp" --web-dir=www
-        npx cap add android
-        npx cap sync android
+        # Пытаемся добавить платформу android (если она уже есть, пропустим ошибку)
+        npx cap add android || true
+
+    - name: 💾 Сохранение папки android в GitHub
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git add android
+        git add package.json package-lock.json # сохраним и зависимости
+        git commit -m "chore: добавлена постоянная папка android проекта" || echo "No changes to commit"
+        git push
 
     - name: ☕ Настройка Java
       uses: actions/setup-java@v4
@@ -37,7 +50,7 @@ jobs:
         distribution: 'temurin'
         java-version: '21'
 
-    - name: 🔨 Сборка файла APK
+    - name: 🔨 Сборка APK
       working-directory: ./android
       run: |
         chmod +x ./gradlew
