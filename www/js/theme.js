@@ -17,13 +17,36 @@ export const themeManager = {
     this.colorBtns = document.querySelectorAll(".color-btn");
     this.bgBtns = document.querySelectorAll(".bg-btn");
 
+    // === ИНТЕГРАЦИЯ MATERIAL YOU (Android 12+) ===
+    if (window.Capacitor && window.Capacitor.isNativePlatform()) {
+      const { MaterialYou } = window.Capacitor.Plugins;
+      if (MaterialYou) {
+        MaterialYou.isSupported()
+          .then((result) => {
+            if (result.isSupported) {
+              // Подписываемся на смену обоев/цветов системы
+              MaterialYou.addListener("colorColorsChanged", (colors) => {
+                this.applyMaterialYouColors(colors);
+              });
+              // Запрашиваем цвета при запуске
+              MaterialYou.getColors()
+                .then((colors) => {
+                  this.applyMaterialYouColors(colors);
+                })
+                .catch(() => {});
+            }
+          })
+          .catch(() => {});
+      }
+    }
+
     this.applySettings();
 
     $("toggle-ms")?.addEventListener("change", (e) => {
       this.showMs = e.target.checked;
       safeSetLS("app_show_ms", this.showMs);
       document.dispatchEvent(
-        new CustomEvent("msChanged", { detail: this.showMs })
+        new CustomEvent("msChanged", { detail: this.showMs }),
       );
     });
 
@@ -33,7 +56,7 @@ export const themeManager = {
       this.updateAdaptiveClass();
       this.applyBgTheme(
         this.currentBg,
-        document.documentElement.classList.contains("dark")
+        document.documentElement.classList.contains("dark"),
       );
     });
 
@@ -56,31 +79,31 @@ export const themeManager = {
     });
 
     $("fontSlider")?.addEventListener("input", (e) =>
-      this.setFontSize(e.target.value)
+      this.setFontSize(e.target.value),
     );
 
     this.themeBtns.forEach((btn) =>
       btn.addEventListener("click", (e) =>
-        this.setMode(e.target.getAttribute("data-theme-mode"))
-      )
+        this.setMode(e.target.getAttribute("data-theme-mode")),
+      ),
     );
     this.colorBtns.forEach((btn) =>
       btn.addEventListener("click", (e) =>
-        this.setColor(e.target.getAttribute("data-color"))
-      )
+        this.setColor(e.target.getAttribute("data-color")),
+      ),
     );
     this.bgBtns.forEach((btn) =>
       btn.addEventListener("click", (e) =>
-        this.setBgColor(e.target.getAttribute("data-bg"))
-      )
+        this.setBgColor(e.target.getAttribute("data-bg")),
+      ),
     );
 
     // Слушатели теперь только на input'ы (кнопки убраны из HTML)
     $("customColorInput")?.addEventListener("input", (e) =>
-      this.setColor(e.target.value)
+      this.setColor(e.target.value),
     );
     $("customBgInput")?.addEventListener("input", (e) =>
-      this.setBgColor(e.target.value)
+      this.setBgColor(e.target.value),
     );
 
     window
@@ -113,6 +136,11 @@ export const themeManager = {
     if ($("vignetteSlider")) $("vignetteSlider").value = this.vignetteAlpha;
     if ($("toggle-ms")) $("toggle-ms").checked = this.showMs;
     if ($("fontSlider")) $("fontSlider").value = safeGetLS("font_size") || 16;
+
+    if ($("customColorInput"))
+      $("customColorInput").value = safeGetLS("theme_color") || "#22c55e";
+    if ($("customBgInput"))
+      $("customBgInput").value = safeGetLS("theme_bg_color") || "#ffffff";
   },
 
   updateAdaptiveClass() {
@@ -166,6 +194,20 @@ export const themeManager = {
 
   setColor(hex) {
     safeSetLS("theme_color", hex);
+
+    // Если выбрали "Авто" - запрашиваем системные цвета и выходим
+    if (hex === "auto") {
+      if (window.Capacitor && window.Capacitor.Plugins.MaterialYou) {
+        window.Capacitor.Plugins.MaterialYou.getColors()
+          .then((colors) => this.applyMaterialYouColors(colors))
+          .catch(() => this.setColor("#22c55e")); // Если не Android 12+ (fallback)
+      } else {
+        this.setColor("#22c55e"); // Фолбэк для веба
+      }
+      this.updateButtons(this.colorBtns, "auto", "customColorInput", false);
+      return;
+    }
+
     document.documentElement.style.setProperty("--primary-color", hex);
 
     const { h } = this.hexToHSL(hex);
@@ -189,7 +231,7 @@ export const themeManager = {
         "ring-2",
         "ring-offset-2",
         "ring-offset-white",
-        "dark:ring-offset-gray-900"
+        "dark:ring-offset-gray-900",
       );
       const targetAttr = isBg
         ? b.getAttribute("data-bg")
@@ -199,7 +241,7 @@ export const themeManager = {
           "ring-2",
           "ring-offset-2",
           "ring-offset-white",
-          "dark:ring-offset-gray-900"
+          "dark:ring-offset-gray-900",
         );
         const iconColor =
           isBg && hex === "default" ? "var(--text-color)" : "white";
@@ -216,7 +258,7 @@ export const themeManager = {
       "ring-2",
       "ring-offset-2",
       "ring-offset-white",
-      "dark:ring-offset-gray-900"
+      "dark:ring-offset-gray-900",
     );
 
     if (!found && hex !== "default") {
@@ -224,7 +266,7 @@ export const themeManager = {
         "ring-2",
         "ring-offset-2",
         "ring-offset-white",
-        "dark:ring-offset-gray-900"
+        "dark:ring-offset-gray-900",
       );
     }
   },
@@ -247,7 +289,7 @@ export const themeManager = {
         root.style.setProperty("--bg-color", isDark ? "#000000" : "#f3f4f6");
         root.style.setProperty(
           "--surface-color",
-          isDark ? "#1c1c1e" : "#ffffff"
+          isDark ? "#1c1c1e" : "#ffffff",
         );
       } else {
         root.style.removeProperty("--bg-color");
@@ -265,18 +307,18 @@ export const themeManager = {
       if (isDark) {
         root.style.setProperty(
           "--surface-color",
-          `color-mix(in srgb, ${hex}, white 12%)`
+          `color-mix(in srgb, ${hex}, white 12%)`,
         );
       } else {
         if (l > 85) {
           root.style.setProperty(
             "--surface-color",
-            `color-mix(in srgb, ${hex}, black 8%)`
+            `color-mix(in srgb, ${hex}, black 8%)`,
           );
         } else {
           root.style.setProperty(
             "--surface-color",
-            `color-mix(in srgb, ${hex}, white 25%)`
+            `color-mix(in srgb, ${hex}, white 25%)`,
           );
         }
       }
@@ -311,7 +353,7 @@ export const themeManager = {
       const visualAlpha = this.vignetteAlpha * 0.3;
       document.documentElement.style.setProperty(
         "--vignette-alpha",
-        visualAlpha
+        visualAlpha,
       );
     } else {
       bgElement.classList.remove("has-vignette");
@@ -361,5 +403,26 @@ export const themeManager = {
     document.documentElement.style.setProperty("--font-scale", scale);
     $("fontSizeDisplay") && ($("fontSizeDisplay").textContent = size + " px");
     safeSetLS("font_size", size);
+  },
+
+  applyMaterialYouColors(colors) {
+    // Если пользователь вручную выбрал цвет (не "Авто"), мы не перебиваем его
+    if (safeGetLS("theme_color") && safeGetLS("theme_color") !== "auto") return;
+
+    // В Android 12+ системные цвета хранятся в палитре.
+    // 'system_accent1_500' - это идеальный акцентный цвет (как кнопки в шторке)
+    const primaryColor = colors.system_accent1_500;
+
+    if (primaryColor) {
+      // Применяем системный цвет к нашему таймеру!
+      document.documentElement.style.setProperty(
+        "--primary-color",
+        primaryColor,
+      );
+
+      // Вычисляем HSL для нашего тонированного серого текста (text-secondary)
+      const { h } = this.hexToHSL(primaryColor);
+      document.documentElement.style.setProperty("--accent-h", h);
+    }
   },
 };

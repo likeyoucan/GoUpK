@@ -55,7 +55,7 @@
         display: none !important;
       }
     </style>
-    
+
     <link rel="stylesheet" href="styles.css" />
   </head>
 
@@ -102,7 +102,6 @@
       <div
         class="app-bg absolute inset-0 flex flex-col w-full h-full z-0 transition-colors duration-300"
       >
-
         <main class="flex-1 relative overflow-hidden z-10" id="viewsContainer">
           <!-- STOPWATCH VIEW -->
           <div
@@ -326,7 +325,7 @@
                       aria-label="Hours"
                       id="tm-h"
                       placeholder="00"
-                      class="timer-input w-16 h-16 text-center text-4xl bg-transparent border-b-2 app-border outline-none font-mono placeholder-gray-500 transition-colors primary-focus-border"
+                      class="timer-input w-16 h-16 text-center text-[32px] bg-transparent border-b-2 app-border outline-none font-mono placeholder-gray-500 transition-colors primary-focus-border"
                     />
                     <label
                       for="tm-h"
@@ -349,7 +348,7 @@
                       aria-label="Minutes"
                       id="tm-m"
                       placeholder="00"
-                      class="timer-input w-16 h-16 text-center text-4xl bg-transparent border-b-2 app-border outline-none font-mono placeholder-gray-500 transition-colors primary-focus-border"
+                      class="timer-input w-16 h-16 text-center text-[32px] bg-transparent border-b-2 app-border outline-none font-mono placeholder-gray-500 transition-colors primary-focus-border"
                     />
                     <label
                       for="tm-m"
@@ -372,7 +371,7 @@
                       aria-label="Seconds"
                       id="tm-s"
                       placeholder="00"
-                      class="timer-input w-16 h-16 text-center text-4xl bg-transparent border-b-2 app-border outline-none font-mono placeholder-gray-500 transition-colors primary-focus-border"
+                      class="timer-input w-16 h-16 text-center text-[32px] bg-transparent border-b-2 app-border outline-none font-mono placeholder-gray-500 transition-colors primary-focus-border"
                     />
                     <label
                       for="tm-s"
@@ -585,6 +584,20 @@
                     <div
                       class="flex gap-4 overflow-x-auto scroll-lock no-scrollbar py-2 px-2 -mx-2"
                     >
+                      <button
+                        type="button"
+                        aria-label="System Auto Color"
+                        data-color="auto"
+                        class="color-btn w-9 h-9 flex items-center justify-center rounded-full shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus relative overflow-hidden"
+                      >
+                        <div
+                          class="absolute inset-0 bg-[conic-gradient(from_0deg,red,orange,yellow,green,blue,indigo,violet,red)] opacity-50"
+                        ></div>
+                        <span
+                          class="relative z-10 text-[10px] font-bold text-white drop-shadow-md"
+                          >AUTO</span
+                        >
+                      </button>
                       <button
                         type="button"
                         aria-label="Green Accent"

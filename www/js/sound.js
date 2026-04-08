@@ -21,6 +21,12 @@ export const sm = {
       this.soundEnabled = e.target.checked;
       safeSetLS("app_sound", this.soundEnabled);
       if (this.soundEnabled) this.initAudio();
+
+      const volSlider = $("volumeSlider");
+      if (volSlider) {
+        volSlider.disabled = !this.soundEnabled;
+        volSlider.style.opacity = this.soundEnabled ? "1" : "0.5";
+      }
     });
 
     $("toggle-vibro")?.addEventListener("change", (e) => {
@@ -55,7 +61,7 @@ export const sm = {
         this.initAudio();
         this.unlock();
       },
-      { once: true, capture: true }
+      { once: true, capture: true },
     );
   },
 
@@ -77,6 +83,12 @@ export const sm = {
       $("volumeDisplay").textContent = Math.round(this.volume * 100) + "%";
     }
     if ($("soundThemeSelect")) $("soundThemeSelect").value = this.theme;
+
+    const volSlider = $("volumeSlider");
+    if (volSlider) {
+      volSlider.disabled = !this.soundEnabled;
+      volSlider.style.opacity = this.soundEnabled ? "1" : "0.5";
+    }
 
     this.updateVibroUI();
   },
@@ -105,7 +117,9 @@ export const sm = {
         const applyLevel = (val) =>
           Math.max(1, Math.min(1000, Math.round(val * this.vibroLevel)));
         navigator.vibrate(
-          Array.isArray(pattern) ? pattern.map(applyLevel) : applyLevel(pattern)
+          Array.isArray(pattern)
+            ? pattern.map(applyLevel)
+            : applyLevel(pattern),
         );
       } catch (e) {}
     }
@@ -118,7 +132,7 @@ export const sm = {
     duration,
     volMultiplier = 1,
     slideToFreq = null,
-    sustain = false
+    sustain = false,
   ) {
     if (!this.audioCtx) return;
     const osc = this.audioCtx.createOscillator();
@@ -130,7 +144,7 @@ export const sm = {
 
     const now = this.audioCtx.currentTime;
     const startTime = now + startTimeOffset;
-    const peakVol = 0.2 * this.volume * volMultiplier;
+    const peakVol = 0.8 * this.volume * volMultiplier;
 
     gainNode.gain.setValueAtTime(0, startTime);
 
@@ -141,14 +155,14 @@ export const sm = {
       gainNode.gain.linearRampToValueAtTime(peakVol, startTime + attackTime);
       gainNode.gain.linearRampToValueAtTime(
         peakVol,
-        startTime + duration - releaseTime
+        startTime + duration - releaseTime,
       );
       gainNode.gain.linearRampToValueAtTime(0.001, startTime + duration);
     } else {
       // Для эффекта "ВУШ" используем классический режим — звук быстро затухает сам
       gainNode.gain.linearRampToValueAtTime(
         peakVol,
-        startTime + Math.min(0.02, duration * 0.1)
+        startTime + Math.min(0.02, duration * 0.1),
       );
       gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
     }
@@ -158,17 +172,17 @@ export const sm = {
       if (sustain) {
         osc.frequency.linearRampToValueAtTime(
           slideToFreq,
-          startTime + duration * 0.4
+          startTime + duration * 0.4,
         );
         osc.frequency.linearRampToValueAtTime(
           slideToFreq,
-          startTime + duration
+          startTime + duration,
         );
       } else {
         // Резкое падение частоты — главный секрет эффекта "ВУШ"
         osc.frequency.exponentialRampToValueAtTime(
           slideToFreq,
-          startTime + duration
+          startTime + duration,
         );
       }
     }
@@ -229,7 +243,7 @@ export const sm = {
             time,
             duration,
             0.7,
-            100
+            100,
           );
 
           // Плотный поток воздуха (бас)

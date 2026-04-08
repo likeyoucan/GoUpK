@@ -9,6 +9,19 @@ export const navigation = {
   },
 
   switchView(viewId) {
+    if (this.activeView === viewId) return;
+
+    // УМНЫЕ НАТИВНЫЕ АНИМАЦИИ (View Transitions API)
+    if (!document.startViewTransition) {
+      this.updateDOM(viewId); // Если старый телефон - просто переключаем
+    } else {
+      document.startViewTransition(() => {
+        this.updateDOM(viewId); // Если современный Android - делаем морфинг!
+      });
+    }
+  },
+
+  updateDOM(viewId) {
     this.activeView = viewId;
     ["stopwatch", "timer", "tabata", "settings"].forEach((id) => {
       const el = $(`view-${id}`);
