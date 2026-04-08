@@ -5,10 +5,6 @@ on:
     branches: [ "main", "master" ]
   workflow_dispatch:
 
-# Это дает роботу право сохранять файлы обратно в ваш репозиторий
-permissions:
-  contents: write
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -22,27 +18,15 @@ jobs:
       with:
         node-version: '22'
 
-    - name: 🎨 Сборка стилей Tailwind
+    - name: 🎨 Сборка стилей Tailwind CSS v4
       run: |
         npm install @tailwindcss/cli
         npx @tailwindcss/cli -i ./input.css -o ./www/styles.css --minify
 
-    - name: 📱 Создание папки Android
+    - name: 📱 Синхронизация Capacitor (Web -> Android)
       run: |
         npm install @capacitor/core @capacitor/cli @capacitor/android
-        # Инициализируем проект, если его нет
-        npx cap init "My App" "com.example.myapp" --web-dir=www
-        # Пытаемся добавить платформу android (если она уже есть, пропустим ошибку)
-        npx cap add android || true
-
-    - name: 💾 Сохранение папки android в GitHub
-      run: |
-        git config --global user.name "github-actions[bot]"
-        git config --global user.email "github-actions[bot]@users.noreply.github.com"
-        git add android
-        git add package.json package-lock.json # сохраним и зависимости
-        git commit -m "chore: добавлена постоянная папка android проекта" || echo "No changes to commit"
-        git push
+        npx cap sync android
 
     - name: ☕ Настройка Java
       uses: actions/setup-java@v4
@@ -53,7 +37,9 @@ jobs:
     - name: 🔨 Сборка APK
       working-directory: ./android
       run: |
+        # Даем права на запуск сборщика
         chmod +x ./gradlew
+        # Собираем отладочный APK
         ./gradlew assembleDebug
 
     - name: 📦 Сохранение готового APK
