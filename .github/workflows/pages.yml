@@ -18,17 +18,27 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
-    - name: Скачивание кода
+    - name: 📥 Скачивание кода
       uses: actions/checkout@v4
 
-    - name: Настройка GitHub Pages
+    - name: ⚙️ Настройка Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: 🎨 Сборка стилей Tailwind CSS v4
+      run: |
+        npm install @tailwindcss/cli
+        npx @tailwindcss/cli -i ./input.css -o ./www/styles.css --minify
+
+    - name: 🌐 Настройка GitHub Pages
       uses: actions/configure-pages@v4
 
-    - name: Загрузка папки www
+    - name: 📤 Загрузка папки www
       uses: actions/upload-pages-artifact@v3
       with:
         path: './www'
 
-    - name: Публикация сайта
+    - name: 🚀 Публикация сайта
       id: deployment
       uses: actions/deploy-pages@v4
