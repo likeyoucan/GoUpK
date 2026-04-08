@@ -5,13 +5,13 @@
     "start": "serve www"
   },
   "dependencies": {
-    "@capacitor/android": "^8.3.0",
-    "@capacitor/cli": "^8.3.0",
-    "@capacitor/core": "^8.3.0",
+    "@capacitor/android": "^7.0.0",
+    "@capacitor/cli": "^7.0.0",
+    "@capacitor/core": "^7.0.0",
     "@capacitor/status-bar": "^7.0.0",
-    "@capawesome/capacitor-foreground-service": "^8.2.0",
+    "@capawesome/capacitor-foreground-service": "^7.0.0",
     "@teamhive/capacitor-material-you": "^6.1.0",
     "@tailwindcss/cli": "^4.0.0",
     "serve": "^14.2.0"
-  } 
+  }
 }
