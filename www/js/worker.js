@@ -14,7 +14,7 @@ self.addEventListener("message", (e) => {
     if (!intervalId) {
       intervalId = setInterval(() => {
         self.postMessage("tick");
-      }, 1000); // Тикаем ровно раз в секунду
+      }, 500ms);
     }
   } else if (command === "stop") {
     // Очищаем интервал и освобождаем память

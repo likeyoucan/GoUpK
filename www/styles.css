@@ -1250,8 +1250,6 @@ body {
   user-select: none;
   -webkit-touch-callout: none;
   touch-action: manipulation;
-  overscroll-behavior-y: none;
-  overscroll-behavior-x: none;
 }
 button {
   -webkit-appearance: none;
@@ -1282,10 +1280,10 @@ button {
 .relative.max-w-md {
   height: 100dvh;
   width: 100%;
-  padding-top: env(safe-area-inset-top);
-  padding-bottom: env(safe-area-inset-bottom);
-  padding-left: env(safe-area-inset-left);
-  padding-right: env(safe-area-inset-right);
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
 }
 @media (min-width: 640px) {
   .relative.max-w-md {
@@ -1295,7 +1293,7 @@ button {
   }
 }
 .app-nav-safe {
-  padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
 }
 .view-top-half {
   display: flex;
@@ -1305,7 +1303,7 @@ button {
   height: 55%;
   width: 100%;
   flex-shrink: 0;
-  padding-top: env(safe-area-inset-top);
+  padding-top: env(safe-area-inset-top, 0px);
 }
 .view-top-half h2 {
   margin: 0.5rem 0;
@@ -1339,8 +1337,8 @@ button {
 @media (orientation: landscape) and (max-height: 900px) {
   .relative.max-w-md {
     max-width: 900px;
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
   }
   #viewsContainer > div:not(#view-settings) {
     flex-direction: row;

@@ -111,7 +111,7 @@ export const tb = {
     $("tb-closeModalBtn")?.addEventListener("click", () => this.closeModal());
 
     this.els.editName?.addEventListener("input", () =>
-      this.els.nameError?.classList.add("hidden")
+      this.els.nameError?.classList.add("hidden"),
     );
 
     document.querySelectorAll("[data-tb-adj]").forEach((btn) => {
@@ -233,7 +233,7 @@ export const tb = {
     const exists = this.workouts.some(
       (w) =>
         w.name.toLowerCase() === finalName.toLowerCase() &&
-        w.id !== this.editingWorkoutId
+        w.id !== this.editingWorkoutId,
     );
 
     if (exists) {
@@ -241,7 +241,7 @@ export const tb = {
       this.els.editName.classList.add("animate-shake");
       setTimeout(
         () => this.els.editName.classList.remove("animate-shake"),
-        300
+        300,
       );
       return;
     }
@@ -252,7 +252,7 @@ export const tb = {
 
     if (this.editingWorkoutId) {
       const index = this.workouts.findIndex(
-        (x) => x.id === this.editingWorkoutId
+        (x) => x.id === this.editingWorkoutId,
       );
       if (index !== -1) {
         this.workouts[index] = {
@@ -265,7 +265,10 @@ export const tb = {
       }
     } else {
       const newW = {
-        id: Date.now(),
+        id:
+          typeof crypto !== "undefined" && crypto.randomUUID
+            ? crypto.randomUUID()
+            : Date.now(),
         name: finalName,
         work: w,
         rest: r,
@@ -311,8 +314,8 @@ export const tb = {
     updateText(
       this.els.activeDetail,
       `${w.work}${t("sec").toLowerCase()} / ${w.rest}${t(
-        "sec"
-      ).toLowerCase()} • ${w.rounds} ${t("rounds")}`
+        "sec",
+      ).toLowerCase()} • ${w.rounds} ${t("rounds")}`,
     );
     this.renderList();
   },
@@ -339,20 +342,20 @@ export const tb = {
             isAct ? "primary-text" : ""
           }">${escapeHTML(w.name)}</div>
           <div class="text-xs app-text-sec mt-1">${w.work}${t(
-        "sec"
-      ).toLowerCase()} / ${w.rest}${t("sec").toLowerCase()} • ${w.rounds} ${t(
-        "rds"
-      )}</div>
+            "sec",
+          ).toLowerCase()} / ${w.rest}${t("sec").toLowerCase()} • ${w.rounds} ${t(
+            "rds",
+          )}</div>
         </div>
         <div class="flex gap-1 shrink-0">
           <button type="button" aria-label="${t("edit")}" data-id="${
-        w.id
-      }" class="tb-edit-btn text-gray-400 hover:primary-text p-2 focus:outline-none custom-focus rounded-lg active:scale-95">
+            w.id
+          }" class="tb-edit-btn text-gray-400 hover:primary-text p-2 focus:outline-none custom-focus rounded-lg active:scale-95">
             <svg focusable="false" aria-hidden="true" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
           </button>
           <button type="button" aria-label="${t("delete")}" data-id="${
-        w.id
-      }" class="tb-del-btn text-red-500 opacity-50 hover:opacity-100 p-2 focus:outline-none custom-focus rounded-lg active:scale-95">
+            w.id
+          }" class="tb-del-btn text-red-500 opacity-50 hover:opacity-100 p-2 focus:outline-none custom-focus rounded-lg active:scale-95">
             <svg focusable="false" aria-hidden="true" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
           </button>
         </div>`;
@@ -373,7 +376,7 @@ export const tb = {
 
   start() {
     document.dispatchEvent(
-      new CustomEvent("timerStarted", { detail: "tabata" })
+      new CustomEvent("timerStarted", { detail: "tabata" }),
     );
     this.currentRound = 1;
     this.status = "READY";
@@ -404,7 +407,7 @@ export const tb = {
 
   resume() {
     document.dispatchEvent(
-      new CustomEvent("timerStarted", { detail: "tabata" })
+      new CustomEvent("timerStarted", { detail: "tabata" }),
     );
     this.paused = false;
     this.phaseEndTime = performance.now() + this.remainingAtPause;
@@ -453,7 +456,10 @@ export const tb = {
       this.lastRender = now;
     }
 
-    if (!isBackground) this.rAF = requestAnimationFrame(() => this.tick());
+    if (!isBackground) {
+      cancelAnimationFrame(this.rAF);
+      this.rAF = requestAnimationFrame(() => this.tick());
+    }
   },
 
   nextPhase(missedTime = 0) {
@@ -534,7 +540,7 @@ export const tb = {
     this.els.ring.classList.remove(
       "primary-stroke",
       "text-blue-500",
-      "text-gray-500"
+      "text-gray-500",
     );
     this.els.ring.style.stroke = "";
 

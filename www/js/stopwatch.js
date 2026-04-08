@@ -89,29 +89,29 @@ export const sw = {
     this.els.btn?.addEventListener("click", () => this.toggle());
     this.els.lapBtn?.addEventListener("click", () => this.recordLapOrReset());
     this.els.saveBtn?.addEventListener("click", () =>
-      this.prepareSaveSession()
+      this.prepareSaveSession(),
     );
     this.els.openResultsBtn?.addEventListener("click", () => this.openModal());
     this.els.closeResultsBtn?.addEventListener("click", () =>
-      this.closeModal()
+      this.closeModal(),
     );
     this.els.sortSelect?.addEventListener("change", (e) =>
-      this.sortSessions(e.target.value)
+      this.sortSessions(e.target.value),
     );
 
     this.els.nameCancel?.addEventListener("click", () => this.closeNameModal());
     this.els.nameInput?.addEventListener("input", () =>
-      this.els.nameError?.classList.add("hidden")
+      this.els.nameError?.classList.add("hidden"),
     );
 
     this.els.clearAllBtn?.addEventListener("click", () => {
       if (this.savedSessions.length > 0) this.openClearModal();
     });
     this.els.clearCancel?.addEventListener("click", () =>
-      this.closeClearModal()
+      this.closeClearModal(),
     );
     this.els.clearConfirm?.addEventListener("click", () =>
-      this.confirmClearAll()
+      this.confirmClearAll(),
     );
 
     this.els.sessionsList?.addEventListener("click", (e) => {
@@ -184,12 +184,12 @@ export const sw = {
       announceToScreenReader(
         `${t("stopwatch")} ${t("pause")}. ${this.formatTime(
           this.elapsedTime,
-          false
-        )}`
+          false,
+        )}`,
       );
     } else {
       document.dispatchEvent(
-        new CustomEvent("timerStarted", { detail: "stopwatch" })
+        new CustomEvent("timerStarted", { detail: "stopwatch" }),
       );
       this.startTime = performance.now() - this.elapsedTime;
       this.isRunning = true;
@@ -221,7 +221,10 @@ export const sw = {
       }
       this.lastRender = now;
     }
-    if (!isBackground) this.rAF = requestAnimationFrame(() => this.tick());
+    if (!isBackground) {
+      cancelAnimationFrame(this.rAF);
+      this.rAF = requestAnimationFrame(() => this.tick());
+    }
   },
 
   updateDisplay() {
@@ -233,7 +236,7 @@ export const sw = {
       const extStr = getExtendedDisplay(
         this.elapsedTime,
         t("day_short"),
-        t("hour_short")
+        t("hour_short"),
       );
       if (extStr) {
         updateText(this.els.extendedDisplay, extStr);
@@ -256,17 +259,17 @@ export const sw = {
     div.className = `lap-row flex justify-between items-center py-3 border-b app-border px-3 rounded-lg transition-all duration-300 ${bgClass}`;
     div.innerHTML = `
       <span class="text-xs app-text-sec font-medium">${t("lap_text")} ${
-      lap.index
-    }</span>
+        lap.index
+      }</span>
       <div class="flex items-center gap-4">
         <span class="font-mono text-[10px] app-text-sec opacity-60 w-16 text-right">${this.formatTime(
           lap.total,
-          true
+          true,
         )}</span>
         <span class="split-time font-mono text-xs font-bold ${textColor} w-16 text-right">${this.formatTime(
-      lap.diff,
-      true
-    )}</span>
+          lap.diff,
+          true,
+        )}</span>
       </div>`;
     return div;
   },
@@ -320,8 +323,8 @@ export const sw = {
       this.els.lapsContainer.insertAdjacentHTML(
         "afterbegin",
         `<div class="text-center app-text-sec opacity-50 mt-4 text-sm" data-i18n="no_laps">${t(
-          "no_laps"
-        )}</div>`
+          "no_laps",
+        )}</div>`,
       );
       this.updateSaveButtonVisibility();
     }
@@ -360,7 +363,10 @@ export const sw = {
       : this.pauseTime || Date.now();
 
     this.nameModalState.pendingSession = {
-      id: Date.now(),
+      id:
+        typeof crypto !== "undefined" && crypto.randomUUID
+          ? crypto.randomUUID()
+          : Date.now(),
       name: "",
       date: completionTime,
       totalTime: this.elapsedTime,
@@ -383,7 +389,7 @@ export const sw = {
     if (this.els.nameTitle)
       updateText(
         this.els.nameTitle,
-        action === "rename" ? t("rename") : t("save_session")
+        action === "rename" ? t("rename") : t("save_session"),
       );
     this.els.nameInput.value = defaultName;
 
@@ -426,7 +432,7 @@ export const sw = {
       (s) =>
         s.name.toLowerCase() === finalName.toLowerCase() &&
         (this.nameModalState.action === "save" ||
-          s.id !== this.nameModalState.targetId)
+          s.id !== this.nameModalState.targetId),
     );
 
     if (isDuplicate) {
@@ -434,7 +440,7 @@ export const sw = {
       this.els.nameInput.classList.add("animate-shake");
       setTimeout(
         () => this.els.nameInput.classList.remove("animate-shake"),
-        300
+        300,
       );
       return;
     }
@@ -447,7 +453,7 @@ export const sw = {
       showToast(t("session_saved"));
     } else if (this.nameModalState.action === "rename") {
       const session = this.savedSessions.find(
-        (s) => s.id === this.nameModalState.targetId
+        (s) => s.id === this.nameModalState.targetId,
       );
       if (session) {
         session.name = finalName;
@@ -568,8 +574,8 @@ export const sw = {
       this.els.sessionsList.insertAdjacentHTML(
         "afterbegin",
         `<div class="text-center app-text-sec opacity-50 mt-10 text-sm">${t(
-          "empty_sessions"
-        )}</div>`
+          "empty_sessions",
+        )}</div>`,
       );
       return;
     }
@@ -580,20 +586,20 @@ export const sw = {
       const dateObj = new Date(session.date || session.id);
       const dateStr = `${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString(
         [],
-        { hour: "2-digit", minute: "2-digit" }
+        { hour: "2-digit", minute: "2-digit" },
       )}`;
 
       let lapsHtml = `
         <div class="flex justify-between items-center py-1.5 border-b border-gray-500/30 mb-1 px-2">
           <span class="text-[10px] font-bold app-text-sec uppercase tracking-wider">${t(
-            "lap_text"
+            "lap_text",
           )}</span>
           <div class="flex items-center gap-4">
             <span class="text-[10px] font-bold app-text-sec uppercase tracking-wider w-16 text-right">${t(
-              "total_time"
+              "total_time",
             )}</span>
             <span class="text-[10px] font-bold app-text-sec uppercase tracking-wider w-16 text-right">${t(
-              "split_time"
+              "split_time",
             )}</span>
           </div>
         </div>`;
@@ -606,17 +612,17 @@ export const sw = {
         lapsHtml += `
           <div class="flex justify-between items-center py-2 border-b border-gray-500/10 last:border-0 px-2 ${bgClass}">
             <span class="text-xs app-text-sec font-medium">${t("lap_text")} ${
-          lap.index
-        }</span>
+              lap.index
+            }</span>
             <div class="flex items-center gap-4">
               <span class="font-mono text-[10px] app-text-sec opacity-60 w-16 text-right">${this.formatTime(
                 lap.total,
-                true
+                true,
               )}</span>
               <span class="font-mono text-xs font-bold ${textColor} w-16 text-right">${this.formatTime(
-          lap.diff,
-          true
-        )}</span>
+                lap.diff,
+                true,
+              )}</span>
             </div>
           </div>`;
       });
@@ -630,14 +636,14 @@ export const sw = {
         }">
           <div class="flex-1 min-w-0 pr-4">
             <div class="font-bold app-text text-lg truncate">${escapeHTML(
-              session.name
+              session.name,
             )}</div>
             <div class="text-xs app-text-sec mt-1">${dateStr}</div>
           </div>
           <div class="flex items-center gap-3 shrink-0">
             <div class="font-mono font-bold primary-text text-lg">${this.formatTime(
               session.totalTime,
-              true
+              true,
             )}</div>
             <svg focusable="false" aria-hidden="true" id="sw-icon-${
               session.id
@@ -651,13 +657,13 @@ export const sw = {
             <button type="button" data-id="${
               session.id
             }" class="sw-rename-btn px-3 py-1 bg-blue-500/10 text-blue-500 rounded-lg text-xs font-bold uppercase tracking-wider active:scale-95 transition-transform">${t(
-        "rename"
-      )}</button>
+              "rename",
+            )}</button>
             <button type="button" data-id="${
               session.id
             }" class="sw-delete-btn px-3 py-1 bg-red-500/10 text-red-500 rounded-lg text-xs font-bold uppercase tracking-wider active:scale-95 transition-transform">${t(
-        "delete"
-      )}</button>
+              "delete",
+            )}</button>
           </div>
           <div class="max-h-48 overflow-y-auto no-scrollbar bg-black/5 dark:bg-white/5 rounded-lg p-2 border app-border">
             ${lapsHtml}

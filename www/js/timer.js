@@ -125,7 +125,7 @@ export const tm = {
         e.preventDefault();
         updateVal(e.deltaY > 0 ? -1 : 1);
       },
-      { passive: false }
+      { passive: false },
     );
 
     input.addEventListener(
@@ -133,7 +133,7 @@ export const tm = {
       (e) => {
         startY = e.touches[0].clientY;
       },
-      { passive: true }
+      { passive: true },
     );
 
     input.addEventListener(
@@ -148,7 +148,7 @@ export const tm = {
           startY = currentY;
         }
       },
-      { passive: false }
+      { passive: false },
     );
 
     const onMouseMove = (e) => {
@@ -195,7 +195,7 @@ export const tm = {
       this.updateUIState();
     } else {
       document.dispatchEvent(
-        new CustomEvent("timerStarted", { detail: "timer" })
+        new CustomEvent("timerStarted", { detail: "timer" }),
       );
 
       if (!this.isPaused) {
@@ -209,7 +209,7 @@ export const tm = {
           this.els.inputs.classList.add("animate-shake");
           setTimeout(
             () => this.els.inputs.classList.remove("animate-shake"),
-            300
+            300,
           );
           return;
         }
@@ -298,7 +298,10 @@ export const tm = {
       return;
     }
 
-    if (!isBackground) this.rAF = requestAnimationFrame(() => this.tick());
+    if (!isBackground) {
+      cancelAnimationFrame(this.rAF);
+      this.rAF = requestAnimationFrame(() => this.tick());
+    }
   },
 
   getFormattedTime(sTotal) {
