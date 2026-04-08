@@ -5,6 +5,10 @@
     "start": "serve www"
   },
   "dependencies": {
+    "@capacitor/android": "^8.3.0",
+    "@capacitor/cli": "^8.3.0",
+    "@capacitor/core": "^8.3.0",
+    "@tailwindcss/cli": "^4.2.2",
     "serve": "^14.2.0"
   }
 }
