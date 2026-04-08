@@ -6,7 +6,7 @@ concurrency:
 
 on:
   push:
-    branches: [ "main", "master" ]
+    branches: ["main", "dev"] # Робот сработает и на main, и на dev
   workflow_dispatch:
 
 permissions:
