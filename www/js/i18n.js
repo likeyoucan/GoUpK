@@ -1,5 +1,8 @@
+// ===== i18n.js (ФИНАЛЬНАЯ ВЕРСИЯ) =====
+
 import { safeGetLS, safeSetLS } from "./utils.js";
 
+// Ваш объект translations остается здесь без изменений
 export const translations = {
   en: {
     theme_classic: "Classic",
@@ -77,8 +80,8 @@ export const translations = {
     clear_all: "Clear All",
     clear_history_confirm: "Are you sure you want to delete all saved results?",
     history_cleared: "History cleared!",
-    adaptive_bg: "Adaptive Background Colors",
-    vignette: "Dark Vignette Effect",
+    adaptive_bg: "Adaptive Background",
+    vignette: "Dark Vignette",
     liquid_glass: "Liquid Glass",
     theme_auto: "Auto",
     theme_light: "Light",
@@ -164,12 +167,11 @@ export const translations = {
     total_time: "Общее",
     split_time: "Интервал",
     clear_all: "Очистить все",
-    clear_history_confirm:
-      "Вы уверены, что хотите удалить все сохраненные результаты?",
+    clear_history_confirm: "Вы уверены, что хотите удалить все сохраненные результаты?",
     history_cleared: "История очищена!",
-    adaptive_bg: "Адаптивные цвета фона",
-    vignette: "Эффект темной виньетки",
-    liquid_glass: "Эффект жидкого стекла",
+    adaptive_bg: "Адаптивные цвета",
+    vignette: "Темная виньетка",
+    liquid_glass: "Жидкое стекло",
     theme_auto: "Авто",
     theme_light: "Светлая",
     theme_dark: "Темная",
@@ -178,7 +180,7 @@ export const translations = {
     hour_short: "ч",
     feedback: "Обратная связь",
     version: "Версия",
-    developed_by: "Разработано:",
+    developed_by: "Разработано",
   },
 };
 
@@ -187,50 +189,46 @@ export const langManager = {
 
   init() {
     const stored = safeGetLS("app_lang");
-    if (stored && stored !== "auto") this.setLang(stored);
-    else {
-      const sys = navigator.language.startsWith("ru") ? "ru" : "en";
-      this.setLang(sys, true);
-      const ls = document.getElementById("langSelect");
-      if (ls) ls.value = "auto";
-    }
+    const langSelect = document.getElementById("langSelect");
 
-    const ls = document.getElementById("langSelect");
-    if (ls) {
-      ls.addEventListener("change", (e) => {
-        if (e.target.value === "auto") {
-          const sys = navigator.language.startsWith("ru") ? "ru" : "en";
-          this.setLang(sys, true);
-          safeSetLS("app_lang", "auto");
-        } else {
-          this.setLang(e.target.value);
-        }
-      });
+    let initialLang = "en";
+    if (stored && stored !== "auto") {
+      initialLang = stored;
+    } else {
+      initialLang = navigator.language.startsWith("ru") ? "ru" : "en";
+      if (langSelect) langSelect.value = "auto";
     }
+    
+    this.setLang(initialLang, stored === 'auto');
+
+    langSelect?.addEventListener("change", (e) => {
+      if (e.target.value === "auto") {
+        const sysLang = navigator.language.startsWith("ru") ? "ru" : "en";
+        this.setLang(sysLang, true);
+        safeSetLS("app_lang", "auto");
+      } else {
+        this.setLang(e.target.value);
+      }
+    });
   },
 
   setLang(lang, isAuto = false) {
     this.current = lang;
     document.documentElement.lang = lang;
-    if (!isAuto) safeSetLS("app_lang", lang);
-    const ls = document.getElementById("langSelect");
-    if (ls) ls.value = isAuto ? "auto" : lang;
+    if (!isAuto) {
+      safeSetLS("app_lang", lang);
+    }
+    
+    const langSelect = document.getElementById("langSelect");
+    if (langSelect) {
+      langSelect.value = isAuto ? "auto" : lang;
+    }
 
-    // ИСПРАВЛЕНО: Безопасная замена перевода, которая не удаляет SVG иконки внутри кнопок
     document.querySelectorAll("[data-i18n]").forEach((el) => {
-      const newText = t(el.getAttribute("data-i18n"));
-
-      let textNode = Array.from(el.childNodes).find(
-        (node) =>
-          node.nodeType === Node.TEXT_NODE && node.nodeValue.trim() !== ""
-      );
-
-      if (textNode) {
-        textNode.nodeValue = newText;
-      } else if (el.children.length === 0) {
+      const key = el.getAttribute("data-i18n");
+      const newText = t(key);
+      if (el.textContent !== newText) {
         el.textContent = newText;
-      } else {
-        el.appendChild(document.createTextNode(" " + newText));
       }
     });
 
@@ -239,5 +237,17 @@ export const langManager = {
 };
 
 export function t(key) {
-  return translations[langManager.current][key] || key;
+  const lang = langManager.current;
+  const translation = translations[lang]?.[key];
+  if (translation !== undefined) {
+    return translation;
+  }
+  
+  const fallbackTranslation = translations['en']?.[key];
+  if (fallbackTranslation !== undefined) {
+    console.warn(`Translation missing for key '${key}' in language '${lang}'. Using 'en' fallback.`);
+    return fallbackTranslation;
+  }
+  
+  return key;
 }

@@ -1,870 +1,618 @@
-@import "tailwindcss";
-@source "./www";
+/* ========================================================== */
+/*                    input.css (ФИНАЛ)                       */
+/* ========================================================== */
 
-@theme {
-  --text-xs: calc(0.75rem * var(--font-scale, 1));
-  --text-xs--line-height: 1.2;
-  --text-sm: calc(0.875rem * var(--font-scale, 1));
-  --text-sm--line-height: 1.25;
-  --text-base: calc(1rem * var(--font-scale, 1));
-  --text-base--line-height: 1.5;
-  --text-lg: calc(1.125rem * var(--font-scale, 1));
-  --text-lg--line-height: 1.75;
-  --text-xl: calc(1.25rem * var(--font-scale, 1));
-  --text-xl--line-height: 1.75;
-  --text-2xl: calc(1.5rem * var(--font-scale, 1));
-  --text-2xl--line-height: 2;
-  --text-4xl: calc(2.25rem * var(--font-scale, 1));
-  --text-4xl--line-height: 2.5;
-  --text-5xl: calc(3rem * var(--font-scale, 1));
-  --text-5xl--line-height: 1;
-}
+/* 1. Импортируем стандартные слои Tailwind. Это должно быть в самом начале и только один раз. */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-/* =========================================
-   1. ПЕРЕМЕННЫЕ И ТЕМЫ
-========================================= */
-:root {
-  color-scheme: light dark;
-  --primary-color: #22c55e;
-  --accent-h: 142; /* Дефолтный оттенок зеленого */
-  --bg-color: #f3f4f6;
-  --surface-color: #ffffff;
-
-  --text-color: #1f2937;
-  /* Вспомогательный текст: серый, но слегка тонирован цветом акцента */
-  --text-secondary: hsl(var(--accent-h), 25%, 45%);
-
-  --border-color: rgba(0, 0, 0, 0.1);
-  --vignette-alpha: 0.15;
-  --font-scale: 1;
-}
-
-:root.dark {
-  --primary-color: #4ade80;
-  --bg-color: #000000;
-  --surface-color: #1c1c1e;
-
-  --text-color: #f9fafb;
-  /* В темной теме тонированный серый текст светлее */
-  --text-secondary: hsl(var(--accent-h), 25%, 65%);
-
-  --border-color: rgba(255, 255, 255, 0.1);
-}
-
-/* ФОРСИРОВАНИЕ ТЕКСТА (Для цветных неадаптивных фонов) */
-body.force-light-text {
-  --text-color: #ffffff;
-  --text-secondary: hsl(var(--accent-h), 30%, 80%);
-  --border-color: rgba(255, 255, 255, 0.2);
-}
-
-body.force-dark-text {
-  --text-color: #111827;
-  --text-secondary: hsl(var(--accent-h), 40%, 40%);
-  --border-color: rgba(0, 0, 0, 0.15);
-}
-
-html {
-  font-size: 16px;
-  color-scheme: light;
-}
-
-html.dark {
-  color-scheme: dark;
-}
-
-/* =========================================
-   2. БАЗОВЫЕ НАСТРОЙКИ И ФИКСЫ ОС
-========================================= */
-* {
-  -webkit-tap-highlight-color: transparent;
-}
-
-.preload * {
-  transition: none !important;
-}
-
-body {
-  height: 100dvh;
-  background-color: #000;
-  color: var(--text-color);
-  font-family:
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    Roboto,
-    Helvetica,
-    Arial,
-    sans-serif;
-
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  overscroll-behavior: none;
-
-  -webkit-user-select: none;
-  user-select: none;
-  -webkit-touch-callout: none;
-  touch-action: manipulation;
-  overscroll-behavior-y: none;
-  overscroll-behavior-x: none; /* Запрет свайпа назад/вперед */
-}
-
-button {
-  -webkit-appearance: none;
-  appearance: none;
-  transition:
-    background-color 0.3s,
-    border-color 0.3s,
-    box-shadow 0.3s,
-    color 0.3s;
-  touch-action: manipulation;
-}
-
-:where(input[type="text"], input[type="number"]) {
-  -webkit-user-select: text;
-  user-select: text;
-  font-size: max(16px, 1em);
-}
-
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border-width: 0;
-}
-
-.selectable-data,
-.selectable-data * {
-  -webkit-user-select: text !important;
-  user-select: text !important;
-}
-
-/* =========================================
-   3. КОНТЕЙНЕР И SAFE AREA
-========================================= */
-.relative.max-w-md {
-  height: 100dvh;
-  width: 100%;
-  padding-top: env(safe-area-inset-top);
-  padding-bottom: env(safe-area-inset-bottom);
-  padding-left: env(safe-area-inset-left);
-  padding-right: env(safe-area-inset-right);
-}
-
-@media (min-width: 640px) {
-  .relative.max-w-md {
-    height: 92vh;
-    max-height: 850px;
-    padding: 0;
+/* 2. Все ваши кастомные стили и переменные. */
+/* Мы помещаем их в слой @layer base, чтобы они имели правильный приоритет. */
+@layer base {
+  /* =========================================
+     ПЕРЕМЕННЫЕ И ТЕМЫ
+  ========================================= */
+  :root {
+    color-scheme: light dark;
+    --primary-color: #22c55e;
+    --accent-h: 142; /* Дефолтный оттенок зеленого */
+    --bg-color: #f3f4f6;
+    --surface-color: #ffffff;
+    --text-color: #1f2937;
+    --text-secondary: hsl(
+      var(--accent-h),
+      25%,
+      45%
+    ); /* Вспомогательный текст: серый, но слегка тонирован цветом акцента */
+    --border-color: rgba(0, 0, 0, 0.1);
+    --vignette-alpha: 0.15;
+    --font-scale: 1;
   }
-}
 
-.app-nav-safe {
-  padding-bottom: calc(1rem + env(safe-area-inset-bottom));
-}
-
-/* =========================================
-   4. ТАЙМЕРЫ (ВЫРАВНИВАНИЕ, КРУГИ И ШРИФТЫ)
-========================================= */
-.view-top-half {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 55%;
-  width: 100%;
-  flex-shrink: 0;
-  padding-top: env(safe-area-inset-top);
-}
-
-.view-top-half h2 {
-  margin: 0.5rem 0;
-  min-height: 1.25rem;
-}
-
-.timer-circle-wrap {
-  width: 100%;
-  max-width: 75%;
-  aspect-ratio: 1 / 1;
-  margin: 1vh auto;
-  max-height: 45vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  /* ИСПРАВЛЕНО: Container Queries для идеального масштабирования текста */
-  container-type: inline-size;
-}
-
-.timer-display {
-  /* ИСПРАВЛЕНО: Используем cqi вместо vw */
-  font-size: clamp(2rem, 22cqi, 2.8rem);
-  line-height: 1;
-  letter-spacing: -0.05em;
-  white-space: nowrap;
-  transition: all 0.3s ease;
-  font-style: normal;
-  font-variant-numeric: tabular-nums;
-}
-
-.timer-display.is-go {
-  font-size: clamp(3rem, 35cqi, 4.8rem);
-  font-style: italic;
-  padding-right: 0.1em;
-}
-
-/* =========================================
-   5. АДАПТИВНОСТЬ (LANDSCAPE И ПОРТРЕТ)
-========================================= */
-@media (orientation: landscape) and (max-height: 900px) {
-  .relative.max-w-md {
-    max-width: 900px;
-    width: 100vw;
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
+  :root.dark {
+    --primary-color: #4ade80;
+    --bg-color: #000000;
+    --surface-color: #1c1c1e;
+    --text-color: #f9fafb;
+    --text-secondary: hsl(
+      var(--accent-h),
+      25%,
+      65%
+    ); /* В темной теме тонированный серый текст светлее */
+    --border-color: rgba(255, 255, 255, 0.1);
   }
-  #viewsContainer > div:not(#view-settings) {
-    flex-direction: row;
+
+  /* ФОРСИРОВАНИЕ ЦВЕТА ТЕКСТА (Для цветных неадаптивных фонов) */
+  body.force-light-text {
+    --text-color: #ffffff;
+    --text-secondary: hsl(var(--accent-h), 30%, 80%);
+    --border-color: rgba(255, 255, 255, 0.2);
+  }
+
+  body.force-dark-text {
+    --text-color: #111827;
+    --text-secondary: hsl(var(--accent-h), 40%, 40%);
+    --border-color: rgba(0, 0, 0, 0.15);
+  }
+
+  html {
+    font-size: 16px;
+    color-scheme: light;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
+  /* =========================================
+     БАЗОВЫЕ НАСТРОЙКИ И ФИКСЫ ОС
+  ========================================= */
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Отключаем все анимации при первой загрузке, чтобы избежать "моргания" */
+  .preload * {
+    transition: none !important;
+  }
+
+  body {
+    height: 100dvh;
+    background-color: #000;
+    color: var(--text-color);
+    font-family:
+      system-ui,
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      Roboto,
+      Helvetica,
+      Arial,
+      sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    display: flex;
     align-items: center;
     justify-content: center;
-    gap: 2rem;
-    padding-bottom: 0;
+    overflow: hidden;
+    overscroll-behavior: none; /* Отключает "pull-to-refresh" */
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    touch-action: manipulation; /* Убирает задержку клика на мобильных */
   }
-  .view-top-half {
-    height: auto;
-    width: 45%;
-    flex: none;
-  }
-  .view-bottom-half {
-    height: 90%;
-    width: 45%;
-    flex: none;
-    justify-content: center;
-  }
-  .timer-circle-wrap {
-    max-height: 70vh;
-    max-width: 260px;
-  }
-  h2 {
-    margin-bottom: 0.5rem;
-  }
-  #view-settings {
-    flex-direction: column;
-  }
-}
 
-@media (max-height: 700px) and (orientation: portrait) {
-  .timer-circle-wrap {
-    max-height: 40vh;
-    max-width: 200px;
+  button {
+    -webkit-appearance: none;
+    appearance: none;
+    transition:
+      background-color 0.3s,
+      border-color 0.3s,
+      box-shadow 0.3s,
+      color 0.3s;
+    touch-action: manipulation;
   }
-  h2 {
-    margin-bottom: 0.25rem;
-    margin-top: 0;
+
+  /* Разрешаем выделение текста в инпутах, но увеличиваем их размер для iOS, чтобы избежать авто-зума */
+  :where(input[type="text"], input[type="number"]) {
+    -webkit-user-select: text;
+    user-select: text;
+    font-size: max(16px, 1em);
   }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+
+  .selectable-data,
+  .selectable-data * {
+    -webkit-user-select: text !important;
+    user-select: text !important;
+  }
+
+  /* =========================================
+     КОНТЕЙНЕР И SAFE AREA ДЛЯ iOS
+  ========================================= */
+  /* Обертка для всего приложения, учитывающая "челку" и "подбородок" */
+  #app {
+    height: 100%;
+    width: 100%;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+  }
+
+  /* На десктопе ограничиваем высоту и убираем паддинги */
+  @media (min-width: 640px) {
+    #app {
+      height: 92vh;
+      max-height: 850px;
+      padding: 0;
+    }
+  }
+
+  /* Отдельный класс для нижней навигации, чтобы добавить отступ снизу */
+  .app-nav-safe {
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* =========================================
+     ТАЙМЕРЫ (ВЫРАВНИВАНИЕ, КРУГИ И ШРИФТЫ)
+  ========================================= */
   .view-top-half {
-    height: 45%;
-  }
-  .view-bottom-half {
     height: 55%;
+    padding-top: env(safe-area-inset-top, 0px);
   }
-  .timer-input {
-    width: 3rem !important;
-    height: 3rem !important;
+
+  .view-top-half h2 {
+    margin: 0.5rem 0;
+    min-height: 1.25rem;
   }
+
+  .timer-circle-wrap {
+    width: 100%;
+    max-width: 75%;
+    aspect-ratio: 1 / 1;
+    margin: 1vh auto;
+    max-height: 45vh;
+    container-type: inline-size; /* Включаем Container Queries */
+  }
+
   .timer-display {
-    font-size: clamp(1.6rem, 20cqi, 2.2rem);
+    font-size: clamp(
+      2rem,
+      22cqi,
+      2.8rem
+    ); /* Размер шрифта зависит от ширины родителя */
+    line-height: 1;
+    transition: all 0.3s ease;
   }
+
   .timer-display.is-go {
-    font-size: clamp(2.5rem, 30cqi, 3.8rem);
+    font-size: clamp(3rem, 35cqi, 4.8rem);
+    font-style: italic;
+    padding-right: 0.1em;
   }
-}
 
-/* =========================================
-   6. УТИЛИТЫ И ТЕМЫ
-========================================= */
-.app-bg {
-  background-color: var(--bg-color);
-  transition: background-color 0.3s;
-  position: relative;
-  z-index: 0;
-}
-
-.app-bg.has-vignette::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  box-shadow: inset 0 0 15vh rgba(0, 0, 0, var(--vignette-alpha, 0.15));
-  border-radius: inherit;
-  transition: box-shadow 0.3s;
-}
-
-html.dark .app-bg.has-vignette::before {
-  box-shadow: inset 0 0 20vh
-    rgba(0, 0, 0, calc(var(--vignette-alpha, 0.15) + 0.1));
-}
-
-.app-surface {
-  background-color: var(--surface-color);
-  transition:
-    background-color 0.3s,
-    box-shadow 0.3s,
-    border-color 0.3s;
-}
-
-.app-text {
-  color: var(--text-color);
-  transition: color 0.3s;
-}
-.app-text-sec {
-  color: var(--text-secondary);
-  transition: color 0.3s;
-}
-.primary-text {
-  color: var(--primary-color);
-  transition: color 0.3s;
-}
-
-.app-border {
-  border-color: var(--border-color);
-  transition: border-color 0.3s;
-}
-
-.primary-bg {
-  background-color: var(--primary-color);
-  transition: background-color 0.3s;
-}
-.primary-stroke {
-  stroke: var(--primary-color);
-  transition: stroke 0.3s;
-}
-
-/* Фикс дефолтного круга фона */
-.default-bg-btn {
-  border: 1px solid var(--border-color);
-  transition:
-    background-color 0.3s,
-    border-color 0.3s;
-}
-.default-bg-btn {
-  background-color: #f3f4f6;
-}
-html.dark .default-bg-btn {
-  background-color: #1c1c1e;
-}
-html.no-adaptive .default-bg-btn {
-  background-color: #ffffff;
-}
-html.dark.no-adaptive .default-bg-btn {
-  background-color: #000000;
-}
-
-.custom-focus:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 4px var(--primary-color);
-}
-.primary-focus-border:focus {
-  border-color: var(--primary-color);
-}
-
-.progress-ring__circle {
-  transition: stroke-dashoffset 0.1s linear;
-  transform: rotate(-90deg);
-  transform-origin: 50% 50%;
-}
-
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
-}
-
-.scroll-lock {
-  overscroll-behavior-y: contain;
-}
-
-#sw-lapsContainer,
-#tb-workoutsList,
-#view-settings {
-  scrollbar-gutter: stable;
-  touch-action: pan-y;
-}
-
-/* =========================================
-   7. АЛЕРТЫ И МОДАЛЬНЫЕ ОКНА
-========================================= */
-#reset-modal,
-#sw-clear-modal,
-#sw-name-modal {
-  background-color: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-}
-
-#reset-modal-content,
-#sw-clear-modal-content,
-#sw-name-modal-content {
-  background-color: var(--surface-color);
-  border: 1px solid var(--border-color);
-}
-
-/* =========================================
-   8. КАСТОМИЗАЦИЯ ЭЛЕМЕНТОВ УПРАВЛЕНИЯ
-========================================= */
-select {
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  background: transparent !important;
-  color: inherit;
-  width: 100%;
-}
-
-select::-ms-expand {
-  display: none;
-}
-
-input[type="range"]::-moz-focus-outer {
-  border: 0;
-}
-
-/* ИСПРАВЛЕНО: Увеличена тап-зона для ползунков на мобильных устройствах */
-input[type="range"] {
-  -webkit-appearance: none;
-  background: transparent;
-  align-items: center;
-  touch-action: pan-y;
-  height: 32px;
-  margin: -14px 0;
-}
-
-input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  height: 24px;
-  width: 24px;
-  border-radius: 50%;
-  background: var(--surface-color);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-  border: 2px solid var(--primary-color);
-  margin-top: -10px;
-  transition:
-    outline 0.2s,
-    transform 0.1s;
-}
-input[type="range"]::-webkit-slider-thumb:active {
-  transform: scale(1.1);
-}
-input[type="range"]::-webkit-slider-runnable-track {
-  width: 100%;
-  height: 4px;
-  cursor: pointer;
-  background: var(--border-color);
-  border-radius: 2px;
-  margin-top: 14px;
-}
-
-input[type="range"]::-moz-range-thumb {
-  height: 24px;
-  width: 24px;
-  border-radius: 50%;
-  background: var(--surface-color);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-  border: 2px solid var(--primary-color);
-  box-sizing: border-box;
-  cursor: pointer;
-  transition:
-    outline 0.2s,
-    transform 0.1s;
-}
-input[type="range"]::-moz-range-thumb:active {
-  transform: scale(1.1);
-}
-input[type="range"]::-moz-range-track {
-  width: 100%;
-  height: 4px;
-  cursor: pointer;
-  background: var(--border-color);
-  border-radius: 2px;
-}
-
-input[type="range"]:focus-visible::-webkit-slider-thumb {
-  outline: 2px solid var(--primary-color);
-  outline-offset: 2px;
-}
-input[type="range"]:focus-visible::-moz-range-thumb {
-  outline: 2px solid var(--primary-color);
-  outline-offset: 2px;
-}
-
-input[type="number"]::-webkit-inner-spin-button,
-input[type="number"]::-webkit-outer-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-input[type="number"] {
-  -moz-appearance: textfield;
-}
-
-.custom-toggle {
-  width: 44px;
-  height: 24px;
-  background-color: var(--border-color);
-  border-radius: 9999px;
-  position: relative;
-  transition: background-color 0.3s ease;
-}
-.custom-toggle::after {
-  content: "";
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 20px;
-  height: 20px;
-  background-color: #ffffff;
-  border-radius: 50%;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-input:checked + .custom-toggle {
-  background-color: var(--primary-color);
-}
-input:checked + .custom-toggle::after {
-  transform: translateX(20px);
-}
-input[type="checkbox"]:focus-visible + .custom-toggle {
-  outline: 2px solid var(--primary-color);
-  outline-offset: 2px;
-}
-
-@keyframes flashCircle {
-  0% {
-    opacity: 0.4;
-    transform: scale(0.98);
+  /* =========================================
+     АДАПТИВНОСТЬ (LANDSCAPE И МАЛЕНЬКИЕ ЭКРАНЫ)
+  ========================================= */
+  @media (orientation: landscape) and (max-height: 900px) {
+    #app {
+      max-width: 900px;
+      padding-left: env(safe-area-inset-left, 0px);
+      padding-right: env(safe-area-inset-right, 0px);
+    }
+    #viewsContainer > div:not(#view-settings) {
+      flex-direction: row;
+      align-items: center;
+      gap: 2rem;
+    }
+    .view-top-half {
+      height: auto;
+      width: 45%;
+      flex: none;
+    }
+    .view-bottom-half {
+      height: 90%;
+      width: 45%;
+      flex: none;
+      justify-content: center;
+    }
+    .timer-circle-wrap {
+      max-height: 70vh;
+      max-width: 260px;
+    }
+    #view-settings {
+      flex-direction: column;
+    }
   }
-  100% {
-    opacity: 0;
-    transform: scale(1);
+
+  @media (max-height: 700px) and (orientation: portrait) {
+    .timer-circle-wrap {
+      max-height: 40vh;
+      max-width: 200px;
+    }
+    .view-top-half {
+      height: 45%;
+    }
+    .view-bottom-half {
+      height: 55%;
+    }
+    .timer-input {
+      width: 3rem !important;
+      height: 3rem !important;
+    }
+    .timer-display {
+      font-size: clamp(1.6rem, 20cqi, 2.2rem);
+    }
+    .timer-display.is-go {
+      font-size: clamp(2.5rem, 30cqi, 3.8rem);
+    }
   }
-}
-.flash-active {
-  animation: flashCircle 0.5s ease-out;
-}
-@keyframes shake {
-  0%,
-  100% {
-    transform: translateX(0);
+
+  /* =========================================
+     УТИЛИТЫ И КЛАССЫ ТЕМЫ
+  ========================================= */
+  .app-bg {
+    background-color: var(--bg-color);
+    transition: background-color 0.3s;
   }
-  25% {
-    transform: translateX(-4px);
+  .app-surface {
+    background-color: var(--surface-color);
+    transition:
+      background-color 0.3s,
+      box-shadow 0.3s,
+      border-color 0.3s;
   }
-  50% {
-    transform: translateX(4px);
+  .app-text {
+    color: var(--text-color);
+    transition: color 0.3s;
   }
-  75% {
-    transform: translateX(-4px);
+  .app-text-sec {
+    color: var(--text-secondary);
+    transition: color 0.3s;
   }
-}
-.animate-shake {
-  animation: shake 0.3s ease-in-out;
-}
-
-.timer-input {
-  touch-action: none;
-  cursor: ns-resize;
-  -webkit-user-select: none !important;
-  user-select: none !important;
-  border-bottom-color: rgba(128, 128, 128, 0.3) !important;
-  transition: border-color 0.3s;
-}
-.timer-input:focus {
-  -webkit-user-select: text !important;
-  user-select: text !important;
-  border-bottom-color: var(--primary-color) !important;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  ::before,
-  ::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
+  .primary-text {
+    color: var(--primary-color);
+    transition: color 0.3s;
   }
-}
-
-/* =========================================
-   9. ЭФФЕКТ ЖИДКОГО СТЕКЛА (LIQUID GLASS)
-========================================= */
-/* ИСПРАВЛЕНО: Убрано засилье !important за счет повышения специфичности (:root.glass-effect body) */
-/* Снижена нагрузка на GPU: saturate(150%) вместо 200%, blur(16-20px) вместо 30-40px */
-
-:root.glass-effect body #tb-modal,
-:root.glass-effect body #sw-sessions-modal {
-  background-color: rgba(255, 255, 255, 0.4);
-  backdrop-filter: blur(20px) saturate(150%);
-  -webkit-backdrop-filter: blur(20px) saturate(150%);
-}
-:root.dark.glass-effect body #tb-modal,
-:root.dark.glass-effect body #sw-sessions-modal {
-  background-color: rgba(0, 0, 0, 0.5);
-}
-
-:root.glass-effect body #reset-modal-content,
-:root.glass-effect body #sw-clear-modal-content,
-:root.glass-effect body #sw-name-modal-content {
-  background-color: color-mix(in srgb, var(--surface-color) 70%, transparent);
-  backdrop-filter: blur(24px) saturate(150%);
-  -webkit-backdrop-filter: blur(24px) saturate(150%);
-  box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.7),
-    0 20px 40px rgba(0, 0, 0, 0.15);
-  border: none;
-}
-:root.dark.glass-effect body #reset-modal-content,
-:root.dark.glass-effect body #sw-clear-modal-content,
-:root.dark.glass-effect body #sw-name-modal-content {
-  background-color: color-mix(in srgb, var(--surface-color) 50%, transparent);
-  box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.08),
-    0 20px 40px rgba(0, 0, 0, 0.5);
-}
-
-:root.glass-effect body nav {
-  background: linear-gradient(
-    to top,
-    color-mix(in srgb, var(--surface-color) 30%, transparent),
-    color-mix(in srgb, var(--surface-color) 2%, transparent)
-  );
-  backdrop-filter: blur(16px) saturate(150%);
-  -webkit-backdrop-filter: blur(16px) saturate(150%);
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: none;
-}
-:root.dark.glass-effect body nav {
-  background: linear-gradient(
-    to top,
-    color-mix(in srgb, var(--surface-color) 25%, transparent),
-    color-mix(in srgb, var(--surface-color) 0%, transparent)
-  );
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-:root.glass-effect body .select-wrapper.app-surface {
-  background-color: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(12px) saturate(150%);
-  -webkit-backdrop-filter: blur(12px) saturate(150%);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.4);
-  color: var(--text-color);
-}
-:root.dark.glass-effect body .select-wrapper.app-surface {
-  background-color: rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05);
-}
-
-:root.glass-effect body button.app-surface {
-  background: color-mix(in srgb, var(--surface-color) 35%, transparent);
-  backdrop-filter: blur(16px) saturate(150%);
-  -webkit-backdrop-filter: blur(16px) saturate(150%);
-  box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.4),
-    0 4px 12px rgba(0, 0, 0, 0.05);
-}
-:root.dark.glass-effect body button.app-surface {
-  background: color-mix(in srgb, var(--surface-color) 20%, transparent);
-  box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.05),
-    0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-:root.glass-effect body button#sw-lapBtn:not(.is-reset) {
-  background: color-mix(in srgb, var(--surface-color) 60%, transparent);
-  backdrop-filter: blur(16px) saturate(150%);
-  -webkit-backdrop-filter: blur(16px) saturate(150%);
-  box-shadow:
-    inset 0 1px 2px rgba(255, 255, 255, 0.6),
-    0 4px 12px rgba(0, 0, 0, 0.08);
-}
-:root.dark.glass-effect body button#sw-lapBtn:not(.is-reset) {
-  background: color-mix(in srgb, var(--surface-color) 40%, transparent);
-  box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.1),
-    0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
-:root.glass-effect body #sw-name-confirm,
-:root.glass-effect body #tb-saveModalBtn {
-  background: color-mix(in srgb, var(--primary-color) 70%, transparent);
-  backdrop-filter: blur(16px) saturate(150%);
-  -webkit-backdrop-filter: blur(16px) saturate(150%);
-  box-shadow:
-    inset 0 1px 2px rgba(255, 255, 255, 0.3),
-    0 4px 12px color-mix(in srgb, var(--primary-color) 30%, transparent);
-  color: #fff;
-}
-
-:root.glass-effect body #sw-clear-confirm,
-:root.glass-effect body #reset-confirm,
-:root.glass-effect body #tb-stopBtn,
-:root.glass-effect body .is-reset {
-  background: rgba(239, 68, 68, 0.85);
-  backdrop-filter: blur(16px) saturate(150%);
-  -webkit-backdrop-filter: blur(16px) saturate(150%);
-  box-shadow:
-    inset 0 1px 2px rgba(255, 255, 255, 0.4),
-    0 4px 15px rgba(239, 68, 68, 0.4);
-  color: #fff;
-}
-
-:root.glass-effect body #sw-saveBtn {
-  background: transparent;
-  box-shadow: none;
-  border: none;
-}
-
-:root.glass-effect body .app-surface:not(button):not(.select-wrapper),
-:root.glass-effect body #toast {
-  background-color: color-mix(in srgb, var(--surface-color) 50%, transparent);
-  backdrop-filter: blur(20px) saturate(150%);
-  -webkit-backdrop-filter: blur(20px) saturate(150%);
-  box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.5),
-    0 8px 32px rgba(0, 0, 0, 0.05);
-}
-:root.dark.glass-effect body .app-surface:not(button):not(.select-wrapper),
-:root.dark.glass-effect body #toast {
-  background-color: color-mix(in srgb, var(--surface-color) 30%, transparent);
-  box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.05),
-    0 8px 32px rgba(0, 0, 0, 0.3);
-}
-
-:root.glass-effect body #reset-modal,
-:root.glass-effect body #sw-clear-modal,
-:root.glass-effect body #sw-name-modal {
-  background-color: rgba(255, 255, 255, 0.3);
-}
-:root.dark.glass-effect body #reset-modal,
-:root.dark.glass-effect body #sw-clear-modal,
-:root.dark.glass-effect body #sw-name-modal {
-  background-color: rgba(0, 0, 0, 0.6);
-}
-
-:root.glass-effect body .lap-row:first-child {
-  background-color: rgba(0, 0, 0, 0.08);
-  box-shadow: none;
-}
-:root.dark.glass-effect body .lap-row:first-child {
-  background-color: rgba(255, 255, 255, 0.1);
-  box-shadow: none;
-}
-
-:root.glass-effect body .lap-row,
-:root.glass-effect body .tb-workout-row,
-:root.glass-effect body .sw-session-header,
-:root.glass-effect body [id^="sw-details-"] > div:last-child {
-  background-color: color-mix(in srgb, var(--surface-color) 30%, transparent);
-  backdrop-filter: blur(16px) saturate(150%);
-  -webkit-backdrop-filter: blur(16px) saturate(150%);
-  box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.2),
-    0 2px 4px rgba(0, 0, 0, 0.05);
-}
-:root.dark.glass-effect body .lap-row,
-:root.dark.glass-effect body .tb-workout-row,
-:root.dark.glass-effect body .sw-session-header,
-:root.dark.glass-effect body [id^="sw-details-"] > div:last-child {
-  background-color: color-mix(in srgb, var(--surface-color) 15%, transparent);
-  box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.05),
-    0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-/* =========================================
-   10. ФИКСЫ
-========================================= */
-nav.app-nav-safe {
-  border-bottom-left-radius: inherit;
-  border-bottom-right-radius: inherit;
-  overflow: hidden;
-}
-
-button:disabled {
-  opacity: 0.3 !important;
-  cursor: not-allowed !important;
-  transform: none !important;
-}
-
-select option {
-  background-color: var(--surface-color);
-  color: var(--text-color);
-}
-
-/* =========================================
-   РЕЖИМ КАРТИНКА-В-КАРТИНКЕ (PiP)
-========================================= */
-body.is-pip nav,
-body.is-pip .view-bottom-half,
-body.is-pip h2,
-body.is-pip #toast {
-  display: none !important; /* Прячем нижнее меню, списки, заголовки и тосты */
-}
-
-body.is-pip .view-top-half {
-  height: 100dvh !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  justify-content: center !important;
-}
-
-body.is-pip .timer-circle-wrap {
-  max-width: 90vw !important;
-  max-height: 90vh !important;
-  margin: auto !important;
-}
-
-/* Делаем фон абсолютно прозрачным, чтобы сливалось с мини-окном */
-body.is-pip .app-bg {
-  background: transparent !important;
-}
-body.is-pip .timer-display {
-  font-size: clamp(3rem, 40cqi, 5rem) !important; /* Делаем цифры огромными */
-}
-
-/* =========================================
-   UX / UI УЛУЧШЕНИЯ (НЕОН И BEAT)
-========================================= */
-/* 1. Неоновое свечение круга в Темной Теме */
-html.dark .progress-ring__circle {
-  filter: drop-shadow(0 0 12px color-mix(in srgb, var(--primary-color) 60%, transparent));
-}
-
-/* 2. Анимация beat */
-@keyframes beat {
-  0%, 100% { transform: scale(1); }
-  50% { 
-    transform: scale(1.08); 
-    color: var(--color-red-500); 
-    filter: drop-shadow(0 0 15px rgba(239, 68, 68, 0.6)); 
+  .app-border {
+    border-color: var(--border-color);
+    transition: border-color 0.3s;
   }
-}
-.pulse-text {
-  animation: beat 1s infinite ease-in-out;
+  .primary-bg {
+    background-color: var(--primary-color);
+    transition: background-color 0.3s;
+  }
+  .primary-stroke {
+    stroke: var(--primary-color);
+    transition: stroke 0.3s;
+  }
+
+  .app-bg.has-vignette::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    box-shadow: inset 0 0 15vh rgba(0, 0, 0, var(--vignette-alpha, 0.15));
+    border-radius: inherit;
+    transition: box-shadow 0.3s;
+  }
+  html.dark .app-bg.has-vignette::before {
+    box-shadow: inset 0 0 20vh
+      rgba(0, 0, 0, calc(var(--vignette-alpha, 0.15) + 0.1));
+  }
+
+  .default-bg-btn {
+    border: 1px solid var(--border-color);
+    transition:
+      background-color 0.3s,
+      border-color 0.3s;
+    background-color: #f3f4f6;
+  }
+  html.dark .default-bg-btn {
+    background-color: #1c1c1e;
+  }
+  html.no-adaptive .default-bg-btn {
+    background-color: #ffffff;
+  }
+  html.dark.no-adaptive .default-bg-btn {
+    background-color: #000000;
+  }
+
+  .custom-focus:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px var(--primary-color);
+  }
+  .primary-focus-border:focus {
+    border-color: var(--primary-color);
+  }
+
+  .progress-ring__circle {
+    transition: stroke-dashoffset 0.1s linear;
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .scroll-lock {
+    overscroll-behavior-y: contain;
+  }
+  #sw-lapsContainer,
+  #tb-workoutsList,
+  #view-settings {
+    scrollbar-gutter: stable;
+    touch-action: pan-y;
+  }
+
+  /* =========================================
+     АЛЕРТЫ И МОДАЛЬНЫЕ ОКНА
+  ========================================= */
+  #reset-modal,
+  #sw-clear-modal,
+  #sw-name-modal {
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  #reset-modal-content,
+  #sw-clear-modal-content,
+  #sw-name-modal-content {
+    background-color: var(--surface-color);
+    border: 1px solid var(--border-color);
+  }
+
+  /* =========================================
+     КАСТОМИЗАЦИЯ ЭЛЕМЕНТОВ УПРАВЛЕНИЯ
+  ========================================= */
+  select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background: transparent !important;
+    color: inherit;
+  }
+  select::-ms-expand {
+    display: none;
+  }
+  select option {
+    background-color: var(--surface-color);
+    color: var(--text-color);
+  }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    background: transparent;
+    touch-action: pan-y;
+    height: 32px;
+    margin: -14px 0;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 24px;
+    width: 24px;
+    border-radius: 50%;
+    background: var(--surface-color);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    border: 2px solid var(--primary-color);
+    margin-top: -10px;
+    transition:
+      outline 0.2s,
+      transform 0.1s;
+  }
+  input[type="range"]::-webkit-slider-thumb:active {
+    transform: scale(1.1);
+  }
+  input[type="range"]::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 4px;
+    cursor: pointer;
+    background: var(--border-color);
+    border-radius: 2px;
+    margin-top: 14px;
+  }
+  input[type="range"]:focus-visible::-webkit-slider-thumb {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+  }
+
+  .custom-toggle {
+    width: 44px;
+    height: 24px;
+    background-color: var(--border-color);
+    border-radius: 9999px;
+    position: relative;
+    transition: background-color 0.3s ease;
+  }
+  .custom-toggle::after {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 20px;
+    height: 20px;
+    background-color: #ffffff;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  input:checked + .custom-toggle {
+    background-color: var(--primary-color);
+  }
+  input:checked + .custom-toggle::after {
+    transform: translateX(20px);
+  }
+  input[type="checkbox"]:focus-visible + .custom-toggle {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+  }
+
+  .timer-input {
+    touch-action: none;
+    cursor: ns-resize;
+    border-bottom-color: rgba(128, 128, 128, 0.3) !important;
+    transition: border-color 0.3s;
+  }
+  .timer-input:focus {
+    border-bottom-color: var(--primary-color) !important;
+  }
+
+  nav.app-nav-safe {
+    border-bottom-left-radius: inherit;
+    border-bottom-right-radius: inherit;
+    overflow: hidden;
+  }
+  button:disabled {
+    opacity: 0.3 !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+  }
+
+  /* =========================================
+     АНИМАЦИИ
+  ========================================= */
+  @keyframes flashCircle {
+    0% {
+      opacity: 0.4;
+      transform: scale(0.98);
+    }
+    100% {
+      opacity: 0;
+      transform: scale(1);
+    }
+  }
+  .flash-active {
+    animation: flashCircle 0.5s ease-out;
+  }
+  @keyframes shake {
+    0%,
+    100% {
+      transform: translateX(0);
+    }
+    25%,
+    75% {
+      transform: translateX(-4px);
+    }
+    50% {
+      transform: translateX(4px);
+    }
+  }
+  .animate-shake {
+    animation: shake 0.3s ease-in-out;
+  }
+  @keyframes beat {
+    0%,
+    100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.08);
+      color: #ef4444;
+      filter: drop-shadow(0 0 15px rgba(239, 68, 68, 0.6));
+    }
+  }
+  .pulse-text {
+    animation: beat 1s infinite ease-in-out;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* =========================================
+     ЭФФЕКТ ЖИДКОГО СТЕКЛА (LIQUID GLASS)
+  ========================================= */
+  :root.glass-effect body #tb-modal,
+  :root.glass-effect body #sw-sessions-modal {
+    background-color: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(20px) saturate(150%);
+    -webkit-backdrop-filter: blur(20px) saturate(150%);
+  }
+  :root.dark.glass-effect body #tb-modal,
+  :root.dark.glass-effect body #sw-sessions-modal {
+    background-color: rgba(0, 0, 0, 0.5);
+  }
+
+  :root.glass-effect nav {
+    background: linear-gradient(
+      to top,
+      color-mix(in srgb, var(--surface-color) 30%, transparent),
+      color-mix(in srgb, var(--surface-color) 2%, transparent)
+    );
+    backdrop-filter: blur(16px) saturate(150%);
+    -webkit-backdrop-filter: blur(16px) saturate(150%);
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: none;
+  }
+  :root.dark.glass-effect nav {
+    background: linear-gradient(
+      to top,
+      color-mix(in srgb, var(--surface-color) 25%, transparent),
+      color-mix(in srgb, var(--surface-color) 0%, transparent)
+    );
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  /* =========================================
+     РЕЖИМ КАРТИНКА-В-КАРТИНКЕ (PiP)
+  ========================================= */
+  body.is-pip nav,
+  body.is-pip .view-bottom-half,
+  body.is-pip h2,
+  body.is-pip #toast {
+    display: none !important;
+  }
+  body.is-pip .view-top-half {
+    height: 100dvh !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    justify-content: center !important;
+  }
+  body.is-pip .timer-circle-wrap {
+    max-width: 90vw !important;
+    max-height: 90vh !important;
+    margin: auto !important;
+  }
+  body.is-pip .app-bg {
+    background: transparent !important;
+  }
+  body.is-pip .timer-display {
+    font-size: clamp(3rem, 40cqi, 5rem) !important;
+  }
+
+  /* =========================================
+     ДОПОЛНИТЕЛЬНЫЕ UI УЛУЧШЕНИЯ
+  ========================================= */
+  /* Неоновое свечение круга в Темной Теме */
+  html.dark .progress-ring__circle {
+    filter: drop-shadow(
+      0 0 12px color-mix(in srgb, var(--primary-color) 60%, transparent)
+    );
+  }
 }
