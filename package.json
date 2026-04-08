@@ -9,7 +9,7 @@
     "@capacitor/cli": "^6.0.0",
     "@capacitor/core": "^6.0.0",
     "@capacitor/status-bar": "^6.0.0",
-    "@capawesome/capacitor-foreground-service": "^6.0.0",
+    "@capawesome/capacitor-android-foreground-service": "^6.0.0",
     "@teamhive/capacitor-material-you": "^6.1.0",
     "@tailwindcss/cli": "^4.0.0",
     "serve": "^14.2.0"
