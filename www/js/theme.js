@@ -133,17 +133,23 @@ export const themeManager = {
     if ($("toggle-ms")) $("toggle-ms").checked = this.showMs;
     if ($("fontSlider")) $("fontSlider").value = safeGetLS("font_size") || 16;
 
-    if ($("customColorInput"))
-      $("customColorInput").value = safeGetLS("theme_color") || "#22c55e";
-    
+    // Этот блок остается для инициализации при загрузке страницы
+    const storedColor = safeGetLS("theme_color");
+    if ($("customColorInput")) {
+      if (storedColor && storedColor.startsWith("#")) {
+        $("customColorInput").value = storedColor;
+      } else {
+        $("customColorInput").value = "#22c55e";
+      }
+    }
+
     const storedBgColor = safeGetLS("theme_bg_color");
-    const customBgInput = $("customBgInput");
-    if (customBgInput) {
-        if (storedBgColor && storedBgColor.startsWith("#")) {
-            customBgInput.value = storedBgColor;
-        } else {
-            customBgInput.value = "#000000"; 
-        }
+    if ($("customBgInput")) {
+      if (storedBgColor && storedBgColor.startsWith("#")) {
+        $("customBgInput").value = storedBgColor;
+      } else {
+        $("customBgInput").value = "#000000";
+      }
     }
   },
 
@@ -203,8 +209,21 @@ export const themeManager = {
   setColor(hex) {
     safeSetLS("theme_color", hex);
 
+    // ===============================================
+    // === НОВОЕ ИЗМЕНЕНИЕ ===
+    // Обновляем значение кастомного пикера в реальном времени
+    // ===============================================
+    const customColorPicker = $("customColorInput");
+    if (customColorPicker && hex.startsWith("#")) {
+      customColorPicker.value = hex;
+    }
+
     if (hex === "auto") {
-      if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.MaterialYou) {
+      if (
+        window.Capacitor &&
+        window.Capacitor.Plugins &&
+        window.Capacitor.Plugins.MaterialYou
+      ) {
         window.Capacitor.Plugins.MaterialYou.getColors()
           .then((colors) => this.applyMaterialYouColors(colors))
           .catch(() => this.setColor("#22c55e"));
@@ -216,33 +235,55 @@ export const themeManager = {
     }
 
     document.documentElement.style.setProperty("--primary-color", hex);
-
     const { h } = this.hexToHSL(hex);
     document.documentElement.style.setProperty("--accent-h", h);
-
     this.updateButtons(this.colorBtns, hex, "customColorInput", false);
   },
 
   setBgColor(hex) {
     this.currentBg = hex;
     safeSetLS("theme_bg_color", hex);
+
+    // ===============================================
+    // === НОВОЕ ИЗМЕНЕНИЕ ===
+    // Обновляем значение кастомного пикера в реальном времени
+    // ===============================================
+    const customBgPicker = $("customBgInput");
+    if (customBgPicker) {
+      if (hex.startsWith("#")) {
+        customBgPicker.value = hex;
+      } else {
+        // Если выбран "default", сбрасываем пикер на безопасное значение
+        customBgPicker.value = "#000000";
+      }
+    }
+
     const isDark = document.documentElement.classList.contains("dark");
     this.applyBgTheme(hex, isDark);
     this.updateButtons(this.bgBtns, hex, "customBgInput", true);
   },
-  
+
   updateButtons(btnCollection, hex, customId, isBg) {
     let found = false;
     btnCollection.forEach((b) => {
       b.classList.remove(
-        "ring-2", "ring-offset-2", "ring-offset-white", "dark:ring-offset-gray-900"
+        "ring-2",
+        "ring-offset-2",
+        "ring-offset-white",
+        "dark:ring-offset-gray-900",
       );
-      const targetAttr = isBg ? b.getAttribute("data-bg") : b.getAttribute("data-color");
+      const targetAttr = isBg
+        ? b.getAttribute("data-bg")
+        : b.getAttribute("data-color");
       if (targetAttr === hex) {
         b.classList.add(
-          "ring-2", "ring-offset-2", "ring-offset-white", "dark:ring-offset-gray-900"
+          "ring-2",
+          "ring-offset-2",
+          "ring-offset-white",
+          "dark:ring-offset-gray-900",
         );
-        const iconColor = isBg && hex === "default" ? "var(--text-color)" : "white";
+        const iconColor =
+          isBg && hex === "default" ? "var(--text-color)" : "white";
         b.innerHTML = `<svg focusable="false" aria-hidden="true" class="w-5 h-5" style="color: ${iconColor};" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>`;
         found = true;
       } else {
@@ -252,24 +293,28 @@ export const themeManager = {
 
     const pickerWrapper = $(customId)?.closest(".relative");
     if (!pickerWrapper) return;
-    
-    // === ИСПРАВЛЕНИЕ: Используем правильный селектор по атрибуту ===
-    const gradientEl = pickerWrapper.querySelector('[class*="bg-[conic-gradient"]');
-
-    // Сброс состояния кастомного пикера
-    pickerWrapper.classList.remove(
-      "ring-2", "ring-offset-2", "ring-offset-white", "dark:ring-offset-gray-900"
+    const gradientEl = pickerWrapper.querySelector(
+      '[class*="bg-[conic-gradient"]',
     );
-    pickerWrapper.style.backgroundColor = '';
-    if (gradientEl) gradientEl.style.opacity = '1';
 
-    // Если активен кастомный цвет
+    pickerWrapper.classList.remove(
+      "ring-2",
+      "ring-offset-2",
+      "ring-offset-white",
+      "dark:ring-offset-gray-900",
+    );
+    pickerWrapper.style.backgroundColor = "";
+    if (gradientEl) gradientEl.style.opacity = "1";
+
     if (!found && hex !== "default" && hex.startsWith("#")) {
       pickerWrapper.classList.add(
-        "ring-2", "ring-offset-2", "ring-offset-white", "dark:ring-offset-gray-900"
+        "ring-2",
+        "ring-offset-2",
+        "ring-offset-white",
+        "dark:ring-offset-gray-900",
       );
       pickerWrapper.style.backgroundColor = hex;
-      if (gradientEl) gradientEl.style.opacity = '0';
+      if (gradientEl) gradientEl.style.opacity = "0";
     }
   },
 
@@ -371,7 +416,9 @@ export const themeManager = {
 
   hexToRGB(H) {
     if (!H || !H.startsWith("#")) return { r: 0, g: 0, b: 0 };
-    let r = 0, g = 0, b = 0;
+    let r = 0,
+      g = 0,
+      b = 0;
     if (H.length === 4) {
       r = parseInt(H[1] + H[1], 16);
       g = parseInt(H[2] + H[2], 16);
@@ -411,7 +458,8 @@ export const themeManager = {
     const numSize = Number(size);
     const scale = numSize / 16;
     document.documentElement.style.setProperty("--font-scale", scale);
-    if ($("fontSizeDisplay")) $("fontSizeDisplay").textContent = numSize + " px";
+    if ($("fontSizeDisplay"))
+      $("fontSizeDisplay").textContent = numSize + " px";
     safeSetLS("font_size", numSize);
   },
 
@@ -421,7 +469,10 @@ export const themeManager = {
 
     const primaryColor = colors.system_accent1_500;
     if (primaryColor) {
-      document.documentElement.style.setProperty("--primary-color", primaryColor);
+      document.documentElement.style.setProperty(
+        "--primary-color",
+        primaryColor,
+      );
       const { h } = this.hexToHSL(primaryColor);
       document.documentElement.style.setProperty("--accent-h", h);
     }
