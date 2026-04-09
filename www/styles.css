@@ -1278,6 +1278,7 @@ button {
   user-select: text !important;
 }
 .relative.max-w-md {
+  height: 100vh;
   height: 100dvh;
   width: 100%;
   padding-top: env(safe-area-inset-top, 0px);
