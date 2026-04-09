@@ -158,20 +158,28 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // 8. Глобальные горячие клавиши (Для ПК/Веб версии)
+  // 8. Глобальные горячие клавиши
   document.addEventListener("keydown", (e) => {
     // Закрытие модалок по Escape
     if (e.key === "Escape") {
-      if (!$("sw-name-modal")?.classList.contains("hidden")) sw.closeNameModal();
-      if (!$("sw-clear-modal")?.classList.contains("hidden")) sw.closeClearModal();
-      if (!$("sw-sessions-modal")?.classList.contains("hidden")) sw.closeModal();
+      if (!$("sw-name-modal")?.classList.contains("hidden"))
+        sw.closeNameModal();
+      if (!$("sw-clear-modal")?.classList.contains("hidden"))
+        sw.closeClearModal();
+      if (!$("sw-sessions-modal")?.classList.contains("hidden"))
+        sw.closeModal();
       if (!$("tb-modal")?.classList.contains("hidden")) tb.closeModal();
       if (!$("reset-modal")?.classList.contains("hidden")) resetModal.close();
       return;
     }
 
     // Игнорируем шорткаты, если фокус находится в поле ввода
-    if (e.target.closest('input, textarea, select, button, [contenteditable="true"]')) return;
+    if (
+      e.target.closest(
+        'input, textarea, select, button, [contenteditable="true"]'
+      )
+    )
+      return;
 
     const view = navigation.activeView;
 
@@ -188,114 +196,4 @@ document.addEventListener("DOMContentLoaded", () => {
       else if (view === "tabata") tb.stop();
     }
   });
-
-  // =========================================
-  // 9. ИНТЕГРАЦИЯ С СИСТЕМОЙ ANDROID (ПРО-ФИШКИ)
-  // =========================================
-  if (window.Capacitor && window.Capacitor.isNativePlatform()) {
-    const { App, LocalNotifications, StatusBar } = window.Capacitor.Plugins;
-
-    // --- ФИШКА 1: Прозрачный статус-бар (Дизайн без рамок) ---
-    if (StatusBar) {
-      StatusBar.setOverlaysWebView({ overlay: true }).catch(() => {});
-    }
-
-    // --- ФИШКА 2: Умная кнопка "Назад" (Свайп на Android) ---
-    if (App) {
-      App.addListener('backButton', () => {
-        // Проверяем, открыты ли модальные окна, и закрываем их
-        const nameModal = $("sw-name-modal");
-        const clearModal = $("sw-clear-modal");
-        const sessionsModal = $("sw-sessions-modal");
-        const tbModal = $("tb-modal");
-        const rModal = $("reset-modal");
-
-        if (nameModal && !nameModal.classList.contains("hidden")) { sw.closeNameModal(); return; }
-        if (clearModal && !clearModal.classList.contains("hidden")) { sw.closeClearModal(); return; }
-        if (sessionsModal && !sessionsModal.classList.contains("hidden")) { sw.closeModal(); return; }
-        if (tbModal && !tbModal.classList.contains("hidden")) { tb.closeModal(); return; }
-        if (rModal && !rModal.classList.contains("hidden")) { resetModal.close(); return; }
-
-        // Если мы не на главном экране (секундомере) — возвращаемся на него
-        if (navigation.activeView !== 'stopwatch') {
-          navigation.switchView('stopwatch');
-          // Обновляем визуальное выделение иконки в меню
-          const btn = document.querySelector('[data-nav="stopwatch"]');
-          if (btn) btn.click();
-          return;
-        }
-
-        // Если мы на главном экране и модалок нет — аккуратно сворачиваем приложение (не убивая таймер)
-        App.minimizeApp();
-      });
-    }
-
-    // --- ФИШКА 3: Секундомер в системной шторке ---
-    if (App && LocalNotifications) {
-      // Запрашиваем права
-      LocalNotifications.requestPermissions().then((result) => {
-        if (result.display === 'granted') {
-          LocalNotifications.registerActionTypes({
-            types: [
-              {
-                id: 'TIMER_CONTROLS',
-                actions: [
-                  { id: 'pause', title: 'Пауза' },
-                  { id: 'stop', title: 'Сброс', destructive: true }
-                ]
-              }
-            ]
-          });
-        }
-      });
-
-      // Слушаем сворачивание приложения
-      App.addListener('appStateChange', async ({ isActive }) => {
-        if (!isActive) {
-          if (sw.isRunning) {
-            await LocalNotifications.schedule({
-              notifications: [
-                {
-                  title: "Stopwatch Pro",
-                  body: "⏱ Секундомер работает в фоне",
-                  id: 1, 
-                  ongoing: true, 
-                  autoCancel: false,
-                  actionTypeId: 'TIMER_CONTROLS', 
-                }
-              ]
-            });
-          }
-        } else {
-          // Приложение развернули -> прячем уведомление
-          await LocalNotifications.cancel({ notifications: [{ id: 1 }] });
-        }
-      });
-
-      // Слушаем нажатия на кнопки в шторке
-      LocalNotifications.addListener('localNotificationActionPerformed', (notificationAction) => {
-        const action = notificationAction.actionId;
-        
-        if (action === 'pause') {
-          if (sw.isRunning) sw.toggle(); 
-          
-          LocalNotifications.schedule({
-            notifications: [{
-              title: "Stopwatch Pro",
-              body: "⏸ Секундомер на паузе",
-              id: 1,
-              ongoing: false, 
-              autoCancel: true
-            }]
-          });
-        } 
-        else if (action === 'stop') {
-          if (sw.isRunning) sw.toggle(); 
-          if (sw.elapsedTime > 0) sw.recordLapOrReset(); 
-          
-          LocalNotifications.cancel({ notifications: [{ id: 1 }] });
-        }
-      });
-    }
-  }
 });

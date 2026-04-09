@@ -138,4 +138,5 @@ export const getExtendedDisplay = (ms, strDay = "d", strHour = "h") => {
   return "";
 };
 
-export const bgWorker = new Worker('./js/worker.js');
+// ИСПРАВЛЕНО: Вернули классическую инициализацию, чтобы не падало на протоколе file://
+export const bgWorker = new Worker("./js/worker.js");
