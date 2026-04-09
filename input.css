@@ -1,67 +1,119 @@
 @import "tailwindcss";
+
 /* =========================================
    1. ТЕМА TAILWIND 4 — масштабируемые размеры
 ========================================= */
 @theme {
-  --text-xs: calc(0.75rem * var(--font-scale, 1));
-  --text-sm: calc(0.875rem * var(--font-scale, 1));
-  --text-base: calc(1rem * var(--font-scale, 1));
-  --text-lg: calc(1.125rem * var(--font-scale, 1));
-  --text-xl: calc(1.25rem * var(--font-scale, 1));
-  --text-2xl: calc(1.5rem * var(--font-scale, 1));
-  --text-4xl: calc(2.25rem * var(--font-scale, 1));
-  --text-5xl: calc(3rem * var(--font-scale, 1));
+  --text-xs:   calc(0.75rem  * var(--font-scale, 1));
+  --text-sm:   calc(0.875rem * var(--font-scale, 1));
+  --text-base: calc(1rem     * var(--font-scale, 1));
+  --text-lg:   calc(1.125rem * var(--font-scale, 1));
+  --text-xl:   calc(1.25rem  * var(--font-scale, 1));
+  --text-2xl:  calc(1.5rem   * var(--font-scale, 1));
+  --text-4xl:  calc(2.25rem  * var(--font-scale, 1));
+  --text-5xl:  calc(3rem     * var(--font-scale, 1));
 }
+
 /* =========================================
-   2. CSS ПЕРЕМЕННЫЕ — светлая / тёмная тема
+   2. CSS ПЕРЕМЕННЫЕ — светлая тема (default)
 ========================================= */
 :root {
-  color-scheme: light dark;
-  /* Акцент */
-  --primary-color: #22c55e;
-  --accent-h: 142;
-  /* Поверхности */
-  --bg-color: #f3f4f6;
-  --surface-color: #ffffff;
-  /* Текст */
-  --text-color: #1f2937;
+  color-scheme: light;
+
+  --primary-color:  #22c55e;
+  --accent-h:       142;
+
+  --bg-color:       #f3f4f6;
+  --surface-color:  #ffffff;
+
+  --text-color:     #1f2937;
   --text-secondary: hsl(var(--accent-h), 25%, 45%);
-  /* Разделитель */
-  --border-color: rgba(0, 0, 0, 0.1);
-  /* Виньетка */
+
+  --border-color:   rgba(0, 0, 0, 0.1);
   --vignette-alpha: 0.15;
-  /* Масштаб шрифта */
-  --font-scale: 1;
+  --font-scale:     1;
 }
-:root.dark {
-  --primary-color: #4ade80;
-  --bg-color: #000000;
-  --surface-color: #1c1c1e;
-  --text-color: #f9fafb;
-  --text-secondary: hsl(var(--accent-h), 25%, 65%);
-  --border-color: rgba(255, 255, 255, 0.1);
-}
+
 /* =========================================
-   3. ГЛОБАЛЬНЫЕ СТИЛИ BODY
+   ТЁМНАЯ ТЕМА — переключается JS через :root.dark
 ========================================= */
+:root.dark {
+  color-scheme: dark;
+
+  --primary-color:  #4ade80;
+
+  --bg-color:       #000000;
+  --surface-color:  #1c1c1e;
+
+  --text-color:     #f9fafb;
+  --text-secondary: hsl(var(--accent-h), 25%, 65%);
+
+  --border-color:   rgba(255, 255, 255, 0.1);
+}
+
+/* =========================================
+   ФОРСИРОВАНИЕ ТЕКСТА (для цветных фонов)
+   Применяется theme.js через body.force-*
+========================================= */
+body.force-light-text {
+  --text-color:     #ffffff;
+  --text-secondary: hsl(var(--accent-h), 30%, 80%);
+  --border-color:   rgba(255, 255, 255, 0.2);
+}
+body.force-dark-text {
+  --text-color:     #111827;
+  --text-secondary: hsl(var(--accent-h), 40%, 40%);
+  --border-color:   rgba(0, 0, 0, 0.15);
+}
+
+/* =========================================
+   3. БАЗОВЫЕ НАСТРОЙКИ
+========================================= */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  touch-action: manipulation;
+}
+
+/* Запрет любых переходов до загрузки темы */
+.preload * {
+  transition: none !important;
+  animation: none !important;
+}
+
 body {
   height: 100dvh;
   background-color: #000;
   color: var(--text-color);
-  font-family:
-    system-ui,
-    -apple-system,
-    sans-serif;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   overflow: hidden;
-  touch-action: manipulation;
-  /* Запрет выделения текста во всём приложении */
+  overscroll-behavior: none;
   -webkit-user-select: none;
   user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: manipulation;
 }
+
+button {
+  -webkit-appearance: none;
+  appearance: none;
+  touch-action: manipulation;
+}
+
+/* Инпуты — разрешаем выделение и корректный размер шрифта */
+:where(input[type="text"], input[type="number"]) {
+  -webkit-user-select: text;
+  user-select: text;
+  font-size: max(16px, 1em); /* Запрет zoom на iOS при focus */
+}
+
 /* =========================================
    4. PRELOAD — защита от FOUC
-   body.preload скрывает #app до инициализации
 ========================================= */
 body.preload #app {
   opacity: 0;
@@ -71,158 +123,191 @@ body:not(.preload) #app {
   opacity: 1;
   transition: opacity 0.2s ease;
 }
+
 /* =========================================
-   5. УТИЛИТЫ ТЕМЫ (семантические классы)
+   5. УТИЛИТЫ ТЕМЫ — семантические классы
+   Реагируют на --*-color переменные,
+   которые меняются при смене :root.dark
 ========================================= */
-/* Поверхности и текст */
-.app-surface {
-  background-color: var(--surface-color);
-}
 .app-bg {
   background-color: var(--bg-color);
+  transition: background-color 0.3s ease;
+  position: relative;
+  z-index: 0;
 }
-.app-text {
-  color: var(--text-color);
+
+.app-surface {
+  background-color: var(--surface-color);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
 }
-.app-text-sec {
-  color: var(--text-secondary);
-}
-.app-border {
-  border-color: var(--border-color);
-}
-/* Акцент */
-.primary-text {
-  color: var(--primary-color);
-}
-.primary-bg {
-  background-color: var(--primary-color);
-}
-.primary-stroke {
-  stroke: var(--primary-color);
-}
-/* Псевдо-hover для семантических классов */
-.hover\:primary-text:hover {
-  color: var(--primary-color);
-}
-.hover\:app-text:hover {
-  color: var(--text-color);
-}
+
+.app-text     { color: var(--text-color);      transition: color 0.3s ease; }
+.app-text-sec { color: var(--text-secondary);  transition: color 0.3s ease; }
+.app-border   { border-color: var(--border-color); transition: border-color 0.3s ease; }
+
+.primary-text   { color: var(--primary-color);            transition: color 0.3s ease; }
+.primary-bg     { background-color: var(--primary-color); transition: background-color 0.3s ease; }
+.primary-stroke { stroke: var(--primary-color);           transition: stroke 0.3s ease; }
+
+/* Hover-варианты */
+.hover\:primary-text:hover { color: var(--primary-color); }
+.hover\:app-text:hover     { color: var(--text-color); }
+
 /* =========================================
    6. FORCE-TEXT — принудительный цвет текста
-   Применяется theme.js когда фон тёмный/светлый
+   Применяется theme.js для цветных фонов
 ========================================= */
-body.force-light-text,
 body.force-light-text .app-text,
 body.force-light-text .app-text-sec,
-body.force-light-text .primary-text {
-  color: rgba(255, 255, 255, 0.95) !important;
-}
-body.force-light-text .app-border {
-  border-color: rgba(255, 255, 255, 0.2) !important;
-}
-body.force-light-text .app-surface {
-  background-color: rgba(255, 255, 255, 0.15) !important;
-}
-body.force-dark-text,
+body.force-light-text .primary-text,
+body.force-light-text .app-text-sec { color: rgba(255, 255, 255, 0.95) !important; }
+body.force-light-text .app-border   { border-color: rgba(255, 255, 255, 0.25) !important; }
+body.force-light-text .app-surface  { background-color: rgba(255, 255, 255, 0.15) !important; }
+
 body.force-dark-text .app-text,
 body.force-dark-text .app-text-sec,
-body.force-dark-text .primary-text {
-  color: rgba(0, 0, 0, 0.9) !important;
-}
-body.force-dark-text .app-border {
-  border-color: rgba(0, 0, 0, 0.15) !important;
-}
-body.force-dark-text .app-surface {
-  background-color: rgba(0, 0, 0, 0.12) !important;
-}
+body.force-dark-text .primary-text,
+body.force-dark-text .app-text-sec  { color: rgba(0, 0, 0, 0.9) !important; }
+body.force-dark-text .app-border    { border-color: rgba(0, 0, 0, 0.18) !important; }
+body.force-dark-text .app-surface   { background-color: rgba(0, 0, 0, 0.1) !important; }
+
 /* =========================================
-   7. СКРОЛЛБАР — скрытие
+   7. ГАЛОЧКА НА ЦВЕТОВЫХ КНОПКАХ
+   Цвет SVG галочки внутри кнопки:
+   — тёмные кружки → белая галочка
+   — светлые кружки → чёрная галочка
+   JS использует style="color: white/var(--text-color)"
+   Дополнительно: кнопка default-bg-btn всегда
+   адаптирует цвет галочки под текущую тему
 ========================================= */
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
+.color-btn svg,
+.bg-btn svg {
+  /* Цвет задаётся инлайново из JS — здесь только fallback */
+  color: currentColor;
+  pointer-events: none;
 }
+
+/* Дефолтная кнопка фона — галочка в цвет основного текста темы */
+.default-bg-btn svg {
+  color: var(--text-color) !important;
+}
+
+/* =========================================
+   8. СКРОЛЛБАР — скрытие
+========================================= */
+.no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
 }
+
 /* =========================================
-   8. SCROLL-LOCK — блокировка свайпа навигации
-   Применяется к спискам и модалкам чтобы
-   горизонтальный свайп не переключал вкладки
+   9. SCROLL-LOCK — блокировка свайпа навигации
 ========================================= */
 .scroll-lock {
   touch-action: pan-y;
   overscroll-behavior: contain;
 }
-/* =========================================
-   9. SELECTABLE-DATA — разрешаем выделение
-   текста только в блоках с данными (круги, сессии)
-========================================= */
-.selectable-data {
-  -webkit-user-select: text;
-  user-select: text;
+
+#sw-lapsContainer,
+#tb-workoutsList,
+#sw-sessionsList,
+#view-settings {
+  touch-action: pan-y;
+  overscroll-behavior-y: contain;
 }
+
 /* =========================================
-   10. CUSTOM FOCUS — единый стиль фокуса
+   10. SELECTABLE-DATA — разрешаем выделение текста
+========================================= */
+.selectable-data,
+.selectable-data * {
+  -webkit-user-select: text !important;
+  user-select: text !important;
+}
+
+/* =========================================
+   11. CUSTOM FOCUS
 ========================================= */
 .custom-focus:focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px var(--primary-color);
 }
-/* Фокус-граница для input полей таймера */
+
 .primary-focus-border:focus {
   border-color: var(--primary-color) !important;
   outline: none;
 }
+
 /* =========================================
-   11. APP CONTAINER — основной контейнер
+   12. SR-ONLY — screen reader
+========================================= */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* =========================================
+   13. APP CONTAINER — safe area
 ========================================= */
 .app-container {
-  /* Обеспечиваем корректную высоту с учётом safe-area */
   height: 100dvh;
   max-height: 100dvh;
 }
-/* =========================================
-   12. APP NAV SAFE — безопасная зона навигации
-   (для устройств с вырезами и скруглениями)
-========================================= */
+
 .app-nav-safe {
   padding-bottom: max(1rem, env(safe-area-inset-bottom));
 }
+
 /* =========================================
-   13. VIEW TOP / BOTTOM HALF — разбивка экрана
+   14. VIEW TOP / BOTTOM HALF
 ========================================= */
 .view-top-half {
   height: 55%;
   min-height: 55%;
+  padding-top: env(safe-area-inset-top);
 }
+
 .view-bottom-half {
   height: 45%;
   min-height: 0;
 }
+
 /* =========================================
-   14. ТАЙМЕРНЫЙ КРУГ (timer-circle-wrap)
+   15. ТАЙМЕРНЫЙ КРУГ
 ========================================= */
 .timer-circle-wrap {
   width: 100%;
   max-width: 75%;
   aspect-ratio: 1 / 1;
+  max-height: 45vh;
+  margin: 0.5vh auto;
   display: flex;
   align-items: center;
   justify-content: center;
   container-type: inline-size;
   position: relative;
 }
+
 /* =========================================
-   15. SVG ПРОГРЕСС-КОЛЬЦО
+   16. SVG ПРОГРЕСС-КОЛЬЦО
 ========================================= */
 .progress-ring__circle {
   transform: rotate(-90deg);
   transform-origin: 50% 50%;
   transition: stroke-dashoffset 0.1s linear;
 }
+
 /* =========================================
-   16. ДИСПЛЕЙ ТАЙМЕРА
+   17. ДИСПЛЕЙ ТАЙМЕРА
 ========================================= */
 .timer-display {
   font-size: clamp(1.8rem, 22cqi, 2.8rem);
@@ -234,19 +319,20 @@ body.force-dark-text .app-surface {
   position: relative;
   z-index: 10;
 }
-/* GO — большой курсивный */
+
 .timer-display.is-go {
   font-size: clamp(3rem, 35cqi, 5rem) !important;
   font-style: italic;
   letter-spacing: -0.04em;
 }
+
 /* =========================================
-   17. ИНПУТЫ ТАЙМЕРА (HH : MM : SS)
+   18. ИНПУТЫ ТАЙМЕРА (HH : MM : SS)
 ========================================= */
 .timer-input {
   font-size: calc(32px * var(--font-scale, 1)) !important;
   height: calc(64px * var(--font-scale, 1)) !important;
-  width: calc(64px * var(--font-scale, 1)) !important;
+  width:  calc(64px * var(--font-scale, 1)) !important;
   line-height: 1 !important;
   text-align: center;
   background: transparent;
@@ -254,62 +340,47 @@ body.force-dark-text .app-surface {
   font-family: ui-monospace, monospace;
   color: var(--text-color);
   transition: border-color 0.2s ease;
-  /* Запрещаем выделение при свайпе */
+  touch-action: none;
+  cursor: ns-resize;
   -webkit-user-select: none;
   user-select: none;
 }
 .timer-input:focus {
   border-color: var(--primary-color);
   outline: none;
+  -webkit-user-select: text;
+  user-select: text;
 }
+
 /* =========================================
-   18. LAP FLASH — вспышка при записи круга
+   19. LAP FLASH — вспышка при записи круга
 ========================================= */
 @keyframes lapFlash {
-  0% {
-    opacity: 0;
-  }
-  30% {
-    opacity: 0.35;
-  }
-  100% {
-    opacity: 0;
-  }
+  0%   { opacity: 0; }
+  30%  { opacity: 0.35; }
+  100% { opacity: 0; }
 }
 .flash-active {
   animation: lapFlash 0.45s ease-out forwards;
 }
+
 /* =========================================
-   19. АНИМАЦИЯ SHAKE — ошибка ввода
+   20. SHAKE — анимация ошибки ввода
 ========================================= */
 @keyframes shake {
-  0%,
-  100% {
-    transform: translateX(0);
-  }
-  20% {
-    transform: translateX(-6px);
-  }
-  40% {
-    transform: translateX(6px);
-  }
-  60% {
-    transform: translateX(-4px);
-  }
-  80% {
-    transform: translateX(4px);
-  }
+  0%, 100% { transform: translateX(0); }
+  20%       { transform: translateX(-6px); }
+  40%       { transform: translateX(6px); }
+  60%       { transform: translateX(-4px); }
+  80%       { transform: translateX(4px); }
 }
 .animate-shake {
   animation: shake 0.3s ease-in-out;
 }
+
 /* =========================================
-   20. ВИНЬЕТКА (app-bg.has-vignette)
+   21. ВИНЬЕТКА
 ========================================= */
-.app-bg {
-  position: relative;
-  z-index: 0;
-}
 .app-bg.has-vignette::before {
   content: "";
   position: absolute;
@@ -318,71 +389,38 @@ body.force-dark-text .app-surface {
   pointer-events: none;
   border-radius: inherit;
   box-shadow: inset 0 0 18vh rgba(0, 0, 0, var(--vignette-alpha, 0.15));
-  transition: box-shadow 0.3s;
+  transition: box-shadow 0.3s ease;
 }
+
 :root.dark .app-bg.has-vignette::before {
   box-shadow: inset 0 0 24vh
     rgba(0, 0, 0, calc(var(--vignette-alpha, 0.15) + 0.1));
 }
+
 /* =========================================
-   21. КНОПКА ДЕФОЛТНОГО ФОНА
+   22. КНОПКА ДЕФОЛТНОГО ФОНА
 ========================================= */
 .default-bg-btn {
   background: linear-gradient(135deg, #f3f4f6 50%, #1c1c1e 50%);
 }
+:root.dark .default-bg-btn {
+  background: linear-gradient(135deg, #f3f4f6 50%, #000000 50%);
+}
+
 /* =========================================
-   22. LIQUID GLASS — эффект стеклянной поверхности
+   23. NO-ADAPTIVE — адаптивный фон выключен
 ========================================= */
-/* Модальные окна (Bottom Sheets) */
-:root.glass-effect #tb-modal,
-:root.glass-effect #sw-sessions-modal {
-  background-color: rgba(255, 255, 255, 0.45) !important;
-  backdrop-filter: blur(24px) saturate(160%) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(160%) !important;
+:root.no-adaptive {
+  --bg-color:      #f3f4f6;
+  --surface-color: #ffffff;
 }
-:root.dark.glass-effect #tb-modal,
-:root.dark.glass-effect #sw-sessions-modal {
-  background-color: rgba(0, 0, 0, 0.55) !important;
+:root.no-adaptive.dark {
+  --bg-color:      #000000;
+  --surface-color: #1c1c1e;
 }
-/* app-surface элементы */
-:root.glass-effect .app-surface:not(button):not(select):not(.select-wrapper),
-:root.glass-effect #toast {
-  background-color: color-mix(
-    in srgb,
-    var(--surface-color) 55%,
-    transparent
-  ) !important;
-  backdrop-filter: blur(20px) saturate(150%) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(150%) !important;
-  box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.55),
-    0 8px 32px rgba(0, 0, 0, 0.06) !important;
-}
-:root.dark.glass-effect
-  .app-surface:not(button):not(select):not(.select-wrapper),
-:root.dark.glass-effect #toast {
-  background-color: color-mix(
-    in srgb,
-    var(--surface-color) 32%,
-    transparent
-  ) !important;
-  box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.06),
-    0 8px 32px rgba(0, 0, 0, 0.32) !important;
-}
-/* Нижняя навигация */
-:root.glass-effect nav {
-  background: linear-gradient(
-    to top,
-    color-mix(in srgb, var(--surface-color) 35%, transparent),
-    color-mix(in srgb, var(--surface-color) 4%, transparent)
-  ) !important;
-  backdrop-filter: blur(18px) saturate(150%) !important;
-  -webkit-backdrop-filter: blur(18px) saturate(150%) !important;
-  border-top-color: rgba(255, 255, 255, 0.2) !important;
-}
+
 /* =========================================
-   23. КАСТОМНЫЙ TOGGLE (переключатели)
+   24. КАСТОМНЫЙ TOGGLE
 ========================================= */
 .custom-toggle {
   width: 44px;
@@ -390,8 +428,8 @@ body.force-dark-text .app-surface {
   background-color: var(--border-color);
   border-radius: 9999px;
   position: relative;
-  transition: background-color 0.25s ease;
   flex-shrink: 0;
+  transition: background-color 0.25s ease;
 }
 .custom-toggle::after {
   content: "";
@@ -402,8 +440,8 @@ body.force-dark-text .app-surface {
   height: 20px;
   background-color: #ffffff;
   border-radius: 50%;
-  transition: transform 0.25s ease;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 input:checked + .custom-toggle {
   background-color: var(--primary-color);
@@ -411,14 +449,18 @@ input:checked + .custom-toggle {
 input:checked + .custom-toggle::after {
   transform: translateX(20px);
 }
-/* Дополнительные отступы для кликабельности */
+input[type="checkbox"]:focus-visible + .custom-toggle {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
 label:has(.custom-toggle) {
   min-height: 44px;
   display: flex;
   align-items: center;
 }
+
 /* =========================================
-   24. КАСТОМНЫЕ RANGE СЛАЙДЕРЫ
+   25. RANGE СЛАЙДЕРЫ
 ========================================= */
 input[type="range"] {
   -webkit-appearance: none;
@@ -427,7 +469,7 @@ input[type="range"] {
   height: 32px;
   cursor: pointer;
 }
-/* Track */
+
 input[type="range"]::-webkit-slider-runnable-track {
   width: 100%;
   height: 4px;
@@ -440,7 +482,7 @@ input[type="range"]::-moz-range-track {
   background: var(--border-color);
   border-radius: 2px;
 }
-/* Thumb */
+
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   height: 24px;
@@ -463,8 +505,17 @@ input[type="range"]::-moz-range-thumb {
 input[type="range"]:active::-webkit-slider-thumb {
   transform: scale(1.2);
 }
+input[type="range"]:focus-visible::-webkit-slider-thumb {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+input[type="range"]:focus-visible::-moz-range-thumb {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
 /* =========================================
-   25. SELECT WRAPPER — стилизованный селект
+   26. SELECT WRAPPER
 ========================================= */
 .select-wrapper {
   position: relative;
@@ -478,32 +529,41 @@ input[type="range"]:active::-webkit-slider-thumb {
   color: var(--text-color);
   outline: none;
 }
+select option {
+  background-color: var(--surface-color);
+  color: var(--text-color);
+}
+select::-ms-expand { display: none; }
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] { -moz-appearance: textfield; }
+
 /* =========================================
-   26. КНОПКИ ТЕМЫ (Auto / Light / Dark)
-   Активная кнопка получает app-surface + shadow-sm + app-text через JS.
-   Неактивная — app-text-sec. Базовый стиль здесь.
+   27. КНОПКИ ТЕМЫ (Auto / Light / Dark)
 ========================================= */
 [id^="theme-"] {
   min-height: 36px;
   border-radius: 0.375rem;
   font-weight: 700;
   font-size: 0.75rem;
-  transition:
-    background-color 0.2s,
-    color 0.2s,
-    box-shadow 0.2s;
+  transition: background-color 0.2s, color 0.2s, box-shadow 0.2s;
 }
+
 /* =========================================
-   27. NAV КНОПКИ — минимальная зона касания
+   28. NAV КНОПКИ
 ========================================= */
 .nav-btn {
   min-height: 44px;
   min-width: 44px;
   -webkit-tap-highlight-color: transparent;
 }
+
 /* =========================================
-   28. BOTTOM SHEET МОДАЛКИ
-   Базовые стили — translate управляется через JS classList
+   29. BOTTOM SHEET МОДАЛКИ
 ========================================= */
 #sw-sessions-modal,
 #tb-modal {
@@ -511,13 +571,13 @@ input[type="range"]:active::-webkit-slider-thumb {
   flex-direction: column;
   will-change: transform;
 }
-/* Когда модалка hidden — display:none перекрывает flex */
 #sw-sessions-modal.hidden,
 #tb-modal.hidden {
   display: none !important;
 }
+
 /* =========================================
-   29. OVERLAY МОДАЛКИ (подтверждения)
+   30. OVERLAY МОДАЛКИ (подтверждения)
 ========================================= */
 #sw-clear-modal,
 #sw-name-modal,
@@ -531,18 +591,17 @@ input[type="range"]:active::-webkit-slider-thumb {
 #reset-modal.hidden {
   display: none !important;
 }
+
 /* =========================================
-   30. TOAST УВЕДОМЛЕНИЕ
+   31. TOAST
 ========================================= */
 #toast {
-  transition:
-    opacity 0.3s ease,
-    transform 0.3s ease;
+  transition: opacity 0.3s ease, transform 0.3s ease;
   will-change: opacity, transform;
 }
+
 /* =========================================
-   31. STATUS TEXT (PAUSE, WORK, REST, GET READY)
-   Применяется к sw-statusText, tm-statusText, tb-statusText
+   32. STATUS TEXT (PAUSE / WORK / REST)
 ========================================= */
 [id$="statusText"] {
   font-size: calc(0.75rem * var(--font-scale, 1));
@@ -550,24 +609,25 @@ input[type="range"]:active::-webkit-slider-thumb {
   letter-spacing: 0.12em;
   line-height: 1.2;
 }
+
 /* =========================================
-   32. LAP ROW — строка круга секундомера
+   33. LAP ROW
 ========================================= */
 .lap-row {
   transition: background-color 0.2s ease;
   border-radius: 0.5rem;
 }
+
 /* =========================================
-   33. TABATA WORKOUT ROW — строка тренировки
+   34. TABATA WORKOUT ROW
 ========================================= */
 .tb-workout-row {
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
   -webkit-tap-highlight-color: transparent;
 }
+
 /* =========================================
-   34. COLOR BUTTONS — цветовые кнопки настроек
+   35. COLOR / BG КНОПКИ (настройки акцента)
 ========================================= */
 .color-btn,
 .bg-btn {
@@ -578,91 +638,288 @@ input[type="range"]:active::-webkit-slider-thumb {
 .bg-btn:active {
   transform: scale(0.88);
 }
-/* Активная цветовая кнопка (ring добавляется через JS) */
-.color-btn.ring-2,
-.bg-btn.ring-2 {
-  ring-color: var(--primary-color);
-}
+
 /* =========================================
-   35. NO-ADAPTIVE — когда адаптивный фон выключен
-   Применяется как :root.no-adaptive — переопределяет
-   цвета фона и поверхностей на системные
+   36. КНОПКА STOP В ТАБАТА
+   Явно задаём высоту чтобы Tailwind не потерял
 ========================================= */
-:root.no-adaptive {
-  --bg-color: #f3f4f6;
-  --surface-color: #ffffff;
+#tb-stopBtn {
+  min-height: 56px;
+  width: 100%;
+  border-radius: 1rem;
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: 0.05em;
+  background-color: rgb(239 68 68);
+  color: #ffffff;
+  flex-shrink: 0;
 }
-:root.no-adaptive.dark {
-  --bg-color: #000000;
-  --surface-color: #1c1c1e;
-}
+
 /* =========================================
-   36. DARK MODE — переопределения через :root.dark
-   (не через media-query, т.к. тема управляется вручную)
+   37. TABATA RUNNING CONTROLS — контейнер
 ========================================= */
-/* Поля ввода в тёмной теме */
-:root.dark input::placeholder {
-  color: rgba(255, 255, 255, 0.3);
+#tb-runningControls {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding-bottom: 5rem;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  gap: 2rem;
+  height: 100%;
 }
-/* Фон кружочков цветовых кнопок в тёмной теме */
-:root.dark .default-bg-btn {
-  background: linear-gradient(135deg, #f3f4f6 50%, #000000 50%);
+/* когда JS делает classList.remove("hidden").add("flex") */
+#tb-runningControls:not(.hidden) {
+  display: flex;
 }
+
 /* =========================================
-   37. ACCESSIBILITY — screen reader only
+   38. LIQUID GLASS — эффект стеклянной поверхности
 ========================================= */
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border-width: 0;
+
+/* Bottom Sheet модалки */
+:root.glass-effect body #tb-modal,
+:root.glass-effect body #sw-sessions-modal {
+  background-color: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
 }
+:root.dark.glass-effect body #tb-modal,
+:root.dark.glass-effect body #sw-sessions-modal {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+/* Контент overlay-модалок */
+:root.glass-effect body #reset-modal-content,
+:root.glass-effect body #sw-clear-modal-content,
+:root.glass-effect body #sw-name-modal-content {
+  background-color: color-mix(in srgb, var(--surface-color) 70%, transparent);
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.7),
+    0 20px 40px rgba(0, 0, 0, 0.15);
+  border: none;
+}
+:root.dark.glass-effect body #reset-modal-content,
+:root.dark.glass-effect body #sw-clear-modal-content,
+:root.dark.glass-effect body #sw-name-modal-content {
+  background-color: color-mix(in srgb, var(--surface-color) 50%, transparent);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.08),
+    0 20px 40px rgba(0, 0, 0, 0.5);
+}
+
+/* Нижняя навигация */
+:root.glass-effect body nav {
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--surface-color) 30%, transparent),
+    color-mix(in srgb, var(--surface-color) 2%, transparent)
+  );
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: none;
+}
+:root.dark.glass-effect body nav {
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--surface-color) 25%, transparent),
+    color-mix(in srgb, var(--surface-color) 0%, transparent)
+  );
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Select wrapper в glass-режиме */
+:root.glass-effect body .select-wrapper.app-surface {
+  background-color: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(12px) saturate(150%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.4);
+  color: var(--text-color);
+}
+:root.dark.glass-effect body .select-wrapper.app-surface {
+  background-color: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05);
+}
+
+/* Кнопки с app-surface */
+:root.glass-effect body button.app-surface {
+  background: color-mix(in srgb, var(--surface-color) 35%, transparent);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.4),
+    0 4px 12px rgba(0, 0, 0, 0.05);
+}
+:root.dark.glass-effect body button.app-surface {
+  background: color-mix(in srgb, var(--surface-color) 20%, transparent);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.05),
+    0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Кнопка Lap */
+:root.glass-effect body button#sw-lapBtn:not(.is-reset) {
+  background: color-mix(in srgb, var(--surface-color) 60%, transparent);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  box-shadow:
+    inset 0 1px 2px rgba(255, 255, 255, 0.6),
+    0 4px 12px rgba(0, 0, 0, 0.08);
+}
+:root.dark.glass-effect body button#sw-lapBtn:not(.is-reset) {
+  background: color-mix(in srgb, var(--surface-color) 40%, transparent);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.1),
+    0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Кнопки сохранить — primary цвет */
+:root.glass-effect body #sw-name-confirm,
+:root.glass-effect body #tb-saveModalBtn {
+  background: color-mix(in srgb, var(--primary-color) 70%, transparent);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  box-shadow:
+    inset 0 1px 2px rgba(255, 255, 255, 0.3),
+    0 4px 12px color-mix(in srgb, var(--primary-color) 30%, transparent);
+  color: #fff;
+}
+
+/* Кнопки с опасными действиями */
+:root.glass-effect body #sw-clear-confirm,
+:root.glass-effect body #reset-confirm,
+:root.glass-effect body #tb-stopBtn,
+:root.glass-effect body .is-reset {
+  background: rgba(239, 68, 68, 0.85);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  box-shadow:
+    inset 0 1px 2px rgba(255, 255, 255, 0.4),
+    0 4px 15px rgba(239, 68, 68, 0.4);
+  color: #fff;
+}
+
+/* Кнопка сохранить сессию — прозрачная */
+:root.glass-effect body #sw-saveBtn {
+  background: transparent;
+  box-shadow: none;
+  border: none;
+}
+
+/* app-surface (не кнопки) + toast */
+:root.glass-effect body .app-surface:not(button):not(.select-wrapper),
+:root.glass-effect body #toast {
+  background-color: color-mix(in srgb, var(--surface-color) 50%, transparent);
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.5),
+    0 8px 32px rgba(0, 0, 0, 0.05);
+}
+:root.dark.glass-effect body .app-surface:not(button):not(.select-wrapper),
+:root.dark.glass-effect body #toast {
+  background-color: color-mix(in srgb, var(--surface-color) 30%, transparent);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.05),
+    0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+/* Overlay фон модалок */
+:root.glass-effect body #reset-modal,
+:root.glass-effect body #sw-clear-modal,
+:root.glass-effect body #sw-name-modal {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+:root.dark.glass-effect body #reset-modal,
+:root.dark.glass-effect body #sw-clear-modal,
+:root.dark.glass-effect body #sw-name-modal {
+  background-color: rgba(0, 0, 0, 0.6);
+}
+
+/* Строки кругов и тренировок в glass */
+:root.glass-effect body .lap-row:first-child {
+  background-color: rgba(0, 0, 0, 0.08);
+  box-shadow: none;
+}
+:root.dark.glass-effect body .lap-row:first-child {
+  background-color: rgba(255, 255, 255, 0.1);
+  box-shadow: none;
+}
+:root.glass-effect body .lap-row,
+:root.glass-effect body .tb-workout-row,
+:root.glass-effect body .sw-session-header,
+:root.glass-effect body [id^="sw-details-"] > div:last-child {
+  background-color: color-mix(in srgb, var(--surface-color) 30%, transparent);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.2),
+    0 2px 4px rgba(0, 0, 0, 0.05);
+}
+:root.dark.glass-effect body .lap-row,
+:root.dark.glass-effect body .tb-workout-row,
+:root.dark.glass-effect body .sw-session-header,
+:root.dark.glass-effect body [id^="sw-details-"] > div:last-child {
+  background-color: color-mix(in srgb, var(--surface-color) 15%, transparent);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.05),
+    0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
 /* =========================================
-   38. VIEW TRANSITIONS API — анимация смены вкладок
+   39. АДАПТИВНОСТЬ — LANDSCAPE и маленький экран
 ========================================= */
-@keyframes fade-in {
-  from {
-    opacity: 0;
-    transform: translateX(20px);
+@media (orientation: landscape) and (max-height: 900px) {
+  #viewsContainer > div:not(#view-settings) {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
   }
-  to {
-    opacity: 1;
-    transform: translateX(0);
+  .view-top-half {
+    height: auto;
+    width: 45%;
+    flex: none;
+  }
+  .view-bottom-half {
+    height: 90%;
+    width: 45%;
+    flex: none;
+    justify-content: center;
+  }
+  .timer-circle-wrap {
+    max-height: 70vh;
+    max-width: 260px;
   }
 }
-@keyframes fade-out {
-  from {
-    opacity: 1;
-    transform: translateX(0);
+
+@media (max-height: 700px) and (orientation: portrait) {
+  .timer-circle-wrap {
+    max-height: 38vh;
+    max-width: 200px;
   }
-  to {
-    opacity: 0;
-    transform: translateX(-20px);
+  .view-top-half {
+    height: 45%;
+  }
+  .view-bottom-half {
+    height: 55%;
+  }
+  .timer-display {
+    font-size: clamp(1.6rem, 20cqi, 2.2rem);
+  }
+  .timer-display.is-go {
+    font-size: clamp(2.5rem, 30cqi, 3.8rem);
   }
 }
-::view-transition-new(root) {
-  animation: fade-in 0.28s ease both;
-}
-::view-transition-old(root) {
-  animation: fade-out 0.28s ease both;
-}
+
 /* =========================================
-   39. WEBKIT / ANDROID ФИКСЫ
+   40. iOS SAFARI ФИКСЫ
 ========================================= */
-/* Убираем синее выделение при тапе на Android */
-* {
-  -webkit-tap-highlight-color: transparent;
-}
-/* Запрет масштабирования при двойном тапе */
-html {
-  touch-action: manipulation;
-}
-/* Фикс высоты на iOS Safari */
 @supports (-webkit-touch-callout: none) {
   .app-container {
     height: -webkit-fill-available;
@@ -671,31 +928,68 @@ html {
     height: -webkit-fill-available;
   }
 }
-/* Корректная работа overflow на iOS */
-.overflow-hidden {
-  -webkit-overflow-scrolling: touch;
-}
-/* Плавная прокрутка для списков */
+
 .overflow-y-auto {
   -webkit-overflow-scrolling: touch;
 }
+
 /* =========================================
-   40. ДОПОЛНИТЕЛЬНЫЕ УТИЛИТЫ
+   41. VIEW TRANSITIONS API
 ========================================= */
-/* Запрет перетаскивания изображений */
+@keyframes vt-fade-in {
+  from { opacity: 0; transform: translateX(20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes vt-fade-out {
+  from { opacity: 1; transform: translateX(0); }
+  to   { opacity: 0; transform: translateX(-20px); }
+}
+::view-transition-new(root) {
+  animation: vt-fade-in 0.28s ease both;
+}
+::view-transition-old(root) {
+  animation: vt-fade-out 0.28s ease both;
+}
+
+/* =========================================
+   42. REDUCED MOTION
+========================================= */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  ::view-transition-new(root),
+  ::view-transition-old(root) {
+    animation: none;
+  }
+}
+
+/* =========================================
+   43. ПРОЧИЕ ФИКСЫ
+========================================= */
+nav {
+  border-bottom-left-radius: inherit;
+  border-bottom-right-radius: inherit;
+}
+
+button:disabled {
+  opacity: 0.3 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+}
+
 img {
   -webkit-user-drag: none;
-  user-drag: none;
 }
-/* Минимальные зоны касания для интерактивных элементов */
-button,
-a,
-label[for],
-[tabindex] {
+
+/* Минимальные зоны касания */
+button, a, label[for], [tabindex="0"] {
   min-height: 36px;
-  min-width: 36px;
 }
-/* Сброс outline для всех кнопок (используем custom-focus) */
+
 button:focus:not(:focus-visible) {
   outline: none;
 }
