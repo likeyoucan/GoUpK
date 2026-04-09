@@ -1,9 +1,52 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 /* =========================================
-   1. ПЕРЕМЕННЫЕ И ТЕМЫ (Layer Base)
+   1. КОНФИГУРАЦИЯ ТЕМЫ (Tailwind v4 Style)
+========================================= */
+@theme {
+  /* Цвета */
+  --color-primary: var(--primary-color);
+  --color-surface: var(--surface-color);
+  --color-app-bg: var(--bg-color);
+
+  /* Шрифты */
+  --font-sans:
+    system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+
+  /* Анимации */
+  --keyframes-flash-circle: {
+    0% {
+      opacity: 0.4;
+      transform: scale(0.98);
+    }
+    100% {
+      opacity: 0;
+      transform: scale(1);
+    }
+  };
+  --keyframes-shake: {
+    0%,
+    100% {
+      transform: translateX(0);
+    }
+    25% {
+      transform: translateX(-4px);
+    }
+    50% {
+      transform: translateX(4px);
+    }
+    75% {
+      transform: translateX(-4px);
+    }
+  };
+
+  --animation-flash: flash-circle 0.5s ease-out;
+  --animation-shake: shake 0.3s ease-in-out;
+}
+
+/* =========================================
+   2. ПЕРЕМЕННЫЕ И ТЕМЫ (Базовые слои)
 ========================================= */
 @layer base {
   :root {
@@ -13,105 +56,101 @@
     --bg-color: #f3f4f6;
     --surface-color: #ffffff;
     --text-color: #1f2937;
-    --text-secondary: hsl(var(--accent-h), 25%, 45%);
+    --text-secondary: hsl(var(--accent-h) 25% 45%);
     --border-color: rgba(0, 0, 0, 0.1);
     --vignette-alpha: 0.15;
-    --font-scale: 1;
   }
 
-  /* Темная тема (через класс .dark или системную настройку) */
   :root.dark {
     --primary-color: #4ade80;
     --bg-color: #000000;
     --surface-color: #1c1c1e;
     --text-color: #f9fafb;
-    --text-secondary: hsl(var(--accent-h), 25%, 65%);
+    --text-secondary: hsl(var(--accent-h) 25% 65%);
     --border-color: rgba(255, 255, 255, 0.1);
   }
 
-  /* Форсирование текста */
-  body.force-light-text {
-    --text-color: #ffffff;
-    --text-secondary: hsl(var(--accent-h), 30%, 80%);
-    --border-color: rgba(255, 255, 255, 0.2);
-  }
-
-  body.force-dark-text {
-    --text-color: #111827;
-    --text-secondary: hsl(var(--accent-h), 40%, 40%);
-    --border-color: rgba(0, 0, 0, 0.15);
-  }
-
-  html {
-    @apply antialiased;
-    font-size: 16px;
+  /* Сбросы для Android */
+  * {
     -webkit-tap-highlight-color: transparent;
+    box-sizing: border-box;
+  }
+
+  html,
+  body {
+    height: 100dvh;
+    overflow: hidden;
+    overscroll-behavior: none;
   }
 
   body {
-    @apply h-[100dvh] flex items-center justify-center overflow-hidden;
-    background-color: #000;
+    background-color: #000; /* Фон под приложением */
     color: var(--text-color);
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    overscroll-behavior: none;
+    -webkit-font-smoothing: antialiased;
     -webkit-user-select: none;
     user-select: none;
     touch-action: manipulation;
   }
 
-  /* Настройки инпутов */
-  :where(input[type="text"], input[type="number"]) {
-    -webkit-user-select: text;
+  /* Разрешаем выделение только там, где нужно */
+  .selectable-data,
+  input,
+  textarea {
     user-select: text;
-    font-size: max(16px, 1em);
-  }
-
-  button {
-    @apply transition-colors duration-300;
-    -webkit-appearance: none;
-    appearance: none;
-    touch-action: manipulation;
+    -webkit-user-select: text;
   }
 }
 
 /* =========================================
-   2. КОМПОНЕНТЫ (Layer Components)
+   3. КОМПОНЕНТЫ (Layer Components)
 ========================================= */
 @layer components {
-  /* Контейнер с учетом безопасных зон Android/iOS */
-  .app-container-safe {
-    @apply relative w-full h-[100dvh];
+  /* Safe Areas для вырезов в экране Android */
+  .safe-area-container {
     padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
   }
 
-  @media (min-width: 640px) {
-    .app-container-safe {
-      height: 92vh;
-      max-height: 850px;
-      padding: 0;
-    }
-  }
-
-  /* Таймер и Круги */
+  /* Таймер */
   .timer-circle-wrap {
-    @apply w-full max-w-[75%] aspect-square mx-auto flex items-center justify-center;
-    margin-top: 1vh;
-    margin-bottom: 1vh;
-    max-height: 45vh;
+    width: 100%;
+    max-width: 75%;
+    aspect-ratio: 1 / 1;
+    margin: 1vh auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     container-type: inline-size;
   }
 
   .timer-display {
     font-size: clamp(2rem, 22cqi, 2.8rem);
-    @apply transition-all duration-300 leading-none tracking-tighter whitespace-nowrap tabular-nums;
+    transition: all 0.3s ease;
+    font-variant-numeric: tabular-nums;
+    @apply leading-none tracking-tight whitespace-nowrap;
   }
 
   .timer-display.is-go {
     font-size: clamp(3rem, 35cqi, 4.8rem);
-    @apply italic pr-[0.1em];
+    font-style: italic;
+  }
+
+  /* Слайдер (Range) */
+  input[type="range"] {
+    @apply appearance-none bg-transparent h-8 touch-pan-y;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    @apply appearance-none h-6 w-6 rounded-full shadow-md border-2 border-primary transition-transform active:scale-110;
+    background: var(--surface-color);
+    margin-top: -10px;
+  }
+
+  input[type="range"]::-webkit-slider-runnable-track {
+    @apply w-full h-1 rounded-full;
+    background: var(--border-color);
   }
 
   /* Кастомный Toggle */
@@ -122,7 +161,7 @@
 
   .custom-toggle::after {
     content: "";
-    @apply absolute top-[2px] left-[2px] w-5 h-5 bg-white rounded-full shadow-md transition-transform duration-300;
+    @apply absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-300;
   }
 
   input:checked + .custom-toggle {
@@ -132,131 +171,80 @@
   input:checked + .custom-toggle::after {
     @apply translate-x-5;
   }
-
-  /* Range Slider */
-  input[type="range"] {
-    @apply w-full h-8 bg-transparent appearance-none touch-pan-y my-[-14px];
-  }
-
-  input[type="range"]::-webkit-slider-thumb {
-    @apply appearance-none h-6 w-6 rounded-full shadow-lg border-2 mt-[-10px] transition-transform;
-    background: var(--surface-color);
-    border-color: var(--primary-color);
-  }
-
-  input[type="range"]::-webkit-slider-runnable-track {
-    @apply w-full h-1 cursor-pointer rounded-sm mt-[14px];
-    background: var(--border-color);
-  }
-
-  /* Таймер Инпут */
-  .timer-input {
-    @apply border-b transition-colors duration-300 cursor-ns-resize touch-none select-none;
-    border-bottom-color: rgba(128, 128, 128, 0.3);
-  }
-
-  .timer-input:focus {
-    @apply select-text;
-    border-bottom-color: var(--primary-color) !important;
-  }
 }
 
 /* =========================================
-   3. УТИЛИТЫ (Layer Utilities)
+   4. ЭФФЕКТ ЖИДКОГО СТЕКЛА (Liquid Glass)
 ========================================= */
 @layer utilities {
-  .app-bg {
-    background-color: var(--bg-color);
-    @apply transition-colors duration-300 relative z-0;
+  :root.glass-effect body {
+    --glass-blur: blur(20px) saturate(150%);
+
+    .glass-card {
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      background-color: color-mix(
+        in srgb,
+        var(--surface-color) 60%,
+        transparent
+      );
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    nav {
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      background: linear-gradient(
+        to top,
+        color-mix(in srgb, var(--surface-color) 40%, transparent),
+        transparent
+      );
+    }
   }
 
-  .app-bg.has-vignette::before {
-    content: "";
-    @apply absolute inset-0 -z-10 pointer-events-none transition-shadow duration-300;
-    box-shadow: inset 0 0 15vh rgba(0, 0, 0, var(--vignette-alpha));
+  /* Темы для темного стекла */
+  :root.dark.glass-effect body .glass-card {
+    background-color: color-mix(in srgb, var(--surface-color) 40%, transparent);
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05);
   }
 
-  .app-surface {
-    background-color: var(--surface-color);
-    @apply transition-all duration-300;
+  /* Виньетка */
+  .has-vignette {
+    position: relative;
+    &::before {
+      content: "";
+      @apply absolute inset-0 pointer-events-none z-[-1];
+      box-shadow: inset 0 0 15vh rgba(0, 0, 0, var(--vignette-alpha));
+    }
   }
-
-  .app-text { color: var(--text-color); }
-  .app-text-sec { color: var(--text-secondary); }
-  .primary-text { color: var(--primary-color); }
-  .app-border { border-color: var(--border-color); }
-  .primary-bg { background-color: var(--primary-color); }
-
-  .no-scrollbar::-webkit-scrollbar { display: none; }
-  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-  /* Animations */
-  .animate-shake { animation: shake 0.3s ease-in-out; }
-  .flash-active { animation: flashCircle 0.5s ease-out; }
 }
 
 /* =========================================
-   4. КЛЮЧЕВЫЕ КАДРЫ (Кейфреймы)
+   5. АДАПТИВНОСТЬ (Media Queries)
 ========================================= */
-@keyframes flashCircle {
-  0% { opacity: 0.4; transform: scale(0.98); }
-  100% { opacity: 0; transform: scale(1); }
-}
-
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-4px); }
-  50% { transform: translateX(4px); }
-  75% { transform: translateX(-4px); }
-}
-
-/* =========================================
-   5. ЭФФЕКТ ЖИДКОГО СТЕКЛА (LIQUID GLASS)
-========================================= */
-:root.glass-effect body .glass-panel {
-  backdrop-filter: blur(20px) saturate(150%);
-  -webkit-backdrop-filter: blur(20px) saturate(150%);
-  background-color: color-mix(in srgb, var(--surface-color) 70%, transparent);
-}
-
-:root.dark.glass-effect body .glass-panel {
-  background-color: color-mix(in srgb, var(--surface-color) 50%, transparent);
-}
-
-/* Селекторы для конкретных модалок из вашего CSS */
-:root.glass-effect body #reset-modal-content,
-:root.glass-effect body #sw-clear-modal-content,
-:root.glass-effect body #sw-name-modal-content {
-  @apply glass-panel border-none;
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.7), 0 20px 40px rgba(0, 0, 0, 0.15);
-}
-
-/* Навигация (стекло) */
-:root.glass-effect body nav {
-  background: linear-gradient(to top, color-mix(in srgb, var(--surface-color) 30%, transparent), transparent);
-  backdrop-filter: blur(16px) saturate(150%);
-  -webkit-backdrop-filter: blur(16px) saturate(150%);
-  @apply border-t border-white/20 shadow-none;
-}
-
-/* =========================================
-   6. АДАПТИВНОСТЬ (LANDSCAPE)
-========================================= */
-@media (orientation: landscape) and (max-height: 900px) {
+@media (orientation: landscape) and (max-height: 600px) {
   .view-top-half {
-    @apply h-auto w-[45%] flex-none;
-  }
-  .view-bottom-half {
-    @apply h-[90%] w-[45%] flex-none justify-center;
+    @apply h-auto w-[45%] flex-none flex-row;
   }
   .timer-circle-wrap {
-    @apply max-h-[70vh] max-w-[260px];
+    @apply max-h-[70vh] max-w-[240px];
   }
 }
 
-/* Фикс для маленьких экранов */
+/* Фикс для маленьких экранов Android */
 @media (max-height: 700px) and (orientation: portrait) {
-  .timer-circle-wrap { @apply max-h-[40vh] max-w-[200px]; }
-  .view-top-half { @apply h-[45%]; }
-  .view-bottom-half { @apply h-[55%]; }
+  .timer-display {
+    font-size: clamp(1.6rem, 20cqi, 2.2rem);
+  }
+  .timer-input {
+    @apply w-12 h-12;
+  }
+}
+
+/* Учет предпочтений движения */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
