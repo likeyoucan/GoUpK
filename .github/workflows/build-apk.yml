@@ -17,37 +17,36 @@ jobs:
     - name: 📥 Скачивание кода
       uses: actions/checkout@v4
 
-    - name: ⚙️ Настройка Node.js
+    - name: ⚙️ Настройка Node.js и кэш
       uses: actions/setup-node@v4
       with:
         node-version: '22'
+        cache: 'npm' # Автоматически сохраняет скачанные пакеты
 
-    - name: 🎨 Сборка стилей Tailwind CSS v4
-      run: |
-        npm install @tailwindcss/cli
-        npx @tailwindcss/cli -i ./input.css -o ./www/styles.css --minify
-
-    - name: 📱 Синхронизация Capacitor (Web -> Android)
-      run: |
-        npm install @capacitor/core @capacitor/cli @capacitor/android
-        npx cap sync android
-
-    - name: ☕ Настройка Java
+    - name: ☕ Настройка Java 21 и кэш Gradle
       uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
         java-version: '21'
+        cache: 'gradle' # Ускоряет сборку Android части
+
+    - name: 📦 Установка зависимостей
+      run: npm install
+
+    - name: 🎨 Сборка стилей Tailwind CSS v4
+      run: npm run build:css
+
+    - name: 📱 Синхронизация Capacitor
+      run: npm run cap:sync
 
     - name: 🔨 Сборка APK
       working-directory: ./android
       run: |
-        # Даем права на запуск сборщика
         chmod +x ./gradlew
-        # Собираем отладочный APK
         ./gradlew assembleDebug
 
     - name: 📦 Сохранение готового APK
       uses: actions/upload-artifact@v4
       with:
-        name: my-app-apk
+        name: my-app-apk-${{ github.sha }}
         path: android/app/build/outputs/apk/debug/app-debug.apk

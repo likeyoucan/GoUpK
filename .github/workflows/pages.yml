@@ -25,15 +25,17 @@ jobs:
     - name: 📥 Скачивание кода
       uses: actions/checkout@v4
 
-    - name: ⚙️ Настройка Node.js
+    - name: ⚙️ Настройка Node.js и кэш
       uses: actions/setup-node@v4
       with:
         node-version: '22'
+        cache: 'npm'
+
+    - name: 📦 Установка зависимостей
+      run: npm install
 
     - name: 🎨 Сборка стилей Tailwind CSS v4
-      run: |
-        npm install @tailwindcss/cli
-        npx @tailwindcss/cli -i ./input.css -o ./www/styles.css --minify
+      run: npm run build:css
 
     - name: 🌐 Настройка GitHub Pages
       uses: actions/configure-pages@v4
