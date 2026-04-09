@@ -1,44 +1,36 @@
 @import "tailwindcss";
 
 /* =========================================
-   1. КОНФИГУРАЦИЯ ТЕМЫ (Tailwind v4 Style)
+   1. КОНФИГУРАЦИЯ ТЕМЫ (Tailwind v4)
 ========================================= */
 @theme {
-  /* Цвета */
+  /* Цвета проекта */
   --color-primary: var(--primary-color);
   --color-surface: var(--surface-color);
   --color-app-bg: var(--bg-color);
+  --color-app-border: var(--border-color);
+  
+  /* Шрифты с поддержкой динамического масштабирования (--font-scale) */
+  /* Это заменяет ваш скрипт tailwind.config в index.html */
+  --font-size-xs: calc(0.75rem * var(--font-scale, 1));
+  --font-size-sm: calc(0.875rem * var(--font-scale, 1));
+  --font-size-base: calc(1rem * var(--font-scale, 1));
+  --font-size-lg: calc(1.125rem * var(--font-scale, 1));
+  --font-size-xl: calc(1.25rem * var(--font-scale, 1));
+  --font-size-2xl: calc(1.5rem * var(--font-scale, 1));
+  --font-size-4xl: calc(2.25rem * var(--font-scale, 1));
+  --font-size-5xl: calc(3rem * var(--font-scale, 1));
 
-  /* Шрифты */
-  --font-sans:
-    system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
-    Arial, sans-serif;
-
-  /* Анимации */
+  /* Анимации из вашего style.css */
   --keyframes-flash-circle: {
-    0% {
-      opacity: 0.4;
-      transform: scale(0.98);
-    }
-    100% {
-      opacity: 0;
-      transform: scale(1);
-    }
+    0% { opacity: 0.4; transform: scale(0.98); }
+    100% { opacity: 0; transform: scale(1); }
   };
   --keyframes-shake: {
-    0%,
-    100% {
-      transform: translateX(0);
-    }
-    25% {
-      transform: translateX(-4px);
-    }
-    50% {
-      transform: translateX(4px);
-    }
-    75% {
-      transform: translateX(-4px);
-    }
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-4px); }
+    50% { transform: translateX(4px); }
+    75% { transform: translateX(-4px); }
   };
 
   --animation-flash: flash-circle 0.5s ease-out;
@@ -46,7 +38,7 @@
 }
 
 /* =========================================
-   2. ПЕРЕМЕННЫЕ И ТЕМЫ (Базовые слои)
+   2. ПЕРЕМЕННЫЕ И БАЗОВЫЕ СТИЛИ
 ========================================= */
 @layer base {
   :root {
@@ -59,6 +51,7 @@
     --text-secondary: hsl(var(--accent-h) 25% 45%);
     --border-color: rgba(0, 0, 0, 0.1);
     --vignette-alpha: 0.15;
+    --font-scale: 1;
   }
 
   :root.dark {
@@ -70,181 +63,145 @@
     --border-color: rgba(255, 255, 255, 0.1);
   }
 
-  /* Сбросы для Android */
-  * {
-    -webkit-tap-highlight-color: transparent;
-    box-sizing: border-box;
-  }
-
-  html,
-  body {
-    height: 100dvh;
-    overflow: hidden;
-    overscroll-behavior: none;
-  }
+  /* Сброс для мобильных ОС */
+  * { -webkit-tap-highlight-color: transparent; }
 
   body {
-    background-color: #000; /* Фон под приложением */
+    @apply h-[100dvh] w-full overflow-hidden flex items-center justify-center bg-black;
     color: var(--text-color);
-    -webkit-font-smoothing: antialiased;
-    -webkit-user-select: none;
+    font-family: var(--font-sans);
+    overscroll-behavior: none;
     user-select: none;
+    -webkit-user-select: none;
     touch-action: manipulation;
   }
 
-  /* Разрешаем выделение только там, где нужно */
-  .selectable-data,
-  input,
-  textarea {
+  /* Разрешаем выделение данных (результатов кругов) */
+  .selectable-data, .selectable-data * {
+    user-select: text !important;
+    -webkit-user-select: text !important;
+  }
+
+  input[type="text"], input[type="number"] {
+    @apply bg-transparent outline-none;
     user-select: text;
-    -webkit-user-select: text;
   }
 }
 
 /* =========================================
-   3. КОМПОНЕНТЫ (Layer Components)
+   3. КОМПОНЕНТЫ И МОБИЛЬНЫЕ ФИКСЫ
 ========================================= */
 @layer components {
-  /* Safe Areas для вырезов в экране Android */
-  .safe-area-container {
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
+  /* Адаптация под вырезы в экране (Safe Area) */
+  .app-nav-safe {
+    padding-bottom: calc(env(safe-area-inset-bottom) + 1rem);
   }
 
-  /* Таймер */
+  /* Круг таймера */
   .timer-circle-wrap {
-    width: 100%;
-    max-width: 75%;
-    aspect-ratio: 1 / 1;
-    margin: 1vh auto;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @apply w-full max-w-[75%] aspect-square flex items-center justify-center relative;
+    max-height: 45vh;
     container-type: inline-size;
   }
 
   .timer-display {
     font-size: clamp(2rem, 22cqi, 2.8rem);
-    transition: all 0.3s ease;
-    font-variant-numeric: tabular-nums;
-    @apply leading-none tracking-tight whitespace-nowrap;
+    @apply font-mono font-bold tracking-tighter tabular-nums transition-all duration-300;
   }
 
   .timer-display.is-go {
-    font-size: clamp(3rem, 35cqi, 4.8rem);
-    font-style: italic;
-  }
-
-  /* Слайдер (Range) */
-  input[type="range"] {
-    @apply appearance-none bg-transparent h-8 touch-pan-y;
-  }
-
-  input[type="range"]::-webkit-slider-thumb {
-    @apply appearance-none h-6 w-6 rounded-full shadow-md border-2 border-primary transition-transform active:scale-110;
-    background: var(--surface-color);
-    margin-top: -10px;
-  }
-
-  input[type="range"]::-webkit-slider-runnable-track {
-    @apply w-full h-1 rounded-full;
-    background: var(--border-color);
+    font-size: clamp(3.5rem, 35cqi, 5rem);
+    @apply italic;
   }
 
   /* Кастомный Toggle */
   .custom-toggle {
-    @apply w-11 h-6 rounded-full relative transition-colors duration-300;
-    background-color: var(--border-color);
+    @apply w-11 h-6 rounded-full relative transition-colors duration-300 bg-[var(--border-color)];
   }
-
   .custom-toggle::after {
     content: "";
-    @apply absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-300;
+    @apply absolute top-[2px] left-[2px] w-5 h-5 bg-white rounded-full shadow transition-transform duration-300;
+  }
+  input:checked + .custom-toggle { background-color: var(--primary-color); }
+  input:checked + .custom-toggle::after { transform: translateX(20px); }
+
+  /* Слайдеры (Range) */
+  input[type="range"] {
+    @apply appearance-none bg-transparent h-8 w-full touch-pan-y;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    @apply appearance-none h-6 w-6 rounded-full border-2 border-primary shadow-md transition-transform active:scale-110;
+    background: var(--surface-color);
+    margin-top: -10px;
+  }
+  input[type="range"]::-webkit-slider-runnable-track {
+    @apply w-full h-1 bg-[var(--border-color)] rounded-full mt-[14px];
   }
 
-  input:checked + .custom-toggle {
-    background-color: var(--primary-color);
+  /* Инпуты ввода времени */
+  .timer-input {
+    @apply transition-colors duration-300 border-b-2;
+    border-bottom-color: rgba(128,128,128,0.3);
   }
-
-  input:checked + .custom-toggle::after {
-    @apply translate-x-5;
+  .timer-input:focus {
+    border-bottom-color: var(--primary-color) !important;
   }
 }
 
 /* =========================================
-   4. ЭФФЕКТ ЖИДКОГО СТЕКЛА (Liquid Glass)
+   4. УТИЛИТЫ И СПЕЦЭФФЕКТЫ
 ========================================= */
 @layer utilities {
-  :root.glass-effect body {
-    --glass-blur: blur(20px) saturate(150%);
-
-    .glass-card {
-      backdrop-filter: var(--glass-blur);
-      -webkit-backdrop-filter: var(--glass-blur);
-      background-color: color-mix(
-        in srgb,
-        var(--surface-color) 60%,
-        transparent
-      );
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    nav {
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      background: linear-gradient(
-        to top,
-        color-mix(in srgb, var(--surface-color) 40%, transparent),
-        transparent
-      );
-    }
-  }
-
-  /* Темы для темного стекла */
-  :root.dark.glass-effect body .glass-card {
-    background-color: color-mix(in srgb, var(--surface-color) 40%, transparent);
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05);
-  }
+  .app-bg { background-color: var(--bg-color); }
+  .app-surface { background-color: var(--surface-color); }
+  .app-text { color: var(--text-color); }
+  .app-text-sec { color: var(--text-secondary); }
+  .primary-text { color: var(--primary-color); }
+  .primary-bg { background-color: var(--primary-color); }
+  .app-border { border-color: var(--border-color); }
 
   /* Виньетка */
-  .has-vignette {
-    position: relative;
-    &::before {
-      content: "";
-      @apply absolute inset-0 pointer-events-none z-[-1];
-      box-shadow: inset 0 0 15vh rgba(0, 0, 0, var(--vignette-alpha));
+  .has-vignette::before {
+    content: "";
+    @apply absolute inset-0 pointer-events-none z-[-1] transition-shadow duration-300;
+    box-shadow: inset 0 0 15vh rgba(0, 0, 0, var(--vignette-alpha));
+  }
+
+  /* Стеклянный эффект (Liquid Glass) */
+  :root.glass-effect {
+    & .app-surface:not(button) {
+      background-color: color-mix(in srgb, var(--surface-color) 60%, transparent);
+      backdrop-filter: blur(20px) saturate(150%);
+      -webkit-backdrop-filter: blur(20px) saturate(150%);
+    }
+    
+    & nav {
+      background: linear-gradient(to top, color-mix(in srgb, var(--surface-color) 30%, transparent), transparent);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+
+    & #tb-modal, & #sw-sessions-modal {
+      @apply !bg-white/40 dark:!bg-black/50;
     }
   }
+
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 }
 
 /* =========================================
-   5. АДАПТИВНОСТЬ (Media Queries)
+   5. АДАПТИВНОСТЬ ПОД ГИБКИЕ ЭКРАНЫ
 ========================================= */
 @media (orientation: landscape) and (max-height: 600px) {
-  .view-top-half {
-    @apply h-auto w-[45%] flex-none flex-row;
-  }
-  .timer-circle-wrap {
-    @apply max-h-[70vh] max-w-[240px];
-  }
+  .view-top-half { @apply h-auto w-[45%] flex-none; }
+  .view-bottom-half { @apply h-[90%] w-[45%] flex-none justify-center; }
+  .timer-circle-wrap { @apply max-h-[70vh] max-w-[240px]; }
+  #viewsContainer > div { @apply flex-row items-center justify-center gap-8; }
 }
 
-/* Фикс для маленьких экранов Android */
+/* Маленькие телефоны */
 @media (max-height: 700px) and (orientation: portrait) {
-  .timer-display {
-    font-size: clamp(1.6rem, 20cqi, 2.2rem);
-  }
-  .timer-input {
-    @apply w-12 h-12;
-  }
-}
-
-/* Учет предпочтений движения */
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
-  }
+  .timer-circle-wrap { @apply max-h-[38vh] max-w-[200px]; }
+  .timer-display { font-size: clamp(1.8rem, 20cqi, 2.4rem); }
 }
