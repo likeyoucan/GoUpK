@@ -16,6 +16,10 @@ export const sm = {
 
   init() {
     this.applySettings();
+    
+    // ИЗМЕНЕНИЕ 1: Создаем AudioContext сразу при инициализации.
+    // Он будет в состоянии 'suspended', пока пользователь не совершит действие.
+    this.initAudio();
 
     $("toggle-sound")?.addEventListener("change", (e) => {
       this.soundEnabled = e.target.checked;
@@ -50,24 +54,15 @@ export const sm = {
       safeSetLS("app_sound_theme", this.theme);
       this.play("click");
     });
-
-    document.addEventListener(
-      "click",
-      () => {
-        this.initAudio();
+    
+    // ИЗМЕНЕНИЕ 2: Эти обработчики теперь ТОЛЬКО разблокируют уже
+    // существующий контекст, а не создают его.
+    const unlockHandler = () => {
         this.unlock();
-      },
-      { once: true, capture: true },
-    );
-
-    document.addEventListener(
-      "touchstart",
-      () => {
-        this.initAudio();
-        this.unlock();
-      },
-      { once: true, passive: true },
-    );
+    };
+    
+    document.addEventListener("click", unlockHandler, { once: true, capture: true });
+    document.addEventListener("touchstart", unlockHandler, { once: true, passive: true });
   },
 
   applySettings() {
@@ -111,13 +106,17 @@ export const sm = {
   },
 
   initAudio() {
-    if (this.soundEnabled && !this.audioCtx) {
-      try {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (AudioContext) this.audioCtx = new AudioContext();
-      } catch (e) {
-        console.warn("AudioContext creation failed:", e);
+    // Эта функция теперь вызывается только один раз (или при включении звука)
+    if (this.audioCtx || !this.soundEnabled) return;
+    try {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (AudioContext) {
+        this.audioCtx = new AudioContext();
       }
+    } catch (e) {
+      console.warn("AudioContext creation failed:", e);
+      // Если создать контекст не удалось, отключаем звук, чтобы избежать ошибок
+      this.soundEnabled = false;
     }
   },
 
@@ -132,7 +131,7 @@ export const sm = {
             : applyLevel(pattern),
         );
       } catch (e) {
-        // Vibration API может быть недоступна — молча игнорируем
+        // Молча игнорируем
       }
     }
   },
@@ -203,7 +202,11 @@ export const sm = {
   },
 
   play(type) {
+    // Эта функция теперь надежно работает с первого раза
     if (!this.soundEnabled || !this.audioCtx || this.volume === 0) return;
+    
+    // Пытаемся разбудить контекст при каждом вызове.
+    // Это безопасно и работает как подстраховка.
     this.unlock();
 
     if (this.theme === "classic") {
