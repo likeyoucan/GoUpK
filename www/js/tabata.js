@@ -1,5 +1,3 @@
-// tabata.js
-
 import {
   $,
   escapeHTML,
@@ -17,6 +15,7 @@ import {
 } from "./utils.js";
 import { sm } from "./sound.js";
 import { t } from "./i18n.js";
+
 export const tb = {
   workouts: [],
   selectedId: null,
@@ -35,9 +34,7 @@ export const tb = {
   lastBeepSec: 0,
   editingWorkoutId: null,
   ringLength: 282.74,
-  // 🟢 УЛУЧШЕНИЕ: базовые классы для statusText вынесены в константу
-  // чтобы не перезаписывать className целиком (это стирало бы Tailwind-классы)
-  STATUS_BASE_CLASS: "font-bold uppercase tracking-widest mb-1",
+
   init() {
     this.els = {
       listSection: $("tb-list-section"),
@@ -59,18 +56,22 @@ export const tb = {
       editRounds: $("tb-edit-rounds"),
       nameError: $("tb-name-error"),
     };
+
     if (this.els.ring) {
       this.els.ring.style.strokeDasharray = this.ringLength;
       this.els.ring.style.strokeDashoffset = this.ringLength;
     }
+
     document.addEventListener("timerStarted", (e) => {
       if (e.detail !== "tabata" && this.status !== "STOPPED" && !this.paused)
         this.pause();
     });
+
     document.addEventListener("languageChanged", () => {
       this.renderList();
       if (this.selectedId) this.selectWorkout(this.selectedId);
     });
+
     try {
       const stored = safeGetLS("tb_workouts");
       if (stored) {
@@ -84,28 +85,35 @@ export const tb = {
         throw new Error("No data");
       }
     } catch (e) {
-      console.warn("Failed to parse tabata workouts, using defaults");
+      console.warn("Failed to parse tabata workouts", e);
       this.workouts = [
         { id: 1, name: "Tabata 1", work: 20, rest: 10, rounds: 8 },
       ];
       safeSetLS("tb_workouts", JSON.stringify(this.workouts));
     }
+
     let lastSelectedId = safeGetLS("tb_selected_id");
     if (lastSelectedId) lastSelectedId = Number(lastSelectedId);
+
     const exists = this.workouts.find((w) => w.id === lastSelectedId);
     if (exists) {
       this.selectWorkout(lastSelectedId);
     } else {
       this.selectWorkout(this.workouts[0].id);
     }
+
     this.renderList();
+
     this.els.startBtn?.addEventListener("click", () => this.toggle());
     this.els.stopBtn?.addEventListener("click", () => this.stop());
+
     $("tb-openModalBtn")?.addEventListener("click", () => this.openModal(null));
     $("tb-closeModalBtn")?.addEventListener("click", () => this.closeModal());
+
     this.els.editName?.addEventListener("input", () =>
       this.els.nameError?.classList.add("hidden"),
     );
+
     document.querySelectorAll("[data-tb-adj]").forEach((btn) => {
       btn.addEventListener("click", (e) => {
         const [id, delta] = e.currentTarget
@@ -114,6 +122,7 @@ export const tb = {
         adjustVal(id, parseInt(delta));
       });
     });
+
     this.els.list?.addEventListener("click", (e) => {
       const delBtn = e.target.closest(".tb-del-btn");
       const editBtn = e.target.closest(".tb-edit-btn");
@@ -128,10 +137,12 @@ export const tb = {
         this.selectWorkout(Number(row.dataset.id));
       }
     });
+
     this.els.list?.addEventListener("keydown", (e) => {
       const row = e.target.closest(".tb-workout-row");
       if (e.key === "Enter" && row) this.selectWorkout(Number(row.dataset.id));
     });
+
     bgWorker.addEventListener("message", (e) => {
       if (
         e.data === "tick" &&
@@ -141,6 +152,7 @@ export const tb = {
       )
         this.tick(true);
     });
+
     document.addEventListener("visibilitychange", () => {
       if (
         document.visibilityState === "visible" &&
@@ -152,6 +164,7 @@ export const tb = {
       }
     });
   },
+
   getUniqueName(baseName) {
     let name = baseName;
     let counter = 1;
@@ -163,9 +176,11 @@ export const tb = {
     }
     return name;
   },
+
   openModal(idToEdit = null) {
     this.els.nameError?.classList.add("hidden");
     this.editingWorkoutId = idToEdit;
+
     if (idToEdit) {
       const w = this.workouts.find((x) => x.id === idToEdit);
       if (w) {
@@ -180,22 +195,28 @@ export const tb = {
       this.els.editRest.value = 10;
       this.els.editRounds.value = 8;
     }
+
     this.els.modal.classList.remove("hidden");
     this.els.modal.classList.add("flex");
     this.els.modal.removeAttribute("inert");
     this.els.modal.removeAttribute("aria-hidden");
+
     void this.els.modal.offsetWidth;
+
     this.els.modal.classList.remove("translate-y-full");
     this.els.modal.classList.add("translate-y-0");
-    setTimeout(() => this.els.editName?.focus(), 300);
+
+    setTimeout(() => this.els.editName.focus(), 300);
   },
+
   closeModal() {
-    // 🟢 УЛУЧШЕНИЕ: blur перед закрытием убирает клавиатуру на мобильных
     if (document.activeElement === this.els.editName) {
       this.els.editName.blur();
     }
+
     this.els.modal.classList.remove("translate-y-0");
     this.els.modal.classList.add("translate-y-full");
+
     setTimeout(() => {
       this.els.modal.classList.add("hidden");
       this.els.modal.classList.remove("flex");
@@ -204,14 +225,17 @@ export const tb = {
       this.editingWorkoutId = null;
     }, 400);
   },
+
   saveWorkout() {
     let finalName = this.els.editName.value.trim();
     if (!finalName) finalName = this.getUniqueName(t("tabata"));
+
     const exists = this.workouts.some(
       (w) =>
         w.name.toLowerCase() === finalName.toLowerCase() &&
         w.id !== this.editingWorkoutId,
     );
+
     if (exists) {
       this.els.nameError?.classList.remove("hidden");
       this.els.editName.classList.add("animate-shake");
@@ -221,9 +245,11 @@ export const tb = {
       );
       return;
     }
+
     const w = Math.max(1, parseInt(this.els.editWork.value) || 20);
     const r = Math.max(1, parseInt(this.els.editRest.value) || 10);
     const rnd = Math.max(1, parseInt(this.els.editRounds.value) || 8);
+
     if (this.editingWorkoutId) {
       const index = this.workouts.findIndex(
         (x) => x.id === this.editingWorkoutId,
@@ -251,11 +277,13 @@ export const tb = {
       this.workouts.push(newW);
       this.editingWorkoutId = newW.id;
     }
+
     safeSetLS("tb_workouts", JSON.stringify(this.workouts));
     this.renderList();
     this.selectWorkout(this.editingWorkoutId);
     this.closeModal();
   },
+
   deleteWorkout(id) {
     if (this.status !== "STOPPED") {
       showToast(t("active_timer"));
@@ -270,26 +298,33 @@ export const tb = {
     if (this.selectedId === id) this.selectWorkout(this.workouts[0].id);
     this.renderList();
   },
+
   selectWorkout(id) {
     if (this.status !== "STOPPED") return;
     const w = this.workouts.find((k) => k.id === id);
     if (!w) return;
+
     this.selectedId = id;
     safeSetLS("tb_selected_id", id);
+
     this.work = w.work * 1000;
     this.rest = w.rest * 1000;
     this.rounds = w.rounds;
     updateText(this.els.activeName, w.name);
     updateText(
       this.els.activeDetail,
-      `${w.work}${t("sec").toLowerCase()} / ${w.rest}${t("sec").toLowerCase()} • ${w.rounds} ${t("rounds")}`,
+      `${w.work}${t("sec").toLowerCase()} / ${w.rest}${t(
+        "sec",
+      ).toLowerCase()} • ${w.rounds} ${t("rounds")}`,
     );
     this.renderList();
   },
+
   renderList() {
     if (!this.els.list) return;
     this.els.list.replaceChildren();
     const fragment = document.createDocumentFragment();
+
     this.workouts.forEach((w) => {
       const div = document.createElement("div");
       const isAct = w.id === this.selectedId;
@@ -300,35 +335,45 @@ export const tb = {
           : "app-surface border border-transparent shadow-sm"
       }`;
       div.dataset.id = w.id;
+
       div.innerHTML = `
         <div class="flex-1">
-          <div class="font-bold ${isAct ? "primary-text" : "app-text"}">${escapeHTML(w.name)}</div>
-          <div class="text-xs app-text-sec mt-1">${w.work}${t("sec").toLowerCase()} / ${w.rest}${t("sec").toLowerCase()} • ${w.rounds} ${t("rds")}</div>
+          <div class="font-bold app-text ${
+            isAct ? "primary-text" : ""
+          }">${escapeHTML(w.name)}</div>
+          <div class="text-xs app-text-sec mt-1">${w.work}${t(
+            "sec",
+          ).toLowerCase()} / ${w.rest}${t("sec").toLowerCase()} • ${w.rounds} ${t(
+            "rds",
+          )}</div>
         </div>
         <div class="flex gap-1 shrink-0">
-          <button type="button" aria-label="${t("edit")}" data-id="${w.id}" class="tb-edit-btn text-gray-400 hover:primary-text p-2 focus:outline-none custom-focus rounded-lg active:scale-95">
-            <svg focusable="false" aria-hidden="true" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
-            </svg>
+          <button type="button" aria-label="${t("edit")}" data-id="${
+            w.id
+          }" class="tb-edit-btn text-gray-400 hover:primary-text p-2 focus:outline-none custom-focus rounded-lg active:scale-95">
+            <svg focusable="false" aria-hidden="true" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
           </button>
-          <button type="button" aria-label="${t("delete")}" data-id="${w.id}" class="tb-del-btn text-red-500 opacity-50 hover:opacity-100 p-2 focus:outline-none custom-focus rounded-lg active:scale-95">
-            <svg focusable="false" aria-hidden="true" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
+          <button type="button" aria-label="${t("delete")}" data-id="${
+            w.id
+          }" class="tb-del-btn text-red-500 opacity-50 hover:opacity-100 p-2 focus:outline-none custom-focus rounded-lg active:scale-95">
+            <svg focusable="false" aria-hidden="true" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
           </button>
         </div>`;
       fragment.appendChild(div);
     });
     this.els.list.appendChild(fragment);
   },
+
   toggle() {
     sm.vibrate(50);
     sm.play("click");
     sm.unlock();
+
     if (this.status === "STOPPED") this.start();
     else if (this.paused) this.resume();
     else this.pause();
   },
+
   start() {
     document.dispatchEvent(
       new CustomEvent("timerStarted", { detail: "tabata" }),
@@ -340,9 +385,7 @@ export const tb = {
     this.paused = false;
     this.lastBeepSec = 0;
     this.els.listSection.classList.add("hidden");
-    // 🟡 ИСПРАВЛЕНО: hidden → flex (было hidden → flex через replace, но replace ненадёжен)
-    this.els.runningControls.classList.remove("hidden");
-    this.els.runningControls.classList.add("flex");
+    this.els.runningControls.classList.replace("hidden", "flex");
     updateText(this.els.totalRoundsDisplay, this.rounds);
     this.els.status.classList.remove("hidden");
     this.els.timer.classList.remove("is-go");
@@ -351,6 +394,7 @@ export const tb = {
     bgWorker.postMessage("start");
     this.tick();
   },
+
   pause() {
     this.paused = true;
     bgWorker.postMessage("stop");
@@ -360,6 +404,7 @@ export const tb = {
     releaseWakeLock();
     updateTitle("");
   },
+
   resume() {
     document.dispatchEvent(
       new CustomEvent("timerStarted", { detail: "tabata" }),
@@ -372,6 +417,7 @@ export const tb = {
     this.tick();
     this.updatePhaseStyles();
   },
+
   stop() {
     sm.vibrate(30);
     sm.play("click");
@@ -382,25 +428,24 @@ export const tb = {
     releaseWakeLock();
     updateTitle("");
     this.els.listSection.classList.remove("hidden");
-    // 🟡 ИСПРАВЛЕНО: flex → hidden через remove+add
-    this.els.runningControls.classList.remove("flex");
-    this.els.runningControls.classList.add("hidden");
+    this.els.runningControls.classList.replace("flex", "hidden");
     this.els.status.classList.add("hidden");
     updateText(this.els.timer, "GO");
     this.els.timer.classList.add("is-go");
-    if (this.els.ring) {
-      this.els.ring.style.strokeDashoffset = this.ringLength;
-    }
+    this.els.ring.style.strokeDashoffset = this.ringLength;
   },
+
   tick(isBackground = false) {
     if (this.status === "STOPPED" || this.paused) return;
     const now = performance.now();
     const rem = this.phaseEndTime - now;
+
     if (rem <= 0) {
       const isDeepSleepWakeup = rem < -2000;
       this.nextPhase(isDeepSleepWakeup ? Math.abs(rem) : 0);
       return;
     }
+
     if (now - this.lastRender >= 16 || isBackground) {
       if (!isBackground) {
         this.render(rem);
@@ -410,14 +455,17 @@ export const tb = {
       }
       this.lastRender = now;
     }
+
     if (!isBackground) {
       cancelAnimationFrame(this.rAF);
       this.rAF = requestAnimationFrame(() => this.tick());
     }
   },
+
   nextPhase(missedTime = 0) {
     if (missedTime === 0) sm.vibrate([100, 50, 100]);
     this.lastBeepSec = 0;
+
     if (missedTime > 0) {
       let remainingMissed = missedTime;
       while (remainingMissed > 0 && this.status !== "STOPPED") {
@@ -462,7 +510,9 @@ export const tb = {
         if (this.currentRound >= this.rounds) {
           sm.vibrate([200, 100, 200, 100, 400]);
           sm.play("complete");
+
           announceToScreenReader(t("tabata_complete"));
+
           requestAnimationFrame(() => {
             showToast(t("tabata_complete"));
             this.stop();
@@ -480,47 +530,52 @@ export const tb = {
       }
       this.phaseEndTime = performance.now() + this.phaseDuration;
     }
+
     this.updatePhaseStyles();
     this.tick();
   },
+
   updatePhaseStyles() {
-    if (!this.els.ring) return;
     updateText(this.els.roundDisplay, this.currentRound);
-    // 🟡 ИСПРАВЛЕНО: НЕ перезаписываем className целиком — это стирало бы все классы.
-    // Вместо этого меняем только цветовые классы через remove+add.
-    const statusEl = this.els.status;
-    statusEl.classList.remove("primary-text", "text-blue-500", "app-text-sec");
-    this.els.ring.classList.remove("primary-stroke");
+    this.els.ring.classList.remove(
+      "primary-stroke",
+      "text-blue-500",
+      "text-gray-500",
+    );
     this.els.ring.style.stroke = "";
+
     if (this.status === "WORK") {
-      updateText(statusEl, t("work"));
-      statusEl.classList.add("primary-text");
+      updateText(this.els.status, t("work"));
+      this.els.status.className =
+        "text-xl font-bold uppercase tracking-widest mb-1 primary-text";
       this.els.ring.classList.add("primary-stroke");
     } else if (this.status === "REST") {
-      updateText(statusEl, t("rest"));
-      statusEl.classList.add("text-blue-500");
+      updateText(this.els.status, t("rest"));
+      this.els.status.className =
+        "text-xl font-bold uppercase tracking-widest mb-1 text-blue-500";
       this.els.ring.style.stroke = "#3b82f6";
     } else {
-      // READY
-      updateText(statusEl, t("get_ready"));
-      statusEl.classList.add("app-text-sec");
+      updateText(this.els.status, t("get_ready"));
+      this.els.status.className =
+        "text-xl font-bold uppercase tracking-widest mb-1 app-text-sec";
       this.els.ring.classList.add("primary-stroke");
     }
   },
+
   render(rem) {
     const sTotal = Math.max(0, Math.ceil(rem / 1000));
+
     if (sTotal <= 3 && sTotal > 0 && this.lastBeepSec !== sTotal) {
       sm.play("tick");
       this.lastBeepSec = sTotal;
     }
+
     const timeStr = formatTimeStr(sTotal, false);
     updateText(this.els.timer, timeStr);
     updateTitle(`${this.status}: ${timeStr}`);
-    if (this.els.ring) {
-      this.els.ring.style.strokeDashoffset =
-        this.ringLength -
-        (Math.max(0, this.phaseDuration - rem) / this.phaseDuration) *
-          this.ringLength;
-    }
+    this.els.ring.style.strokeDashoffset =
+      this.ringLength -
+      (Math.max(0, this.phaseDuration - rem) / this.phaseDuration) *
+        this.ringLength;
   },
 };
