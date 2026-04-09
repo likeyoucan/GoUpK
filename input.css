@@ -412,7 +412,6 @@ html.dark.no-adaptive .default-bg-btn {
 #sw-name-modal {
   background-color: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
 }
 
 #reset-modal-content,
@@ -617,7 +616,6 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
 :root.glass-effect body #sw-sessions-modal {
   background-color: rgba(255, 255, 255, 0.4);
   backdrop-filter: blur(20px) saturate(150%);
-  -webkit-backdrop-filter: blur(20px) saturate(150%);
 }
 :root.dark.glass-effect body #tb-modal,
 :root.dark.glass-effect body #sw-sessions-modal {
@@ -629,7 +627,6 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
 :root.glass-effect body #sw-name-modal-content {
   background-color: color-mix(in srgb, var(--surface-color) 70%, transparent);
   backdrop-filter: blur(24px) saturate(150%);
-  -webkit-backdrop-filter: blur(24px) saturate(150%);
   box-shadow:
     inset 0 1px 1px rgba(255, 255, 255, 0.7),
     0 20px 40px rgba(0, 0, 0, 0.15);
@@ -651,7 +648,7 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
     color-mix(in srgb, var(--surface-color) 2%, transparent)
   );
   backdrop-filter: blur(16px) saturate(150%);
-  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  backdrop-filter: blur(16px) saturate(150%);
   border-top: 1px solid rgba(255, 255, 255, 0.2);
   box-shadow: none;
 }
@@ -667,7 +664,6 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
 :root.glass-effect body .select-wrapper.app-surface {
   background-color: rgba(255, 255, 255, 0.15);
   backdrop-filter: blur(12px) saturate(150%);
-  -webkit-backdrop-filter: blur(12px) saturate(150%);
   border: 1px solid rgba(255, 255, 255, 0.3);
   box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.4);
   color: var(--text-color);
@@ -681,7 +677,6 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
 :root.glass-effect body button.app-surface {
   background: color-mix(in srgb, var(--surface-color) 35%, transparent);
   backdrop-filter: blur(16px) saturate(150%);
-  -webkit-backdrop-filter: blur(16px) saturate(150%);
   box-shadow:
     inset 0 1px 1px rgba(255, 255, 255, 0.4),
     0 4px 12px rgba(0, 0, 0, 0.05);
@@ -696,7 +691,7 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
 :root.glass-effect body button#sw-lapBtn:not(.is-reset) {
   background: color-mix(in srgb, var(--surface-color) 60%, transparent);
   backdrop-filter: blur(16px) saturate(150%);
-  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  backdrop-filter: blur(16px) saturate(150%);
   box-shadow:
     inset 0 1px 2px rgba(255, 255, 255, 0.6),
     0 4px 12px rgba(0, 0, 0, 0.08);
@@ -712,7 +707,6 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
 :root.glass-effect body #tb-saveModalBtn {
   background: color-mix(in srgb, var(--primary-color) 70%, transparent);
   backdrop-filter: blur(16px) saturate(150%);
-  -webkit-backdrop-filter: blur(16px) saturate(150%);
   box-shadow:
     inset 0 1px 2px rgba(255, 255, 255, 0.3),
     0 4px 12px color-mix(in srgb, var(--primary-color) 30%, transparent);
@@ -725,7 +719,6 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
 :root.glass-effect body .is-reset {
   background: rgba(239, 68, 68, 0.85);
   backdrop-filter: blur(16px) saturate(150%);
-  -webkit-backdrop-filter: blur(16px) saturate(150%);
   box-shadow:
     inset 0 1px 2px rgba(255, 255, 255, 0.4),
     0 4px 15px rgba(239, 68, 68, 0.4);
@@ -742,7 +735,6 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
 :root.glass-effect body #toast {
   background-color: color-mix(in srgb, var(--surface-color) 50%, transparent);
   backdrop-filter: blur(20px) saturate(150%);
-  -webkit-backdrop-filter: blur(20px) saturate(150%);
   box-shadow:
     inset 0 1px 1px rgba(255, 255, 255, 0.5),
     0 8px 32px rgba(0, 0, 0, 0.05);
@@ -781,7 +773,6 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
 :root.glass-effect body [id^="sw-details-"] > div:last-child {
   background-color: color-mix(in srgb, var(--surface-color) 30%, transparent);
   backdrop-filter: blur(16px) saturate(150%);
-  -webkit-backdrop-filter: blur(16px) saturate(150%);
   box-shadow:
     inset 0 1px 1px rgba(255, 255, 255, 0.2),
     0 2px 4px rgba(0, 0, 0, 0.05);
