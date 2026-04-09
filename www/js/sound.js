@@ -1,4 +1,3 @@
-// sound.js
 import { $, safeGetLS, safeSetLS } from "./utils.js";
 
 export const sm = {
@@ -22,12 +21,7 @@ export const sm = {
       this.soundEnabled = e.target.checked;
       safeSetLS("app_sound", this.soundEnabled);
       if (this.soundEnabled) this.initAudio();
-
-      const volSlider = $("volumeSlider");
-      if (volSlider) {
-        volSlider.disabled = !this.soundEnabled;
-        volSlider.style.opacity = this.soundEnabled ? "1" : "0.5";
-      }
+      this.updateVolumeUI();
     });
 
     $("toggle-vibro")?.addEventListener("change", (e) => {
@@ -45,7 +39,8 @@ export const sm = {
 
     $("volumeSlider")?.addEventListener("input", (e) => {
       this.volume = parseFloat(e.target.value);
-      $("volumeDisplay").textContent = Math.round(this.volume * 100) + "%";
+      const display = $("volumeDisplay");
+      if (display) display.textContent = Math.round(this.volume * 100) + "%";
       safeSetLS("app_volume", this.volume);
     });
     $("volumeSlider")?.addEventListener("change", () => this.play("click"));
@@ -56,6 +51,8 @@ export const sm = {
       this.play("click");
     });
 
+    // Разблокируем AudioContext при первом взаимодействии пользователя
+    // (требование браузеров: AudioContext не может стартовать без жеста)
     document.addEventListener(
       "click",
       () => {
@@ -63,6 +60,16 @@ export const sm = {
         this.unlock();
       },
       { once: true, capture: true },
+    );
+
+    // 🟢 УЛУЧШЕНИЕ: также разблокируем при первом касании (мобильные)
+    document.addEventListener(
+      "touchstart",
+      () => {
+        this.initAudio();
+        this.unlock();
+      },
+      { once: true, passive: true },
     );
   },
 
@@ -81,34 +88,40 @@ export const sm = {
     if ($("vibroSlider")) $("vibroSlider").value = this.vibroLevel;
     if ($("volumeSlider")) {
       $("volumeSlider").value = this.volume;
-      $("volumeDisplay").textContent = Math.round(this.volume * 100) + "%";
+      const display = $("volumeDisplay");
+      if (display) display.textContent = Math.round(this.volume * 100) + "%";
     }
     if ($("soundThemeSelect")) $("soundThemeSelect").value = this.theme;
 
+    this.updateVolumeUI();
+    this.updateVibroUI();
+  },
+
+  // 🟢 ВЫНЕСЕНО: управление состоянием слайдера громкости в отдельный метод
+  updateVolumeUI() {
     const volSlider = $("volumeSlider");
     if (volSlider) {
       volSlider.disabled = !this.soundEnabled;
       volSlider.style.opacity = this.soundEnabled ? "1" : "0.5";
     }
-
-    this.updateVibroUI();
   },
 
   updateVibroUI() {
-    if ($("vibro-level-container")) {
-      $("vibro-level-container").style.opacity = this.vibroEnabled
-        ? "1"
-        : "0.5";
-      $("vibro-level-container").style.pointerEvents = this.vibroEnabled
-        ? "auto"
-        : "none";
+    const container = $("vibro-level-container");
+    if (container) {
+      container.style.opacity = this.vibroEnabled ? "1" : "0.5";
+      container.style.pointerEvents = this.vibroEnabled ? "auto" : "none";
     }
   },
 
   initAudio() {
     if (this.soundEnabled && !this.audioCtx) {
-      const AudioContext = window.AudioContext || window.webkitAudioContext;
-      if (AudioContext) this.audioCtx = new AudioContext();
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) this.audioCtx = new AudioContext();
+      } catch (e) {
+        console.warn("AudioContext creation failed:", e);
+      }
     }
   },
 
@@ -122,7 +135,9 @@ export const sm = {
             ? pattern.map(applyLevel)
             : applyLevel(pattern),
         );
-      } catch (e) {}
+      } catch (e) {
+        // Vibration API может быть недоступна — молча игнорируем
+      }
     }
   },
 
@@ -152,7 +167,6 @@ export const sm = {
     if (sustain) {
       const attackTime = Math.min(0.05, duration * 0.1);
       const releaseTime = Math.min(0.05, duration * 0.1);
-
       gainNode.gain.linearRampToValueAtTime(peakVol, startTime + attackTime);
       gainNode.gain.linearRampToValueAtTime(
         peakVol,
@@ -160,7 +174,6 @@ export const sm = {
       );
       gainNode.gain.linearRampToValueAtTime(0.001, startTime + duration);
     } else {
-      // Для эффекта "ВУШ" используем классический режим — звук быстро затухает сам
       gainNode.gain.linearRampToValueAtTime(
         peakVol,
         startTime + Math.min(0.02, duration * 0.1),
@@ -175,12 +188,8 @@ export const sm = {
           slideToFreq,
           startTime + duration * 0.4,
         );
-        osc.frequency.linearRampToValueAtTime(
-          slideToFreq,
-          startTime + duration,
-        );
+        osc.frequency.linearRampToValueAtTime(slideToFreq, startTime + duration);
       } else {
-        // Резкое падение частоты — главный секрет эффекта "ВУШ"
         osc.frequency.exponentialRampToValueAtTime(
           slideToFreq,
           startTime + duration,
@@ -221,42 +230,23 @@ export const sm = {
         }
       }
     } else if (this.theme === "sport") {
-      // ТЕМА СПОРТ: Аэродинамические эффекты (Звонкие Вжухи)
-
       if (type === "click") this.playNote(1200, "triangle", 0, 0.05, 0.2, 200);
       else if (type === "tick")
         this.playNote(1500, "triangle", 0, 0.1, 0.3, 300);
       else if (type === "work_start") {
-        // Резкий, звонкий взмах! (Go!)
         this.playNote(2500, "triangle", 0.0, 0.3, 0.7, 100);
         this.playNote(1000, "sine", 0.0, 0.3, 0.6, 50);
       } else if (type === "rest_start") {
-        // Более глухой, расслабляющий взмах вниз (Rest)
         this.playNote(1200, "triangle", 0.0, 0.3, 0.4, 100);
         this.playNote(600, "sine", 0.0, 0.3, 0.5, 50);
       } else if (type === "complete") {
-        // Звонкий тройной ВШУХ!
         const playSwoosh = (time, duration, isFinal = false) => {
-          // Звонкий металлический свист (как лезвие меча)
-          this.playNote(
-            isFinal ? 3500 : 2500,
-            "triangle",
-            time,
-            duration,
-            0.7,
-            100,
-          );
-
-          // Плотный поток воздуха (бас)
+          this.playNote(isFinal ? 3500 : 2500, "triangle", time, duration, 0.7, 100);
           this.playNote(isFinal ? 1500 : 1000, "sine", time, duration, 0.8, 50);
-
           if (isFinal) {
-            // Легкий басовый "хлопок" в самом конце для эффекта удара
             this.playNote(300, "square", time, duration, 0.3, 20);
           }
         };
-
-        // Два быстрых взмаха и один мощный, длинный финишный
         playSwoosh(0.0, 0.25);
         playSwoosh(0.35, 0.25);
         playSwoosh(0.7, 0.8, true);
