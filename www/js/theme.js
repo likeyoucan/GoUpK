@@ -136,14 +136,13 @@ export const themeManager = {
     if ($("customColorInput"))
       $("customColorInput").value = safeGetLS("theme_color") || "#22c55e";
     
-    // ИСПРАВЛЕНИЕ: Безопасная установка значения для color input
     const storedBgColor = safeGetLS("theme_bg_color");
     const customBgInput = $("customBgInput");
     if (customBgInput) {
         if (storedBgColor && storedBgColor.startsWith("#")) {
             customBgInput.value = storedBgColor;
         } else {
-            customBgInput.value = "#000000"; // Безопасное значение по умолчанию
+            customBgInput.value = "#000000"; 
         }
     }
   },
@@ -253,7 +252,9 @@ export const themeManager = {
 
     const pickerWrapper = $(customId)?.closest(".relative");
     if (!pickerWrapper) return;
-    const gradientEl = pickerWrapper.querySelector(".bg-\\[conic-gradient.*\\]");
+    
+    // === ИСПРАВЛЕНИЕ: Используем правильный селектор по атрибуту ===
+    const gradientEl = pickerWrapper.querySelector('[class*="bg-[conic-gradient"]');
 
     // Сброс состояния кастомного пикера
     pickerWrapper.classList.remove(
@@ -267,9 +268,7 @@ export const themeManager = {
       pickerWrapper.classList.add(
         "ring-2", "ring-offset-2", "ring-offset-white", "dark:ring-offset-gray-900"
       );
-      // Устанавливаем фон для кружка
       pickerWrapper.style.backgroundColor = hex;
-      // Скрываем градиент, чтобы фон был виден
       if (gradientEl) gradientEl.style.opacity = '0';
     }
   },
