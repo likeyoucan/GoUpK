@@ -350,16 +350,13 @@ html.dark .app-bg.has-vignette::before {
 /* Фикс дефолтного круга фона */
 .default-bg-btn {
   border: 1px solid var(--border-color);
-  transition:
-    background-color 0.3s,
-    border-color 0.3s;
-}
-.default-bg-btn {
-  background-color: #f3f4f6;
+  background-color: #f3f4f6; /* Светлая тема */
+  transition: background-color 0.3s, border-color 0.3s;
 }
 html.dark .default-bg-btn {
-  background-color: #1c1c1e;
+  background-color: #1c1c1e; /* Темная тема */
 }
+/* Если адаптивность выключена в настройках */
 html.no-adaptive .default-bg-btn {
   background-color: #ffffff;
 }
@@ -456,7 +453,7 @@ input[type="range"]::-webkit-slider-thumb {
   background: var(--surface-color);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
   border: 2px solid var(--primary-color);
-  margin-top: -10px;
+  margin-top: calc((4px / 2) - (24px / 2)); 
   transition:
     outline 0.2s,
     transform 0.1s;
@@ -646,7 +643,6 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
     color-mix(in srgb, var(--surface-color) 2%, transparent)
   );
   backdrop-filter: blur(16px) saturate(150%);
-  backdrop-filter: blur(16px) saturate(150%);
   border-top: 1px solid rgba(255, 255, 255, 0.2);
   box-shadow: none;
 }
@@ -688,7 +684,6 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
 
 :root.glass-effect body button#sw-lapBtn:not(.is-reset) {
   background: color-mix(in srgb, var(--surface-color) 60%, transparent);
-  backdrop-filter: blur(16px) saturate(150%);
   backdrop-filter: blur(16px) saturate(150%);
   box-shadow:
     inset 0 1px 2px rgba(255, 255, 255, 0.6),
@@ -769,6 +764,7 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
 :root.glass-effect body .tb-workout-row,
 :root.glass-effect body .sw-session-header,
 :root.glass-effect body [id^="sw-details-"] > div:last-child {
+  will-change: backdrop-filter, transform;
   background-color: color-mix(in srgb, var(--surface-color) 30%, transparent);
   backdrop-filter: blur(16px) saturate(150%);
   box-shadow:
