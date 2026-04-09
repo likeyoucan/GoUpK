@@ -6,7 +6,6 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover"
     />
-    <meta name="color-scheme" content="light dark" />
     <meta
       name="theme-color"
       media="(prefers-color-scheme: light)"
@@ -25,11 +24,13 @@
     />
     <meta
       name="description"
-      content="Stopwatch Pro — Browser based timer and Tabata interval app"
+      content="Stopwatch Pro - Browser based timer and Tabata interval app"
     />
+
     <link rel="manifest" href="manifest.json" />
     <link rel="icon" type="image/svg+xml" href="icon.svg" />
     <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+
     <link
       rel="apple-touch-startup-image"
       media="screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3)"
@@ -40,7 +41,9 @@
       media="screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3)"
       href="splash.png"
     />
+
     <title>Stopwatch Pro</title>
+
     <script>
       document.documentElement.classList.add("js");
     </script>
@@ -52,31 +55,32 @@
         display: none !important;
       }
     </style>
+
     <link rel="stylesheet" href="styles.css" />
   </head>
+
   <body
     class="preload flex items-center justify-center h-[100dvh] w-full overflow-hidden bg-black text-base select-none"
   >
-    <!-- Сообщение если JS отключён -->
     <div
       class="no-js-warning bg-white text-black p-6 rounded-2xl font-bold shadow-2xl text-center max-w-sm mx-4 absolute z-50"
     >
       <span class="text-2xl block mb-2">⚠️</span>
       Please enable JavaScript to use Stopwatch Pro.
     </div>
-    <!-- Скрин-ридер анонс -->
+
     <div id="sr-only-announce" aria-live="polite" class="sr-only"></div>
-    <!-- Toast уведомление -->
+
     <div
       id="toast"
       role="status"
       aria-live="polite"
-      class="fixed top-8 left-1/2 -translate-x-1/2 app-surface border app-border app-text px-6 py-3 rounded-full shadow-2xl z-[150] transition-all duration-300 opacity-0 -translate-y-4 pointer-events-none flex items-center gap-3"
+      class="fixed top-8 left-1/2 transform -translate-x-1/2 app-surface border app-border app-text px-6 py-3 rounded-full shadow-2xl z-[150] transition-all duration-300 opacity-0 -translate-y-4 pointer-events-none flex items-center gap-3"
     >
       <svg
         focusable="false"
         aria-hidden="true"
-        class="w-5 h-5 primary-text shrink-0"
+        class="w-5 h-5 primary-text"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -86,27 +90,43 @@
           stroke-linecap="round"
           stroke-linejoin="round"
           d="M5 13l4 4L19 7"
-        />
+        ></path>
       </svg>
       <span id="toast-msg" class="font-bold text-sm tracking-wide"></span>
     </div>
-    <!-- Основной контейнер приложения -->
+
+    <!-- <div
+      id="app"
+      class="relative w-full max-w-md h-full sm:h-[min(92vh,850px)] sm:rounded-[3rem] overflow-hidden flex flex-col bg-black sm:border-8 sm:border-gray-900 shadow-2xl transition-shadow duration-300"
+    > -->
     <div
       id="app"
-      class="app-container relative w-full max-w-md mx-auto h-full overflow-hidden flex flex-col bg-black transition-shadow duration-300"
+      class="relative w-full max-w-md mx-auto h-full overflow-hidden flex flex-col bg-black transition-shadow duration-300"
     >
       <div
         class="app-bg absolute inset-0 flex flex-col w-full h-full z-0 transition-colors duration-300"
       >
+        <!-- <header
+          class="h-12 shrink-0 w-full flex justify-between items-end px-6 pb-2 z-20 app-text relative"
+        >
+          <span
+            class="text-xs font-semibold opacity-80 tabular-nums w-12"
+            id="clock"
+            >12:00</span
+          >
+          <div class="flex gap-1 opacity-80" aria-hidden="true">
+            <div
+              class="w-4 h-2.5 bg-current rounded-[2px] border border-current"
+            ></div>
+          </div>
+        </header> -->
+
         <main class="flex-1 relative overflow-hidden z-10" id="viewsContainer">
-          <!-- ==========================================
-               СЕКУНДОМЕР (STOPWATCH VIEW)
-          =========================================== -->
+          <!-- STOPWATCH VIEW -->
           <div
             id="view-stopwatch"
             class="absolute inset-0 flex flex-col transition-opacity duration-300 z-10"
           >
-            <!-- Верхняя половина: круг с таймером -->
             <div
               class="view-top-half w-full flex flex-col items-center justify-center shrink-0 px-6"
             >
@@ -124,7 +144,7 @@
                   type="button"
                   id="sw-startStopBtn"
                   aria-label="Start or Stop Stopwatch"
-                  class="absolute inset-0 flex flex-col items-center justify-center rounded-full focus:outline-none focus-visible:ring-4 focus-visible:ring-[var(--primary-color)] active:scale-95 transition-transform overflow-hidden cursor-pointer"
+                  class="absolute inset-0 flex flex-col items-center justify-center rounded-full focus:outline-none focus-visible:ring-4 focus-visible:ring-[var(--primary-color)] group active:scale-95 transition-transform overflow-hidden cursor-pointer"
                 >
                   <div
                     id="sw-lapFlash"
@@ -150,11 +170,10 @@
                 </button>
               </div>
             </div>
-            <!-- Нижняя половина: кнопка круга + список кругов -->
+
             <div
               class="view-bottom-half h-[45%] w-full flex flex-col shrink-0 min-h-0"
             >
-              <!-- Кнопка Круг / Сброс -->
               <div class="w-full flex justify-center h-14 shrink-0 mb-2 mt-2">
                 <button
                   type="button"
@@ -165,7 +184,6 @@
                   Lap
                 </button>
               </div>
-              <!-- Список кругов -->
               <div
                 class="flex-1 flex flex-col min-h-0 border-t app-border pt-2 px-2 sm:px-4"
               >
@@ -179,12 +197,11 @@
                     Laps History
                   </h3>
                   <div class="flex items-center gap-1">
-                    <!-- Кнопка сохранить сессию (скрыта пока нет кругов) -->
                     <button
                       type="button"
                       id="sw-saveBtn"
+                      class="hidden flex items-center justify-center min-w-[44px] min-h-[44px] text-gray-400 hover:primary-text transition-colors focus:outline-none custom-focus rounded-lg"
                       aria-label="Save Session"
-                      class="hidden items-center justify-center min-w-[44px] min-h-[44px] text-gray-400 hover:primary-text transition-colors focus:outline-none custom-focus rounded-lg"
                     >
                       <svg
                         focusable="false"
@@ -199,15 +216,14 @@
                           stroke-linecap="round"
                           stroke-linejoin="round"
                           d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-                        />
+                        ></path>
                       </svg>
                     </button>
-                    <!-- Кнопка открыть сохранённые результаты -->
                     <button
                       type="button"
                       id="sw-openResultsBtn"
-                      aria-label="Saved Results"
                       class="flex items-center justify-center min-w-[44px] min-h-[44px] text-gray-400 hover:primary-text transition-colors focus:outline-none custom-focus rounded-lg"
+                      aria-label="Saved Results"
                     >
                       <svg
                         focusable="false"
@@ -222,15 +238,15 @@
                           stroke-linecap="round"
                           stroke-linejoin="round"
                           d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                        />
+                        ></path>
                       </svg>
                     </button>
                   </div>
                 </div>
-                <!-- Заголовок таблицы кругов (скрыт пока нет кругов) -->
+
                 <div
                   id="sw-currentLapsHeader"
-                  class="hidden justify-between items-center px-3 py-1.5 border-b app-border shrink-0 mt-1"
+                  class="hidden flex justify-between items-center px-3 py-1.5 border-b app-border shrink-0 mt-1"
                 >
                   <span
                     class="text-[10px] font-bold app-text-sec uppercase tracking-wider"
@@ -250,10 +266,10 @@
                     >
                   </div>
                 </div>
-                <!-- Контейнер кругов -->
+
                 <div
-                  id="sw-lapsContainer"
                   class="flex-1 overflow-y-auto scroll-lock no-scrollbar px-1 pb-28 selectable-data"
+                  id="sw-lapsContainer"
                 >
                   <div
                     class="text-center app-text-sec opacity-50 mt-4 text-sm"
@@ -265,10 +281,8 @@
               </div>
             </div>
           </div>
-          <!-- /view-stopwatch -->
-          <!-- ==========================================
-               ТАЙМЕР (TIMER VIEW)
-          =========================================== -->
+
+          <!-- TIMER VIEW -->
           <div
             id="view-timer"
             inert
@@ -292,7 +306,7 @@
                   type="button"
                   id="tm-circleBtn"
                   aria-label="Start or Stop Timer"
-                  class="absolute inset-0 flex flex-col items-center justify-center rounded-full focus:outline-none focus-visible:ring-4 focus-visible:ring-[var(--primary-color)] active:scale-95 transition-transform overflow-hidden cursor-pointer"
+                  class="absolute inset-0 flex flex-col items-center justify-center rounded-full focus:outline-none focus-visible:ring-4 focus-visible:ring-[var(--primary-color)] group active:scale-95 transition-transform overflow-hidden cursor-pointer"
                 >
                   <span
                     id="tm-statusText"
@@ -310,6 +324,7 @@
                 </button>
               </div>
             </div>
+
             <div
               class="view-bottom-half h-[45%] w-full flex flex-col items-center justify-start pt-6 shrink-0 px-6"
             >
@@ -318,7 +333,6 @@
                   id="tm-inputs"
                   class="flex items-center gap-2 transition-all duration-300"
                 >
-                  <!-- Часы -->
                   <div class="flex flex-col items-center">
                     <input
                       type="text"
@@ -330,7 +344,7 @@
                       aria-label="Hours"
                       id="tm-h"
                       placeholder="00"
-                      class="timer-input w-16 h-16 text-center text-[32px] bg-transparent border-b-2 app-border outline-none font-mono placeholder-gray-500 transition-colors primary-focus-border"
+                      class="timer-input w-16 h-16 text-center text-4xl bg-transparent border-b-2 app-border outline-none font-mono placeholder-gray-500 transition-colors primary-focus-border"
                     />
                     <label
                       for="tm-h"
@@ -342,7 +356,6 @@
                   <span class="text-4xl opacity-30 pb-5" aria-hidden="true"
                     >:</span
                   >
-                  <!-- Минуты -->
                   <div class="flex flex-col items-center">
                     <input
                       type="text"
@@ -354,7 +367,7 @@
                       aria-label="Minutes"
                       id="tm-m"
                       placeholder="00"
-                      class="timer-input w-16 h-16 text-center text-[32px] bg-transparent border-b-2 app-border outline-none font-mono placeholder-gray-500 transition-colors primary-focus-border"
+                      class="timer-input w-16 h-16 text-center text-4xl bg-transparent border-b-2 app-border outline-none font-mono placeholder-gray-500 transition-colors primary-focus-border"
                     />
                     <label
                       for="tm-m"
@@ -366,7 +379,6 @@
                   <span class="text-4xl opacity-30 pb-5" aria-hidden="true"
                     >:</span
                   >
-                  <!-- Секунды -->
                   <div class="flex flex-col items-center">
                     <input
                       type="text"
@@ -378,7 +390,7 @@
                       aria-label="Seconds"
                       id="tm-s"
                       placeholder="00"
-                      class="timer-input w-16 h-16 text-center text-[32px] bg-transparent border-b-2 app-border outline-none font-mono placeholder-gray-500 transition-colors primary-focus-border"
+                      class="timer-input w-16 h-16 text-center text-4xl bg-transparent border-b-2 app-border outline-none font-mono placeholder-gray-500 transition-colors primary-focus-border"
                     />
                     <label
                       for="tm-s"
@@ -388,13 +400,7 @@
                     >
                   </div>
                 </div>
-                <!-- Скрытая submit-кнопка для закрытия клавиатуры -->
-                <button
-                  type="submit"
-                  class="sr-only"
-                  tabindex="-1"
-                  aria-hidden="true"
-                ></button>
+                <button type="submit" class="sr-only" tabindex="-1"></button>
               </form>
               <button
                 type="button"
@@ -406,10 +412,8 @@
               </button>
             </div>
           </div>
-          <!-- /view-timer -->
-          <!-- ==========================================
-               ТАБАТА (TABATA VIEW)
-          =========================================== -->
+
+          <!-- TABATA VIEW -->
           <div
             id="view-tabata"
             inert
@@ -433,7 +437,7 @@
                   type="button"
                   id="tb-startBtn"
                   aria-label="Start or Pause Tabata"
-                  class="absolute inset-0 flex flex-col items-center justify-center rounded-full focus:outline-none focus-visible:ring-4 focus-visible:ring-[var(--primary-color)] active:scale-95 transition-transform overflow-hidden cursor-pointer"
+                  class="absolute inset-0 flex flex-col items-center justify-center rounded-full focus:outline-none focus-visible:ring-4 focus-visible:ring-[var(--primary-color)] group active:scale-95 transition-transform overflow-hidden cursor-pointer"
                 >
                   <span
                     id="tb-statusText"
@@ -450,10 +454,10 @@
                 </button>
               </div>
             </div>
+
             <div
               class="view-bottom-half h-[45%] w-full flex flex-col shrink-0 min-h-0"
             >
-              <!-- Список тренировок (показывается когда табата не запущена) -->
               <div
                 id="tb-list-section"
                 class="flex-1 flex flex-col min-h-0 px-2 sm:px-4"
@@ -478,8 +482,8 @@
                   <button
                     type="button"
                     id="tb-openModalBtn"
-                    data-i18n="create_new"
                     class="min-h-[44px] text-sm font-bold primary-text uppercase tracking-wider px-2 py-1 active:scale-95 transition-transform focus:outline-none custom-focus rounded-lg"
+                    data-i18n="create_new"
                   >
                     + New
                   </button>
@@ -488,12 +492,11 @@
                   class="flex-1 flex flex-col min-h-0 border-t app-border pt-3"
                 >
                   <div
-                    id="tb-workoutsList"
                     class="flex-1 overflow-y-auto scroll-lock no-scrollbar px-1 pb-28 selectable-data"
+                    id="tb-workoutsList"
                   ></div>
                 </div>
               </div>
-              <!-- Управление во время табаты (скрыто в покое) -->
               <div
                 id="tb-runningControls"
                 class="hidden w-full flex-col items-center justify-center h-full pb-20 px-6"
@@ -506,12 +509,12 @@
                     data-i18n="round"
                     >ROUND</span
                   >
-                  <span class="text-xl font-bold app-text">
-                    <span id="tb-currentRound">1</span>/<span
+                  <span class="text-xl font-bold app-text"
+                    ><span id="tb-currentRound">1</span>/<span
                       id="tb-totalRounds"
                       >8</span
-                    >
-                  </span>
+                    ></span
+                  >
                 </div>
                 <button
                   type="button"
@@ -524,10 +527,8 @@
               </div>
             </div>
           </div>
-          <!-- /view-tabata -->
-          <!-- ==========================================
-               НАСТРОЙКИ (SETTINGS VIEW)
-          =========================================== -->
+
+          <!-- SETTINGS VIEW -->
           <div
             id="view-settings"
             inert
@@ -544,8 +545,8 @@
                 Settings
               </h2>
             </div>
+
             <div class="space-y-6 pb-28 px-4 pt-1">
-              <!-- === ВНЕШНИЙ ВИД === -->
               <div>
                 <h3
                   class="text-xs font-bold app-text-sec uppercase tracking-wider mb-3 ml-2"
@@ -556,7 +557,6 @@
                 <div
                   class="app-surface rounded-2xl overflow-hidden shadow-sm border app-border"
                 >
-                  <!-- Тема (Auto / Light / Dark) -->
                   <div
                     class="p-4 flex items-center justify-between border-b app-border"
                   >
@@ -566,34 +566,34 @@
                     <div class="flex app-bg rounded-lg p-1 border app-border">
                       <button
                         type="button"
+                        class="px-3 py-1.5 min-h-[36px] rounded-md text-xs font-bold transition-all focus:outline-none custom-focus"
                         id="theme-system"
                         data-theme-mode="system"
                         data-i18n="theme_auto"
-                        class="px-3 py-1.5 min-h-[36px] rounded-md text-xs font-bold transition-all focus:outline-none custom-focus"
                       >
                         Auto
                       </button>
                       <button
                         type="button"
+                        class="px-3 py-1.5 min-h-[36px] rounded-md text-xs font-bold transition-all focus:outline-none custom-focus"
                         id="theme-light"
                         data-theme-mode="light"
                         data-i18n="theme_light"
-                        class="px-3 py-1.5 min-h-[36px] rounded-md text-xs font-bold transition-all focus:outline-none custom-focus"
                       >
                         Light
                       </button>
                       <button
                         type="button"
+                        class="px-3 py-1.5 min-h-[36px] rounded-md text-xs font-bold transition-all focus:outline-none custom-focus"
                         id="theme-dark"
                         data-theme-mode="dark"
                         data-i18n="theme_dark"
-                        class="px-3 py-1.5 min-h-[36px] rounded-md text-xs font-bold transition-all focus:outline-none custom-focus"
                       >
                         Dark
                       </button>
                     </div>
                   </div>
-                  <!-- Цвет акцента -->
+
                   <div class="p-4 border-b app-border">
                     <span
                       class="block font-medium app-text text-sm mb-3"
@@ -603,70 +603,56 @@
                     <div
                       class="flex gap-4 overflow-x-auto scroll-lock no-scrollbar py-2 px-2 -mx-2"
                     >
-                      <!-- Авто (Material You) -->
-                      <button
-                        type="button"
-                        aria-label="System Auto Color"
-                        data-color="auto"
-                        class="color-btn w-9 h-9 flex items-center justify-center rounded-full shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus relative overflow-hidden"
-                      >
-                        <div
-                          class="absolute inset-0 bg-[conic-gradient(from_0deg,red,orange,yellow,green,blue,indigo,violet,red)] opacity-50"
-                        ></div>
-                        <span
-                          class="relative z-10 text-[10px] font-bold text-white drop-shadow-md"
-                          >AUTO</span
-                        >
-                      </button>
                       <button
                         type="button"
                         aria-label="Green Accent"
                         data-color="#22c55e"
-                        class="color-btn w-9 h-9 rounded-full bg-green-500 shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus flex items-center justify-center"
+                        class="color-btn w-9 h-9 flex items-center justify-center rounded-full bg-green-500 shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus"
                       ></button>
                       <button
                         type="button"
                         aria-label="Blue Accent"
                         data-color="#3b82f6"
-                        class="color-btn w-9 h-9 rounded-full bg-blue-500 shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus flex items-center justify-center"
+                        class="color-btn w-9 h-9 flex items-center justify-center rounded-full bg-blue-500 shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus"
                       ></button>
                       <button
                         type="button"
                         aria-label="Purple Accent"
                         data-color="#a855f7"
-                        class="color-btn w-9 h-9 rounded-full bg-purple-500 shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus flex items-center justify-center"
+                        class="color-btn w-9 h-9 flex items-center justify-center rounded-full bg-purple-500 shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus"
                       ></button>
                       <button
                         type="button"
                         aria-label="Pink Accent"
                         data-color="#ec4899"
-                        class="color-btn w-9 h-9 rounded-full bg-pink-500 shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus flex items-center justify-center"
+                        class="color-btn w-9 h-9 flex items-center justify-center rounded-full bg-pink-500 shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus"
                       ></button>
                       <button
                         type="button"
                         aria-label="Orange Accent"
                         data-color="#f97316"
-                        class="color-btn w-9 h-9 rounded-full bg-orange-500 shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus flex items-center justify-center"
+                        class="color-btn w-9 h-9 flex items-center justify-center rounded-full bg-orange-500 shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus"
                       ></button>
                       <button
                         type="button"
                         aria-label="Red Accent"
                         data-color="#ef4444"
-                        class="color-btn w-9 h-9 rounded-full bg-red-500 shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus flex items-center justify-center"
+                        class="color-btn w-9 h-9 flex items-center justify-center rounded-full bg-red-500 shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus"
                       ></button>
                       <button
                         type="button"
                         aria-label="Indigo Accent"
                         data-color="#6366f1"
-                        class="color-btn w-9 h-9 rounded-full bg-indigo-500 shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus flex items-center justify-center"
+                        class="color-btn w-9 h-9 flex items-center justify-center rounded-full bg-indigo-500 shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus"
                       ></button>
                       <button
                         type="button"
                         aria-label="Rose Accent"
                         data-color="#e11d48"
-                        class="color-btn w-9 h-9 rounded-full bg-rose-600 shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus flex items-center justify-center"
+                        class="color-btn w-9 h-9 flex items-center justify-center rounded-full bg-rose-500 shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus"
                       ></button>
-                      <!-- Кастомный цвет (color picker) -->
+
+                      <!-- Безопасный инпут для iOS -->
                       <div
                         class="relative w-9 h-9 shrink-0 group rounded-full overflow-hidden border border-black/20 dark:border-white/20 transition-transform active:scale-90 focus-within:ring-4 focus-within:ring-[var(--primary-color)]"
                       >
@@ -682,7 +668,7 @@
                       </div>
                     </div>
                   </div>
-                  <!-- Цвет фона -->
+
                   <div class="p-4 border-b app-border">
                     <span
                       class="block font-medium app-text text-sm mb-3"
@@ -692,7 +678,6 @@
                     <div
                       class="flex gap-4 overflow-x-auto scroll-lock no-scrollbar py-2 px-2 -mx-2"
                     >
-                      <!-- Дефолтный фон -->
                       <button
                         type="button"
                         aria-label="Default Background"
@@ -703,45 +688,46 @@
                         type="button"
                         aria-label="Blue Background"
                         data-bg="#60a5fa"
-                        class="bg-btn w-9 h-9 rounded-full bg-blue-400 shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus flex items-center justify-center"
+                        class="bg-btn w-9 h-9 flex items-center justify-center rounded-full bg-blue-400 shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus"
                       ></button>
                       <button
                         type="button"
                         aria-label="Purple Background"
                         data-bg="#c084fc"
-                        class="bg-btn w-9 h-9 rounded-full bg-purple-400 shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus flex items-center justify-center"
+                        class="bg-btn w-9 h-9 flex items-center justify-center rounded-full bg-purple-400 shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus"
                       ></button>
                       <button
                         type="button"
                         aria-label="Pink Background"
                         data-bg="#f472b6"
-                        class="bg-btn w-9 h-9 rounded-full bg-pink-400 shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus flex items-center justify-center"
+                        class="bg-btn w-9 h-9 flex items-center justify-center rounded-full bg-pink-400 shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus"
                       ></button>
                       <button
                         type="button"
                         aria-label="Emerald Background"
                         data-bg="#34d399"
-                        class="bg-btn w-9 h-9 rounded-full bg-emerald-400 shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus flex items-center justify-center"
+                        class="bg-btn w-9 h-9 flex items-center justify-center rounded-full bg-emerald-400 shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus"
                       ></button>
                       <button
                         type="button"
                         aria-label="Yellow Background"
                         data-bg="#facc15"
-                        class="bg-btn w-9 h-9 rounded-full bg-yellow-400 shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus flex items-center justify-center"
+                        class="bg-btn w-9 h-9 flex items-center justify-center rounded-full bg-yellow-400 shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus"
                       ></button>
                       <button
                         type="button"
                         aria-label="Red Background"
                         data-bg="#f87171"
-                        class="bg-btn w-9 h-9 rounded-full bg-red-400 shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus flex items-center justify-center"
+                        class="bg-btn w-9 h-9 flex items-center justify-center rounded-full bg-red-400 shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus"
                       ></button>
                       <button
                         type="button"
                         aria-label="Teal Background"
                         data-bg="#2dd4bf"
-                        class="bg-btn w-9 h-9 rounded-full bg-teal-400 shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus flex items-center justify-center"
+                        class="bg-btn w-9 h-9 flex items-center justify-center rounded-full bg-teal-400 shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus"
                       ></button>
-                      <!-- Кастомный цвет фона -->
+
+                      <!-- Безопасный инпут для iOS -->
                       <div
                         class="relative w-9 h-9 shrink-0 group rounded-full overflow-hidden border border-black/20 dark:border-white/20 transition-transform active:scale-90 focus-within:ring-4 focus-within:ring-[var(--primary-color)]"
                       >
@@ -757,9 +743,8 @@
                       </div>
                     </div>
                   </div>
-                  <!-- Переключатели: Адаптивный фон / Liquid Glass / Виньетка -->
+
                   <div class="p-4 border-b app-border flex flex-col gap-4">
-                    <!-- Адаптивный фон -->
                     <div class="flex items-center justify-between">
                       <label
                         for="toggle-adaptive-bg"
@@ -778,7 +763,7 @@
                         <div class="custom-toggle"></div>
                       </label>
                     </div>
-                    <!-- Liquid Glass -->
+
                     <div class="flex items-center justify-between">
                       <label
                         for="toggle-glass"
@@ -797,7 +782,7 @@
                         <div class="custom-toggle"></div>
                       </label>
                     </div>
-                    <!-- Виньетка -->
+
                     <div class="flex flex-col gap-3">
                       <div class="flex items-center justify-between">
                         <label
@@ -817,7 +802,7 @@
                           <div class="custom-toggle"></div>
                         </label>
                       </div>
-                      <!-- Глубина виньетки (показывается когда включена) -->
+
                       <div
                         id="vignette-depth-container"
                         class="hidden justify-between items-center transition-opacity duration-300"
@@ -835,13 +820,12 @@
                           value="0.5"
                           step="0.1"
                           id="vignetteSlider"
-                          aria-label="Vignette Depth"
                           class="w-32"
                         />
                       </div>
                     </div>
                   </div>
-                  <!-- Размер шрифта -->
+
                   <div class="p-4">
                     <div class="flex justify-between items-center mb-3">
                       <label
@@ -869,8 +853,7 @@
                   </div>
                 </div>
               </div>
-              <!-- /appearance -->
-              <!-- === ОБЩИЕ НАСТРОЙКИ === -->
+
               <div>
                 <h3
                   class="text-xs font-bold app-text-sec uppercase tracking-wider mb-3 ml-2 mt-6"
@@ -881,7 +864,6 @@
                 <div
                   class="app-surface rounded-2xl overflow-hidden shadow-sm border app-border"
                 >
-                  <!-- Язык -->
                   <div class="flex items-center justify-between p-4">
                     <label
                       for="langSelect"
@@ -904,7 +886,7 @@
                       <svg
                         focusable="false"
                         aria-hidden="true"
-                        class="w-4 h-4 app-text-sec absolute right-2 pointer-events-none"
+                        class="w-4 h-4 app-text-sec absolute right-2 pointer-events-none z-0"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -914,11 +896,11 @@
                           stroke-linejoin="round"
                           stroke-width="2"
                           d="M19 9l-7 7-7-7"
-                        />
+                        ></path>
                       </svg>
                     </div>
                   </div>
-                  <!-- Звук -->
+
                   <div
                     class="flex items-center justify-between p-4 border-t app-border"
                   >
@@ -939,7 +921,7 @@
                       <div class="custom-toggle"></div>
                     </label>
                   </div>
-                  <!-- Тема звуков -->
+
                   <div
                     class="flex items-center justify-between p-4 border-t app-border"
                   >
@@ -954,7 +936,7 @@
                     >
                       <select
                         id="soundThemeSelect"
-                        aria-label="Select Sound Theme"
+                        aria-label="Select Theme"
                         class="w-full bg-transparent app-text text-sm font-bold appearance-none outline-none py-1.5 pl-3 pr-8 cursor-pointer z-10"
                       >
                         <option value="classic" data-i18n="theme_classic">
@@ -976,7 +958,7 @@
                       <svg
                         focusable="false"
                         aria-hidden="true"
-                        class="w-4 h-4 app-text-sec absolute right-2 pointer-events-none"
+                        class="w-4 h-4 app-text-sec absolute right-2 pointer-events-none z-0"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -986,11 +968,11 @@
                           stroke-linejoin="round"
                           stroke-width="2"
                           d="M19 9l-7 7-7-7"
-                        />
+                        ></path>
                       </svg>
                     </div>
                   </div>
-                  <!-- Громкость -->
+
                   <div class="p-4 border-t app-border flex flex-col gap-3">
                     <div class="flex items-center justify-between mb-1">
                       <label
@@ -1012,11 +994,10 @@
                       value="1"
                       step="0.1"
                       id="volumeSlider"
-                      aria-label="Volume"
                       class="w-full"
                     />
                   </div>
-                  <!-- Вибрация -->
+
                   <div class="p-4 border-t app-border flex flex-col gap-3">
                     <div class="flex items-center justify-between">
                       <label
@@ -1037,8 +1018,8 @@
                       </label>
                     </div>
                     <div
-                      id="vibro-level-container"
                       class="flex justify-between items-center transition-opacity duration-300"
+                      id="vibro-level-container"
                     >
                       <label
                         for="vibroSlider"
@@ -1053,12 +1034,11 @@
                         value="1"
                         step="0.2"
                         id="vibroSlider"
-                        aria-label="Vibration Level"
                         class="w-32"
                       />
                     </div>
                   </div>
-                  <!-- Миллисекунды -->
+
                   <div
                     class="flex items-center justify-between p-4 border-t app-border"
                   >
@@ -1075,16 +1055,17 @@
                       <div class="custom-toggle"></div>
                     </label>
                   </div>
-                  <!-- Сброс настроек + Обратная связь -->
+
                   <div class="p-4 border-t app-border flex flex-col gap-2 mt-4">
                     <button
                       type="button"
                       id="btn-open-reset"
-                      data-i18n="reset_settings"
                       class="min-h-[44px] text-red-500 font-bold text-xs tracking-widest uppercase active:scale-95 transition-transform focus:outline-none flex items-center justify-center gap-2 rounded-lg"
+                      data-i18n="reset_settings"
                     >
                       Reset to Defaults
                     </button>
+
                     <a
                       href="mailto:support@yourdomain.com?subject=Stopwatch Pro Feedback"
                       class="min-h-[44px] app-text font-bold text-xs tracking-widest uppercase active:scale-95 transition-transform focus:outline-none flex items-center justify-center gap-2 rounded-lg bg-black/5 dark:bg-white/5"
@@ -1092,7 +1073,7 @@
                       <svg
                         focusable="false"
                         aria-hidden="true"
-                        class="w-4 h-4 shrink-0"
+                        class="w-4 h-4"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -1102,55 +1083,52 @@
                           stroke-linecap="round"
                           stroke-linejoin="round"
                           d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                        />
+                        ></path>
                       </svg>
                       <span data-i18n="feedback">Feedback</span>
                     </a>
                   </div>
                 </div>
-                <!-- Версия приложения -->
+                <!-- Версия и Разработчик -->
                 <div
                   class="flex flex-col items-center justify-center pt-8 pb-4 opacity-50"
                 >
                   <span class="text-xs font-bold app-text tracking-widest"
-                    >STOPWATCH PRO</span
+                    >WATCH PRO</span
                   >
+
                   <div
                     class="text-[10px] app-text-sec mt-1 font-mono flex items-center gap-1"
                   >
                     <span data-i18n="version">Version</span>
                     <span>1.0.0</span>
                   </div>
+
                   <div
                     class="text-[10px] app-text-sec mt-2 flex items-center gap-1"
                   >
                     <span data-i18n="developed_by">Developed by</span>
                     <span>[Твое Имя]</span>
+                    <!-- Впиши сюда свое имя/никнейм -->
                   </div>
                 </div>
               </div>
-              <!-- /general -->
             </div>
           </div>
-          <!-- /view-settings -->
         </main>
-        <!-- ==========================================
-             НИЖНЯЯ НАВИГАЦИЯ
-        =========================================== -->
+
+        <!-- BOTTOM NAVIGATION -->
         <nav
           class="absolute bottom-0 w-full h-20 flex justify-between items-center px-4 app-surface pb-4 z-30 border-t app-border sm:rounded-b-[3rem] app-nav-safe"
-          aria-label="Main Navigation"
         >
-          <!-- Секундомер -->
           <button
             type="button"
             data-nav="stopwatch"
-            aria-label="Stopwatch"
-            class="nav-btn w-16 h-full flex flex-col items-center justify-center gap-1 active:scale-90 transition-transform focus:outline-none rounded-xl custom-focus"
+            class="nav-btn w-16 h-full flex flex-col items-center justify-center gap-1 group active:scale-90 transition-transform focus:outline-none rounded-xl custom-focus"
           >
             <div
+              class="relative w-7 h-7 flex items-center justify-center transition-colors text-gray-400 group-hover:text-gray-500"
               id="nav-icon-stopwatch"
-              class="relative w-7 h-7 flex items-center justify-center transition-colors text-gray-400"
             >
               <svg
                 focusable="false"
@@ -1163,11 +1141,11 @@
                 stroke-linecap="round"
                 stroke-linejoin="round"
               >
-                <circle cx="12" cy="13" r="8" />
-                <path d="M12 9v4l2 2" />
-                <path d="M12 1v4" />
-                <path d="M19.07 4.93L17.66 6.34" />
-                <path d="M4.93 4.93L6.34 6.34" />
+                <circle cx="12" cy="13" r="8"></circle>
+                <path d="M12 9v4l2 2"></path>
+                <path d="M12 1v4"></path>
+                <path d="M19.07 4.93L17.66 6.34"></path>
+                <path d="M4.93 4.93L6.34 6.34"></path>
               </svg>
             </div>
             <span
@@ -1176,16 +1154,14 @@
               >Stopwatch</span
             >
           </button>
-          <!-- Таймер -->
           <button
             type="button"
             data-nav="timer"
-            aria-label="Timer"
-            class="nav-btn w-16 h-full flex flex-col items-center justify-center gap-1 active:scale-90 transition-transform focus:outline-none rounded-xl custom-focus"
+            class="nav-btn w-16 h-full flex flex-col items-center justify-center gap-1 group active:scale-90 transition-transform focus:outline-none rounded-xl custom-focus"
           >
             <div
+              class="relative w-7 h-7 flex items-center justify-center transition-colors text-gray-400 group-hover:text-gray-500"
               id="nav-icon-timer"
-              class="relative w-7 h-7 flex items-center justify-center transition-colors text-gray-400"
             >
               <svg
                 focusable="false"
@@ -1198,8 +1174,8 @@
                 stroke-linecap="round"
                 stroke-linejoin="round"
               >
-                <circle cx="12" cy="12" r="10" />
-                <polyline points="12 6 12 12 16 14" />
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
               </svg>
             </div>
             <span
@@ -1208,16 +1184,14 @@
               >Timer</span
             >
           </button>
-          <!-- Табата -->
           <button
             type="button"
             data-nav="tabata"
-            aria-label="Tabata"
-            class="nav-btn w-16 h-full flex flex-col items-center justify-center gap-1 active:scale-90 transition-transform focus:outline-none rounded-xl custom-focus"
+            class="nav-btn w-16 h-full flex flex-col items-center justify-center gap-1 group active:scale-90 transition-transform focus:outline-none rounded-xl custom-focus"
           >
             <div
+              class="relative w-7 h-7 flex items-center justify-center transition-colors text-gray-400 group-hover:text-gray-500"
               id="nav-icon-tabata"
-              class="relative w-7 h-7 flex items-center justify-center transition-colors text-gray-400"
             >
               <svg
                 focusable="false"
@@ -1230,8 +1204,8 @@
                 stroke-linecap="round"
                 stroke-linejoin="round"
               >
-                <circle cx="12" cy="12" r="10" />
-                <path d="M13 6l-6 6h5l-1 6 6-7h-5l1-6z" />
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M13 6l-6 6h5l-1 6 6-7h-5l1-6z"></path>
               </svg>
             </div>
             <span
@@ -1240,16 +1214,14 @@
               >Tabata</span
             >
           </button>
-          <!-- Настройки -->
           <button
             type="button"
             data-nav="settings"
-            aria-label="Settings"
-            class="nav-btn w-16 h-full flex flex-col items-center justify-center gap-1 active:scale-90 transition-transform focus:outline-none rounded-xl custom-focus"
+            class="nav-btn w-16 h-full flex flex-col items-center justify-center gap-1 group active:scale-90 transition-transform focus:outline-none rounded-xl custom-focus"
           >
             <div
+              class="relative w-7 h-7 flex items-center justify-center transition-colors text-gray-400 group-hover:text-gray-500"
               id="nav-icon-settings"
-              class="relative w-7 h-7 flex items-center justify-center transition-colors text-gray-400"
             >
               <svg
                 focusable="false"
@@ -1262,10 +1234,10 @@
                 stroke-linecap="round"
                 stroke-linejoin="round"
               >
-                <circle cx="12" cy="12" r="3" />
+                <circle cx="12" cy="12" r="3"></circle>
                 <path
                   d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"
-                />
+                ></path>
               </svg>
             </div>
             <span
@@ -1275,10 +1247,12 @@
             >
           </button>
         </nav>
-        <!-- ==========================================
-             МОДАЛЬНЫЕ ОКНА (BOTTOM SHEETS)
-        =========================================== -->
-        <!-- Сохранённые результаты секундомера -->
+
+        <!-- =========================================
+                 МОДАЛЬНЫЕ ОКНА (BOTTOM SHEETS)
+            ========================================= -->
+
+        <!-- Stopwatch: Saved Results -->
         <div
           id="sw-sessions-modal"
           role="dialog"
@@ -1291,6 +1265,7 @@
           <div
             class="w-12 h-1.5 bg-gray-500/30 rounded-full mx-auto mb-2 shrink-0"
           ></div>
+
           <div
             class="flex justify-between items-center mb-6 shrink-0 mt-2 sm:mt-0"
           >
@@ -1320,7 +1295,7 @@
                   stroke-linecap="round"
                   stroke-linejoin="round"
                   d="M6 18L18 6M6 6l12 12"
-                />
+                ></path>
               </svg>
             </button>
           </div>
@@ -1328,8 +1303,8 @@
             <button
               type="button"
               id="sw-clearAllBtn"
-              data-i18n="clear_all"
               class="text-xs font-bold text-red-500 uppercase tracking-wider p-2 -ml-2 active:scale-95 transition-transform focus:outline-none custom-focus rounded-lg min-h-[44px]"
+              data-i18n="clear_all"
             >
               Clear All
             </button>
@@ -1338,7 +1313,6 @@
             >
               <select
                 id="sw-sortSelect"
-                aria-label="Sort sessions"
                 class="w-full bg-transparent app-text text-xs font-bold appearance-none outline-none py-1.5 pl-3 pr-8 cursor-pointer z-10"
               >
                 <option value="date_asc" data-i18n="date_old">
@@ -1355,7 +1329,7 @@
               <svg
                 focusable="false"
                 aria-hidden="true"
-                class="w-4 h-4 app-text-sec absolute right-2 pointer-events-none"
+                class="w-4 h-4 app-text-sec absolute right-2 pointer-events-none z-0"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -1365,16 +1339,17 @@
                   stroke-linejoin="round"
                   stroke-width="2"
                   d="M19 9l-7 7-7-7"
-                />
+                ></path>
               </svg>
             </div>
           </div>
           <div
-            id="sw-sessionsList"
             class="flex-1 overflow-y-auto scroll-lock no-scrollbar pb-10 space-y-3 selectable-data px-1"
+            id="sw-sessionsList"
           ></div>
         </div>
-        <!-- Создать / Редактировать тренировку Табата -->
+
+        <!-- Tabata Create/Edit Modal -->
         <div
           id="tb-modal"
           role="dialog"
@@ -1387,6 +1362,7 @@
           <div
             class="w-12 h-1.5 bg-gray-500/30 rounded-full mx-auto mb-2 shrink-0"
           ></div>
+
           <div
             class="flex justify-between items-center mb-8 shrink-0 mt-2 sm:mt-0"
           >
@@ -1416,7 +1392,7 @@
                   stroke-linecap="round"
                   stroke-linejoin="round"
                   d="M6 18L18 6M6 6l12 12"
-                />
+                ></path>
               </svg>
             </button>
           </div>
@@ -1424,7 +1400,6 @@
             id="tb-modal-form"
             class="space-y-6 overflow-y-auto scroll-lock flex-1 no-scrollbar pb-10 px-1"
           >
-            <!-- Название -->
             <div class="flex flex-col">
               <label
                 for="tb-edit-name"
@@ -1437,8 +1412,8 @@
                 id="tb-edit-name"
                 required
                 enterkeyhint="done"
-                placeholder="Tabata"
                 class="w-full min-h-[44px] bg-transparent border-b-2 app-border py-2 text-xl font-bold app-text outline-none transition-colors primary-focus-border"
+                placeholder="Tabata"
               />
               <span
                 id="tb-name-error"
@@ -1447,7 +1422,7 @@
                 >Name already exists</span
               >
             </div>
-            <!-- Работа -->
+
             <div class="flex justify-between items-center">
               <label for="tb-edit-work">
                 <span class="block text-lg font-bold app-text" data-i18n="work"
@@ -1458,7 +1433,7 @@
               <div class="flex items-center gap-3">
                 <button
                   type="button"
-                  aria-label="Decrease work"
+                  aria-label="Decrease"
                   data-tb-adj="tb-edit-work,-5"
                   class="w-12 h-12 rounded-full app-bg border app-border app-text flex items-center justify-center text-2xl font-bold active:scale-90 focus:outline-none custom-focus"
                 >
@@ -1475,7 +1450,7 @@
                 />
                 <button
                   type="button"
-                  aria-label="Increase work"
+                  aria-label="Increase"
                   data-tb-adj="tb-edit-work,5"
                   class="w-12 h-12 rounded-full app-bg border app-border app-text flex items-center justify-center text-2xl font-bold active:scale-90 focus:outline-none custom-focus"
                 >
@@ -1483,7 +1458,7 @@
                 </button>
               </div>
             </div>
-            <!-- Отдых -->
+
             <div class="flex justify-between items-center">
               <label for="tb-edit-rest">
                 <span class="block text-lg font-bold app-text" data-i18n="rest"
@@ -1494,7 +1469,7 @@
               <div class="flex items-center gap-3">
                 <button
                   type="button"
-                  aria-label="Decrease rest"
+                  aria-label="Decrease"
                   data-tb-adj="tb-edit-rest,-5"
                   class="w-12 h-12 rounded-full app-bg border app-border app-text flex items-center justify-center text-2xl font-bold active:scale-90 focus:outline-none custom-focus"
                 >
@@ -1511,7 +1486,7 @@
                 />
                 <button
                   type="button"
-                  aria-label="Increase rest"
+                  aria-label="Increase"
                   data-tb-adj="tb-edit-rest,5"
                   class="w-12 h-12 rounded-full app-bg border app-border app-text flex items-center justify-center text-2xl font-bold active:scale-90 focus:outline-none custom-focus"
                 >
@@ -1519,7 +1494,7 @@
                 </button>
               </div>
             </div>
-            <!-- Раунды -->
+
             <div class="flex justify-between items-center">
               <label for="tb-edit-rounds">
                 <span
@@ -1534,7 +1509,7 @@
               <div class="flex items-center gap-3">
                 <button
                   type="button"
-                  aria-label="Decrease rounds"
+                  aria-label="Decrease"
                   data-tb-adj="tb-edit-rounds,-1"
                   class="w-12 h-12 rounded-full app-bg border app-border app-text flex items-center justify-center text-2xl font-bold active:scale-90 focus:outline-none custom-focus"
                 >
@@ -1551,7 +1526,7 @@
                 />
                 <button
                   type="button"
-                  aria-label="Increase rounds"
+                  aria-label="Increase"
                   data-tb-adj="tb-edit-rounds,1"
                   class="w-12 h-12 rounded-full app-bg border app-border app-text flex items-center justify-center text-2xl font-bold active:scale-90 focus:outline-none custom-focus"
                 >
@@ -1562,14 +1537,15 @@
             <button
               type="submit"
               id="tb-saveModalBtn"
-              data-i18n="save"
               class="w-full primary-bg text-white min-h-[56px] rounded-2xl font-bold text-lg shadow-lg active:scale-95 transition-transform mt-8 focus:outline-none custom-focus"
+              data-i18n="save"
             >
               Save
             </button>
           </form>
         </div>
-        <!-- Подтверждение очистки истории -->
+
+        <!-- Stopwatch: Clear All Confirm -->
         <div
           id="sw-clear-modal"
           role="dialog"
@@ -1580,8 +1556,8 @@
           class="hidden absolute inset-0 z-[110] bg-black/80 items-center justify-center p-6 transition-opacity duration-300 opacity-0"
         >
           <div
-            id="sw-clear-modal-content"
             class="app-surface w-full max-w-sm rounded-3xl p-6 shadow-2xl border app-border flex flex-col gap-4 transform transition-all duration-300 opacity-0 scale-95"
+            id="sw-clear-modal-content"
           >
             <h3
               id="sw-clear-title"
@@ -1600,28 +1576,28 @@
               <button
                 type="button"
                 id="sw-clear-cancel"
-                data-i18n="cancel"
                 class="min-h-[44px] px-5 py-2 rounded-xl font-bold app-text-sec active:scale-95 transition-transform focus:outline-none custom-focus"
+                data-i18n="cancel"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 id="sw-clear-confirm"
-                data-i18n="delete"
                 class="min-h-[44px] px-5 py-2 rounded-xl font-bold text-white bg-red-500 shadow-lg active:scale-95 transition-transform focus:outline-none custom-focus"
+                data-i18n="delete"
               >
                 Delete
               </button>
             </div>
           </div>
         </div>
-        <!-- Имя сессии секундомера -->
+
+        <!-- Stopwatch: Session Name -->
         <div
           id="sw-name-modal"
           role="dialog"
           aria-modal="true"
-          aria-labelledby="sw-name-title"
           inert
           aria-hidden="true"
           class="hidden absolute inset-0 z-[110] bg-black/80 items-center justify-center p-6 transition-opacity duration-300 opacity-0"
@@ -1644,8 +1620,8 @@
                 required
                 enterkeyhint="done"
                 aria-label="Session Name"
-                placeholder="Stopwatch..."
                 class="w-full min-h-[44px] bg-transparent border-b-2 app-border py-2 text-lg font-bold app-text outline-none primary-focus-border transition-colors"
+                placeholder="Stopwatch..."
               />
               <span
                 id="sw-name-error"
@@ -1658,23 +1634,24 @@
               <button
                 type="button"
                 id="sw-name-cancel"
-                data-i18n="cancel"
                 class="min-h-[44px] px-5 py-2 rounded-xl font-bold app-text-sec active:scale-95 transition-transform focus:outline-none custom-focus"
+                data-i18n="cancel"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 id="sw-name-confirm"
-                data-i18n="save"
                 class="min-h-[44px] px-5 py-2 rounded-xl font-bold text-white primary-bg shadow-lg active:scale-95 transition-transform focus:outline-none custom-focus"
+                data-i18n="save"
               >
                 Save
               </button>
             </div>
           </form>
         </div>
-        <!-- Подтверждение сброса настроек -->
+
+        <!-- Settings: Reset -->
         <div
           id="reset-modal"
           role="dialog"
@@ -1685,8 +1662,8 @@
           class="hidden absolute inset-0 z-[110] bg-black/80 items-center justify-center p-6 transition-opacity duration-300 opacity-0"
         >
           <div
-            id="reset-modal-content"
             class="app-surface w-full max-w-sm rounded-3xl p-6 shadow-2xl border app-border flex flex-col gap-4 transform transition-all duration-300 opacity-0 scale-95"
+            id="reset-modal-content"
           >
             <h3
               id="reset-modal-title"
@@ -1705,16 +1682,16 @@
               <button
                 type="button"
                 id="reset-cancel"
-                data-i18n="cancel"
                 class="min-h-[44px] px-5 py-2 rounded-xl font-bold app-text-sec active:scale-95 transition-transform focus:outline-none custom-focus"
+                data-i18n="cancel"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 id="reset-confirm"
-                data-i18n="reset"
                 class="min-h-[44px] px-5 py-2 rounded-xl font-bold text-white bg-red-500 shadow-lg active:scale-95 transition-transform focus:outline-none custom-focus"
+                data-i18n="reset"
               >
                 Reset
               </button>
@@ -1723,7 +1700,7 @@
         </div>
       </div>
     </div>
-    <!-- /app -->
+
     <script type="module" src="./js/main.js"></script>
   </body>
 </html>

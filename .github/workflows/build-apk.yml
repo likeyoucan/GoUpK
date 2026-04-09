@@ -6,7 +6,7 @@ concurrency:
 
 on:
   push:
-    branches: ["main", "alpha"]
+    branches: ["main"]
   workflow_dispatch:
 
 jobs:
