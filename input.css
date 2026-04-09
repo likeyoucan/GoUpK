@@ -1,14 +1,22 @@
 /* ========================================================== */
-/*                    input.css (ФИНАЛ)                       */
+/*           input.css (ФИНАЛЬНАЯ ВЕРСИЯ для v4)              */
 /* ========================================================== */
 
-/* 1. Импортируем стандартные слои Tailwind. Это должно быть в самом начале и только один раз. */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* 1. Главная директива Tailwind v4. Импортирует все необходимое. */
+@import "tailwindcss";
 
-/* 2. Все ваши кастомные стили и переменные. */
-/* Мы помещаем их в слой @layer base, чтобы они имели правильный приоритет. */
+/* 2. Директива @theme для определения кастомных CSS-переменных, управляемых Tailwind. */
+@theme {
+  --text-xs: calc(0.75rem * var(--font-scale, 1));
+  --text-sm: calc(0.875rem * var(--font-scale, 1));
+  --text-base: calc(1rem * var(--font-scale, 1));
+  --text-lg: calc(1.125rem * var(--font-scale, 1));
+  --text-xl: calc(1.25rem * var(--font-scale, 1));
+  --text-2xl: calc(1.5rem * var(--font-scale, 1));
+  --text-4xl: calc(2.25rem * var(--font-scale, 1));
+}
+
+/* 3. Все ваши кастомные стили. Оборачиваем их в @layer base для правильного порядка в CSS. */
 @layer base {
 
   /* =========================================
@@ -21,7 +29,7 @@
     --bg-color: #f3f4f6;
     --surface-color: #ffffff;
     --text-color: #1f2937;
-    --text-secondary: hsl(var(--accent-h), 25%, 45%); /* Вспомогательный текст: серый, но слегка тонирован цветом акцента */
+    --text-secondary: hsl(var(--accent-h), 25%, 45%);
     --border-color: rgba(0, 0, 0, 0.1);
     --vignette-alpha: 0.15;
     --font-scale: 1;
@@ -32,11 +40,10 @@
     --bg-color: #000000;
     --surface-color: #1c1c1e;
     --text-color: #f9fafb;
-    --text-secondary: hsl(var(--accent-h), 25%, 65%); /* В темной теме тонированный серый текст светлее */
+    --text-secondary: hsl(var(--accent-h), 25%, 65%);
     --border-color: rgba(255, 255, 255, 0.1);
   }
 
-  /* ФОРСИРОВАНИЕ ЦВЕТА ТЕКСТА (Для цветных неадаптивных фонов) */
   body.force-light-text {
     --text-color: #ffffff;
     --text-secondary: hsl(var(--accent-h), 30%, 80%);
@@ -65,7 +72,6 @@
     -webkit-tap-highlight-color: transparent;
   }
 
-  /* Отключаем все анимации при первой загрузке, чтобы избежать "моргания" */
   .preload * {
     transition: none !important;
   }
@@ -81,11 +87,11 @@
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    overscroll-behavior: none; /* Отключает "pull-to-refresh" */
+    overscroll-behavior: none;
     -webkit-user-select: none;
     user-select: none;
     -webkit-touch-callout: none;
-    touch-action: manipulation; /* Убирает задержку клика на мобильных */
+    touch-action: manipulation;
   }
 
   button {
@@ -95,35 +101,15 @@
     touch-action: manipulation;
   }
 
-  /* Разрешаем выделение текста в инпутах, но увеличиваем их размер для iOS, чтобы избежать авто-зума */
   :where(input[type="text"], input[type="number"]) {
     -webkit-user-select: text;
     user-select: text;
     font-size: max(16px, 1em);
   }
 
-  .sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border-width: 0;
-  }
-  
-  .selectable-data,
-  .selectable-data * {
-    -webkit-user-select: text !important;
-    user-select: text !important;
-  }
-
   /* =========================================
-     КОНТЕЙНЕР И SAFE AREA ДЛЯ iOS
+     КОНТЕЙНЕР И SAFE AREA
   ========================================= */
-  /* Обертка для всего приложения, учитывающая "челку" и "подбородок" */
   #app {
     height: 100%;
     width: 100%;
@@ -133,7 +119,6 @@
     padding-right: env(safe-area-inset-right, 0px);
   }
 
-  /* На десктопе ограничиваем высоту и убираем паддинги */
   @media (min-width: 640px) {
     #app {
       height: 92vh;
@@ -142,7 +127,6 @@
     }
   }
 
-  /* Отдельный класс для нижней навигации, чтобы добавить отступ снизу */
   .app-nav-safe {
     padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
   }
@@ -155,22 +139,17 @@
     padding-top: env(safe-area-inset-top, 0px);
   }
 
-  .view-top-half h2 {
-    margin: 0.5rem 0;
-    min-height: 1.25rem;
-  }
-  
   .timer-circle-wrap {
     width: 100%;
     max-width: 75%;
     aspect-ratio: 1 / 1;
     margin: 1vh auto;
     max-height: 45vh;
-    container-type: inline-size; /* Включаем Container Queries */
+    container-type: inline-size;
   }
 
   .timer-display {
-    font-size: clamp(2rem, 22cqi, 2.8rem); /* Размер шрифта зависит от ширины родителя */
+    font-size: clamp(2rem, 22cqi, 2.8rem);
     line-height: 1;
     transition: all 0.3s ease;
   }
@@ -182,7 +161,7 @@
   }
 
   /* =========================================
-     АДАПТИВНОСТЬ (LANDSCAPE И МАЛЕНЬКИЕ ЭКРАНЫ)
+     АДАПТИВНОСТЬ
   ========================================= */
   @media (orientation: landscape) and (max-height: 900px) {
     #app {
@@ -190,15 +169,10 @@
       padding-left: env(safe-area-inset-left, 0px);
       padding-right: env(safe-area-inset-right, 0px);
     }
-    #viewsContainer > div:not(#view-settings) {
-      flex-direction: row;
-      align-items: center;
-      gap: 2rem;
-    }
+    #viewsContainer > div:not(#view-settings) { flex-direction: row; align-items: center; gap: 2rem; }
     .view-top-half { height: auto; width: 45%; flex: none; }
     .view-bottom-half { height: 90%; width: 45%; flex: none; justify-content: center; }
     .timer-circle-wrap { max-height: 70vh; max-width: 260px; }
-    #view-settings { flex-direction: column; }
   }
 
   @media (max-height: 700px) and (orientation: portrait) {
@@ -222,25 +196,10 @@
   .primary-bg { background-color: var(--primary-color); transition: background-color 0.3s; }
   .primary-stroke { stroke: var(--primary-color); transition: stroke 0.3s; }
 
-  .app-bg.has-vignette::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-    box-shadow: inset 0 0 15vh rgba(0, 0, 0, var(--vignette-alpha, 0.15));
-    border-radius: inherit;
-    transition: box-shadow 0.3s;
-  }
-  html.dark .app-bg.has-vignette::before {
-    box-shadow: inset 0 0 20vh rgba(0, 0, 0, calc(var(--vignette-alpha, 0.15) + 0.1));
-  }
+  .app-bg.has-vignette::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; box-shadow: inset 0 0 15vh rgba(0, 0, 0, var(--vignette-alpha, 0.15)); border-radius: inherit; transition: box-shadow 0.3s; }
+  html.dark .app-bg.has-vignette::before { box-shadow: inset 0 0 20vh rgba(0, 0, 0, calc(var(--vignette-alpha, 0.15) + 0.1)); }
 
-  .default-bg-btn {
-    border: 1px solid var(--border-color);
-    transition: background-color 0.3s, border-color 0.3s;
-    background-color: #f3f4f6;
-  }
+  .default-bg-btn { border: 1px solid var(--border-color); transition: background-color 0.3s, border-color 0.3s; background-color: #f3f4f6; }
   html.dark .default-bg-btn { background-color: #1c1c1e; }
   html.no-adaptive .default-bg-btn { background-color: #ffffff; }
   html.dark.no-adaptive .default-bg-btn { background-color: #000000; }
@@ -258,15 +217,8 @@
   /* =========================================
      АЛЕРТЫ И МОДАЛЬНЫЕ ОКНА
   ========================================= */
-  #reset-modal, #sw-clear-modal, #sw-name-modal {
-    background-color: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-  }
-  #reset-modal-content, #sw-clear-modal-content, #sw-name-modal-content {
-    background-color: var(--surface-color);
-    border: 1px solid var(--border-color);
-  }
+  #reset-modal, #sw-clear-modal, #sw-name-modal { background-color: rgba(0, 0, 0, 0.6); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+  #reset-modal-content, #sw-clear-modal-content, #sw-name-modal-content { background-color: var(--surface-color); border: 1px solid var(--border-color); }
 
   /* =========================================
      КАСТОМИЗАЦИЯ ЭЛЕМЕНТОВ УПРАВЛЕНИЯ
@@ -276,9 +228,9 @@
   select option { background-color: var(--surface-color); color: var(--text-color); }
 
   input[type="range"] { -webkit-appearance: none; background: transparent; touch-action: pan-y; height: 32px; margin: -14px 0; }
-  input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; height: 24px; width: 24px; border-radius: 50%; background: var(--surface-color); box-shadow: 0 2px 6px rgba(0,0,0,0.3); border: 2px solid var(--primary-color); margin-top: -10px; transition: outline 0.2s, transform 0.1s; }
+  input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; height: 24px; width: 24px; border-radius: 50%; background: var(--surface-color); box-shadow: 0 2px 6px rgba(0,0,0,0.3); border: 2px solid var(--primary-color); margin-top: -10px; transition: transform 0.1s; }
   input[type="range"]::-webkit-slider-thumb:active { transform: scale(1.1); }
-  input[type="range"]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: var(--border-color); border-radius: 2px; margin-top: 14px; }
+  input[type="range"]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: var(--border-color); border-radius: 2px; }
   input[type="range"]:focus-visible::-webkit-slider-thumb { outline: 2px solid var(--primary-color); outline-offset: 2px; }
 
   .custom-toggle { width: 44px; height: 24px; background-color: var(--border-color); border-radius: 9999px; position: relative; transition: background-color 0.3s ease; }
@@ -294,7 +246,7 @@
   button:disabled { opacity: 0.3 !important; cursor: not-allowed !important; transform: none !important; }
   
   /* =========================================
-     АНИМАЦИИ
+     АНИМАЦИИ И ЭФФЕКТЫ
   ========================================= */
   @keyframes flashCircle { 0% { opacity: 0.4; transform: scale(0.98); } 100% { opacity: 0; transform: scale(1); } }
   .flash-active { animation: flashCircle 0.5s ease-out; }
@@ -303,10 +255,13 @@
   @keyframes beat { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); color: #ef4444; filter: drop-shadow(0 0 15px rgba(239, 68, 68, 0.6)); } }
   .pulse-text { animation: beat 1s infinite ease-in-out; }
 
-  @media (prefers-reduced-motion: reduce) {
-    *, ::before, ::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
-  }
+  @media (prefers-reduced-motion: reduce) { *, ::before, ::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
 
+  /* Неоновое свечение круга в Темной Теме */
+  html.dark .progress-ring__circle {
+    filter: drop-shadow(0 0 12px color-mix(in srgb, var(--primary-color) 60%, transparent));
+  }
+  
   /* =========================================
      ЭФФЕКТ ЖИДКОГО СТЕКЛА (LIQUID GLASS)
   ========================================= */
@@ -342,20 +297,8 @@
   body.is-pip #toast {
     display: none !important;
   }
-  body.is-pip .view-top-half {
-    height: 100dvh !important; padding: 0 !important; margin: 0 !important; justify-content: center !important;
-  }
-  body.is-pip .timer-circle-wrap {
-    max-width: 90vw !important; max-height: 90vh !important; margin: auto !important;
-  }
+  body.is-pip .view-top-half { height: 100dvh !important; padding: 0 !important; margin: 0 !important; justify-content: center !important; }
+  body.is-pip .timer-circle-wrap { max-width: 90vw !important; max-height: 90vh !important; margin: auto !important; }
   body.is-pip .app-bg { background: transparent !important; }
   body.is-pip .timer-display { font-size: clamp(3rem, 40cqi, 5rem) !important; }
-  
-  /* =========================================
-     ДОПОЛНИТЕЛЬНЫЕ UI УЛУЧШЕНИЯ
-  ========================================= */
-  /* Неоновое свечение круга в Темной Теме */
-  html.dark .progress-ring__circle {
-    filter: drop-shadow(0 0 12px color-mix(in srgb, var(--primary-color) 60%, transparent));
-  }
 }

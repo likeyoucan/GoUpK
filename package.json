@@ -3,10 +3,14 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "concurrently \"npm:watch:css\" \"npm:start\"",
+    "dev": "concurrently \"npm:watch:css\" \"serve www\"",
     "start": "serve www",
-    "build:css": "tailwindcss -i ./input.css -o ./www/styles.css --minify",
-    "watch:css": "tailwindcss -i ./input.css -o ./www/styles.css --watch",
+    
+    "// --- ИСПРАВЛЕННЫЕ СКРИПТЫ ДЛЯ TAILWIND v4 --- //": "",
+    "build:css": "tailwindcss -i ./input.css -o ./www/styles.css --minify --content \"./www/**/*.html,./www/js/**/*.js\"",
+    "watch:css": "tailwindcss -i ./input.css -o ./www/styles.css --watch --content \"./www/**/*.html,./www/js/**/*.js\"",
+    
+    "// --- CAPACITOR И СБОРКА APK --- //": "",
     "build": "npm run build:css && npx cap sync android",
     "cap:sync": "npx cap sync android",
     "cap:open": "npx cap open android"
