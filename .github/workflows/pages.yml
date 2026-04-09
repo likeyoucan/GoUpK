@@ -25,11 +25,10 @@ jobs:
     - name: 📥 Скачивание кода
       uses: actions/checkout@v4
 
-    - name: ⚙️ Настройка Node.js и кэш
+    - name: ⚙️ Настройка Node.js 22
       uses: actions/setup-node@v4
       with:
         node-version: '22'
-        cache: 'npm'
 
     - name: 📦 Установка зависимостей
       run: npm install

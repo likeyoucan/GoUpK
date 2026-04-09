@@ -6,7 +6,7 @@ concurrency:
 
 on:
   push:
-    branches: ["main", "dev", "alpha"]
+    branches: ["main", "dev"]
   workflow_dispatch:
 
 jobs:
@@ -17,18 +17,16 @@ jobs:
     - name: 📥 Скачивание кода
       uses: actions/checkout@v4
 
-    - name: ⚙️ Настройка Node.js и кэш
+    - name: ⚙️ Настройка Node.js 22
       uses: actions/setup-node@v4
       with:
         node-version: '22'
-        cache: 'npm' # Автоматически сохраняет скачанные пакеты
 
-    - name: ☕ Настройка Java 21 и кэш Gradle
+    - name: ☕ Настройка Java 21
       uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
         java-version: '21'
-        cache: 'gradle' # Ускоряет сборку Android части
 
     - name: 📦 Установка зависимостей
       run: npm install
