@@ -6,6 +6,24 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover"
     />
+
+    <!-- ====================================================== -->
+    <!-- 🟢 ДОБАВЛЕНО: Content Security Policy (CSP)             -->
+    <!-- Это критически важный заголовок безопасности для       -->
+    <!-- Capacitor/Cordova приложений. Он защищает от XSS-атак. -->
+    <!-- ====================================================== -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="
+        default-src 'self'; 
+        script-src 'self' 'unsafe-inline'; 
+        style-src 'self' 'unsafe-inline'; 
+        img-src 'self' data:;
+        font-src 'self' data:;
+        connect-src 'self';
+    "
+    />
+
     <meta
       name="theme-color"
       media="(prefers-color-scheme: light)"
@@ -95,10 +113,6 @@
       <span id="toast-msg" class="font-bold text-sm tracking-wide"></span>
     </div>
 
-    <!-- <div
-      id="app"
-      class="relative w-full max-w-md h-full sm:h-[min(92vh,850px)] sm:rounded-[3rem] overflow-hidden flex flex-col bg-black sm:border-8 sm:border-gray-900 shadow-2xl transition-shadow duration-300"
-    > -->
     <div
       id="app"
       class="relative w-full max-w-md mx-auto h-full overflow-hidden flex flex-col bg-black transition-shadow duration-300"
@@ -106,21 +120,6 @@
       <div
         class="app-bg absolute inset-0 flex flex-col w-full h-full z-0 transition-colors duration-300"
       >
-        <!-- <header
-          class="h-12 shrink-0 w-full flex justify-between items-end px-6 pb-2 z-20 app-text relative"
-        >
-          <span
-            class="text-xs font-semibold opacity-80 tabular-nums w-12"
-            id="clock"
-            >12:00</span
-          >
-          <div class="flex gap-1 opacity-80" aria-hidden="true">
-            <div
-              class="w-4 h-2.5 bg-current rounded-[2px] border border-current"
-            ></div>
-          </div>
-        </header> -->
-
         <main class="flex-1 relative overflow-hidden z-10" id="viewsContainer">
           <!-- STOPWATCH VIEW -->
           <div
@@ -652,7 +651,6 @@
                         class="color-btn w-9 h-9 flex items-center justify-center rounded-full bg-rose-500 shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus"
                       ></button>
 
-                      <!-- Безопасный инпут для iOS -->
                       <div
                         class="relative w-9 h-9 shrink-0 group rounded-full overflow-hidden border border-black/20 dark:border-white/20 transition-transform active:scale-90 focus-within:ring-4 focus-within:ring-[var(--primary-color)]"
                       >
@@ -727,7 +725,6 @@
                         class="bg-btn w-9 h-9 flex items-center justify-center rounded-full bg-teal-400 shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus"
                       ></button>
 
-                      <!-- Безопасный инпут для iOS -->
                       <div
                         class="relative w-9 h-9 shrink-0 group rounded-full overflow-hidden border border-black/20 dark:border-white/20 transition-transform active:scale-90 focus-within:ring-4 focus-within:ring-[var(--primary-color)]"
                       >
@@ -810,7 +807,7 @@
                         <label
                           for="vignetteSlider"
                           class="text-xs app-text-sec"
-                          data-i18n="vibro_level"
+                          data-i18n="vignette_depth"
                           >Depth</label
                         >
                         <input
@@ -1089,7 +1086,7 @@
                     </a>
                   </div>
                 </div>
-                <!-- Версия и Разработчик -->
+
                 <div
                   class="flex flex-col items-center justify-center pt-8 pb-4 opacity-50"
                 >
@@ -1109,7 +1106,6 @@
                   >
                     <span data-i18n="developed_by">Developed by</span>
                     <span>[Твое Имя]</span>
-                    <!-- Впиши сюда свое имя/никнейм -->
                   </div>
                 </div>
               </div>
@@ -1700,31 +1696,7 @@
         </div>
       </div>
     </div>
-    <div
-      onclick="
-        localStorage.clear();
-        alert('LocalStorage очищен!');
-      "
-      style="
-        padding: 20px 40px;
-        background-color: #e74c3c;
-        position: fixed;
-        inset: 0 0 auto auto;
-        color: white;
-        font-size: 18px;
-        font-weight: bold;
-        border-radius: 10px;
-        cursor: pointer;
-        text-align: center;
-        display: inline-block;
-        user-select: none;
-        transition: background-color 0.3s;
-      "
-      onmouseover="this.style.backgroundColor = '#c0392b'"
-      onmouseout="this.style.backgroundColor = '#e74c3c'"
-    >
-      Очистить LocalStorage
-    </div>
+
     <script type="module" src="./js/main.js"></script>
   </body>
 </html>
