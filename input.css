@@ -340,10 +340,8 @@ html.dark .app-bg.has-vignette::before {
 /* Фикс дефолтного круга фона */
 .default-bg-btn {
   border: 1px solid var(--border-color);
-  transition: background-color 0.3s, border-color 0.3s;
-}
-.default-bg-btn {
   background-color: #f3f4f6;
+  transition: background-color 0.3s, border-color 0.3s;
 }
 html.dark .default-bg-btn {
   background-color: #1c1c1e;
