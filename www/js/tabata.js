@@ -1,3 +1,5 @@
+// tabata.js
+
 import {
   $,
   escapeHTML,
@@ -85,7 +87,7 @@ export const tb = {
         throw new Error("No data");
       }
     } catch (e) {
-      console.warn("Failed to parse tabata workouts, using defaults");
+      console.warn("Failed to parse tabata workouts, using defaults", e); // Добавил вывод ошибки
       this.workouts = [
         { id: 1, name: "Tabata 1", work: 20, rest: 10, rounds: 8 },
       ];
@@ -98,7 +100,7 @@ export const tb = {
     const exists = this.workouts.find((w) => w.id === lastSelectedId);
     if (exists) {
       this.selectWorkout(lastSelectedId);
-    } else {
+    } else if (this.workouts.length > 0) { // Проверка, что массив не пустой
       this.selectWorkout(this.workouts[0].id);
     }
 
@@ -210,8 +212,8 @@ export const tb = {
   },
 
   closeModal() {
-    if (document.activeElement === this.els.editName) {
-      this.els.editName.blur();
+    if (document.activeElement.closest("form")) {
+        document.activeElement.blur();
     }
 
     this.els.modal.classList.remove("translate-y-0");
@@ -265,10 +267,8 @@ export const tb = {
       }
     } else {
       const newW = {
-        id:
-          typeof crypto !== "undefined" && crypto.randomUUID
-            ? crypto.randomUUID()
-            : Date.now(),
+        // === ИСПРАВЛЕНИЕ: ID всегда должен быть числом ===
+        id: Date.now(),
         name: finalName,
         work: w,
         rest: r,
@@ -284,6 +284,9 @@ export const tb = {
     this.closeModal();
   },
 
+  // Остальная часть файла tabata.js остается без изменений...
+  // ... (весь ваш код от deleteWorkout до конца файла)
+  // ...
   deleteWorkout(id) {
     if (this.status !== "STOPPED") {
       showToast(t("active_timer"));
@@ -335,8 +338,8 @@ export const tb = {
       div.dataset.id = w.id;
 
       div.innerHTML = `
-        <div class="flex-1">
-          <div class="font-bold ${isAct ? "primary-text" : "app-text"}">${escapeHTML(w.name)}</div>
+        <div class="flex-1 min-w-0 pr-2">
+          <div class="font-bold truncate ${isAct ? "primary-text" : "app-text"}">${escapeHTML(w.name)}</div>
           <div class="text-xs app-text-sec mt-1">${w.work}${t("sec").toLowerCase()} / ${w.rest}${t("sec").toLowerCase()} • ${w.rounds} ${t("rds")}</div>
         </div>
         <div class="flex gap-1 shrink-0">

@@ -1,6 +1,9 @@
+// theme.js
+
 import { $, safeGetLS, safeSetLS } from "./utils.js";
 
 export const themeManager = {
+  // ... (начало файла без изменений, до функции updateButtons) ...
   currentMode: "system",
   currentBg: "default",
   showMs: true,
@@ -135,8 +138,16 @@ export const themeManager = {
 
     if ($("customColorInput"))
       $("customColorInput").value = safeGetLS("theme_color") || "#22c55e";
-    if ($("customBgInput"))
-      $("customBgInput").value = safeGetLS("theme_bg_color") || "#ffffff";
+    
+    const storedBgColor = safeGetLS("theme_bg_color");
+    const customBgInput = $("customBgInput");
+    if (customBgInput) {
+        if (storedBgColor && storedBgColor.startsWith("#")) {
+            customBgInput.value = storedBgColor;
+        } else {
+            customBgInput.value = "#000000"; 
+        }
+    }
   },
 
   updateAdaptiveClass() {
@@ -222,9 +233,13 @@ export const themeManager = {
     this.applyBgTheme(hex, isDark);
     this.updateButtons(this.bgBtns, hex, "customBgInput", true);
   },
-
+  
+  // ===============================================
+  // === ИСПРАВЛЕННАЯ ФУНКЦИЯ updateButtons ===
+  // ===============================================
   updateButtons(btnCollection, hex, customId, isBg) {
     let found = false;
+    // Обновляем предопределенные кнопки
     btnCollection.forEach((b) => {
       b.classList.remove(
         "ring-2",
@@ -253,20 +268,36 @@ export const themeManager = {
 
     const pickerWrapper = $(customId)?.closest(".relative");
     if (!pickerWrapper) return;
+
+    // Находим дочерний элемент с градиентом
+    const gradientEl = pickerWrapper.querySelector(".bg-\\[conic-gradient.*\\]");
+
+    // Сбрасываем состояние кастомного пикера
     pickerWrapper.classList.remove(
       "ring-2",
       "ring-offset-2",
       "ring-offset-white",
       "dark:ring-offset-gray-900",
     );
+    // Показываем градиент по умолчанию
+    if (gradientEl) gradientEl.style.opacity = '1';
 
-    if (!found && hex !== "default") {
+
+    // Если выбран кастомный цвет
+    if (!found && hex !== "default" && hex.startsWith("#")) {
       pickerWrapper.classList.add(
         "ring-2",
         "ring-offset-2",
         "ring-offset-white",
         "dark:ring-offset-gray-900",
       );
+      // Устанавливаем фон самого `pickerWrapper`
+      pickerWrapper.style.backgroundColor = hex;
+      // И скрываем градиент, чтобы фон стал виден
+      if (gradientEl) gradientEl.style.opacity = '0';
+    } else {
+        // Если выбран НЕ кастомный цвет, сбрасываем фон
+        pickerWrapper.style.backgroundColor = '';
     }
   },
 

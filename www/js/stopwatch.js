@@ -1,3 +1,5 @@
+// stopwatch.js
+
 import {
   $,
   escapeHTML,
@@ -20,6 +22,8 @@ import { t } from "./i18n.js";
 import { themeManager } from "./theme.js";
 
 export const sw = {
+  // ... (начало файла без изменений) ...
+  // ...
   startTime: 0,
   elapsedTime: 0,
   isRunning: false,
@@ -109,10 +113,16 @@ export const sw = {
       const header = e.target.closest(".sw-session-header");
       const renameBtn = e.target.closest(".sw-rename-btn");
       const deleteBtn = e.target.closest(".sw-delete-btn");
-
-      if (renameBtn) this.prepareRenameSession(Number(renameBtn.dataset.id), e);
-      else if (deleteBtn) this.deleteSession(Number(deleteBtn.dataset.id), e);
-      else if (header) this.toggleSessionDetails(Number(header.dataset.id));
+      
+      if (renameBtn) {
+        e.stopPropagation();
+        this.prepareRenameSession(Number(renameBtn.dataset.id));
+      } else if (deleteBtn) {
+        e.stopPropagation();
+        this.deleteSession(Number(deleteBtn.dataset.id));
+      } else if (header) {
+        this.toggleSessionDetails(Number(header.dataset.id));
+      }
     });
 
     try {
@@ -137,6 +147,39 @@ export const sw = {
     });
   },
 
+  prepareSaveSession() {
+    if (this.laps.length === 0 && this.elapsedTime === 0) return;
+    let sessionLaps = [...this.laps];
+    let total = this.laps.length > 0 ? this.laps[0].total : 0;
+    if (this.elapsedTime > total) {
+      const diff = this.elapsedTime - total;
+      if (diff > 10) {
+        sessionLaps.unshift({
+          total: this.elapsedTime,
+          diff: diff,
+          index: sessionLaps.length + 1,
+        });
+      }
+    }
+    const defaultName = this.getUniqueName(t("stopwatch"));
+    const completionTime = this.isRunning
+      ? Date.now()
+      : this.pauseTime || Date.now();
+
+    this.nameModalState.pendingSession = {
+      // === ИСПРАВЛЕНИЕ: ID всегда должен быть числом ===
+      id: Date.now(),
+      name: "",
+      date: completionTime,
+      totalTime: this.elapsedTime,
+      laps: sessionLaps,
+    };
+    this.openNameModal("save", defaultName);
+  },
+
+  // ... (остальная часть файла stopwatch.js без изменений)
+  // ...
+  // ...
   formatTime(ms, forceMs = null) {
     const showMs = forceMs !== null ? forceMs : themeManager.showMs;
     return formatMsTime(ms, showMs);
@@ -335,40 +378,7 @@ export const sw = {
     }
   },
 
-  prepareSaveSession() {
-    if (this.laps.length === 0 && this.elapsedTime === 0) return;
-    let sessionLaps = [...this.laps];
-    let total = this.laps.length > 0 ? this.laps[0].total : 0;
-    if (this.elapsedTime > total) {
-      const diff = this.elapsedTime - total;
-      if (diff > 10) {
-        sessionLaps.unshift({
-          total: this.elapsedTime,
-          diff: diff,
-          index: sessionLaps.length + 1,
-        });
-      }
-    }
-    const defaultName = this.getUniqueName(t("stopwatch"));
-    const completionTime = this.isRunning
-      ? Date.now()
-      : this.pauseTime || Date.now();
-
-    this.nameModalState.pendingSession = {
-      id:
-        typeof crypto !== "undefined" && crypto.randomUUID
-          ? crypto.randomUUID()
-          : Date.now(),
-      name: "",
-      date: completionTime,
-      totalTime: this.elapsedTime,
-      laps: sessionLaps,
-    };
-    this.openNameModal("save", defaultName);
-  },
-
-  prepareRenameSession(id, e) {
-    if (e) e.stopPropagation();
+  prepareRenameSession(id) {
     const session = this.savedSessions.find((s) => s.id === id);
     if (!session) return;
     this.openNameModal("rename", session.name, id);
@@ -527,8 +537,7 @@ export const sw = {
     this.renderSavedSessions();
   },
 
-  deleteSession(id, e) {
-    if (e) e.stopPropagation();
+  deleteSession(id) {
     this.savedSessions = this.savedSessions.filter((s) => s.id !== id);
     safeSetLS("sw_saved_sessions", JSON.stringify(this.savedSessions));
     this.renderSavedSessions();
