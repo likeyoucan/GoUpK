@@ -333,6 +333,7 @@
                   class="flex items-center gap-2 transition-all duration-300"
                 >
                   <div class="flex flex-col items-center">
+                    <!-- ИЗМЕНЕНИЕ: убран класс text-4xl -->
                     <input
                       type="text"
                       inputmode="numeric"
@@ -343,7 +344,7 @@
                       aria-label="Hours"
                       id="tm-h"
                       placeholder="00"
-                      class="timer-input w-16 h-16 text-center text-4xl bg-transparent border-b-2 app-border outline-none font-mono placeholder-gray-500 transition-colors primary-focus-border"
+                      class="timer-input w-16 h-16 text-center bg-transparent border-b-2 app-border outline-none font-mono placeholder-gray-500 transition-colors primary-focus-border"
                     />
                     <label
                       for="tm-h"
@@ -356,6 +357,7 @@
                     >:</span
                   >
                   <div class="flex flex-col items-center">
+                    <!-- ИЗМЕНЕНИЕ: убран класс text-4xl -->
                     <input
                       type="text"
                       inputmode="numeric"
@@ -366,7 +368,7 @@
                       aria-label="Minutes"
                       id="tm-m"
                       placeholder="00"
-                      class="timer-input w-16 h-16 text-center text-4xl bg-transparent border-b-2 app-border outline-none font-mono placeholder-gray-500 transition-colors primary-focus-border"
+                      class="timer-input w-16 h-16 text-center bg-transparent border-b-2 app-border outline-none font-mono placeholder-gray-500 transition-colors primary-focus-border"
                     />
                     <label
                       for="tm-m"
@@ -379,6 +381,7 @@
                     >:</span
                   >
                   <div class="flex flex-col items-center">
+                    <!-- ИЗМЕНЕНИЕ: убран класс text-4xl -->
                     <input
                       type="text"
                       inputmode="numeric"
@@ -389,7 +392,7 @@
                       aria-label="Seconds"
                       id="tm-s"
                       placeholder="00"
-                      class="timer-input w-16 h-16 text-center text-4xl bg-transparent border-b-2 app-border outline-none font-mono placeholder-gray-500 transition-colors primary-focus-border"
+                      class="timer-input w-16 h-16 text-center bg-transparent border-b-2 app-border outline-none font-mono placeholder-gray-500 transition-colors primary-focus-border"
                     />
                     <label
                       for="tm-s"
@@ -401,14 +404,18 @@
                 </div>
                 <button type="submit" class="sr-only" tabindex="-1"></button>
               </form>
-              <button
-                type="button"
-                id="tm-resetBtn"
-                data-i18n="reset"
-                class="hidden app-surface app-text w-32 min-h-[44px] rounded-full text-lg font-bold shadow-sm active:scale-95 transition-transform text-red-500 mt-6 focus:outline-none custom-focus"
-              >
-                Reset
-              </button>
+
+              <!-- === ИЗМЕНЕНИЕ: Кнопка обернута в контейнер, как у секундомера === -->
+              <div class="w-full flex justify-center h-14 shrink-0 mb-2 mt-2">
+                <button
+                  type="button"
+                  id="tm-resetBtn"
+                  data-i18n="reset"
+                  class="hidden app-surface app-text w-32 min-h-[44px] rounded-full text-lg font-bold shadow-sm active:scale-95 transition-transform focus:outline-none custom-focus"
+                >
+                  Reset
+                </button>
+              </div>
             </div>
           </div>
 
@@ -1696,7 +1703,7 @@
         </div>
       </div>
     </div>
-   <div
+    <div
       onclick="
         localStorage.clear();
         alert('LocalStorage очищен!');
