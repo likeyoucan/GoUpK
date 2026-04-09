@@ -1,5 +1,3 @@
-// i18n.js
-
 import { safeGetLS, safeSetLS } from "./utils.js";
 
 export const translations = {
@@ -69,7 +67,7 @@ export const translations = {
     sound: "Sound",
     vibration: "Vibration",
     vibro_level: "Depth",
-    vignette_depth: "Depth",   // 🟢 ДОБАВЛЕНО: отдельный ключ для виньетки
+    vignette_depth: "Depth",
     sound_theme: "Sound Theme",
     theme_sport: "Sport",
     theme_vibe: "Vibe",
@@ -159,7 +157,7 @@ export const translations = {
     sound: "Звук",
     vibration: "Вибрация",
     vibro_level: "Глубина",
-    vignette_depth: "Глубина",  // 🟢 ДОБАВЛЕНО: отдельный ключ для виньетки
+    vignette_depth: "Глубина",
     sound_theme: "Тема звуков",
     theme_sport: "Спорт",
     theme_vibe: "Вайб",
@@ -221,31 +219,21 @@ export const langManager = {
     const ls = document.getElementById("langSelect");
     if (ls) ls.value = isAuto ? "auto" : lang;
 
-    // 🟡 ИСПРАВЛЕНО: Безопасная замена текста без дублирования текстовых узлов.
-    // Стратегия: если у элемента есть дочерние элементы (SVG/иконки) — ищем
-    // ПЕРВЫЙ текстовый узел и обновляем только его. Если элемент — чистый текст,
-    // используем textContent напрямую.
     document.querySelectorAll("[data-i18n]").forEach((el) => {
       const newText = t(el.getAttribute("data-i18n"));
 
       if (el.children.length === 0) {
-        // Нет дочерних элементов — просто меняем текст напрямую (самый быстрый путь)
         el.textContent = newText;
         return;
       }
 
-      // Есть дочерние элементы (например SVG иконки в кнопке Feedback).
-      // Ищем существующий непустой текстовый узел
       const existingTextNode = Array.from(el.childNodes).find(
         (node) => node.nodeType === Node.TEXT_NODE && node.nodeValue.trim() !== ""
       );
 
       if (existingTextNode) {
-        // Обновляем существующий узел — SVG не трогаем
         existingTextNode.nodeValue = newText;
       }
-      // Если текстового узла нет (только SVG) — ничего не делаем:
-      // такие элементы используют aria-label, а не видимый текст
     });
 
     document.dispatchEvent(new CustomEvent("languageChanged"));
@@ -255,5 +243,5 @@ export const langManager = {
 export function t(key) {
   return (translations[langManager.current] && translations[langManager.current][key])
     ? translations[langManager.current][key]
-    : (translations["en"][key] || key); // 🟢 УЛУЧШЕНИЕ: фолбэк на английский вместо возврата ключа
+    : (translations["en"][key] || key);
 }

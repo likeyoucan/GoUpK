@@ -1,5 +1,3 @@
-// main.js
-
 import { $, showToast, safeRemoveLS, requestWakeLock } from "./utils.js";
 import { langManager, t } from "./i18n.js";
 import { themeManager } from "./theme.js";
@@ -24,7 +22,7 @@ function injectSVG() {
     const ringId = svgs[type];
     if (!ringId) return;
 
-    // 🟢 УЛУЧШЕНИЕ: проверяем, не был ли SVG уже вставлен (защита от повторного вызова)
+    // Проверяем, не был ли SVG уже вставлен (защита от повторного вызова)
     if (container.querySelector("svg")) return;
 
     // Для таймера кольцо не реагирует на клики (управление через отдельную кнопку)
@@ -43,7 +41,7 @@ function injectSVG() {
 // 2. МОДАЛЬНЫЕ ОКНА И СВАЙПЫ (ЖЕСТЫ)
 // =========================================
 const resetModal = {
-  modal: null, // 🟢 УЛУЧШЕНИЕ: ленивая инициализация после DOMContentLoaded
+  modal: null, // Ленивая инициализация после DOMContentLoaded
   content: null,
 
   init() {
@@ -91,7 +89,7 @@ const resetModal = {
       "app_vignette",
       "app_vignette_alpha",
       "app_liquid_glass",
-      "app_volume", // 🟢 ДОБАВЛЕНО: этот ключ отсутствовал в оригинале
+      "app_volume",
     ];
     keys.forEach((key) => safeRemoveLS(key));
     this.close();
@@ -113,9 +111,7 @@ function initSwipeToClose() {
     const modal = document.getElementById(id);
     if (!modal) return;
 
-    // Ищем верхнюю серую полоску-ручку
     const handle = modal.querySelector(".w-12.h-1\\.5");
-    // Если ручка не найдена — используем весь верх модального окна
     const touchArea = handle ? handle.parentElement : modal;
     if (!touchArea) return;
 
@@ -127,7 +123,7 @@ function initSwipeToClose() {
       "touchstart",
       (e) => {
         startY = e.touches[0].clientY;
-        currentY = startY; // 🟢 ИСПРАВЛЕНО: инициализируем currentY чтобы deltaY не был NaN при быстром тапе
+        currentY = startY;
         isDragging = true;
         modal.style.transition = "none";
       },
@@ -144,7 +140,7 @@ function initSwipeToClose() {
           modal.style.transform = `translateY(${deltaY}px)`;
         }
       },
-      { passive: true }, // 🟢 ИСПРАВЛЕНО: passive:true т.к. мы не вызываем preventDefault здесь
+      { passive: true },
     );
 
     touchArea.addEventListener("touchend", () => {
@@ -158,7 +154,6 @@ function initSwipeToClose() {
       } else {
         modal.style.transform = "translateY(0)";
       }
-      // Очищаем inline transform после анимации
       setTimeout(() => {
         modal.style.transform = "";
         modal.style.transition = "";
@@ -172,7 +167,7 @@ function initSwipeToClose() {
 // =========================================
 document.addEventListener("DOMContentLoaded", () => {
   injectSVG();
-  resetModal.init(); // 🟢 ИСПРАВЛЕНО: инициализируем после загрузки DOM
+  resetModal.init();
   langManager.init();
   themeManager.init();
   sm.init();
@@ -182,38 +177,29 @@ document.addEventListener("DOMContentLoaded", () => {
   navigation.init();
   initSwipeToClose();
 
-  // Убираем класс preload чтобы показать приложение (предотвращает FOUC)
   setTimeout(() => document.body.classList.remove("preload"), 50);
 
-  // Навигационные кнопки
   document.querySelectorAll("[data-nav]").forEach((btn) => {
     btn.addEventListener("click", (e) =>
       navigation.switchView(e.currentTarget.getAttribute("data-nav")),
     );
   });
 
-  // Кнопки модального окна сброса настроек
   $("btn-open-reset")?.addEventListener("click", () => resetModal.open());
   $("reset-cancel")?.addEventListener("click", () => resetModal.close());
   $("reset-confirm")?.addEventListener("click", () => resetModal.confirm());
 
-  // Форма имени сессии секундомера
   $("sw-name-modal-content")?.addEventListener("submit", (e) => {
     e.preventDefault();
     sw.confirmNameModal();
   });
 
-  // Форма создания/редактирования тренировки Табата
   $("tb-modal-form")?.addEventListener("submit", (e) => {
     e.preventDefault();
     tb.saveWorkout();
   });
 
-  // =========================================
-  // ГЛОБАЛЬНЫЕ КЛАВИШИ (для веб-версии)
-  // =========================================
   document.addEventListener("keydown", (e) => {
-    // Сначала обрабатываем Escape для закрытия модалок
     if (e.key === "Escape") {
       if (!$("sw-name-modal")?.classList.contains("hidden")) {
         sw.closeNameModal();
@@ -238,7 +224,6 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    // 🟢 УЛУЧШЕНИЕ: игнорируем горячие клавиши если фокус в интерактивном элементе
     if (
       e.target.closest('input, textarea, select, button, [contenteditable="true"]')
     )
@@ -259,14 +244,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // =========================================
-  // ЖЕСТЫ (СВАЙПЫ И ДВОЙНОЙ ТАП)
-  // =========================================
-
-  // 1. Двойной тап по фону секундомера — отсечка КРУГА (Lap)
   let lastBgTap = 0;
   $("view-stopwatch")?.addEventListener("touchstart", (e) => {
-    // Игнорируем нажатия на кнопки и прокручиваемые списки
     if (e.target.closest("button, .scroll-lock, .selectable-data")) return;
 
     const now = Date.now();
@@ -277,7 +256,6 @@ document.addEventListener("DOMContentLoaded", () => {
     lastBgTap = now;
   });
 
-  // 2. Свайпы влево/вправо для переключения вкладок
   let touchStartX = 0;
   let touchStartY = 0;
   const tabs = ["stopwatch", "timer", "tabata", "settings"];
@@ -292,7 +270,6 @@ document.addEventListener("DOMContentLoaded", () => {
   );
 
   document.addEventListener("touchend", (e) => {
-    // Игнорируем свайп если пользователь скроллит список или взаимодействует с UI
     if (
       e.target.closest(".scroll-lock, .no-scrollbar, input, button, select")
     )
@@ -303,15 +280,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const deltaX = touchEndX - touchStartX;
     const deltaY = touchEndY - touchStartY;
 
-    // Только строгий горизонтальный свайп (минимум 80px по X, максимум 50px по Y)
     if (Math.abs(deltaX) > 80 && Math.abs(deltaY) < 50) {
       const currentIdx = tabs.indexOf(navigation.activeView);
 
       if (deltaX < 0 && currentIdx < tabs.length - 1) {
-        // Свайп ВЛЕВО → следующая вкладка
         navigation.switchView(tabs[currentIdx + 1]);
       } else if (deltaX > 0 && currentIdx > 0) {
-        // Свайп ВПРАВО → предыдущая вкладка
         navigation.switchView(tabs[currentIdx - 1]);
       }
     }
@@ -321,17 +295,13 @@ document.addEventListener("DOMContentLoaded", () => {
   // 4. СИСТЕМНАЯ ИНТЕГРАЦИЯ ANDROID
   // =========================================
   if (window.Capacitor && window.Capacitor.isNativePlatform()) {
-    // 🟡 ИСПРАВЛЕНО: деструктуризация из Plugins напрямую (без промежуточной переменной)
-    // т.к. плагины регистрируются асинхронно и могут быть undefined в момент деструктуризации
     const Plugins = window.Capacitor.Plugins;
 
-    // 1. Прозрачный статус-бар (безрамочный дизайн)
     if (Plugins.StatusBar) {
       Plugins.StatusBar.setOverlaysWebView({ overlay: true }).catch(() => {});
       Plugins.StatusBar.setStyle({ style: "DARK" }).catch(() => {});
     }
 
-    // 2. Системная кнопка "Назад" / свайп от края
     if (Plugins.App) {
       Plugins.App.addListener("backButton", () => {
         if (!$("sw-name-modal")?.classList.contains("hidden")) {
@@ -358,13 +328,10 @@ document.addEventListener("DOMContentLoaded", () => {
           navigation.switchView("stopwatch");
           return;
         }
-        // Аккуратно сворачиваем приложение если всё закрыто
         Plugins.App.minimizeApp().catch(() => {});
       });
     }
 
-    // 3. FOREGROUND SERVICE — живая нотификация при сворачивании
-    // 🟡 ИСПРАВЛЕНО: проверяем наличие плагина через Plugins объект
     const FgService = Plugins.CapacitorAndroidForegroundService || Plugins.AndroidForegroundService;
 
     if (Plugins.App && FgService) {
@@ -389,7 +356,6 @@ document.addEventListener("DOMContentLoaded", () => {
           let phaseStr = tb.status === "WORK" ? "Work" : tb.status === "REST" ? "Rest" : "Get Ready";
           body = `Round ${tb.currentRound}/${tb.rounds} • ${phaseStr}: ${sTotal}s`;
         } else {
-          // Ничего не работает — останавливаем службу
           if (fgInterval) {
             clearInterval(fgInterval);
             fgInterval = null;
@@ -413,7 +379,6 @@ document.addEventListener("DOMContentLoaded", () => {
           (tb.status !== "STOPPED" && !tb.paused);
 
         if (!isActive && isTimerRunning) {
-          // Приложение свёрнуто и таймер работает — запускаем службу
           sm.unlock();
           requestWakeLock();
           await updateForegroundNotification();
@@ -421,7 +386,6 @@ document.addEventListener("DOMContentLoaded", () => {
             fgInterval = setInterval(updateForegroundNotification, 1000);
           }
         } else if (isActive) {
-          // Приложение открыто — чистим службу
           if (fgInterval) {
             clearInterval(fgInterval);
             fgInterval = null;

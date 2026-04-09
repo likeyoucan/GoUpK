@@ -1,5 +1,3 @@
-// navigation.js
-
 import { $ } from "./utils.js";
 
 export const navigation = {
@@ -7,21 +5,17 @@ export const navigation = {
   clockInterval: null,
 
   init() {
-    // 🟡 ИСПРАВЛЕНО: initClock() вызывается только если элемент #clock существует в DOM.
-    // Ранее функция создавала мёртвый интервал при каждом запуске,
-    // что вело к утечке памяти если #clock отсутствует в HTML.
     this.initClock();
   },
 
   switchView(viewId) {
     if (this.activeView === viewId) return;
 
-    // УМНЫЕ НАТИВНЫЕ АНИМАЦИИ (View Transitions API)
     if (!document.startViewTransition) {
-      this.updateDOM(viewId); // Если старый телефон — просто переключаем
+      this.updateDOM(viewId);
     } else {
       document.startViewTransition(() => {
-        this.updateDOM(viewId); // Если современный Android — делаем морфинг!
+        this.updateDOM(viewId);
       });
     }
   },
@@ -54,9 +48,6 @@ export const navigation = {
       const iconSvg = iconDiv.querySelector("svg");
 
       if (id === activeId) {
-        // 🟡 ИСПРАВЛЕНО: classList.replace() не работает если класс уже удалён
-        // (возвращает false — без ошибки, но класс не добавляется).
-        // Используем явный remove + add для надёжности.
         iconDiv.classList.remove("text-gray-400");
         iconDiv.classList.add("primary-text");
         if (textSpan) {
@@ -78,12 +69,8 @@ export const navigation = {
 
   initClock() {
     const clockEl = $("clock");
-    // 🟡 ИСПРАВЛЕНО: ранее создавался бесконечный интервал даже если #clock не существует.
-    // Теперь функция тихо выходит если элемент не найден.
     if (!clockEl) return;
 
-    // 🟢 УЛУЧШЕНИЕ: очищаем предыдущий интервал перед созданием нового
-    // (защита от случайного повторного вызова init())
     if (this.clockInterval) {
       clearInterval(this.clockInterval);
       this.clockInterval = null;

@@ -1,5 +1,3 @@
-// sound.js
-
 import { $, safeGetLS, safeSetLS } from "./utils.js";
 
 export const sm = {
@@ -53,8 +51,6 @@ export const sm = {
       this.play("click");
     });
 
-    // Разблокируем AudioContext при первом взаимодействии пользователя
-    // (требование браузеров: AudioContext не может стартовать без жеста)
     document.addEventListener(
       "click",
       () => {
@@ -64,7 +60,6 @@ export const sm = {
       { once: true, capture: true },
     );
 
-    // 🟢 УЛУЧШЕНИЕ: также разблокируем при первом касании (мобильные)
     document.addEventListener(
       "touchstart",
       () => {
@@ -99,7 +94,6 @@ export const sm = {
     this.updateVibroUI();
   },
 
-  // 🟢 ВЫНЕСЕНО: управление состоянием слайдера громкости в отдельный метод
   updateVolumeUI() {
     const volSlider = $("volumeSlider");
     if (volSlider) {
