@@ -4,23 +4,23 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "npx @tailwindcss/cli -i ./input.css -o ./www/styles.css --watch & serve www",
+    "dev": "npx @tailwindcss/cli -i ./input.css -o ./www/styles.css --watch & npx serve www",
     "build": "npx @tailwindcss/cli -i ./input.css -o ./www/styles.css --minify",
     "cap:sync": "npm run build && npx cap sync",
     "cap:android": "npx cap sync android && npx cap open android",
     "cap:ios": "npx cap sync ios && npx cap open ios",
-    "start": "serve www"
+    "start": "npx serve www"
   },
   "dependencies": {
     "@capacitor/android": "^8.3.0",
     "@capacitor/core": "^8.3.0",
     "@capacitor/ios": "^8.3.0",
     "@capacitor/status-bar": "^8.0.0",
-    "@capawesome-team/capacitor-android-foreground-service": "^8.1.0",
-    "serve": "^14.2.0"
+    "@capawesome-team/capacitor-android-foreground-service": "^8.1.0"
   },
   "devDependencies": {
     "@capacitor/cli": "^8.3.0",
-    "@tailwindcss/cli": "^4.0.0"
+    "@tailwindcss/cli": "^4.0.0",
+    "serve": "^14.2.0"
   }
 }
