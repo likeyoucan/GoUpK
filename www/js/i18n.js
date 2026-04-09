@@ -159,7 +159,7 @@ export const translations = {
     sound: "Звук",
     vibration: "Вибрация",
     vibro_level: "Глубина",
-    vignette_depth: "Глубина",
+    vignette_depth: "Интенсивность",
     sound_theme: "Тема звуков",
     theme_sport: "Спорт",
     theme_vibe: "Вайб",
