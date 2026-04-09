@@ -17,27 +17,24 @@
     <meta
       http-equiv="Content-Security-Policy"
       content="
-        default-src 'self'; 
-        script-src 'self'; 
-        style-src 'self'; 
-        img-src 'self' data: capacitor: ionic: http://localhost;
-        font-src 'self' data:;
-        connect-src 'self' https:;
-        frame-ancestors 'none';
-        object-src 'none';
-        base-uri 'self';
-        form-action 'self';
-        upgrade-insecure-requests;
+      default-src 'self'; 
+      script-src 'self'; 
+      style-src 'self' 'unsafe-inline'; 
+      img-src 'self' data: capacitor: ionic: http://localhost;
+      font-src 'self' data:;
+      connect-src 'self' https:;
+      object-src 'none';
+      base-uri 'self';
+      form-action 'self';
+      upgrade-insecure-requests;
     "
     />
 
-    <!-- Ограничение доступа к API устройства (безопасность приватности) -->
     <meta
       http-equiv="Permissions-Policy"
       content="camera=(), microphone=(), geolocation=(), payment=()"
     />
 
-    <!-- Защита от утечки данных о переходе -->
     <meta name="referrer" content="no-referrer" />
 
     <meta
@@ -77,13 +74,10 @@
     />
 
     <title>Stopwatch Pro</title>
-    
+
     <script src="./js-check.js"></script>
     <link rel="stylesheet" href="./js-check.css" />
     <link rel="stylesheet" href="styles.css" />
-    <script>
-  alert('123');
-</script>
   </head>
 
   <body
