@@ -1,5 +1,3 @@
-// theme.js
-
 import { $, safeGetLS, safeSetLS } from "./utils.js";
 export const themeManager = {
   currentMode: "system",
@@ -138,14 +136,15 @@ export const themeManager = {
   setMode(mode) {
     this.currentMode = mode;
     safeSetLS("theme_mode", mode);
-
+    // 🟡 ИСПРАВЛЕНО: ранее activeBtn получал app-text но НЕ терял app-text-sec.
+    // Теперь явно убираем app-text-sec у всех, потом добавляем нужное активной кнопке.
     this.themeBtns.forEach((b) => {
       b.classList.remove("app-surface", "shadow-sm", "app-text");
       b.classList.add("app-text-sec");
     });
     const activeBtn = $(`theme-${mode}`);
     if (activeBtn) {
-      activeBtn.classList.remove("app-text-sec");
+      activeBtn.classList.remove("app-text-sec"); // 🟡 ИСПРАВЛЕНО: убираем sec у активной
       activeBtn.classList.add("app-surface", "shadow-sm", "app-text");
     }
     const isDark =
@@ -159,7 +158,8 @@ export const themeManager = {
       document.documentElement.classList.remove("dark");
       document.documentElement.style.colorScheme = "light";
     }
-
+    // Обновляем meta theme-color динамически
+    // 🟢 УЛУЧШЕНИЕ: обновляем существующие meta теги вместо создания нового
     document.querySelectorAll('meta[name="theme-color"]').forEach((meta) => {
       const media = meta.getAttribute("media") || "";
       if (media.includes("dark")) {
@@ -173,11 +173,7 @@ export const themeManager = {
   setColor(hex) {
     safeSetLS("theme_color", hex);
     if (hex === "auto") {
-      if (
-        window.Capacitor &&
-        window.Capacitor.Plugins &&
-        window.Capacitor.Plugins.MaterialYou
-      ) {
+      if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.MaterialYou) {
         window.Capacitor.Plugins.MaterialYou.getColors()
           .then((colors) => this.applyMaterialYouColors(colors))
           .catch(() => this.setColor("#22c55e"));
@@ -296,7 +292,7 @@ export const themeManager = {
     const satDark = Math.min(s, 40);
     const satLight = Math.max(s, 20);
     if (isDark) {
-      root.style.setProperty("--bg-color", `hsl(${h} ${satDark}% 8%)`);
+      root.style.setProperty("--bg-color", `hsl(${h} ${satDark}% 8%)`);      // 🟡 ИСПРАВЛЕНО: hsl без запятых (CSS Color Level 4)
       root.style.setProperty("--surface-color", `hsl(${h} ${satDark}% 14%)`);
     } else {
       root.style.setProperty("--bg-color", `hsl(${h} ${satLight}% 94%)`);
@@ -308,7 +304,7 @@ export const themeManager = {
     const vignetteContainer = $("vignette-depth-container");
     if (!bgElement) return;
     if (vignetteContainer) {
-
+      // 🟡 ИСПРАВЛЕНО: display:none/flex вместо style.display (совместимость с Tailwind hidden)
       if (this.hasVignette) {
         vignetteContainer.classList.remove("hidden");
         vignetteContainer.classList.add("flex");
@@ -329,11 +325,9 @@ export const themeManager = {
     }
   },
   hexToRGB(H) {
-
+    // 🟢 УЛУЧШЕНИЕ: поддержка коротких (#rgb) и длинных (#rrggbb) форматов
     if (!H || !H.startsWith("#")) return { r: 0, g: 0, b: 0 };
-    let r = 0,
-      g = 0,
-      b = 0;
+    let r = 0, g = 0, b = 0;
     if (H.length === 4) {
       r = parseInt(H[1] + H[1], 16);
       g = parseInt(H[2] + H[2], 16);
@@ -346,7 +340,7 @@ export const themeManager = {
     return { r, g, b };
   },
   hexToHSL(H) {
-    if (!H || !H.startsWith("#")) return { h: 142, s: 50, l: 50 };
+    if (!H || !H.startsWith("#")) return { h: 142, s: 50, l: 50 }; // 🟢 дефолт = зелёный
     const { r: r255, g: g255, b: b255 } = this.hexToRGB(H);
     let r = r255 / 255,
       g = g255 / 255,
@@ -371,19 +365,16 @@ export const themeManager = {
     const numSize = Number(size);
     const scale = numSize / 16;
     document.documentElement.style.setProperty("--font-scale", scale);
-    if ($("fontSizeDisplay"))
-      $("fontSizeDisplay").textContent = numSize + " px";
+    if ($("fontSizeDisplay")) $("fontSizeDisplay").textContent = numSize + " px";
     safeSetLS("font_size", numSize);
   },
   applyMaterialYouColors(colors) {
+    // Применяем только если пользователь выбрал "Авто"
     const storedColor = safeGetLS("theme_color");
     if (storedColor && storedColor !== "auto") return;
     const primaryColor = colors.system_accent1_500;
     if (primaryColor) {
-      document.documentElement.style.setProperty(
-        "--primary-color",
-        primaryColor,
-      );
+      document.documentElement.style.setProperty("--primary-color", primaryColor);
       const { h } = this.hexToHSL(primaryColor);
       document.documentElement.style.setProperty("--accent-h", h);
     }

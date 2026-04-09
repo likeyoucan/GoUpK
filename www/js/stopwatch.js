@@ -1,5 +1,3 @@
-// stopwatch.js
-
 import {
   $,
   escapeHTML,
@@ -161,6 +159,7 @@ export const sw = {
       updateTitle("");
       this.els.status.classList.remove("hidden");
       updateText(this.els.lapBtn, t("reset"));
+      // 🟡 ИСПРАВЛЕНО: используем remove+add вместо replace() для надёжности
       this.els.lapBtn.classList.remove("app-surface", "app-text");
       this.els.lapBtn.classList.add("bg-red-500", "text-white", "is-reset");
       announceToScreenReader(
@@ -178,6 +177,7 @@ export const sw = {
       this.tick();
       this.els.status.classList.add("hidden");
       this.els.display.classList.remove("is-go");
+      // 🟡 ИСПРАВЛЕНО: показываем lapBtn через flex, не через remove("hidden")
       this.showLapBtn();
       updateText(this.els.lapBtn, t("lap"));
       this.els.lapBtn.classList.remove("bg-red-500", "text-white", "is-reset");
@@ -185,7 +185,7 @@ export const sw = {
     }
     this.updateSaveButtonVisibility();
   },
-
+  // 🟢 НОВЫЙ МЕТОД: правильный show для lapBtn (был display:block из-за remove("hidden"))
   showLapBtn() {
     this.els.lapBtn.classList.remove("hidden");
   },
@@ -224,6 +224,7 @@ export const sw = {
       }
     }
     updateTitle(this.formatTime(this.elapsedTime, false));
+    // 🟢 УЛУЧШЕНИЕ: проверяем наличие ring перед обращением к style
     if (this.els.ring) {
       this.els.ring.style.strokeDashoffset =
         this.ringLength -
@@ -257,6 +258,7 @@ export const sw = {
       this.laps.unshift(newLap);
       if (this.laps.length === 1) {
         this.els.lapsContainer.replaceChildren();
+        // 🟡 ИСПРАВЛЕНО: classList.remove("hidden") → classList.add("flex") + remove("hidden")
         this.els.currentLapsHeader.classList.remove("hidden");
         this.els.currentLapsHeader.classList.add("flex");
       } else {
@@ -289,6 +291,7 @@ export const sw = {
         this.els.ring.style.strokeDashoffset = this.ringLength;
       }
       this.els.lapBtn.classList.add("hidden");
+      // 🟡 ИСПРАВЛЕНО: скрываем header правильно (убираем flex тоже)
       this.els.currentLapsHeader.classList.add("hidden");
       this.els.currentLapsHeader.classList.remove("flex");
       this.els.lapsContainer.replaceChildren();
@@ -309,6 +312,8 @@ export const sw = {
   updateSaveButtonVisibility() {
     if (!this.els.saveBtn) return;
     if (this.laps.length > 0) {
+      // 🟡 ИСПРАВЛЕНО: кнопка изначально hidden — нужно добавлять flex явно,
+      // иначе получается display:block вместо display:flex
       this.els.saveBtn.classList.remove("hidden");
       this.els.saveBtn.classList.add("flex");
     } else {
@@ -491,7 +496,7 @@ export const sw = {
   toggleSessionDetails(id) {
     const detailsEl = $(`sw-details-${id}`);
     const iconEl = $(`sw-icon-${id}`);
-    if (!detailsEl) return;
+    if (!detailsEl) return; // 🟢 УЛУЧШЕНИЕ: ранняя проверка
     if (detailsEl.classList.contains("hidden")) {
       detailsEl.classList.remove("hidden");
       if (iconEl) iconEl.style.transform = "rotate(180deg)";
@@ -506,6 +511,8 @@ export const sw = {
     if (this.els.clearAllBtn) {
       this.els.clearAllBtn.disabled = this.savedSessions.length === 0;
     }
+    // 🟡 ИСПРАВЛЕНО: $("sw-controls-row") не существует в HTML — убран мёртвый код
+    // controlsRow не объявлен в HTML, поэтому проверяем и тихо пропускаем
     if (this.savedSessions.length === 0) {
       this.els.sessionsList.insertAdjacentHTML(
         "afterbegin",

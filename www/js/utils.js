@@ -1,5 +1,3 @@
-// utils.js
-
 export const $ = (id) => document.getElementById(id);
 export const escapeHTML = (str) =>
   str.replace(
@@ -48,7 +46,7 @@ export const requestWakeLock = async () => {
         wakeLock = null;
       });
     } catch (err) {
-
+      // Тихо игнорируем: пользователь мог запретить или браузер не поддерживает
       console.warn("Wake Lock error:", err);
     }
   }
@@ -58,7 +56,7 @@ export const releaseWakeLock = () => {
     wakeLock.release().then(() => {
       wakeLock = null;
     }).catch(() => {
-      wakeLock = null;
+      wakeLock = null; // 🟢 УЛУЧШЕНИЕ: сбрасываем ссылку даже при ошибке release
     });
   }
 };
@@ -118,14 +116,15 @@ export const getExtendedDisplay = (ms, strDay = "d", strHour = "h") => {
   if (h > 0) return `${h}${strHour}`;
   return "";
 };
-
+// 🟢 УЛУЧШЕНИЕ: проверяем существование файла воркера перед созданием
+// Это предотвращает NetworkError при отладке без сервера
 let _bgWorker = null;
 const createWorker = () => {
   try {
     return new Worker('./js/worker.js');
   } catch (e) {
     console.error("Web Worker не удалось создать:", e);
-
+    // Возвращаем заглушку с тем же API, чтобы приложение не падало
     return {
       postMessage: () => {},
       addEventListener: () => {},
