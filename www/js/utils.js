@@ -1,5 +1,3 @@
-// ===== utils.js (ОБНОВЛЕННАЯ ВЕРСИЯ) =====
-
 export const $ = (id) => document.getElementById(id);
 
 export const escapeHTML = (str) =>
@@ -47,6 +45,7 @@ export const safeRemoveLS = (key) => {
 };
 
 let wakeLock = null;
+
 export const requestWakeLock = async () => {
   if ("wakeLock" in navigator && !wakeLock) {
     try {
@@ -72,9 +71,12 @@ let toastTimeout = null;
 export const showToast = (message) => {
   const toast = $("toast");
   if (!toast) return;
+
   if (toastTimeout) clearTimeout(toastTimeout);
+
   $("toast-msg").textContent = message;
   toast.classList.remove("opacity-0", "-translate-y-4");
+
   toastTimeout = setTimeout(() => {
     toast.classList.add("opacity-0", "-translate-y-4");
     toastTimeout = null;
@@ -86,10 +88,9 @@ export const announceToScreenReader = (text) => {
   if (el) el.textContent = text;
 };
 
-// ИЗМЕНЕНО: Добавлен опциональный параметр min для большей гибкости
-export const adjustVal = (id, delta, min = 1) => {
+export const adjustVal = (id, delta) => {
   const el = $(id);
-  if (el) el.value = Math.max(min, (parseInt(el.value) || 0) + delta);
+  if (el) el.value = Math.max(1, (parseInt(el.value) || 0) + delta);
 };
 
 export const pad = (num) => String(num).padStart(2, "0");
@@ -102,32 +103,29 @@ export const formatTimeStr = (totalSeconds, showHoursIfZero = false) => {
   return `${pad(m)}:${pad(s)}`;
 };
 
-// НОВОЕ: Универсальная функция, заменяющая formatMsTime и formatMainDisplay
-export const formatMilliseconds = (ms, options = {}) => {
-  const { showMs = true, showHours = "auto", padHours = false } = options;
-
+export const formatMsTime = (ms, showMs = true) => {
   const totalS = Math.floor(ms / 1000);
   const h = Math.floor(totalS / 3600);
   const m = Math.floor((totalS % 3600) / 60);
   const s = Math.floor(totalS % 60);
+  const milli = Math.floor((ms % 1000) / 10);
 
-  let timeParts = [];
-  
-  if (showHours === true || (showHours === 'auto' && h > 0)) {
-    timeParts.push(padHours ? pad(h) : h);
-  }
+  let str = `${pad(m)}:${pad(s)}`;
+  if (showMs) str += `.${pad(milli)}`;
 
-  timeParts.push(pad(m));
-  timeParts.push(pad(s));
+  if (h > 0) return `${h}:${str}`;
+  return str;
+};
 
-  let timeStr = timeParts.join(":");
-  
-  if (showMs) {
-    const milli = Math.floor((ms % 1000) / 10);
-    timeStr += `.${pad(milli)}`;
-  }
+export const formatMainDisplay = (ms, showMs = true) => {
+  const totalS = Math.floor(ms / 1000);
+  const m = Math.floor((totalS % 3600) / 60);
+  const s = Math.floor(totalS % 60);
+  const milli = Math.floor((ms % 1000) / 10);
 
-  return timeStr;
+  let str = `${pad(m)}:${pad(s)}`;
+  if (showMs) str += `.${pad(milli)}`;
+  return str;
 };
 
 export const getExtendedDisplay = (ms, strDay = "d", strHour = "h") => {
