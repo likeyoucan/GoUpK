@@ -2,7 +2,6 @@
 @source "./www";
 
 @theme {
-  /* Кастомная сетка шрифтов с поддержкой масштабирования */
   --text-xs: calc(0.75rem * var(--font-scale, 1));
   --text-sm: calc(0.875rem * var(--font-scale, 1));
   --text-base: calc(1rem * var(--font-scale, 1));
@@ -11,281 +10,107 @@
   --text-2xl: calc(1.5rem * var(--font-scale, 1));
   --text-4xl: calc(2.25rem * var(--font-scale, 1));
   --text-5xl: calc(3rem * var(--font-scale, 1));
-
-  /* Анимации */
-  --animate-shake: shake 0.3s ease-in-out;
-  --animate-beat: beat 1s infinite ease-in-out;
 }
 
-/* =========================================
-   1. ПЕРЕМЕННЫЕ И ТЕМЫ (Динамические)
-========================================= */
+/* ПЕРЕМЕННЫЕ */
 :root {
   color-scheme: light dark;
-  --accent-h: 142; /* Базовый Hue (Зеленый) */
-  --accent-s: 70%;
-  --accent-l: 45%;
-  
-  /* Динамический основной цвет на базе HSL */
-  --primary-color: hsl(var(--accent-h), var(--accent-s), var(--accent-l));
-  
+  --primary-color: #22c55e;
+  --accent-h: 142;
   --bg-color: #f3f4f6;
   --surface-color: #ffffff;
   --text-color: #1f2937;
   --text-secondary: hsl(var(--accent-h), 25%, 45%);
-  --border-color: rgba(0, 0, 0, 0.08);
-  --vignette-alpha: 0.15;
+  --border-color: rgba(0, 0, 0, 0.1);
   --font-scale: 1;
 }
 
 :root.dark {
-  --accent-l: 55%; /* Чуть светлее для темной темы */
+  --primary-color: #4ade80;
   --bg-color: #000000;
   --surface-color: #1c1c1e;
   --text-color: #f9fafb;
-  --text-secondary: hsl(var(--accent-h), 20%, 65%);
+  --text-secondary: hsl(var(--accent-h), 25%, 65%);
   --border-color: rgba(255, 255, 255, 0.1);
 }
 
-/* =========================================
-   2. СИСТЕМНЫЕ ФИКСЫ (Mobile First)
-========================================= */
-* {
-  -webkit-tap-highlight-color: transparent;
-  -webkit-touch-callout: none;
-  box-sizing: border-box;
-}
-
-/* Предотвращение мигания при загрузке */
-.preload * {
-  transition: none !important;
-  animation: none !important;
-}
-
-html, body {
-  height: 100%;
-  width: 100%;
-  overflow: hidden;
-  position: fixed; /* Критично для iOS, чтобы не скроллилось всё тело */
-}
+/* БАЗОВЫЕ НАСТРОЙКИ */
+* { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
 
 body {
-  background-color: #000; /* Фон под приложением */
+  height: 100dvh;
+  background-color: #000;
   color: var(--text-color);
   font-family: system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  overflow: hidden;
+  overscroll-behavior: none;
   user-select: none;
   touch-action: manipulation;
 }
 
-/* Зоны выбора текста (только для результатов) */
-.selectable-data {
-  user-select: text !important;
-  -webkit-user-select: text !important;
-}
+.app-bg { background-color: var(--bg-color); transition: background-color 0.3s; }
+.app-surface { background-color: var(--surface-color); transition: background-color 0.3s, border-color 0.3s; }
+.app-text { color: var(--text-color); }
+.app-text-sec { color: var(--text-secondary); }
+.primary-text { color: var(--primary-color); }
+.app-border { border-color: var(--border-color); }
+.primary-bg { background-color: var(--primary-color); }
 
-/* =========================================
-   3. ГЛАВНЫЙ КОНТЕЙНЕР (Safe Areas)
-========================================= */
-#app {
-  width: 100%;
-  height: 100dvh;
-  padding-top: env(safe-area-inset-top);
-  padding-bottom: env(safe-area-inset-bottom);
-  display: flex;
-  flex-direction: column;
-  background-color: var(--bg-color);
-  will-change: transform;
-}
-
-/* Адаптив для планшетов/десктопа */
-@media (min-width: 640px) {
-  #app {
-    max-width: 420px;
-    height: 90vh;
-    border-radius: 3rem;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-  }
-}
-
-/* =========================================
-   4. ТАЙМЕРЫ И ЦИФРЫ (Container Queries)
-========================================= */
+/* ТАЙМЕРЫ */
 .view-top-half {
-  flex: 1.2;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  container-type: inline-size; /* Магия для масштабирования цифр */
+  height: 55%;
+  flex-shrink: 0;
 }
 
 .timer-circle-wrap {
-  width: 85cqi;
-  height: 85cqi;
-  max-width: 320px;
-  max-height: 320px;
-  position: relative;
+  width: 100%;
+  max-width: 75%;
+  aspect-ratio: 1 / 1;
   display: flex;
   align-items: center;
   justify-content: center;
+  container-type: inline-size; /* Позволяет масштабировать текст через cqi */
 }
 
 .timer-display {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 22cqi;
+  font-size: clamp(2rem, 22cqi, 4rem);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  color: var(--primary-color);
-  transition: transform 0.2s cubic-bezier(0.17, 0.67, 0.83, 0.67);
-  will-change: transform;
+  white-space: nowrap;
 }
 
 .timer-display.is-go {
-  font-size: 28cqi;
-  font-style: italic;
+  font-size: clamp(3rem, 30cqi, 6rem);
 }
 
-/* =========================================
-   5. ЭФФЕКТ ЖИДКОГО СТЕКЛА (Оптимизированный)
-========================================= */
-:root.glass-effect .app-surface {
-  background-color: color-mix(in srgb, var(--surface-color) 60%, transparent);
-  backdrop-filter: blur(12px) saturate(160%);
-  -webkit-backdrop-filter: blur(12px) saturate(160%);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-:root.dark.glass-effect .app-surface {
-  background-color: color-mix(in srgb, var(--surface-color) 40%, transparent);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-/* Стили для Bottom Sheets (Модалок) в режиме стекла */
-:root.glass-effect #sw-sessions-modal, 
-:root.glass-effect #tb-modal {
-  background-color: color-mix(in srgb, var(--surface-color) 80%, transparent);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-}
-
-/* =========================================
-   6. UI ЭЛЕМЕНТЫ (Кнопки, Инпуты, Слайдеры)
-========================================= */
-.nav-btn.active {
-  color: var(--primary-color);
-}
-
-.nav-btn.active svg {
-  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--primary-color) 40%, transparent));
-}
-
-/* Кастомный ползунок (увеличенная зона для пальца) */
-input[type="range"] {
-  -webkit-appearance: none;
-  height: 40px;
-  background: transparent;
-}
-
-input[type="range"]::-webkit-slider-runnable-track {
-  width: 100%;
-  height: 6px;
-  background: var(--border-color);
-  border-radius: 3px;
-}
-
-input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  height: 24px;
-  width: 24px;
-  border-radius: 50%;
-  background: #fff;
-  border: 2px solid var(--primary-color);
-  margin-top: -9px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-}
-
-/* Кастомный переключатель (Toggle) */
+/* UI ЭЛЕМЕНТЫ */
 .custom-toggle {
-  width: 48px;
-  height: 26px;
+  width: 44px;
+  height: 24px;
   background-color: var(--border-color);
   border-radius: 999px;
   position: relative;
-  transition: background-color 0.3s ease;
+  transition: background-color 0.3s;
 }
-
 .custom-toggle::after {
   content: "";
   position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 20px;
-  height: 20px;
+  top: 2px; left: 2px;
+  width: 20px; height: 20px;
   background: white;
   border-radius: 50%;
-  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  transition: transform 0.2s;
 }
-
-input:checked + .custom-toggle {
-  background-color: var(--primary-color);
-}
-
-input:checked + .custom-toggle::after {
-  transform: translateX(22px);
-}
-
-/* =========================================
-   7. АНИМАЦИИ И ЭФФЕКТЫ
-========================================= */
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-5px); }
-  75% { transform: translateX(5px); }
-}
-
-@keyframes beat {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.05); opacity: 0.8; }
-}
-
-.pulse-text {
-  animation: beat 1s infinite ease-in-out;
-}
-
-/* Вспышка при круге (Lap) */
-.flash-active {
-  animation: flash-animation 0.4s ease-out;
-}
-
-@keyframes flash-animation {
-  from { opacity: 0.5; transform: scale(0.9); }
-  to { opacity: 0; transform: scale(1.1); }
-}
-
-/* =========================================
-   8. УТИЛИТЫ (Цвета и Скролл)
-========================================= */
-.app-surface { background-color: var(--surface-color); }
-.app-text { color: var(--text-color); }
-.app-text-sec { color: var(--text-secondary); }
-.app-border { border-color: var(--border-color); }
-.primary-text { color: var(--primary-color); }
-.primary-bg { background-color: var(--primary-color); }
+input:checked + .custom-toggle { background-color: var(--primary-color); }
+input:checked + .custom-toggle::after { transform: translateX(20px); }
 
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-/* Виньетка (эффект глубины) */
-.app-bg.has-vignette::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  box-shadow: inset 0 0 100px rgba(0,0,0, var(--vignette-alpha));
-  z-index: 1;
-}
+/* ФИКС МОДАЛОК */
+#sw-sessions-modal:not(.hidden) { display: flex; }
