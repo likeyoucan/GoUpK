@@ -1,3 +1,5 @@
+// theme.js
+
 import { $, safeGetLS, safeSetLS } from "./utils.js";
 
 export const themeManager = {
@@ -24,11 +26,9 @@ export const themeManager = {
         MaterialYou.isSupported()
           .then((result) => {
             if (result.isSupported) {
-              // Подписываемся на смену обоев/цветов системы
               MaterialYou.addListener("colorColorsChanged", (colors) => {
                 this.applyMaterialYouColors(colors);
               });
-              // Запрашиваем цвета при запуске
               MaterialYou.getColors()
                 .then((colors) => {
                   this.applyMaterialYouColors(colors);
@@ -84,21 +84,20 @@ export const themeManager = {
 
     this.themeBtns.forEach((btn) =>
       btn.addEventListener("click", (e) =>
-        this.setMode(e.target.getAttribute("data-theme-mode")),
+        this.setMode(e.currentTarget.getAttribute("data-theme-mode")),
       ),
     );
     this.colorBtns.forEach((btn) =>
       btn.addEventListener("click", (e) =>
-        this.setColor(e.target.getAttribute("data-color")),
+        this.setColor(e.currentTarget.getAttribute("data-color")),
       ),
     );
     this.bgBtns.forEach((btn) =>
       btn.addEventListener("click", (e) =>
-        this.setBgColor(e.target.getAttribute("data-bg")),
+        this.setBgColor(e.currentTarget.getAttribute("data-bg")),
       ),
     );
 
-    // Слушатели теперь только на input'ы (кнопки убраны из HTML)
     $("customColorInput")?.addEventListener("input", (e) =>
       this.setColor(e.target.value),
     );
@@ -160,13 +159,18 @@ export const themeManager = {
   setMode(mode) {
     this.currentMode = mode;
     safeSetLS("theme_mode", mode);
+
+    // 🟡 ИСПРАВЛЕНО: ранее activeBtn получал app-text но НЕ терял app-text-sec.
+    // Теперь явно убираем app-text-sec у всех, потом добавляем нужное активной кнопке.
     this.themeBtns.forEach((b) => {
       b.classList.remove("app-surface", "shadow-sm", "app-text");
       b.classList.add("app-text-sec");
     });
     const activeBtn = $(`theme-${mode}`);
-    if (activeBtn)
+    if (activeBtn) {
+      activeBtn.classList.remove("app-text-sec"); // 🟡 ИСПРАВЛЕНО: убираем sec у активной
       activeBtn.classList.add("app-surface", "shadow-sm", "app-text");
+    }
 
     const isDark =
       mode === "dark" ||
@@ -181,13 +185,16 @@ export const themeManager = {
       document.documentElement.style.colorScheme = "light";
     }
 
-    let metaColorScheme = document.querySelector('meta[name="color-scheme"]');
-    if (!metaColorScheme) {
-      metaColorScheme = document.createElement("meta");
-      metaColorScheme.name = "color-scheme";
-      document.head.appendChild(metaColorScheme);
-    }
-    metaColorScheme.content = isDark ? "dark" : "light";
+    // Обновляем meta theme-color динамически
+    // 🟢 УЛУЧШЕНИЕ: обновляем существующие meta теги вместо создания нового
+    document.querySelectorAll('meta[name="theme-color"]').forEach((meta) => {
+      const media = meta.getAttribute("media") || "";
+      if (media.includes("dark")) {
+        meta.content = isDark ? "#000000" : "#f3f4f6";
+      } else if (media.includes("light")) {
+        meta.content = isDark ? "#000000" : "#f3f4f6";
+      }
+    });
 
     this.applyBgTheme(this.currentBg, isDark);
   },
@@ -195,14 +202,13 @@ export const themeManager = {
   setColor(hex) {
     safeSetLS("theme_color", hex);
 
-    // Если выбрали "Авто" - запрашиваем системные цвета и выходим
     if (hex === "auto") {
-      if (window.Capacitor && window.Capacitor.Plugins.MaterialYou) {
+      if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.MaterialYou) {
         window.Capacitor.Plugins.MaterialYou.getColors()
           .then((colors) => this.applyMaterialYouColors(colors))
-          .catch(() => this.setColor("#22c55e")); // Если не Android 12+ (fallback)
+          .catch(() => this.setColor("#22c55e"));
       } else {
-        this.setColor("#22c55e"); // Фолбэк для веба
+        this.setColor("#22c55e");
       }
       this.updateButtons(this.colorBtns, "auto", "customColorInput", false);
       return;
@@ -332,11 +338,11 @@ export const themeManager = {
     const satDark = Math.min(s, 40);
     const satLight = Math.max(s, 20);
     if (isDark) {
-      root.style.setProperty("--bg-color", `hsl(${h}, ${satDark}%, 8%)`);
-      root.style.setProperty("--surface-color", `hsl(${h}, ${satDark}%, 14%)`);
+      root.style.setProperty("--bg-color", `hsl(${h} ${satDark}% 8%)`);      // 🟡 ИСПРАВЛЕНО: hsl без запятых (CSS Color Level 4)
+      root.style.setProperty("--surface-color", `hsl(${h} ${satDark}% 14%)`);
     } else {
-      root.style.setProperty("--bg-color", `hsl(${h}, ${satLight}%, 94%)`);
-      root.style.setProperty("--surface-color", `hsl(${h}, ${satLight}%, 98%)`);
+      root.style.setProperty("--bg-color", `hsl(${h} ${satLight}% 94%)`);
+      root.style.setProperty("--surface-color", `hsl(${h} ${satLight}% 98%)`);
     }
   },
 
@@ -345,8 +351,16 @@ export const themeManager = {
     const vignetteContainer = $("vignette-depth-container");
     if (!bgElement) return;
 
-    if (vignetteContainer)
-      vignetteContainer.style.display = this.hasVignette ? "flex" : "none";
+    if (vignetteContainer) {
+      // 🟡 ИСПРАВЛЕНО: display:none/flex вместо style.display (совместимость с Tailwind hidden)
+      if (this.hasVignette) {
+        vignetteContainer.classList.remove("hidden");
+        vignetteContainer.classList.add("flex");
+      } else {
+        vignetteContainer.classList.add("hidden");
+        vignetteContainer.classList.remove("flex");
+      }
+    }
 
     if (this.hasVignette) {
       bgElement.classList.add("has-vignette");
@@ -361,22 +375,23 @@ export const themeManager = {
   },
 
   hexToRGB(H) {
-    let r = 0,
-      g = 0,
-      b = 0;
-    if (H.length == 4) {
-      r = "0x" + H[1] + H[1];
-      g = "0x" + H[2] + H[2];
-      b = "0x" + H[3] + H[3];
-    } else if (H.length == 7) {
-      r = "0x" + H[1] + H[2];
-      g = "0x" + H[3] + H[4];
-      b = "0x" + H[5] + H[6];
+    // 🟢 УЛУЧШЕНИЕ: поддержка коротких (#rgb) и длинных (#rrggbb) форматов
+    if (!H || !H.startsWith("#")) return { r: 0, g: 0, b: 0 };
+    let r = 0, g = 0, b = 0;
+    if (H.length === 4) {
+      r = parseInt(H[1] + H[1], 16);
+      g = parseInt(H[2] + H[2], 16);
+      b = parseInt(H[3] + H[3], 16);
+    } else if (H.length === 7) {
+      r = parseInt(H[1] + H[2], 16);
+      g = parseInt(H[3] + H[4], 16);
+      b = parseInt(H[5] + H[6], 16);
     }
-    return { r: Number(r), g: Number(g), b: Number(b) };
+    return { r, g, b };
   },
 
   hexToHSL(H) {
+    if (!H || !H.startsWith("#")) return { h: 142, s: 50, l: 50 }; // 🟢 дефолт = зелёный
     const { r: r255, g: g255, b: b255 } = this.hexToRGB(H);
     let r = r255 / 255,
       g = g255 / 255,
@@ -387,11 +402,11 @@ export const themeManager = {
     let h = 0,
       s = 0,
       l = (cmax + cmin) / 2;
-    if (delta != 0) {
-      if (cmax == r) h = ((g - b) / delta) % 6;
-      else if (cmax == g) h = (b - r) / delta + 2;
-      else h = (r - g) / delta + 4;
+    if (delta !== 0) {
       s = delta / (1 - Math.abs(2 * l - 1));
+      if (cmax === r) h = ((g - b) / delta) % 6;
+      else if (cmax === g) h = (b - r) / delta + 2;
+      else h = (r - g) / delta + 4;
     }
     h = Math.round(h * 60);
     if (h < 0) h += 360;
@@ -399,28 +414,21 @@ export const themeManager = {
   },
 
   setFontSize(size) {
-    const scale = size / 16;
+    const numSize = Number(size);
+    const scale = numSize / 16;
     document.documentElement.style.setProperty("--font-scale", scale);
-    $("fontSizeDisplay") && ($("fontSizeDisplay").textContent = size + " px");
-    safeSetLS("font_size", size);
+    if ($("fontSizeDisplay")) $("fontSizeDisplay").textContent = numSize + " px";
+    safeSetLS("font_size", numSize);
   },
 
   applyMaterialYouColors(colors) {
-    // Если пользователь вручную выбрал цвет (не "Авто"), мы не перебиваем его
-    if (safeGetLS("theme_color") && safeGetLS("theme_color") !== "auto") return;
+    // Применяем только если пользователь выбрал "Авто"
+    const storedColor = safeGetLS("theme_color");
+    if (storedColor && storedColor !== "auto") return;
 
-    // В Android 12+ системные цвета хранятся в палитре.
-    // 'system_accent1_500' - это идеальный акцентный цвет (как кнопки в шторке)
     const primaryColor = colors.system_accent1_500;
-
     if (primaryColor) {
-      // Применяем системный цвет к нашему таймеру!
-      document.documentElement.style.setProperty(
-        "--primary-color",
-        primaryColor,
-      );
-
-      // Вычисляем HSL для нашего тонированного серого текста (text-secondary)
+      document.documentElement.style.setProperty("--primary-color", primaryColor);
       const { h } = this.hexToHSL(primaryColor);
       document.documentElement.style.setProperty("--accent-h", h);
     }
