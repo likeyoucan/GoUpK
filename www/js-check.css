@@ -1,0 +1,7 @@
+html.js .no-js-warning {
+  display: none !important;
+}
+
+html:not(.js) #app {
+  display: none !important;
+}

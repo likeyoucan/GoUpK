@@ -7,6 +7,39 @@
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover"
     />
 
+    <!-- 
+        CSP ДЛЯ МОБИЛЬНЫХ ПРИЛОЖЕНИЙ 
+      - script-src 'self': запрещает любые инлайновые скрипты (защита от XSS).
+      - style-src 'self': разрешает стили только из файлов.
+      - img-src / font-src: разрешает локальные ресурсы и data-uri (иконки).
+      - capacitor:// и http://localhost: необходимы для работы нативных движков iOS/Android.
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="
+        default-src 'self'; 
+        script-src 'self'; 
+        style-src 'self'; 
+        img-src 'self' data: capacitor: ionic: http://localhost;
+        font-src 'self' data:;
+        connect-src 'self' https:;
+        frame-ancestors 'none';
+        object-src 'none';
+        base-uri 'self';
+        form-action 'self';
+        upgrade-insecure-requests;
+    "
+    />
+
+    <!-- Ограничение доступа к API устройства (безопасность приватности) -->
+    <meta
+      http-equiv="Permissions-Policy"
+      content="camera=(), microphone=(), geolocation=(), payment=()"
+    />
+
+    <!-- Защита от утечки данных о переходе -->
+    <meta name="referrer" content="no-referrer" />
+
     <meta
       name="theme-color"
       media="(prefers-color-scheme: light)"
@@ -45,31 +78,14 @@
 
     <title>Stopwatch Pro</title>
 
-    <script>
-      document.documentElement.classList.add("js");
-    </script>
-    <style>
-      html.js .no-js-warning {
-        display: none !important;
-      }
-      html:not(.js) #app {
-        display: none !important;
-      }
-    </style>
-
+    <script src="./js-check.js"></script>
+    <link rel="stylesheet" href="./js-check.css" />
     <link rel="stylesheet" href="styles.css" />
   </head>
 
   <body
     class="preload flex items-center justify-center h-[100dvh] w-full overflow-hidden bg-black text-base select-none"
   >
-    <div
-      class="no-js-warning bg-white text-black p-6 rounded-2xl font-bold shadow-2xl text-center max-w-sm mx-4 absolute z-50"
-    >
-      <span class="text-2xl block mb-2">⚠️</span>
-      Please enable JavaScript to use Stopwatch Pro.
-    </div>
-
     <div id="sr-only-announce" aria-live="polite" class="sr-only"></div>
 
     <div
@@ -1686,6 +1702,14 @@
         </div>
       </div>
     </div>
+    
+    <div
+      class="no-js-warning bg-white text-black p-6 rounded-2xl font-bold shadow-2xl text-center max-w-sm mx-4 absolute z-50"
+    >
+      Please enable JavaScript to use Stopwatch Pro. Пожалуйста, включите
+      JavaScript для работы секундомера.
+    </div>
+
     <script type="module" src="./scripts.js"></script>
     <script type="module" src="./js/main.js"></script>
   </body>
