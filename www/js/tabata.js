@@ -1,3 +1,5 @@
+// tabata.js
+
 import {
   $,
   escapeHTML,
@@ -33,8 +35,6 @@ export const tb = {
   lastBeepSec: 0,
   editingWorkoutId: null,
   ringLength: 282.74,
-  // 🟢 УЛУЧШЕНИЕ: базовые классы для statusText вынесены в константу
-  // чтобы не перезаписывать className целиком (это стирало бы Tailwind-классы)
   STATUS_BASE_CLASS: "font-bold uppercase tracking-widest mb-1",
   init() {
     this.els = {
@@ -188,7 +188,6 @@ export const tb = {
     setTimeout(() => this.els.editName?.focus(), 300);
   },
   closeModal() {
-    // 🟢 УЛУЧШЕНИЕ: blur перед закрытием убирает клавиатуру на мобильных
     if (document.activeElement === this.els.editName) {
       this.els.editName.blur();
     }
@@ -338,7 +337,6 @@ export const tb = {
     this.paused = false;
     this.lastBeepSec = 0;
     this.els.listSection.classList.add("hidden");
-    // 🟡 ИСПРАВЛЕНО: hidden → flex (было hidden → flex через replace, но replace ненадёжен)
     this.els.runningControls.classList.remove("hidden");
     this.els.runningControls.classList.add("flex");
     updateText(this.els.totalRoundsDisplay, this.rounds);
@@ -380,7 +378,6 @@ export const tb = {
     releaseWakeLock();
     updateTitle("");
     this.els.listSection.classList.remove("hidden");
-    // 🟡 ИСПРАВЛЕНО: flex → hidden через remove+add
     this.els.runningControls.classList.remove("flex");
     this.els.runningControls.classList.add("hidden");
     this.els.status.classList.add("hidden");
@@ -484,8 +481,6 @@ export const tb = {
   updatePhaseStyles() {
     if (!this.els.ring) return;
     updateText(this.els.roundDisplay, this.currentRound);
-    // 🟡 ИСПРАВЛЕНО: НЕ перезаписываем className целиком — это стирало бы все классы.
-    // Вместо этого меняем только цветовые классы через remove+add.
     const statusEl = this.els.status;
     statusEl.classList.remove("primary-text", "text-blue-500", "app-text-sec");
     this.els.ring.classList.remove("primary-stroke");

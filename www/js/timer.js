@@ -1,3 +1,5 @@
+// timer.js
+
 import {
   $,
   showToast,
@@ -50,11 +52,10 @@ export const tm = {
 
     $("tm-form")?.addEventListener("submit", (e) => {
       e.preventDefault();
-      // Закрываем клавиатуру при нажатии Enter на мобильных
+
       document.activeElement?.blur();
     });
 
-    // Обработчики для полей минут и секунд (с оборачиванием значений)
     [this.els.m, this.els.s].forEach((i) => {
       if (!i) return;
       i.addEventListener("focus", () => {
@@ -69,7 +70,6 @@ export const tm = {
       });
     });
 
-    // Обработчики для поля часов (без оборачивания, максимум 99)
     if (this.els.h) {
       this.els.h.addEventListener("focus", () => {
         if (this.els.h.value === "00" || this.els.h.value === "0")
@@ -77,14 +77,12 @@ export const tm = {
       });
       this.els.h.addEventListener("input", () => {
         this.els.h.value = this.els.h.value.replace(/\D/g, "").slice(0, 2);
-        if (parseInt(this.els.h.value, 10) > 99) this.els.h.value = "99"; // 🟢 ДОБАВЛЕНО: ограничение для часов
-      });
+        if (parseInt(this.els.h.value, 10) > 99) this.els.h.value = "99";
       this.els.h.addEventListener("blur", () => {
         this.els.h.value = pad(this.els.h.value || 0);
       });
     }
 
-    // Скролл/свайп для изменения значений полей
     this.setupScrollInteraction(this.els.h, 99, false);
     this.setupScrollInteraction(this.els.m, 59, true);
     this.setupScrollInteraction(this.els.s, 59, true);
@@ -123,7 +121,6 @@ export const tm = {
       sm.vibrate(10);
     };
 
-    // Колёсико мыши (для десктопа)
     input.addEventListener(
       "wheel",
       (e) => {
@@ -133,7 +130,6 @@ export const tm = {
       { passive: false },
     );
 
-    // Свайп пальцем (для мобильных)
     input.addEventListener(
       "touchstart",
       (e) => {
@@ -157,7 +153,6 @@ export const tm = {
       { passive: false },
     );
 
-    // Перетаскивание мышью (для десктопа)
     const onMouseMove = (e) => {
       if (!isDragging) return;
       const currentY = e.clientY;
@@ -193,7 +188,7 @@ export const tm = {
     sm.unlock();
 
     if (this.isRunning) {
-      // Пауза
+
       this.isRunning = false;
       this.isPaused = true;
       this.remainingAtPause = Math.max(0, this.targetTime - performance.now());
@@ -208,7 +203,7 @@ export const tm = {
       );
 
       if (!this.isPaused) {
-        // Свежий старт — читаем значения из инпутов
+
         const h = parseInt(this.els.h?.value, 10) || 0;
         const m = parseInt(this.els.m?.value, 10) || 0;
         const s = parseInt(this.els.s?.value, 10) || 0;
@@ -225,7 +220,7 @@ export const tm = {
         }
         this.targetTime = performance.now() + this.totalDuration;
       } else {
-        // Возобновление после паузы
+
         this.targetTime = performance.now() + this.remainingAtPause;
       }
 
@@ -263,7 +258,7 @@ export const tm = {
   },
 
   updateUIState() {
-    if (!this.els.inputs) return; // 🟢 УЛУЧШЕНИЕ: защита если DOM ещё не готов
+    if (!this.els.inputs) return;
 
     if (this.isRunning) {
       this.els.inputs.classList.add("hidden", "opacity-0");
@@ -276,7 +271,7 @@ export const tm = {
       this.els.status?.classList.remove("hidden");
       updateText(this.els.status, t("pause"));
     } else {
-      // Сброшен / начальное состояние
+
       this.els.inputs.classList.remove("hidden", "opacity-0");
       this.els.resetBtn?.classList.add("hidden");
       this.els.status?.classList.add("hidden");
@@ -324,7 +319,6 @@ export const tm = {
     const h = Math.floor(sTotal / 3600);
     const m = Math.floor((sTotal % 3600) / 60);
     const s = sTotal % 60;
-    // 🟡 ИСПРАВЛЕНО: безопасное чтение значений (els может быть не инициализирован при фоновом тике)
     const hInput = parseInt(this.els.h?.value, 10) || 0;
     const mInput = parseInt(this.els.m?.value, 10) || 0;
     if (hInput > 0 || h > 0) return `${pad(h)}:${pad(m)}:${pad(s)}`;
