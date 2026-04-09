@@ -5,8 +5,8 @@
   "scripts": {
     "dev": "concurrently \"npm:watch:css\" \"serve www\"",
     "start": "serve www",
-    "build:css": "npx tailwindcss -i ./input.css -o ./www/styles.css --minify",
-    "watch:css": "npx tailwindcss -i ./input.css -o ./www/styles.css --watch",
+    "build:css": "npx @tailwindcss/cli -i ./input.css -o ./www/styles.css --minify",
+    "watch:css": "npx @tailwindcss/cli -i ./input.css -o ./www/styles.css --watch",
     "build": "npm run build:css && npx cap sync android",
     "cap:sync": "npx cap sync android",
     "cap:open": "npx cap open android"
@@ -19,6 +19,7 @@
   },
   "devDependencies": {
     "@capacitor/cli": "^8.3.0",
+    "@tailwindcss/cli": "^4.0.0",
     "concurrently": "^8.2.2",
     "serve": "^14.2.3",
     "tailwindcss": "^4.0.0"
