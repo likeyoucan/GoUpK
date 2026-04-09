@@ -5,8 +5,8 @@
   "scripts": {
     "dev": "concurrently \"npm:watch:css\" \"serve www\"",
     "start": "serve www",
-    "build:css": "tailwindcss -i ./input.css -o ./www/styles.css --minify",
-    "watch:css": "tailwindcss -i ./input.css -o ./www/styles.css --watch",
+    "build:css": "npx tailwindcss -i ./input.css -o ./www/styles.css --minify",
+    "watch:css": "npx tailwindcss -i ./input.css -o ./www/styles.css --watch",
     "build": "npm run build:css && npx cap sync android",
     "cap:sync": "npx cap sync android",
     "cap:open": "npx cap open android"
