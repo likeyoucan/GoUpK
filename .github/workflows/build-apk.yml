@@ -1,12 +1,13 @@
 name: Build Android APK
 
+# Настройки параллелизма, все отлично.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 on:
   push:
-    branches: ["main"]
+    branches: ["main", "dev", "alpha"] # Рекомендую оставить только 'main' для сборки релизных/тестовых версий
   workflow_dispatch:
 
 jobs:
@@ -14,40 +15,46 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: 📥 Скачивание кода
-      uses: actions/checkout@v4
+      - name: 📥 Скачивание кода репозитория
+        uses: actions/checkout@v4
 
-    - name: ⚙️ Настройка Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '22'
+      # ИСПРАВЛЕНО: Кэшируем и NPM, и Gradle зависимости
+      - name: ⚙️ Настройка Node.js и кэширование NPM
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' # Рекомендую использовать ту же версию, что и в pages.yml для консистентности
+          cache: 'npm'
 
-    - name: 🎨 Сборка стилей Tailwind CSS v4
-      run: |
-        npm install @tailwindcss/cli
-        npx @tailwindcss/cli -i ./input.css -o ./www/styles.css --minify
+      - name: ☕ Настройка Java и кэширование Gradle
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17' # Capacitor 6 / последняя версия Android Studio требует JDK 17
+          cache: 'gradle' # Включаем кэширование Gradle - это ОЧЕНЬ ускорит сборку
 
-    - name: 📱 Синхронизация Capacitor (Web -> Android)
-      run: |
-        npm install @capacitor/core @capacitor/cli @capacitor/android
-        npx cap sync android
+      # ИСПРАВЛЕНО: Один шаг для установки всех JS зависимостей
+      - name: 📦 Установка JS зависимостей
+        run: npm install
 
-    - name: ☕ Настройка Java
-      uses: actions/setup-java@v4
-      with:
-        distribution: 'temurin'
-        java-version: '21'
+      # ИСПРАВЛЕНО: Используем скрипт из package.json
+      - name: 🎨 Сборка стилей Tailwind CSS
+        run: npm run build:css
+      
+      # ИСПРАВЛЕНО: Используем скрипт из package.json для Capacitor
+      - name: 📱 Синхронизация Capacitor (Web -> Android)
+        # Эта команда запустит "cap:sync": "npx cap sync android" из вашего package.json
+        run: npm run cap:sync
 
-    - name: 🔨 Сборка APK
-      working-directory: ./android
-      run: |
-        # Даем права на запуск сборщика
-        chmod +x ./gradlew
-        # Собираем отладочный APK
-        ./gradlew assembleDebug
+      - name: 🔨 Сборка отладочного APK (Debug)
+        working-directory: ./android
+        run: |
+          chmod +x ./gradlew
+          ./gradlew assembleDebug
 
-    - name: 📦 Сохранение готового APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: my-app-apk
-        path: android/app/build/outputs/apk/debug/app-debug.apk
+      # ИЗМЕНЕНО: Добавлено хранение версии в имени файла
+      - name: 📤 Сохранение готового APK
+        uses: actions/upload-artifact@v4
+        with:
+          # Добавляем SHA коммита в имя файла, чтобы легко отличать сборки
+          name: stopwatch-pro-debug-${{ github.sha }}
+          path: android/app/build/outputs/apk/debug/app-debug.apk

@@ -1,5 +1,7 @@
 name: Deploy to GitHub Pages
 
+# Настройки параллелизма, чтобы новая сборка отменяла старую для той же ветки.
+# У вас это настроено идеально, оставляем как есть.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -7,8 +9,10 @@ concurrency:
 on:
   push:
     branches: ["main", "dev", "alpha"]
+  # Позволяет запускать воркфлоу вручную из интерфейса GitHub. Отлично.
   workflow_dispatch:
 
+# Права доступа для деплоя на Pages. Все настроено идеально.
 permissions:
   contents: read
   pages: write
@@ -22,27 +26,36 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
-    - name: 📥 Скачивание кода
-      uses: actions/checkout@v4
+      - name: 📥 Скачивание кода репозитория
+        uses: actions/checkout@v4
 
-    - name: ⚙️ Настройка Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '22'
+      # ИСПРАВЛЕНО: Добавлено кэширование зависимостей
+      - name: ⚙️ Настройка Node.js и кэширование NPM
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm' # Эта строка включает кэширование node_modules
 
-    - name: 🎨 Сборка стилей Tailwind CSS v4
-      run: |
-        npm install @tailwindcss/cli
-        npx @tailwindcss/cli -i ./input.css -o ./www/styles.css --minify
+      # ИСПРАВЛЕНО: Теперь мы используем package.json
+      - name: 📦 Установка зависимостей
+        run: npm install
 
-    - name: 🌐 Настройка GitHub Pages
-      uses: actions/configure-pages@v4
+      # ИСПРАВЛЕНО: Теперь мы используем скрипт из package.json
+      - name: 🎨 Сборка стилей Tailwind CSS
+        # Эта команда запустит "build:css": "tailwindcss -i ./input.css -o ./www/styles.css --minify"
+        # из вашего package.json. Это стандартный и правильный подход.
+        run: npm run build:css
 
-    - name: 📤 Загрузка папки www
-      uses: actions/upload-pages-artifact@v3
-      with:
-        path: './www'
+      - name: 🌐 Настройка GitHub Pages
+        # Этот шаг подготавливает среду для загрузки артефакта.
+        uses: actions/configure-pages@v4
 
-    - name: 🚀 Публикация сайта
-      id: deployment
-      uses: actions/deploy-pages@v4
+      - name: 📤 Загрузка артефакта для деплоя
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # Указываем папку, которую нужно будет развернуть на сайте.
+          path: './www'
+
+      - name: 🚀 Публикация на GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
