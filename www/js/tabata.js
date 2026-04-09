@@ -1,5 +1,3 @@
-// tabata.js
-
 import {
   $,
   escapeHTML,
@@ -81,15 +79,15 @@ export const tb = {
         if (Array.isArray(parsed) && parsed.length > 0) {
           this.workouts = parsed;
         } else {
-          throw new Error("Invalid Array");
+          throw new Error("Invalid or empty array in localStorage");
         }
       } else {
-        throw new Error("No data");
+        throw new Error("No data in localStorage");
       }
     } catch (e) {
-      console.warn("Failed to parse tabata workouts, using defaults", e); // Добавил вывод ошибки
+      console.warn("Failed to parse tabata workouts, using defaults:", e);
       this.workouts = [
-        { id: 1, name: "Tabata 1", work: 20, rest: 10, rounds: 8 },
+        { id: 1, name: "Standard Tabata", work: 20, rest: 10, rounds: 8 },
       ];
       safeSetLS("tb_workouts", JSON.stringify(this.workouts));
     }
@@ -100,7 +98,7 @@ export const tb = {
     const exists = this.workouts.find((w) => w.id === lastSelectedId);
     if (exists) {
       this.selectWorkout(lastSelectedId);
-    } else if (this.workouts.length > 0) { // Проверка, что массив не пустой
+    } else if (this.workouts.length > 0) {
       this.selectWorkout(this.workouts[0].id);
     }
 
@@ -213,7 +211,7 @@ export const tb = {
 
   closeModal() {
     if (document.activeElement.closest("form")) {
-        document.activeElement.blur();
+      document.activeElement.blur();
     }
 
     this.els.modal.classList.remove("translate-y-0");
@@ -267,26 +265,22 @@ export const tb = {
       }
     } else {
       const newW = {
-        // === ИСПРАВЛЕНИЕ: ID всегда должен быть числом ===
-        id: Date.now(),
+        id: Date.now(), // ИСПРАВЛЕНИЕ: Гарантируем, что ID - это число
         name: finalName,
         work: w,
         rest: r,
         rounds: rnd,
       };
       this.workouts.push(newW);
-      this.editingWorkoutId = newW.id;
+      this.editingWorkoutId = newW.id; // Сохраняем ID для последующего выбора
     }
 
     safeSetLS("tb_workouts", JSON.stringify(this.workouts));
     this.renderList();
-    this.selectWorkout(this.editingWorkoutId);
+    this.selectWorkout(this.editingWorkoutId); // Выбираем только что созданную/отредактированную тренировку
     this.closeModal();
   },
 
-  // Остальная часть файла tabata.js остается без изменений...
-  // ... (весь ваш код от deleteWorkout до конца файла)
-  // ...
   deleteWorkout(id) {
     if (this.status !== "STOPPED") {
       showToast(t("active_timer"));
@@ -298,7 +292,9 @@ export const tb = {
     }
     this.workouts = this.workouts.filter((w) => w.id !== id);
     safeSetLS("tb_workouts", JSON.stringify(this.workouts));
-    if (this.selectedId === id) this.selectWorkout(this.workouts[0].id);
+    if (this.selectedId === id) {
+        this.selectWorkout(this.workouts[0].id);
+    }
     this.renderList();
   },
 
@@ -316,7 +312,7 @@ export const tb = {
     updateText(this.els.activeName, w.name);
     updateText(
       this.els.activeDetail,
-      `${w.work}${t("sec").toLowerCase()} / ${w.rest}${t("sec").toLowerCase()} • ${w.rounds} ${t("rounds")}`,
+      `${w.work}${t("sec").toLowerCase()} / ${w.rest}${t("sec").toLowerCase()} • ${w.rounds} ${t("rds")}`,
     );
     this.renderList();
   },
@@ -330,10 +326,11 @@ export const tb = {
       const div = document.createElement("div");
       const isAct = w.id === this.selectedId;
       div.tabIndex = 0;
+      div.setAttribute('role', 'button');
       div.className = `tb-workout-row p-4 rounded-xl flex justify-between items-center transition-all cursor-pointer mb-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-color)] ${
         isAct
           ? "app-surface border-2 border-[var(--primary-color)] shadow-md"
-          : "app-surface border border-transparent shadow-sm"
+          : "app-surface border app-border shadow-sm"
       }`;
       div.dataset.id = w.id;
 

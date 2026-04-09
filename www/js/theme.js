@@ -1,9 +1,6 @@
-// theme.js
-
 import { $, safeGetLS, safeSetLS } from "./utils.js";
 
 export const themeManager = {
-  // ... (начало файла без изменений, до функции updateButtons) ...
   currentMode: "system",
   currentBg: "default",
   showMs: true,
@@ -139,13 +136,14 @@ export const themeManager = {
     if ($("customColorInput"))
       $("customColorInput").value = safeGetLS("theme_color") || "#22c55e";
     
+    // ИСПРАВЛЕНИЕ: Безопасная установка значения для color input
     const storedBgColor = safeGetLS("theme_bg_color");
     const customBgInput = $("customBgInput");
     if (customBgInput) {
         if (storedBgColor && storedBgColor.startsWith("#")) {
             customBgInput.value = storedBgColor;
         } else {
-            customBgInput.value = "#000000"; 
+            customBgInput.value = "#000000"; // Безопасное значение по умолчанию
         }
     }
   },
@@ -234,31 +232,18 @@ export const themeManager = {
     this.updateButtons(this.bgBtns, hex, "customBgInput", true);
   },
   
-  // ===============================================
-  // === ИСПРАВЛЕННАЯ ФУНКЦИЯ updateButtons ===
-  // ===============================================
   updateButtons(btnCollection, hex, customId, isBg) {
     let found = false;
-    // Обновляем предопределенные кнопки
     btnCollection.forEach((b) => {
       b.classList.remove(
-        "ring-2",
-        "ring-offset-2",
-        "ring-offset-white",
-        "dark:ring-offset-gray-900",
+        "ring-2", "ring-offset-2", "ring-offset-white", "dark:ring-offset-gray-900"
       );
-      const targetAttr = isBg
-        ? b.getAttribute("data-bg")
-        : b.getAttribute("data-color");
+      const targetAttr = isBg ? b.getAttribute("data-bg") : b.getAttribute("data-color");
       if (targetAttr === hex) {
         b.classList.add(
-          "ring-2",
-          "ring-offset-2",
-          "ring-offset-white",
-          "dark:ring-offset-gray-900",
+          "ring-2", "ring-offset-2", "ring-offset-white", "dark:ring-offset-gray-900"
         );
-        const iconColor =
-          isBg && hex === "default" ? "var(--text-color)" : "white";
+        const iconColor = isBg && hex === "default" ? "var(--text-color)" : "white";
         b.innerHTML = `<svg focusable="false" aria-hidden="true" class="w-5 h-5" style="color: ${iconColor};" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>`;
         found = true;
       } else {
@@ -268,36 +253,24 @@ export const themeManager = {
 
     const pickerWrapper = $(customId)?.closest(".relative");
     if (!pickerWrapper) return;
-
-    // Находим дочерний элемент с градиентом
     const gradientEl = pickerWrapper.querySelector(".bg-\\[conic-gradient.*\\]");
 
-    // Сбрасываем состояние кастомного пикера
+    // Сброс состояния кастомного пикера
     pickerWrapper.classList.remove(
-      "ring-2",
-      "ring-offset-2",
-      "ring-offset-white",
-      "dark:ring-offset-gray-900",
+      "ring-2", "ring-offset-2", "ring-offset-white", "dark:ring-offset-gray-900"
     );
-    // Показываем градиент по умолчанию
+    pickerWrapper.style.backgroundColor = '';
     if (gradientEl) gradientEl.style.opacity = '1';
 
-
-    // Если выбран кастомный цвет
+    // Если активен кастомный цвет
     if (!found && hex !== "default" && hex.startsWith("#")) {
       pickerWrapper.classList.add(
-        "ring-2",
-        "ring-offset-2",
-        "ring-offset-white",
-        "dark:ring-offset-gray-900",
+        "ring-2", "ring-offset-2", "ring-offset-white", "dark:ring-offset-gray-900"
       );
-      // Устанавливаем фон самого `pickerWrapper`
+      // Устанавливаем фон для кружка
       pickerWrapper.style.backgroundColor = hex;
-      // И скрываем градиент, чтобы фон стал виден
+      // Скрываем градиент, чтобы фон был виден
       if (gradientEl) gradientEl.style.opacity = '0';
-    } else {
-        // Если выбран НЕ кастомный цвет, сбрасываем фон
-        pickerWrapper.style.backgroundColor = '';
     }
   },
 

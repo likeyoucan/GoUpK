@@ -1,5 +1,3 @@
-// stopwatch.js
-
 import {
   $,
   escapeHTML,
@@ -22,8 +20,6 @@ import { t } from "./i18n.js";
 import { themeManager } from "./theme.js";
 
 export const sw = {
-  // ... (начало файла без изменений) ...
-  // ...
   startTime: 0,
   elapsedTime: 0,
   isRunning: false,
@@ -147,39 +143,6 @@ export const sw = {
     });
   },
 
-  prepareSaveSession() {
-    if (this.laps.length === 0 && this.elapsedTime === 0) return;
-    let sessionLaps = [...this.laps];
-    let total = this.laps.length > 0 ? this.laps[0].total : 0;
-    if (this.elapsedTime > total) {
-      const diff = this.elapsedTime - total;
-      if (diff > 10) {
-        sessionLaps.unshift({
-          total: this.elapsedTime,
-          diff: diff,
-          index: sessionLaps.length + 1,
-        });
-      }
-    }
-    const defaultName = this.getUniqueName(t("stopwatch"));
-    const completionTime = this.isRunning
-      ? Date.now()
-      : this.pauseTime || Date.now();
-
-    this.nameModalState.pendingSession = {
-      // === ИСПРАВЛЕНИЕ: ID всегда должен быть числом ===
-      id: Date.now(),
-      name: "",
-      date: completionTime,
-      totalTime: this.elapsedTime,
-      laps: sessionLaps,
-    };
-    this.openNameModal("save", defaultName);
-  },
-
-  // ... (остальная часть файла stopwatch.js без изменений)
-  // ...
-  // ...
   formatTime(ms, forceMs = null) {
     const showMs = forceMs !== null ? forceMs : themeManager.showMs;
     return formatMsTime(ms, showMs);
@@ -376,6 +339,35 @@ export const sw = {
       this.els.saveBtn.classList.add("hidden");
       this.els.saveBtn.classList.remove("flex");
     }
+  },
+
+  prepareSaveSession() {
+    if (this.laps.length === 0 && this.elapsedTime === 0) return;
+    let sessionLaps = [...this.laps];
+    let total = this.laps.length > 0 ? this.laps[0].total : 0;
+    if (this.elapsedTime > total) {
+      const diff = this.elapsedTime - total;
+      if (diff > 10) {
+        sessionLaps.unshift({
+          total: this.elapsedTime,
+          diff: diff,
+          index: sessionLaps.length + 1,
+        });
+      }
+    }
+    const defaultName = this.getUniqueName(t("stopwatch"));
+    const completionTime = this.isRunning
+      ? Date.now()
+      : this.pauseTime || Date.now();
+
+    this.nameModalState.pendingSession = {
+      id: Date.now(), // ИСПРАВЛЕНИЕ: Гарантируем, что ID - это число
+      name: "",
+      date: completionTime,
+      totalTime: this.elapsedTime,
+      laps: sessionLaps,
+    };
+    this.openNameModal("save", defaultName);
   },
 
   prepareRenameSession(id) {
