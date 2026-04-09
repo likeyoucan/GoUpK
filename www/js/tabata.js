@@ -1,3 +1,5 @@
+// tabata.js
+
 import {
   $,
   escapeHTML,
@@ -15,7 +17,6 @@ import {
 } from "./utils.js";
 import { sm } from "./sound.js";
 import { t } from "./i18n.js";
-
 export const tb = {
   workouts: [],
   selectedId: null,
@@ -34,11 +35,9 @@ export const tb = {
   lastBeepSec: 0,
   editingWorkoutId: null,
   ringLength: 282.74,
-
   // 🟢 УЛУЧШЕНИЕ: базовые классы для statusText вынесены в константу
   // чтобы не перезаписывать className целиком (это стирало бы Tailwind-классы)
   STATUS_BASE_CLASS: "font-bold uppercase tracking-widest mb-1",
-
   init() {
     this.els = {
       listSection: $("tb-list-section"),
@@ -60,22 +59,18 @@ export const tb = {
       editRounds: $("tb-edit-rounds"),
       nameError: $("tb-name-error"),
     };
-
     if (this.els.ring) {
       this.els.ring.style.strokeDasharray = this.ringLength;
       this.els.ring.style.strokeDashoffset = this.ringLength;
     }
-
     document.addEventListener("timerStarted", (e) => {
       if (e.detail !== "tabata" && this.status !== "STOPPED" && !this.paused)
         this.pause();
     });
-
     document.addEventListener("languageChanged", () => {
       this.renderList();
       if (this.selectedId) this.selectWorkout(this.selectedId);
     });
-
     try {
       const stored = safeGetLS("tb_workouts");
       if (stored) {
@@ -95,29 +90,22 @@ export const tb = {
       ];
       safeSetLS("tb_workouts", JSON.stringify(this.workouts));
     }
-
     let lastSelectedId = safeGetLS("tb_selected_id");
     if (lastSelectedId) lastSelectedId = Number(lastSelectedId);
-
     const exists = this.workouts.find((w) => w.id === lastSelectedId);
     if (exists) {
       this.selectWorkout(lastSelectedId);
     } else {
       this.selectWorkout(this.workouts[0].id);
     }
-
     this.renderList();
-
     this.els.startBtn?.addEventListener("click", () => this.toggle());
     this.els.stopBtn?.addEventListener("click", () => this.stop());
-
     $("tb-openModalBtn")?.addEventListener("click", () => this.openModal(null));
     $("tb-closeModalBtn")?.addEventListener("click", () => this.closeModal());
-
     this.els.editName?.addEventListener("input", () =>
       this.els.nameError?.classList.add("hidden"),
     );
-
     document.querySelectorAll("[data-tb-adj]").forEach((btn) => {
       btn.addEventListener("click", (e) => {
         const [id, delta] = e.currentTarget
@@ -126,7 +114,6 @@ export const tb = {
         adjustVal(id, parseInt(delta));
       });
     });
-
     this.els.list?.addEventListener("click", (e) => {
       const delBtn = e.target.closest(".tb-del-btn");
       const editBtn = e.target.closest(".tb-edit-btn");
@@ -141,12 +128,10 @@ export const tb = {
         this.selectWorkout(Number(row.dataset.id));
       }
     });
-
     this.els.list?.addEventListener("keydown", (e) => {
       const row = e.target.closest(".tb-workout-row");
       if (e.key === "Enter" && row) this.selectWorkout(Number(row.dataset.id));
     });
-
     bgWorker.addEventListener("message", (e) => {
       if (
         e.data === "tick" &&
@@ -156,7 +141,6 @@ export const tb = {
       )
         this.tick(true);
     });
-
     document.addEventListener("visibilitychange", () => {
       if (
         document.visibilityState === "visible" &&
@@ -168,7 +152,6 @@ export const tb = {
       }
     });
   },
-
   getUniqueName(baseName) {
     let name = baseName;
     let counter = 1;
@@ -180,11 +163,9 @@ export const tb = {
     }
     return name;
   },
-
   openModal(idToEdit = null) {
     this.els.nameError?.classList.add("hidden");
     this.editingWorkoutId = idToEdit;
-
     if (idToEdit) {
       const w = this.workouts.find((x) => x.id === idToEdit);
       if (w) {
@@ -199,29 +180,22 @@ export const tb = {
       this.els.editRest.value = 10;
       this.els.editRounds.value = 8;
     }
-
     this.els.modal.classList.remove("hidden");
     this.els.modal.classList.add("flex");
     this.els.modal.removeAttribute("inert");
     this.els.modal.removeAttribute("aria-hidden");
-
     void this.els.modal.offsetWidth;
-
     this.els.modal.classList.remove("translate-y-full");
     this.els.modal.classList.add("translate-y-0");
-
     setTimeout(() => this.els.editName?.focus(), 300);
   },
-
   closeModal() {
     // 🟢 УЛУЧШЕНИЕ: blur перед закрытием убирает клавиатуру на мобильных
     if (document.activeElement === this.els.editName) {
       this.els.editName.blur();
     }
-
     this.els.modal.classList.remove("translate-y-0");
     this.els.modal.classList.add("translate-y-full");
-
     setTimeout(() => {
       this.els.modal.classList.add("hidden");
       this.els.modal.classList.remove("flex");
@@ -230,17 +204,14 @@ export const tb = {
       this.editingWorkoutId = null;
     }, 400);
   },
-
   saveWorkout() {
     let finalName = this.els.editName.value.trim();
     if (!finalName) finalName = this.getUniqueName(t("tabata"));
-
     const exists = this.workouts.some(
       (w) =>
         w.name.toLowerCase() === finalName.toLowerCase() &&
         w.id !== this.editingWorkoutId,
     );
-
     if (exists) {
       this.els.nameError?.classList.remove("hidden");
       this.els.editName.classList.add("animate-shake");
@@ -250,11 +221,9 @@ export const tb = {
       );
       return;
     }
-
     const w = Math.max(1, parseInt(this.els.editWork.value) || 20);
     const r = Math.max(1, parseInt(this.els.editRest.value) || 10);
     const rnd = Math.max(1, parseInt(this.els.editRounds.value) || 8);
-
     if (this.editingWorkoutId) {
       const index = this.workouts.findIndex(
         (x) => x.id === this.editingWorkoutId,
@@ -282,13 +251,11 @@ export const tb = {
       this.workouts.push(newW);
       this.editingWorkoutId = newW.id;
     }
-
     safeSetLS("tb_workouts", JSON.stringify(this.workouts));
     this.renderList();
     this.selectWorkout(this.editingWorkoutId);
     this.closeModal();
   },
-
   deleteWorkout(id) {
     if (this.status !== "STOPPED") {
       showToast(t("active_timer"));
@@ -303,15 +270,12 @@ export const tb = {
     if (this.selectedId === id) this.selectWorkout(this.workouts[0].id);
     this.renderList();
   },
-
   selectWorkout(id) {
     if (this.status !== "STOPPED") return;
     const w = this.workouts.find((k) => k.id === id);
     if (!w) return;
-
     this.selectedId = id;
     safeSetLS("tb_selected_id", id);
-
     this.work = w.work * 1000;
     this.rest = w.rest * 1000;
     this.rounds = w.rounds;
@@ -322,12 +286,10 @@ export const tb = {
     );
     this.renderList();
   },
-
   renderList() {
     if (!this.els.list) return;
     this.els.list.replaceChildren();
     const fragment = document.createDocumentFragment();
-
     this.workouts.forEach((w) => {
       const div = document.createElement("div");
       const isAct = w.id === this.selectedId;
@@ -338,7 +300,6 @@ export const tb = {
           : "app-surface border border-transparent shadow-sm"
       }`;
       div.dataset.id = w.id;
-
       div.innerHTML = `
         <div class="flex-1">
           <div class="font-bold ${isAct ? "primary-text" : "app-text"}">${escapeHTML(w.name)}</div>
@@ -360,17 +321,14 @@ export const tb = {
     });
     this.els.list.appendChild(fragment);
   },
-
   toggle() {
     sm.vibrate(50);
     sm.play("click");
     sm.unlock();
-
     if (this.status === "STOPPED") this.start();
     else if (this.paused) this.resume();
     else this.pause();
   },
-
   start() {
     document.dispatchEvent(
       new CustomEvent("timerStarted", { detail: "tabata" }),
@@ -393,7 +351,6 @@ export const tb = {
     bgWorker.postMessage("start");
     this.tick();
   },
-
   pause() {
     this.paused = true;
     bgWorker.postMessage("stop");
@@ -403,7 +360,6 @@ export const tb = {
     releaseWakeLock();
     updateTitle("");
   },
-
   resume() {
     document.dispatchEvent(
       new CustomEvent("timerStarted", { detail: "tabata" }),
@@ -416,7 +372,6 @@ export const tb = {
     this.tick();
     this.updatePhaseStyles();
   },
-
   stop() {
     sm.vibrate(30);
     sm.play("click");
@@ -437,18 +392,15 @@ export const tb = {
       this.els.ring.style.strokeDashoffset = this.ringLength;
     }
   },
-
   tick(isBackground = false) {
     if (this.status === "STOPPED" || this.paused) return;
     const now = performance.now();
     const rem = this.phaseEndTime - now;
-
     if (rem <= 0) {
       const isDeepSleepWakeup = rem < -2000;
       this.nextPhase(isDeepSleepWakeup ? Math.abs(rem) : 0);
       return;
     }
-
     if (now - this.lastRender >= 16 || isBackground) {
       if (!isBackground) {
         this.render(rem);
@@ -458,17 +410,14 @@ export const tb = {
       }
       this.lastRender = now;
     }
-
     if (!isBackground) {
       cancelAnimationFrame(this.rAF);
       this.rAF = requestAnimationFrame(() => this.tick());
     }
   },
-
   nextPhase(missedTime = 0) {
     if (missedTime === 0) sm.vibrate([100, 50, 100]);
     this.lastBeepSec = 0;
-
     if (missedTime > 0) {
       let remainingMissed = missedTime;
       while (remainingMissed > 0 && this.status !== "STOPPED") {
@@ -531,23 +480,18 @@ export const tb = {
       }
       this.phaseEndTime = performance.now() + this.phaseDuration;
     }
-
     this.updatePhaseStyles();
     this.tick();
   },
-
   updatePhaseStyles() {
     if (!this.els.ring) return;
     updateText(this.els.roundDisplay, this.currentRound);
-
     // 🟡 ИСПРАВЛЕНО: НЕ перезаписываем className целиком — это стирало бы все классы.
     // Вместо этого меняем только цветовые классы через remove+add.
     const statusEl = this.els.status;
     statusEl.classList.remove("primary-text", "text-blue-500", "app-text-sec");
-
     this.els.ring.classList.remove("primary-stroke");
     this.els.ring.style.stroke = "";
-
     if (this.status === "WORK") {
       updateText(statusEl, t("work"));
       statusEl.classList.add("primary-text");
@@ -563,19 +507,15 @@ export const tb = {
       this.els.ring.classList.add("primary-stroke");
     }
   },
-
   render(rem) {
     const sTotal = Math.max(0, Math.ceil(rem / 1000));
-
     if (sTotal <= 3 && sTotal > 0 && this.lastBeepSec !== sTotal) {
       sm.play("tick");
       this.lastBeepSec = sTotal;
     }
-
     const timeStr = formatTimeStr(sTotal, false);
     updateText(this.els.timer, timeStr);
     updateTitle(`${this.status}: ${timeStr}`);
-
     if (this.els.ring) {
       this.els.ring.style.strokeDashoffset =
         this.ringLength -

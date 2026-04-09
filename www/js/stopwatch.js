@@ -1,3 +1,5 @@
+// stopwatch.js
+
 import {
   $,
   escapeHTML,
@@ -18,7 +20,6 @@ import {
 import { sm } from "./sound.js";
 import { t } from "./i18n.js";
 import { themeManager } from "./theme.js";
-
 export const sw = {
   startTime: 0,
   elapsedTime: 0,
@@ -32,7 +33,6 @@ export const sw = {
   pauseTime: 0,
   nameModalState: { action: null, targetId: null, pendingSession: null },
   ringLength: 282.74,
-
   init() {
     this.els = {
       display: $("sw-mainDisplay"),
@@ -64,58 +64,56 @@ export const sw = {
       clearCancel: $("sw-clear-cancel"),
       clearConfirm: $("sw-clear-confirm"),
     };
-
     if (this.els.ring) {
       this.els.ring.style.strokeDasharray = this.ringLength;
       this.els.ring.style.strokeDashoffset = this.ringLength;
     }
-
     document.addEventListener("timerStarted", (e) => {
       if (e.detail !== "stopwatch" && this.isRunning) this.toggle();
     });
-
     bgWorker.addEventListener("message", (e) => {
       if (e.data === "tick" && this.isRunning && document.hidden)
         this.tick(true);
     });
-
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "visible" && this.isRunning) {
         this.lastRender = 0;
         this.tick();
       }
     });
-
     this.els.btn?.addEventListener("click", () => this.toggle());
     this.els.lapBtn?.addEventListener("click", () => this.recordLapOrReset());
-    this.els.saveBtn?.addEventListener("click", () => this.prepareSaveSession());
+    this.els.saveBtn?.addEventListener("click", () =>
+      this.prepareSaveSession(),
+    );
     this.els.openResultsBtn?.addEventListener("click", () => this.openModal());
-    this.els.closeResultsBtn?.addEventListener("click", () => this.closeModal());
+    this.els.closeResultsBtn?.addEventListener("click", () =>
+      this.closeModal(),
+    );
     this.els.sortSelect?.addEventListener("change", (e) =>
       this.sortSessions(e.target.value),
     );
-
     this.els.nameCancel?.addEventListener("click", () => this.closeNameModal());
     this.els.nameInput?.addEventListener("input", () =>
       this.els.nameError?.classList.add("hidden"),
     );
-
     this.els.clearAllBtn?.addEventListener("click", () => {
       if (this.savedSessions.length > 0) this.openClearModal();
     });
-    this.els.clearCancel?.addEventListener("click", () => this.closeClearModal());
-    this.els.clearConfirm?.addEventListener("click", () => this.confirmClearAll());
-
+    this.els.clearCancel?.addEventListener("click", () =>
+      this.closeClearModal(),
+    );
+    this.els.clearConfirm?.addEventListener("click", () =>
+      this.confirmClearAll(),
+    );
     this.els.sessionsList?.addEventListener("click", (e) => {
       const header = e.target.closest(".sw-session-header");
       const renameBtn = e.target.closest(".sw-rename-btn");
       const deleteBtn = e.target.closest(".sw-delete-btn");
-
       if (renameBtn) this.prepareRenameSession(Number(renameBtn.dataset.id), e);
       else if (deleteBtn) this.deleteSession(Number(deleteBtn.dataset.id), e);
       else if (header) this.toggleSessionDetails(Number(header.dataset.id));
     });
-
     try {
       const stored = safeGetLS("sw_saved_sessions");
       if (stored) {
@@ -126,23 +124,19 @@ export const sw = {
       console.warn("Failed to parse stopwatch sessions", e);
       this.savedSessions = [];
     }
-
     document.addEventListener("languageChanged", () => {
       this.renderSavedSessions();
       if (this.laps.length > 0) this.reRenderCurrentLaps();
     });
-
     document.addEventListener("msChanged", () => {
       if (!this.isRunning && this.elapsedTime > 0) this.updateDisplay();
       if (this.laps.length > 0) this.reRenderCurrentLaps();
     });
   },
-
   formatTime(ms, forceMs = null) {
     const showMs = forceMs !== null ? forceMs : themeManager.showMs;
     return formatMsTime(ms, showMs);
   },
-
   getUniqueName(baseName) {
     let name = baseName;
     let counter = 1;
@@ -154,12 +148,10 @@ export const sw = {
     }
     return name;
   },
-
   toggle() {
     sm.vibrate(50);
     sm.play("click");
     sm.unlock();
-
     if (this.isRunning) {
       this.isRunning = false;
       this.pauseTime = Date.now();
@@ -172,7 +164,6 @@ export const sw = {
       // 🟡 ИСПРАВЛЕНО: используем remove+add вместо replace() для надёжности
       this.els.lapBtn.classList.remove("app-surface", "app-text");
       this.els.lapBtn.classList.add("bg-red-500", "text-white", "is-reset");
-
       announceToScreenReader(
         `${t("stopwatch")} ${t("pause")}. ${this.formatTime(this.elapsedTime, false)}`,
       );
@@ -196,17 +187,14 @@ export const sw = {
     }
     this.updateSaveButtonVisibility();
   },
-
   // 🟢 НОВЫЙ МЕТОД: правильный show для lapBtn (был display:block из-за remove("hidden"))
   showLapBtn() {
     this.els.lapBtn.classList.remove("hidden");
   },
-
   tick(isBackground = false) {
     if (!this.isRunning) return;
     const now = performance.now();
     this.elapsedTime = now - this.startTime;
-
     if (now - this.lastRender >= 16 || isBackground) {
       if (!isBackground) {
         this.updateDisplay();
@@ -220,12 +208,10 @@ export const sw = {
       this.rAF = requestAnimationFrame(() => this.tick());
     }
   },
-
   updateDisplay() {
     const showMs = themeManager.showMs;
     const timeStr = formatMainDisplay(this.elapsedTime, showMs);
     updateText(this.els.display, timeStr);
-
     if (this.els.extendedDisplay) {
       const extStr = getExtendedDisplay(
         this.elapsedTime,
@@ -239,20 +225,17 @@ export const sw = {
         this.els.extendedDisplay.classList.add("hidden");
       }
     }
-
     updateTitle(this.formatTime(this.elapsedTime, false));
-
     // 🟢 УЛУЧШЕНИЕ: проверяем наличие ring перед обращением к style
     if (this.els.ring) {
       this.els.ring.style.strokeDashoffset =
-        this.ringLength - ((this.elapsedTime % 60000) / 60000) * this.ringLength;
+        this.ringLength -
+        ((this.elapsedTime % 60000) / 60000) * this.ringLength;
     }
   },
-
   createLapElement(lap, isLatest = false) {
     const bgClass = isLatest ? "bg-black/5 dark:bg-white/5" : "";
     const textColor = isLatest ? "primary-text" : "app-text";
-
     const div = document.createElement("div");
     div.className = `lap-row flex justify-between items-center py-3 border-b app-border px-3 rounded-lg transition-all duration-300 ${bgClass}`;
     div.innerHTML = `
@@ -263,7 +246,6 @@ export const sw = {
       </div>`;
     return div;
   },
-
   recordLapOrReset() {
     sm.vibrate(30);
     sm.play("click");
@@ -275,9 +257,7 @@ export const sw = {
         diff: diff,
         index: this.laps.length + 1,
       };
-
       this.laps.unshift(newLap);
-
       if (this.laps.length === 1) {
         this.els.lapsContainer.replaceChildren();
         // 🟡 ИСПРАВЛЕНО: classList.remove("hidden") → classList.add("flex") + remove("hidden")
@@ -294,9 +274,7 @@ export const sw = {
           }
         }
       }
-
       this.els.lapsContainer.prepend(this.createLapElement(newLap, true));
-
       if (this.els.lapFlash) {
         this.els.lapFlash.classList.remove("flash-active");
         void this.els.lapFlash.offsetWidth;
@@ -326,7 +304,6 @@ export const sw = {
       this.updateSaveButtonVisibility();
     }
   },
-
   reRenderCurrentLaps() {
     this.els.lapsContainer.replaceChildren();
     [...this.laps].reverse().forEach((lap, i, arr) => {
@@ -334,7 +311,6 @@ export const sw = {
       this.els.lapsContainer.prepend(this.createLapElement(lap, isLatest));
     });
   },
-
   updateSaveButtonVisibility() {
     if (!this.els.saveBtn) return;
     if (this.laps.length > 0) {
@@ -347,7 +323,6 @@ export const sw = {
       this.els.saveBtn.classList.remove("flex");
     }
   },
-
   prepareSaveSession() {
     if (this.laps.length === 0 && this.elapsedTime === 0) return;
     let sessionLaps = [...this.laps];
@@ -366,7 +341,6 @@ export const sw = {
     const completionTime = this.isRunning
       ? Date.now()
       : this.pauseTime || Date.now();
-
     this.nameModalState.pendingSession = {
       id:
         typeof crypto !== "undefined" && crypto.randomUUID
@@ -379,14 +353,12 @@ export const sw = {
     };
     this.openNameModal("save", defaultName);
   },
-
   prepareRenameSession(id, e) {
     if (e) e.stopPropagation();
     const session = this.savedSessions.find((s) => s.id === id);
     if (!session) return;
     this.openNameModal("rename", session.name, id);
   },
-
   openNameModal(action, defaultName, targetId = null) {
     this.nameModalState.action = action;
     this.nameModalState.targetId = targetId;
@@ -397,24 +369,18 @@ export const sw = {
         action === "rename" ? t("rename") : t("save_session"),
       );
     this.els.nameInput.value = defaultName;
-
     this.els.nameModal.classList.remove("hidden");
     this.els.nameModal.classList.add("flex");
     this.els.nameModal.removeAttribute("inert");
     this.els.nameModal.removeAttribute("aria-hidden");
-
     void this.els.nameModal.offsetWidth;
-
     this.els.nameModal.classList.remove("opacity-0");
     this.els.nameModalContent.classList.remove("opacity-0", "scale-95");
-
     setTimeout(() => this.els.nameInput?.focus(), 100);
   },
-
   closeNameModal() {
     this.els.nameModal.classList.add("opacity-0");
     this.els.nameModalContent.classList.add("opacity-0", "scale-95");
-
     setTimeout(() => {
       this.els.nameModal.classList.add("hidden");
       this.els.nameModal.classList.remove("flex");
@@ -427,19 +393,16 @@ export const sw = {
       };
     }, 300);
   },
-
   confirmNameModal() {
     const inputVal = this.els.nameInput.value.trim();
     const finalName =
       inputVal !== "" ? inputVal : this.els.nameInput.placeholder;
-
     const isDuplicate = this.savedSessions.some(
       (s) =>
         s.name.toLowerCase() === finalName.toLowerCase() &&
         (this.nameModalState.action === "save" ||
           s.id !== this.nameModalState.targetId),
     );
-
     if (isDuplicate) {
       this.els.nameError?.classList.remove("hidden");
       this.els.nameInput.classList.add("animate-shake");
@@ -449,7 +412,6 @@ export const sw = {
       );
       return;
     }
-
     if (this.nameModalState.action === "save") {
       const session = this.nameModalState.pendingSession;
       session.name = finalName;
@@ -468,24 +430,19 @@ export const sw = {
     }
     this.closeNameModal();
   },
-
   openClearModal() {
     if (this.savedSessions.length === 0) return;
     this.els.clearModal.classList.remove("hidden");
     this.els.clearModal.classList.add("flex");
     this.els.clearModal.removeAttribute("inert");
     this.els.clearModal.removeAttribute("aria-hidden");
-
     void this.els.clearModal.offsetWidth;
-
     this.els.clearModal.classList.remove("opacity-0");
     this.els.clearModalContent.classList.remove("opacity-0", "scale-95");
   },
-
   closeClearModal() {
     this.els.clearModal.classList.add("opacity-0");
     this.els.clearModalContent.classList.add("opacity-0", "scale-95");
-
     setTimeout(() => {
       this.els.clearModal.classList.add("hidden");
       this.els.clearModal.classList.remove("flex");
@@ -493,7 +450,6 @@ export const sw = {
       this.els.clearModal.setAttribute("aria-hidden", "true");
     }, 300);
   },
-
   confirmClearAll() {
     this.savedSessions = [];
     safeRemoveLS("sw_saved_sessions");
@@ -501,24 +457,19 @@ export const sw = {
     this.closeClearModal();
     showToast(t("history_cleared"));
   },
-
   openModal() {
     this.sortSessions(this.currentSort);
     this.els.modal.classList.remove("hidden");
     this.els.modal.classList.add("flex");
     this.els.modal.removeAttribute("inert");
     this.els.modal.removeAttribute("aria-hidden");
-
     void this.els.modal.offsetWidth;
-
     this.els.modal.classList.remove("translate-y-full");
     this.els.modal.classList.add("translate-y-0");
   },
-
   closeModal() {
     this.els.modal.classList.remove("translate-y-0");
     this.els.modal.classList.add("translate-y-full");
-
     setTimeout(() => {
       this.els.modal.classList.add("hidden");
       this.els.modal.classList.remove("flex");
@@ -526,7 +477,6 @@ export const sw = {
       this.els.modal.setAttribute("aria-hidden", "true");
     }, 400);
   },
-
   sortSessions(type) {
     this.currentSort = type;
     if (this.els.sortSelect) this.els.sortSelect.value = type;
@@ -539,19 +489,16 @@ export const sw = {
     });
     this.renderSavedSessions();
   },
-
   deleteSession(id, e) {
     if (e) e.stopPropagation();
     this.savedSessions = this.savedSessions.filter((s) => s.id !== id);
     safeSetLS("sw_saved_sessions", JSON.stringify(this.savedSessions));
     this.renderSavedSessions();
   },
-
   toggleSessionDetails(id) {
     const detailsEl = $(`sw-details-${id}`);
     const iconEl = $(`sw-icon-${id}`);
     if (!detailsEl) return; // 🟢 УЛУЧШЕНИЕ: ранняя проверка
-
     if (detailsEl.classList.contains("hidden")) {
       detailsEl.classList.remove("hidden");
       if (iconEl) iconEl.style.transform = "rotate(180deg)";
@@ -560,18 +507,14 @@ export const sw = {
       if (iconEl) iconEl.style.transform = "rotate(0deg)";
     }
   },
-
   renderSavedSessions() {
     if (!this.els || !this.els.sessionsList) return;
     this.els.sessionsList.replaceChildren();
-
     if (this.els.clearAllBtn) {
       this.els.clearAllBtn.disabled = this.savedSessions.length === 0;
     }
-
     // 🟡 ИСПРАВЛЕНО: $("sw-controls-row") не существует в HTML — убран мёртвый код
     // controlsRow не объявлен в HTML, поэтому проверяем и тихо пропускаем
-
     if (this.savedSessions.length === 0) {
       this.els.sessionsList.insertAdjacentHTML(
         "afterbegin",
@@ -579,16 +522,13 @@ export const sw = {
       );
       return;
     }
-
     const fragment = document.createDocumentFragment();
-
     this.savedSessions.forEach((session) => {
       const dateObj = new Date(session.date || session.id);
       const dateStr = `${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString(
         [],
         { hour: "2-digit", minute: "2-digit" },
       )}`;
-
       let lapsHtml = `
         <div class="flex justify-between items-center py-1.5 border-b border-gray-500/30 mb-1 px-2">
           <span class="text-[10px] font-bold app-text-sec uppercase tracking-wider">${t("lap_text")}</span>
@@ -597,12 +537,12 @@ export const sw = {
             <span class="text-[10px] font-bold app-text-sec uppercase tracking-wider w-16 text-right">${t("split_time")}</span>
           </div>
         </div>`;
-
       session.laps.forEach((lap, idx) => {
         const isLatest = idx === 0;
-        const bgClass = isLatest ? "bg-black/5 dark:bg-black/20 rounded-lg" : "";
+        const bgClass = isLatest
+          ? "bg-black/5 dark:bg-black/20 rounded-lg"
+          : "";
         const textColor = isLatest ? "primary-text" : "app-text";
-
         lapsHtml += `
           <div class="flex justify-between items-center py-2 border-b border-gray-500/10 last:border-0 px-2 ${bgClass}">
             <span class="text-xs app-text-sec font-medium">${t("lap_text")} ${lap.index}</span>
@@ -612,7 +552,6 @@ export const sw = {
             </div>
           </div>`;
       });
-
       const div = document.createElement("div");
       div.className =
         "app-surface border app-border rounded-xl overflow-hidden transition-all mb-3";

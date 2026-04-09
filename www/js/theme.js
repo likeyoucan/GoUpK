@@ -1,5 +1,6 @@
-import { $, safeGetLS, safeSetLS } from "./utils.js";
+// theme.js
 
+import { $, safeGetLS, safeSetLS } from "./utils.js";
 export const themeManager = {
   currentMode: "system",
   currentBg: "default",
@@ -11,12 +12,10 @@ export const themeManager = {
   themeBtns: [],
   colorBtns: [],
   bgBtns: [],
-
   init() {
     this.themeBtns = document.querySelectorAll('[id^="theme-"]');
     this.colorBtns = document.querySelectorAll(".color-btn");
     this.bgBtns = document.querySelectorAll(".bg-btn");
-
     // === ИНТЕГРАЦИЯ MATERIAL YOU (Android 12+) ===
     if (window.Capacitor && window.Capacitor.isNativePlatform()) {
       const { MaterialYou } = window.Capacitor.Plugins;
@@ -37,9 +36,7 @@ export const themeManager = {
           .catch(() => {});
       }
     }
-
     this.applySettings();
-
     $("toggle-ms")?.addEventListener("change", (e) => {
       this.showMs = e.target.checked;
       safeSetLS("app_show_ms", this.showMs);
@@ -47,7 +44,6 @@ export const themeManager = {
         new CustomEvent("msChanged", { detail: this.showMs }),
       );
     });
-
     $("toggle-adaptive-bg")?.addEventListener("change", (e) => {
       this.isAdaptiveBg = e.target.checked;
       safeSetLS("app_adaptive_bg", this.isAdaptiveBg);
@@ -57,29 +53,24 @@ export const themeManager = {
         document.documentElement.classList.contains("dark"),
       );
     });
-
     $("toggle-glass")?.addEventListener("change", (e) => {
       this.isLiquidGlass = e.target.checked;
       safeSetLS("app_liquid_glass", this.isLiquidGlass);
       this.updateGlass();
     });
-
     $("toggle-vignette")?.addEventListener("change", (e) => {
       this.hasVignette = e.target.checked;
       safeSetLS("app_vignette", this.hasVignette);
       this.updateVignette();
     });
-
     $("vignetteSlider")?.addEventListener("input", (e) => {
       this.vignetteAlpha = parseFloat(e.target.value);
       safeSetLS("app_vignette_alpha", this.vignetteAlpha);
       this.updateVignette();
     });
-
     $("fontSlider")?.addEventListener("input", (e) =>
       this.setFontSize(e.target.value),
     );
-
     this.themeBtns.forEach((btn) =>
       btn.addEventListener("click", (e) =>
         this.setMode(e.currentTarget.getAttribute("data-theme-mode")),
@@ -95,21 +86,18 @@ export const themeManager = {
         this.setBgColor(e.currentTarget.getAttribute("data-bg")),
       ),
     );
-
     $("customColorInput")?.addEventListener("input", (e) =>
       this.setColor(e.target.value),
     );
     $("customBgInput")?.addEventListener("input", (e) =>
       this.setBgColor(e.target.value),
     );
-
     window
       .matchMedia("(prefers-color-scheme: dark)")
       .addEventListener("change", () => {
         if (this.currentMode === "system") this.setMode("system");
       });
   },
-
   applySettings() {
     this.setMode(safeGetLS("theme_mode") || "system");
     this.setColor(safeGetLS("theme_color") || "#22c55e");
@@ -118,14 +106,11 @@ export const themeManager = {
     this.isLiquidGlass = safeGetLS("app_liquid_glass") === "true";
     this.vignetteAlpha = parseFloat(safeGetLS("app_vignette_alpha")) || 0.5;
     this.showMs = safeGetLS("app_show_ms") !== "false";
-
     this.updateAdaptiveClass();
     this.setBgColor(safeGetLS("theme_bg_color") || "default");
     this.setFontSize(safeGetLS("font_size") || 16);
-
     this.updateGlass();
     this.updateVignette();
-
     if ($("toggle-adaptive-bg"))
       $("toggle-adaptive-bg").checked = this.isAdaptiveBg;
     if ($("toggle-glass")) $("toggle-glass").checked = this.isLiquidGlass;
@@ -133,13 +118,11 @@ export const themeManager = {
     if ($("vignetteSlider")) $("vignetteSlider").value = this.vignetteAlpha;
     if ($("toggle-ms")) $("toggle-ms").checked = this.showMs;
     if ($("fontSlider")) $("fontSlider").value = safeGetLS("font_size") || 16;
-
     if ($("customColorInput"))
       $("customColorInput").value = safeGetLS("theme_color") || "#22c55e";
     if ($("customBgInput"))
       $("customBgInput").value = safeGetLS("theme_bg_color") || "#ffffff";
   },
-
   updateAdaptiveClass() {
     if (this.isAdaptiveBg) {
       document.documentElement.classList.remove("no-adaptive");
@@ -147,17 +130,14 @@ export const themeManager = {
       document.documentElement.classList.add("no-adaptive");
     }
   },
-
   updateGlass() {
     if (this.isLiquidGlass)
       document.documentElement.classList.add("glass-effect");
     else document.documentElement.classList.remove("glass-effect");
   },
-
   setMode(mode) {
     this.currentMode = mode;
     safeSetLS("theme_mode", mode);
-
     // 🟡 ИСПРАВЛЕНО: ранее activeBtn получал app-text но НЕ терял app-text-sec.
     // Теперь явно убираем app-text-sec у всех, потом добавляем нужное активной кнопке.
     this.themeBtns.forEach((b) => {
@@ -169,12 +149,10 @@ export const themeManager = {
       activeBtn.classList.remove("app-text-sec"); // 🟡 ИСПРАВЛЕНО: убираем sec у активной
       activeBtn.classList.add("app-surface", "shadow-sm", "app-text");
     }
-
     const isDark =
       mode === "dark" ||
       (mode === "system" &&
         window.matchMedia("(prefers-color-scheme: dark)").matches);
-
     if (isDark) {
       document.documentElement.classList.add("dark");
       document.documentElement.style.colorScheme = "dark";
@@ -182,7 +160,6 @@ export const themeManager = {
       document.documentElement.classList.remove("dark");
       document.documentElement.style.colorScheme = "light";
     }
-
     // Обновляем meta theme-color динамически
     // 🟢 УЛУЧШЕНИЕ: обновляем существующие meta теги вместо создания нового
     document.querySelectorAll('meta[name="theme-color"]').forEach((meta) => {
@@ -193,13 +170,10 @@ export const themeManager = {
         meta.content = isDark ? "#000000" : "#f3f4f6";
       }
     });
-
     this.applyBgTheme(this.currentBg, isDark);
   },
-
   setColor(hex) {
     safeSetLS("theme_color", hex);
-
     if (hex === "auto") {
       if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.MaterialYou) {
         window.Capacitor.Plugins.MaterialYou.getColors()
@@ -211,15 +185,11 @@ export const themeManager = {
       this.updateButtons(this.colorBtns, "auto", "customColorInput", false);
       return;
     }
-
     document.documentElement.style.setProperty("--primary-color", hex);
-
     const { h } = this.hexToHSL(hex);
     document.documentElement.style.setProperty("--accent-h", h);
-
     this.updateButtons(this.colorBtns, hex, "customColorInput", false);
   },
-
   setBgColor(hex) {
     this.currentBg = hex;
     safeSetLS("theme_bg_color", hex);
@@ -227,7 +197,6 @@ export const themeManager = {
     this.applyBgTheme(hex, isDark);
     this.updateButtons(this.bgBtns, hex, "customBgInput", true);
   },
-
   updateButtons(btnCollection, hex, customId, isBg) {
     let found = false;
     btnCollection.forEach((b) => {
@@ -255,7 +224,6 @@ export const themeManager = {
         b.innerHTML = "";
       }
     });
-
     const pickerWrapper = $(customId)?.closest(".relative");
     if (!pickerWrapper) return;
     pickerWrapper.classList.remove(
@@ -264,7 +232,6 @@ export const themeManager = {
       "ring-offset-white",
       "dark:ring-offset-gray-900",
     );
-
     if (!found && hex !== "default") {
       pickerWrapper.classList.add(
         "ring-2",
@@ -274,7 +241,6 @@ export const themeManager = {
       );
     }
   },
-
   getLuminance(r, g, b) {
     const a = [r, g, b].map((v) => {
       v /= 255;
@@ -282,12 +248,9 @@ export const themeManager = {
     });
     return a[0] * 0.2126 + a[1] * 0.7152 + a[2] * 0.0722;
   },
-
   applyBgTheme(hex, isDark) {
     const root = document.documentElement;
-
     document.body.classList.remove("force-light-text", "force-dark-text");
-
     if (hex === "default") {
       if (!this.isAdaptiveBg) {
         root.style.setProperty("--bg-color", isDark ? "#000000" : "#f3f4f6");
@@ -301,13 +264,10 @@ export const themeManager = {
       }
       return;
     }
-
     const rgb = this.hexToRGB(hex);
     const { h, s, l } = this.hexToHSL(hex);
-
     if (!this.isAdaptiveBg) {
       root.style.setProperty("--bg-color", hex);
-
       if (isDark) {
         root.style.setProperty(
           "--surface-color",
@@ -326,13 +286,11 @@ export const themeManager = {
           );
         }
       }
-
       const luminance = this.getLuminance(rgb.r, rgb.g, rgb.b);
       if (luminance < 0.5) document.body.classList.add("force-light-text");
       else document.body.classList.add("force-dark-text");
       return;
     }
-
     const satDark = Math.min(s, 40);
     const satLight = Math.max(s, 20);
     if (isDark) {
@@ -343,12 +301,10 @@ export const themeManager = {
       root.style.setProperty("--surface-color", `hsl(${h} ${satLight}% 98%)`);
     }
   },
-
   updateVignette() {
     const bgElement = document.querySelector(".app-bg");
     const vignetteContainer = $("vignette-depth-container");
     if (!bgElement) return;
-
     if (vignetteContainer) {
       // 🟡 ИСПРАВЛЕНО: display:none/flex вместо style.display (совместимость с Tailwind hidden)
       if (this.hasVignette) {
@@ -359,7 +315,6 @@ export const themeManager = {
         vignetteContainer.classList.remove("flex");
       }
     }
-
     if (this.hasVignette) {
       bgElement.classList.add("has-vignette");
       const visualAlpha = this.vignetteAlpha * 0.3;
@@ -371,7 +326,6 @@ export const themeManager = {
       bgElement.classList.remove("has-vignette");
     }
   },
-
   hexToRGB(H) {
     // 🟢 УЛУЧШЕНИЕ: поддержка коротких (#rgb) и длинных (#rrggbb) форматов
     if (!H || !H.startsWith("#")) return { r: 0, g: 0, b: 0 };
@@ -387,7 +341,6 @@ export const themeManager = {
     }
     return { r, g, b };
   },
-
   hexToHSL(H) {
     if (!H || !H.startsWith("#")) return { h: 142, s: 50, l: 50 }; // 🟢 дефолт = зелёный
     const { r: r255, g: g255, b: b255 } = this.hexToRGB(H);
@@ -410,7 +363,6 @@ export const themeManager = {
     if (h < 0) h += 360;
     return { h, s: +(s * 100).toFixed(1), l: +(l * 100).toFixed(1) };
   },
-
   setFontSize(size) {
     const numSize = Number(size);
     const scale = numSize / 16;
@@ -418,12 +370,10 @@ export const themeManager = {
     if ($("fontSizeDisplay")) $("fontSizeDisplay").textContent = numSize + " px";
     safeSetLS("font_size", numSize);
   },
-
   applyMaterialYouColors(colors) {
     // Применяем только если пользователь выбрал "Авто"
     const storedColor = safeGetLS("theme_color");
     if (storedColor && storedColor !== "auto") return;
-
     const primaryColor = colors.system_accent1_500;
     if (primaryColor) {
       document.documentElement.style.setProperty("--primary-color", primaryColor);
