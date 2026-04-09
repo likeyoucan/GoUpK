@@ -1,4 +1,4 @@
-// tabata.js
+// 
 
 import {
   $,
@@ -75,28 +75,23 @@ export const tb = {
     });
 
     try {
-const stored = safeGetLS("tb_workouts");
-
-if (stored) {
-  try {
-    const parsed = JSON.parse(stored);
-    if (Array.isArray(parsed) && parsed.length > 0) {
-      this.workouts = parsed;
-    } else {
-      console.info("Invalid workouts data, using defaults");
-      this.workouts = this.getDefaultWorkouts();
+      const stored = safeGetLS("tb_workouts");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          this.workouts = parsed;
+        } else {
+          throw new Error("Invalid or empty array in localStorage");
+        }
+      } else {
+        throw new Error("No data in localStorage");
+      }
+    } catch (e) {
+      console.warn("Failed to parse tabata workouts, using defaults:", e);
+      this.workouts = [
+        { id: 1, name: "Standard Tabata", work: 20, rest: 10, rounds: 8 },
+      ];
       safeSetLS("tb_workouts", JSON.stringify(this.workouts));
-    }
-  } catch (e) {
-    console.warn("Failed to parse tabata workouts:", e);
-    this.workouts = this.getDefaultWorkouts();
-    safeSetLS("tb_workouts", JSON.stringify(this.workouts));
-  }
-} else {
-  // Первый запуск — это нормально, не нужно показывать ошибку
-  this.workouts = this.getDefaultWorkouts();
-  safeSetLS("tb_workouts", JSON.stringify(this.workouts));
-}
     }
 
     let lastSelectedId = safeGetLS("tb_selected_id");
