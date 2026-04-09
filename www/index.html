@@ -1,11 +1,12 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="h-full overflow-hidden select-none">
   <head>
     <meta charset="UTF-8" />
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover"
     />
+    <!-- Цвет статус-бара -->
     <meta
       name="theme-color"
       media="(prefers-color-scheme: light)"
@@ -16,6 +17,7 @@
       media="(prefers-color-scheme: dark)"
       content="#000000"
     />
+
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta
@@ -31,55 +33,88 @@
     <link rel="icon" type="image/svg+xml" href="icon.svg" />
     <link rel="apple-touch-icon" href="apple-touch-icon.png" />
 
-    <link
-      rel="apple-touch-startup-image"
-      media="screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3)"
-      href="splash.png"
-    />
-    <link
-      rel="apple-touch-startup-image"
-      media="screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3)"
-      href="splash.png"
-    />
-
     <title>Stopwatch Pro</title>
 
+    <!-- Предварительная установка темы (предотвращает мерцание) -->
     <script>
-      document.documentElement.classList.add("js");
+      (function () {
+        const savedTheme = localStorage.getItem("theme-mode") || "system";
+        const isDark =
+          savedTheme === "dark" ||
+          (savedTheme === "system" &&
+            window.matchMedia("(prefers-color-scheme: dark)").matches);
+        if (isDark) document.documentElement.classList.add("dark");
+        document.documentElement.classList.add("js");
+      })();
     </script>
+
+    <!-- Скомпилированные стили Tailwind 4 -->
+    <link rel="stylesheet" href="styles.css" />
+
     <style>
-      html.js .no-js-warning {
-        display: none !important;
+      /* Системные фиксы для Mobile WebView */
+      :root {
+        --primary-color: #22c55e; /* Дефолтный цвет до загрузки JS */
+      }
+      body {
+        position: fixed;
+        width: 100%;
+        height: 100%;
+        overscroll-behavior: none;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .no-js-warning {
+        display: none;
+      }
+      html:not(.js) .no-js-warning {
+        display: flex !important;
       }
       html:not(.js) #app {
         display: none !important;
       }
-    </style>
 
-    <link rel="stylesheet" href="styles.css" />
+      /* Поддержка безопасных зон (Safe Areas) */
+      .app-nav-safe {
+        padding-bottom: env(safe-area-inset-bottom);
+      }
+      .view-top-half {
+        padding-top: env(safe-area-inset-top);
+      }
+
+      /* Скрытие скроллбара */
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+    </style>
   </head>
 
   <body
-    class="preload flex items-center justify-center h-[100dvh] w-full overflow-hidden bg-black text-base select-none"
+    class="preload flex items-center justify-center bg-black text-base antialiased"
   >
+    <!-- No-JS Fallback -->
     <div
-      class="no-js-warning bg-white text-black p-6 rounded-2xl font-bold shadow-2xl text-center max-w-sm mx-4 absolute z-50"
+      class="no-js-warning fixed inset-0 bg-white text-black p-6 flex flex-col items-center justify-center text-center z-[200]"
     >
-      <span class="text-2xl block mb-2">⚠️</span>
-      Please enable JavaScript to use Stopwatch Pro.
+      <span class="text-4xl mb-4">⚠️</span>
+      <h1 class="text-xl font-bold">JavaScript Required</h1>
+      <p>Please enable JavaScript to use Stopwatch Pro.</p>
     </div>
 
+    <!-- accessibility announcer -->
     <div id="sr-only-announce" aria-live="polite" class="sr-only"></div>
 
+    <!-- Toast Notifications -->
     <div
       id="toast"
       role="status"
       aria-live="polite"
-      class="fixed top-8 left-1/2 transform -translate-x-1/2 app-surface border app-border app-text px-6 py-3 rounded-full shadow-2xl z-[150] transition-all duration-300 opacity-0 -translate-y-4 pointer-events-none flex items-center gap-3"
+      class="fixed top-12 left-1/2 transform -translate-x-1/2 app-surface border app-border app-text px-6 py-3 rounded-full shadow-2xl z-[150] transition-all duration-300 opacity-0 -translate-y-4 pointer-events-none flex items-center gap-3"
     >
       <svg
-        focusable="false"
-        aria-hidden="true"
         class="w-5 h-5 primary-text"
         fill="none"
         stroke="currentColor"
@@ -95,24 +130,25 @@
       <span id="toast-msg" class="font-bold text-sm tracking-wide"></span>
     </div>
 
+    <!-- MAIN APP CONTAINER -->
     <div
       id="app"
-      class="relative w-full max-w-md mx-auto h-full overflow-hidden flex flex-col bg-black transition-shadow duration-300"
+      class="relative w-full max-w-md mx-auto h-[100dvh] flex flex-col bg-black transition-shadow duration-300 overflow-hidden"
     >
       <div
         class="app-bg absolute inset-0 flex flex-col w-full h-full z-0 transition-colors duration-300"
       >
         <main class="flex-1 relative overflow-hidden z-10" id="viewsContainer">
           <!-- STOPWATCH VIEW -->
-          <div
+          <section
             id="view-stopwatch"
             class="absolute inset-0 flex flex-col transition-opacity duration-300 z-10"
           >
             <div
-              class="view-top-half w-full flex flex-col items-center justify-center shrink-0 px-6"
+              class="view-top-half w-full flex flex-col items-center justify-center shrink-0 px-6 pt-4"
             >
               <h2
-                class="text-sm font-bold app-text-sec uppercase tracking-widest"
+                class="text-sm font-bold app-text-sec uppercase tracking-widest mb-4"
                 data-i18n="stopwatch"
               >
                 Stopwatch
@@ -124,8 +160,8 @@
                 <button
                   type="button"
                   id="sw-startStopBtn"
-                  aria-label="Start or Stop Stopwatch"
-                  class="absolute inset-0 flex flex-col items-center justify-center rounded-full focus:outline-none focus-visible:ring-4 focus-visible:ring-[var(--primary-color)] group active:scale-95 transition-transform overflow-hidden cursor-pointer"
+                  aria-label="Start or Stop"
+                  class="absolute inset-0 flex flex-col items-center justify-center rounded-full focus:outline-none focus-visible:ring-4 focus-visible:ring-[var(--primary-color)] active:scale-95 transition-transform overflow-hidden"
                 >
                   <div
                     id="sw-lapFlash"
@@ -140,9 +176,8 @@
                   >
                   <span
                     id="sw-mainDisplay"
-                    aria-hidden="true"
-                    class="font-mono font-bold tracking-tighter tabular-nums primary-text timer-display is-go relative z-10 selectable-data"
-                    >GO</span
+                    class="font-mono font-bold tracking-tighter tabular-nums primary-text timer-display relative z-10"
+                    >00:00.00</span
                   >
                   <span
                     id="sw-extendedDisplay"
@@ -155,22 +190,20 @@
             <div
               class="view-bottom-half h-[45%] w-full flex flex-col shrink-0 min-h-0"
             >
-              <div class="w-full flex justify-center h-14 shrink-0 mb-2 mt-2">
+              <div class="w-full flex justify-center h-14 shrink-0 mb-4 mt-4">
                 <button
                   type="button"
                   id="sw-lapBtn"
                   data-i18n="lap"
-                  class="hidden app-surface app-text w-32 min-h-[44px] rounded-full text-lg font-bold shadow-sm active:scale-95 transition-transform focus:outline-none"
+                  class="hidden app-surface app-text w-32 min-h-[48px] rounded-full text-lg font-bold shadow-md active:scale-95 transition-transform"
                 >
                   Lap
                 </button>
               </div>
               <div
-                class="flex-1 flex flex-col min-h-0 border-t app-border pt-2 px-2 sm:px-4"
+                class="flex-1 flex flex-col min-h-0 border-t app-border pt-2 px-4"
               >
-                <div
-                  class="flex justify-between items-center mb-1 px-2 shrink-0"
-                >
+                <div class="flex justify-between items-center mb-1 shrink-0">
                   <h3
                     class="text-xs font-bold app-text-sec uppercase tracking-wider"
                     data-i18n="laps_history"
@@ -181,12 +214,9 @@
                     <button
                       type="button"
                       id="sw-saveBtn"
-                      class="hidden flex items-center justify-center min-w-[44px] min-h-[44px] text-gray-400 hover:primary-text transition-colors focus:outline-none custom-focus rounded-lg"
-                      aria-label="Save Session"
+                      class="hidden p-2 text-gray-400 hover:primary-text transition-colors"
                     >
                       <svg
-                        focusable="false"
-                        aria-hidden="true"
                         class="w-5 h-5"
                         fill="none"
                         stroke="currentColor"
@@ -194,8 +224,6 @@
                         stroke-width="2"
                       >
                         <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
                           d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
                         ></path>
                       </svg>
@@ -203,12 +231,9 @@
                     <button
                       type="button"
                       id="sw-openResultsBtn"
-                      class="flex items-center justify-center min-w-[44px] min-h-[44px] text-gray-400 hover:primary-text transition-colors focus:outline-none custom-focus rounded-lg"
-                      aria-label="Saved Results"
+                      class="p-2 text-gray-400 hover:primary-text transition-colors"
                     >
                       <svg
-                        focusable="false"
-                        aria-hidden="true"
                         class="w-5 h-5"
                         fill="none"
                         stroke="currentColor"
@@ -216,41 +241,15 @@
                         stroke-width="2"
                       >
                         <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
                           d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
                         ></path>
                       </svg>
                     </button>
                   </div>
                 </div>
-
                 <div
-                  id="sw-currentLapsHeader"
-                  class="hidden flex justify-between items-center px-3 py-1.5 border-b app-border shrink-0 mt-1"
-                >
-                  <span
-                    class="text-[10px] font-bold app-text-sec uppercase tracking-wider"
-                    data-i18n="lap_text"
-                    >Lap</span
-                  >
-                  <div class="flex items-center gap-4">
-                    <span
-                      class="text-[10px] font-bold app-text-sec uppercase tracking-wider w-16 text-right"
-                      data-i18n="total_time"
-                      >Total</span
-                    >
-                    <span
-                      class="text-[10px] font-bold app-text-sec uppercase tracking-wider w-16 text-right"
-                      data-i18n="split_time"
-                      >Split</span
-                    >
-                  </div>
-                </div>
-
-                <div
-                  class="flex-1 overflow-y-auto scroll-lock no-scrollbar px-1 pb-28 selectable-data"
                   id="sw-lapsContainer"
+                  class="flex-1 overflow-y-auto no-scrollbar pb-24"
                 >
                   <div
                     class="text-center app-text-sec opacity-50 mt-4 text-sm"
@@ -261,20 +260,20 @@
                 </div>
               </div>
             </div>
-          </div>
+          </section>
 
           <!-- TIMER VIEW -->
-          <div
+          <section
             id="view-timer"
             inert
             aria-hidden="true"
             class="absolute inset-0 flex flex-col transition-opacity duration-300 opacity-0 pointer-events-none"
           >
             <div
-              class="view-top-half w-full flex flex-col items-center justify-center shrink-0 px-6"
+              class="view-top-half w-full flex flex-col items-center justify-center shrink-0 px-6 pt-4"
             >
               <h2
-                class="text-sm font-bold app-text-sec uppercase tracking-widest"
+                class="text-sm font-bold app-text-sec uppercase tracking-widest mb-4"
                 data-i18n="countdown"
               >
                 Countdown
@@ -286,129 +285,79 @@
                 <button
                   type="button"
                   id="tm-circleBtn"
-                  aria-label="Start or Stop Timer"
-                  class="absolute inset-0 flex flex-col items-center justify-center rounded-full focus:outline-none focus-visible:ring-4 focus-visible:ring-[var(--primary-color)] group active:scale-95 transition-transform overflow-hidden cursor-pointer"
+                  class="absolute inset-0 flex flex-col items-center justify-center rounded-full active:scale-95 transition-transform"
                 >
                   <span
                     id="tm-statusText"
-                    aria-live="assertive"
-                    data-i18n="pause"
                     class="hidden text-sm font-bold tracking-widest uppercase mb-1 app-text-sec"
+                    data-i18n="pause"
                     >PAUSE</span
                   >
                   <span
                     id="tm-mainDisplay"
-                    aria-hidden="true"
-                    class="font-mono font-bold tracking-tighter tabular-nums primary-text timer-display is-go"
-                    >GO</span
+                    class="font-mono font-bold tracking-tighter tabular-nums primary-text timer-display"
+                    >00:00:00</span
                   >
                 </button>
               </div>
             </div>
-
             <div
-              class="view-bottom-half h-[45%] w-full flex flex-col items-center justify-start pt-6 shrink-0 px-6"
+              class="view-bottom-half h-[45%] w-full flex flex-col items-center pt-6 px-6"
             >
-              <form id="tm-form" class="flex flex-col items-center w-full">
-                <div
-                  id="tm-inputs"
-                  class="flex items-center gap-2 transition-all duration-300"
-                >
-                  <div class="flex flex-col items-center">
-                    <input
-                      type="text"
-                      inputmode="numeric"
-                      pattern="[0-9]*"
-                      autocomplete="off"
-                      enterkeyhint="next"
-                      maxlength="2"
-                      aria-label="Hours"
-                      id="tm-h"
-                      placeholder="00"
-                      class="timer-input w-16 h-16 text-center text-[32px] bg-transparent border-b-2 app-border outline-none font-mono placeholder-gray-500 transition-colors primary-focus-border"
-                    />
-                    <label
-                      for="tm-h"
-                      class="text-[10px] mt-1 font-bold opacity-50 cursor-pointer"
-                      data-i18n="hr"
-                      >HR</label
-                    >
-                  </div>
-                  <span class="text-4xl opacity-30 pb-5" aria-hidden="true"
-                    >:</span
-                  >
-                  <div class="flex flex-col items-center">
-                    <input
-                      type="text"
-                      inputmode="numeric"
-                      pattern="[0-9]*"
-                      autocomplete="off"
-                      enterkeyhint="next"
-                      maxlength="2"
-                      aria-label="Minutes"
-                      id="tm-m"
-                      placeholder="00"
-                      class="timer-input w-16 h-16 text-center text-[32px] bg-transparent border-b-2 app-border outline-none font-mono placeholder-gray-500 transition-colors primary-focus-border"
-                    />
-                    <label
-                      for="tm-m"
-                      class="text-[10px] mt-1 font-bold opacity-50 cursor-pointer"
-                      data-i18n="min"
-                      >MIN</label
-                    >
-                  </div>
-                  <span class="text-4xl opacity-30 pb-5" aria-hidden="true"
-                    >:</span
-                  >
-                  <div class="flex flex-col items-center">
-                    <input
-                      type="text"
-                      inputmode="numeric"
-                      pattern="[0-9]*"
-                      autocomplete="off"
-                      enterkeyhint="done"
-                      maxlength="2"
-                      aria-label="Seconds"
-                      id="tm-s"
-                      placeholder="00"
-                      class="timer-input w-16 h-16 text-center text-[32px] bg-transparent border-b-2 app-border outline-none font-mono placeholder-gray-500 transition-colors primary-focus-border"
-                    />
-                    <label
-                      for="tm-s"
-                      class="text-[10px] mt-1 font-bold opacity-50 cursor-pointer"
-                      data-i18n="sec"
-                      >SEC</label
-                    >
-                  </div>
-                </div>
-                <button type="submit" class="sr-only" tabindex="-1"></button>
+              <form id="tm-form" class="flex items-center gap-2">
+                <input
+                  type="text"
+                  inputmode="numeric"
+                  pattern="[0-9]*"
+                  id="tm-h"
+                  placeholder="00"
+                  class="timer-input w-16 h-16 text-center text-3xl bg-transparent border-b-2 app-border outline-none font-mono"
+                />
+                <span class="text-2xl opacity-30">:</span>
+                <input
+                  type="text"
+                  inputmode="numeric"
+                  pattern="[0-9]*"
+                  id="tm-m"
+                  placeholder="00"
+                  class="timer-input w-16 h-16 text-center text-3xl bg-transparent border-b-2 app-border outline-none font-mono"
+                />
+                <span class="text-2xl opacity-30">:</span>
+                <input
+                  type="text"
+                  inputmode="numeric"
+                  pattern="[0-9]*"
+                  id="tm-s"
+                  placeholder="00"
+                  class="timer-input w-16 h-16 text-center text-3xl bg-transparent border-b-2 app-border outline-none font-mono"
+                />
               </form>
               <button
                 type="button"
                 id="tm-resetBtn"
                 data-i18n="reset"
-                class="hidden app-surface app-text w-32 min-h-[44px] rounded-full text-lg font-bold shadow-sm active:scale-95 transition-transform text-red-500 mt-6 focus:outline-none custom-focus"
+                class="hidden mt-8 text-red-500 font-bold uppercase tracking-widest"
               >
                 Reset
               </button>
             </div>
-          </div>
+          </section>
 
           <!-- TABATA VIEW -->
-          <div
+          <section
             id="view-tabata"
             inert
             aria-hidden="true"
             class="absolute inset-0 flex flex-col transition-opacity duration-300 opacity-0 pointer-events-none"
           >
             <div
-              class="view-top-half w-full flex flex-col items-center justify-center shrink-0 px-6"
+              class="view-top-half w-full flex flex-col items-center justify-center shrink-0 px-6 pt-4"
             >
               <h2
-                class="text-sm font-bold app-text-sec uppercase tracking-widest"
+                class="text-sm font-bold app-text-sec uppercase tracking-widest mb-4"
                 data-i18n="tabata_interval"
               >
-                Tabata Interval
+                Tabata
               </h2>
               <div
                 class="timer-circle-wrap relative shrink-0 flex items-center justify-center"
@@ -417,734 +366,168 @@
                 <button
                   type="button"
                   id="tb-startBtn"
-                  aria-label="Start or Pause Tabata"
-                  class="absolute inset-0 flex flex-col items-center justify-center rounded-full focus:outline-none focus-visible:ring-4 focus-visible:ring-[var(--primary-color)] group active:scale-95 transition-transform overflow-hidden cursor-pointer"
+                  class="absolute inset-0 flex flex-col items-center justify-center rounded-full"
                 >
-                  <span
-                    id="tb-statusText"
-                    aria-live="assertive"
-                    class="hidden text-sm font-bold tracking-widest uppercase mb-1 app-text-sec"
-                    >PAUSE</span
-                  >
                   <span
                     id="tb-mainTimer"
-                    aria-hidden="true"
-                    class="font-mono font-bold tracking-tighter tabular-nums primary-text timer-display is-go"
-                    >GO</span
+                    class="font-mono font-bold tracking-tighter tabular-nums primary-text timer-display"
+                    >READY</span
                   >
                 </button>
               </div>
             </div>
-
-            <div
-              class="view-bottom-half h-[45%] w-full flex flex-col shrink-0 min-h-0"
-            >
-              <div
-                id="tb-list-section"
-                class="flex-1 flex flex-col min-h-0 px-2 sm:px-4"
-              >
-                <div class="flex flex-col items-center mb-4 shrink-0 mt-2">
-                  <span id="tb-activeName" class="text-xl font-bold app-text"
-                    >Standard Tabata</span
-                  >
-                  <span id="tb-activeDetail" class="text-sm app-text-sec"
-                    >20s / 10s • 8 Rounds</span
-                  >
-                </div>
-                <div
-                  class="flex justify-between items-center mb-2 px-2 shrink-0"
+            <div class="view-bottom-half h-[45%] w-full flex flex-col px-4">
+              <div class="flex justify-between items-center mb-4">
+                <h3
+                  class="text-xs font-bold app-text-sec uppercase"
+                  data-i18n="my_workouts"
                 >
-                  <h3
-                    class="text-xs font-bold app-text-sec uppercase tracking-wider"
-                    data-i18n="my_workouts"
-                  >
-                    My Workouts
-                  </h3>
-                  <button
-                    type="button"
-                    id="tb-openModalBtn"
-                    class="min-h-[44px] text-sm font-bold primary-text uppercase tracking-wider px-2 py-1 active:scale-95 transition-transform focus:outline-none custom-focus rounded-lg"
-                    data-i18n="create_new"
-                  >
-                    + New
-                  </button>
-                </div>
-                <div
-                  class="flex-1 flex flex-col min-h-0 border-t app-border pt-3"
-                >
-                  <div
-                    class="flex-1 overflow-y-auto scroll-lock no-scrollbar px-1 pb-28 selectable-data"
-                    id="tb-workoutsList"
-                  ></div>
-                </div>
-              </div>
-              <div
-                id="tb-runningControls"
-                class="hidden w-full flex-col items-center justify-center h-full pb-20 px-6"
-              >
-                <div
-                  class="flex items-center gap-2 mb-8 app-surface px-6 py-2 rounded-full shadow-sm border app-border"
-                >
-                  <span
-                    class="text-sm font-bold opacity-60 app-text"
-                    data-i18n="round"
-                    >ROUND</span
-                  >
-                  <span class="text-xl font-bold app-text"
-                    ><span id="tb-currentRound">1</span>/<span
-                      id="tb-totalRounds"
-                      >8</span
-                    ></span
-                  >
-                </div>
+                  Workouts
+                </h3>
                 <button
                   type="button"
-                  id="tb-stopBtn"
-                  data-i18n="stop"
-                  class="w-full bg-red-500 text-white min-h-[56px] rounded-2xl font-bold shadow-lg active:scale-95 transition-transform focus:outline-none custom-focus"
+                  id="tb-openModalBtn"
+                  class="primary-text font-bold text-sm"
                 >
-                  STOP
+                  + NEW
                 </button>
               </div>
+              <div
+                id="tb-workoutsList"
+                class="flex-1 overflow-y-auto no-scrollbar pb-24"
+              ></div>
             </div>
-          </div>
+          </section>
 
           <!-- SETTINGS VIEW -->
-          <div
+          <section
             id="view-settings"
             inert
             aria-hidden="true"
-            class="absolute inset-0 flex flex-col overflow-y-auto scroll-lock no-scrollbar opacity-0 pointer-events-none transition-opacity duration-300"
+            class="absolute inset-0 flex flex-col overflow-y-auto no-scrollbar opacity-0 pointer-events-none transition-opacity duration-300 px-4"
           >
             <div
-              class="h-[55px] shrink-0 flex items-center justify-center mb-2 mt-6"
+              class="view-top-half shrink-0 flex items-center justify-center h-16 mb-4"
             >
               <h2
-                class="text-sm font-bold app-text-sec uppercase tracking-widest mt-2"
+                class="text-sm font-bold app-text-sec uppercase tracking-widest"
                 data-i18n="settings"
               >
                 Settings
               </h2>
             </div>
-
-            <div class="space-y-6 pb-28 px-4 pt-1">
-              <div>
-                <h3
-                  class="text-xs font-bold app-text-sec uppercase tracking-wider mb-3 ml-2"
-                  data-i18n="appearance"
-                >
-                  Appearance
-                </h3>
+            <div class="space-y-6 pb-32">
+              <!-- Appearance Section -->
+              <div
+                class="app-surface rounded-2xl border app-border overflow-hidden"
+              >
                 <div
-                  class="app-surface rounded-2xl overflow-hidden shadow-sm border app-border"
+                  class="p-4 flex items-center justify-between border-b app-border"
                 >
-                  <div
-                    class="p-4 flex items-center justify-between border-b app-border"
+                  <span class="app-text font-medium" data-i18n="theme"
+                    >Theme</span
                   >
-                    <span class="font-medium app-text text-sm" data-i18n="theme"
-                      >Theme</span
-                    >
-                    <div class="flex app-bg rounded-lg p-1 border app-border">
-                      <button
-                        type="button"
-                        class="px-3 py-1.5 min-h-[36px] rounded-md text-xs font-bold transition-all focus:outline-none custom-focus"
-                        id="theme-system"
-                        data-theme-mode="system"
-                        data-i18n="theme_auto"
-                      >
-                        Auto
-                      </button>
-                      <button
-                        type="button"
-                        class="px-3 py-1.5 min-h-[36px] rounded-md text-xs font-bold transition-all focus:outline-none custom-focus"
-                        id="theme-light"
-                        data-theme-mode="light"
-                        data-i18n="theme_light"
-                      >
-                        Light
-                      </button>
-                      <button
-                        type="button"
-                        class="px-3 py-1.5 min-h-[36px] rounded-md text-xs font-bold transition-all focus:outline-none custom-focus"
-                        id="theme-dark"
-                        data-theme-mode="dark"
-                        data-i18n="theme_dark"
-                      >
-                        Dark
-                      </button>
-                    </div>
-                  </div>
-
-                  <div class="p-4 border-b app-border">
-                    <span
-                      class="block font-medium app-text text-sm mb-3"
-                      data-i18n="accent_color"
-                      >Accent Color</span
-                    >
-                    <div
-                      class="flex gap-4 overflow-x-auto scroll-lock no-scrollbar py-2 px-2 -mx-2"
-                    >
-                      <button
-                        type="button"
-                        aria-label="System Auto Color"
-                        data-color="auto"
-                        class="color-btn w-9 h-9 flex items-center justify-center rounded-full shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus relative overflow-hidden"
-                      >
-                        <div
-                          class="absolute inset-0 bg-[conic-gradient(from_0deg,red,orange,yellow,green,blue,indigo,violet,red)] opacity-50"
-                        ></div>
-                        <span
-                          class="relative z-10 text-[10px] font-bold text-white drop-shadow-md"
-                          >AUTO</span
-                        >
-                      </button>
-                      <button
-                        type="button"
-                        aria-label="Green Accent"
-                        data-color="#22c55e"
-                        class="color-btn w-9 h-9 flex items-center justify-center rounded-full bg-green-500 shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus"
-                      ></button>
-                      <button
-                        type="button"
-                        aria-label="Blue Accent"
-                        data-color="#3b82f6"
-                        class="color-btn w-9 h-9 flex items-center justify-center rounded-full bg-blue-500 shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus"
-                      ></button>
-                      <button
-                        type="button"
-                        aria-label="Purple Accent"
-                        data-color="#a855f7"
-                        class="color-btn w-9 h-9 flex items-center justify-center rounded-full bg-purple-500 shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus"
-                      ></button>
-                      <button
-                        type="button"
-                        aria-label="Pink Accent"
-                        data-color="#ec4899"
-                        class="color-btn w-9 h-9 flex items-center justify-center rounded-full bg-pink-500 shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus"
-                      ></button>
-                      <button
-                        type="button"
-                        aria-label="Orange Accent"
-                        data-color="#f97316"
-                        class="color-btn w-9 h-9 flex items-center justify-center rounded-full bg-orange-500 shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus"
-                      ></button>
-                      <button
-                        type="button"
-                        aria-label="Red Accent"
-                        data-color="#ef4444"
-                        class="color-btn w-9 h-9 flex items-center justify-center rounded-full bg-red-500 shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus"
-                      ></button>
-                      <button
-                        type="button"
-                        aria-label="Indigo Accent"
-                        data-color="#6366f1"
-                        class="color-btn w-9 h-9 flex items-center justify-center rounded-full bg-indigo-500 shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus"
-                      ></button>
-                      <button
-                        type="button"
-                        aria-label="Rose Accent"
-                        data-color="#e11d48"
-                        class="color-btn w-9 h-9 flex items-center justify-center rounded-full bg-rose-500 shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus"
-                      ></button>
-
-                      <!-- Безопасный инпут для iOS -->
-                      <div
-                        class="relative w-9 h-9 shrink-0 group rounded-full overflow-hidden border border-black/20 dark:border-white/20 transition-transform active:scale-90 focus-within:ring-4 focus-within:ring-[var(--primary-color)]"
-                      >
-                        <div
-                          class="absolute inset-0 bg-[conic-gradient(from_0deg,red,orange,yellow,green,blue,indigo,violet,red)] opacity-90 group-hover:opacity-100 transition-opacity pointer-events-none z-0"
-                        ></div>
-                        <input
-                          type="color"
-                          id="customColorInput"
-                          aria-label="Custom Accent Color"
-                          class="absolute inset-0 w-[150%] h-[150%] -top-1 -left-1 opacity-0 cursor-pointer z-10"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="p-4 border-b app-border">
-                    <span
-                      class="block font-medium app-text text-sm mb-3"
-                      data-i18n="bg_color"
-                      >Background Color</span
-                    >
-                    <div
-                      class="flex gap-4 overflow-x-auto scroll-lock no-scrollbar py-2 px-2 -mx-2"
-                    >
-                      <button
-                        type="button"
-                        aria-label="Default Background"
-                        data-bg="default"
-                        class="bg-btn default-bg-btn w-9 h-9 flex items-center justify-center rounded-full shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus relative"
-                      ></button>
-                      <button
-                        type="button"
-                        aria-label="Blue Background"
-                        data-bg="#60a5fa"
-                        class="bg-btn w-9 h-9 flex items-center justify-center rounded-full bg-blue-400 shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus"
-                      ></button>
-                      <button
-                        type="button"
-                        aria-label="Purple Background"
-                        data-bg="#c084fc"
-                        class="bg-btn w-9 h-9 flex items-center justify-center rounded-full bg-purple-400 shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus"
-                      ></button>
-                      <button
-                        type="button"
-                        aria-label="Pink Background"
-                        data-bg="#f472b6"
-                        class="bg-btn w-9 h-9 flex items-center justify-center rounded-full bg-pink-400 shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus"
-                      ></button>
-                      <button
-                        type="button"
-                        aria-label="Emerald Background"
-                        data-bg="#34d399"
-                        class="bg-btn w-9 h-9 flex items-center justify-center rounded-full bg-emerald-400 shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus"
-                      ></button>
-                      <button
-                        type="button"
-                        aria-label="Yellow Background"
-                        data-bg="#facc15"
-                        class="bg-btn w-9 h-9 flex items-center justify-center rounded-full bg-yellow-400 shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus"
-                      ></button>
-                      <button
-                        type="button"
-                        aria-label="Red Background"
-                        data-bg="#f87171"
-                        class="bg-btn w-9 h-9 flex items-center justify-center rounded-full bg-red-400 shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus"
-                      ></button>
-                      <button
-                        type="button"
-                        aria-label="Teal Background"
-                        data-bg="#2dd4bf"
-                        class="bg-btn w-9 h-9 flex items-center justify-center rounded-full bg-teal-400 shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus"
-                      ></button>
-
-                      <!-- Безопасный инпут для iOS -->
-                      <div
-                        class="relative w-9 h-9 shrink-0 group rounded-full overflow-hidden border border-black/20 dark:border-white/20 transition-transform active:scale-90 focus-within:ring-4 focus-within:ring-[var(--primary-color)]"
-                      >
-                        <div
-                          class="absolute inset-0 bg-[conic-gradient(from_0deg,red,orange,yellow,green,blue,indigo,violet,red)] opacity-50 group-hover:opacity-100 transition-opacity pointer-events-none z-0"
-                        ></div>
-                        <input
-                          type="color"
-                          id="customBgInput"
-                          aria-label="Custom Background Color"
-                          class="absolute inset-0 w-[150%] h-[150%] -top-1 -left-1 opacity-0 cursor-pointer z-10"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="p-4 border-b app-border flex flex-col gap-4">
-                    <div class="flex items-center justify-between">
-                      <label
-                        for="toggle-adaptive-bg"
-                        class="font-medium app-text text-sm cursor-pointer"
-                        data-i18n="adaptive_bg"
-                        >Adaptive Background Colors</label
-                      >
-                      <label
-                        class="relative inline-flex items-center cursor-pointer"
-                      >
-                        <input
-                          type="checkbox"
-                          id="toggle-adaptive-bg"
-                          class="sr-only"
-                        />
-                        <div class="custom-toggle"></div>
-                      </label>
-                    </div>
-
-                    <div class="flex items-center justify-between">
-                      <label
-                        for="toggle-glass"
-                        class="font-medium app-text text-sm cursor-pointer"
-                        data-i18n="liquid_glass"
-                        >Liquid Glass</label
-                      >
-                      <label
-                        class="relative inline-flex items-center cursor-pointer"
-                      >
-                        <input
-                          type="checkbox"
-                          id="toggle-glass"
-                          class="sr-only"
-                        />
-                        <div class="custom-toggle"></div>
-                      </label>
-                    </div>
-
-                    <div class="flex flex-col gap-3">
-                      <div class="flex items-center justify-between">
-                        <label
-                          for="toggle-vignette"
-                          class="font-medium app-text text-sm cursor-pointer"
-                          data-i18n="vignette"
-                          >Dark Vignette Effect</label
-                        >
-                        <label
-                          class="relative inline-flex items-center cursor-pointer"
-                        >
-                          <input
-                            type="checkbox"
-                            id="toggle-vignette"
-                            class="sr-only"
-                          />
-                          <div class="custom-toggle"></div>
-                        </label>
-                      </div>
-
-                      <div
-                        id="vignette-depth-container"
-                        class="hidden justify-between items-center transition-opacity duration-300"
-                      >
-                        <label
-                          for="vignetteSlider"
-                          class="text-xs app-text-sec"
-                          data-i18n="vibro_level"
-                          >Depth</label
-                        >
-                        <input
-                          type="range"
-                          min="0.1"
-                          max="1"
-                          value="0.5"
-                          step="0.1"
-                          id="vignetteSlider"
-                          class="w-32"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="p-4">
-                    <div class="flex justify-between items-center mb-3">
-                      <label
-                        for="fontSlider"
-                        class="font-medium app-text text-sm"
-                        data-i18n="font_size"
-                        >Font Size</label
-                      >
-                      <span
-                        id="fontSizeDisplay"
-                        class="font-bold primary-text text-xs"
-                        >16 px</span
-                      >
-                    </div>
-                    <input
-                      type="range"
-                      min="12"
-                      max="24"
-                      value="16"
-                      step="1"
-                      id="fontSlider"
-                      aria-label="Font Size"
-                      class="w-full"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <h3
-                  class="text-xs font-bold app-text-sec uppercase tracking-wider mb-3 ml-2 mt-6"
-                  data-i18n="interface"
-                >
-                  General
-                </h3>
-                <div
-                  class="app-surface rounded-2xl overflow-hidden shadow-sm border app-border"
-                >
-                  <div class="flex items-center justify-between p-4">
-                    <label
-                      for="langSelect"
-                      class="font-medium app-text text-sm"
-                      data-i18n="language"
-                      >Language</label
-                    >
-                    <div
-                      class="select-wrapper relative flex items-center app-surface rounded-lg border app-border shadow-sm focus-within:ring-2 focus-within:ring-[var(--primary-color)] transition-colors"
-                    >
-                      <select
-                        id="langSelect"
-                        aria-label="Select Language"
-                        class="w-full bg-transparent app-text text-sm font-bold appearance-none outline-none py-1.5 pl-3 pr-8 cursor-pointer z-10"
-                      >
-                        <option value="auto" data-i18n="lang_auto">Auto</option>
-                        <option value="en">English</option>
-                        <option value="ru">Русский</option>
-                      </select>
-                      <svg
-                        focusable="false"
-                        aria-hidden="true"
-                        class="w-4 h-4 app-text-sec absolute right-2 pointer-events-none z-0"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M19 9l-7 7-7-7"
-                        ></path>
-                      </svg>
-                    </div>
-                  </div>
-
-                  <div
-                    class="flex items-center justify-between p-4 border-t app-border"
-                  >
-                    <label
-                      for="toggle-sound"
-                      class="font-medium app-text text-sm cursor-pointer"
-                      data-i18n="sound"
-                      >Sound</label
-                    >
-                    <label
-                      class="relative inline-flex items-center cursor-pointer"
-                    >
-                      <input
-                        type="checkbox"
-                        id="toggle-sound"
-                        class="sr-only"
-                      />
-                      <div class="custom-toggle"></div>
-                    </label>
-                  </div>
-
-                  <div
-                    class="flex items-center justify-between p-4 border-t app-border"
-                  >
-                    <label
-                      for="soundThemeSelect"
-                      class="font-medium app-text text-sm cursor-pointer"
-                      data-i18n="sound_theme"
-                      >Sound Theme</label
-                    >
-                    <div
-                      class="select-wrapper relative flex items-center app-surface rounded-lg border app-border shadow-sm focus-within:ring-2 focus-within:ring-[var(--primary-color)] transition-colors"
-                    >
-                      <select
-                        id="soundThemeSelect"
-                        aria-label="Select Theme"
-                        class="w-full bg-transparent app-text text-sm font-bold appearance-none outline-none py-1.5 pl-3 pr-8 cursor-pointer z-10"
-                      >
-                        <option value="classic" data-i18n="theme_classic">
-                          Classic
-                        </option>
-                        <option value="sport" data-i18n="theme_sport">
-                          Sport
-                        </option>
-                        <option value="vibe" data-i18n="theme_vibe">
-                          Vibe
-                        </option>
-                        <option value="work" data-i18n="theme_work">
-                          Work
-                        </option>
-                        <option value="life" data-i18n="theme_life">
-                          Life
-                        </option>
-                      </select>
-                      <svg
-                        focusable="false"
-                        aria-hidden="true"
-                        class="w-4 h-4 app-text-sec absolute right-2 pointer-events-none z-0"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M19 9l-7 7-7-7"
-                        ></path>
-                      </svg>
-                    </div>
-                  </div>
-
-                  <div class="p-4 border-t app-border flex flex-col gap-3">
-                    <div class="flex items-center justify-between mb-1">
-                      <label
-                        for="volumeSlider"
-                        class="font-medium app-text text-sm"
-                        data-i18n="volume"
-                        >Volume</label
-                      >
-                      <span
-                        id="volumeDisplay"
-                        class="font-bold primary-text text-xs"
-                        >100%</span
-                      >
-                    </div>
-                    <input
-                      type="range"
-                      min="0"
-                      max="1"
-                      value="1"
-                      step="0.1"
-                      id="volumeSlider"
-                      class="w-full"
-                    />
-                  </div>
-
-                  <div class="p-4 border-t app-border flex flex-col gap-3">
-                    <div class="flex items-center justify-between">
-                      <label
-                        for="toggle-vibro"
-                        class="font-medium app-text text-sm cursor-pointer"
-                        data-i18n="vibration"
-                        >Vibration</label
-                      >
-                      <label
-                        class="relative inline-flex items-center cursor-pointer"
-                      >
-                        <input
-                          type="checkbox"
-                          id="toggle-vibro"
-                          class="sr-only"
-                        />
-                        <div class="custom-toggle"></div>
-                      </label>
-                    </div>
-                    <div
-                      class="flex justify-between items-center transition-opacity duration-300"
-                      id="vibro-level-container"
-                    >
-                      <label
-                        for="vibroSlider"
-                        class="text-xs app-text-sec"
-                        data-i18n="vibro_level"
-                        >Depth</label
-                      >
-                      <input
-                        type="range"
-                        min="0.2"
-                        max="2"
-                        value="1"
-                        step="0.2"
-                        id="vibroSlider"
-                        class="w-32"
-                      />
-                    </div>
-                  </div>
-
-                  <div
-                    class="flex items-center justify-between p-4 border-t app-border"
-                  >
-                    <label
-                      for="toggle-ms"
-                      class="font-medium app-text text-sm cursor-pointer"
-                      data-i18n="show_ms"
-                      >Show Milliseconds</label
-                    >
-                    <label
-                      class="relative inline-flex items-center cursor-pointer"
-                    >
-                      <input type="checkbox" id="toggle-ms" class="sr-only" />
-                      <div class="custom-toggle"></div>
-                    </label>
-                  </div>
-
-                  <div class="p-4 border-t app-border flex flex-col gap-2 mt-4">
+                  <div class="flex bg-black/5 dark:bg-white/5 rounded-lg p-1">
                     <button
-                      type="button"
-                      id="btn-open-reset"
-                      class="min-h-[44px] text-red-500 font-bold text-xs tracking-widest uppercase active:scale-95 transition-transform focus:outline-none flex items-center justify-center gap-2 rounded-lg"
-                      data-i18n="reset_settings"
+                      class="px-3 py-1 rounded text-xs font-bold"
+                      data-theme-mode="light"
                     >
-                      Reset to Defaults
+                      Light
                     </button>
-
-                    <a
-                      href="mailto:support@yourdomain.com?subject=Stopwatch Pro Feedback"
-                      class="min-h-[44px] app-text font-bold text-xs tracking-widest uppercase active:scale-95 transition-transform focus:outline-none flex items-center justify-center gap-2 rounded-lg bg-black/5 dark:bg-white/5"
+                    <button
+                      class="px-3 py-1 rounded text-xs font-bold"
+                      data-theme-mode="dark"
                     >
-                      <svg
-                        focusable="false"
-                        aria-hidden="true"
-                        class="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        stroke-width="2"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                        ></path>
-                      </svg>
-                      <span data-i18n="feedback">Feedback</span>
-                    </a>
+                      Dark
+                    </button>
+                    <button
+                      class="px-3 py-1 rounded text-xs font-bold"
+                      data-theme-mode="system"
+                    >
+                      Auto
+                    </button>
                   </div>
                 </div>
-                <!-- Версия и Разработчик -->
-                <div
-                  class="flex flex-col items-center justify-center pt-8 pb-4 opacity-50"
-                >
-                  <span class="text-xs font-bold app-text tracking-widest"
-                    >WATCH PRO</span
+                <div class="p-4">
+                  <span
+                    class="block app-text font-medium mb-3"
+                    data-i18n="accent_color"
+                    >Accent Color</span
                   >
-
                   <div
-                    class="text-[10px] app-text-sec mt-1 font-mono flex items-center gap-1"
+                    class="flex gap-3 overflow-x-auto no-scrollbar"
+                    id="accent-colors"
                   >
-                    <span data-i18n="version">Version</span>
-                    <span>1.0.0</span>
-                  </div>
-
-                  <div
-                    class="text-[10px] app-text-sec mt-2 flex items-center gap-1"
-                  >
-                    <span data-i18n="developed_by">Developed by</span>
-                    <span>[Твое Имя]</span>
-                    <!-- Впиши сюда свое имя/никнейм -->
+                    <!-- JS will populate or keep your static buttons here -->
                   </div>
                 </div>
               </div>
+
+              <!-- General Section -->
+              <div
+                class="app-surface rounded-2xl border app-border overflow-hidden"
+              >
+                <div
+                  class="p-4 flex items-center justify-between border-b app-border"
+                >
+                  <label class="app-text font-medium" data-i18n="language"
+                    >Language</label
+                  >
+                  <select
+                    id="langSelect"
+                    class="bg-transparent font-bold text-sm outline-none"
+                  >
+                    <option value="en">English</option>
+                    <option value="ru">Русский</option>
+                  </select>
+                </div>
+                <div class="p-4 flex items-center justify-between">
+                  <span class="app-text font-medium" data-i18n="sound"
+                    >Sound</span
+                  >
+                  <label
+                    class="relative inline-flex items-center cursor-pointer"
+                  >
+                    <input type="checkbox" id="toggle-sound" class="sr-only" />
+                    <div
+                      class="w-11 h-6 bg-gray-600 rounded-full transition-colors"
+                    ></div>
+                  </label>
+                </div>
+              </div>
+
+              <button
+                id="btn-open-reset"
+                class="w-full p-4 text-red-500 font-bold text-sm uppercase tracking-widest"
+                data-i18n="reset_settings"
+              >
+                Reset to Defaults
+              </button>
             </div>
-          </div>
+          </section>
         </main>
 
         <!-- BOTTOM NAVIGATION -->
         <nav
-          class="absolute bottom-0 w-full h-20 flex justify-between items-center px-4 app-surface pb-4 z-30 border-t app-border sm:rounded-b-[3rem] app-nav-safe"
+          class="absolute bottom-0 w-full h-20 flex justify-around items-center px-4 app-surface z-30 border-t app-border app-nav-safe"
         >
           <button
             type="button"
             data-nav="stopwatch"
-            class="nav-btn w-16 h-full flex flex-col items-center justify-center gap-1 group active:scale-90 transition-transform focus:outline-none rounded-xl custom-focus"
+            class="nav-btn group flex flex-col items-center gap-1"
           >
-            <div
-              class="relative w-7 h-7 flex items-center justify-center transition-colors text-gray-400 group-hover:text-gray-500"
-              id="nav-icon-stopwatch"
+            <svg
+              class="w-6 h-6 text-gray-400 group-[.active]:primary-text"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
             >
-              <svg
-                focusable="false"
-                aria-hidden="true"
-                class="w-full h-full"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <circle cx="12" cy="13" r="8"></circle>
-                <path d="M12 9v4l2 2"></path>
-                <path d="M12 1v4"></path>
-                <path d="M19.07 4.93L17.66 6.34"></path>
-                <path d="M4.93 4.93L6.34 6.34"></path>
-              </svg>
-            </div>
+              <circle cx="12" cy="13" r="8"></circle>
+              <path d="M12 9v4l2 2"></path>
+            </svg>
             <span
-              class="text-[10px] font-bold text-gray-400 transition-colors"
+              class="text-[10px] font-bold text-gray-400 group-[.active]:primary-text uppercase"
               data-i18n="stopwatch"
               >Stopwatch</span
             >
@@ -1152,29 +535,20 @@
           <button
             type="button"
             data-nav="timer"
-            class="nav-btn w-16 h-full flex flex-col items-center justify-center gap-1 group active:scale-90 transition-transform focus:outline-none rounded-xl custom-focus"
+            class="nav-btn group flex flex-col items-center gap-1"
           >
-            <div
-              class="relative w-7 h-7 flex items-center justify-center transition-colors text-gray-400 group-hover:text-gray-500"
-              id="nav-icon-timer"
+            <svg
+              class="w-6 h-6 text-gray-400 group-[.active]:primary-text"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
             >
-              <svg
-                focusable="false"
-                aria-hidden="true"
-                class="w-full h-full"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <circle cx="12" cy="12" r="10"></circle>
-                <polyline points="12 6 12 12 16 14"></polyline>
-              </svg>
-            </div>
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
             <span
-              class="text-[10px] font-bold text-gray-400 transition-colors"
+              class="text-[10px] font-bold text-gray-400 group-[.active]:primary-text uppercase"
               data-i18n="timer"
               >Timer</span
             >
@@ -1182,29 +556,19 @@
           <button
             type="button"
             data-nav="tabata"
-            class="nav-btn w-16 h-full flex flex-col items-center justify-center gap-1 group active:scale-90 transition-transform focus:outline-none rounded-xl custom-focus"
+            class="nav-btn group flex flex-col items-center gap-1"
           >
-            <div
-              class="relative w-7 h-7 flex items-center justify-center transition-colors text-gray-400 group-hover:text-gray-500"
-              id="nav-icon-tabata"
+            <svg
+              class="w-6 h-6 text-gray-400 group-[.active]:primary-text"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
             >
-              <svg
-                focusable="false"
-                aria-hidden="true"
-                class="w-full h-full"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <circle cx="12" cy="12" r="10"></circle>
-                <path d="M13 6l-6 6h5l-1 6 6-7h-5l1-6z"></path>
-              </svg>
-            </div>
+              <path d="M13 6l-6 6h5l-1 6 6-7h-5l1-6z"></path>
+            </svg>
             <span
-              class="text-[10px] font-bold text-gray-400 transition-colors"
+              class="text-[10px] font-bold text-gray-400 group-[.active]:primary-text uppercase"
               data-i18n="tabata"
               >Tabata</span
             >
@@ -1212,490 +576,58 @@
           <button
             type="button"
             data-nav="settings"
-            class="nav-btn w-16 h-full flex flex-col items-center justify-center gap-1 group active:scale-90 transition-transform focus:outline-none rounded-xl custom-focus"
+            class="nav-btn group flex flex-col items-center gap-1"
           >
-            <div
-              class="relative w-7 h-7 flex items-center justify-center transition-colors text-gray-400 group-hover:text-gray-500"
-              id="nav-icon-settings"
+            <svg
+              class="w-6 h-6 text-gray-400 group-[.active]:primary-text"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
             >
-              <svg
-                focusable="false"
-                aria-hidden="true"
-                class="w-full h-full"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <circle cx="12" cy="12" r="3"></circle>
-                <path
-                  d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"
-                ></path>
-              </svg>
-            </div>
+              <circle cx="12" cy="12" r="3"></circle>
+              <path
+                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"
+              ></path>
+            </svg>
             <span
-              class="text-[10px] font-bold text-gray-400 transition-colors"
+              class="text-[10px] font-bold text-gray-400 group-[.active]:primary-text uppercase"
               data-i18n="settings"
               >Settings</span
             >
           </button>
         </nav>
 
-        <!-- =========================================
-                 МОДАЛЬНЫЕ ОКНА (BOTTOM SHEETS)
-            ========================================= -->
-
-        <!-- Stopwatch: Saved Results -->
+        <!-- MODALS (Bottom Sheets) -->
         <div
           id="sw-sessions-modal"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="sw-sessions-title"
           inert
           aria-hidden="true"
-          class="hidden absolute bottom-0 left-0 w-full h-[85dvh] sm:h-[85%] z-[100] app-surface border-t sm:border app-border shadow-[0_-8px_30px_rgba(0,0,0,0.15)] rounded-t-[2rem] sm:rounded-[3rem] flex-col p-6 transition-transform duration-[400ms] ease-out translate-y-full"
+          class="hidden fixed inset-x-0 bottom-0 z-[100] app-surface rounded-t-[2rem] border-t app-border shadow-2xl transition-transform duration-300 translate-y-full flex flex-col max-h-[85dvh]"
         >
           <div
-            class="w-12 h-1.5 bg-gray-500/30 rounded-full mx-auto mb-2 shrink-0"
+            class="w-12 h-1.5 bg-gray-500/30 rounded-full mx-auto my-3"
           ></div>
-
-          <div
-            class="flex justify-between items-center mb-6 shrink-0 mt-2 sm:mt-0"
-          >
-            <h2
-              id="sw-sessions-title"
-              class="text-2xl font-bold app-text"
-              data-i18n="saved_results"
-            >
+          <div class="p-6 overflow-y-auto no-scrollbar">
+            <h2 class="text-2xl font-bold mb-4" data-i18n="saved_results">
               Saved Results
             </h2>
+            <div id="sw-sessionsList" class="space-y-3"></div>
             <button
               type="button"
               id="sw-closeResultsBtn"
-              aria-label="Close Results"
-              class="text-gray-400 hover:app-text transition-colors focus:outline-none active:scale-90 custom-focus rounded-lg flex items-center justify-center min-w-[44px] min-h-[44px] -mr-2"
+              class="w-full mt-6 p-4 font-bold uppercase"
+              data-i18n="close"
             >
-              <svg
-                focusable="false"
-                aria-hidden="true"
-                class="w-7 h-7"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                stroke-width="2.5"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M6 18L18 6M6 6l12 12"
-                ></path>
-              </svg>
+              Close
             </button>
-          </div>
-          <div class="mb-4 shrink-0 flex items-center justify-between">
-            <button
-              type="button"
-              id="sw-clearAllBtn"
-              class="text-xs font-bold text-red-500 uppercase tracking-wider p-2 -ml-2 active:scale-95 transition-transform focus:outline-none custom-focus rounded-lg min-h-[44px]"
-              data-i18n="clear_all"
-            >
-              Clear All
-            </button>
-            <div
-              class="select-wrapper relative flex items-center app-surface rounded-lg border app-border shadow-sm focus-within:ring-2 focus-within:ring-[var(--primary-color)] transition-colors w-40"
-            >
-              <select
-                id="sw-sortSelect"
-                class="w-full bg-transparent app-text text-xs font-bold appearance-none outline-none py-1.5 pl-3 pr-8 cursor-pointer z-10"
-              >
-                <option value="date_asc" data-i18n="date_old">
-                  Oldest first
-                </option>
-                <option value="date_desc" data-i18n="date_new">
-                  Newest first
-                </option>
-                <option value="result_fast" data-i18n="result_fast">
-                  Result (Fastest)
-                </option>
-                <option value="name_az" data-i18n="name_az">Name (A-Z)</option>
-              </select>
-              <svg
-                focusable="false"
-                aria-hidden="true"
-                class="w-4 h-4 app-text-sec absolute right-2 pointer-events-none z-0"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M19 9l-7 7-7-7"
-                ></path>
-              </svg>
-            </div>
-          </div>
-          <div
-            class="flex-1 overflow-y-auto scroll-lock no-scrollbar pb-10 space-y-3 selectable-data px-1"
-            id="sw-sessionsList"
-          ></div>
-        </div>
-
-        <!-- Tabata Create/Edit Modal -->
-        <div
-          id="tb-modal"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="tb-modal-title"
-          inert
-          aria-hidden="true"
-          class="hidden absolute bottom-0 left-0 w-full h-[85dvh] sm:h-[85%] z-[100] app-surface border-t sm:border app-border shadow-[0_-8px_30px_rgba(0,0,0,0.15)] rounded-t-[2rem] sm:rounded-[3rem] flex-col p-6 transition-transform duration-[400ms] ease-out translate-y-full"
-        >
-          <div
-            class="w-12 h-1.5 bg-gray-500/30 rounded-full mx-auto mb-2 shrink-0"
-          ></div>
-
-          <div
-            class="flex justify-between items-center mb-8 shrink-0 mt-2 sm:mt-0"
-          >
-            <h2
-              id="tb-modal-title"
-              class="text-2xl font-bold app-text"
-              data-i18n="create_workout"
-            >
-              Create Workout
-            </h2>
-            <button
-              type="button"
-              id="tb-closeModalBtn"
-              aria-label="Close"
-              class="text-gray-400 hover:app-text transition-colors focus:outline-none active:scale-90 custom-focus rounded-lg flex items-center justify-center min-w-[44px] min-h-[44px] -mr-2"
-            >
-              <svg
-                focusable="false"
-                aria-hidden="true"
-                class="w-7 h-7"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                stroke-width="2.5"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M6 18L18 6M6 6l12 12"
-                ></path>
-              </svg>
-            </button>
-          </div>
-          <form
-            id="tb-modal-form"
-            class="space-y-6 overflow-y-auto scroll-lock flex-1 no-scrollbar pb-10 px-1"
-          >
-            <div class="flex flex-col">
-              <label
-                for="tb-edit-name"
-                class="block text-xs font-bold uppercase app-text-sec mb-2"
-                data-i18n="name"
-                >Name</label
-              >
-              <input
-                type="text"
-                id="tb-edit-name"
-                required
-                enterkeyhint="done"
-                class="w-full min-h-[44px] bg-transparent border-b-2 app-border py-2 text-xl font-bold app-text outline-none transition-colors primary-focus-border"
-                placeholder="Tabata"
-              />
-              <span
-                id="tb-name-error"
-                class="hidden text-red-500 text-xs font-bold mt-2"
-                data-i18n="name_exists"
-                >Name already exists</span
-              >
-            </div>
-
-            <div class="flex justify-between items-center">
-              <label for="tb-edit-work">
-                <span class="block text-lg font-bold app-text" data-i18n="work"
-                  >Work</span
-                >
-                <span class="text-xs app-text-sec" data-i18n="sec">SEC</span>
-              </label>
-              <div class="flex items-center gap-3">
-                <button
-                  type="button"
-                  aria-label="Decrease"
-                  data-tb-adj="tb-edit-work,-5"
-                  class="w-12 h-12 rounded-full app-bg border app-border app-text flex items-center justify-center text-2xl font-bold active:scale-90 focus:outline-none custom-focus"
-                >
-                  −
-                </button>
-                <input
-                  type="text"
-                  inputmode="numeric"
-                  id="tb-edit-work"
-                  required
-                  aria-label="Work seconds"
-                  value="20"
-                  class="w-14 text-center bg-transparent font-mono text-2xl font-bold outline-none app-text min-h-[44px]"
-                />
-                <button
-                  type="button"
-                  aria-label="Increase"
-                  data-tb-adj="tb-edit-work,5"
-                  class="w-12 h-12 rounded-full app-bg border app-border app-text flex items-center justify-center text-2xl font-bold active:scale-90 focus:outline-none custom-focus"
-                >
-                  +
-                </button>
-              </div>
-            </div>
-
-            <div class="flex justify-between items-center">
-              <label for="tb-edit-rest">
-                <span class="block text-lg font-bold app-text" data-i18n="rest"
-                  >Rest</span
-                >
-                <span class="text-xs app-text-sec" data-i18n="sec">SEC</span>
-              </label>
-              <div class="flex items-center gap-3">
-                <button
-                  type="button"
-                  aria-label="Decrease"
-                  data-tb-adj="tb-edit-rest,-5"
-                  class="w-12 h-12 rounded-full app-bg border app-border app-text flex items-center justify-center text-2xl font-bold active:scale-90 focus:outline-none custom-focus"
-                >
-                  −
-                </button>
-                <input
-                  type="text"
-                  inputmode="numeric"
-                  id="tb-edit-rest"
-                  required
-                  aria-label="Rest seconds"
-                  value="10"
-                  class="w-14 text-center bg-transparent font-mono text-2xl font-bold outline-none app-text min-h-[44px]"
-                />
-                <button
-                  type="button"
-                  aria-label="Increase"
-                  data-tb-adj="tb-edit-rest,5"
-                  class="w-12 h-12 rounded-full app-bg border app-border app-text flex items-center justify-center text-2xl font-bold active:scale-90 focus:outline-none custom-focus"
-                >
-                  +
-                </button>
-              </div>
-            </div>
-
-            <div class="flex justify-between items-center">
-              <label for="tb-edit-rounds">
-                <span
-                  class="block text-lg font-bold app-text"
-                  data-i18n="rounds"
-                  >Rounds</span
-                >
-                <span class="text-xs app-text-sec" data-i18n="count"
-                  >COUNT</span
-                >
-              </label>
-              <div class="flex items-center gap-3">
-                <button
-                  type="button"
-                  aria-label="Decrease"
-                  data-tb-adj="tb-edit-rounds,-1"
-                  class="w-12 h-12 rounded-full app-bg border app-border app-text flex items-center justify-center text-2xl font-bold active:scale-90 focus:outline-none custom-focus"
-                >
-                  −
-                </button>
-                <input
-                  type="text"
-                  inputmode="numeric"
-                  id="tb-edit-rounds"
-                  required
-                  aria-label="Rounds count"
-                  value="8"
-                  class="w-14 text-center bg-transparent font-mono text-2xl font-bold outline-none app-text min-h-[44px]"
-                />
-                <button
-                  type="button"
-                  aria-label="Increase"
-                  data-tb-adj="tb-edit-rounds,1"
-                  class="w-12 h-12 rounded-full app-bg border app-border app-text flex items-center justify-center text-2xl font-bold active:scale-90 focus:outline-none custom-focus"
-                >
-                  +
-                </button>
-              </div>
-            </div>
-            <button
-              type="submit"
-              id="tb-saveModalBtn"
-              class="w-full primary-bg text-white min-h-[56px] rounded-2xl font-bold text-lg shadow-lg active:scale-95 transition-transform mt-8 focus:outline-none custom-focus"
-              data-i18n="save"
-            >
-              Save
-            </button>
-          </form>
-        </div>
-
-        <!-- Stopwatch: Clear All Confirm -->
-        <div
-          id="sw-clear-modal"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="sw-clear-title"
-          inert
-          aria-hidden="true"
-          class="hidden absolute inset-0 z-[110] bg-black/80 items-center justify-center p-6 transition-opacity duration-300 opacity-0"
-        >
-          <div
-            class="app-surface w-full max-w-sm rounded-3xl p-6 shadow-2xl border app-border flex flex-col gap-4 transform transition-all duration-300 opacity-0 scale-95"
-            id="sw-clear-modal-content"
-          >
-            <h3
-              id="sw-clear-title"
-              class="text-xl font-bold text-red-500"
-              data-i18n="clear_all"
-            >
-              Clear All
-            </h3>
-            <p
-              class="app-text-sec text-sm font-medium leading-relaxed"
-              data-i18n="clear_history_confirm"
-            >
-              Are you sure you want to delete all saved results?
-            </p>
-            <div class="flex justify-end gap-3 mt-4">
-              <button
-                type="button"
-                id="sw-clear-cancel"
-                class="min-h-[44px] px-5 py-2 rounded-xl font-bold app-text-sec active:scale-95 transition-transform focus:outline-none custom-focus"
-                data-i18n="cancel"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                id="sw-clear-confirm"
-                class="min-h-[44px] px-5 py-2 rounded-xl font-bold text-white bg-red-500 shadow-lg active:scale-95 transition-transform focus:outline-none custom-focus"
-                data-i18n="delete"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Stopwatch: Session Name -->
-        <div
-          id="sw-name-modal"
-          role="dialog"
-          aria-modal="true"
-          inert
-          aria-hidden="true"
-          class="hidden absolute inset-0 z-[110] bg-black/80 items-center justify-center p-6 transition-opacity duration-300 opacity-0"
-        >
-          <form
-            id="sw-name-modal-content"
-            class="app-surface w-full max-w-sm rounded-3xl p-6 shadow-2xl border app-border flex flex-col gap-4 transform transition-all duration-300 opacity-0 scale-95"
-          >
-            <h3
-              id="sw-name-title"
-              class="text-xl font-bold app-text"
-              data-i18n="session_name"
-            >
-              Session Name
-            </h3>
-            <div class="flex flex-col">
-              <input
-                type="text"
-                id="sw-name-input"
-                required
-                enterkeyhint="done"
-                aria-label="Session Name"
-                class="w-full min-h-[44px] bg-transparent border-b-2 app-border py-2 text-lg font-bold app-text outline-none primary-focus-border transition-colors"
-                placeholder="Stopwatch..."
-              />
-              <span
-                id="sw-name-error"
-                class="hidden text-red-500 text-xs font-bold mt-2"
-                data-i18n="name_exists"
-                >Name already exists</span
-              >
-            </div>
-            <div class="flex justify-end gap-3 mt-4">
-              <button
-                type="button"
-                id="sw-name-cancel"
-                class="min-h-[44px] px-5 py-2 rounded-xl font-bold app-text-sec active:scale-95 transition-transform focus:outline-none custom-focus"
-                data-i18n="cancel"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                id="sw-name-confirm"
-                class="min-h-[44px] px-5 py-2 rounded-xl font-bold text-white primary-bg shadow-lg active:scale-95 transition-transform focus:outline-none custom-focus"
-                data-i18n="save"
-              >
-                Save
-              </button>
-            </div>
-          </form>
-        </div>
-
-        <!-- Settings: Reset -->
-        <div
-          id="reset-modal"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="reset-modal-title"
-          inert
-          aria-hidden="true"
-          class="hidden absolute inset-0 z-[110] bg-black/80 items-center justify-center p-6 transition-opacity duration-300 opacity-0"
-        >
-          <div
-            class="app-surface w-full max-w-sm rounded-3xl p-6 shadow-2xl border app-border flex flex-col gap-4 transform transition-all duration-300 opacity-0 scale-95"
-            id="reset-modal-content"
-          >
-            <h3
-              id="reset-modal-title"
-              class="text-xl font-bold text-red-500"
-              data-i18n="reset_settings"
-            >
-              Reset to Defaults
-            </h3>
-            <p
-              class="app-text-sec text-sm font-medium leading-relaxed"
-              data-i18n="reset_confirm_msg"
-            >
-              Are you sure? Your saved workouts will not be deleted.
-            </p>
-            <div class="flex justify-end gap-3 mt-4">
-              <button
-                type="button"
-                id="reset-cancel"
-                class="min-h-[44px] px-5 py-2 rounded-xl font-bold app-text-sec active:scale-95 transition-transform focus:outline-none custom-focus"
-                data-i18n="cancel"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                id="reset-confirm"
-                class="min-h-[44px] px-5 py-2 rounded-xl font-bold text-white bg-red-500 shadow-lg active:scale-95 transition-transform focus:outline-none custom-focus"
-                data-i18n="reset"
-              >
-                Reset
-              </button>
-            </div>
           </div>
         </div>
       </div>
     </div>
-    <div></div>
+
+    <!-- Capacitor & Main JS -->
+    <script src="capacitor.js"></script>
     <script type="module" src="./js/main.js"></script>
   </body>
 </html>
