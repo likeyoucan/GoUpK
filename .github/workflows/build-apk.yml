@@ -22,14 +22,14 @@ jobs:
       - name: ⚙️ Настройка Node.js и кэширование NPM
         uses: actions/setup-node@v4
         with:
-          node-version: '20' # Рекомендую использовать ту же версию, что и в pages.yml для консистентности
+          node-version: '22' # Рекомендую использовать ту же версию, что и в pages.yml для консистентности
           cache: 'npm'
 
       - name: ☕ Настройка Java и кэширование Gradle
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17' # Capacitor 6 / последняя версия Android Studio требует JDK 17
+          java-version: '21' # Capacitor 6 / последняя версия Android Studio требует JDK 17
           cache: 'gradle' # Включаем кэширование Gradle - это ОЧЕНЬ ускорит сборку
 
       # ИСПРАВЛЕНО: Один шаг для установки всех JS зависимостей

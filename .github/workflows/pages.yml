@@ -33,7 +33,7 @@ jobs:
       - name: ⚙️ Настройка Node.js и кэширование NPM
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm' # Эта строка включает кэширование node_modules
 
       # ИСПРАВЛЕНО: Теперь мы используем package.json
