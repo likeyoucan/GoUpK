@@ -1,3 +1,5 @@
+// worker.js
+
 let intervalId = null;
 
 self.addEventListener("message", (e) => {
