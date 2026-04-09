@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@source "./www";
 
 @theme {
   --text-xs: calc(0.75rem * var(--font-scale, 1));
@@ -201,12 +202,12 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  /* Container Queries для идеального масштабирования текста */
+  /* ИСПРАВЛЕНО: Container Queries для идеального масштабирования текста */
   container-type: inline-size;
 }
 
 .timer-display {
-  /* Используем cqi вместо vw */
+  /* ИСПРАВЛЕНО: Используем cqi вместо vw */
   font-size: clamp(2rem, 22cqi, 2.8rem);
   line-height: 1;
   letter-spacing: -0.05em;
@@ -442,7 +443,7 @@ input[type="range"]::-moz-focus-outer {
   border: 0;
 }
 
-/* Увеличена тап-зона для ползунков на мобильных устройствах */
+/* ИСПРАВЛЕНО: Увеличена тап-зона для ползунков на мобильных устройствах */
 input[type="range"] {
   -webkit-appearance: none;
   background: transparent;
@@ -563,7 +564,6 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
 .flash-active {
   animation: flashCircle 0.5s ease-out;
 }
-
 @keyframes shake {
   0%,
   100% {
@@ -611,7 +611,7 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
 /* =========================================
    9. ЭФФЕКТ ЖИДКОГО СТЕКЛА (LIQUID GLASS)
 ========================================= */
-/* Убрано засилье !important за счет повышения специфичности (:root.glass-effect body) */
+/* ИСПРАВЛЕНО: Убрано засилье !important за счет повышения специфичности (:root.glass-effect body) */
 /* Снижена нагрузка на GPU: saturate(150%) вместо 200%, blur(16-20px) вместо 30-40px */
 
 :root.glass-effect body #tb-modal,
@@ -853,21 +853,16 @@ body.is-pip .timer-display {
 ========================================= */
 /* 1. Неоновое свечение круга в Темной Теме */
 html.dark .progress-ring__circle {
-  filter: drop-shadow(
-    0 0 12px color-mix(in srgb, var(--primary-color) 60%, transparent)
-  );
+  filter: drop-shadow(0 0 12px color-mix(in srgb, var(--primary-color) 60%, transparent));
 }
 
 /* 2. Анимация beat */
 @keyframes beat {
-  0%,
-  100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.08);
-    color: var(--color-red-500);
-    filter: drop-shadow(0 0 15px rgba(239, 68, 68, 0.6));
+  0%, 100% { transform: scale(1); }
+  50% { 
+    transform: scale(1.08); 
+    color: var(--color-red-500); 
+    filter: drop-shadow(0 0 15px rgba(239, 68, 68, 0.6)); 
   }
 }
 .pulse-text {

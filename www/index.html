@@ -1695,31 +1695,23 @@
         </div>
       </div>
     </div>
-    <div
-      onclick="
-        localStorage.clear();
-        alert('LocalStorage очищен!');
-      "
-      style="
-        padding: 20px 40px;
-        background-color: #e74c3c;
-        color: white;
-        font-size: 18px;
-        font-weight: bold;
-        border-radius: 10px;
-        cursor: pointer;
-        text-align: center;
-        display: inline-block;
-        position: fixed;
-        inset: 0 0 auto auto;
-        user-select: none;
-        transition: background-color 0.3s;
-      "
-      onmouseover="this.style.backgroundColor = '#c0392b'"
-      onmouseout="this.style.backgroundColor = '#e74c3c'"
-    >
-      Очистить LocalStorage
-    </div>
+    <div onclick="localStorage.clear(); alert('LocalStorage очищен!');" style="
+  padding: 20px 40px;
+  background-color: #e74c3c;
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: center;
+  display: inline-block;
+    position: fixed;
+    inset: 0 0 auto auto;
+  user-select: none;
+  transition: background-color 0.3s;
+" onmouseover="this.style.backgroundColor='#c0392b'" onmouseout="this.style.backgroundColor='#e74c3c'">
+  Очистить LocalStorage
+</div>
     <script type="module" src="./js/main.js"></script>
   </body>
 </html>
