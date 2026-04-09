@@ -1,3 +1,4 @@
+//main.js
 import { $, showToast, safeRemoveLS, requestWakeLock } from "./utils.js";
 import { langManager, t } from "./i18n.js";
 import { themeManager } from "./theme.js";

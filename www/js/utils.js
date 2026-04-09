@@ -1,3 +1,4 @@
+// utils.js
 export const $ = (id) => document.getElementById(id);
 
 export const escapeHTML = (str) =>

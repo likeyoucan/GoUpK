@@ -1,3 +1,4 @@
+// navigation.js
 import { $ } from "./utils.js";
 
 export const navigation = {

@@ -1,3 +1,4 @@
+// i18n.js
 import { safeGetLS, safeSetLS } from "./utils.js";
 
 export const translations = {
