@@ -7,22 +7,37 @@
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover"
     />
 
-    <!-- ====================================================== -->
-    <!-- 🟢 ДОБАВЛЕНО: Content Security Policy (CSP)             -->
-    <!-- Это критически важный заголовок безопасности для       -->
-    <!-- Capacitor/Cordova приложений. Он защищает от XSS-атак. -->
-    <!-- ====================================================== -->
+    <!-- 
+        CSP ДЛЯ МОБИЛЬНЫХ ПРИЛОЖЕНИЙ 
+      - script-src 'self': запрещает любые инлайновые скрипты (защита от XSS).
+      - style-src 'self': разрешает стили только из файлов.
+      - img-src / font-src: разрешает локальные ресурсы и data-uri (иконки).
+      - capacitor:// и http://localhost: необходимы для работы нативных движков iOS/Android.
+    -->
     <meta
       http-equiv="Content-Security-Policy"
       content="
-    default-src 'self'; 
-    script-src 'self' 'unsafe-inline'; 
-    style-src 'self' 'unsafe-inline'; 
-    img-src 'self' data:;
-    font-src 'self' data:;
-    connect-src 'self';
-"
+        default-src 'self'; 
+        script-src 'self'; 
+        style-src 'self'; 
+        img-src 'self' data: capacitor: ionic: http://localhost;
+        font-src 'self' data:;
+        connect-src 'self' https:;
+        frame-ancestors 'none';
+        object-src 'none';
+        base-uri 'self';
+        form-action 'self';
+        upgrade-insecure-requests;
+    "
     />
+    <!-- Ограничение доступа к API устройства (безопасность приватности) -->
+    <meta
+      http-equiv="Permissions-Policy"
+      content="camera=(), microphone=(), geolocation=(), payment=()"
+    />
+
+    <!-- Защита от утечки данных о переходе -->
+    <meta name="referrer" content="no-referrer" />
 
     <meta
       name="theme-color"
@@ -73,7 +88,7 @@
         display: none !important;
       }
     </style>
-
+    <!-- Стили и скрипты только через внешние файлы -->
     <link rel="stylesheet" href="styles.css" />
   </head>
 
@@ -1728,6 +1743,7 @@
     >
       Очистить LocalStorage
     </div>
+    <!-- Основной скрипт приложения -->
     <script type="module" src="./js/main.js"></script>
   </body>
 </html>
