@@ -1,16 +1,36 @@
+// ===== navigation.js (ОБНОВЛЕННАЯ ВЕРСИЯ) =====
+
 import { $ } from "./utils.js";
 
 export const navigation = {
   activeView: "stopwatch",
-  clockInterval: null,
+  navIds: [], // НОВОЕ: Кэшируем ID вкладок
 
   init() {
-    this.initClock();
+    // НОВОЕ: Получаем ID всех вкладок при инициализации
+    this.navIds = Array.from(document.querySelectorAll("[data-nav]")).map(
+      (btn) => btn.dataset.nav
+    );
+    this.updateIcons(this.activeView);
+    // УДАЛЕНО: Вызов this.initClock()
   },
 
   switchView(viewId) {
+    if (this.activeView === viewId) return;
+
+    if (!document.startViewTransition) {
+      this.updateDOM(viewId);
+    } else {
+      document.startViewTransition(() => {
+        this.updateDOM(viewId);
+      });
+    }
+  },
+
+  updateDOM(viewId) {
     this.activeView = viewId;
-    ["stopwatch", "timer", "tabata", "settings"].forEach((id) => {
+    // ИЗМЕНЕНО: Используем динамический список
+    this.navIds.forEach((id) => {
       const el = $(`view-${id}`);
       if (!el) return;
       if (id === viewId) {
@@ -29,35 +49,27 @@ export const navigation = {
   },
 
   updateIcons(activeId) {
-    ["stopwatch", "timer", "tabata", "settings"].forEach((id) => {
+    // ИЗМЕНЕНО: Используем динамический список
+    this.navIds.forEach((id) => {
       const iconDiv = $(`nav-icon-${id}`);
       if (!iconDiv) return;
-      const textSpan = iconDiv.nextElementSibling;
+      // ИЗМЕНЕНО: Более надежный селектор
+      const textSpan = iconDiv.parentElement.querySelector("span");
       const iconSvg = iconDiv.querySelector("svg");
+
+      if (!textSpan || !iconSvg) return;
 
       if (id === activeId) {
         iconDiv.classList.replace("text-gray-400", "primary-text");
         textSpan.classList.replace("text-gray-400", "primary-text");
-        if (iconSvg) iconSvg.classList.add("stroke-2");
+        iconSvg.classList.add("stroke-2");
       } else {
         iconDiv.classList.replace("primary-text", "text-gray-400");
         textSpan.classList.replace("primary-text", "text-gray-400");
-        if (iconSvg) iconSvg.classList.remove("stroke-2");
+        iconSvg.classList.remove("stroke-2");
       }
     });
   },
-
-  initClock() {
-    const clockEl = $("clock");
-    if (!clockEl) return;
-    const update = () => {
-      const now = new Date();
-      const h = String(now.getHours()).padStart(2, "0");
-      const m = String(now.getMinutes()).padStart(2, "0");
-      clockEl.textContent =
-        now.getSeconds() % 2 === 0 ? `${h}:${m}` : `${h} ${m}`;
-    };
-    update();
-    this.clockInterval = setInterval(update, 1000);
-  },
+  
+  // УДАЛЕНО: Метод initClock()
 };
