@@ -50,9 +50,11 @@ export const tm = {
 
     $("tm-form")?.addEventListener("submit", (e) => {
       e.preventDefault();
+      // Закрываем клавиатуру при нажатии Enter на мобильных
       document.activeElement?.blur();
     });
 
+    // Обработчики для полей минут и секунд (с оборачиванием значений)
     [this.els.m, this.els.s].forEach((i) => {
       if (!i) return;
       i.addEventListener("focus", () => {
@@ -67,6 +69,7 @@ export const tm = {
       });
     });
 
+    // Обработчики для поля часов (без оборачивания, максимум 99)
     if (this.els.h) {
       this.els.h.addEventListener("focus", () => {
         if (this.els.h.value === "00" || this.els.h.value === "0")
@@ -74,12 +77,14 @@ export const tm = {
       });
       this.els.h.addEventListener("input", () => {
         this.els.h.value = this.els.h.value.replace(/\D/g, "").slice(0, 2);
+        if (parseInt(this.els.h.value, 10) > 99) this.els.h.value = "99"; // 🟢 ДОБАВЛЕНО: ограничение для часов
       });
       this.els.h.addEventListener("blur", () => {
         this.els.h.value = pad(this.els.h.value || 0);
       });
     }
 
+    // Скролл/свайп для изменения значений полей
     this.setupScrollInteraction(this.els.h, 99, false);
     this.setupScrollInteraction(this.els.m, 59, true);
     this.setupScrollInteraction(this.els.s, 59, true);
@@ -111,29 +116,30 @@ export const tm = {
         if (val > max) val = 0;
         if (val < 0) val = max;
       } else {
-        if (val > max) val = max;
-        if (val < 0) val = 0;
+        val = Math.max(0, Math.min(max, val));
       }
       input.value = pad(val);
       sm.play("click");
       sm.vibrate(10);
     };
 
+    // Колёсико мыши (для десктопа)
     input.addEventListener(
       "wheel",
       (e) => {
         e.preventDefault();
         updateVal(e.deltaY > 0 ? -1 : 1);
       },
-      { passive: false }
+      { passive: false },
     );
 
+    // Свайп пальцем (для мобильных)
     input.addEventListener(
       "touchstart",
       (e) => {
         startY = e.touches[0].clientY;
       },
-      { passive: true }
+      { passive: true },
     );
 
     input.addEventListener(
@@ -148,9 +154,10 @@ export const tm = {
           startY = currentY;
         }
       },
-      { passive: false }
+      { passive: false },
     );
 
+    // Перетаскивание мышью (для десктопа)
     const onMouseMove = (e) => {
       if (!isDragging) return;
       const currentY = e.clientY;
@@ -162,6 +169,7 @@ export const tm = {
     };
 
     const onMouseUp = () => {
+      if (!isDragging) return;
       isDragging = false;
       window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("mouseup", onMouseUp);
@@ -185,6 +193,7 @@ export const tm = {
     sm.unlock();
 
     if (this.isRunning) {
+      // Пауза
       this.isRunning = false;
       this.isPaused = true;
       this.remainingAtPause = Math.max(0, this.targetTime - performance.now());
@@ -195,13 +204,14 @@ export const tm = {
       this.updateUIState();
     } else {
       document.dispatchEvent(
-        new CustomEvent("timerStarted", { detail: "timer" })
+        new CustomEvent("timerStarted", { detail: "timer" }),
       );
 
       if (!this.isPaused) {
-        const h = parseInt(this.els.h.value, 10) || 0;
-        const m = parseInt(this.els.m.value, 10) || 0;
-        const s = parseInt(this.els.s.value, 10) || 0;
+        // Свежий старт — читаем значения из инпутов
+        const h = parseInt(this.els.h?.value, 10) || 0;
+        const m = parseInt(this.els.m?.value, 10) || 0;
+        const s = parseInt(this.els.s?.value, 10) || 0;
         this.totalDuration = (h * 3600 + m * 60 + s) * 1000;
 
         if (this.totalDuration === 0) {
@@ -209,14 +219,16 @@ export const tm = {
           this.els.inputs.classList.add("animate-shake");
           setTimeout(
             () => this.els.inputs.classList.remove("animate-shake"),
-            300
+            300,
           );
           return;
         }
         this.targetTime = performance.now() + this.totalDuration;
       } else {
+        // Возобновление после паузы
         this.targetTime = performance.now() + this.remainingAtPause;
       }
+
       this.isRunning = true;
       this.isPaused = false;
       requestWakeLock();
@@ -243,27 +255,32 @@ export const tm = {
     }
 
     this.updateUIState();
-    this.els.ring.style.strokeDashoffset = this.ringLength;
+    if (this.els.ring) {
+      this.els.ring.style.strokeDashoffset = this.ringLength;
+    }
     updateText(this.els.display, "GO");
     this.els.display.classList.add("is-go");
   },
 
   updateUIState() {
+    if (!this.els.inputs) return; // 🟢 УЛУЧШЕНИЕ: защита если DOM ещё не готов
+
     if (this.isRunning) {
       this.els.inputs.classList.add("hidden", "opacity-0");
-      this.els.resetBtn.classList.add("hidden");
-      this.els.status.classList.add("hidden");
-      this.els.display.classList.remove("is-go");
+      this.els.resetBtn?.classList.add("hidden");
+      this.els.status?.classList.add("hidden");
+      this.els.display?.classList.remove("is-go");
     } else if (this.isPaused) {
       this.els.inputs.classList.add("hidden", "opacity-0");
-      this.els.resetBtn.classList.remove("hidden");
-      this.els.status.classList.remove("hidden");
+      this.els.resetBtn?.classList.remove("hidden");
+      this.els.status?.classList.remove("hidden");
       updateText(this.els.status, t("pause"));
     } else {
+      // Сброшен / начальное состояние
       this.els.inputs.classList.remove("hidden", "opacity-0");
-      this.els.resetBtn.classList.add("hidden");
-      this.els.status.classList.add("hidden");
-      this.els.display.classList.add("is-go");
+      this.els.resetBtn?.classList.add("hidden");
+      this.els.status?.classList.add("hidden");
+      this.els.display?.classList.add("is-go");
       updateText(this.els.display, "GO");
     }
   },
@@ -288,7 +305,6 @@ export const tm = {
       bgWorker.postMessage("stop");
       sm.vibrate([200, 100, 200, 100, 400]);
       sm.play("complete");
-
       announceToScreenReader(t("timer_finished"));
 
       requestAnimationFrame(() => {
@@ -298,16 +314,20 @@ export const tm = {
       return;
     }
 
-    if (!isBackground) this.rAF = requestAnimationFrame(() => this.tick());
+    if (!isBackground) {
+      cancelAnimationFrame(this.rAF);
+      this.rAF = requestAnimationFrame(() => this.tick());
+    }
   },
 
   getFormattedTime(sTotal) {
     const h = Math.floor(sTotal / 3600);
     const m = Math.floor((sTotal % 3600) / 60);
     const s = sTotal % 60;
-    const hInput = parseInt(this.els.h.value, 10) || 0;
-    const mInput = parseInt(this.els.m.value, 10) || 0;
-    if (hInput > 0) return `${pad(h)}:${pad(m)}:${pad(s)}`;
+    // 🟡 ИСПРАВЛЕНО: безопасное чтение значений (els может быть не инициализирован при фоновом тике)
+    const hInput = parseInt(this.els.h?.value, 10) || 0;
+    const mInput = parseInt(this.els.m?.value, 10) || 0;
+    if (hInput > 0 || h > 0) return `${pad(h)}:${pad(m)}:${pad(s)}`;
     if (mInput > 0 || m > 0) return `${pad(m)}:${pad(s)}`;
     return `${s}`;
   },
@@ -318,9 +338,12 @@ export const tm = {
 
     updateText(this.els.display, timeStr);
     updateTitle(timeStr);
-    this.els.ring.style.strokeDashoffset =
-      this.ringLength -
-      (Math.max(0, this.totalDuration - rem) / this.totalDuration) *
-        this.ringLength;
+
+    if (this.els.ring && this.totalDuration > 0) {
+      this.els.ring.style.strokeDashoffset =
+        this.ringLength -
+        (Math.max(0, this.totalDuration - rem) / this.totalDuration) *
+          this.ringLength;
+    }
   },
 };

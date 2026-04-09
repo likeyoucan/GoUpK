@@ -17,13 +17,34 @@ export const themeManager = {
     this.colorBtns = document.querySelectorAll(".color-btn");
     this.bgBtns = document.querySelectorAll(".bg-btn");
 
+    // === ИНТЕГРАЦИЯ MATERIAL YOU (Android 12+) ===
+    if (window.Capacitor && window.Capacitor.isNativePlatform()) {
+      const { MaterialYou } = window.Capacitor.Plugins;
+      if (MaterialYou) {
+        MaterialYou.isSupported()
+          .then((result) => {
+            if (result.isSupported) {
+              MaterialYou.addListener("colorColorsChanged", (colors) => {
+                this.applyMaterialYouColors(colors);
+              });
+              MaterialYou.getColors()
+                .then((colors) => {
+                  this.applyMaterialYouColors(colors);
+                })
+                .catch(() => {});
+            }
+          })
+          .catch(() => {});
+      }
+    }
+
     this.applySettings();
 
     $("toggle-ms")?.addEventListener("change", (e) => {
       this.showMs = e.target.checked;
       safeSetLS("app_show_ms", this.showMs);
       document.dispatchEvent(
-        new CustomEvent("msChanged", { detail: this.showMs })
+        new CustomEvent("msChanged", { detail: this.showMs }),
       );
     });
 
@@ -33,7 +54,7 @@ export const themeManager = {
       this.updateAdaptiveClass();
       this.applyBgTheme(
         this.currentBg,
-        document.documentElement.classList.contains("dark")
+        document.documentElement.classList.contains("dark"),
       );
     });
 
@@ -56,31 +77,30 @@ export const themeManager = {
     });
 
     $("fontSlider")?.addEventListener("input", (e) =>
-      this.setFontSize(e.target.value)
+      this.setFontSize(e.target.value),
     );
 
     this.themeBtns.forEach((btn) =>
       btn.addEventListener("click", (e) =>
-        this.setMode(e.target.getAttribute("data-theme-mode"))
-      )
+        this.setMode(e.currentTarget.getAttribute("data-theme-mode")),
+      ),
     );
     this.colorBtns.forEach((btn) =>
       btn.addEventListener("click", (e) =>
-        this.setColor(e.target.getAttribute("data-color"))
-      )
+        this.setColor(e.currentTarget.getAttribute("data-color")),
+      ),
     );
     this.bgBtns.forEach((btn) =>
       btn.addEventListener("click", (e) =>
-        this.setBgColor(e.target.getAttribute("data-bg"))
-      )
+        this.setBgColor(e.currentTarget.getAttribute("data-bg")),
+      ),
     );
 
-    // Слушатели теперь только на input'ы (кнопки убраны из HTML)
     $("customColorInput")?.addEventListener("input", (e) =>
-      this.setColor(e.target.value)
+      this.setColor(e.target.value),
     );
     $("customBgInput")?.addEventListener("input", (e) =>
-      this.setBgColor(e.target.value)
+      this.setBgColor(e.target.value),
     );
 
     window
@@ -113,6 +133,11 @@ export const themeManager = {
     if ($("vignetteSlider")) $("vignetteSlider").value = this.vignetteAlpha;
     if ($("toggle-ms")) $("toggle-ms").checked = this.showMs;
     if ($("fontSlider")) $("fontSlider").value = safeGetLS("font_size") || 16;
+
+    if ($("customColorInput"))
+      $("customColorInput").value = safeGetLS("theme_color") || "#22c55e";
+    if ($("customBgInput"))
+      $("customBgInput").value = safeGetLS("theme_bg_color") || "#ffffff";
   },
 
   updateAdaptiveClass() {
@@ -132,13 +157,18 @@ export const themeManager = {
   setMode(mode) {
     this.currentMode = mode;
     safeSetLS("theme_mode", mode);
+
+    // 🟡 ИСПРАВЛЕНО: ранее activeBtn получал app-text но НЕ терял app-text-sec.
+    // Теперь явно убираем app-text-sec у всех, потом добавляем нужное активной кнопке.
     this.themeBtns.forEach((b) => {
       b.classList.remove("app-surface", "shadow-sm", "app-text");
       b.classList.add("app-text-sec");
     });
     const activeBtn = $(`theme-${mode}`);
-    if (activeBtn)
+    if (activeBtn) {
+      activeBtn.classList.remove("app-text-sec"); // 🟡 ИСПРАВЛЕНО: убираем sec у активной
       activeBtn.classList.add("app-surface", "shadow-sm", "app-text");
+    }
 
     const isDark =
       mode === "dark" ||
@@ -153,19 +183,35 @@ export const themeManager = {
       document.documentElement.style.colorScheme = "light";
     }
 
-    let metaColorScheme = document.querySelector('meta[name="color-scheme"]');
-    if (!metaColorScheme) {
-      metaColorScheme = document.createElement("meta");
-      metaColorScheme.name = "color-scheme";
-      document.head.appendChild(metaColorScheme);
-    }
-    metaColorScheme.content = isDark ? "dark" : "light";
+    // Обновляем meta theme-color динамически
+    // 🟢 УЛУЧШЕНИЕ: обновляем существующие meta теги вместо создания нового
+    document.querySelectorAll('meta[name="theme-color"]').forEach((meta) => {
+      const media = meta.getAttribute("media") || "";
+      if (media.includes("dark")) {
+        meta.content = isDark ? "#000000" : "#f3f4f6";
+      } else if (media.includes("light")) {
+        meta.content = isDark ? "#000000" : "#f3f4f6";
+      }
+    });
 
     this.applyBgTheme(this.currentBg, isDark);
   },
 
   setColor(hex) {
     safeSetLS("theme_color", hex);
+
+    if (hex === "auto") {
+      if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.MaterialYou) {
+        window.Capacitor.Plugins.MaterialYou.getColors()
+          .then((colors) => this.applyMaterialYouColors(colors))
+          .catch(() => this.setColor("#22c55e"));
+      } else {
+        this.setColor("#22c55e");
+      }
+      this.updateButtons(this.colorBtns, "auto", "customColorInput", false);
+      return;
+    }
+
     document.documentElement.style.setProperty("--primary-color", hex);
 
     const { h } = this.hexToHSL(hex);
@@ -189,7 +235,7 @@ export const themeManager = {
         "ring-2",
         "ring-offset-2",
         "ring-offset-white",
-        "dark:ring-offset-gray-900"
+        "dark:ring-offset-gray-900",
       );
       const targetAttr = isBg
         ? b.getAttribute("data-bg")
@@ -199,7 +245,7 @@ export const themeManager = {
           "ring-2",
           "ring-offset-2",
           "ring-offset-white",
-          "dark:ring-offset-gray-900"
+          "dark:ring-offset-gray-900",
         );
         const iconColor =
           isBg && hex === "default" ? "var(--text-color)" : "white";
@@ -216,7 +262,7 @@ export const themeManager = {
       "ring-2",
       "ring-offset-2",
       "ring-offset-white",
-      "dark:ring-offset-gray-900"
+      "dark:ring-offset-gray-900",
     );
 
     if (!found && hex !== "default") {
@@ -224,7 +270,7 @@ export const themeManager = {
         "ring-2",
         "ring-offset-2",
         "ring-offset-white",
-        "dark:ring-offset-gray-900"
+        "dark:ring-offset-gray-900",
       );
     }
   },
@@ -247,7 +293,7 @@ export const themeManager = {
         root.style.setProperty("--bg-color", isDark ? "#000000" : "#f3f4f6");
         root.style.setProperty(
           "--surface-color",
-          isDark ? "#1c1c1e" : "#ffffff"
+          isDark ? "#1c1c1e" : "#ffffff",
         );
       } else {
         root.style.removeProperty("--bg-color");
@@ -265,18 +311,18 @@ export const themeManager = {
       if (isDark) {
         root.style.setProperty(
           "--surface-color",
-          `color-mix(in srgb, ${hex}, white 12%)`
+          `color-mix(in srgb, ${hex}, white 12%)`,
         );
       } else {
         if (l > 85) {
           root.style.setProperty(
             "--surface-color",
-            `color-mix(in srgb, ${hex}, black 8%)`
+            `color-mix(in srgb, ${hex}, black 8%)`,
           );
         } else {
           root.style.setProperty(
             "--surface-color",
-            `color-mix(in srgb, ${hex}, white 25%)`
+            `color-mix(in srgb, ${hex}, white 25%)`,
           );
         }
       }
@@ -290,11 +336,11 @@ export const themeManager = {
     const satDark = Math.min(s, 40);
     const satLight = Math.max(s, 20);
     if (isDark) {
-      root.style.setProperty("--bg-color", `hsl(${h}, ${satDark}%, 8%)`);
-      root.style.setProperty("--surface-color", `hsl(${h}, ${satDark}%, 14%)`);
+      root.style.setProperty("--bg-color", `hsl(${h} ${satDark}% 8%)`);      // 🟡 ИСПРАВЛЕНО: hsl без запятых (CSS Color Level 4)
+      root.style.setProperty("--surface-color", `hsl(${h} ${satDark}% 14%)`);
     } else {
-      root.style.setProperty("--bg-color", `hsl(${h}, ${satLight}%, 94%)`);
-      root.style.setProperty("--surface-color", `hsl(${h}, ${satLight}%, 98%)`);
+      root.style.setProperty("--bg-color", `hsl(${h} ${satLight}% 94%)`);
+      root.style.setProperty("--surface-color", `hsl(${h} ${satLight}% 98%)`);
     }
   },
 
@@ -303,15 +349,23 @@ export const themeManager = {
     const vignetteContainer = $("vignette-depth-container");
     if (!bgElement) return;
 
-    if (vignetteContainer)
-      vignetteContainer.style.display = this.hasVignette ? "flex" : "none";
+    if (vignetteContainer) {
+      // 🟡 ИСПРАВЛЕНО: display:none/flex вместо style.display (совместимость с Tailwind hidden)
+      if (this.hasVignette) {
+        vignetteContainer.classList.remove("hidden");
+        vignetteContainer.classList.add("flex");
+      } else {
+        vignetteContainer.classList.add("hidden");
+        vignetteContainer.classList.remove("flex");
+      }
+    }
 
     if (this.hasVignette) {
       bgElement.classList.add("has-vignette");
       const visualAlpha = this.vignetteAlpha * 0.3;
       document.documentElement.style.setProperty(
         "--vignette-alpha",
-        visualAlpha
+        visualAlpha,
       );
     } else {
       bgElement.classList.remove("has-vignette");
@@ -319,22 +373,23 @@ export const themeManager = {
   },
 
   hexToRGB(H) {
-    let r = 0,
-      g = 0,
-      b = 0;
-    if (H.length == 4) {
-      r = "0x" + H[1] + H[1];
-      g = "0x" + H[2] + H[2];
-      b = "0x" + H[3] + H[3];
-    } else if (H.length == 7) {
-      r = "0x" + H[1] + H[2];
-      g = "0x" + H[3] + H[4];
-      b = "0x" + H[5] + H[6];
+    // 🟢 УЛУЧШЕНИЕ: поддержка коротких (#rgb) и длинных (#rrggbb) форматов
+    if (!H || !H.startsWith("#")) return { r: 0, g: 0, b: 0 };
+    let r = 0, g = 0, b = 0;
+    if (H.length === 4) {
+      r = parseInt(H[1] + H[1], 16);
+      g = parseInt(H[2] + H[2], 16);
+      b = parseInt(H[3] + H[3], 16);
+    } else if (H.length === 7) {
+      r = parseInt(H[1] + H[2], 16);
+      g = parseInt(H[3] + H[4], 16);
+      b = parseInt(H[5] + H[6], 16);
     }
-    return { r: Number(r), g: Number(g), b: Number(b) };
+    return { r, g, b };
   },
 
   hexToHSL(H) {
+    if (!H || !H.startsWith("#")) return { h: 142, s: 50, l: 50 }; // 🟢 дефолт = зелёный
     const { r: r255, g: g255, b: b255 } = this.hexToRGB(H);
     let r = r255 / 255,
       g = g255 / 255,
@@ -345,11 +400,11 @@ export const themeManager = {
     let h = 0,
       s = 0,
       l = (cmax + cmin) / 2;
-    if (delta != 0) {
-      if (cmax == r) h = ((g - b) / delta) % 6;
-      else if (cmax == g) h = (b - r) / delta + 2;
-      else h = (r - g) / delta + 4;
+    if (delta !== 0) {
       s = delta / (1 - Math.abs(2 * l - 1));
+      if (cmax === r) h = ((g - b) / delta) % 6;
+      else if (cmax === g) h = (b - r) / delta + 2;
+      else h = (r - g) / delta + 4;
     }
     h = Math.round(h * 60);
     if (h < 0) h += 360;
@@ -357,9 +412,23 @@ export const themeManager = {
   },
 
   setFontSize(size) {
-    const scale = size / 16;
+    const numSize = Number(size);
+    const scale = numSize / 16;
     document.documentElement.style.setProperty("--font-scale", scale);
-    $("fontSizeDisplay") && ($("fontSizeDisplay").textContent = size + " px");
-    safeSetLS("font_size", size);
+    if ($("fontSizeDisplay")) $("fontSizeDisplay").textContent = numSize + " px";
+    safeSetLS("font_size", numSize);
+  },
+
+  applyMaterialYouColors(colors) {
+    // Применяем только если пользователь выбрал "Авто"
+    const storedColor = safeGetLS("theme_color");
+    if (storedColor && storedColor !== "auto") return;
+
+    const primaryColor = colors.system_accent1_500;
+    if (primaryColor) {
+      document.documentElement.style.setProperty("--primary-color", primaryColor);
+      const { h } = this.hexToHSL(primaryColor);
+      document.documentElement.style.setProperty("--accent-h", h);
+    }
   },
 };

@@ -35,6 +35,10 @@ export const tb = {
   editingWorkoutId: null,
   ringLength: 282.74,
 
+  // 🟢 УЛУЧШЕНИЕ: базовые классы для statusText вынесены в константу
+  // чтобы не перезаписывать className целиком (это стирало бы Tailwind-классы)
+  STATUS_BASE_CLASS: "font-bold uppercase tracking-widest mb-1",
+
   init() {
     this.els = {
       listSection: $("tb-list-section"),
@@ -85,7 +89,7 @@ export const tb = {
         throw new Error("No data");
       }
     } catch (e) {
-      console.warn("Failed to parse tabata workouts", e);
+      console.warn("Failed to parse tabata workouts, using defaults");
       this.workouts = [
         { id: 1, name: "Tabata 1", work: 20, rest: 10, rounds: 8 },
       ];
@@ -111,7 +115,7 @@ export const tb = {
     $("tb-closeModalBtn")?.addEventListener("click", () => this.closeModal());
 
     this.els.editName?.addEventListener("input", () =>
-      this.els.nameError?.classList.add("hidden")
+      this.els.nameError?.classList.add("hidden"),
     );
 
     document.querySelectorAll("[data-tb-adj]").forEach((btn) => {
@@ -206,10 +210,11 @@ export const tb = {
     this.els.modal.classList.remove("translate-y-full");
     this.els.modal.classList.add("translate-y-0");
 
-    setTimeout(() => this.els.editName.focus(), 300);
+    setTimeout(() => this.els.editName?.focus(), 300);
   },
 
   closeModal() {
+    // 🟢 УЛУЧШЕНИЕ: blur перед закрытием убирает клавиатуру на мобильных
     if (document.activeElement === this.els.editName) {
       this.els.editName.blur();
     }
@@ -233,7 +238,7 @@ export const tb = {
     const exists = this.workouts.some(
       (w) =>
         w.name.toLowerCase() === finalName.toLowerCase() &&
-        w.id !== this.editingWorkoutId
+        w.id !== this.editingWorkoutId,
     );
 
     if (exists) {
@@ -241,7 +246,7 @@ export const tb = {
       this.els.editName.classList.add("animate-shake");
       setTimeout(
         () => this.els.editName.classList.remove("animate-shake"),
-        300
+        300,
       );
       return;
     }
@@ -252,7 +257,7 @@ export const tb = {
 
     if (this.editingWorkoutId) {
       const index = this.workouts.findIndex(
-        (x) => x.id === this.editingWorkoutId
+        (x) => x.id === this.editingWorkoutId,
       );
       if (index !== -1) {
         this.workouts[index] = {
@@ -265,7 +270,10 @@ export const tb = {
       }
     } else {
       const newW = {
-        id: Date.now(),
+        id:
+          typeof crypto !== "undefined" && crypto.randomUUID
+            ? crypto.randomUUID()
+            : Date.now(),
         name: finalName,
         work: w,
         rest: r,
@@ -310,9 +318,7 @@ export const tb = {
     updateText(this.els.activeName, w.name);
     updateText(
       this.els.activeDetail,
-      `${w.work}${t("sec").toLowerCase()} / ${w.rest}${t(
-        "sec"
-      ).toLowerCase()} • ${w.rounds} ${t("rounds")}`
+      `${w.work}${t("sec").toLowerCase()} / ${w.rest}${t("sec").toLowerCase()} • ${w.rounds} ${t("rounds")}`,
     );
     this.renderList();
   },
@@ -335,25 +341,19 @@ export const tb = {
 
       div.innerHTML = `
         <div class="flex-1">
-          <div class="font-bold app-text ${
-            isAct ? "primary-text" : ""
-          }">${escapeHTML(w.name)}</div>
-          <div class="text-xs app-text-sec mt-1">${w.work}${t(
-        "sec"
-      ).toLowerCase()} / ${w.rest}${t("sec").toLowerCase()} • ${w.rounds} ${t(
-        "rds"
-      )}</div>
+          <div class="font-bold ${isAct ? "primary-text" : "app-text"}">${escapeHTML(w.name)}</div>
+          <div class="text-xs app-text-sec mt-1">${w.work}${t("sec").toLowerCase()} / ${w.rest}${t("sec").toLowerCase()} • ${w.rounds} ${t("rds")}</div>
         </div>
         <div class="flex gap-1 shrink-0">
-          <button type="button" aria-label="${t("edit")}" data-id="${
-        w.id
-      }" class="tb-edit-btn text-gray-400 hover:primary-text p-2 focus:outline-none custom-focus rounded-lg active:scale-95">
-            <svg focusable="false" aria-hidden="true" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+          <button type="button" aria-label="${t("edit")}" data-id="${w.id}" class="tb-edit-btn text-gray-400 hover:primary-text p-2 focus:outline-none custom-focus rounded-lg active:scale-95">
+            <svg focusable="false" aria-hidden="true" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+            </svg>
           </button>
-          <button type="button" aria-label="${t("delete")}" data-id="${
-        w.id
-      }" class="tb-del-btn text-red-500 opacity-50 hover:opacity-100 p-2 focus:outline-none custom-focus rounded-lg active:scale-95">
-            <svg focusable="false" aria-hidden="true" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+          <button type="button" aria-label="${t("delete")}" data-id="${w.id}" class="tb-del-btn text-red-500 opacity-50 hover:opacity-100 p-2 focus:outline-none custom-focus rounded-lg active:scale-95">
+            <svg focusable="false" aria-hidden="true" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
           </button>
         </div>`;
       fragment.appendChild(div);
@@ -373,7 +373,7 @@ export const tb = {
 
   start() {
     document.dispatchEvent(
-      new CustomEvent("timerStarted", { detail: "tabata" })
+      new CustomEvent("timerStarted", { detail: "tabata" }),
     );
     this.currentRound = 1;
     this.status = "READY";
@@ -382,7 +382,9 @@ export const tb = {
     this.paused = false;
     this.lastBeepSec = 0;
     this.els.listSection.classList.add("hidden");
-    this.els.runningControls.classList.replace("hidden", "flex");
+    // 🟡 ИСПРАВЛЕНО: hidden → flex (было hidden → flex через replace, но replace ненадёжен)
+    this.els.runningControls.classList.remove("hidden");
+    this.els.runningControls.classList.add("flex");
     updateText(this.els.totalRoundsDisplay, this.rounds);
     this.els.status.classList.remove("hidden");
     this.els.timer.classList.remove("is-go");
@@ -404,7 +406,7 @@ export const tb = {
 
   resume() {
     document.dispatchEvent(
-      new CustomEvent("timerStarted", { detail: "tabata" })
+      new CustomEvent("timerStarted", { detail: "tabata" }),
     );
     this.paused = false;
     this.phaseEndTime = performance.now() + this.remainingAtPause;
@@ -425,11 +427,15 @@ export const tb = {
     releaseWakeLock();
     updateTitle("");
     this.els.listSection.classList.remove("hidden");
-    this.els.runningControls.classList.replace("flex", "hidden");
+    // 🟡 ИСПРАВЛЕНО: flex → hidden через remove+add
+    this.els.runningControls.classList.remove("flex");
+    this.els.runningControls.classList.add("hidden");
     this.els.status.classList.add("hidden");
     updateText(this.els.timer, "GO");
     this.els.timer.classList.add("is-go");
-    this.els.ring.style.strokeDashoffset = this.ringLength;
+    if (this.els.ring) {
+      this.els.ring.style.strokeDashoffset = this.ringLength;
+    }
   },
 
   tick(isBackground = false) {
@@ -453,7 +459,10 @@ export const tb = {
       this.lastRender = now;
     }
 
-    if (!isBackground) this.rAF = requestAnimationFrame(() => this.tick());
+    if (!isBackground) {
+      cancelAnimationFrame(this.rAF);
+      this.rAF = requestAnimationFrame(() => this.tick());
+    }
   },
 
   nextPhase(missedTime = 0) {
@@ -504,9 +513,7 @@ export const tb = {
         if (this.currentRound >= this.rounds) {
           sm.vibrate([200, 100, 200, 100, 400]);
           sm.play("complete");
-
           announceToScreenReader(t("tabata_complete"));
-
           requestAnimationFrame(() => {
             showToast(t("tabata_complete"));
             this.stop();
@@ -530,28 +537,29 @@ export const tb = {
   },
 
   updatePhaseStyles() {
+    if (!this.els.ring) return;
     updateText(this.els.roundDisplay, this.currentRound);
-    this.els.ring.classList.remove(
-      "primary-stroke",
-      "text-blue-500",
-      "text-gray-500"
-    );
+
+    // 🟡 ИСПРАВЛЕНО: НЕ перезаписываем className целиком — это стирало бы все классы.
+    // Вместо этого меняем только цветовые классы через remove+add.
+    const statusEl = this.els.status;
+    statusEl.classList.remove("primary-text", "text-blue-500", "app-text-sec");
+
+    this.els.ring.classList.remove("primary-stroke");
     this.els.ring.style.stroke = "";
 
     if (this.status === "WORK") {
-      updateText(this.els.status, t("work"));
-      this.els.status.className =
-        "text-xl font-bold uppercase tracking-widest mb-1 primary-text";
+      updateText(statusEl, t("work"));
+      statusEl.classList.add("primary-text");
       this.els.ring.classList.add("primary-stroke");
     } else if (this.status === "REST") {
-      updateText(this.els.status, t("rest"));
-      this.els.status.className =
-        "text-xl font-bold uppercase tracking-widest mb-1 text-blue-500";
+      updateText(statusEl, t("rest"));
+      statusEl.classList.add("text-blue-500");
       this.els.ring.style.stroke = "#3b82f6";
     } else {
-      updateText(this.els.status, t("get_ready"));
-      this.els.status.className =
-        "text-xl font-bold uppercase tracking-widest mb-1 app-text-sec";
+      // READY
+      updateText(statusEl, t("get_ready"));
+      statusEl.classList.add("app-text-sec");
       this.els.ring.classList.add("primary-stroke");
     }
   },
@@ -567,9 +575,12 @@ export const tb = {
     const timeStr = formatTimeStr(sTotal, false);
     updateText(this.els.timer, timeStr);
     updateTitle(`${this.status}: ${timeStr}`);
-    this.els.ring.style.strokeDashoffset =
-      this.ringLength -
-      (Math.max(0, this.phaseDuration - rem) / this.phaseDuration) *
-        this.ringLength;
+
+    if (this.els.ring) {
+      this.els.ring.style.strokeDashoffset =
+        this.ringLength -
+        (Math.max(0, this.phaseDuration - rem) / this.phaseDuration) *
+          this.ringLength;
+    }
   },
 };
