@@ -1,10 +1,10 @@
 @import "tailwindcss";
 
 /* =========================================
-   1. НАСТРОЙКИ ТЕМЫ TAILWIND 4
+   1. ИНТЕГРАЦИЯ С TAILWIND 4 (ТЕМА)
 ========================================= */
 @theme {
-  /* Динамические размеры текста, зависящие от переменной --font-scale */
+  /* Привязываем стандартные размеры Tailwind к вашему коэффициенту масштабирования */
   --text-xs: calc(0.75rem * var(--font-scale, 1));
   --text-sm: calc(0.875rem * var(--font-scale, 1));
   --text-base: calc(1rem * var(--font-scale, 1));
@@ -16,10 +16,10 @@
 }
 
 /* =========================================
-   2. БАЗОВЫЕ ПЕРЕМЕННЫЕ
+   2. ВАШИ РАБОЧИЕ ПЕРЕМЕННЫЕ
 ========================================= */
 :root {
-  --font-scale: 1; /* Управляется ползунком из JS */
+  color-scheme: light dark;
   --primary-color: #22c55e;
   --accent-h: 142;
   --bg-color: #f3f4f6;
@@ -28,6 +28,7 @@
   --text-secondary: hsl(var(--accent-h), 25%, 45%);
   --border-color: rgba(0, 0, 0, 0.1);
   --vignette-alpha: 0.15;
+  --font-scale: 1;
 }
 
 :root.dark {
@@ -40,7 +41,33 @@
 }
 
 /* =========================================
-   3. ТАЙМЕРЫ И ДИСПЛЕЙ (Фикс размера GO)
+   3. ГЛОБАЛЬНЫЕ ФИКСЫ (БАЗА)
+========================================= */
+body {
+  height: 100dvh;
+  background-color: #000; /* Черная подложка для эффектов */
+  color: var(--text-color);
+  font-family: system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  touch-action: manipulation;
+}
+
+/* Фикс для инпутов tm-inputs: размер 32px + масштабирование */
+.timer-input {
+  font-size: calc(32px * var(--font-scale, 1)) !important;
+  height: calc(64px * var(--font-scale, 1)) !important;
+  width: calc(64px * var(--font-scale, 1)) !important;
+  line-height: 1 !important;
+  text-align: center;
+  background: transparent;
+  border-bottom: 2px solid rgba(128, 128, 128, 0.3);
+  font-family: ui-monospace, monospace;
+  transition: all 0.2s ease;
+}
+
+/* =========================================
+   4. ТАЙМЕРЫ И ДИСПЛЕЙ (Фикс GO и PAUSE)
 ========================================= */
 .timer-circle-wrap {
   width: 100%;
@@ -49,87 +76,84 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  container-type: inline-size; /* Важно для работы cqi */
+  container-type: inline-size; /* Для работы cqi */
 }
 
 .timer-display {
-  /* Используем cqi для адаптации под размер круга */
-  font-size: clamp(2rem, 22cqi, 4rem);
+  font-size: clamp(2rem, 22cqi, 2.8rem);
   line-height: 1;
+  letter-spacing: -0.05em;
+  white-space: nowrap;
   font-variant-numeric: tabular-nums;
   transition: all 0.3s ease;
 }
 
-/* Огромный размер для надписи GO */
+/* Возвращаем ОГРОМНЫЙ размер для GO */
 .timer-display.is-go {
-  font-size: clamp(3rem, 35cqi, 7rem) !important;
+  font-size: clamp(3rem, 35cqi, 4.8rem) !important;
   font-style: italic;
 }
 
-/* Унификация надписей PAUSE / ROUND */
-[id$="-statusText"], .tb-status-label {
+/* Унификация PAUSE для всех экранов (включая Tabata) */
+[id$="statusText"], #tb-statusText {
   font-size: calc(0.875rem * var(--font-scale, 1)) !important;
-  font-weight: 800;
+  font-weight: 800 !important;
   letter-spacing: 0.1em;
+  display: block;
 }
 
 /* =========================================
-   4. ИНПУТЫ (Фикс масштабирования шрифта)
-========================================= */
-.timer-input {
-  /* Теперь размер 32px умножается на коэффициент из настроек */
-  font-size: calc(32px * var(--font-scale, 1)) !important;
-  height: calc(64px * var(--font-scale, 1)) !important;
-  width: calc(64px * var(--font-scale, 1)) !important;
-  text-align: center;
-  background: transparent;
-  border-bottom: 2px solid rgba(128, 128, 128, 0.3);
-  font-family: ui-monospace, monospace;
-  outline: none;
-  transition: border-color 0.3s, font-size 0.2s;
-}
-
-.timer-input:focus {
-  border-bottom-color: var(--primary-color);
-}
-
-/* =========================================
-   5. ВИКТНЬЕТКА (Vignette Effect)
+   5. ВИКНЬЕТКА (Vignette)
 ========================================= */
 .app-bg {
+  background-color: var(--bg-color);
   position: relative;
   z-index: 0;
-  overflow: hidden;
 }
 
-/* Исправленный слой виньетки */
-.app-bg.has-vignette::after {
+.app-bg.has-vignette::before {
   content: "";
   position: absolute;
   inset: 0;
+  z-index: 1; /* Поверх фона */
   pointer-events: none;
-  z-index: 5; /* Поверх фона, но под контентом */
   box-shadow: inset 0 0 15vh rgba(0, 0, 0, var(--vignette-alpha, 0.15));
   transition: box-shadow 0.3s;
 }
 
-html.dark .app-bg.has-vignette::after {
-  box-shadow: inset 0 0 20vh rgba(0, 0, 0, calc(var(--vignette-alpha, 0.15) + 0.15));
+html.dark .app-bg.has-vignette::before {
+  box-shadow: inset 0 0 20vh rgba(0, 0, 0, calc(var(--vignette-alpha, 0.15) + 0.1));
 }
 
 /* =========================================
-   6. ЭФФЕКТ ЖИДКОГО СТЕКЛА (Liquid Glass)
+   6. ЭФФЕКТ ЖИДКОГО СТЕКЛА (LIQUID GLASS)
 ========================================= */
-:root.glass-effect body .app-surface {
+/* Используем ваши оригинальные селекторы с высокой специфичностью */
+
+:root.glass-effect body #tb-modal,
+:root.glass-effect body #sw-sessions-modal {
+  background-color: rgba(255, 255, 255, 0.4) !important;
+  backdrop-filter: blur(20px) saturate(150%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(150%) !important;
+}
+
+:root.dark.glass-effect body #tb-modal,
+:root.dark.glass-effect body #sw-sessions-modal {
+  background-color: rgba(0, 0, 0, 0.5) !important;
+}
+
+:root.glass-effect body .app-surface:not(button):not(.select-wrapper),
+:root.glass-effect body #toast {
   background-color: color-mix(in srgb, var(--surface-color) 50%, transparent) !important;
   backdrop-filter: blur(20px) saturate(150%) !important;
   -webkit-backdrop-filter: blur(20px) saturate(150%) !important;
-  border-color: rgba(255, 255, 255, 0.2) !important;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.5), 0 8px 32px rgba(0, 0, 0, 0.05) !important;
 }
 
-:root.dark.glass-effect body .app-surface {
-  background-color: color-mix(in srgb, var(--surface-color) 25%, transparent) !important;
-  border-color: rgba(255, 255, 255, 0.05) !important;
+:root.dark.glass-effect body .app-surface:not(button):not(.select-wrapper),
+:root.dark.glass-effect body #toast {
+  background-color: color-mix(in srgb, var(--surface-color) 30%, transparent) !important;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05), 0 8px 32px rgba(0, 0, 0, 0.3) !important;
 }
 
 :root.glass-effect body nav {
@@ -140,86 +164,58 @@ html.dark .app-bg.has-vignette::after {
   ) !important;
   backdrop-filter: blur(16px) saturate(150%) !important;
   -webkit-backdrop-filter: blur(16px) saturate(150%) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.2) !important;
 }
 
 /* =========================================
-   7. УТИЛИТЫ И ПРОЧЕЕ
+   7. УТИЛИТЫ И ПРОЧЕЕ (ИЗ РАБОЧЕГО ФАЙЛА)
 ========================================= */
-body {
-  height: 100dvh;
-  background-color: #000;
-  color: var(--text-color);
-  font-family: system-ui, -apple-system, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  overflow: hidden;
-}
-
-.app-surface {
-  background-color: var(--surface-color);
-  transition: all 0.3s ease;
-}
-
+.app-surface { background-color: var(--surface-color); }
 .app-text { color: var(--text-color); }
 .app-text-sec { color: var(--text-secondary); }
 .app-border { border-color: var(--border-color); }
 .primary-text { color: var(--primary-color); }
 .primary-bg { background-color: var(--primary-color); }
 
-/* Ползунки и контролы */
-input[type="range"] {
-  -webkit-appearance: none;
-  height: 32px;
-  background: transparent;
-  cursor: pointer;
-}
-
-input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  height: 24px;
-  width: 24px;
-  border-radius: 50%;
-  background: var(--surface-color);
-  border: 2px solid var(--primary-color);
-  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-  margin-top: -10px;
-}
-
-input[type="range"]::-webkit-slider-runnable-track {
-  width: 100%;
-  height: 4px;
-  background: var(--border-color);
-  border-radius: 2px;
-}
-
-.custom-toggle {
-  width: 44px;
-  height: 24px;
-  background-color: var(--border-color);
-  border-radius: 12px;
-  position: relative;
-  transition: background-color 0.3s;
-}
-
-.custom-toggle::after {
-  content: "";
-  position: absolute;
-  top: 2px; left: 2px;
-  width: 20px; height: 20px;
-  background: white;
-  border-radius: 50%;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-input:checked + .custom-toggle { background-color: var(--primary-color); }
-input:checked + .custom-toggle::after { transform: translateX(20px); }
-
 /* Скрытие скроллбара */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-/* Анимация пульсации для Tabata */
-@keyframes beat {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); filter: brightness(1.2); }
+/* Кастомные ползунки */
+input[type="range"] {
+  -webkit-appearance: none;
+  background: transparent;
+  height: 32px;
 }
-.pulse-text { animation: beat 1s infinite ease-in-out; }
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 24px; width: 24px;
+  border-radius: 50%;
+  background: var(--surface-color);
+  border: 2px solid var(--primary-color);
+  margin-top: -10px;
+}
+input[type="range"]::-webkit-slider-runnable-track {
+  width: 100%; height: 4px;
+  background: var(--border-color);
+  border-radius: 2px;
+}
+
+/* Кастомный Toggle */
+.custom-toggle {
+  width: 44px; height: 24px;
+  background-color: var(--border-color);
+  border-radius: 9999px;
+  position: relative;
+  transition: background-color 0.3s ease;
+}
+.custom-toggle::after {
+  content: ""; position: absolute;
+  top: 2px; left: 2px;
+  width: 20px; height: 20px;
+  background-color: #ffffff;
+  border-radius: 50%;
+  transition: transform 0.3s;
+}
+input:checked + .custom-toggle { background-color: var(--primary-color); }
+input:checked + .custom-toggle::after { transform: translateX(20px); }
