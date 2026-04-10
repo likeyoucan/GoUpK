@@ -318,7 +318,7 @@ html.dark .app-bg.has-vignette::before {
 /* На планшете отступ не нужен */
 @media (min-width: 768px) {
   .view-top-half {
-    padding-top: 1rem;
+    padding-top: 0;
     /*
       На планшете высоту немного уменьшаем —
       кольцо меньше, нижней части нужно больше места
