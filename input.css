@@ -35,21 +35,20 @@
   --vignette-alpha: 0.15;
   --font-scale: 1;
 
-  /*
-    Safe Area CSS-переменные.
-    env() нельзя переопределить через JS, но можно читать
-    через getComputedStyle если они заданы как var().
-    JS → document.documentElement.style.setProperty не нужен —
-    браузер сам обновляет env() при ротации.
-  */
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
 
-  /* Высоты навигации — используем как переменные везде */
   --nav-height: 5rem;
   --nav-total: calc(var(--nav-height) + var(--safe-bottom));
+
+  /*
+    Размер кольца таймера через переменную —
+    меняется в медиа-запросах, используется в .timer-circle-wrap.
+    Телефон: 75vmin, планшет: фиксированный px.
+  */
+  --circle-size: min(75vmin, 300px);
 }
 
 :root.dark {
@@ -84,29 +83,6 @@ html.dark {
 
 /* =========================================
    2. БАЗОВЫЕ НАСТРОЙКИ
-   
-   СТРАТЕГИЯ SAFE AREA:
-   ┌─────────────────────────────────────┐
-   │  Dynamic Island / Notch / Punch-hole│ ← env(safe-area-inset-top)
-   │  [фон .app-bg заходит СЮДА]        │
-   ├─────────────────────────────────────┤
-   │                                     │
-   │  Контент со сдвигом                 │ ← padding-top на view-top-half
-   │                                     │    и #view-settings > div:first
-   ├─────────────────────────────────────┤
-   │  Навигация                          │
-   │  [home indicator / gesture bar]     │ ← padding-bottom на .app-nav-safe
-   └─────────────────────────────────────┘
-   
-   ПРАВИЛО:
-   - body, #app, .app-bg — БЕЗ padding-top
-   - Контентные блоки — padding-top: env(safe-area-inset-top)
-   - Нижний контент — padding-bottom: var(--nav-total)
-   - Toast — top: calc(env(safe-area-inset-top) + 1rem)
-   
-   LANDSCAPE (iPhone в горизонтали):
-   - Вырез смещается ВБОК → safe-area-inset-left/right
-   - Добавляем боковые отступы контейнеру
 ========================================= */
 * {
   -webkit-tap-highlight-color: transparent;
@@ -181,50 +157,32 @@ button {
 
 /* =========================================
    3. КОНТЕЙНЕР ПРИЛОЖЕНИЯ (#app)
-   
-   ТЕЛЕФОН: на весь экран, safe-area padding чтобы
-   навбар и контент не заходили под систему.
-   Но! фон (.app-bg) через absolute inset-0 заходит
-   под вырез — это правильное поведение.
-   
-   ПЛАНШЕТ (≥768px): фиксированная ширина, центрирован,
-   скруглён как "телефон на столе", safe area не нужен.
-   
-   АЛЬБОМНАЯ (≥1024px landscape): широкий контейнер,
-   боковые safe-area отступы обязательны (вырез сбоку).
 ========================================= */
 
-/* --- Телефон (всё по умолчанию) --- */
+/* --- Телефон (по умолчанию) --- */
 #app {
   position: relative;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  /* 100dvh — учитывает динамические панели браузера */
   height: 100vh;
   height: 100dvh;
-  /* Полная ширина на телефоне */
   width: 100%;
   max-width: 100%;
   border-radius: 0;
-  /*
-    padding на #app нужен ТОЛЬКО для того, чтобы
-    дочерние absolute-элементы (nav, модалки) корректно
-    рассчитывали свой bottom/top относительно safe area.
-    Само .app-bg через absolute inset-0 всё равно
-    заходит под вырез — это ожидаемо.
-  */
   padding-top: env(safe-area-inset-top, 0px);
   padding-bottom: env(safe-area-inset-bottom, 0px);
   padding-left: env(safe-area-inset-left, 0px);
   padding-right: env(safe-area-inset-right, 0px);
+  /*
+    contain: strict изолирует #app от внешнего layout.
+    Браузер не пересчитывает layout снаружи при изменениях внутри.
+    size — фиксирует размер, layout — изолирует поток,
+    paint — не рисует за пределами (clip без overflow:hidden).
+  */
+  contain: strict;
 }
 
-/*
-  .app-bg — absolute inset-0, т.е. он выходит за padding #app
-  и заходит под вырез/home indicator. Это правильно —
-  фон приложения должен быть виден за Dynamic Island.
-*/
 .app-bg {
   background-color: var(--bg-color);
   transition: background-color 0.3s;
@@ -232,14 +190,18 @@ button {
   z-index: 0;
 }
 
-/* --- Планшет (≥768px) --- */
+/* --- Планшет portrait (≥768px) --- */
 @media (min-width: 768px) {
-  #app {
+  :root {
     /*
-      Ширина как у большого телефона — контент читабельен.
-      На планшете в портрете: 430px по центру.
-      На планшете в альбоме: можно шире — см. ниже.
+      На планшете контейнер фиксирован (430px).
+      Кольцо ограничиваем жёстче: не более 220px —
+      иначе на 430px контейнере 75% = 322px, что огромно.
     */
+    --circle-size: 220px;
+  }
+
+  #app {
     width: 430px;
     max-width: 430px;
     height: 92vh;
@@ -249,16 +211,17 @@ button {
     box-shadow:
       0 0 0 1px rgba(255, 255, 255, 0.08),
       0 30px 80px rgba(0, 0, 0, 0.6);
-    /*
-      Safe area на планшете НЕ нужна — приложение
-      не растянуто на весь экран, вырез не задевает контент.
-    */
     padding: 0;
+    contain: strict;
   }
 }
 
 /* --- iPad Pro portrait (≥1024px, portrait) --- */
 @media (min-width: 1024px) and (orientation: portrait) {
+  :root {
+    --circle-size: 240px;
+  }
+
   #app {
     width: 480px;
     max-width: 480px;
@@ -268,12 +231,16 @@ button {
   }
 }
 
-/*
-  ПЛАНШЕТ В АЛЬБОМНОЙ ОРИЕНТАЦИИ:
-  Делаем контейнер шире — больше пространства для контента.
-  На больших экранах в landscape хочется видеть больше.
-*/
+/* --- Планшет landscape (≥768px landscape) --- */
 @media (min-width: 768px) and (orientation: landscape) {
+  :root {
+    /*
+      В альбомной ориентации контейнер шире (680px),
+      но высота меньше. Кольцо ограничиваем по высоте.
+    */
+    --circle-size: min(38vh, 240px);
+  }
+
   #app {
     width: 680px;
     max-width: 680px;
@@ -284,6 +251,10 @@ button {
 }
 
 @media (min-width: 1024px) and (orientation: landscape) {
+  :root {
+    --circle-size: min(36vh, 250px);
+  }
+
   #app {
     width: 760px;
     max-width: 760px;
@@ -315,18 +286,12 @@ html.dark .app-bg.has-vignette::before {
 /* =========================================
    5. ВЕРХНЯЯ ПОЛОВИНА ВИДОВ (ТАЙМЕР + КРУГ)
    
-   КЛЮЧЕВОЕ МЕСТО для safe area на телефоне!
+   contain: layout style — браузер изолирует блок:
+   - layout: не пересчитывает родителей при изменениях внутри
+   - style: CSS-счётчики/свойства не вытекают наружу
    
-   Стратегия:
-   - На телефоне: padding-top = вырез + 0.5rem
-     (фон под вырезом, текст — ниже)
-   - На планшете: padding-top = обычный отступ
-     (safe area = 0, контейнер не на весь экран)
-   
-   Почему padding-top здесь, а не на #app?
-   → Если добавить padding на #app, то .app-bg (через absolute inset-0)
-     тоже сдвинется и не будет закрывать зону выреза.
-     Здесь же — только контент сдвигается, фон остаётся под вырезом.
+   НЕ используем contain: size — нам нужен height: 55%
+   от родителя (size contain запрещает зависимость от родителя).
 ========================================= */
 .view-top-half {
   display: flex;
@@ -336,15 +301,13 @@ html.dark .app-bg.has-vignette::before {
   height: 55%;
   width: 100%;
   flex-shrink: 0;
-  /*
-    env(safe-area-inset-top) — высота выреза:
-    iPhone 14 Pro / Dynamic Island: ~59px
-    iPhone X-13 / Notch: ~44px
-    iPhone SE (без выреза): ~20px (status bar)
-    Android punch-hole: ~24-32px
-    Планшет (≥768px): 0px → переопределено ниже
-  */
   padding-top: env(safe-area-inset-top, 0px);
+  /*
+    contain: layout style — изолируем перерасчёты.
+    Когда меняется таймер внутри, браузер не трогает снаружи.
+    Это убирает ненужные reflow на каждый тик таймера.
+  */
+  contain: layout style;
 }
 
 .view-top-half h2 {
@@ -356,24 +319,74 @@ html.dark .app-bg.has-vignette::before {
 @media (min-width: 768px) {
   .view-top-half {
     padding-top: 1rem;
+    /*
+      На планшете высоту немного уменьшаем —
+      кольцо меньше, нижней части нужно больше места
+      для кнопок, списков и контролов.
+    */
+    height: 52%;
+  }
+}
+
+/* На малых планшетах в landscape ещё компактнее */
+@media (min-width: 768px) and (orientation: landscape) {
+  .view-top-half {
+    height: 100%;
+    width: 45%;
+    flex: none;
+    padding-top: 0.5rem;
   }
 }
 
 /* =========================================
    6. КРУЖОК ТАЙМЕРА
+   
+   ИСПРАВЛЕНИЕ ПЛАНШЕТА:
+   Было: max-width: 75% → на 430px = 322px (огромно!)
+   Стало: var(--circle-size) — меняется через :root медиа-запросы.
+   
+   Телефон: min(75vmin, 300px) — адаптивно, но не больше 300px
+   Планшет portrait: 220px — фиксировано, не перекрывает кнопки
+   Планшет landscape: min(38vh, 240px) — ограничено высотой
+   
+   container-type: inline-size нужен для cqi единиц в .timer-display.
+   contain: layout style — изолируем кольцо (SVG и текст внутри).
 ========================================= */
 .timer-circle-wrap {
-  width: 100%;
-  max-width: 75%;
-  aspect-ratio: 1 / 1;
-  margin: 1vh auto;
-  max-height: 45vh;
+  width: var(--circle-size);
+  height: var(--circle-size);
+  max-width: var(--circle-size);
+  max-height: var(--circle-size);
+  /* Убираем aspect-ratio — используем явные width/height */
+  margin: 0.5vh auto;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+  /*
+    container-type: inline-size — включает container queries.
+    Нужен для cqi единиц в .timer-display (font-size: 22cqi).
+    Внимание: container-type несовместим с contain: size —
+    не используем contain: size здесь.
+  */
   container-type: inline-size;
+  contain: layout style;
 }
 
+/* =========================================
+   7. ТЕКСТ ТАЙМЕРА
+   
+   will-change: contents — НЕВЕРНО (нет такого значения).
+   Правильно: will-change: transform для GPU-слоя
+   при анимации/частых обновлениях.
+   
+   ВАЖНО: will-change расходует GPU-память.
+   Добавляем только на активный таймер через JS:
+     el.style.willChange = 'transform'  // при старте
+     el.style.willChange = 'auto'       // при остановке
+   
+   В CSS оставляем will-change: auto по умолчанию.
+========================================= */
 .timer-display {
   font-size: clamp(2rem, 22cqi, 2.8rem);
   line-height: 1;
@@ -382,6 +395,12 @@ html.dark .app-bg.has-vignette::before {
   transition: all 0.3s ease;
   font-style: normal;
   font-variant-numeric: tabular-nums;
+  /*
+    will-change: auto — браузер сам решает.
+    JS добавит will-change: transform при активном таймере
+    и уберёт при паузе/стопе.
+  */
+  will-change: auto;
 }
 
 .timer-display.is-go {
@@ -390,14 +409,21 @@ html.dark .app-bg.has-vignette::before {
   padding-right: 0.1em;
 }
 
+/*
+  .timer-display.is-running добавляется через JS при старте,
+  убирается при паузе/стопе. Это правильный паттерн:
+  will-change живёт ровно столько, сколько нужен.
+  
+  Пример JS:
+    display.classList.add('is-running')    // при старте
+    display.classList.remove('is-running') // при паузе
+*/
+.timer-display.is-running {
+  will-change: transform;
+}
+
 /* =========================================
-   7. НАСТРОЙКИ — спец. отступ сверху
-   
-   #view-settings — scrollable, overflow-y: auto.
-   Нельзя добавить padding-top к самому view —
-   это сломает scroll (контент обрежется).
-   
-   Добавляем к первому дочернему блоку (шапка "Settings").
+   8. НАСТРОЙКИ — спец. отступ сверху
 ========================================= */
 #view-settings > div:first-child {
   padding-top: calc(env(safe-area-inset-top, 0px) + 0.5rem);
@@ -405,7 +431,6 @@ html.dark .app-bg.has-vignette::before {
   min-height: calc(55px + env(safe-area-inset-top, 0px));
 }
 
-/* На планшете — фиксированный отступ */
 @media (min-width: 768px) {
   #view-settings > div:first-child {
     padding-top: 1.5rem;
@@ -414,24 +439,19 @@ html.dark .app-bg.has-vignette::before {
 }
 
 /* =========================================
-   8. НАВИГАЦИОННАЯ ПАНЕЛЬ (НИЖНЯЯ)
-   
-   Позиционирована абсолютно, прибита к низу.
-   
-   Высота = --nav-height + safe-area-inset-bottom
-   safe-area-inset-bottom:
-   - iPhone с Home Indicator (X+): ~34px
-   - iPhone SE (кнопка Home): 0px
-   - Android жестовая навигация: 16-40px
-   - Android кнопочная навигация: 0px
-   - Планшет в окне (≥768px): 0px
+   9. НАВИГАЦИОННАЯ ПАНЕЛЬ (НИЖНЯЯ)
 ========================================= */
 .app-nav-safe {
   padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 0.5rem);
   height: calc(var(--nav-height) + env(safe-area-inset-bottom, 0px));
+  /*
+    contain: layout style — навбар изолирован.
+    При смене активной вкладки (цвет иконки) браузер
+    не пересчитывает layout всего приложения.
+  */
+  contain: layout style;
 }
 
-/* На планшете safe area = 0, скругление низа совпадает с #app */
 @media (min-width: 768px) {
   .app-nav-safe {
     padding-bottom: 0.5rem;
@@ -442,7 +462,6 @@ html.dark .app-bg.has-vignette::before {
   }
 }
 
-/* Унаследовать скругление от #app */
 nav.app-nav-safe {
   border-bottom-left-radius: inherit;
   border-bottom-right-radius: inherit;
@@ -450,14 +469,7 @@ nav.app-nav-safe {
 }
 
 /* =========================================
-   9. ОТСТУПЫ СКРОЛЛ-КОНТЕЙНЕРОВ ОТ НАВИГАЦИИ
-   
-   Контент в списках не должен прятаться за навигацией.
-   Используем --nav-total вместо хардкода.
-   
-   Убрали !important — специфичность ID-селектора
-   (#sw-lapsContainer) достаточна для переопределения
-   любых утилит Tailwind.
+   10. ОТСТУПЫ СКРОЛЛ-КОНТЕЙНЕРОВ ОТ НАВИГАЦИИ
 ========================================= */
 #sw-lapsContainer,
 #tb-workoutsList {
@@ -465,26 +477,19 @@ nav.app-nav-safe {
 }
 
 /* =========================================
-   10. TOAST УВЕДОМЛЕНИЕ
-   
-   ПРОБЛЕМА: toast с top: 8 (2rem из Tailwind) отображается
-   поверх Dynamic Island / notch.
-   
-   РЕШЕНИЕ: в HTML убираем класс top-8, вместо него
-   позиционируем только через CSS.
-   
-   Используем слой @layer utilities чтобы не нужен !important.
-   CSS-переменная --safe-top уже содержит env() значение.
+   11. TOAST УВЕДОМЛЕНИЕ
 ========================================= */
 #toast {
   top: calc(env(safe-area-inset-top, 0px) + 1rem);
+  /*
+    contain: layout — toast не влияет на внешний поток.
+    Он fixed, но contain: layout страхует от случайных reflow.
+  */
+  contain: layout;
 }
 
 /* =========================================
-   11. МОДАЛЬНЫЕ ОКНА (BOTTOM SHEETS)
-   
-   Bottom sheets растянуты на 85dvh снизу.
-   Контент внутри должен учитывать home indicator.
+   12. МОДАЛЬНЫЕ ОКНА (BOTTOM SHEETS)
 ========================================= */
 #tb-saveModalBtn,
 #sw-sessionsList {
@@ -492,30 +497,10 @@ nav.app-nav-safe {
 }
 
 /* =========================================
-   12. LANDSCAPE НА ТЕЛЕФОНЕ
-   
-   При повороте iPhone в горизонталь:
-   - Dynamic Island / notch смещается ВБОК (влево)
-   - safe-area-inset-left становится ~59px
-   - safe-area-inset-right ~59px
-   - safe-area-inset-top уменьшается
-   
-   #app уже получает padding-left/right через основные правила,
-   поэтому на телефоне боковые отступы работают автоматически.
-   
-   Здесь перестраиваем LAYOUT под ширину.
+   13. LANDSCAPE НА ТЕЛЕФОНЕ
 ========================================= */
 @media (orientation: landscape) and (max-width: 767px) {
-  /*
-    Телефон в горизонтали: layout становится side-by-side.
-    Левая колонка — таймер, правая — контролы.
-  */
   .view-top-half {
-    /*
-      В landscape вырез СБОКУ.
-      Убираем top padding — он теперь не нужен.
-      Боковой отступ уже есть через padding #app.
-    */
     padding-top: 0.5rem;
     height: auto;
     width: 45%;
@@ -534,19 +519,9 @@ nav.app-nav-safe {
     width: 50%;
     flex: none;
     justify-content: center;
-    /*
-      Отступ снизу в landscape на телефоне:
-      home indicator может быть снизу или сбоку
-    */
     padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 0.5rem);
   }
 
-  .timer-circle-wrap {
-    max-height: 70vh;
-    max-width: 220px;
-  }
-
-  /* Навигация в landscape: safe-area-right для home indicator */
   .app-nav-safe {
     padding-right: calc(env(safe-area-inset-right, 0px) + 1rem);
     padding-bottom: 0.5rem;
@@ -559,12 +534,14 @@ nav.app-nav-safe {
 }
 
 /* =========================================
-   13. МАЛЫЕ ЭКРАНЫ В ПОРТРЕТЕ
+   14. МАЛЫЕ ЭКРАНЫ В ПОРТРЕТЕ (height ≤ 700px)
+   
+   На маленьких телефонах (SE, старые Android)
+   кольцо тоже нужно поджать.
 ========================================= */
 @media (max-height: 700px) and (orientation: portrait) {
-  .timer-circle-wrap {
-    max-height: 40vh;
-    max-width: 200px;
+  :root {
+    --circle-size: min(55vmin, 220px);
   }
 
   h2 {
@@ -595,7 +572,7 @@ nav.app-nav-safe {
 }
 
 /* =========================================
-   14. УТИЛИТЫ
+   15. УТИЛИТЫ
 ========================================= */
 .app-surface {
   background-color: var(--surface-color);
@@ -664,10 +641,17 @@ html.dark.no-adaptive .default-bg-btn {
   border-color: var(--primary-color);
 }
 
+/*
+  SVG прогресс-кольцо:
+  will-change: transform — GPU-слой для плавной анимации stroke-dashoffset.
+  Это оправдано: анимация идёт каждые 100ms при активном таймере.
+  JS убирает will-change когда таймер остановлен (аналогично .timer-display).
+*/
 .progress-ring__circle {
   transition: stroke-dashoffset 0.1s linear;
   transform: rotate(-90deg);
   transform-origin: 50% 50%;
+  will-change: transform;
 }
 
 .no-scrollbar::-webkit-scrollbar {
@@ -692,7 +676,7 @@ html.dark.no-adaptive .default-bg-btn {
 }
 
 /* =========================================
-   15. МОДАЛЬНЫЕ ОКНА — АЛЕРТЫ
+   16. МОДАЛЬНЫЕ ОКНА — АЛЕРТЫ
 ========================================= */
 #reset-modal,
 #sw-clear-modal,
@@ -709,7 +693,7 @@ html.dark.no-adaptive .default-bg-btn {
 }
 
 /* =========================================
-   16. КАСТОМИЗАЦИЯ ЭЛЕМЕНТОВ УПРАВЛЕНИЯ
+   17. КАСТОМИЗАЦИЯ ЭЛЕМЕНТОВ УПРАВЛЕНИЯ
 ========================================= */
 select {
   -webkit-appearance: none;
@@ -908,7 +892,7 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
 }
 
 /* =========================================
-   17. ЭФФЕКТ ЖИДКОГО СТЕКЛА (LIQUID GLASS)
+   18. ЭФФЕКТ ЖИДКОГО СТЕКЛА (LIQUID GLASS)
 ========================================= */
 :root.glass-effect body #tb-modal,
 :root.glass-effect body #sw-sessions-modal {
@@ -1104,7 +1088,7 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
 }
 
 /* =========================================
-   18. ФИКСЫ
+   19. ФИКСЫ
 ========================================= */
 button:disabled {
   opacity: 0.3;
