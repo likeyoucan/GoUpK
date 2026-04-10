@@ -253,7 +253,7 @@ export const sw = {
     const textColor = isLatest ? "primary-text" : "app-text";
 
     const div = document.createElement("div");
-    div.className = `lap-row flex justify-between items-center py-3 border-b app-border px-3 rounded-lg transition-all duration-300 ${bgClass}`;
+    div.className = `lap-row mt-2.5 flex justify-between items-center py-3 border-b app-border px-3 rounded-lg transition-all duration-300 ${bgClass}`;
     div.innerHTML = `
       <span class="text-xs app-text-sec font-medium">${t("lap_text")} ${lap.index}</span>
       <div class="flex items-center gap-4">
