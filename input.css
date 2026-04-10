@@ -266,10 +266,9 @@ button {
     height: 90dvh;
     max-height: 960px;
   }
-
   .timer-circle-wrap {
-    max-height: 70vh;
-    max-width: 10px;
+    max-height: 45%;
+      max-width: 30vh;
   }
 }
 
@@ -286,8 +285,8 @@ button {
     height: 88dvh;
     max-height: 700px;
     .timer-circle-wrap {
-      max-height: 40vh;
-      max-width: 200px;
+      max-height: 45%;
+      max-width: 30vh;
     }
   }
 }
@@ -300,8 +299,8 @@ button {
     height: 86dvh;
     max-height: 720px;
     .timer-circle-wrap {
-      max-height: 40vh;
-      max-width: 200px;
+      max-height: 45%;
+      max-width: 30vh;
     }
   }
 }
@@ -368,7 +367,7 @@ html.dark .app-bg.has-vignette::before {
 /* На планшете отступ не нужен */
 @media (min-width: 768px) {
   .view-top-half {
-    padding-top: 1rem;
+    padding-top: 4rem;
   }
 }
 
