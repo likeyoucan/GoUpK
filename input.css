@@ -359,52 +359,7 @@ html.dark .app-bg.has-vignette::before {
   }
 }
 
-/* =========================================
-   ОПТИМИЗАЦИЯ ДЛЯ ПЛАНШЕТОВ (iPad/Android Tab)
-========================================= */
-@media (min-width: 768px) {
-  /* Сбрасываем высоты из мобильной версии */
-  .view-top-half, 
-  .view-bottom-half {
-    height: 100% !important;
-    padding-top: env(safe-area-inset-top) !important;
-  }
 
-  /* Оптимизируем размер круга, чтобы он не был гигантским */
-  .timer-circle-wrap {
-    /* На планшете в 2-х колоночном режиме круг должен быть компактнее */
-    max-width: 380px !important; 
-    max-height: 380px !important;
-    width: 80% !important;
-    margin: 0 auto !important;
-  }
-
-  /* Корректируем шрифты внутри круга для планшета */
-  .timer-display {
-    font-size: clamp(3rem, 15cqi, 5rem) !important;
-  }
-  .timer-display.is-go {
-    font-size: clamp(4rem, 25cqi, 7rem) !important;
-  }
-
-  /* Настройки Safe Area для горизонтального режима планшета */
-  .view-top-half {
-    padding-left: calc(env(safe-area-inset-left) + 1.5rem) !important;
-  }
-  
-  /* Убираем нижний отступ навигации, если он мешает контенту справа */
-  .view-bottom-half {
-    padding-bottom: calc(5.5rem + env(safe-area-inset-bottom)) !important;
-  }
-}
-
-/* Фикс для очень больших экранов (Desktop/Large Tablets) */
-@media (min-width: 1024px) {
-  .timer-circle-wrap {
-    max-width: 450px !important;
-    max-height: 450px !important;
-  }
-}
 
 /* =========================================
    6. КРУЖОК ТАЙМЕРА
