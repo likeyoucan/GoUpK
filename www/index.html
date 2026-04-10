@@ -2,38 +2,34 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <!--
-      viewport-fit=cover — КЛЮЧЕВОЙ параметр!
-      Без него env(safe-area-inset-*) всегда возвращает 0.
-      С ним браузер/WebView позволяет контенту заходить
-      под Dynamic Island / notch / home indicator.
-    -->
+    <!-- viewport-fit=cover — КЛЮЧЕВОЙ параметр! Без него env(safe-area-inset-*) всегда возвращает 0. С ним браузер/WebView позволяет контенту заходить под Dynamic Island / notch / home indicator. -->
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover"
     />
+    text
 
     <!-- 
-        CSP ДЛЯ МОБИЛЬНЫХ ПРИЛОЖЕНИЙ 
-      - script-src 'self': запрещает любые инлайновые скрипты (защита от XSS).
-      - style-src 'self': разрешает стили только из файлов.
-      - img-src / font-src: разрешает локальные ресурсы и data-uri (иконки).
-      - capacitor:// и http://localhost: необходимы для работы нативных движков iOS/Android.
-    -->
+    CSP ДЛЯ МОБИЛЬНЫХ ПРИЛОЖЕНИЙ 
+  - script-src 'self': запрещает любые инлайновые скрипты (защита от XSS).
+  - style-src 'self': разрешает стили только из файлов.
+  - img-src / font-src: разрешает локальные ресурсы и data-uri (иконки).
+  - capacitor:// и http://localhost: необходимы для работы нативных движков iOS/Android.
+-->
     <meta
       http-equiv="Content-Security-Policy"
       content="
-      default-src 'self'; 
-      script-src 'self'; 
-      style-src 'self' 'unsafe-inline'; 
-      img-src 'self' data: capacitor: ionic: http://localhost;
-      font-src 'self' data:;
-      connect-src 'self' https:;
-      object-src 'none';
-      base-uri 'self';
-      form-action 'self';
-      upgrade-insecure-requests;
-    "
+  default-src 'self'; 
+  script-src 'self'; 
+  style-src 'self' 'unsafe-inline'; 
+  img-src 'self' data: capacitor: ionic: http://localhost;
+  font-src 'self' data:;
+  connect-src 'self' https:;
+  object-src 'none';
+  base-uri 'self';
+  form-action 'self';
+  upgrade-insecure-requests;
+"
     />
 
     <meta
@@ -56,10 +52,10 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <!--
-      black-translucent — статус-бар iPhone становится прозрачным,
-      фон приложения виден ЗА статус-баром и Dynamic Island.
-      Именно это в связке с viewport-fit=cover даёт нужный эффект.
-    -->
+  black-translucent — статус-бар iPhone становится прозрачным,
+  фон приложения виден ЗА статус-баром и Dynamic Island.
+  Именно это в связке с viewport-fit=cover даёт нужный эффект.
+-->
     <meta
       name="apple-mobile-web-app-status-bar-style"
       content="black-translucent"
@@ -90,29 +86,19 @@
     <link rel="stylesheet" href="js-check.css" />
     <link rel="stylesheet" href="styles.css" />
   </head>
-
-  <!--
-    body: h-[100dvh] w-full overflow-hidden bg-black
-    
-    НЕТ классов safe-area padding на body!
-    body — это «подложка» под всё приложение.
-    Его чёрный фон (#000) виден под Dynamic Island — это ОК,
-    потому что #app тоже чёрный и перекрывает body на всей площади.
-    
-    Если у вас цветной фон body — цвет Dynamic Island zone будет body.bg.
-    Ставьте тот же цвет что и у .app-bg (var(--bg-color)).
-  -->
+  <!-- body: h-[100dvh] w-full overflow-hidden bg-black НЕТ классов safe-area padding на body! body — это «подложка» под всё приложение. Его чёрный фон (#000) виден под Dynamic Island — это ОК, потому что #app тоже чёрный и перекрывает body на всей площади. Если у вас цветной фон body — цвет Dynamic Island zone будет body.bg. Ставьте тот же цвет что и у .app-bg (var(--bg-color)). -->
   <body
     class="preload flex items-center justify-center h-[100dvh] w-full overflow-hidden bg-black text-base select-none"
   >
     <div id="sr-only-announce" aria-live="polite" class="sr-only"></div>
+    text
 
     <!--
-      TOAST: top позиционирование переопределено в CSS через:
-      top: calc(env(safe-area-inset-top, 0px) + 1rem)
-      Убираем inline top-8 отсюда или оставляем как fallback —
-      CSS-правило в input.css с !important перебьёт его.
-    -->
+  TOAST: top позиционирование переопределено в CSS через:
+  top: calc(env(safe-area-inset-top, 0px) + 1rem)
+  Убираем inline top-8 отсюда или оставляем как fallback —
+  CSS-правило в input.css с !important перебьёт его.
+-->
     <div
       id="toast"
       role="status"
@@ -138,51 +124,51 @@
     </div>
 
     <!--
-      #app — ГЛАВНЫЙ КОНТЕЙНЕР ПРИЛОЖЕНИЯ
-      
-      Изменения:
-      1. Убран класс "relative w-full max-w-md mx-auto" — теперь стили в CSS через #app
-      2. Оставляем только нужные классы: h-full overflow-hidden flex flex-col bg-black
-      
-      Почему убрали max-w-md из HTML?
-      - Селектор .relative.max-w-md в CSS был ХРУПКИМ — любое изменение классов ломало стили
-      - Теперь #app надёжно стилизуется через ID-селектор в CSS
-      
-      ВАЖНО: h-full здесь = 100% от body = 100dvh
-    -->
+  #app — ГЛАВНЫЙ КОНТЕЙНЕР ПРИЛОЖЕНИЯ
+  
+  Изменения:
+  1. Убран класс "relative w-full max-w-md mx-auto" — теперь стили в CSS через #app
+  2. Оставляем только нужные классы: h-full overflow-hidden flex flex-col bg-black
+  
+  Почему убрали max-w-md из HTML?
+  - Селектор .relative.max-w-md в CSS был ХРУПКИМ — любое изменение классов ломало стили
+  - Теперь #app надёжно стилизуется через ID-селектор в CSS
+  
+  ВАЖНО: h-full здесь = 100% от body = 100dvh
+-->
     <div
       id="app"
       class="relative overflow-hidden flex flex-col bg-black transition-shadow duration-300"
     >
       <!--
-        .app-bg — фоновый слой
-        absolute inset-0 = занимает весь #app включая зону под Dynamic Island
-        Цвет этого блока (var(--bg-color)) будет виден за вырезом камеры
-      -->
+    .app-bg — фоновый слой
+    absolute inset-0 = занимает весь #app включая зону под Dynamic Island
+    Цвет этого блока (var(--bg-color)) будет виден за вырезом камеры
+  -->
       <div
         class="app-bg absolute inset-0 flex flex-col w-full h-full z-0 transition-colors duration-300"
       >
         <!--
-          main#viewsContainer — контейнер всех видов
-          flex-1 relative overflow-hidden z-10
-          Занимает всё пространство между верхом (включая safe area) и навигацией
-        -->
+      main#viewsContainer — контейнер всех видов
+      flex-1 relative overflow-hidden z-10
+      Занимает всё пространство между верхом (включая safe area) и навигацией
+    -->
         <main class="flex-1 relative overflow-hidden z-10" id="viewsContainer">
           <!-- ═══════════════════════════════════════════
-               STOPWATCH VIEW
-               
-               .view-top-half имеет padding-top: env(safe-area-inset-top)
-               заданный в CSS — это сдвигает h2 и кружок таймера ниже выреза,
-               при этом фон (.app-bg) остаётся под вырезом.
-          ═══════════════════════════════════════════ -->
+           STOPWATCH VIEW
+           
+           .view-top-half имеет padding-top: env(safe-area-inset-top)
+           заданный в CSS — это сдвигает h2 и кружок таймера ниже выреза,
+           при этом фон (.app-bg) остаётся под вырезом.
+      ═══════════════════════════════════════════ -->
           <div
             id="view-stopwatch"
             class="absolute inset-0 flex flex-col transition-opacity duration-300 z-10"
           >
             <!--
-              view-top-half: height 55%, padding-top = safe-area-inset-top (из CSS)
-              Заголовок "Stopwatch" и кружок таймера сдвинуты под вырез.
-            -->
+          view-top-half: height 55%, padding-top = safe-area-inset-top (из CSS)
+          Заголовок "Stopwatch" и кружок таймера сдвинуты под вырез.
+        -->
             <div
               class="view-top-half w-full flex flex-col items-center justify-center shrink-0 px-6"
             >
@@ -339,8 +325,8 @@
           </div>
 
           <!-- ═══════════════════════════════════════════
-               TIMER VIEW
-          ═══════════════════════════════════════════ -->
+           TIMER VIEW
+      ═══════════════════════════════════════════ -->
           <div
             id="view-timer"
             inert
@@ -475,8 +461,8 @@
           </div>
 
           <!-- ═══════════════════════════════════════════
-               TABATA VIEW
-          ═══════════════════════════════════════════ -->
+           TABATA VIEW
+      ═══════════════════════════════════════════ -->
           <div
             id="view-tabata"
             inert
@@ -595,12 +581,12 @@
           </div>
 
           <!-- ═══════════════════════════════════════════
-               SETTINGS VIEW
-               
-               Отдельная стратегия: view-settings — scrollable.
-               Первый дочерний div получает padding-top через CSS:
-               #view-settings > div:first-child { padding-top: calc(env(safe-area-inset-top) + 0.5rem) }
-          ═══════════════════════════════════════════ -->
+           SETTINGS VIEW
+           
+           Отдельная стратегия: view-settings — scrollable.
+           Первый дочерний div получает padding-top через CSS:
+           #view-settings > div:first-child { padding-top: calc(env(safe-area-inset-top) + 0.5rem) }
+      ═══════════════════════════════════════════ -->
           <div
             id="view-settings"
             inert
@@ -608,10 +594,10 @@
             class="absolute inset-0 flex flex-col overflow-y-auto scroll-lock no-scrollbar opacity-0 pointer-events-none transition-opacity duration-300"
           >
             <!--
-              Этот div — шапка настроек.
-              CSS добавляет к нему padding-top = safe-area-inset-top + 0.5rem
-              через селектор #view-settings > div:first-child
-            -->
+          Этот div — шапка настроек.
+          CSS добавляет к нему padding-top = safe-area-inset-top + 0.5rem
+          через селектор #view-settings > div:first-child
+        -->
             <div class="shrink-0 flex items-center justify-center mb-2 mt-6">
               <h2
                 class="text-sm font-bold app-text-sec uppercase tracking-widest mt-2"
@@ -1187,16 +1173,16 @@
         </main>
 
         <!-- ═══════════════════════════════════════════
-             BOTTOM NAVIGATION
-             
-             position: absolute, bottom: 0
-             .app-nav-safe задаёт:
-               padding-bottom: calc(env(safe-area-inset-bottom) + 0.5rem)
-               height: calc(5rem + env(safe-area-inset-bottom))
-             
-             Кнопки навигации остаются над home indicator.
-             Фон навигации заходит под home indicator.
-        ═══════════════════════════════════════════ -->
+         BOTTOM NAVIGATION
+         
+         position: absolute, bottom: 0
+         .app-nav-safe задаёт:
+           padding-bottom: calc(env(safe-area-inset-bottom) + 0.5rem)
+           height: calc(5rem + env(safe-area-inset-bottom))
+         
+         Кнопки навигации остаются над home indicator.
+         Фон навигации заходит под home indicator.
+    ═══════════════════════════════════════════ -->
         <nav
           class="absolute bottom-0 w-full flex justify-between items-center px-4 app-surface z-30 border-t app-border sm:rounded-b-[3rem] app-nav-safe"
         >
@@ -1331,8 +1317,8 @@
         </nav>
 
         <!-- ═══════════════════════════════════════════
-             МОДАЛЬНЫЕ ОКНА (BOTTOM SHEETS)
-        ═══════════════════════════════════════════ -->
+         МОДАЛЬНЫЕ ОКНА (BOTTOM SHEETS)
+    ═══════════════════════════════════════════ -->
 
         <!-- Stopwatch: Saved Results -->
         <div
