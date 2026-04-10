@@ -267,7 +267,7 @@ button {
     max-height: 960px;
   }
   .timer-circle-wrap {
-    max-height: 90%;
+    max-height: 45%;
     max-width: 30vh;
   }
 }
@@ -299,7 +299,7 @@ button {
     height: 86dvh;
     max-height: 720px;
     .timer-circle-wrap {
-      max-height: 45%;
+      max-height: 75%;
       max-width: 30vh;
     }
   }
