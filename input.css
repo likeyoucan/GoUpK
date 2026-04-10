@@ -359,7 +359,78 @@ html.dark .app-bg.has-vignette::before {
   }
 }
 
+/* =========================================
+   ОБНОВЛЕННАЯ АДАПТИВНОСТЬ ДЛЯ ПЛАНШЕТОВ
+========================================= */
 
+@media (min-width: 768px) {
+  /* 1. Разрешаем контейнеру быть широким */
+  #app {
+    width: 90% !important;
+    max-width: 950px !important; /* Оптимальная ширина для двух колонок */
+    height: 80vh !important;
+    max-height: 600px !important; /* Чтобы приложение не было слишком длинным */
+    border-radius: 2.5rem;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4);
+    padding: 0 !important;
+  }
+
+  /* 2. Включаем двухколоночный режим для всех экранов (Секундомер, Таймер, Табата) */
+  #view-stopwatch, 
+  #view-timer, 
+  #view-tabata {
+    flex-direction: row !important; /* Выстраиваем в ряд: лево и право */
+    align-items: stretch !important;
+  }
+
+  /* 3. Левая часть (Круг) */
+  .view-top-half {
+    width: 50% !important; /* Занимает ровно половину ширины */
+    height: 100% !important; /* На всю высоту приложения */
+    border-right: 1px solid var(--border-color); /* Разделительная линия */
+    padding-top: 2rem !important;
+    padding-bottom: 2rem !important;
+  }
+
+  /* 4. Правая часть (Контент/Списки) */
+  .view-bottom-half {
+    width: 50% !important; /* Вторая половина ширины */
+    height: 100% !important;
+    padding-bottom: 1rem !important; /* Уменьшаем отступ, так как места больше */
+  }
+
+  /* 5. Оптимизация круга, чтобы он не был огромным */
+  .timer-circle-wrap {
+    max-width: 320px !important; /* Фиксируем размер круга на планшете */
+    max-height: 320px !important;
+    width: 90% !important;
+    margin: auto !important;
+  }
+
+  /* 6. Подправляем навигацию (она остается снизу на всю ширину) */
+  .app-nav-safe {
+    height: 4.5rem !important;
+    border-bottom-left-radius: 2.5rem !important;
+    border-bottom-right-radius: 2.5rem !important;
+  }
+
+  /* Исправляем отступы для настроек (settings на планшете обычно в одну колонку) */
+  #view-settings {
+    flex-direction: column !important;
+  }
+}
+
+/* Для очень больших планшетов или десктопа */
+@media (min-width: 1024px) {
+  #app {
+    max-width: 1100px !important;
+    max-height: 700px !important;
+  }
+  .timer-circle-wrap {
+    max-width: 380px !important;
+    max-height: 380px !important;
+  }
+}
 
 /* =========================================
    6. КРУЖОК ТАЙМЕРА
