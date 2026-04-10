@@ -364,66 +364,73 @@ html.dark .app-bg.has-vignette::before {
 ========================================= */
 
 @media (min-width: 768px) {
-  /* 1. Расширяем контейнер, иначе колонки не поместятся */
   #app {
-    width: 90% !important;
-    max-width: 960px !important; 
+    width: 95% !important;
+    max-width: 1000px !important; 
     height: 85vh !important;
-    max-height: 650px !important;
-    border-radius: 2.5rem;
+    max-height: 700px !important;
+    border-radius: 3rem;
     padding: 0 !important;
   }
 
-  /* 2. Общая логика для всех экранов: в ряд (две колонки) */
-  #view-stopwatch, 
-  #view-timer, 
-  #view-tabata {
+  /* 1. Общая сетка для всех экранов */
+  #view-stopwatch, #view-timer, #view-tabata {
     flex-direction: row !important;
     align-items: stretch !important;
   }
 
-  /* 3. Левая часть (Круг) для всех экранов */
+  /* 2. Левая колонка (Заголовок + Круг) */
   .view-top-half {
     width: 50% !important;
     height: 100% !important;
-    padding-top: 0 !important; /* Обнуляем, так как теперь центруем */
-    justify-content: center !important;
     border-right: 1px solid var(--border-color);
+    
+    /* Прижимаем контент к верху и задаем большой отступ всей группе */
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important; 
+    align-items: center !important;
+    padding-top: 5rem !important; /* РЕГУЛИРУЙТЕ ЭТОТ ОТСТУП (весь блок ниже/выше) */
   }
 
-  /* 4. Правая часть (Контент) для всех экранов */
+  /* Сближаем заголовок и круг */
+  .view-top-half h2 {
+    margin-top: 0 !important;
+    margin-bottom: 1.5rem !important; /* Расстояние от надписи до круга */
+    font-size: 0.9rem !important;
+    letter-spacing: 0.2em !important;
+  }
+
+  .timer-circle-wrap {
+    margin: 0 !important; /* Убираем авто-отступы */
+    width: 85% !important;
+    max-width: 360px !important;
+    max-height: 360px !important;
+  }
+
+  /* 3. Правая колонка (Контент) */
   .view-bottom-half {
     width: 50% !important;
     height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    
+    /* Чтобы правая часть начиналась на том же уровне, что и левая */
+    justify-content: flex-start !important; 
+    padding-top: 5rem !important; 
+    padding-bottom: 2rem !important;
   }
 
-  /* 5. СПЕЦИФИКА ТОЛЬКО ДЛЯ ТАЙМЕРА (Центровка контента справа) */
+  /* СПЕЦИФИКА ДЛЯ ТАЙМЕРА (если всё же нужно его центровать справа) */
   #view-timer .view-bottom-half {
-    justify-content: center !important; /* Центрируем инпуты по вертикали */
-    padding-top: 0 !important;         /* Убираем отступ, чтобы не сбивать центр */
+    justify-content: center !important; /* Оставляем центровку только для инпутов таймера */
+    padding-top: 0 !important; 
   }
 
-  /* 6. Оптимизация размера круга */
-  .timer-circle-wrap {
-    max-width: 340px !important;
-    max-height: 340px !important;
-    width: 85% !important;
-    margin: auto !important;
-  }
-
-  /* Для Секундомера (Stopwatch) лучше оставить justify-start, 
-     чтобы история кругов начиналась сверху */
-  #view-stopwatch .view-bottom-half {
-    justify-content: flex-start !important;
-    padding-top: 2rem !important;
-  }
-}
-
-/* Для больших экранов (Desktop) */
-@media (min-width: 1024px) {
-  #app {
-    max-width: 1100px !important;
-    max-height: 750px !important;
+  /* Исправляем кнопку Сброс в секундомере, чтобы она не была слишком огромной */
+  #sw-lapBtn {
+    width: 180px !important;
+    margin-bottom: 2rem !important;
   }
 }
 
