@@ -162,10 +162,16 @@ button {
 
 @media (min-width: 640px) {
   .relative.max-w-md {
+    width: 80%;
+    max-width: 550px;
     height: 95vh;
     height: 95dvh;
-    max-height: 900px;
+    max-height: 1000px;
     padding: 0;
+    margin: 0 auto;
+    border-radius: 2.5rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); /* Добавим тень для глубины */
+    border: 1px solid var(--border-color);
   }
 }
 
