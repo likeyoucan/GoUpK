@@ -30,8 +30,8 @@
   --bg-color: #f3f4f6;
   --surface-color: #ffffff;
   --text-color: #1f2937;
-  --text-secondary: hsl(var(--accent-h), 25%, 45%);
-  --border-color: rgba(0, 0, 0, 0.1);
+  --text-secondary: color-mix(in srgb, var(--text-color) 65%, var(--primary-color));
+  --border-color: color-mix(in srgb, var(--text-color) 15%, transparent);
   --vignette-alpha: 0.15;
   --font-scale: 1;
 
@@ -57,20 +57,20 @@
   --bg-color: #000000;
   --surface-color: #1c1c1e;
   --text-color: #f9fafb;
-  --text-secondary: hsl(var(--accent-h), 25%, 65%);
-  --border-color: rgba(255, 255, 255, 0.1);
+  --text-secondary: color-mix(in srgb, var(--text-color) 70%, var(--primary-color));
+  --border-color: color-mix(in srgb, var(--text-color) 12%, transparent);
 }
 
 body.force-light-text {
   --text-color: #ffffff;
-  --text-secondary: hsl(var(--accent-h), 30%, 80%);
-  --border-color: rgba(255, 255, 255, 0.2);
+  --text-secondary: color-mix(in srgb, #ffffff 70%, var(--primary-color));
+  --border-color: rgba(255, 255, 255, 0.15);
 }
 
 body.force-dark-text {
   --text-color: #111827;
-  --text-secondary: hsl(var(--accent-h), 40%, 40%);
-  --border-color: rgba(0, 0, 0, 0.15);
+  --text-secondary: color-mix(in srgb, #111827 70%, var(--primary-color));
+  --border-color: rgba(0, 0, 0, 0.1);
 }
 
 html {
@@ -686,6 +686,10 @@ nav.app-nav-safe {
   transition: color 0.3s;
 }
 
+.accent-dimmed {
+  color: color-mix(in srgb, var(--primary-color) 45%, var(--text-color));
+}
+
 .primary-text {
   color: var(--primary-color);
   transition: color 0.3s;
@@ -965,6 +969,11 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
   -webkit-user-select: text;
   user-select: text;
   border-bottom-color: var(--primary-color);
+}
+
+.timer-input::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.5;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -356,24 +356,19 @@ export const themeManager = {
       if (isDark) {
         root.style.setProperty(
           "--surface-color",
-          `color-mix(in srgb, ${hex}, white 12%)`,
+          `color-mix(in srgb, ${hex}, white 10%)`,
         );
       } else {
-        if (l > 85) {
-          root.style.setProperty(
-            "--surface-color",
-            `color-mix(in srgb, ${hex}, black 8%)`,
-          );
-        } else {
-          root.style.setProperty(
-            "--surface-color",
-            `color-mix(in srgb, ${hex}, white 25%)`,
-          );
-        }
+        const mixArg = l > 90 ? "black 5%" : "white 25%";
+        root.style.setProperty(
+          "--surface-color",
+          `color-mix(in srgb, ${hex}, ${mixArg})`,
+        );
       }
 
       const luminance = this.getLuminance(rgb.r, rgb.g, rgb.b);
-      if (luminance < 0.5) document.body.classList.add("force-light-text");
+
+      if (luminance < 0.48) document.body.classList.add("force-light-text");
       else document.body.classList.add("force-dark-text");
       return;
     }
