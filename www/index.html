@@ -7,7 +7,6 @@
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover"
     />
 
-    <!-- CSP для мобильных приложений -->
     <meta
       http-equiv="Content-Security-Policy"
       content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: capacitor: ionic: http://localhost; font-src 'self' data:; connect-src 'self' https:; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;"
@@ -41,7 +40,7 @@
   >
     <div id="sr-only-announce" aria-live="polite" class="sr-only"></div>
 
-    <!-- Уведомление (Toast) -->
+    <!-- Toast Notification -->
     <div
       id="toast"
       role="status"
@@ -65,20 +64,19 @@
 
     <div
       id="app"
-      class="relative overflow-hidden flex flex-col bg-black transition-shadow duration-300"
+      class="relative overflow-hidden flex flex-col bg-black transition-shadow duration-300 w-full h-full"
     >
       <div
         class="app-bg absolute inset-0 flex flex-col w-full h-full z-0 transition-colors duration-300"
       >
         <main class="flex-1 relative overflow-hidden z-10" id="viewsContainer">
           <!-- ═══════════════════════════════════════════
-             STOPWATCH VIEW (ПЛАНШЕТ: Split Screen)
+             STOPWATCH VIEW
         ═══════════════════════════════════════════ -->
           <div
             id="view-stopwatch"
             class="absolute inset-0 flex flex-col md:flex-row transition-opacity duration-300 z-10"
           >
-            <!-- ЛЕВАЯ ЧАСТЬ: Круг -->
             <div
               class="view-top-half w-full md:w-1/2 h-[55%] md:h-full flex flex-col items-center justify-center shrink-0 px-6"
             >
@@ -119,7 +117,6 @@
               </div>
             </div>
 
-            <!-- ПРАВАЯ ЧАСТЬ: История -->
             <div
               class="view-bottom-half h-[45%] md:h-full w-full md:w-1/2 flex flex-col shrink-0 min-h-0 md:border-l app-border"
             >
@@ -143,26 +140,33 @@
                   </h3>
                   <div class="flex items-center gap-1">
                     <button
+                      type="button"
                       id="sw-saveBtn"
-                      class="hidden p-2 text-gray-400 hover:primary-text"
+                      class="hidden p-2 text-gray-400"
                     >
                       <svg
                         class="w-5 h-5"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
+                        stroke-width="2"
                       >
                         <path
                           d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
                         ></path>
                       </svg>
                     </button>
-                    <button id="sw-openResultsBtn" class="p-2 text-gray-400">
+                    <button
+                      type="button"
+                      id="sw-openResultsBtn"
+                      class="p-2 text-gray-400"
+                    >
                       <svg
                         class="w-5 h-5"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
+                        stroke-width="2"
                       >
                         <path
                           d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
@@ -184,7 +188,7 @@
           </div>
 
           <!-- ═══════════════════════════════════════════
-             TIMER VIEW (ПЛАНШЕТ: Split Screen)
+             TIMER VIEW
         ═══════════════════════════════════════════ -->
           <div
             id="view-timer"
@@ -221,43 +225,60 @@
             >
               <form id="tm-form" class="flex flex-col items-center w-full">
                 <div id="tm-inputs" class="flex items-center gap-2">
-                  <input
-                    type="text"
-                    inputmode="numeric"
-                    id="tm-h"
-                    placeholder="00"
-                    class="timer-input w-16 h-16 text-center bg-transparent border-b-2 app-border outline-none"
-                  />
-                  <span class="text-4xl opacity-30">:</span>
-                  <input
-                    type="text"
-                    inputmode="numeric"
-                    id="tm-m"
-                    placeholder="00"
-                    class="timer-input w-16 h-16 text-center bg-transparent border-b-2 app-border outline-none"
-                  />
-                  <span class="text-4xl opacity-30">:</span>
-                  <input
-                    type="text"
-                    inputmode="numeric"
-                    id="tm-s"
-                    placeholder="00"
-                    class="timer-input w-16 h-16 text-center bg-transparent border-b-2 app-border outline-none"
-                  />
+                  <div class="flex flex-col items-center">
+                    <input
+                      type="text"
+                      inputmode="numeric"
+                      id="tm-h"
+                      placeholder="00"
+                      class="timer-input w-16 h-16 text-center bg-transparent border-b-2 app-border outline-none font-mono"
+                    />
+                    <span class="text-[10px] mt-1 font-bold opacity-50"
+                      >HR</span
+                    >
+                  </div>
+                  <span class="text-4xl opacity-30 pb-5">:</span>
+                  <div class="flex flex-col items-center">
+                    <input
+                      type="text"
+                      inputmode="numeric"
+                      id="tm-m"
+                      placeholder="00"
+                      class="timer-input w-16 h-16 text-center bg-transparent border-b-2 app-border outline-none font-mono"
+                    />
+                    <span class="text-[10px] mt-1 font-bold opacity-50"
+                      >MIN</span
+                    >
+                  </div>
+                  <span class="text-4xl opacity-30 pb-5">:</span>
+                  <div class="flex flex-col items-center">
+                    <input
+                      type="text"
+                      inputmode="numeric"
+                      id="tm-s"
+                      placeholder="00"
+                      class="timer-input w-16 h-16 text-center bg-transparent border-b-2 app-border outline-none font-mono"
+                    />
+                    <span class="text-[10px] mt-1 font-bold opacity-50"
+                      >SEC</span
+                    >
+                  </div>
                 </div>
-                <button
-                  type="button"
-                  id="tm-resetBtn"
-                  class="hidden mt-8 app-surface app-text px-8 py-2 rounded-full font-bold"
-                >
-                  Reset
-                </button>
+                <div class="w-full flex justify-center h-14 mt-8">
+                  <button
+                    type="button"
+                    id="tm-resetBtn"
+                    class="hidden app-surface app-text px-8 py-2 rounded-full font-bold shadow-sm"
+                  >
+                    Reset
+                  </button>
+                </div>
               </form>
             </div>
           </div>
 
           <!-- ═══════════════════════════════════════════
-             TABATA VIEW (ПЛАНШЕТ: Split Screen)
+             TABATA VIEW
         ═══════════════════════════════════════════ -->
           <div
             id="view-tabata"
@@ -277,6 +298,7 @@
                 data-ring="tb"
               >
                 <button
+                  type="button"
                   id="tb-startBtn"
                   class="absolute inset-0 flex flex-col items-center justify-center rounded-full"
                 >
@@ -291,27 +313,61 @@
             <div
               class="view-bottom-half h-[45%] md:h-full w-full md:w-1/2 flex flex-col shrink-0 md:border-l app-border px-4 pt-4"
             >
-              <div class="flex justify-between items-center mb-4">
+              <div class="flex flex-col items-center mb-4 mt-2">
+                <span id="tb-activeName" class="text-xl font-bold app-text"
+                  >Standard Tabata</span
+                >
+                <span id="tb-activeDetail" class="text-sm app-text-sec"
+                  >20s / 10s • 8 Rounds</span
+                >
+              </div>
+              <div class="flex justify-between items-center mb-2 px-2">
                 <h3
                   class="text-xs font-bold app-text-sec uppercase tracking-wider"
                 >
                   My Workouts
                 </h3>
                 <button
+                  type="button"
                   id="tb-openModalBtn"
-                  class="primary-text font-bold text-sm"
+                  class="primary-text font-bold text-sm tracking-wider uppercase"
                 >
                   + New
                 </button>
               </div>
               <div
                 id="tb-workoutsList"
-                class="flex-1 overflow-y-auto no-scrollbar"
+                class="flex-1 overflow-y-auto no-scrollbar border-t app-border pt-2"
               ></div>
+
+              <div
+                id="tb-runningControls"
+                class="hidden absolute inset-0 bg-black/10 flex flex-col items-center justify-center p-6"
+              >
+                <div
+                  class="app-surface px-6 py-2 rounded-full mb-8 border app-border"
+                >
+                  <span class="text-xl font-bold app-text"
+                    ><span id="tb-currentRound">1</span>/<span
+                      id="tb-totalRounds"
+                      >8</span
+                    ></span
+                  >
+                </div>
+                <button
+                  type="button"
+                  id="tb-stopBtn"
+                  class="w-full bg-red-500 text-white min-h-[56px] rounded-2xl font-bold shadow-lg"
+                >
+                  STOP
+                </button>
+              </div>
             </div>
           </div>
 
-          <!-- SETTINGS VIEW (Оставляем как есть, на весь экран) -->
+          <!-- ═══════════════════════════════════════════
+             SETTINGS VIEW
+        ═══════════════════════════════════════════ -->
           <div
             id="view-settings"
             inert
@@ -324,83 +380,220 @@
                 Settings
               </h2>
             </div>
-            <!-- Тут ваши настройки... -->
-            <div class="app-surface rounded-2xl p-4 border app-border">
-              <p class="app-text-sec text-sm text-center">
-                Settings configuration here...
-              </p>
+
+            <div class="space-y-6 pb-24">
+              <section>
+                <h3
+                  class="text-xs font-bold app-text-sec uppercase tracking-wider mb-3 ml-2"
+                >
+                  Appearance
+                </h3>
+                <div
+                  class="app-surface rounded-2xl overflow-hidden border app-border"
+                >
+                  <div
+                    class="p-4 flex items-center justify-between border-b app-border"
+                  >
+                    <span class="font-medium app-text text-sm">Theme</span>
+                    <div class="flex app-bg rounded-lg p-1 border app-border">
+                      <button
+                        id="theme-system"
+                        class="px-3 py-1 text-xs font-bold"
+                      >
+                        Auto
+                      </button>
+                      <button
+                        id="theme-light"
+                        class="px-3 py-1 text-xs font-bold"
+                      >
+                        Light
+                      </button>
+                      <button
+                        id="theme-dark"
+                        class="px-3 py-1 text-xs font-bold"
+                      >
+                        Dark
+                      </button>
+                    </div>
+                  </div>
+                  <div class="p-4 border-b app-border">
+                    <span class="block font-medium app-text text-sm mb-3"
+                      >Accent Color</span
+                    >
+                    <div class="flex gap-3 overflow-x-auto no-scrollbar py-2">
+                      <button
+                        class="color-btn w-8 h-8 rounded-full bg-green-500"
+                        data-color="#22c55e"
+                      ></button>
+                      <button
+                        class="color-btn w-8 h-8 rounded-full bg-blue-500"
+                        data-color="#3b82f6"
+                      ></button>
+                      <button
+                        class="color-btn w-8 h-8 rounded-full bg-purple-500"
+                        data-color="#a855f7"
+                      ></button>
+                      <button
+                        class="color-btn w-8 h-8 rounded-full bg-pink-500"
+                        data-color="#ec4899"
+                      ></button>
+                      <input
+                        type="color"
+                        id="customColorInput"
+                        class="w-8 h-8 rounded-full overflow-hidden border-none"
+                      />
+                    </div>
+                  </div>
+                  <div class="p-4">
+                    <div class="flex justify-between items-center mb-2">
+                      <label class="font-medium app-text text-sm"
+                        >Font Size</label
+                      >
+                      <span
+                        id="fontSizeDisplay"
+                        class="font-bold primary-text text-xs"
+                        >16px</span
+                      >
+                    </div>
+                    <input
+                      type="range"
+                      id="fontSlider"
+                      min="12"
+                      max="24"
+                      value="16"
+                      class="w-full"
+                    />
+                  </div>
+                </div>
+              </section>
+
+              <section>
+                <h3
+                  class="text-xs font-bold app-text-sec uppercase tracking-wider mb-3 ml-2"
+                >
+                  General
+                </h3>
+                <div
+                  class="app-surface rounded-2xl overflow-hidden border app-border"
+                >
+                  <div
+                    class="p-4 flex items-center justify-between border-b app-border"
+                  >
+                    <label class="font-medium app-text text-sm">Language</label>
+                    <select
+                      id="langSelect"
+                      class="bg-transparent font-bold text-sm outline-none"
+                    >
+                      <option value="en">English</option>
+                      <option value="ru">Русский</option>
+                    </select>
+                  </div>
+                  <div
+                    class="p-4 flex items-center justify-between border-b app-border"
+                  >
+                    <span class="font-medium app-text text-sm">Sound</span>
+                    <label
+                      class="relative inline-flex items-center cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        id="toggle-sound"
+                        class="sr-only"
+                        checked
+                      />
+                      <div class="custom-toggle"></div>
+                    </label>
+                  </div>
+                  <div class="p-4">
+                    <button
+                      id="btn-open-reset"
+                      class="w-full text-red-500 font-bold text-xs uppercase tracking-widest py-2"
+                    >
+                      Reset to Defaults
+                    </button>
+                  </div>
+                </div>
+              </section>
+
+              <div class="flex flex-col items-center opacity-40 pt-4">
+                <span class="text-xs font-bold tracking-widest"
+                  >STOPWATCH PRO</span
+                >
+                <span class="text-[10px] mt-1">Version 1.0.0</span>
+              </div>
             </div>
           </div>
         </main>
 
-        <!-- НИЖНЯЯ НАВИГАЦИЯ -->
+        <!-- NAVIGATION -->
         <nav class="app-nav-safe">
           <button
+            type="button"
             data-nav="stopwatch"
-            class="flex flex-col items-center gap-1 group"
+            class="nav-btn flex flex-col items-center gap-1 group"
           >
             <svg
               class="w-7 h-7 text-gray-400 group-hover:primary-text transition-colors"
+              viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
-              viewBox="0 0 24 24"
               stroke-width="2"
             >
               <circle cx="12" cy="13" r="8"></circle>
               <path d="M12 9v4l2 2"></path>
             </svg>
-            <span
-              class="text-[10px] font-bold text-gray-400 group-hover:primary-text"
-              >Stopwatch</span
+            <span class="text-[10px] font-bold text-gray-400 uppercase"
+              >Watch</span
             >
           </button>
           <button
+            type="button"
             data-nav="timer"
-            class="flex flex-col items-center gap-1 group"
+            class="nav-btn flex flex-col items-center gap-1 group"
           >
             <svg
               class="w-7 h-7 text-gray-400 group-hover:primary-text transition-colors"
+              viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
-              viewBox="0 0 24 24"
               stroke-width="2"
             >
               <circle cx="12" cy="12" r="10"></circle>
               <polyline points="12 6 12 12 16 14"></polyline>
             </svg>
-            <span
-              class="text-[10px] font-bold text-gray-400 group-hover:primary-text"
+            <span class="text-[10px] font-bold text-gray-400 uppercase"
               >Timer</span
             >
           </button>
           <button
+            type="button"
             data-nav="tabata"
-            class="flex flex-col items-center gap-1 group"
+            class="nav-btn flex flex-col items-center gap-1 group"
           >
             <svg
               class="w-7 h-7 text-gray-400 group-hover:primary-text transition-colors"
+              viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
-              viewBox="0 0 24 24"
               stroke-width="2"
             >
               <circle cx="12" cy="12" r="10"></circle>
               <path d="M13 6l-6 6h5l-1 6 6-7h-5l1-6z"></path>
             </svg>
-            <span
-              class="text-[10px] font-bold text-gray-400 group-hover:primary-text"
+            <span class="text-[10px] font-bold text-gray-400 uppercase"
               >Tabata</span
             >
           </button>
           <button
+            type="button"
             data-nav="settings"
-            class="flex flex-col items-center gap-1 group"
+            class="nav-btn flex flex-col items-center gap-1 group"
           >
             <svg
               class="w-7 h-7 text-gray-400 group-hover:primary-text transition-colors"
+              viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
-              viewBox="0 0 24 24"
               stroke-width="2"
             >
               <circle cx="12" cy="12" r="3"></circle>
@@ -408,12 +601,119 @@
                 d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"
               ></path>
             </svg>
-            <span
-              class="text-[10px] font-bold text-gray-400 group-hover:primary-text"
-              >Settings</span
+            <span class="text-[10px] font-bold text-gray-400 uppercase"
+              >Setup</span
             >
           </button>
         </nav>
+
+        <!-- ═══════════════════════════════════════════
+           MODALS / BOTTOM SHEETS
+      ═══════════════════════════════════════════ -->
+
+        <!-- Sessions Modal -->
+        <div
+          id="sw-sessions-modal"
+          class="hidden absolute bottom-0 left-0 w-full h-[85dvh] z-[100] app-surface border-t app-border rounded-t-[2rem] flex flex-col p-6 transition-transform translate-y-full"
+        >
+          <div
+            class="w-12 h-1.5 bg-gray-500/30 rounded-full mx-auto mb-6"
+          ></div>
+          <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold app-text">Saved Results</h2>
+            <button id="sw-closeResultsBtn" class="p-2">✕</button>
+          </div>
+          <div
+            id="sw-sessionsList"
+            class="flex-1 overflow-y-auto no-scrollbar"
+          ></div>
+        </div>
+
+        <!-- Tabata Workout Modal -->
+        <div
+          id="tb-modal"
+          class="hidden absolute bottom-0 left-0 w-full h-[85dvh] z-[100] app-surface border-t app-border rounded-t-[2rem] flex flex-col p-6 transition-transform translate-y-full"
+        >
+          <div
+            class="w-12 h-1.5 bg-gray-500/30 rounded-full mx-auto mb-6"
+          ></div>
+          <form
+            id="tb-modal-form"
+            class="space-y-6 flex-1 overflow-y-auto no-scrollbar"
+          >
+            <div class="flex flex-col">
+              <label class="text-xs font-bold uppercase app-text-sec mb-2"
+                >Name</label
+              >
+              <input
+                type="text"
+                id="tb-edit-name"
+                required
+                class="bg-transparent border-b-2 app-border py-2 text-xl font-bold outline-none"
+                placeholder="Workout Name"
+              />
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="font-bold">Work (sec)</span>
+              <input
+                type="number"
+                id="tb-edit-work"
+                value="20"
+                class="w-16 bg-transparent text-right font-mono text-xl"
+              />
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="font-bold">Rest (sec)</span>
+              <input
+                type="number"
+                id="tb-edit-rest"
+                value="10"
+                class="w-16 bg-transparent text-right font-mono text-xl"
+              />
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="font-bold">Rounds</span>
+              <input
+                type="number"
+                id="tb-edit-rounds"
+                value="8"
+                class="w-16 bg-transparent text-right font-mono text-xl"
+              />
+            </div>
+            <button
+              type="submit"
+              class="w-full primary-bg text-white py-4 rounded-2xl font-bold text-lg"
+            >
+              Save Workout
+            </button>
+          </form>
+        </div>
+
+        <!-- Confirm Modal -->
+        <div
+          id="reset-modal"
+          class="hidden absolute inset-0 z-[200] flex items-center justify-center p-6 opacity-0 pointer-events-none transition-opacity"
+        >
+          <div
+            class="app-surface w-full max-w-sm rounded-3xl p-6 border app-border shadow-2xl"
+          >
+            <h3 class="text-xl font-bold text-red-500 mb-2">Are you sure?</h3>
+            <p class="app-text-sec text-sm mb-6">
+              This will reset all your application settings to default.
+            </p>
+            <div class="flex justify-end gap-4">
+              <button id="reset-cancel" class="font-bold app-text-sec">
+                Cancel
+              </button>
+              <button
+                id="reset-confirm"
+                class="bg-red-500 text-white px-6 py-2 rounded-xl font-bold"
+              >
+                Reset
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
