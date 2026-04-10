@@ -266,6 +266,11 @@ button {
     height: 90dvh;
     max-height: 960px;
   }
+
+  .timer-circle-wrap {
+    max-height: 70vh;
+    max-width: 10px;
+  }
 }
 
 /*
@@ -281,6 +286,10 @@ button {
     height: 88dvh;
     max-height: 700px;
   }
+  .timer-circle-wrap {
+    max-height: 70vh;
+    max-width: 20px;
+  }
 }
 
 @media (min-width: 1024px) and (orientation: landscape) {
@@ -291,9 +300,9 @@ button {
     height: 86dvh;
     max-height: 720px;
   }
-  .timer-circle-wrap{
-    max-height: 40vh;
-    max-width: 200px;
+  .timer-circle-wrap {
+    max-height: 70vh;
+    max-width: 30px;
   }
 }
 
@@ -359,7 +368,7 @@ html.dark .app-bg.has-vignette::before {
 /* На планшете отступ не нужен */
 @media (min-width: 768px) {
   .view-top-half {
-    padding-top: 0;
+    padding-top: 1rem;
   }
 }
 
@@ -520,7 +529,7 @@ nav.app-nav-safe {
       Убираем top padding — он теперь не нужен.
       Боковой отступ уже есть через padding #app.
     */
-    padding-top: 0;
+    padding-top: 0.5rem;
     height: auto;
     width: 45%;
     flex: none;
