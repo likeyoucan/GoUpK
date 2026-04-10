@@ -177,14 +177,14 @@
           ═══════════════════════════════════════════ -->
           <div
             id="view-stopwatch"
-            class="absolute inset-0 flex flex-col transition-opacity duration-300 z-10"
+            class="absolute inset-0 flex flex-col md:flex-row transition-opacity duration-300 z-10"
           >
             <!--
               view-top-half: height 55%, padding-top = safe-area-inset-top (из CSS)
               Заголовок "Stopwatch" и кружок таймера сдвинуты под вырез.
             -->
             <div
-              class="view-top-half w-full flex flex-col items-center justify-center shrink-0 px-6"
+              class="view-top-half w-full md:w-1/2 h-[55%] md:h-full flex flex-col items-center justify-center shrink-0 px-6"
             >
               <h2
                 class="text-sm font-bold app-text-sec uppercase tracking-widest"
@@ -228,7 +228,7 @@
             </div>
 
             <div
-              class="view-bottom-half h-[45%] w-full flex flex-col shrink-0 min-h-0"
+              class="view-bottom-half h-[45%] md:h-full w-full md:w-1/2 w-full flex flex-col shrink-0 min-h-0"
             >
               <div class="w-full flex justify-center h-14 shrink-0 mb-2 mt-2">
                 <button
@@ -384,7 +384,7 @@
             </div>
 
             <div
-              class="view-bottom-half h-[45%] w-full flex flex-col md:flex-row items-center justify-start pt-6 shrink-0 px-6"
+              class="view-bottom-half h-[45%] md:h-full w-full md:w-1/2 w-full flex flex-col items-center justify-start pt-6 shrink-0 px-6"
             >
               <form id="tm-form" class="flex flex-col items-center w-full">
                 <div
