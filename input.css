@@ -152,18 +152,19 @@ button {
    3. КОНТЕЙНЕР И SAFE AREA
 ========================================= */
 .relative.max-w-md {
+  height: 100vh;
   height: 100dvh;
   width: 100%;
-  padding-top: env(safe-area-inset-top, 0px);
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-  padding-left: env(safe-area-inset-left, 0px);
-  padding-right: env(safe-area-inset-right, 0px);
+  display: flex;
+  flex-direction: column;
+  margin: 0 auto;
 }
 
 @media (min-width: 640px) {
   .relative.max-w-md {
-    height: 92vh;
-    max-height: 850px;
+    height: 95vh;
+    height: 95dvh;
+    max-height: 900px;
     padding: 0;
   }
 }
@@ -180,10 +181,12 @@ button {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 55%;
+  flex: 0 0 auto; /* Не дает секции растягиваться бесконечно */
+  min-height: 400px; /* Минимальная высота, чтобы круг не сжался */
+  max-height: 60vh; /* Максимальная высота, чтобы не "убегал" вниз */
   width: 100%;
-  flex-shrink: 0;
-  padding-top: env(safe-area-inset-top, 0px);
+  padding-top: env(safe-area-inset-top, 20px);
+  gap: 2vh;
 }
 
 .view-top-half h2 {
@@ -243,10 +246,11 @@ button {
     flex: none;
   }
   .view-bottom-half {
-    height: 90%;
-    width: 45%;
-    flex: none;
-    justify-content: center;
+    flex: 1; /* Занимает всё свободное пространство */
+    display: flex;
+    flex-direction: column;
+    min-height: 0; /* Важно для работы скролла внутри flex-элемента */
+    width: 100%;
   }
   .timer-circle-wrap {
     max-height: 70vh;
@@ -352,7 +356,9 @@ html.dark .app-bg.has-vignette::before {
 .default-bg-btn {
   border: 1px solid var(--border-color);
   background-color: #f3f4f6; /* Светлая тема */
-  transition: background-color 0.3s, border-color 0.3s;
+  transition:
+    background-color 0.3s,
+    border-color 0.3s;
 }
 html.dark .default-bg-btn {
   background-color: #1c1c1e; /* Темная тема */
@@ -454,7 +460,7 @@ input[type="range"]::-webkit-slider-thumb {
   background: var(--surface-color);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
   border: 2px solid var(--primary-color);
-  margin-top: calc((4px / 2) - (24px / 2)); 
+  margin-top: calc((4px / 2) - (24px / 2));
   transition:
     outline 0.2s,
     transform 0.1s;
