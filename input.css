@@ -291,6 +291,10 @@ button {
     height: 86dvh;
     max-height: 720px;
   }
+  .timer-circle-wrap{
+    max-height: 40vh;
+    max-width: 200px;
+  }
 }
 
 /* =========================================
