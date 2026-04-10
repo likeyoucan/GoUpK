@@ -26,32 +26,35 @@
 :root {
   color-scheme: light dark;
   --primary-color: #22c55e;
-  --accent-h: 142; /* Дефолтный оттенок зеленого */
+  --accent-h: 142;
   --bg-color: #f3f4f6;
   --surface-color: #ffffff;
-
   --text-color: #1f2937;
-  /* Вспомогательный текст: серый, но слегка тонирован цветом акцента */
   --text-secondary: hsl(var(--accent-h), 25%, 45%);
-
   --border-color: rgba(0, 0, 0, 0.1);
   --vignette-alpha: 0.15;
   --font-scale: 1;
+
+  /* -------------------------------------------------------
+     Safe Area переменные — используем env() с fallback 0px
+     Эти переменные нужны для того, чтобы JS мог читать
+     реальные значения safe area через getComputedStyle
+  ------------------------------------------------------- */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
 }
 
 :root.dark {
   --primary-color: #4ade80;
   --bg-color: #000000;
   --surface-color: #1c1c1e;
-
   --text-color: #f9fafb;
-  /* В темной теме тонированный серый текст светлее */
   --text-secondary: hsl(var(--accent-h), 25%, 65%);
-
   --border-color: rgba(255, 255, 255, 0.1);
 }
 
-/* ФОРСИРОВАНИЕ ТЕКСТА (Для цветных неадаптивных фонов) */
 body.force-light-text {
   --text-color: #ffffff;
   --text-secondary: hsl(var(--accent-h), 30%, 80%);
@@ -74,7 +77,24 @@ html.dark {
 }
 
 /* =========================================
-   2. БАЗОВЫЕ НАСТРОЙКИ И ФИКСЫ ОС
+   2. БАЗОВЫЕ НАСТРОЙКИ
+   
+   СТРАТЕГИЯ SAFE AREA:
+   ┌─────────────────────────────┐
+   │   Dynamic Island / Notch    │  ← safe-area-inset-top
+   │  [фон заходит СЮДА]         │
+   ├─────────────────────────────┤
+   │                             │
+   │   Контент с отступом        │  ← padding-top: var(--safe-top)
+   │                             │
+   ├─────────────────────────────┤
+   │   Навигация                 │
+   │   [home indicator]          │  ← padding-bottom: var(--safe-bottom)
+   └─────────────────────────────┘
+   
+   1. body и #app — БЕЗ padding → фон уходит под вырез
+   2. viewport-fit=cover в <meta> — фон под вырезом
+   3. Только контентные элементы получают padding safe area
 ========================================= */
 * {
   -webkit-tap-highlight-color: transparent;
@@ -85,6 +105,11 @@ html.dark {
 }
 
 body {
+  /* 
+    ВАЖНО: height без padding!
+    Фон (#000 на body) виден под вырезом — это правильно.
+    viewport-fit=cover в мета-теге позволяет это.
+  */
   height: 100vh;
   height: 100dvh;
   background-color: #000;
@@ -98,10 +123,8 @@ body {
     Helvetica,
     Arial,
     sans-serif;
-
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-
   display: flex;
   align-items: center;
   justify-content: center;
@@ -111,6 +134,11 @@ body {
   user-select: none;
   -webkit-touch-callout: none;
   touch-action: manipulation;
+  /* 
+    НЕТ padding для safe area на body!
+    Padding на body сдвигает ВЕСЬ контент включая фон —
+    под вырезом будет черная полоса body, а не фон приложения.
+  */
 }
 
 button {
@@ -149,153 +177,61 @@ button {
 }
 
 /* =========================================
-   3. КОНТЕЙНЕР И SAFE AREA
+   3. КОНТЕЙНЕР ПРИЛОЖЕНИЯ (#app)
+   
+   #app — это основной контейнер с фоном приложения.
+   Он должен занимать ВЕСЬ экран включая зону выреза.
+   Фон #app (через .app-bg) будет виден под Dynamic Island.
+   
+   НЕ добавляем padding к #app — только к внутренним элементам!
 ========================================= */
-.relative.max-w-md {
+#app {
+  /*
+    Занимаем весь viewport включая safe area.
+    Фон приложения заходит под вырез — это и есть нужный эффект.
+  */
+  position: relative;
+  width: 100%;
   height: 100vh;
   height: 100dvh;
-  width: 100%;
-  padding-top: env(safe-area-inset-top, 0px);
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-  padding-left: env(safe-area-inset-left, 0px);
-  padding-right: env(safe-area-inset-right, 0px);
-}
-
-@media (min-width: 640px) {
-  .relative.max-w-md {
-    height: 92vh;
-    max-height: 850px;
-    padding: 0;
-  }
-}
-
-.app-nav-safe {
-  padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
-}
-
-/* =========================================
-   4. ТАЙМЕРЫ (ВЫРАВНИВАНИЕ, КРУГИ И ШРИФТЫ)
-========================================= */
-.view-top-half {
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 55%;
-  width: 100%;
-  flex-shrink: 0;
-  padding-top: env(safe-area-inset-top, 0px);
+  background-color: #000;
+
+  /* Без max-width на мобильных — на десктопе ограничим медиазапросом */
+  max-width: 448px; /* max-w-md = 28rem = 448px */
+  margin: 0 auto;
 }
 
-.view-top-half h2 {
-  margin: 0.5rem 0;
-  min-height: 1.25rem;
-}
-
-.timer-circle-wrap {
-  width: 100%;
-  max-width: 75%;
-  aspect-ratio: 1 / 1;
-  margin: 1vh auto;
-  max-height: 45vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  /* ИСПРАВЛЕНО: Container Queries для идеального масштабирования текста */
-  container-type: inline-size;
-}
-
-.timer-display {
-  /* ИСПРАВЛЕНО: Используем cqi вместо vw */
-  font-size: clamp(2rem, 22cqi, 2.8rem);
-  line-height: 1;
-  letter-spacing: -0.05em;
-  white-space: nowrap;
-  transition: all 0.3s ease;
-  font-style: normal;
-  font-variant-numeric: tabular-nums;
-}
-
-.timer-display.is-go {
-  font-size: clamp(3rem, 35cqi, 4.8rem);
-  font-style: italic;
-  padding-right: 0.1em;
-}
-
-/* =========================================
-   5. АДАПТИВНОСТЬ (LANDSCAPE И ПОРТРЕТ)
-========================================= */
-@media (orientation: landscape) and (max-height: 900px) {
-  .relative.max-w-md {
-    max-width: 900px;
-    padding-left: env(safe-area-inset-left, 0px);
-    padding-right: env(safe-area-inset-right, 0px);
-  }
-  #viewsContainer > div:not(#view-settings) {
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    gap: 2rem;
-    padding-bottom: 0;
-  }
-  .view-top-half {
-    height: auto;
-    width: 45%;
-    flex: none;
-  }
-  .view-bottom-half {
-    height: 90%;
-    width: 45%;
-    flex: none;
-    justify-content: center;
-  }
-  .timer-circle-wrap {
-    max-height: 70vh;
-    max-width: 260px;
-  }
-  h2 {
-    margin-bottom: 0.5rem;
-  }
-  #view-settings {
-    flex-direction: column;
-  }
-}
-
-@media (max-height: 700px) and (orientation: portrait) {
-  .timer-circle-wrap {
-    max-height: 40vh;
-    max-width: 200px;
-  }
-  h2 {
-    margin-bottom: 0.25rem;
-    margin-top: 0;
-  }
-  .view-top-half {
-    height: 45%;
-  }
-  .view-bottom-half {
-    height: 55%;
-  }
-  .timer-input {
-    width: 3rem !important;
-    height: 3rem !important;
-  }
-  .timer-display {
-    font-size: clamp(1.6rem, 20cqi, 2.2rem);
-  }
-  .timer-display.is-go {
-    font-size: clamp(2.5rem, 30cqi, 3.8rem);
+/*
+  На десктопе/планшете ограничиваем высоту как карточку.
+  Только здесь — на мобильном 100dvh без ограничений.
+*/
+@media (min-width: 640px) {
+  #app {
+    height: 92vh;
+    max-height: 850px;
+    border-radius: 3rem;
+    overflow: hidden;
   }
 }
 
 /* =========================================
-   6. УТИЛИТЫ И ТЕМЫ
+   4. ОСНОВНОЙ КОНТЕЙНЕР ВИДОВ
+   
+   .app-bg — фоновый слой, занимает весь #app включая зону выреза.
+   Это именно тот элемент, цвет которого виден под Dynamic Island.
 ========================================= */
 .app-bg {
   background-color: var(--bg-color);
   transition: background-color 0.3s;
   position: relative;
   z-index: 0;
+  /*
+    Занимает весь #app — фон под вырезом.
+    Контент внутри будет сдвинут через padding у view-top-half.
+  */
 }
 
 .app-bg.has-vignette::before {
@@ -314,6 +250,267 @@ html.dark .app-bg.has-vignette::before {
     rgba(0, 0, 0, calc(var(--vignette-alpha, 0.15) + 0.1));
 }
 
+/* =========================================
+   5. ТАЙМЕРЫ — ВЕРХНЯЯ ПОЛОВИНА
+   
+   КЛЮЧЕВОЕ МЕСТО для safe area!
+   view-top-half — первый видимый блок контента.
+   Именно здесь добавляем padding-top чтобы:
+   - Фон (.app-bg) уходил под Dynamic Island
+   - Но текст и кнопки начинались НИЖЕ выреза
+========================================= */
+.view-top-half {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 55%;
+  width: 100%;
+  flex-shrink: 0;
+
+  /*
+    ↓ ГЛАВНЫЙ ОТСТУП ДЛЯ SAFE AREA ↓
+    
+    Добавляем отступ сверху = высота выреза + небольшой отступ.
+    Фон при этом остаётся за вырезом (он идёт от #app),
+    а контент (h2, таймер, кнопки) начинается под вырезом.
+    
+    env(safe-area-inset-top, 0px) — возвращает:
+    - iPhone с Dynamic Island: ~59px
+    - iPhone с notch: ~44px  
+    - iPhone SE (без выреза): 20px (status bar)
+    - Android с punch-hole: обычно 24-32px
+    - Android без выреза: 0px
+  */
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.view-top-half h2 {
+  margin: 0.5rem 0;
+  min-height: 1.25rem;
+}
+
+/* =========================================
+   6. КРУЖОК ТАЙМЕРА
+========================================= */
+.timer-circle-wrap {
+  width: 100%;
+  max-width: 75%;
+  aspect-ratio: 1 / 1;
+  margin: 1vh auto;
+  max-height: 45vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  container-type: inline-size;
+}
+
+.timer-display {
+  font-size: clamp(2rem, 22cqi, 2.8rem);
+  line-height: 1;
+  letter-spacing: -0.05em;
+  white-space: nowrap;
+  transition: all 0.3s ease;
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+}
+
+.timer-display.is-go {
+  font-size: clamp(3rem, 35cqi, 4.8rem);
+  font-style: italic;
+  padding-right: 0.1em;
+}
+
+/* =========================================
+   7. НАСТРОЙКИ — спец. отступ сверху
+   
+   View настроек — отдельный случай: это scrollable контейнер.
+   Отступ добавляем не к самому view, а к его первому дочернему блоку.
+========================================= */
+#view-settings {
+  /*
+    НЕ добавляем padding-top здесь — это сломает scroll.
+    Вместо этого у нас есть div.h-\[55px\] который мы корректируем ниже.
+  */
+}
+
+/*
+  Первый div в view-settings — это шапка с заголовком "Settings".
+  Добавляем к нему padding-top для учёта safe area.
+  Селектор: первый div внутри #view-settings.
+*/
+#view-settings > div:first-child {
+  padding-top: calc(env(safe-area-inset-top, 0px) + 0.5rem);
+  height: auto;
+  min-height: calc(55px + env(safe-area-inset-top, 0px));
+}
+
+/* =========================================
+   8. НАВИГАЦИОННАЯ ПАНЕЛЬ (НИЖНЯЯ)
+   
+   nav имеет position: absolute, bottom: 0.
+   Добавляем padding-bottom для home indicator.
+   
+   Высота nav = 80px (h-20) + safe-area-inset-bottom
+========================================= */
+
+/*
+  .app-nav-safe — кастомный класс навигации.
+  Переопределяем padding-bottom для учёта home indicator.
+  
+  safe-area-inset-bottom:
+  - iPhone с Home Indicator (X и новее): ~34px
+  - iPhone SE (кнопка Home): 0px
+  - Android с жестовой навигацией: обычно 16-40px
+  - Android с кнопками: 0px
+*/
+.app-nav-safe {
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 0.5rem);
+  height: calc(5rem + env(safe-area-inset-bottom, 0px));
+}
+
+/*
+  Поскольку навигация стала выше, нужно увеличить отступ снизу
+  в скроллируемых списках чтобы контент не перекрывался навигацией.
+*/
+#sw-lapsContainer,
+#tb-workoutsList {
+  padding-bottom: calc(7rem + env(safe-area-inset-bottom, 0px)) !important;
+}
+
+/* =========================================
+   9. TOAST УВЕДОМЛЕНИЕ
+   
+   Toast позиционируется через top: 2rem (top-8).
+   Нужно сместить его ниже выреза.
+========================================= */
+#toast {
+  /*
+    top: 2rem не учитывает вырез.
+    Добавляем safe-area-inset-top чтобы toast не перекрывался вырезом.
+  */
+  top: calc(env(safe-area-inset-top, 0px) + 1rem) !important;
+}
+
+/* =========================================
+   10. МОДАЛЬНЫЕ ОКНА (BOTTOM SHEETS)
+   
+   Bottom sheets поднимаются снизу.
+   Их содержимое может быть перекрыто home indicator.
+   Добавляем padding-bottom к скроллируемой части.
+========================================= */
+#sw-sessions-modal,
+#tb-modal {
+  /*
+    Высота шита уже учитывает 85dvh.
+    Добавим padding-bottom к контенту внутри.
+  */
+}
+
+/* Кнопка Save в Tabata modal — прижата к низу */
+#tb-saveModalBtn,
+#sw-sessionsList {
+  margin-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* =========================================
+   11. АДАПТИВНОСТЬ (LANDSCAPE И ПОРТРЕТ)
+========================================= */
+@media (orientation: landscape) and (max-height: 900px) {
+  #app {
+    max-width: 900px;
+    /*
+      В landscape вырез может быть сбоку (iPhone в горизонтали).
+      Добавляем боковые отступы для safe area.
+    */
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+  }
+
+  .view-top-half {
+    /*
+      В landscape вырез сбоку, не сверху.
+      Убираем top padding, добавляем боковые.
+    */
+    padding-top: 0;
+    padding-left: env(safe-area-inset-left, 0px);
+    height: auto;
+    width: 45%;
+    flex: none;
+  }
+
+  #viewsContainer > div:not(#view-settings) {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    padding-bottom: 0;
+  }
+
+  .view-bottom-half {
+    height: 90%;
+    width: 45%;
+    flex: none;
+    justify-content: center;
+  }
+
+  .timer-circle-wrap {
+    max-height: 70vh;
+    max-width: 260px;
+  }
+
+  h2 {
+    margin-bottom: 0.5rem;
+  }
+
+  #view-settings {
+    flex-direction: column;
+  }
+
+  /* В landscape навигация сбоку может иметь safe area */
+  .app-nav-safe {
+    padding-right: calc(env(safe-area-inset-right, 0px) + 1rem);
+    padding-bottom: 0.5rem;
+    height: 5rem;
+  }
+}
+
+@media (max-height: 700px) and (orientation: portrait) {
+  .timer-circle-wrap {
+    max-height: 40vh;
+    max-width: 200px;
+  }
+
+  h2 {
+    margin-bottom: 0.25rem;
+    margin-top: 0;
+  }
+
+  .view-top-half {
+    height: 45%;
+  }
+
+  .view-bottom-half {
+    height: 55%;
+  }
+
+  .timer-input {
+    width: 3rem !important;
+    height: 3rem !important;
+  }
+
+  .timer-display {
+    font-size: clamp(1.6rem, 20cqi, 2.2rem);
+  }
+
+  .timer-display.is-go {
+    font-size: clamp(2.5rem, 30cqi, 3.8rem);
+  }
+}
+
+/* =========================================
+   12. УТИЛИТЫ
+========================================= */
 .app-surface {
   background-color: var(--surface-color);
   transition:
@@ -326,10 +523,12 @@ html.dark .app-bg.has-vignette::before {
   color: var(--text-color);
   transition: color 0.3s;
 }
+
 .app-text-sec {
   color: var(--text-secondary);
   transition: color 0.3s;
 }
+
 .primary-text {
   color: var(--primary-color);
   transition: color 0.3s;
@@ -344,24 +543,28 @@ html.dark .app-bg.has-vignette::before {
   background-color: var(--primary-color);
   transition: background-color 0.3s;
 }
+
 .primary-stroke {
   stroke: var(--primary-color);
   transition: stroke 0.3s;
 }
 
-/* Фикс дефолтного круга фона */
 .default-bg-btn {
   border: 1px solid var(--border-color);
-  background-color: #f3f4f6; /* Светлая тема */
-  transition: background-color 0.3s, border-color 0.3s;
+  background-color: #f3f4f6;
+  transition:
+    background-color 0.3s,
+    border-color 0.3s;
 }
+
 html.dark .default-bg-btn {
-  background-color: #1c1c1e; /* Темная тема */
+  background-color: #1c1c1e;
 }
-/* Если адаптивность выключена в настройках */
+
 html.no-adaptive .default-bg-btn {
   background-color: #ffffff;
 }
+
 html.dark.no-adaptive .default-bg-btn {
   background-color: #000000;
 }
@@ -370,6 +573,7 @@ html.dark.no-adaptive .default-bg-btn {
   outline: none;
   box-shadow: 0 0 0 4px var(--primary-color);
 }
+
 .primary-focus-border:focus {
   border-color: var(--primary-color);
 }
@@ -383,6 +587,7 @@ html.dark.no-adaptive .default-bg-btn {
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
@@ -401,7 +606,7 @@ html.dark.no-adaptive .default-bg-btn {
 }
 
 /* =========================================
-   7. АЛЕРТЫ И МОДАЛЬНЫЕ ОКНА
+   13. МОДАЛЬНЫЕ ОКНА — АЛЕРТЫ
 ========================================= */
 #reset-modal,
 #sw-clear-modal,
@@ -418,7 +623,7 @@ html.dark.no-adaptive .default-bg-btn {
 }
 
 /* =========================================
-   8. КАСТОМИЗАЦИЯ ЭЛЕМЕНТОВ УПРАВЛЕНИЯ
+   14. КАСТОМИЗАЦИЯ ЭЛЕМЕНТОВ УПРАВЛЕНИЯ
 ========================================= */
 select {
   -webkit-appearance: none;
@@ -437,7 +642,6 @@ input[type="range"]::-moz-focus-outer {
   border: 0;
 }
 
-/* ИСПРАВЛЕНО: Увеличена тап-зона для ползунков на мобильных устройствах */
 input[type="range"] {
   -webkit-appearance: none;
   background: transparent;
@@ -455,14 +659,16 @@ input[type="range"]::-webkit-slider-thumb {
   background: var(--surface-color);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
   border: 2px solid var(--primary-color);
-  margin-top: calc((4px / 2) - (24px / 2)); 
+  margin-top: calc((4px / 2) - (24px / 2));
   transition:
     outline 0.2s,
     transform 0.1s;
 }
+
 input[type="range"]::-webkit-slider-thumb:active {
   transform: scale(1.1);
 }
+
 input[type="range"]::-webkit-slider-runnable-track {
   width: 100%;
   height: 4px;
@@ -485,9 +691,11 @@ input[type="range"]::-moz-range-thumb {
     outline 0.2s,
     transform 0.1s;
 }
+
 input[type="range"]::-moz-range-thumb:active {
   transform: scale(1.1);
 }
+
 input[type="range"]::-moz-range-track {
   width: 100%;
   height: 4px;
@@ -500,6 +708,7 @@ input[type="range"]:focus-visible::-webkit-slider-thumb {
   outline: 2px solid var(--primary-color);
   outline-offset: 2px;
 }
+
 input[type="range"]:focus-visible::-moz-range-thumb {
   outline: 2px solid var(--primary-color);
   outline-offset: 2px;
@@ -510,6 +719,7 @@ input[type="number"]::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
+
 input[type="number"] {
   -moz-appearance: textfield;
 }
@@ -522,6 +732,7 @@ input[type="number"] {
   position: relative;
   transition: background-color 0.3s ease;
 }
+
 .custom-toggle::after {
   content: "";
   position: absolute;
@@ -534,12 +745,15 @@ input[type="number"] {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
 input:checked + .custom-toggle {
   background-color: var(--primary-color);
 }
+
 input:checked + .custom-toggle::after {
   transform: translateX(20px);
 }
+
 input[type="checkbox"]:focus-visible + .custom-toggle {
   outline: 2px solid var(--primary-color);
   outline-offset: 2px;
@@ -555,9 +769,11 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
     transform: scale(1);
   }
 }
+
 .flash-active {
   animation: flashCircle 0.5s ease-out;
 }
+
 @keyframes shake {
   0%,
   100% {
@@ -573,6 +789,7 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
     transform: translateX(-4px);
   }
 }
+
 .animate-shake {
   animation: shake 0.3s ease-in-out;
 }
@@ -586,6 +803,7 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
   border-bottom-color: rgba(128, 128, 128, 0.3) !important;
   transition: border-color 0.3s;
 }
+
 .timer-input:focus {
   -webkit-user-select: text !important;
   user-select: text !important;
@@ -604,16 +822,14 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
 }
 
 /* =========================================
-   9. ЭФФЕКТ ЖИДКОГО СТЕКЛА (LIQUID GLASS)
+   15. ЭФФЕКТ ЖИДКОГО СТЕКЛА (LIQUID GLASS)
 ========================================= */
-/* ИСПРАВЛЕНО: Убрано засилье !important за счет повышения специфичности (:root.glass-effect body) */
-/* Снижена нагрузка на GPU: saturate(150%) вместо 200%, blur(16-20px) вместо 30-40px */
-
 :root.glass-effect body #tb-modal,
 :root.glass-effect body #sw-sessions-modal {
   background-color: rgba(255, 255, 255, 0.4);
   backdrop-filter: blur(20px) saturate(150%);
 }
+
 :root.dark.glass-effect body #tb-modal,
 :root.dark.glass-effect body #sw-sessions-modal {
   background-color: rgba(0, 0, 0, 0.5);
@@ -629,6 +845,7 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
     0 20px 40px rgba(0, 0, 0, 0.15);
   border: none;
 }
+
 :root.dark.glass-effect body #reset-modal-content,
 :root.dark.glass-effect body #sw-clear-modal-content,
 :root.dark.glass-effect body #sw-name-modal-content {
@@ -648,6 +865,7 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
   border-top: 1px solid rgba(255, 255, 255, 0.2);
   box-shadow: none;
 }
+
 :root.dark.glass-effect body nav {
   background: linear-gradient(
     to top,
@@ -664,6 +882,7 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
   box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.4);
   color: var(--text-color);
 }
+
 :root.dark.glass-effect body .select-wrapper.app-surface {
   background-color: rgba(0, 0, 0, 0.2);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -677,6 +896,7 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
     inset 0 1px 1px rgba(255, 255, 255, 0.4),
     0 4px 12px rgba(0, 0, 0, 0.05);
 }
+
 :root.dark.glass-effect body button.app-surface {
   background: color-mix(in srgb, var(--surface-color) 20%, transparent);
   box-shadow:
@@ -691,6 +911,7 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
     inset 0 1px 2px rgba(255, 255, 255, 0.6),
     0 4px 12px rgba(0, 0, 0, 0.08);
 }
+
 :root.dark.glass-effect body button#sw-lapBtn:not(.is-reset) {
   background: color-mix(in srgb, var(--surface-color) 40%, transparent);
   box-shadow:
@@ -734,6 +955,7 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
     inset 0 1px 1px rgba(255, 255, 255, 0.5),
     0 8px 32px rgba(0, 0, 0, 0.05);
 }
+
 :root.dark.glass-effect body .app-surface:not(button):not(.select-wrapper),
 :root.dark.glass-effect body #toast {
   background-color: color-mix(in srgb, var(--surface-color) 30%, transparent);
@@ -747,6 +969,7 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
 :root.glass-effect body #sw-name-modal {
   background-color: rgba(255, 255, 255, 0.3);
 }
+
 :root.dark.glass-effect body #reset-modal,
 :root.dark.glass-effect body #sw-clear-modal,
 :root.dark.glass-effect body #sw-name-modal {
@@ -757,6 +980,7 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
   background-color: rgba(0, 0, 0, 0.08);
   box-shadow: none;
 }
+
 :root.dark.glass-effect body .lap-row:first-child {
   background-color: rgba(255, 255, 255, 0.1);
   box-shadow: none;
@@ -773,6 +997,7 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
     inset 0 1px 1px rgba(255, 255, 255, 0.2),
     0 2px 4px rgba(0, 0, 0, 0.05);
 }
+
 :root.dark.glass-effect body .lap-row,
 :root.dark.glass-effect body .tb-workout-row,
 :root.dark.glass-effect body .sw-session-header,
@@ -782,19 +1007,18 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
     inset 0 1px 1px rgba(255, 255, 255, 0.05),
     0 2px 4px rgba(0, 0, 0, 0.2);
 }
-/* Улучшаем читаемость текста при включенном эффекте стекла */
+
 :root.glass-effect .app-text,
 :root.glass-effect .timer-display {
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
-/* В темной теме можно сделать тень чуть сильнее для глубины */
 :root.dark.glass-effect .app-text {
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 /* =========================================
-   10. ФИКСЫ
+   16. ФИКСЫ
 ========================================= */
 nav.app-nav-safe {
   border-bottom-left-radius: inherit;
@@ -812,3 +1036,12 @@ select option {
   background-color: var(--surface-color);
   color: var(--text-color);
 }
+
+/* =========================================
+   17. УСТАРЕВШИЙ КЛАСС — ОБРАТНАЯ СОВМЕСТИМОСТЬ
+   
+   .relative.max-w-md использовался как селектор контейнера.
+   Теперь используем #app, но оставляем этот блок пустым
+   чтобы не ломать существующие стили если он где-то есть.
+========================================= */
+/* Намеренно пусто — логика перенесена в #app */
