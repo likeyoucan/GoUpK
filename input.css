@@ -334,7 +334,7 @@ html.dark .app-bg.has-vignette::before {
     height: 100%;
     width: 45%;
     flex: none;
-    padding-top: 0.5rem;
+    padding-top: 0;
   }
 }
 
