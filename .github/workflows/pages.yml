@@ -28,10 +28,10 @@ jobs:
     - name: 📥 Скачивание кода
       uses: actions/checkout@v4
 
-    - name: ⚙️ Настройка Node.js 22
-      uses: actions/setup-node@v4
+    - name: ⚙️ Настройка Node.js 24
+      uses: actions/setup-node@v6
       with:
-        node-version: '22'
+        node-version: '24'
 
     - name: 📦 Установка зависимостей
       run: npm install
