@@ -22,7 +22,7 @@
     zIndex: "9999",
     margin: "10px",
     // Исправлено: значение в кавычках и объединение transition
-    translate: "70% 0",
+    translate: "170% 0",
     transition: "background-color 0.3s, translate 0.3s ease-in-out",
   });
 
@@ -40,7 +40,7 @@
 
   btn.onmouseout = function () {
     this.style.backgroundColor = "#e74c3c";
-    this.style.translate = "70% 0";
+    this.style.translate = "170% 0";
   };
 
   // 6. Добавляем элемент на страницу
