@@ -9,7 +9,7 @@ concurrency:
 
 on:
   push:
-    branches: ["main"]
+    branches: ["optimization"]
   workflow_dispatch:
 
 jobs:
