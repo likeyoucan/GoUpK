@@ -256,7 +256,7 @@ export const themeManager = {
         customBgPicker.value = hex;
       } else {
         // Если выбран "default", сбрасываем пикер на безопасное значение
-        customBgPicker.value = "#000000";
+        customBgPicker.value = "#ffffff";
       }
     }
 
