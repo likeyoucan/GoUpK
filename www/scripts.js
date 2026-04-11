@@ -22,7 +22,7 @@
         transition: "background-color 0.3s",
         zIndex: "9999", // Чтобы кнопка была поверх других элементов
         margin: "10px"  // Небольшой отступ от края экрана
-        translate: 0 100%;
+        translate: 0 70%;
         &:hover{
             translate: 0 0;
         }
