@@ -7,18 +7,17 @@
     padding: "20px 40px",
     backgroundColor: "#e74c3c",
     position: "fixed",
-    top: "20px",    // Явно задаем верх
-    right: "0px",   // Прижимаем к правому краю без margin
+    top: "20px",
+    right: "0px",
     color: "white",
     fontSize: "18px",
     fontWeight: "bold",
-    borderRadius: "10px 0 0 10px", // Скругляем только левые углы
+    borderRadius: "10px 0 0 10px",
     cursor: "pointer",
     textAlign: "center",
     zIndex: "9999",
     userSelect: "none",
-    // Используем transform для лучшей совместимости
-    transform: "translateX(70%)", 
+    transform: "translateX(90%)", 
     transition: "background-color 0.3s, transform 0.3s ease-in-out",
   });
 
@@ -30,12 +29,12 @@
   // Эффект при наведении
   btn.onmouseover = function () {
     this.style.backgroundColor = "#c0392b";
-    this.style.transform = "translateX(0)"; // Возвращаем полностью
+    this.style.transform = "translateX(0)";
   };
 
   btn.onmouseout = function () {
     this.style.backgroundColor = "#e74c3c";
-    this.style.transform = "translateX(70%)"; // Прячем на 70%
+    this.style.transform = "translateX(79%)";
   };
 
   document.body.appendChild(btn);

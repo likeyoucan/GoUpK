@@ -32,9 +32,10 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '22'
+        cache: 'npm'
 
     - name: 📦 Установка зависимостей
-      run: npm install
+      run: npm ci
 
     - name: 🎨 Сборка стилей Tailwind CSS v4
       run: npm run build:css
