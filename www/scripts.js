@@ -22,6 +22,11 @@
         transition: "background-color 0.3s",
         zIndex: "9999", // Чтобы кнопка была поверх других элементов
         margin: "10px"  // Небольшой отступ от края экрана
+        translate: 0 100%;
+        &:hover{
+            translate: 0 0;
+        }
+        transition: translate .3s ease-in-out;
     });
 
     // 4. Логика клика
