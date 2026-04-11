@@ -1,6 +1,5 @@
 name: Build Android APK
 
-# Эта строчка уберет предупреждение про Node.js 20
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
@@ -10,7 +9,7 @@ concurrency:
 
 on:
   push:
-    branches: ["main"]
+    branches: ["optimization"]
   workflow_dispatch:
 
 jobs:
@@ -31,6 +30,7 @@ jobs:
       with:
         distribution: 'temurin'
         java-version: '21'
+        cache: 'gradle' # Автоматически кэширует Gradle wrapper и зависимости
 
     - name: 📦 Установка зависимостей
       run: npm install
@@ -39,7 +39,7 @@ jobs:
       run: npm run build:css
 
     - name: 📱 Синхронизация Capacitor
-      run: npm run cap:sync
+      run: npx cap sync android
 
     - name: 🔨 Сборка APK
       working-directory: ./android
@@ -50,5 +50,6 @@ jobs:
     - name: 📦 Сохранение готового APK
       uses: actions/upload-artifact@v4
       with:
-        name: my-app-apk-${{ github.sha }}
+        name: StopwatchPro-Debug-APK
         path: android/app/build/outputs/apk/debug/app-debug.apk
+        retention-days: 7 # Авто-удаление старых билдов через неделю
