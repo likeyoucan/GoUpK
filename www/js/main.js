@@ -1,4 +1,4 @@
-// main.js
+/*! main.js */
 
 import { $, showToast, safeRemoveLS, requestWakeLock } from "./utils.js";
 import { langManager, t } from "./i18n.js";
@@ -9,9 +9,6 @@ import { tm } from "./timer.js";
 import { tb } from "./tabata.js";
 import { sm } from "./sound.js";
 
-// =========================================
-// 1. ДИНАМИЧЕСКИЙ РЕНДЕР SVG КОЛЕЦ (DRY)
-// =========================================
 function injectSVG() {
   const svgs = {
     sw: "sw-progressRing",
@@ -22,28 +19,23 @@ function injectSVG() {
   document.querySelectorAll("[data-ring]").forEach((container) => {
     const type = container.getAttribute("data-ring");
     const ringId = svgs[type];
-    if (!ringId) return;
+    if (!ringId || container.querySelector("svg")) return;
 
-    // Проверяем, не был ли SVG уже вставлен (защита от повторного вызова)
-    if (container.querySelector("svg")) return;
-
-    // Для таймера кольцо не реагирует на клики (управление через отдельную кнопку)
     const pointerEventsClass = type === "tm" ? "pointer-events-none" : "";
-    const svgHTML = `
+    container.insertAdjacentHTML(
+      "afterbegin",
+      `
       <svg focusable="false" class="w-full h-full transform ${pointerEventsClass}" viewBox="0 0 100 100" aria-hidden="true">
         <circle class="app-text opacity-10" stroke-width="4" stroke="currentColor" fill="transparent" r="45" cx="50" cy="50" />
         <circle id="${ringId}" class="progress-ring__circle primary-stroke" stroke-width="4" stroke-linecap="round" fill="transparent" r="45" cx="50" cy="50" />
       </svg>
-    `;
-    container.insertAdjacentHTML("afterbegin", svgHTML);
+    `,
+    );
   });
 }
 
-// =========================================
-// 2. МОДАЛЬНЫЕ ОКНА И СВАЙПЫ (ЖЕСТЫ)
-// =========================================
 const resetModal = {
-  modal: null, // Ленивая инициализация после DOMContentLoaded
+  modal: null,
   content: null,
 
   init() {
@@ -53,8 +45,7 @@ const resetModal = {
 
   open() {
     if (!this.modal) return;
-    this.modal.classList.remove("hidden");
-    this.modal.classList.add("flex");
+    this.modal.classList.replace("hidden", "flex");
     this.modal.removeAttribute("inert");
     this.modal.removeAttribute("aria-hidden");
     requestAnimationFrame(() => {
@@ -68,8 +59,7 @@ const resetModal = {
     this.modal.classList.add("opacity-0");
     this.content.classList.add("opacity-0", "scale-95");
     setTimeout(() => {
-      this.modal.classList.add("hidden");
-      this.modal.classList.remove("flex");
+      this.modal.classList.replace("flex", "hidden");
       this.modal.setAttribute("inert", "");
       this.modal.setAttribute("aria-hidden", "true");
     }, 300);
@@ -93,7 +83,7 @@ const resetModal = {
       "app_liquid_glass",
       "app_volume",
     ];
-    keys.forEach((key) => safeRemoveLS(key));
+    keys.forEach(safeRemoveLS);
     this.close();
     themeManager.applySettings();
     langManager.init();
@@ -102,7 +92,6 @@ const resetModal = {
   },
 };
 
-// Функция свайпа вниз для закрытия Bottom Sheet модальных окон
 function initSwipeToClose() {
   const modals = [
     { id: "sw-sessions-modal", closeFn: () => sw.closeModal() },
@@ -113,19 +102,16 @@ function initSwipeToClose() {
     const modal = document.getElementById(id);
     if (!modal) return;
 
-    const handle = modal.querySelector(".w-12.h-1\\.5");
-    const touchArea = handle ? handle.parentElement : modal;
-    if (!touchArea) return;
-
-    let startY = 0;
-    let currentY = 0;
-    let isDragging = false;
+    const touchArea =
+      modal.querySelector(".w-12.h-1\\.5")?.parentElement || modal;
+    let startY = 0,
+      currentY = 0,
+      isDragging = false;
 
     touchArea.addEventListener(
       "touchstart",
       (e) => {
         startY = e.touches[0].clientY;
-        currentY = startY;
         isDragging = true;
         modal.style.transition = "none";
       },
@@ -138,9 +124,7 @@ function initSwipeToClose() {
         if (!isDragging) return;
         currentY = e.touches[0].clientY;
         const deltaY = currentY - startY;
-        if (deltaY > 0) {
-          modal.style.transform = `translateY(${deltaY}px)`;
-        }
+        if (deltaY > 0) modal.style.transform = `translateY(${deltaY}px)`;
       },
       { passive: true },
     );
@@ -149,13 +133,8 @@ function initSwipeToClose() {
       if (!isDragging) return;
       isDragging = false;
       modal.style.transition = "transform 400ms ease-out";
-
-      const deltaY = currentY - startY;
-      if (deltaY > 100) {
-        closeFn();
-      } else {
-        modal.style.transform = "translateY(0)";
-      }
+      if (currentY - startY > 100) closeFn();
+      else modal.style.transform = "translateY(0)";
       setTimeout(() => {
         modal.style.transform = "";
         modal.style.transition = "";
@@ -164,20 +143,19 @@ function initSwipeToClose() {
   });
 }
 
-// =========================================
-// 3. ИНИЦИАЛИЗАЦИЯ ПРИЛОЖЕНИЯ
-// =========================================
 document.addEventListener("DOMContentLoaded", () => {
-  injectSVG();
-  resetModal.init();
-  langManager.init();
-  themeManager.init();
-  sm.init();
-  sw.init();
-  tm.init();
-  tb.init();
-  navigation.init();
-  initSwipeToClose();
+  [
+    injectSVG,
+    resetModal.init,
+    langManager.init,
+    themeManager.init,
+    sm.init,
+    sw.init,
+    tm.init,
+    tb.init,
+    navigation.init,
+    initSwipeToClose,
+  ].forEach((fn) => fn.call(resetModal));
 
   setTimeout(() => document.body.classList.remove("preload"), 50);
 
@@ -190,12 +168,10 @@ document.addEventListener("DOMContentLoaded", () => {
   $("btn-open-reset")?.addEventListener("click", () => resetModal.open());
   $("reset-cancel")?.addEventListener("click", () => resetModal.close());
   $("reset-confirm")?.addEventListener("click", () => resetModal.confirm());
-
   $("sw-name-modal-content")?.addEventListener("submit", (e) => {
     e.preventDefault();
     sw.confirmNameModal();
   });
-
   $("tb-modal-form")?.addEventListener("submit", (e) => {
     e.preventDefault();
     tb.saveWorkout();
@@ -203,36 +179,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
-      if (!$("sw-name-modal")?.classList.contains("hidden")) {
-        sw.closeNameModal();
-        return;
-      }
-      if (!$("sw-clear-modal")?.classList.contains("hidden")) {
-        sw.closeClearModal();
-        return;
-      }
-      if (!$("sw-sessions-modal")?.classList.contains("hidden")) {
-        sw.closeModal();
-        return;
-      }
-      if (!$("tb-modal")?.classList.contains("hidden")) {
-        tb.closeModal();
-        return;
-      }
-      if (!$("reset-modal")?.classList.contains("hidden")) {
-        resetModal.close();
-        return;
-      }
+      if (!$("sw-name-modal")?.classList.contains("hidden"))
+        return sw.closeNameModal();
+      if (!$("sw-clear-modal")?.classList.contains("hidden"))
+        return sw.closeClearModal();
+      if (!$("sw-sessions-modal")?.classList.contains("hidden"))
+        return sw.closeModal();
+      if (!$("tb-modal")?.classList.contains("hidden")) return tb.closeModal();
+      if (!$("reset-modal")?.classList.contains("hidden"))
+        return resetModal.close();
       return;
     }
 
     if (
-      e.target.closest('input, textarea, select, button, [contenteditable="true"]')
+      e.target.closest(
+        'input, textarea, select, button, [contenteditable="true"]',
+      )
     )
       return;
 
     const view = navigation.activeView;
-
     if (e.code === "Space") {
       e.preventDefault();
       if (view === "stopwatch") sw.toggle();
@@ -249,7 +215,6 @@ document.addEventListener("DOMContentLoaded", () => {
   let lastBgTap = 0;
   $("view-stopwatch")?.addEventListener("touchstart", (e) => {
     if (e.target.closest("button, .scroll-lock, .selectable-data")) return;
-
     const now = Date.now();
     if (now - lastBgTap < 300 && sw.isRunning) {
       e.preventDefault();
@@ -258,8 +223,8 @@ document.addEventListener("DOMContentLoaded", () => {
     lastBgTap = now;
   });
 
-  let touchStartX = 0;
-  let touchStartY = 0;
+  let touchStartX = 0,
+    touchStartY = 0;
   const tabs = ["stopwatch", "timer", "tabata", "settings"];
 
   document.addEventListener(
@@ -272,127 +237,81 @@ document.addEventListener("DOMContentLoaded", () => {
   );
 
   document.addEventListener("touchend", (e) => {
-    if (
-      e.target.closest(".scroll-lock, .no-scrollbar, input, button, select")
-    )
+    if (e.target.closest(".scroll-lock, .no-scrollbar, input, button, select"))
       return;
-
-    const touchEndX = e.changedTouches[0].clientX;
-    const touchEndY = e.changedTouches[0].clientY;
-    const deltaX = touchEndX - touchStartX;
-    const deltaY = touchEndY - touchStartY;
+    const deltaX = e.changedTouches[0].clientX - touchStartX;
+    const deltaY = e.changedTouches[0].clientY - touchStartY;
 
     if (Math.abs(deltaX) > 80 && Math.abs(deltaY) < 50) {
       const currentIdx = tabs.indexOf(navigation.activeView);
-
-      if (deltaX < 0 && currentIdx < tabs.length - 1) {
+      if (deltaX < 0 && currentIdx < tabs.length - 1)
         navigation.switchView(tabs[currentIdx + 1]);
-      } else if (deltaX > 0 && currentIdx > 0) {
+      else if (deltaX > 0 && currentIdx > 0)
         navigation.switchView(tabs[currentIdx - 1]);
-      }
     }
   });
 
-  // =========================================
-  // 4. СИСТЕМНАЯ ИНТЕГРАЦИЯ ANDROID
-  // =========================================
-  if (window.Capacitor && window.Capacitor.isNativePlatform()) {
-    const Plugins = window.Capacitor.Plugins;
+  if (window.Capacitor?.isNativePlatform()) {
+    const P = window.Capacitor.Plugins;
+    P.StatusBar?.setOverlaysWebView({ overlay: true }).catch(() => {});
+    P.StatusBar?.setStyle({ style: "DARK" }).catch(() => {});
 
-    if (Plugins.StatusBar) {
-      Plugins.StatusBar.setOverlaysWebView({ overlay: true }).catch(() => {});
-      Plugins.StatusBar.setStyle({ style: "DARK" }).catch(() => {});
-    }
+    P.App?.addListener("backButton", () => {
+      if (!$("sw-name-modal")?.classList.contains("hidden"))
+        return sw.closeNameModal();
+      if (!$("sw-clear-modal")?.classList.contains("hidden"))
+        return sw.closeClearModal();
+      if (!$("sw-sessions-modal")?.classList.contains("hidden"))
+        return sw.closeModal();
+      if (!$("tb-modal")?.classList.contains("hidden")) return tb.closeModal();
+      if (!$("reset-modal")?.classList.contains("hidden"))
+        return resetModal.close();
+      if (navigation.activeView !== "stopwatch")
+        return navigation.switchView("stopwatch");
+      P.App.minimizeApp();
+    });
 
-    if (Plugins.App) {
-      Plugins.App.addListener("backButton", () => {
-        if (!$("sw-name-modal")?.classList.contains("hidden")) {
-          sw.closeNameModal();
-          return;
-        }
-        if (!$("sw-clear-modal")?.classList.contains("hidden")) {
-          sw.closeClearModal();
-          return;
-        }
-        if (!$("sw-sessions-modal")?.classList.contains("hidden")) {
-          sw.closeModal();
-          return;
-        }
-        if (!$("tb-modal")?.classList.contains("hidden")) {
-          tb.closeModal();
-          return;
-        }
-        if (!$("reset-modal")?.classList.contains("hidden")) {
-          resetModal.close();
-          return;
-        }
-        if (navigation.activeView !== "stopwatch") {
-          navigation.switchView("stopwatch");
-          return;
-        }
-        Plugins.App.minimizeApp().catch(() => {});
-      });
-    }
-
-    const FgService = Plugins.CapacitorAndroidForegroundService || Plugins.AndroidForegroundService;
-
-    if (Plugins.App && FgService) {
+    const Fg =
+      P.CapacitorAndroidForegroundService || P.AndroidForegroundService;
+    if (P.App && Fg) {
       let fgInterval = null;
-
-      async function updateForegroundNotification() {
-        let title = "Stopwatch Pro";
-        let body = "Running in background";
-
+      const updateFg = async () => {
+        let t = "Stopwatch Pro",
+          b = "Running";
         if (sw.isRunning) {
-          title = "⏱ Stopwatch";
-          body = sw.formatTime(sw.elapsedTime, false);
+          t = "⏱ Stopwatch";
+          b = sw.formatTime(sw.elapsedTime, false);
         } else if (tm.isRunning) {
-          title = "⏳ Timer";
-          const rem = Math.max(0, tm.targetTime - performance.now());
-          body = tm.getFormattedTime(Math.ceil(rem / 1000));
+          t = "⏳ Timer";
+          b = tm.getFormattedTime(
+            Math.ceil((tm.targetTime - performance.now()) / 1000),
+          );
         } else if (tb.status !== "STOPPED" && !tb.paused) {
-          const activeName = $("tb-activeName")?.textContent || "Tabata";
-          title = `🏋️ ${activeName}`;
-          const rem = Math.max(0, tb.phaseEndTime - performance.now());
-          const sTotal = Math.ceil(rem / 1000);
-          let phaseStr = tb.status === "WORK" ? "Work" : tb.status === "REST" ? "Rest" : "Get Ready";
-          body = `Round ${tb.currentRound}/${tb.rounds} • ${phaseStr}: ${sTotal}s`;
+          t = `🏋️ ${$("tb-activeName")?.textContent || "Tabata"}`;
+          b = `Round ${tb.currentRound}/${tb.rounds}`;
         } else {
-          if (fgInterval) {
-            clearInterval(fgInterval);
-            fgInterval = null;
-          }
-          await FgService.stop().catch(() => {});
-          return;
+          clearInterval(fgInterval);
+          fgInterval = null;
+          return Fg.stop();
         }
+        Fg.start({ id: 101, title: t, body: b, smallIcon: "ic_stat_name" });
+      };
 
-        await FgService.start({
-          id: 101,
-          title,
-          body,
-          smallIcon: "ic_stat_name",
-        }).catch(() => {});
-      }
-
-      Plugins.App.addListener("appStateChange", async ({ isActive }) => {
-        const isTimerRunning =
-          sw.isRunning ||
-          tm.isRunning ||
-          (tb.status !== "STOPPED" && !tb.paused);
-
-        if (!isActive && isTimerRunning) {
+      P.App.addListener("appStateChange", ({ isActive }) => {
+        if (
+          !isActive &&
+          (sw.isRunning ||
+            tm.isRunning ||
+            (tb.status !== "STOPPED" && !tb.paused))
+        ) {
           sm.unlock();
           requestWakeLock();
-          await updateForegroundNotification();
-          if (!fgInterval) {
-            fgInterval = setInterval(updateForegroundNotification, 1000);
-          }
+          updateFg();
+          if (!fgInterval) fgInterval = setInterval(updateFg, 1000);
         } else if (isActive) {
-          if (fgInterval) {
-            clearInterval(fgInterval);
-            fgInterval = null;
-          }
-          await FgService.stop().catch(() => {});
+          clearInterval(fgInterval);
+          fgInterval = null;
+          Fg.stop();
         }
       });
     }
