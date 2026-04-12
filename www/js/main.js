@@ -241,34 +241,50 @@ document.addEventListener("DOMContentLoaded", () => {
     lastBgTap = now;
   });
 
-  let touchStartX = 0;
-  let touchStartY = 0;
+  // --- ИСПРАВЛЕНИЕ СВАЙПОВ ---
+  const viewsContainer = $("viewsContainer");
+  if (viewsContainer) {
+    let touchStartX = 0;
+    let touchStartY = 0;
 
-  document.addEventListener(
-    "touchstart",
-    (e) => {
-      touchStartX = e.touches[0].clientX;
-      touchStartY = e.touches[0].clientY;
-    },
-    { passive: true },
-  );
+    viewsContainer.addEventListener(
+      "touchstart",
+      (e) => {
+        // Не начинаем свайп, если касание на интерактивном элементе
+        if (e.target.closest("button, a, input, select, .scroll-lock, .no-scrollbar")) {
+          touchStartX = 0; // Сбрасываем, чтобы touchend не сработал
+          return;
+        }
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+      },
+      { passive: true },
+    );
 
-  document.addEventListener("touchend", (e) => {
-    if (e.target.closest(".scroll-lock, .no-scrollbar, input, button, select"))
-      return;
-    const touchEndX = e.changedTouches[0].clientX;
-    const touchEndY = e.changedTouches[0].clientY;
-    const deltaX = touchEndX - touchStartX;
-    const deltaY = touchEndY - touchStartY;
-    if (Math.abs(deltaX) > 80 && Math.abs(deltaY) < 50) {
-      const currentIdx = tabs.indexOf(navigation.activeView);
-      if (deltaX < 0 && currentIdx < tabs.length - 1) {
-        navigation.switchView(tabs[currentIdx + 1], 'forward');
-      } else if (deltaX > 0 && currentIdx > 0) {
-        navigation.switchView(tabs[currentIdx - 1], 'backward');
+    viewsContainer.addEventListener("touchend", (e) => {
+      // Если свайп не был начат (например, из-за касания на кнопке), выходим
+      if (touchStartX === 0) return;
+
+      const touchEndX = e.changedTouches[0].clientX;
+      const touchEndY = e.changedTouches[0].clientY;
+      const deltaX = touchEndX - touchStartX;
+      const deltaY = touchEndY - touchStartY;
+      
+      // Сбрасываем стартовую позицию для следующего свайпа
+      touchStartX = 0;
+
+      // Условие: горизонтальное движение должно быть значительным И как минимум в 2 раза больше вертикального
+      if (Math.abs(deltaX) > 80 && Math.abs(deltaX) > Math.abs(deltaY) * 2) {
+        const currentIdx = tabs.indexOf(navigation.activeView);
+        if (deltaX < 0 && currentIdx < tabs.length - 1) {
+          navigation.switchView(tabs[currentIdx + 1], 'forward');
+        } else if (deltaX > 0 && currentIdx > 0) {
+          navigation.switchView(tabs[currentIdx - 1], 'backward');
+        }
       }
-    }
-  });
+    });
+  }
+
 
   // =========================================
   // 4. СИСТЕМНАЯ ИНТЕГРАЦИЯ ANDROID
