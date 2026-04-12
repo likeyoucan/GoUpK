@@ -1,6 +1,6 @@
 // main.js
 
-import { $, showToast, safeRemoveLS, requestWakeLock } from "./utils.js";
+import { $, showToast, safeRemoveLS, requestWakeLock } from "./utils.js?v=VERSION";
 import { langManager, t } from "./i18n.js?v=VERSION";
 import { themeManager } from "./theme.js?v=VERSION";
 import { navigation } from "./navigation.js?v=VERSION";
