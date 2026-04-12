@@ -45,7 +45,7 @@ export const themeManager = {
       this.showMs = e.target.checked;
       safeSetLS("app_show_ms", this.showMs);
       document.dispatchEvent(
-        new CustomEvent("msChanged", { detail: this.showMs }),
+        new CustomEvent("msChanged", { detail: this.showMs })
       );
     });
 
@@ -55,7 +55,7 @@ export const themeManager = {
       this.updateAdaptiveClass();
       this.applyBgTheme(
         this.currentBg,
-        document.documentElement.classList.contains("dark"),
+        document.documentElement.classList.contains("dark")
       );
     });
 
@@ -78,30 +78,30 @@ export const themeManager = {
     });
 
     $("fontSlider")?.addEventListener("input", (e) =>
-      this.setFontSize(e.target.value),
+      this.setFontSize(e.target.value)
     );
 
     this.themeBtns.forEach((btn) =>
       btn.addEventListener("click", (e) =>
-        this.setMode(e.currentTarget.getAttribute("data-theme-mode")),
-      ),
+        this.setMode(e.currentTarget.getAttribute("data-theme-mode"))
+      )
     );
     this.colorBtns.forEach((btn) =>
       btn.addEventListener("click", (e) =>
-        this.setColor(e.currentTarget.getAttribute("data-color")),
-      ),
+        this.setColor(e.currentTarget.getAttribute("data-color"))
+      )
     );
     this.bgBtns.forEach((btn) =>
       btn.addEventListener("click", (e) =>
-        this.setBgColor(e.currentTarget.getAttribute("data-bg")),
-      ),
+        this.setBgColor(e.currentTarget.getAttribute("data-bg"))
+      )
     );
 
     $("customColorInput")?.addEventListener("input", (e) =>
-      this.setColor(e.target.value),
+      this.setColor(e.target.value)
     );
     $("customBgInput")?.addEventListener("input", (e) =>
-      this.setBgColor(e.target.value),
+      this.setBgColor(e.target.value)
     );
 
     window
@@ -134,8 +134,7 @@ export const themeManager = {
     if ($("vignetteSlider")) $("vignetteSlider").value = this.vignetteAlpha;
     if ($("toggle-ms")) $("toggle-ms").checked = this.showMs;
     if ($("fontSlider")) $("fontSlider").value = safeGetLS("font_size") || 16;
-
-    // Этот блок остается для инициализации при загрузке страницы
+    
     const storedColor = safeGetLS("theme_color");
     if ($("customColorInput")) {
       if (storedColor && storedColor.startsWith("#")) {
@@ -202,10 +201,6 @@ export const themeManager = {
   setColor(hex) {
     safeSetLS("theme_color", hex);
 
-    // ===============================================
-    // === НОВОЕ ИЗМЕНЕНИЕ ===
-    // Обновляем значение кастомного пикера в реальном времени
-    // ===============================================
     const customColorPicker = $("customColorInput");
     if (customColorPicker && hex.startsWith("#")) {
       customColorPicker.value = hex;
@@ -237,16 +232,11 @@ export const themeManager = {
     this.currentBg = hex;
     safeSetLS("theme_bg_color", hex);
 
-    // ===============================================
-    // === НОВОЕ ИЗМЕНЕНИЕ ===
-    // Обновляем значение кастомного пикера в реальном времени
-    // ===============================================
     const customBgPicker = $("customBgInput");
     if (customBgPicker) {
       if (hex.startsWith("#")) {
         customBgPicker.value = hex;
       } else {
-        // Если выбран "default", сбрасываем пикер на безопасное значение
         customBgPicker.value = "#ffffff";
       }
     }
@@ -263,7 +253,7 @@ export const themeManager = {
         "ring-2",
         "ring-offset-2",
         "ring-offset-white",
-        "dark:ring-offset-gray-900",
+        "dark:ring-offset-gray-900"
       );
       const targetAttr = isBg
         ? b.getAttribute("data-bg")
@@ -273,7 +263,7 @@ export const themeManager = {
           "ring-2",
           "ring-offset-2",
           "ring-offset-white",
-          "dark:ring-offset-gray-900",
+          "dark:ring-offset-gray-900"
         );
         const iconColor =
           isBg && hex === "default" ? "var(--text-color)" : "white";
@@ -287,14 +277,14 @@ export const themeManager = {
     const pickerWrapper = $(customId)?.closest(".relative");
     if (!pickerWrapper) return;
     const gradientEl = pickerWrapper.querySelector(
-      '[class*="bg-[conic-gradient"]',
+      '[class*="bg-[conic-gradient"]'
     );
 
     pickerWrapper.classList.remove(
       "ring-2",
       "ring-offset-2",
       "ring-offset-white",
-      "dark:ring-offset-gray-900",
+      "dark:ring-offset-gray-900"
     );
     pickerWrapper.style.backgroundColor = "";
     if (gradientEl) gradientEl.style.opacity = "1";
@@ -304,7 +294,7 @@ export const themeManager = {
         "ring-2",
         "ring-offset-2",
         "ring-offset-white",
-        "dark:ring-offset-gray-900",
+        "dark:ring-offset-gray-900"
       );
       pickerWrapper.style.backgroundColor = hex;
       if (gradientEl) gradientEl.style.opacity = "0";
@@ -329,7 +319,7 @@ export const themeManager = {
         root.style.setProperty("--bg-color", isDark ? "#000000" : "#f3f4f6");
         root.style.setProperty(
           "--surface-color",
-          isDark ? "#1c1c1e" : "#ffffff",
+          isDark ? "#1c1c1e" : "#ffffff"
         );
       } else {
         root.style.removeProperty("--bg-color");
@@ -347,13 +337,13 @@ export const themeManager = {
       if (isDark) {
         root.style.setProperty(
           "--surface-color",
-          `color-mix(in srgb, ${hex}, white 10%)`,
+          `color-mix(in srgb, ${hex}, white 10%)`
         );
       } else {
         const mixArg = l > 90 ? "black 5%" : "white 25%";
         root.style.setProperty(
           "--surface-color",
-          `color-mix(in srgb, ${hex}, ${mixArg})`,
+          `color-mix(in srgb, ${hex}, ${mixArg})`
         );
       }
 
@@ -395,7 +385,7 @@ export const themeManager = {
       const visualAlpha = this.vignetteAlpha * 0.3;
       document.documentElement.style.setProperty(
         "--vignette-alpha",
-        visualAlpha,
+        visualAlpha
       );
     } else {
       bgElement.classList.remove("has-vignette");
@@ -459,7 +449,7 @@ export const themeManager = {
     if (primaryColor) {
       document.documentElement.style.setProperty(
         "--primary-color",
-        primaryColor,
+        primaryColor
       );
       const { h } = this.hexToHSL(primaryColor);
       document.documentElement.style.setProperty("--accent-h", h);

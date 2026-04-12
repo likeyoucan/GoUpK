@@ -18,9 +18,6 @@ export const sm = {
 
   init() {
     this.applySettings();
-    
-    // ИЗМЕНЕНИЕ 1: Создаем AudioContext сразу при инициализации.
-    // Он будет в состоянии 'suspended', пока пользователь не совершит действие.
     this.initAudio();
 
     $("toggle-sound")?.addEventListener("change", (e) => {
@@ -57,10 +54,8 @@ export const sm = {
       this.play("click");
     });
     
-    // ИЗМЕНЕНИЕ 2: Эти обработчики теперь ТОЛЬКО разблокируют уже
-    // существующий контекст, а не создают его.
     const unlockHandler = () => {
-        this.unlock();
+      this.unlock();
     };
     
     document.addEventListener("click", unlockHandler, { once: true, capture: true });
@@ -108,7 +103,6 @@ export const sm = {
   },
 
   initAudio() {
-    // Эта функция теперь вызывается только один раз (или при включении звука)
     if (this.audioCtx || !this.soundEnabled) return;
     try {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -116,8 +110,6 @@ export const sm = {
         this.audioCtx = new AudioContext();
       }
     } catch (e) {
-      console.warn("AudioContext creation failed:", e);
-      // Если создать контекст не удалось, отключаем звук, чтобы избежать ошибок
       this.soundEnabled = false;
     }
   },
@@ -130,11 +122,9 @@ export const sm = {
         navigator.vibrate(
           Array.isArray(pattern)
             ? pattern.map(applyLevel)
-            : applyLevel(pattern),
+            : applyLevel(pattern)
         );
-      } catch (e) {
-        // Молча игнорируем
-      }
+      } catch (e) {}
     }
   },
 
@@ -145,7 +135,7 @@ export const sm = {
     duration,
     volMultiplier = 1,
     slideToFreq = null,
-    sustain = false,
+    sustain = false
   ) {
     if (!this.audioCtx) return;
     const osc = this.audioCtx.createOscillator();
@@ -167,13 +157,13 @@ export const sm = {
       gainNode.gain.linearRampToValueAtTime(peakVol, startTime + attackTime);
       gainNode.gain.linearRampToValueAtTime(
         peakVol,
-        startTime + duration - releaseTime,
+        startTime + duration - releaseTime
       );
       gainNode.gain.linearRampToValueAtTime(0.001, startTime + duration);
     } else {
       gainNode.gain.linearRampToValueAtTime(
         peakVol,
-        startTime + Math.min(0.02, duration * 0.1),
+        startTime + Math.min(0.02, duration * 0.1)
       );
       gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
     }
@@ -183,13 +173,13 @@ export const sm = {
       if (sustain) {
         osc.frequency.linearRampToValueAtTime(
           slideToFreq,
-          startTime + duration * 0.4,
+          startTime + duration * 0.4
         );
         osc.frequency.linearRampToValueAtTime(slideToFreq, startTime + duration);
       } else {
         osc.frequency.exponentialRampToValueAtTime(
           slideToFreq,
-          startTime + duration,
+          startTime + duration
         );
       }
     }
@@ -204,13 +194,8 @@ export const sm = {
   },
 
   play(type) {
-    // Эта функция теперь надежно работает с первого раза
     if (!this.soundEnabled || !this.audioCtx || this.volume === 0) return;
-    
-    // Пытаемся разбудить контекст при каждом вызове.
-    // Это безопасно и работает как подстраховка.
     this.unlock();
-
     if (this.theme === "classic") {
       if (type === "click") this.playNote(2000, "square", 0, 0.05, 0.2);
       else if (type === "tick") this.playNote(2500, "square", 0, 0.05, 0.3);
@@ -242,7 +227,14 @@ export const sm = {
         this.playNote(600, "sine", 0.0, 0.3, 0.5, 50);
       } else if (type === "complete") {
         const playSwoosh = (time, duration, isFinal = false) => {
-          this.playNote(isFinal ? 3500 : 2500, "triangle", time, duration, 0.7, 100);
+          this.playNote(
+            isFinal ? 3500 : 2500,
+            "triangle",
+            time,
+            duration,
+            0.7,
+            100
+          );
           this.playNote(isFinal ? 1500 : 1000, "sine", time, duration, 0.8, 50);
           if (isFinal) {
             this.playNote(300, "square", time, duration, 0.3, 20);

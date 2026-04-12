@@ -243,7 +243,10 @@ export const langManager = {
 };
 
 export function t(key) {
-  return (translations[langManager.current] && translations[langManager.current][key])
-    ? translations[langManager.current][key]
-    : (translations["en"][key] || key);
+  return (
+    (translations[langManager.current] &&
+      translations[langManager.current][key]) ||
+    translations["en"][key] ||
+    key
+  );
 }

@@ -25,9 +25,7 @@ export const updateTitle = (text) => {
 export const safeSetLS = (key, value) => {
   try {
     localStorage.setItem(key, value);
-  } catch (e) {
-    console.warn("LocalStorage Quota Exceeded or Blocked");
-  }
+  } catch (e) {}
 };
 
 export const safeGetLS = (key) => {
@@ -41,9 +39,7 @@ export const safeGetLS = (key) => {
 export const safeRemoveLS = (key) => {
   try {
     localStorage.removeItem(key);
-  } catch (e) {
-    console.warn("LocalStorage Remove Error");
-  }
+  } catch (e) {}
 };
 
 let wakeLock = null;
@@ -55,19 +51,20 @@ export const requestWakeLock = async () => {
       wakeLock.addEventListener("release", () => {
         wakeLock = null;
       });
-    } catch (err) {
-      console.warn("Wake Lock error:", err);
-    }
+    } catch (err) {}
   }
 };
 
 export const releaseWakeLock = () => {
   if (wakeLock !== null) {
-    wakeLock.release().then(() => {
-      wakeLock = null;
-    }).catch(() => {
-      wakeLock = null;
-    });
+    wakeLock
+      .release()
+      .then(() => {
+        wakeLock = null;
+      })
+      .catch(() => {
+        wakeLock = null;
+      });
   }
 };
 
@@ -144,10 +141,8 @@ export const getExtendedDisplay = (ms, strDay = "d", strHour = "h") => {
 
 const createWorker = () => {
   try {
-    return new Worker('./js/worker.js');
+    return new Worker("./js/worker.js");
   } catch (e) {
-    console.error("Web Worker не удалось создать:", e);
-    // Возвращаем заглушку с тем же API, чтобы приложение не падало
     return {
       postMessage: () => {},
       addEventListener: () => {},

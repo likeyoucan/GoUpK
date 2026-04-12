@@ -37,24 +37,19 @@ export const tm = {
       m: $("tm-m"),
       s: $("tm-s"),
     };
-
     if (this.els.ring) {
       this.els.ring.style.strokeDasharray = this.ringLength;
       this.els.ring.style.strokeDashoffset = this.ringLength;
     }
-
     document.addEventListener("timerStarted", (e) => {
       if (e.detail !== "timer" && this.isRunning) this.toggle();
     });
-
     this.els.circleBtn?.addEventListener("click", () => this.toggle());
     this.els.resetBtn?.addEventListener("click", () => this.reset(true));
-
     $("tm-form")?.addEventListener("submit", (e) => {
       e.preventDefault();
       document.activeElement?.blur();
     });
-
     [this.els.m, this.els.s].forEach((i) => {
       if (!i) return;
       i.addEventListener("focus", () => {
@@ -68,7 +63,6 @@ export const tm = {
         i.value = pad(i.value || 0);
       });
     });
-
     if (this.els.h) {
       this.els.h.addEventListener("focus", () => {
         if (this.els.h.value === "00" || this.els.h.value === "0")
@@ -82,16 +76,13 @@ export const tm = {
         this.els.h.value = pad(this.els.h.value || 0);
       });
     }
-
     this.setupScrollInteraction(this.els.h, 99, false);
     this.setupScrollInteraction(this.els.m, 59, true);
     this.setupScrollInteraction(this.els.s, 59, true);
-
     bgWorker.addEventListener("message", (e) => {
       if (e.data === "tick" && this.isRunning && document.hidden)
         this.tick(true);
     });
-
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "visible" && this.isRunning) {
         this.lastRender = 0;
@@ -102,10 +93,8 @@ export const tm = {
 
   setupScrollInteraction(input, max, isWrap) {
     if (!input) return;
-
     let startY = 0;
     const threshold = 15;
-
     const updateVal = (delta) => {
       let val = parseInt(input.value || 0, 10);
       val += delta;
@@ -119,24 +108,21 @@ export const tm = {
       sm.play("click");
       sm.vibrate(10);
     };
-
     input.addEventListener(
       "wheel",
       (e) => {
         e.preventDefault();
         updateVal(e.deltaY > 0 ? -1 : 1);
       },
-      { passive: false },
+      { passive: false }
     );
-
     input.addEventListener(
       "touchstart",
       (e) => {
         startY = e.touches[0].clientY;
       },
-      { passive: true },
+      { passive: true }
     );
-
     input.addEventListener(
       "touchmove",
       (e) => {
@@ -149,9 +135,8 @@ export const tm = {
           startY = currentY;
         }
       },
-      { passive: false },
+      { passive: false }
     );
-
     let isDragging = false;
     const onMouseMove = (e) => {
       if (!isDragging) return;
@@ -184,7 +169,6 @@ export const tm = {
     sm.vibrate(50);
     sm.play("click");
     sm.unlock();
-
     if (this.isRunning) {
       this.isRunning = false;
       this.isPaused = true;
@@ -196,21 +180,19 @@ export const tm = {
       this.updateUIState();
     } else {
       document.dispatchEvent(
-        new CustomEvent("timerStarted", { detail: "timer" }),
+        new CustomEvent("timerStarted", { detail: "timer" })
       );
-
       if (!this.isPaused) {
         const h = parseInt(this.els.h?.value, 10) || 0;
         const m = parseInt(this.els.m?.value, 10) || 0;
         const s = parseInt(this.els.s?.value, 10) || 0;
         this.totalDuration = (h * 3600 + m * 60 + s) * 1000;
-
         if (this.totalDuration === 0) {
           showToast(t("timer_zero"));
           this.els.inputs.classList.add("animate-shake");
           setTimeout(
             () => this.els.inputs.classList.remove("animate-shake"),
-            300,
+            300
           );
           return;
         }
@@ -218,7 +200,6 @@ export const tm = {
       } else {
         this.targetTime = performance.now() + this.remainingAtPause;
       }
-
       this.isRunning = true;
       this.isPaused = false;
       requestWakeLock();
@@ -237,13 +218,11 @@ export const tm = {
     cancelAnimationFrame(this.rAF);
     releaseWakeLock();
     updateTitle("");
-
     if (clearInputs) {
       if (this.els.h) this.els.h.value = "00";
       if (this.els.m) this.els.m.value = "00";
       if (this.els.s) this.els.s.value = "00";
     }
-
     this.updateUIState();
     if (this.els.ring) {
       this.els.ring.style.strokeDashoffset = this.ringLength;
@@ -254,7 +233,6 @@ export const tm = {
 
   updateUIState() {
     if (!this.els.inputs) return;
-
     if (this.isRunning) {
       this.els.inputs.classList.add("hidden", "opacity-0");
       this.els.resetBtn?.classList.add("hidden");
@@ -278,7 +256,6 @@ export const tm = {
     if (!this.isRunning) return;
     const now = performance.now();
     const remaining = Math.max(0, this.targetTime - now);
-
     if (now - this.lastRender >= 16 || isBackground) {
       if (!isBackground) {
         this.updateDisplay(remaining);
@@ -288,21 +265,18 @@ export const tm = {
       }
       this.lastRender = now;
     }
-
     if (remaining <= 0) {
       this.isRunning = false;
       bgWorker.postMessage("stop");
       sm.vibrate([200, 100, 200, 100, 400]);
       sm.play("complete");
       announceToScreenReader(t("timer_finished"));
-
       requestAnimationFrame(() => {
         showToast(t("timer_finished"));
         this.reset(false);
       });
       return;
     }
-
     if (!isBackground) {
       cancelAnimationFrame(this.rAF);
       this.rAF = requestAnimationFrame(() => this.tick());
@@ -323,10 +297,8 @@ export const tm = {
   updateDisplay(rem) {
     const sTotal = Math.ceil(rem / 1000);
     const timeStr = this.getFormattedTime(sTotal);
-
     updateText(this.els.display, timeStr);
     updateTitle(timeStr);
-
     if (this.els.ring && this.totalDuration > 0) {
       this.els.ring.style.strokeDashoffset =
         this.ringLength -

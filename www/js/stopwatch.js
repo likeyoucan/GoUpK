@@ -65,53 +65,46 @@ export const sw = {
       clearCancel: $("sw-clear-cancel"),
       clearConfirm: $("sw-clear-confirm"),
     };
-
     if (this.els.ring) {
       this.els.ring.style.strokeDasharray = this.ringLength;
       this.els.ring.style.strokeDashoffset = this.ringLength;
     }
-
     document.addEventListener("timerStarted", (e) => {
       if (e.detail !== "stopwatch" && this.isRunning) this.toggle();
     });
-
     bgWorker.addEventListener("message", (e) => {
       if (e.data === "tick" && this.isRunning && document.hidden)
         this.tick(true);
     });
-
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "visible" && this.isRunning) {
         this.lastRender = 0;
         this.tick();
       }
     });
-
     this.els.btn?.addEventListener("click", () => this.toggle());
     this.els.lapBtn?.addEventListener("click", () => this.recordLapOrReset());
     this.els.saveBtn?.addEventListener("click", () => this.prepareSaveSession());
     this.els.openResultsBtn?.addEventListener("click", () => this.openModal());
     this.els.closeResultsBtn?.addEventListener("click", () => this.closeModal());
     this.els.sortSelect?.addEventListener("change", (e) =>
-      this.sortSessions(e.target.value),
+      this.sortSessions(e.target.value)
     );
-
     this.els.nameCancel?.addEventListener("click", () => this.closeNameModal());
     this.els.nameInput?.addEventListener("input", () =>
-      this.els.nameError?.classList.add("hidden"),
+      this.els.nameError?.classList.add("hidden")
     );
-
     this.els.clearAllBtn?.addEventListener("click", () => {
       if (this.savedSessions.length > 0) this.openClearModal();
     });
     this.els.clearCancel?.addEventListener("click", () => this.closeClearModal());
-    this.els.clearConfirm?.addEventListener("click", () => this.confirmClearAll());
-
+    this.els.clearConfirm?.addEventListener("click", () =>
+      this.confirmClearAll()
+    );
     this.els.sessionsList?.addEventListener("click", (e) => {
       const header = e.target.closest(".sw-session-header");
       const renameBtn = e.target.closest(".sw-rename-btn");
       const deleteBtn = e.target.closest(".sw-delete-btn");
-      
       if (renameBtn) {
         e.stopPropagation();
         this.prepareRenameSession(Number(renameBtn.dataset.id));
@@ -122,7 +115,6 @@ export const sw = {
         this.toggleSessionDetails(Number(header.dataset.id));
       }
     });
-
     try {
       const stored = safeGetLS("sw_saved_sessions");
       if (stored) {
@@ -130,15 +122,12 @@ export const sw = {
         this.savedSessions = Array.isArray(parsed) ? parsed : [];
       }
     } catch (e) {
-      console.warn("Failed to parse stopwatch sessions", e);
       this.savedSessions = [];
     }
-
     document.addEventListener("languageChanged", () => {
       this.renderSavedSessions();
       if (this.laps.length > 0) this.reRenderCurrentLaps();
     });
-
     document.addEventListener("msChanged", () => {
       if (!this.isRunning && this.elapsedTime > 0) this.updateDisplay();
       if (this.laps.length > 0) this.reRenderCurrentLaps();
@@ -166,7 +155,6 @@ export const sw = {
     sm.vibrate(50);
     sm.play("click");
     sm.unlock();
-
     if (this.isRunning) {
       this.isRunning = false;
       this.pauseTime = Date.now();
@@ -178,13 +166,15 @@ export const sw = {
       updateText(this.els.lapBtn, t("reset"));
       this.els.lapBtn.classList.remove("app-surface", "app-text");
       this.els.lapBtn.classList.add("bg-red-500", "text-white", "is-reset");
-
       announceToScreenReader(
-        `${t("stopwatch")} ${t("pause")}. ${this.formatTime(this.elapsedTime, false)}`,
+        `${t("stopwatch")} ${t("pause")}. ${this.formatTime(
+          this.elapsedTime,
+          false
+        )}`
       );
     } else {
       document.dispatchEvent(
-        new CustomEvent("timerStarted", { detail: "stopwatch" }),
+        new CustomEvent("timerStarted", { detail: "stopwatch" })
       );
       this.startTime = performance.now() - this.elapsedTime;
       this.isRunning = true;
@@ -206,7 +196,6 @@ export const sw = {
     if (!this.isRunning) return;
     const now = performance.now();
     this.elapsedTime = now - this.startTime;
-
     if (now - this.lastRender >= 16 || isBackground) {
       if (!isBackground) {
         this.updateDisplay();
@@ -225,12 +214,11 @@ export const sw = {
     const showMs = themeManager.showMs;
     const timeStr = formatMainDisplay(this.elapsedTime, showMs);
     updateText(this.els.display, timeStr);
-
     if (this.els.extendedDisplay) {
       const extStr = getExtendedDisplay(
         this.elapsedTime,
         t("day_short"),
-        t("hour_short"),
+        t("hour_short")
       );
       if (extStr) {
         updateText(this.els.extendedDisplay, extStr);
@@ -239,26 +227,32 @@ export const sw = {
         this.els.extendedDisplay.classList.add("hidden");
       }
     }
-
     updateTitle(this.formatTime(this.elapsedTime, false));
-
     if (this.els.ring) {
       this.els.ring.style.strokeDashoffset =
-        this.ringLength - ((this.elapsedTime % 60000) / 60000) * this.ringLength;
+        this.ringLength -
+        ((this.elapsedTime % 60000) / 60000) * this.ringLength;
     }
   },
 
   createLapElement(lap, isLatest = false) {
     const bgClass = isLatest ? "bg-black/5 dark:bg-white/5" : "";
     const textColor = isLatest ? "primary-text" : "app-text";
-
     const div = document.createElement("div");
     div.className = `lap-row mt-2.5 flex justify-between items-center py-3 border-b app-border px-3 rounded-lg transition-all duration-300 ${bgClass}`;
     div.innerHTML = `
-      <span class="text-xs app-text-sec font-medium">${t("lap_text")} ${lap.index}</span>
+      <span class="text-xs app-text-sec font-medium">${t("lap_text")} ${
+      lap.index
+    }</span>
       <div class="flex items-center gap-4">
-        <span class="font-mono text-[10px] app-text-sec opacity-60 w-16 text-right">${this.formatTime(lap.total, true)}</span>
-        <span class="split-time font-mono text-xs font-bold ${textColor} w-16 text-right">${this.formatTime(lap.diff, true)}</span>
+        <span class="font-mono text-[10px] app-text-sec opacity-60 w-16 text-right">${this.formatTime(
+          lap.total,
+          true
+        )}</span>
+        <span class="split-time font-mono text-xs font-bold ${textColor} w-16 text-right">${this.formatTime(
+      lap.diff,
+      true
+    )}</span>
       </div>`;
     return div;
   },
@@ -274,9 +268,7 @@ export const sw = {
         diff: diff,
         index: this.laps.length + 1,
       };
-
       this.laps.unshift(newLap);
-
       if (this.laps.length === 1) {
         this.els.lapsContainer.replaceChildren();
         this.els.currentLapsHeader.classList.remove("hidden");
@@ -292,9 +284,7 @@ export const sw = {
           }
         }
       }
-
       this.els.lapsContainer.prepend(this.createLapElement(newLap, true));
-
       if (this.els.lapFlash) {
         this.els.lapFlash.classList.remove("flash-active");
         void this.els.lapFlash.offsetWidth;
@@ -318,7 +308,9 @@ export const sw = {
       this.els.lapsContainer.replaceChildren();
       this.els.lapsContainer.insertAdjacentHTML(
         "afterbegin",
-        `<div class="text-center app-text-sec opacity-50 mt-4 text-sm" data-i18n="no_laps">${t("no_laps")}</div>`,
+        `<div class="text-center app-text-sec opacity-50 mt-4 text-sm" data-i18n="no_laps">${t(
+          "no_laps"
+        )}</div>`
       );
       this.updateSaveButtonVisibility();
     }
@@ -361,9 +353,8 @@ export const sw = {
     const completionTime = this.isRunning
       ? Date.now()
       : this.pauseTime || Date.now();
-
     this.nameModalState.pendingSession = {
-      id: Date.now(), // ИСПРАВЛЕНИЕ: Гарантируем, что ID - это число
+      id: Date.now(),
       name: "",
       date: completionTime,
       totalTime: this.elapsedTime,
@@ -385,27 +376,22 @@ export const sw = {
     if (this.els.nameTitle)
       updateText(
         this.els.nameTitle,
-        action === "rename" ? t("rename") : t("save_session"),
+        action === "rename" ? t("rename") : t("save_session")
       );
     this.els.nameInput.value = defaultName;
-
     this.els.nameModal.classList.remove("hidden");
     this.els.nameModal.classList.add("flex");
     this.els.nameModal.removeAttribute("inert");
     this.els.nameModal.removeAttribute("aria-hidden");
-
     void this.els.nameModal.offsetWidth;
-
     this.els.nameModal.classList.remove("opacity-0");
     this.els.nameModalContent.classList.remove("opacity-0", "scale-95");
-
     setTimeout(() => this.els.nameInput?.focus(), 100);
   },
 
   closeNameModal() {
     this.els.nameModal.classList.add("opacity-0");
     this.els.nameModalContent.classList.add("opacity-0", "scale-95");
-
     setTimeout(() => {
       this.els.nameModal.classList.add("hidden");
       this.els.nameModal.classList.remove("flex");
@@ -423,24 +409,21 @@ export const sw = {
     const inputVal = this.els.nameInput.value.trim();
     const finalName =
       inputVal !== "" ? inputVal : this.els.nameInput.placeholder;
-
     const isDuplicate = this.savedSessions.some(
       (s) =>
         s.name.toLowerCase() === finalName.toLowerCase() &&
         (this.nameModalState.action === "save" ||
-          s.id !== this.nameModalState.targetId),
+          s.id !== this.nameModalState.targetId)
     );
-
     if (isDuplicate) {
       this.els.nameError?.classList.remove("hidden");
       this.els.nameInput.classList.add("animate-shake");
       setTimeout(
         () => this.els.nameInput.classList.remove("animate-shake"),
-        300,
+        300
       );
       return;
     }
-
     if (this.nameModalState.action === "save") {
       const session = this.nameModalState.pendingSession;
       session.name = finalName;
@@ -449,7 +432,7 @@ export const sw = {
       showToast(t("session_saved"));
     } else if (this.nameModalState.action === "rename") {
       const session = this.savedSessions.find(
-        (s) => s.id === this.nameModalState.targetId,
+        (s) => s.id === this.nameModalState.targetId
       );
       if (session) {
         session.name = finalName;
@@ -466,9 +449,7 @@ export const sw = {
     this.els.clearModal.classList.add("flex");
     this.els.clearModal.removeAttribute("inert");
     this.els.clearModal.removeAttribute("aria-hidden");
-
     void this.els.clearModal.offsetWidth;
-
     this.els.clearModal.classList.remove("opacity-0");
     this.els.clearModalContent.classList.remove("opacity-0", "scale-95");
   },
@@ -476,7 +457,6 @@ export const sw = {
   closeClearModal() {
     this.els.clearModal.classList.add("opacity-0");
     this.els.clearModalContent.classList.add("opacity-0", "scale-95");
-
     setTimeout(() => {
       this.els.clearModal.classList.add("hidden");
       this.els.clearModal.classList.remove("flex");
@@ -499,9 +479,7 @@ export const sw = {
     this.els.modal.classList.add("flex");
     this.els.modal.removeAttribute("inert");
     this.els.modal.removeAttribute("aria-hidden");
-
     void this.els.modal.offsetWidth;
-
     this.els.modal.classList.remove("translate-y-full");
     this.els.modal.classList.add("translate-y-0");
   },
@@ -509,7 +487,6 @@ export const sw = {
   closeModal() {
     this.els.modal.classList.remove("translate-y-0");
     this.els.modal.classList.add("translate-y-full");
-
     setTimeout(() => {
       this.els.modal.classList.add("hidden");
       this.els.modal.classList.remove("flex");
@@ -541,7 +518,6 @@ export const sw = {
     const detailsEl = $(`sw-details-${id}`);
     const iconEl = $(`sw-icon-${id}`);
     if (!detailsEl) return;
-
     if (detailsEl.classList.contains("hidden")) {
       detailsEl.classList.remove("hidden");
       if (iconEl) iconEl.style.transform = "rotate(180deg)";
@@ -554,72 +530,101 @@ export const sw = {
   renderSavedSessions() {
     if (!this.els || !this.els.sessionsList) return;
     this.els.sessionsList.replaceChildren();
-
     if (this.els.clearAllBtn) {
       this.els.clearAllBtn.disabled = this.savedSessions.length === 0;
     }
-
     if (this.savedSessions.length === 0) {
       this.els.sessionsList.insertAdjacentHTML(
         "afterbegin",
-        `<div class="text-center app-text-sec opacity-50 mt-10 text-sm">${t("empty_sessions")}</div>`,
+        `<div class="text-center app-text-sec opacity-50 mt-10 text-sm">${t(
+          "empty_sessions"
+        )}</div>`
       );
       return;
     }
-
     const fragment = document.createDocumentFragment();
-
     this.savedSessions.forEach((session) => {
       const dateObj = new Date(session.date || session.id);
       const dateStr = `${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString(
         [],
-        { hour: "2-digit", minute: "2-digit" },
+        { hour: "2-digit", minute: "2-digit" }
       )}`;
-
       let lapsHtml = `
         <div class="flex justify-between items-center py-1.5 border-b border-gray-500/30 mb-1 px-2">
-          <span class="text-[10px] font-bold app-text-sec uppercase tracking-wider">${t("lap_text")}</span>
+          <span class="text-[10px] font-bold app-text-sec uppercase tracking-wider">${t(
+            "lap_text"
+          )}</span>
           <div class="flex items-center gap-4">
-            <span class="text-[10px] font-bold app-text-sec uppercase tracking-wider w-16 text-right">${t("total_time")}</span>
-            <span class="text-[10px] font-bold app-text-sec uppercase tracking-wider w-16 text-right">${t("split_time")}</span>
+            <span class="text-[10px] font-bold app-text-sec uppercase tracking-wider w-16 text-right">${t(
+              "total_time"
+            )}</span>
+            <span class="text-[10px] font-bold app-text-sec uppercase tracking-wider w-16 text-right">${t(
+              "split_time"
+            )}</span>
           </div>
         </div>`;
-
       session.laps.forEach((lap, idx) => {
         const isLatest = idx === 0;
-        const bgClass = isLatest ? "bg-black/5 dark:bg-black/20 rounded-lg" : "";
+        const bgClass = isLatest
+          ? "bg-black/5 dark:bg-black/20 rounded-lg"
+          : "";
         const textColor = isLatest ? "primary-text" : "app-text";
-
         lapsHtml += `
           <div class="flex justify-between items-center py-2 border-b border-gray-500/10 last:border-0 px-2 ${bgClass}">
-            <span class="text-xs app-text-sec font-medium">${t("lap_text")} ${lap.index}</span>
+            <span class="text-xs app-text-sec font-medium">${t("lap_text")} ${
+          lap.index
+        }</span>
             <div class="flex items-center gap-4">
-              <span class="font-mono text-[10px] app-text-sec opacity-60 w-16 text-right">${this.formatTime(lap.total, true)}</span>
-              <span class="font-mono text-xs font-bold ${textColor} w-16 text-right">${this.formatTime(lap.diff, true)}</span>
+              <span class="font-mono text-[10px] app-text-sec opacity-60 w-16 text-right">${this.formatTime(
+                lap.total,
+                true
+              )}</span>
+              <span class="font-mono text-xs font-bold ${textColor} w-16 text-right">${this.formatTime(
+          lap.diff,
+          true
+        )}</span>
             </div>
           </div>`;
       });
-
       const div = document.createElement("div");
       div.className =
         "app-surface border app-border rounded-xl overflow-hidden transition-all mb-3";
       div.innerHTML = `
-        <div class="p-4 cursor-pointer flex justify-between items-center active:bg-gray-500/10 sw-session-header" data-id="${session.id}">
+        <div class="p-4 cursor-pointer flex justify-between items-center active:bg-gray-500/10 sw-session-header" data-id="${
+          session.id
+        }">
           <div class="flex-1 min-w-0 pr-4">
-            <div class="font-bold app-text text-lg truncate">${escapeHTML(session.name)}</div>
+            <div class="font-bold app-text text-lg truncate">${escapeHTML(
+              session.name
+            )}</div>
             <div class="text-xs app-text-sec mt-1">${dateStr}</div>
           </div>
           <div class="flex items-center gap-3 shrink-0">
-            <div class="font-mono font-bold primary-text text-lg">${this.formatTime(session.totalTime, true)}</div>
-            <svg focusable="false" aria-hidden="true" id="sw-icon-${session.id}" class="w-5 h-5 text-gray-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="font-mono font-bold primary-text text-lg">${this.formatTime(
+              session.totalTime,
+              true
+            )}</div>
+            <svg focusable="false" aria-hidden="true" id="sw-icon-${
+              session.id
+            }" class="w-5 h-5 text-gray-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
             </svg>
           </div>
         </div>
-        <div id="sw-details-${session.id}" class="hidden bg-black/5 dark:bg-black/20 border-t app-border p-4">
+        <div id="sw-details-${
+          session.id
+        }" class="hidden bg-black/5 dark:bg-black/20 border-t app-border p-4">
           <div class="flex justify-end gap-2 mb-3">
-            <button type="button" data-id="${session.id}" class="sw-rename-btn px-3 py-1 bg-blue-500/10 text-blue-500 rounded-lg text-xs font-bold uppercase tracking-wider active:scale-95 transition-transform">${t("rename")}</button>
-            <button type="button" data-id="${session.id}" class="sw-delete-btn px-3 py-1 bg-red-500/10 text-red-500 rounded-lg text-xs font-bold uppercase tracking-wider active:scale-95 transition-transform">${t("delete")}</button>
+            <button type="button" data-id="${
+              session.id
+            }" class="sw-rename-btn px-3 py-1 bg-blue-500/10 text-blue-500 rounded-lg text-xs font-bold uppercase tracking-wider active:scale-95 transition-transform">${t(
+        "rename"
+      )}</button>
+            <button type="button" data-id="${
+              session.id
+            }" class="sw-delete-btn px-3 py-1 bg-red-500/10 text-red-500 rounded-lg text-xs font-bold uppercase tracking-wider active:scale-95 transition-transform">${t(
+        "delete"
+      )}</button>
           </div>
           <div class="max-h-48 overflow-y-auto no-scrollbar bg-black/5 dark:bg-white/5 rounded-lg p-2 border app-border">
             ${lapsHtml}
