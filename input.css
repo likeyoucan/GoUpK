@@ -320,10 +320,11 @@ html.dark .app-bg.has-vignette::before {
     padding-bottom: 2rem;
   }
 
-  #view-stopwatch .view-bottom-half > .flex-1 {
-      flex-grow: 0;
-      max-height: 70%;
+   #view-stopwatch .view-bottom-half > .flex-1 {
+      flex: none; /* Отключаем flex-grow: 1 */
+      height: 65%; /* Ограничиваем высоту, чтобы было пространство для центрирования */
   }
+
 
   #view-timer .view-bottom-half {
     justify-content: center;
@@ -344,8 +345,6 @@ html.dark .app-bg.has-vignette::before {
   align-items: center;
   justify-content: center;
   container-type: inline-size;
-  will-change: transform;
-  transform: translateZ(0);
 }
 
 .timer-display {
@@ -762,11 +761,11 @@ input[type="checkbox"]:focus-visible+.custom-toggle {
 
   100% {
     opacity: 0;
-    transform: scale(1);
+    transform: scale(1.05);
   }
 }
 
-.flash-active {
+.flash-active#sw-lapFlash {
   animation: flashCircle 0.5s ease-out;
 }
 
