@@ -1,4 +1,4 @@
-// tabata.js 11
+// tabata.js
 
 import {
   $,
