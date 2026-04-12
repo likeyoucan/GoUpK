@@ -8,18 +8,32 @@ export const navigation = {
 
   init() {
     this.initClock();
+    // Инициализируем иконки при запуске
+    this.updateIcons(this.activeView);
   },
 
-  switchView(viewId) {
+  switchView(viewId, direction = 'forward') {
     if (this.activeView === viewId) return;
 
+    // Используем View Transitions API, если оно доступно
     if (!document.startViewTransition) {
       this.updateDOM(viewId);
-    } else {
-      document.startViewTransition(() => {
-        this.updateDOM(viewId);
-      });
+      return;
     }
+
+    const html = document.documentElement;
+
+    // Добавляем класс для направления анимации
+    html.classList.add(direction === 'forward' ? 'js-nav-forward' : 'js-nav-backward');
+
+    const transition = document.startViewTransition(() => {
+      this.updateDOM(viewId);
+    });
+
+    // Очищаем класс после завершения анимации
+    transition.finished.then(() => {
+      html.classList.remove('js-nav-forward', 'js-nav-backward');
+    });
   },
 
   updateDOM(viewId) {
@@ -46,25 +60,24 @@ export const navigation = {
     ["stopwatch", "timer", "tabata", "settings"].forEach((id) => {
       const iconDiv = $(`nav-icon-${id}`);
       if (!iconDiv) return;
-      const textSpan = iconDiv.nextElementSibling;
+
+      // Более надежный способ найти связанный текстовый элемент
+      const navButton = iconDiv.closest('.nav-btn');
+      const textSpan = navButton ? navButton.querySelector('span') : null;
       const iconSvg = iconDiv.querySelector("svg");
 
-      if (id === activeId) {
-        iconDiv.classList.remove("text-gray-400");
-        iconDiv.classList.add("primary-text");
-        if (textSpan) {
-          textSpan.classList.remove("text-gray-400");
-          textSpan.classList.add("primary-text");
-        }
-        if (iconSvg) iconSvg.setAttribute("stroke-width", "2.5");
-      } else {
-        iconDiv.classList.remove("primary-text");
-        iconDiv.classList.add("text-gray-400");
-        if (textSpan) {
-          textSpan.classList.remove("primary-text");
-          textSpan.classList.add("text-gray-400");
-        }
-        if (iconSvg) iconSvg.setAttribute("stroke-width", "2");
+      const isActive = id === activeId;
+
+      iconDiv.classList.toggle("primary-text", isActive);
+      iconDiv.classList.toggle("app-text-sec", !isActive);
+      iconDiv.classList.toggle("opacity-70", !isActive);
+
+      if (textSpan) {
+        textSpan.classList.toggle("primary-text", isActive);
+        textSpan.classList.toggle("app-text-sec", !isActive);
+      }
+      if (iconSvg) {
+        iconSvg.setAttribute("stroke-width", isActive ? "2.5" : "2");
       }
     });
   },

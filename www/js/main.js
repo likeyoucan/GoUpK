@@ -161,11 +161,19 @@ document.addEventListener("DOMContentLoaded", () => {
   navigation.init();
   initSwipeToClose();
   setTimeout(() => document.body.classList.remove("preload"), 50);
+
+  const tabs = ["stopwatch", "timer", "tabata", "settings"];
+
   document.querySelectorAll("[data-nav]").forEach((btn) => {
-    btn.addEventListener("click", (e) =>
-      navigation.switchView(e.currentTarget.getAttribute("data-nav")),
-    );
+    btn.addEventListener("click", (e) => {
+      const nextViewId = e.currentTarget.getAttribute("data-nav");
+      const currentIdx = tabs.indexOf(navigation.activeView);
+      const nextIdx = tabs.indexOf(nextViewId);
+      const direction = nextIdx > currentIdx ? 'forward' : 'backward';
+      navigation.switchView(nextViewId, direction);
+    });
   });
+
   $("btn-open-reset")?.addEventListener("click", () => resetModal.open());
   $("reset-cancel")?.addEventListener("click", () => resetModal.close());
   $("reset-confirm")?.addEventListener("click", () => resetModal.confirm());
@@ -177,6 +185,7 @@ document.addEventListener("DOMContentLoaded", () => {
     e.preventDefault();
     tb.saveWorkout();
   });
+
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
       if (!$("sw-name-modal")?.classList.contains("hidden")) {
@@ -220,6 +229,7 @@ document.addEventListener("DOMContentLoaded", () => {
       else if (view === "tabata") tb.stop();
     }
   });
+
   let lastBgTap = 0;
   $("view-stopwatch")?.addEventListener("touchstart", (e) => {
     if (e.target.closest("button, .scroll-lock, .selectable-data")) return;
@@ -230,9 +240,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     lastBgTap = now;
   });
+
   let touchStartX = 0;
   let touchStartY = 0;
-  const tabs = ["stopwatch", "timer", "tabata", "settings"];
+
   document.addEventListener(
     "touchstart",
     (e) => {
@@ -241,6 +252,7 @@ document.addEventListener("DOMContentLoaded", () => {
     },
     { passive: true },
   );
+
   document.addEventListener("touchend", (e) => {
     if (e.target.closest(".scroll-lock, .no-scrollbar, input, button, select"))
       return;
@@ -251,9 +263,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (Math.abs(deltaX) > 80 && Math.abs(deltaY) < 50) {
       const currentIdx = tabs.indexOf(navigation.activeView);
       if (deltaX < 0 && currentIdx < tabs.length - 1) {
-        navigation.switchView(tabs[currentIdx + 1]);
+        navigation.switchView(tabs[currentIdx + 1], 'forward');
       } else if (deltaX > 0 && currentIdx > 0) {
-        navigation.switchView(tabs[currentIdx - 1]);
+        navigation.switchView(tabs[currentIdx - 1], 'backward');
       }
     }
   });

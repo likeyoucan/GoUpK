@@ -35,19 +35,11 @@
   --vignette-alpha: 0.15;
   --font-scale: 1;
 
-  /*
-    Safe Area CSS-переменные.
-    env() нельзя переопределить через JS, но можно читать
-    через getComputedStyle если они заданы как var().
-    JS → document.documentElement.style.setProperty не нужен —
-    браузер сам обновляет env() при ротации.
-  */
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
 
-  /* Высоты навигации — используем как переменные везде */
   --nav-height: 5rem;
   --nav-total: calc(var(--nav-height) + var(--safe-bottom));
 }
@@ -84,29 +76,6 @@ html.dark {
 
 /* =========================================
    2. БАЗОВЫЕ НАСТРОЙКИ
-   
-   СТРАТЕГИЯ SAFE AREA:
-   ┌─────────────────────────────────────┐
-   │  Dynamic Island / Notch / Punch-hole│ ← env(safe-area-inset-top)
-   │  [фон .app-bg заходит СЮДА]        │
-   ├─────────────────────────────────────┤
-   │                                     │
-   │  Контент со сдвигом                 │ ← padding-top на view-top-half
-   │                                     │    и #view-settings > div:first
-   ├─────────────────────────────────────┤
-   │  Навигация                          │
-   │  [home indicator / gesture bar]     │ ← padding-bottom на .app-nav-safe
-   └─────────────────────────────────────┘
-   
-   ПРАВИЛО:
-   - body, #app, .app-bg — БЕЗ padding-top
-   - Контентные блоки — padding-top: env(safe-area-inset-top)
-   - Нижний контент — padding-bottom: var(--nav-total)
-   - Toast — top: calc(env(safe-area-inset-top) + 1rem)
-   
-   LANDSCAPE (iPhone в горизонтали):
-   - Вырез смещается ВБОК → safe-area-inset-left/right
-   - Добавляем боковые отступы контейнеру
 ========================================= */
 * {
   -webkit-tap-highlight-color: transparent;
@@ -157,7 +126,6 @@ button {
 :where(input[type="text"], input[type="number"]) {
   -webkit-user-select: text;
   user-select: text;
-  /* font-size >= 16px предотвращает авто-зум на iOS */
   font-size: max(16px, 1em);
 }
 
@@ -181,50 +149,23 @@ button {
 
 /* =========================================
    3. КОНТЕЙНЕР ПРИЛОЖЕНИЯ (#app)
-   
-   ТЕЛЕФОН: на весь экран, safe-area padding чтобы
-   навбар и контент не заходили под систему.
-   Но! фон (.app-bg) через absolute inset-0 заходит
-   под вырез — это правильное поведение.
-   
-   ПЛАНШЕТ (≥768px): фиксированная ширина, центрирован,
-   скруглён как "телефон на столе", safe area не нужен.
-   
-   АЛЬБОМНАЯ (≥1024px landscape): широкий контейнер,
-   боковые safe-area отступы обязательны (вырез сбоку).
 ========================================= */
-
-/* --- Телефон (всё по умолчанию) --- */
 #app {
   position: relative;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  /* 100dvh — учитывает динамические панели браузера */
   height: 100vh;
   height: 100dvh;
-  /* Полная ширина на телефоне */
   width: 100%;
   max-width: 100%;
   border-radius: 0;
-  /*
-    padding на #app нужен ТОЛЬКО для того, чтобы
-    дочерние absolute-элементы (nav, модалки) корректно
-    рассчитывали свой bottom/top относительно safe area.
-    Само .app-bg через absolute inset-0 всё равно
-    заходит под вырез — это ожидаемо.
-  */
-  padding-top: env(safe-area-inset-top, 0px);
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-  padding-left: env(safe-area-inset-left, 0px);
-  padding-right: env(safe-area-inset-right, 0px);
+  padding-top: var(--safe-top);
+  padding-bottom: var(--safe-bottom);
+  padding-left: var(--safe-left);
+  padding-right: var(--safe-right);
 }
 
-/*
-  .app-bg — absolute inset-0, т.е. он выходит за padding #app
-  и заходит под вырез/home indicator. Это правильно —
-  фон приложения должен быть виден за Dynamic Island.
-*/
 .app-bg {
   background-color: var(--bg-color);
   transition: background-color 0.3s;
@@ -232,64 +173,60 @@ button {
   z-index: 0;
 }
 
-/* --- Планшет (≥768px) --- */
-@media (min-width: 768px) {
+/* --- Планшет (портретная ориентация) --- */
+@media (min-width: 768px) and (orientation: portrait) {
   #app {
-    /*
-      Ширина как у большого телефона — контент читабельен.
-      На планшете в портрете: 430px по центру.
-      На планшете в альбоме: можно шире — см. ниже.
-    */
     width: 430px;
     max-width: 430px;
-    height: 92vh;
     height: 92dvh;
     max-height: 900px;
     border-radius: 2.5rem;
     box-shadow:
       0 0 0 1px rgba(255, 255, 255, 0.08),
       0 30px 80px rgba(0, 0, 0, 0.6);
-    /*
-      Safe area на планшете НЕ нужна — приложение
-      не растянуто на весь экран, вырез не задевает контент.
-    */
     padding: 0;
   }
 }
 
-/* --- iPad Pro portrait (≥1024px, portrait) --- */
+/* --- Большой планшет (iPad Pro) в портретной ориентации --- */
 @media (min-width: 1024px) and (orientation: portrait) {
   #app {
     width: 480px;
     max-width: 480px;
-    height: 90vh;
     height: 90dvh;
     max-height: 960px;
   }
 }
 
-/*
-  ПЛАНШЕТ В АЛЬБОМНОЙ ОРИЕНТАЦИИ:
-  Делаем контейнер шире — больше пространства для контента.
-  На больших экранах в landscape хочется видеть больше.
-*/
-@media (min-width: 768px) and (orientation: landscape) {
-  #app {
-    width: 680px;
-    max-width: 680px;
-    height: 88vh;
-    height: 88dvh;
-    max-height: 700px;
-  }
-}
-
-@media (min-width: 1024px) and (orientation: landscape) {
+/* --- Десктоп / очень большой планшет (ландшафтная ориентация, режим "карточки") --- */
+@media (min-width: 1281px) and (orientation: landscape) {
   #app {
     width: 760px;
     max-width: 760px;
-    height: 86vh;
     height: 86dvh;
     max-height: 720px;
+    border-radius: 2.5rem;
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.08),
+      0 30px 80px rgba(0, 0, 0, 0.6);
+    padding: 0;
+  }
+}
+
+/* --- ПЛАНШЕТ В АЛЬБОМНОЙ ОРИЕНТАЦИИ (ПОЛНЫЙ ЭКРАН) --- */
+@media (min-width: 768px) and (max-width: 1280px) and (orientation: landscape) {
+  #app {
+    width: 100%;
+    max-width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    max-height: 100%;
+    border-radius: 0;
+    box-shadow: none;
+    padding-top: var(--safe-top);
+    padding-bottom: var(--safe-bottom);
+    padding-left: var(--safe-left);
+    padding-right: var(--safe-right);
   }
 }
 
@@ -308,25 +245,11 @@ button {
 }
 
 html.dark .app-bg.has-vignette::before {
-  box-shadow: inset 0 0 20vh
-    rgba(0, 0, 0, calc(var(--vignette-alpha, 0.15) + 0.1));
+  box-shadow: inset 0 0 20vh rgba(0, 0, 0, calc(var(--vignette-alpha, 0.15) + 0.1));
 }
 
 /* =========================================
    5. ВЕРХНЯЯ ПОЛОВИНА ВИДОВ (ТАЙМЕР + КРУГ)
-   
-   КЛЮЧЕВОЕ МЕСТО для safe area на телефоне!
-   
-   Стратегия:
-   - На телефоне: padding-top = вырез + 0.5rem
-     (фон под вырезом, текст — ниже)
-   - На планшете: padding-top = обычный отступ
-     (safe area = 0, контейнер не на весь экран)
-   
-   Почему padding-top здесь, а не на #app?
-   → Если добавить padding на #app, то .app-bg (через absolute inset-0)
-     тоже сдвинется и не будет закрывать зону выреза.
-     Здесь же — только контент сдвигается, фон остаётся под вырезом.
 ========================================= */
 .view-top-half {
   display: flex;
@@ -336,15 +259,7 @@ html.dark .app-bg.has-vignette::before {
   height: 55%;
   width: 100%;
   flex-shrink: 0;
-  /*
-    env(safe-area-inset-top) — высота выреза:
-    iPhone 14 Pro / Dynamic Island: ~59px
-    iPhone X-13 / Notch: ~44px
-    iPhone SE (без выреза): ~20px (status bar)
-    Android punch-hole: ~24-32px
-    Планшет (≥768px): 0px → переопределено ниже
-  */
-  padding-top: env(safe-area-inset-top, 0px);
+  padding-top: var(--safe-top);
 }
 
 .view-top-half h2 {
@@ -352,7 +267,6 @@ html.dark .app-bg.has-vignette::before {
   min-height: 1.25rem;
 }
 
-/* На планшете отступ не нужен */
 @media (min-width: 768px) {
   .view-top-half {
     padding-top: 1rem;
@@ -360,73 +274,48 @@ html.dark .app-bg.has-vignette::before {
 }
 
 /* =========================================
-   АДАПТИВНОСТЬ ДЛЯ ПЛАНШЕТОВ (iPad/Android)
+   АДАПТИВНОСТЬ ДЛЯ ДВУХКОЛОНОЧНОГО МАКЕТА
 ========================================= */
+@media (min-width: 768px) and (orientation: landscape) {
 
-@media (min-width: 768px) {
-  #app {
-    width: 95% !important;
-    max-width: 1000px !important; 
-    height: 85vh !important;
-    max-height: 700px !important;
-    border-radius: 3rem;
-    padding: 0 !important;
+  #view-stopwatch,
+  #view-timer,
+  #view-tabata {
+    flex-direction: row;
+    align-items: stretch;
   }
 
-  /* Унификация сетки */
-  #view-stopwatch, #view-timer, #view-tabata {
-    flex-direction: row !important;
-    display: flex !important;
-    align-items: stretch !important;
-  }
-
-  /* ЛЕВАЯ ЧАСТЬ (Всегда одинаковая!) */
   .view-top-half {
-    width: 50% !important;
-    height: 100% !important;
+    width: 50%;
+    height: 100%;
+    padding-top: 2rem;
     border-right: 1px solid var(--border-color);
-    
-    display: flex !important;
-    flex-direction: column !important;
-    /* Жестко фиксируем позицию сверху */
-    justify-content: flex-start !important; 
-    align-items: center !important;
-    padding-top: 6rem !important; /* Общий отступ от верхнего края */
   }
 
-  /* Заголовок прижат к кругу одинаково везде */
   .view-top-half h2 {
-    margin-top: 0 !important;
-    margin-bottom: 1.5rem !important;
-    font-size: 0.85rem !important;
-    letter-spacing: 0.25em !important;
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    font-size: 0.85rem;
+    letter-spacing: 0.25em;
   }
 
   .timer-circle-wrap {
-    margin: 0 !important;
-    width: 85% !important;
-    max-width: 360px !important;
-    max-height: 360px !important;
+    margin: 0;
+    width: 85%;
+    max-width: 360px;
+    max-height: 360px;
   }
 
-  /* ПРАВАЯ ЧАСТЬ (Может отличаться контентом) */
   .view-bottom-half {
-    width: 50% !important;
-    height: 100% !important;
-    display: flex !important;
-    flex-direction: column !important;
+    width: 50%;
+    height: 100%;
+    justify-content: flex-start;
+    padding-top: 2rem;
   }
 
-  /* Специфика для секундомера: история начинается сверху */
-  #view-stopwatch .view-bottom-half {
-    justify-content: flex-start !important;
-    padding-top: 6rem !important;
-  }
-
-  /* Специфика для таймера: инпуты по центру, но ЛЕВАЯ ЧАСТЬ не дергается */
   #view-timer .view-bottom-half {
-    justify-content: center !important;
-    padding-top: 0 !important;
+    justify-content: center;
+    padding-top: 0;
   }
 }
 
@@ -463,22 +352,15 @@ html.dark .app-bg.has-vignette::before {
 
 /* =========================================
    7. НАСТРОЙКИ — спец. отступ сверху
-   
-   #view-settings — scrollable, overflow-y: auto.
-   Нельзя добавить padding-top к самому view —
-   это сломает scroll (контент обрежется).
-   
-   Добавляем к первому дочернему блоку (шапка "Settings").
 ========================================= */
-#view-settings > div:first-child {
-  padding-top: calc(env(safe-area-inset-top, 0px) + 0.5rem);
+#view-settings>div:first-child {
+  padding-top: calc(var(--safe-top) + 0.5rem);
   height: auto;
-  min-height: calc(55px + env(safe-area-inset-top, 0px));
+  min-height: calc(55px + var(--safe-top));
 }
 
-/* На планшете — фиксированный отступ */
 @media (min-width: 768px) {
-  #view-settings > div:first-child {
+  #view-settings>div:first-child {
     padding-top: 1.5rem;
     min-height: auto;
   }
@@ -486,49 +368,24 @@ html.dark .app-bg.has-vignette::before {
 
 /* =========================================
    8. НАВИГАЦИОННАЯ ПАНЕЛЬ (НИЖНЯЯ)
-   
-   Позиционирована абсолютно, прибита к низу.
-   
-   Высота = --nav-height + safe-area-inset-bottom
-   safe-area-inset-bottom:
-   - iPhone с Home Indicator (X+): ~34px
-   - iPhone SE (кнопка Home): 0px
-   - Android жестовая навигация: 16-40px
-   - Android кнопочная навигация: 0px
-   - Планшет в окне (≥768px): 0px
 ========================================= */
 .app-nav-safe {
-  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 0.5rem);
-  height: calc(var(--nav-height) + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(var(--safe-bottom) + 0.5rem);
+  height: calc(var(--nav-height) + var(--safe-bottom));
 }
 
-/* На планшете safe area = 0, скругление низа совпадает с #app */
 @media (min-width: 768px) {
   .app-nav-safe {
     padding-bottom: 0.5rem;
     height: var(--nav-height);
-    border-bottom-left-radius: 2.5rem;
-    border-bottom-right-radius: 2.5rem;
+    border-bottom-left-radius: inherit;
+    border-bottom-right-radius: inherit;
     overflow: hidden;
   }
 }
 
-/* Унаследовать скругление от #app */
-nav.app-nav-safe {
-  border-bottom-left-radius: inherit;
-  border-bottom-right-radius: inherit;
-  overflow: hidden;
-}
-
 /* =========================================
    9. ОТСТУПЫ СКРОЛЛ-КОНТЕЙНЕРОВ ОТ НАВИГАЦИИ
-   
-   Контент в списках не должен прятаться за навигацией.
-   Используем --nav-total вместо хардкода.
-   
-   Убрали !important — специфичность ID-селектора
-   (#sw-lapsContainer) достаточна для переопределения
-   любых утилит Tailwind.
 ========================================= */
 #sw-lapsContainer,
 #tb-workoutsList {
@@ -537,63 +394,31 @@ nav.app-nav-safe {
 
 /* =========================================
    10. TOAST УВЕДОМЛЕНИЕ
-   
-   ПРОБЛЕМА: toast с top: 8 (2rem из Tailwind) отображается
-   поверх Dynamic Island / notch.
-   
-   РЕШЕНИЕ: в HTML убираем класс top-8, вместо него
-   позиционируем только через CSS.
-   
-   Используем слой @layer utilities чтобы не нужен !important.
-   CSS-переменная --safe-top уже содержит env() значение.
 ========================================= */
 #toast {
-  top: calc(env(safe-area-inset-top, 0px) + 1rem);
+  top: calc(var(--safe-top) + 1rem);
 }
 
 /* =========================================
    11. МОДАЛЬНЫЕ ОКНА (BOTTOM SHEETS)
-   
-   Bottom sheets растянуты на 85dvh снизу.
-   Контент внутри должен учитывать home indicator.
 ========================================= */
 #tb-saveModalBtn,
 #sw-sessionsList {
-  margin-bottom: env(safe-area-inset-bottom, 0px);
+  margin-bottom: var(--safe-bottom);
 }
 
 /* =========================================
    12. LANDSCAPE НА ТЕЛЕФОНЕ
-   
-   При повороте iPhone в горизонталь:
-   - Dynamic Island / notch смещается ВБОК (влево)
-   - safe-area-inset-left становится ~59px
-   - safe-area-inset-right ~59px
-   - safe-area-inset-top уменьшается
-   
-   #app уже получает padding-left/right через основные правила,
-   поэтому на телефоне боковые отступы работают автоматически.
-   
-   Здесь перестраиваем LAYOUT под ширину.
 ========================================= */
 @media (orientation: landscape) and (max-width: 767px) {
-  /*
-    Телефон в горизонтали: layout становится side-by-side.
-    Левая колонка — таймер, правая — контролы.
-  */
   .view-top-half {
-    /*
-      В landscape вырез СБОКУ.
-      Убираем top padding — он теперь не нужен.
-      Боковой отступ уже есть через padding #app.
-    */
     padding-top: 0.5rem;
     height: auto;
     width: 45%;
     flex: none;
   }
 
-  #viewsContainer > div:not(#view-settings) {
+  #viewsContainer>div:not(#view-settings) {
     flex-direction: row;
     align-items: center;
     justify-content: center;
@@ -605,11 +430,7 @@ nav.app-nav-safe {
     width: 50%;
     flex: none;
     justify-content: center;
-    /*
-      Отступ снизу в landscape на телефоне:
-      home indicator может быть снизу или сбоку
-    */
-    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 0.5rem);
+    padding-bottom: calc(var(--safe-bottom) + 0.5rem);
   }
 
   .timer-circle-wrap {
@@ -617,9 +438,8 @@ nav.app-nav-safe {
     max-width: 220px;
   }
 
-  /* Навигация в landscape: safe-area-right для home indicator */
   .app-nav-safe {
-    padding-right: calc(env(safe-area-inset-right, 0px) + 1rem);
+    padding-right: calc(var(--safe-right) + 1rem);
     padding-bottom: 0.5rem;
     height: var(--nav-height);
   }
@@ -907,15 +727,15 @@ input[type="number"] {
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-input:checked + .custom-toggle {
+input:checked+.custom-toggle {
   background-color: var(--primary-color);
 }
 
-input:checked + .custom-toggle::after {
+input:checked+.custom-toggle::after {
   transform: translateX(20px);
 }
 
-input[type="checkbox"]:focus-visible + .custom-toggle {
+input[type="checkbox"]:focus-visible+.custom-toggle {
   outline: 2px solid var(--primary-color);
   outline-offset: 2px;
 }
@@ -925,6 +745,7 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
     opacity: 0.4;
     transform: scale(0.98);
   }
+
   100% {
     opacity: 0;
     transform: scale(1);
@@ -936,16 +757,20 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
 }
 
 @keyframes shake {
+
   0%,
   100% {
     transform: translateX(0);
   }
+
   25% {
     transform: translateX(-4px);
   }
+
   50% {
     transform: translateX(4px);
   }
+
   75% {
     transform: translateX(-4px);
   }
@@ -974,17 +799,6 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
 .timer-input::placeholder {
   color: var(--text-secondary);
   opacity: 0.5;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  ::before,
-  ::after {
-    animation-duration: 0.01ms;
-    animation-iteration-count: 1;
-    transition-duration: 0.01ms;
-    scroll-behavior: auto;
-  }
 }
 
 /* =========================================
@@ -1022,22 +836,18 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
 }
 
 :root.glass-effect body nav {
-  background: linear-gradient(
-    to top,
-    color-mix(in srgb, var(--surface-color) 30%, transparent),
-    color-mix(in srgb, var(--surface-color) 2%, transparent)
-  );
+  background: linear-gradient(to top,
+      color-mix(in srgb, var(--surface-color) 30%, transparent),
+      color-mix(in srgb, var(--surface-color) 2%, transparent));
   backdrop-filter: blur(16px) saturate(150%);
   border-top: 1px solid rgba(255, 255, 255, 0.2);
   box-shadow: none;
 }
 
 :root.dark.glass-effect body nav {
-  background: linear-gradient(
-    to top,
-    color-mix(in srgb, var(--surface-color) 25%, transparent),
-    color-mix(in srgb, var(--surface-color) 0%, transparent)
-  );
+  background: linear-gradient(to top,
+      color-mix(in srgb, var(--surface-color) 25%, transparent),
+      color-mix(in srgb, var(--surface-color) 0%, transparent));
   border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
@@ -1155,7 +965,7 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
 :root.glass-effect body .lap-row,
 :root.glass-effect body .tb-workout-row,
 :root.glass-effect body .sw-session-header,
-:root.glass-effect body [id^="sw-details-"] > div:last-child {
+:root.glass-effect body [id^="sw-details-"]>div:last-child {
   will-change: backdrop-filter, transform;
   background-color: color-mix(in srgb, var(--surface-color) 30%, transparent);
   backdrop-filter: blur(16px) saturate(150%);
@@ -1167,7 +977,7 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
 :root.dark.glass-effect body .lap-row,
 :root.dark.glass-effect body .tb-workout-row,
 :root.dark.glass-effect body .sw-session-header,
-:root.dark.glass-effect body [id^="sw-details-"] > div:last-child {
+:root.dark.glass-effect body [id^="sw-details-"]>div:last-child {
   background-color: color-mix(in srgb, var(--surface-color) 15%, transparent);
   box-shadow:
     inset 0 1px 1px rgba(255, 255, 255, 0.05),
@@ -1184,7 +994,56 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
 }
 
 /* =========================================
-   18. ФИКСЫ
+   18. АНИМАЦИИ ПЕРЕХОДОВ (VIEW TRANSITIONS)
+========================================= */
+@keyframes slide-in-from-right {
+  from {
+    transform: translateX(30%);
+    opacity: 0;
+  }
+}
+
+@keyframes slide-out-to-left {
+  to {
+    transform: translateX(-30%);
+    opacity: 0;
+  }
+}
+
+@keyframes slide-in-from-left {
+  from {
+    transform: translateX(-30%);
+    opacity: 0;
+  }
+}
+
+@keyframes slide-out-to-right {
+  to {
+    transform: translateX(30%);
+    opacity: 0;
+  }
+}
+
+/* Навигация ВПЕРЕД */
+html.js-nav-forward::view-transition-old(root) {
+  animation: 450ms cubic-bezier(0.32, 0.72, 0, 1) both slide-out-to-left;
+}
+
+html.js-nav-forward::view-transition-new(root) {
+  animation: 450ms cubic-bezier(0.32, 0.72, 0, 1) both slide-in-from-right;
+}
+
+/* Навигация НАЗАД */
+html.js-nav-backward::view-transition-old(root) {
+  animation: 450ms cubic-bezier(0.32, 0.72, 0, 1) both slide-out-to-right;
+}
+
+html.js-nav-backward::view-transition-new(root) {
+  animation: 450ms cubic-bezier(0.32, 0.72, 0, 1) both slide-in-from-left;
+}
+
+/* =========================================
+   19. ФИКСЫ И ДОСТУПНОСТЬ
 ========================================= */
 button:disabled {
   opacity: 0.3;
@@ -1195,4 +1054,22 @@ button:disabled {
 select option {
   background-color: var(--surface-color);
   color: var(--text-color);
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
 }
