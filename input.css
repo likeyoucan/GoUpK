@@ -1051,6 +1051,11 @@ html.js-nav-backward::view-transition-new(root) {
 /* =========================================
    19. ФИКСЫ И ДОСТУПНОСТЬ
 ========================================= */
+
+#sw-lapFlash {
+  transform: translateZ(0);
+}
+
 button:disabled {
   opacity: 0.3;
   cursor: not-allowed;
