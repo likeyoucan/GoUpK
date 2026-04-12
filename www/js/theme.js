@@ -144,6 +144,15 @@ export const themeManager = {
         $("customColorInput").value = "#22c55e";
       }
     }
+
+    const storedBgColor = safeGetLS("theme_bg_color");
+    if ($("customBgInput")) {
+      if (storedBgColor && storedBgColor.startsWith("#")) {
+        $("customBgInput").value = storedBgColor;
+      } else {
+        $("customBgInput").value = "#000000";
+      }
+    }
   },
 
   updateAdaptiveClass() {
