@@ -114,14 +114,14 @@ export const tm = {
         e.preventDefault();
         updateVal(e.deltaY > 0 ? -1 : 1);
       },
-      { passive: false }
+      { passive: false },
     );
     input.addEventListener(
       "touchstart",
       (e) => {
         startY = e.touches[0].clientY;
       },
-      { passive: true }
+      { passive: true },
     );
     input.addEventListener(
       "touchmove",
@@ -135,7 +135,7 @@ export const tm = {
           startY = currentY;
         }
       },
-      { passive: false }
+      { passive: false },
     );
     let isDragging = false;
     const onMouseMove = (e) => {
@@ -180,7 +180,7 @@ export const tm = {
       this.updateUIState();
     } else {
       document.dispatchEvent(
-        new CustomEvent("timerStarted", { detail: "timer" })
+        new CustomEvent("timerStarted", { detail: "timer" }),
       );
       if (!this.isPaused) {
         const h = parseInt(this.els.h?.value, 10) || 0;
@@ -192,7 +192,7 @@ export const tm = {
           this.els.inputs.classList.add("animate-shake");
           setTimeout(
             () => this.els.inputs.classList.remove("animate-shake"),
-            300
+            300,
           );
           return;
         }
@@ -303,7 +303,7 @@ export const tm = {
       this.els.ring.style.strokeDashoffset =
         this.ringLength -
         (Math.max(0, this.totalDuration - rem) / this.totalDuration) *
-          this.ringLength;
+        this.ringLength;
     }
   },
 };
