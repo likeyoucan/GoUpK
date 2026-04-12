@@ -308,8 +308,8 @@ html.dark .app-bg.has-vignette::before {
   .timer-circle-wrap {
     margin: 0;
     width: 75%;
-    max-width: 320px;
-    max-height: 320px;
+    max-width: 59px;
+    max-height: 59px;
   }
 
   .view-bottom-half {
