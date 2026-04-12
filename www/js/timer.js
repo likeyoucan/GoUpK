@@ -10,9 +10,9 @@ import {
   releaseWakeLock,
   bgWorker,
   announceToScreenReader,
-} from "./utils.js";
-import { sm } from "./sound.js";
-import { t } from "./i18n.js";
+} from "./utils.js?v=VERSION";
+import { sm } from "./sound.js?v=VERSION";
+import { t } from "./i18n.js?v=VERSION";
 
 export const tm = {
   totalDuration: 0,

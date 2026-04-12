@@ -1,6 +1,6 @@
 // navigation.js
 
-import { $ } from "./utils.js";
+import { $ } from "./utils.js?v=VERSION";
 
 export const navigation = {
   activeView: "stopwatch",

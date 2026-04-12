@@ -1,6 +1,6 @@
 // sound.js
 
-import { $, safeGetLS, safeSetLS } from "./utils.js";
+import { $, safeGetLS, safeSetLS } from "./utils.js?v=VERSION";
 
 export const sm = {
   audioCtx: null,

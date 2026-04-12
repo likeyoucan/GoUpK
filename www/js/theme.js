@@ -1,6 +1,6 @@
 // theme.js
 
-import { $, safeGetLS, safeSetLS } from "./utils.js";
+import { $, safeGetLS, safeSetLS } from "./utils.js?v=VERSION";
 
 export const themeManager = {
   currentMode: "system",
