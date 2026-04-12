@@ -294,12 +294,8 @@ html.dark .app-bg.has-vignette::before {
     height: 100%;
     padding-top: 2rem;
     border-right: 1px solid var(--border-color);
-    /* START: ИЗМЕНЕНИЯ ДЛЯ ЗАДАЧИ 1 */
     justify-content: flex-end;
-    /* Смещаем контент вниз */
-    padding-bottom: 10%;
-    /* Добавляем отступ снизу, чтобы поднять кольцо */
-    /* END: ИЗМЕНЕНИЯ ДЛЯ ЗАДАЧИ 1 */
+    padding-bottom: 15%;
   }
 
   .view-top-half h2 {
@@ -311,7 +307,7 @@ html.dark .app-bg.has-vignette::before {
 
   .timer-circle-wrap {
     margin: 0;
-    width: 85%;
+    width: 75%;
     max-width: 360px;
     max-height: 360px;
   }
