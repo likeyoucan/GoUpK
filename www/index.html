@@ -113,7 +113,7 @@
            заданный в CSS — это сдвигает h2 и кружок таймера ниже выреза,
            при этом фон (.app-bg) остаётся под вырезом.
       ═══════════════════════════════════════════ -->
-        <div id="view-stopwatch" class="app-bg absolute inset-0 flex flex-col transition-opacity duration-300 z-10">
+        <div id="view-stopwatch" class="absolute inset-0 flex flex-col transition-opacity duration-300 z-10">
           <!--
           view-top-half: height 55%, padding-top = safe-area-inset-top (из CSS)
           Заголовок "Stopwatch" и кружок таймера сдвинуты под вырез.
@@ -197,7 +197,7 @@
            TIMER VIEW
       ═══════════════════════════════════════════ -->
         <div id="view-timer" inert aria-hidden="true"
-          class="app-bg absolute inset-0 flex flex-col transition-opacity duration-300 opacity-0 pointer-events-none">
+          class="absolute inset-0 flex flex-col transition-opacity duration-300 opacity-0 pointer-events-none">
           <div
             class="view-top-half h-[45%] w-full flex flex-col items-center justify-start md:justify-center pt-6 md:pt-0 shrink-0 px-6">
             <h2 class="text-sm font-bold app-text-sec uppercase tracking-widest" data-i18n="countdown">
@@ -257,7 +257,7 @@
            TABATA VIEW
       ═══════════════════════════════════════════ -->
         <div id="view-tabata" inert aria-hidden="true"
-          class="app-bg absolute inset-0 flex flex-col transition-opacity duration-300 opacity-0 pointer-events-none">
+          class="absolute inset-0 flex flex-col transition-opacity duration-300 opacity-0 pointer-events-none">
           <div class="view-top-half w-full h-[55%] flex flex-col items-center justify-center shrink-0 px-6">
             <h2 class="text-sm font-bold app-text-sec uppercase tracking-widest" data-i18n="tabata_interval">
               Tabata Interval
@@ -318,7 +318,7 @@
            #view-settings > div:first-child { padding-top: calc(env(safe-area-inset-top) + 0.5rem) }
       ═══════════════════════════════════════════ -->
         <div id="view-settings" inert aria-hidden="true"
-          class="app-bg absolute inset-0 flex flex-col overflow-y-auto scroll-lock no-scrollbar opacity-0 pointer-events-none transition-opacity duration-300">
+          class="absolute inset-0 flex flex-col overflow-y-auto scroll-lock no-scrollbar opacity-0 pointer-events-none transition-opacity duration-300">
           <!--
           Этот div — шапка настроек.
           CSS добавляет к нему padding-top = safe-area-inset-top + 0.5rem
