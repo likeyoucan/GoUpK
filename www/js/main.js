@@ -161,19 +161,11 @@ document.addEventListener("DOMContentLoaded", () => {
   navigation.init();
   initSwipeToClose();
   setTimeout(() => document.body.classList.remove("preload"), 50);
-
-  const tabs = ["stopwatch", "timer", "tabata", "settings"];
-
   document.querySelectorAll("[data-nav]").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      const nextViewId = e.currentTarget.getAttribute("data-nav");
-      const currentIdx = tabs.indexOf(navigation.activeView);
-      const nextIdx = tabs.indexOf(nextViewId);
-      const direction = nextIdx > currentIdx ? 'forward' : 'backward';
-      navigation.switchView(nextViewId, direction);
-    });
+    btn.addEventListener("click", (e) =>
+      navigation.switchView(e.currentTarget.getAttribute("data-nav")),
+    );
   });
-
   $("btn-open-reset")?.addEventListener("click", () => resetModal.open());
   $("reset-cancel")?.addEventListener("click", () => resetModal.close());
   $("reset-confirm")?.addEventListener("click", () => resetModal.confirm());
@@ -185,7 +177,6 @@ document.addEventListener("DOMContentLoaded", () => {
     e.preventDefault();
     tb.saveWorkout();
   });
-
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
       if (!$("sw-name-modal")?.classList.contains("hidden")) {
@@ -229,7 +220,6 @@ document.addEventListener("DOMContentLoaded", () => {
       else if (view === "tabata") tb.stop();
     }
   });
-
   let lastBgTap = 0;
   $("view-stopwatch")?.addEventListener("touchstart", (e) => {
     if (e.target.closest("button, .scroll-lock, .selectable-data")) return;
@@ -240,51 +230,33 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     lastBgTap = now;
   });
-
-  // --- ИСПРАВЛЕНИЕ СВАЙПОВ ---
-  const viewsContainer = $("viewsContainer");
-  if (viewsContainer) {
-    let touchStartX = 0;
-    let touchStartY = 0;
-
-    viewsContainer.addEventListener(
-      "touchstart",
-      (e) => {
-        // Не начинаем свайп, если касание на интерактивном элементе
-        if (e.target.closest("button, a, input, select, .scroll-lock, .no-scrollbar")) {
-          touchStartX = 0; // Сбрасываем, чтобы touchend не сработал
-          return;
-        }
-        touchStartX = e.touches[0].clientX;
-        touchStartY = e.touches[0].clientY;
-      },
-      { passive: true },
-    );
-
-    viewsContainer.addEventListener("touchend", (e) => {
-      // Если свайп не был начат (например, из-за касания на кнопке), выходим
-      if (touchStartX === 0) return;
-
-      const touchEndX = e.changedTouches[0].clientX;
-      const touchEndY = e.changedTouches[0].clientY;
-      const deltaX = touchEndX - touchStartX;
-      const deltaY = touchEndY - touchStartY;
-      
-      // Сбрасываем стартовую позицию для следующего свайпа
-      touchStartX = 0;
-
-      // Условие: горизонтальное движение должно быть значительным И как минимум в 2 раза больше вертикального
-      if (Math.abs(deltaX) > 80 && Math.abs(deltaX) > Math.abs(deltaY) * 2) {
-        const currentIdx = tabs.indexOf(navigation.activeView);
-        if (deltaX < 0 && currentIdx < tabs.length - 1) {
-          navigation.switchView(tabs[currentIdx + 1], 'forward');
-        } else if (deltaX > 0 && currentIdx > 0) {
-          navigation.switchView(tabs[currentIdx - 1], 'backward');
-        }
+  let touchStartX = 0;
+  let touchStartY = 0;
+  const tabs = ["stopwatch", "timer", "tabata", "settings"];
+  document.addEventListener(
+    "touchstart",
+    (e) => {
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    },
+    { passive: true },
+  );
+  document.addEventListener("touchend", (e) => {
+    if (e.target.closest(".scroll-lock, .no-scrollbar, input, button, select"))
+      return;
+    const touchEndX = e.changedTouches[0].clientX;
+    const touchEndY = e.changedTouches[0].clientY;
+    const deltaX = touchEndX - touchStartX;
+    const deltaY = touchEndY - touchStartY;
+    if (Math.abs(deltaX) > 80 && Math.abs(deltaY) < 50) {
+      const currentIdx = tabs.indexOf(navigation.activeView);
+      if (deltaX < 0 && currentIdx < tabs.length - 1) {
+        navigation.switchView(tabs[currentIdx + 1]);
+      } else if (deltaX > 0 && currentIdx > 0) {
+        navigation.switchView(tabs[currentIdx - 1]);
       }
-    });
-  }
-
+    }
+  });
 
   // =========================================
   // 4. СИСТЕМНАЯ ИНТЕГРАЦИЯ ANDROID
