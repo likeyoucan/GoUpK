@@ -39,6 +39,11 @@ jobs:
     - name: 🎨 Сборка стилей Tailwind CSS v4
       run: npm run build:css
 
+    - name: 🏷️ Обновление версии (Cache Busting)
+      run: |
+        # Заменяем VERSION во всех HTML и JS файлах внутри папки www
+        find ./www -type f \( -name "*.html" -o -name "*.js" \) -exec sed -i "s/VERSION/${{ github.run_id }}/g" {} +
+
     - name: 🌐 Настройка GitHub Pages
       uses: actions/configure-pages@v4
 

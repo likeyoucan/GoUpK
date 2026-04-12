@@ -1,13 +1,13 @@
 // main.js
 
 import { $, showToast, safeRemoveLS, requestWakeLock } from "./utils.js";
-import { langManager, t } from "./i18n.js";
-import { themeManager } from "./theme.js";
-import { navigation } from "./navigation.js";
-import { sw } from "./stopwatch.js";
-import { tm } from "./timer.js";
-import { tb } from "./tabata.js";
-import { sm } from "./sound.js";
+import { langManager, t } from "./i18n.js?v=VERSION";
+import { themeManager } from "./theme.js?v=VERSION";
+import { navigation } from "./navigation.js?v=VERSION";
+import { sw } from "./stopwatch.js?v=VERSION";
+import { tm } from "./timer.js?v=VERSION";
+import { tb } from "./tabata.js?v=VERSION";
+import { sm } from "./sound.js?v=VERSION";
 
 // =========================================
 // 1. ДИНАМИЧЕСКИЙ РЕНДЕР SVG КОЛЕЦ (DRY)
