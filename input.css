@@ -308,16 +308,15 @@ html.dark .app-bg.has-vignette::before {
   .timer-circle-wrap {
     margin: 0;
     width: 75%;
-    max-width: 360px;
-    max-height: 360px;
+    max-width: 320px;
+    max-height: 320px;
   }
 
   .view-bottom-half {
     width: 50%;
     height: 100%;
     justify-content: flex-start;
-    padding-top: 4rem;
-    padding-bottom: 4rem;
+    padding-top: 2rem;
   }
 
   #view-timer .view-bottom-half {
@@ -340,11 +339,6 @@ html.dark .app-bg.has-vignette::before {
   justify-content: center;
   container-type: inline-size;
 }
-
-#sw-startStopBtn {
-  will-change: transform;
-}
-
 
 .timer-display {
   font-size: clamp(2rem, 22cqi, 2.8rem);
@@ -1057,11 +1051,6 @@ html.js-nav-backward::view-transition-new(root) {
 /* =========================================
    19. ФИКСЫ И ДОСТУПНОСТЬ
 ========================================= */
-
-#sw-lapFlash {
-  transform: translateZ(0);
-}
-
 button:disabled {
   opacity: 0.3;
   cursor: not-allowed;
