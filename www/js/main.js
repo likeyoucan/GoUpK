@@ -99,63 +99,120 @@ const resetModal = {
 };
 function initSwipeToClose() {
   const modals = [
-    { id: "sw-sessions-modal", handlerId: "sw-modal-handler", closeFn: () => sw.closeModal() },
-    { id: "tb-modal", handlerId: "tb-modal-handler", closeFn: () => tb.closeModal() },
+    {
+      id: "sw-sessions-modal",
+      handlerId: "sw-modal-handler",
+      closeFn: () => sw.closeModal(),
+    },
+    {
+      id: "tb-modal",
+      handlerId: "tb-modal-handler",
+      closeFn: () => tb.closeModal(),
+    },
   ];
 
+  // Эти переменные будут использоваться для отслеживания состояния перетаскивания
+  // между разными функциями-обработчиками.
+  let isDragging = false;
+  let startY = 0;
+  let currentY = 0;
+  let activeModal = null; // Храним ссылку на активную модалку
+  let activeCloseFn = null;
+
+  // --- ОБЩИЕ ФУНКЦИИ-ОБРАБОТЧИКИ ДЛЯ МЫШИ И КАСАНИЙ ---
+
+  const handleDragStart = (e, modal, closeFn) => {
+    // Проверяем, открыта ли модалка, чтобы не инициировать свайп на скрытом элементе
+    if (
+      modal.classList.contains("hidden") ||
+      modal.classList.contains("translate-y-full")
+    )
+      return;
+
+    activeModal = modal;
+    activeCloseFn = closeFn;
+
+    // Получаем координату Y из события касания или мыши
+    startY = e.touches ? e.touches[0].clientY : e.clientY;
+    currentY = startY;
+    isDragging = true;
+
+    // Отключаем анимацию на время перетаскивания для плавности
+    activeModal.style.transition = "none";
+
+    // Для мыши: предотвращаем стандартное поведение (например, выделение текста)
+    if (e.type === "mousedown") {
+      e.preventDefault();
+    }
+  };
+
+  const handleDragMove = (e) => {
+    if (!isDragging || !activeModal) return;
+
+    // Получаем текущую координату Y
+    currentY = e.touches ? e.touches[0].clientY : e.clientY;
+    const deltaY = currentY - startY;
+
+    // Позволяем тащить только вниз
+    if (deltaY > 0) {
+      activeModal.style.transform = `translateY(${deltaY}px)`;
+    }
+  };
+
+  const handleDragEnd = () => {
+    if (!isDragging || !activeModal) return;
+
+    isDragging = false;
+
+    // Возвращаем анимацию для плавного "схлопывания" или закрытия
+    activeModal.style.transition = "transform 400ms ease-out";
+    const deltaY = currentY - startY;
+
+    // Если сдвинули достаточно далеко, закрываем
+    if (deltaY > 100) {
+      if (activeCloseFn) activeCloseFn();
+    } else {
+      // Иначе возвращаем на место
+      activeModal.style.transform = "translateY(0)";
+    }
+
+    // Сбрасываем стили и активные элементы через 400мс
+    setTimeout(() => {
+      if (activeModal && !activeModal.classList.contains("translate-y-full")) {
+        activeModal.style.transform = "";
+        activeModal.style.transition = "";
+      }
+      activeModal = null;
+      activeCloseFn = null;
+    }, 400);
+  };
+
+  // --- НАВЕШИВАЕМ ОБРАБОТЧИКИ ---
+
+  // Обработчики на конкретных хендлерах для начала перетаскивания
   modals.forEach(({ id, handlerId, closeFn }) => {
     const modal = document.getElementById(id);
-    const touchArea = document.getElementById(handlerId); 
+    const touchArea = document.getElementById(handlerId);
     if (!modal || !touchArea) return;
 
-    let startY = 0;
-    let currentY = 0;
-    let isDragging = false;
-
+    // Начало свайпа касанием
     touchArea.addEventListener(
       "touchstart",
-      (e) => {
-        // Проверяем, открыта ли модалка, чтобы не инициировать свайп на скрытом элементе
-        if (modal.classList.contains('hidden') || modal.classList.contains('translate-y-full')) return;
-        startY = e.touches[0].clientY;
-        currentY = startY;
-        isDragging = true;
-        modal.style.transition = "none";
-      },
+      (e) => handleDragStart(e, modal, closeFn),
       { passive: true },
     );
-
-    document.addEventListener(
-      "touchmove",
-      (e) => {
-        if (!isDragging) return;
-        currentY = e.touches[0].clientY;
-        const deltaY = currentY - startY;
-        if (deltaY > 0) {
-          modal.style.transform = `translateY(${deltaY}px)`;
-        }
-      },
-      { passive: true },
+    // Начало перетаскивания мышкой
+    touchArea.addEventListener("mousedown", (e) =>
+      handleDragStart(e, modal, closeFn),
     );
-
-    document.addEventListener("touchend", () => {
-      if (!isDragging) return;
-      isDragging = false;
-      modal.style.transition = "transform 400ms ease-out";
-      const deltaY = currentY - startY;
-      if (deltaY > 100) {
-        closeFn();
-      } else {
-        modal.style.transform = "translateY(0)";
-      }
-      setTimeout(() => {
-        if (!modal.classList.contains('translate-y-full')) {
-          modal.style.transform = "";
-          modal.style.transition = "";
-        }
-      }, 400);
-    });
   });
+
+  // Глобальные обработчики для движения и окончания (чтобы работало вне хендлера)
+  document.addEventListener("touchmove", handleDragMove, { passive: true });
+  document.addEventListener("mousemove", handleDragMove);
+
+  document.addEventListener("touchend", handleDragEnd);
+  document.addEventListener("mouseup", handleDragEnd);
 }
 
 // =========================================
