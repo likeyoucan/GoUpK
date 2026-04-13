@@ -821,11 +821,15 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
 :root.glass-effect body #bottom-sheet-overlay {
   background-color: rgba(255, 255, 255, 0.75);
   backdrop-filter: none; /* <-- ДОБАВЛЕНО: отключаем блюр */
+  height: 15dvh;
+  bottom: auto;
 }
 
 :root.dark.glass-effect body #bottom-sheet-overlay {
   background-color: rgba(0, 0, 0, 0.7);
   backdrop-filter: none; /* <-- ДОБАВЛЕНО: отключаем блюр */
+  height: 15dvh;
+  bottom: auto; 
 }
 :root.glass-effect body #tb-modal,
 :root.glass-effect body #sw-sessions-modal {
