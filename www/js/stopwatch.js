@@ -474,24 +474,35 @@ export const sw = {
   },
 
   openModal() {
+    const overlay = $('bottom-sheet-overlay');
+    if(overlay) {
+      overlay.classList.remove('opacity-0', 'pointer-events-none');
+      overlay.onclick = () => this.closeModal();
+    }
+
     this.sortSessions(this.currentSort);
     this.els.modal.classList.remove("hidden");
     this.els.modal.classList.add("flex");
     this.els.modal.removeAttribute("inert");
     this.els.modal.removeAttribute("aria-hidden");
-    void this.els.modal.offsetWidth;
-    this.els.modal.classList.remove("translate-y-full");
-    this.els.modal.classList.add("translate-y-0");
+    requestAnimationFrame(() => {
+      this.els.modal.classList.remove("translate-y-full");
+    });
   },
 
   closeModal() {
-    this.els.modal.classList.remove("translate-y-0");
+    const overlay = $('bottom-sheet-overlay');
+    if(overlay) {
+      overlay.classList.add('opacity-0', 'pointer-events-none');
+      overlay.onclick = null;
+    }
+
     this.els.modal.classList.add("translate-y-full");
+    this.els.modal.setAttribute("inert", "");
+    this.els.modal.setAttribute("aria-hidden", "true");
     setTimeout(() => {
       this.els.modal.classList.add("hidden");
       this.els.modal.classList.remove("flex");
-      this.els.modal.setAttribute("inert", "");
-      this.els.modal.setAttribute("aria-hidden", "true");
     }, 400);
   },
 

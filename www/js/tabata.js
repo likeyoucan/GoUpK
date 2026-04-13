@@ -102,7 +102,7 @@ export const tb = {
     $("tb-openModalBtn")?.addEventListener("click", () => this.openModal(null));
     $("tb-closeModalBtn")?.addEventListener("click", () => this.closeModal());
     this.els.editName?.addEventListener("input", () =>
-      this.els.nameError?.classList.add("hidden")
+      this.els.nameError?.classList.add("hidden"),
     );
     document.querySelectorAll("[data-tb-adj]").forEach((btn) => {
       btn.addEventListener("click", (e) => {
@@ -164,6 +164,12 @@ export const tb = {
   },
 
   openModal(idToEdit = null) {
+    const overlay = $("bottom-sheet-overlay");
+    if (overlay) {
+      overlay.classList.remove("opacity-0", "pointer-events-none");
+      overlay.onclick = () => this.closeModal();
+    }
+
     this.els.nameError?.classList.add("hidden");
     this.editingWorkoutId = idToEdit;
     if (idToEdit) {
@@ -184,23 +190,28 @@ export const tb = {
     this.els.modal.classList.add("flex");
     this.els.modal.removeAttribute("inert");
     this.els.modal.removeAttribute("aria-hidden");
-    void this.els.modal.offsetWidth;
-    this.els.modal.classList.remove("translate-y-full");
-    this.els.modal.classList.add("translate-y-0");
-    setTimeout(() => this.els.editName?.focus(), 300);
+    requestAnimationFrame(() => {
+      this.els.modal.classList.remove("translate-y-full");
+      setTimeout(() => this.els.editName?.focus(), 300);
+    });
   },
 
   closeModal() {
+    const overlay = $("bottom-sheet-overlay");
+    if (overlay) {
+      overlay.classList.add("opacity-0", "pointer-events-none");
+      overlay.onclick = null;
+    }
+
     if (document.activeElement.closest("form")) {
       document.activeElement.blur();
     }
-    this.els.modal.classList.remove("translate-y-0");
     this.els.modal.classList.add("translate-y-full");
+    this.els.modal.setAttribute("inert", "");
+    this.els.modal.setAttribute("aria-hidden", "true");
     setTimeout(() => {
       this.els.modal.classList.add("hidden");
       this.els.modal.classList.remove("flex");
-      this.els.modal.setAttribute("inert", "");
-      this.els.modal.setAttribute("aria-hidden", "true");
       this.editingWorkoutId = null;
     }, 400);
   },
@@ -211,14 +222,14 @@ export const tb = {
     const exists = this.workouts.some(
       (w) =>
         w.name.toLowerCase() === finalName.toLowerCase() &&
-        w.id !== this.editingWorkoutId
+        w.id !== this.editingWorkoutId,
     );
     if (exists) {
       this.els.nameError?.classList.remove("hidden");
       this.els.editName.classList.add("animate-shake");
       setTimeout(
         () => this.els.editName.classList.remove("animate-shake"),
-        300
+        300,
       );
       return;
     }
@@ -227,7 +238,7 @@ export const tb = {
     const rnd = Math.max(1, parseInt(this.els.editRounds.value) || 8);
     if (this.editingWorkoutId) {
       const index = this.workouts.findIndex(
-        (x) => x.id === this.editingWorkoutId
+        (x) => x.id === this.editingWorkoutId,
       );
       if (index !== -1) {
         this.workouts[index] = {
@@ -285,8 +296,8 @@ export const tb = {
     updateText(
       this.els.activeDetail,
       `${w.work}${t("sec").toLowerCase()} / ${w.rest}${t(
-        "sec"
-      ).toLowerCase()} • ${w.rounds} ${t("rds")}`
+        "sec",
+      ).toLowerCase()} • ${w.rounds} ${t("rds")}`,
     );
     this.renderList();
   },
@@ -312,21 +323,21 @@ export const tb = {
             isAct ? "primary-text" : "app-text"
           }">${escapeHTML(w.name)}</div>
           <div class="text-xs app-text-sec mt-1">${w.work}${t(
-        "sec"
-      ).toLowerCase()} / ${w.rest}${t("sec").toLowerCase()} • ${w.rounds} ${t(
-        "rds"
-      )}</div>
+            "sec",
+          ).toLowerCase()} / ${w.rest}${t("sec").toLowerCase()} • ${w.rounds} ${t(
+            "rds",
+          )}</div>
         </div>
         <div class="flex gap-1 shrink-0">
           <button type="button" aria-label="${t(
-            "edit"
+            "edit",
           )}" data-id="${w.id}" class="tb-edit-btn text-gray-400 hover:primary-text p-2 focus:outline-none custom-focus rounded-lg active:scale-95">
             <svg focusable="false" aria-hidden="true" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
             </svg>
           </button>
           <button type="button" aria-label="${t(
-            "delete"
+            "delete",
           )}" data-id="${w.id}" class="tb-del-btn text-red-500 opacity-50 hover:opacity-100 p-2 focus:outline-none custom-focus rounded-lg active:scale-95">
             <svg focusable="false" aria-hidden="true" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
@@ -349,7 +360,7 @@ export const tb = {
 
   start() {
     document.dispatchEvent(
-      new CustomEvent("timerStarted", { detail: "tabata" })
+      new CustomEvent("timerStarted", { detail: "tabata" }),
     );
     this.currentRound = 1;
     this.status = "READY";
@@ -381,7 +392,7 @@ export const tb = {
 
   resume() {
     document.dispatchEvent(
-      new CustomEvent("timerStarted", { detail: "tabata" })
+      new CustomEvent("timerStarted", { detail: "tabata" }),
     );
     this.paused = false;
     this.phaseEndTime = performance.now() + this.remainingAtPause;

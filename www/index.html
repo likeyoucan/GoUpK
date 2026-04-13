@@ -1152,7 +1152,7 @@
                 stroke-linejoin="round"
               >
                 <circle cx="12" cy="13" r="9"></circle>
-                <polyline points="12 7.8 12 13 15 14.5"></polyline>
+                <polyline points="12 7.8 12 13 15.5 15"></polyline>
                 <path d="M9 2 15 2"></path>
                 <path d="M19.07 4.93 18 6"></path>
                 <path d="M4.93 4.93 6 6"></path>
@@ -1266,17 +1266,28 @@
 
         <!-- Stopwatch: Saved Results -->
         <div
+          id="bottom-sheet-overlay"
+          class="fixed inset-0 z-[99] bg-gray-900/60 transition-opacity duration-300 opacity-0 pointer-events-none"
+          aria-hidden="true"
+        ></div>
+        <div
           id="sw-sessions-modal"
           role="dialog"
           aria-modal="true"
           aria-labelledby="sw-sessions-title"
           inert
           aria-hidden="true"
-          class="hidden absolute bottom-0 left-0 w-full h-[85dvh] sm:h-[85%] z-[100] app-surface border-t sm:border app-border shadow-[0_-8px_30px_rgba(0,0,0,0.15)] rounded-t-[2rem] flex-col p-6 transition-transform duration-[400ms] ease-out translate-y-full"
+          class="hidden absolute bottom-0 left-0 w-full h-[85dvh] sm:h-[85%] z-[100] app-surface border-t sm:border app-border shadow-[0_-8px_30px_rgba(0,0,0,0.15)] rounded-t-[2rem] flex-col px-6 pb-6 pt-10 transition-transform duration-[400ms] ease-out translate-y-full"
         >
           <div
-            class="w-12 h-1.5 bg-gray-500/30 rounded-full mx-auto mb-2 shrink-0"
-          ></div>
+            id="sw-modal-handler"
+            class="absolute top-0 left-0 w-full h-10 cursor-grab"
+            aria-label="Закрыть свайпом вниз"
+          >
+            <div
+              class="w-12 h-1.5 bg-gray-500/30 rounded-full mx-auto mt-4 pointer-events-none"
+            ></div>
+          </div>
           <div
             class="flex justify-between items-center mb-6 shrink-0 mt-2 sm:mt-0"
           >
@@ -1368,11 +1379,17 @@
           aria-labelledby="tb-modal-title"
           inert
           aria-hidden="true"
-          class="hidden absolute bottom-0 left-0 w-full h-[85dvh] sm:h-[85%] z-[100] app-surface border-t sm:border app-border shadow-[0_-8px_30px_rgba(0,0,0,0.15)] rounded-t-[2rem] flex-col p-6 transition-transform duration-[400ms] ease-out translate-y-full"
+          class="hidden absolute bottom-0 left-0 w-full h-[85dvh] sm:h-[85%] z-[100] app-surface border-t sm:border app-border shadow-[0_-8px_30px_rgba(0,0,0,0.15)] rounded-t-[2rem] flex-col px-6 pb-6 pt-10 transition-transform duration-[400ms] ease-out translate-y-full"
         >
           <div
-            class="w-12 h-1.5 bg-gray-500/30 rounded-full mx-auto mb-2 shrink-0"
-          ></div>
+            id="tb-modal-handler"
+            class="absolute top-0 left-0 w-full h-10 cursor-grab"
+            aria-label="Закрыть свайпом вниз"
+          >
+            <div
+              class="w-12 h-1.5 bg-gray-500/30 rounded-full mx-auto mt-4 pointer-events-none"
+            ></div>
+          </div>
           <div
             class="flex justify-between items-center mb-8 shrink-0 mt-2 sm:mt-0"
           >

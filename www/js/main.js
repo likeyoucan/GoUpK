@@ -99,21 +99,24 @@ const resetModal = {
 };
 function initSwipeToClose() {
   const modals = [
-    { id: "sw-sessions-modal", closeFn: () => sw.closeModal() },
-    { id: "tb-modal", closeFn: () => tb.closeModal() },
+    { id: "sw-sessions-modal", handlerId: "sw-modal-handler", closeFn: () => sw.closeModal() },
+    { id: "tb-modal", handlerId: "tb-modal-handler", closeFn: () => tb.closeModal() },
   ];
-  modals.forEach(({ id, closeFn }) => {
+
+  modals.forEach(({ id, handlerId, closeFn }) => {
     const modal = document.getElementById(id);
-    if (!modal) return;
-    const handle = modal.querySelector(".w-12.h-1\\.5");
-    const touchArea = handle ? handle.parentElement : modal;
-    if (!touchArea) return;
+    const touchArea = document.getElementById(handlerId); 
+    if (!modal || !touchArea) return;
+
     let startY = 0;
     let currentY = 0;
     let isDragging = false;
+
     touchArea.addEventListener(
       "touchstart",
       (e) => {
+        // Проверяем, открыта ли модалка, чтобы не инициировать свайп на скрытом элементе
+        if (modal.classList.contains('hidden') || modal.classList.contains('translate-y-full')) return;
         startY = e.touches[0].clientY;
         currentY = startY;
         isDragging = true;
@@ -121,7 +124,8 @@ function initSwipeToClose() {
       },
       { passive: true },
     );
-    touchArea.addEventListener(
+
+    document.addEventListener(
       "touchmove",
       (e) => {
         if (!isDragging) return;
@@ -133,7 +137,8 @@ function initSwipeToClose() {
       },
       { passive: true },
     );
-    touchArea.addEventListener("touchend", () => {
+
+    document.addEventListener("touchend", () => {
       if (!isDragging) return;
       isDragging = false;
       modal.style.transition = "transform 400ms ease-out";
@@ -144,8 +149,10 @@ function initSwipeToClose() {
         modal.style.transform = "translateY(0)";
       }
       setTimeout(() => {
-        modal.style.transform = "";
-        modal.style.transition = "";
+        if (!modal.classList.contains('translate-y-full')) {
+          modal.style.transform = "";
+          modal.style.transition = "";
+        }
       }, 400);
     });
   });

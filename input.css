@@ -328,7 +328,7 @@ html.dark .app-bg.has-vignette::before {
   .view-bottom-half > div.w-full {
     height: clamp(54px, 10dvh, 90px);
   }
-  #tb-activeName{
+  #tb-activeName {
     padding-top: 8px;
   }
 }
@@ -817,6 +817,17 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
 /* =========================================
    17. ЭФФЕКТ ЖИДКОГО СТЕКЛА (LIQUID GLASS)
 ========================================= */
+:root.glass-effect body #bottom-sheet-overlay {
+  background-color: rgba(
+    255,
+    255,
+    255,
+    0.75
+  ); /* Белый прозрачный для светлой темы */
+}
+:root.dark.glass-effect body #bottom-sheet-overlay {
+  background-color: rgba(0, 0, 0, 0.7); /* Черный прозрачный для темной темы */
+}
 :root.glass-effect body #tb-modal,
 :root.glass-effect body #sw-sessions-modal {
   background-color: rgba(255, 255, 255, 0.4);
