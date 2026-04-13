@@ -820,15 +820,15 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
 /* Стили для оверлея под модальными окнами при эффекте стекла (без размытия) */
 :root.glass-effect body #bottom-sheet-overlay {
   background-color: rgba(255, 255, 255, 0.75);
-  backdrop-filter: none; /* <-- ДОБАВЛЕНО: отключаем блюр */
-  height: 15dvh;
+  backdrop-filter: none;
+  height: 20%;
   bottom: auto;
 }
 
 :root.dark.glass-effect body #bottom-sheet-overlay {
   background-color: rgba(0, 0, 0, 0.7);
-  backdrop-filter: none; /* <-- ДОБАВЛЕНО: отключаем блюр */
-  height: 15dvh;
+  backdrop-filter: none;
+  height: 20%;
   bottom: auto; 
 }
 :root.glass-effect body #tb-modal,
