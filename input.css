@@ -294,7 +294,6 @@ html.dark .app-bg.has-vignette::before {
     height: 100%;
     padding-top: 2rem;
     border-right: 1px solid var(--border-color);
-    justify-content: flex-end;
     padding-bottom: 15%;
   }
 
