@@ -163,15 +163,15 @@ export const tb = {
     return name;
   },
 
-      openModal(idToEdit = null) {
-    const overlay = $('bottom-sheet-overlay');
+  openModal(idToEdit = null) {
+    const overlay = $("bottom-sheet-overlay");
     const modal = this.els.modal;
 
-    if(overlay) {
-      overlay.classList.remove('opacity-0', 'pointer-events-none');
+    if (overlay) {
+      overlay.classList.remove("opacity-0", "pointer-events-none");
       overlay.onclick = () => this.closeModal();
     }
-    
+
     // ... (ваша логика заполнения формы) ...
     this.els.nameError?.classList.add("hidden");
     this.editingWorkoutId = idToEdit;
@@ -194,8 +194,8 @@ export const tb = {
     // 1. Подготовка:
     modal.classList.remove("hidden");
     modal.classList.add("flex");
-    modal.style.transition = 'none'; 
-    modal.style.transform = 'translateY(100%)';
+    modal.style.transition = "none";
+    modal.style.transform = "translateY(100%)";
     modal.removeAttribute("inert");
     modal.removeAttribute("aria-hidden");
 
@@ -203,41 +203,40 @@ export const tb = {
     void modal.offsetHeight;
 
     // 3. Запуск анимации
-    modal.style.transition = 'transform 400ms cubic-bezier(0.32, 0.72, 0, 1)';
-    modal.style.transform = 'translateY(0%)';
-    
+    modal.style.transition = "transform 400ms cubic-bezier(0.32, 0.72, 0, 1)";
+    modal.style.transform = "translateY(0%)";
+
     setTimeout(() => this.els.editName?.focus(), 300);
   },
 
-   closeModal() {
-    const overlay = $('bottom-sheet-overlay');
+  closeModal() {
+    const overlay = $("bottom-sheet-overlay");
     const modal = this.els.modal;
 
-    if(overlay) {
-      overlay.classList.add('opacity-0', 'pointer-events-none');
-      overlay.onclick = null;
-    }
-    
-    if (document.activeElement.closest("form")) {
+    // --- ИСПРАВЛЕНИЕ ФОКУСА ---
+    // Заменяем старую проверку на более надежную.
+    if (modal.contains(document.activeElement)) {
       document.activeElement.blur();
     }
-    
+
+    if (overlay) {
+      overlay.classList.add("opacity-0", "pointer-events-none");
+      overlay.onclick = null;
+    }
+
     modal.setAttribute("inert", "");
     modal.setAttribute("aria-hidden", "true");
 
-    // 1. Запускаем анимацию "уезда"
-    modal.style.transition = 'transform 400ms cubic-bezier(0.32, 0.72, 0, 1)';
-    modal.style.transform = 'translateY(100%)';
+    modal.style.transition = "transform 400ms cubic-bezier(0.32, 0.72, 0, 1)";
+    modal.style.transform = "translateY(100%)";
 
-    // 2. ПОСЛЕ анимации: скрываем и полностью сбрасываем стили
     setTimeout(() => {
       modal.classList.add("hidden");
       modal.classList.remove("flex");
       this.editingWorkoutId = null;
-      // КРИТИЧЕСКИ ВАЖНО: готовим к следующему открытию
-      modal.style.transition = '';
-      modal.style.transform = '';
-    }, 400); 
+      modal.style.transition = "";
+      modal.style.transform = "";
+    }, 400);
   },
 
   saveWorkout() {
