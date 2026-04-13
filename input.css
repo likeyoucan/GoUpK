@@ -30,9 +30,11 @@
   --bg-color: #f3f4f6;
   --surface-color: #ffffff;
   --text-color: #1f2937;
-  --text-secondary: color-mix(in srgb,
-      var(--text-color) 65%,
-      var(--primary-color));
+  --text-secondary: color-mix(
+    in srgb,
+    var(--text-color) 65%,
+    var(--primary-color)
+  );
   --border-color: color-mix(in srgb, var(--text-color) 15%, transparent);
   --vignette-alpha: 0.15;
   --font-scale: 1;
@@ -51,9 +53,11 @@
   --bg-color: #000000;
   --surface-color: #1c1c1e;
   --text-color: #f9fafb;
-  --text-secondary: color-mix(in srgb,
-      var(--text-color) 70%,
-      var(--primary-color));
+  --text-secondary: color-mix(
+    in srgb,
+    var(--text-color) 70%,
+    var(--primary-color)
+  );
   --border-color: color-mix(in srgb, var(--text-color) 12%, transparent);
 }
 
@@ -249,7 +253,8 @@ button {
 }
 
 html.dark .app-bg.has-vignette::before {
-  box-shadow: inset 0 0 20vh rgba(0, 0, 0, calc(var(--vignette-alpha, 0.15) + 0.1));
+  box-shadow: inset 0 0 20vh
+    rgba(0, 0, 0, calc(var(--vignette-alpha, 0.15) + 0.1));
 }
 
 /* =========================================
@@ -281,7 +286,6 @@ html.dark .app-bg.has-vignette::before {
    АДАПТИВНОСТЬ ДЛЯ ДВУХКОЛОНОЧНОГО МАКЕТА
 ========================================= */
 @media (min-width: 768px) and (orientation: landscape) {
-
   #view-stopwatch,
   #view-timer,
   #view-tabata {
@@ -311,18 +315,18 @@ html.dark .app-bg.has-vignette::before {
     max-height: 360px;
   }
 
+  /* СТАЛО */
   .view-bottom-half {
     width: 50%;
     height: 100%;
-    justify-content: flex-start;
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Центрирует по вертикали */
+    align-items: center; /* Центрирует по горизонтали */
+    padding-top: 0;
   }
   .view-bottom-half > div.w-full {
     height: clamp(54px, 10dvh, 90px);
-  }
-
-  #view-timer .view-bottom-half {
-    justify-content: center;
-    padding-top: 0;
   }
 }
 
@@ -360,14 +364,14 @@ html.dark .app-bg.has-vignette::before {
 /* =========================================
    7. НАСТРОЙКИ — спец. отступ сверху
 ========================================= */
-#view-settings>div:first-child {
+#view-settings > div:first-child {
   padding-top: calc(var(--safe-top) + 0.5rem);
   height: auto;
   min-height: calc(55px + var(--safe-top));
 }
 
 @media (min-width: 768px) {
-  #view-settings>div:first-child {
+  #view-settings > div:first-child {
     padding-top: 1.5rem;
     min-height: auto;
   }
@@ -425,7 +429,7 @@ html.dark .app-bg.has-vignette::before {
     flex: none;
   }
 
-  #viewsContainer>div:not(#view-settings) {
+  #viewsContainer > div:not(#view-settings) {
     flex-direction: row;
     align-items: center;
     justify-content: center;
@@ -734,15 +738,15 @@ input[type="number"] {
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-input:checked+.custom-toggle {
+input:checked + .custom-toggle {
   background-color: var(--primary-color);
 }
 
-input:checked+.custom-toggle::after {
+input:checked + .custom-toggle::after {
   transform: translateX(20px);
 }
 
-input[type="checkbox"]:focus-visible+.custom-toggle {
+input[type="checkbox"]:focus-visible + .custom-toggle {
   outline: 2px solid var(--primary-color);
   outline-offset: 2px;
 }
@@ -764,7 +768,6 @@ input[type="checkbox"]:focus-visible+.custom-toggle {
 }
 
 @keyframes shake {
-
   0%,
   100% {
     transform: translateX(0);
@@ -843,18 +846,22 @@ input[type="checkbox"]:focus-visible+.custom-toggle {
 }
 
 :root.glass-effect body nav {
-  background: linear-gradient(to top,
-      color-mix(in srgb, var(--surface-color) 30%, transparent),
-      color-mix(in srgb, var(--surface-color) 2%, transparent));
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--surface-color) 30%, transparent),
+    color-mix(in srgb, var(--surface-color) 2%, transparent)
+  );
   backdrop-filter: blur(16px) saturate(150%);
   border-top: 1px solid rgba(255, 255, 255, 0.2);
   box-shadow: none;
 }
 
 :root.dark.glass-effect body nav {
-  background: linear-gradient(to top,
-      color-mix(in srgb, var(--surface-color) 25%, transparent),
-      color-mix(in srgb, var(--surface-color) 0%, transparent));
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--surface-color) 25%, transparent),
+    color-mix(in srgb, var(--surface-color) 0%, transparent)
+  );
   border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
@@ -972,7 +979,7 @@ input[type="checkbox"]:focus-visible+.custom-toggle {
 :root.glass-effect body .lap-row,
 :root.glass-effect body .tb-workout-row,
 :root.glass-effect body .sw-session-header,
-:root.glass-effect body [id^="sw-details-"]>div:last-child {
+:root.glass-effect body [id^="sw-details-"] > div:last-child {
   will-change: backdrop-filter, transform;
   background-color: color-mix(in srgb, var(--surface-color) 30%, transparent);
   backdrop-filter: blur(16px) saturate(150%);
@@ -984,7 +991,7 @@ input[type="checkbox"]:focus-visible+.custom-toggle {
 :root.dark.glass-effect body .lap-row,
 :root.dark.glass-effect body .tb-workout-row,
 :root.dark.glass-effect body .sw-session-header,
-:root.dark.glass-effect body [id^="sw-details-"]>div:last-child {
+:root.dark.glass-effect body [id^="sw-details-"] > div:last-child {
   background-color: color-mix(in srgb, var(--surface-color) 15%, transparent);
   box-shadow:
     inset 0 1px 1px rgba(255, 255, 255, 0.05),
@@ -1064,7 +1071,6 @@ select option {
 }
 
 @media (prefers-reduced-motion: reduce) {
-
   *,
   ::before,
   ::after {
