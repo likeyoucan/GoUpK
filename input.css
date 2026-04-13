@@ -298,7 +298,7 @@ html.dark .app-bg.has-vignette::before {
     height: 100%;
     padding-top: 2rem;
     border-right: 1px solid var(--border-color);
-    padding-bottom: 15%;
+    padding-bottom: var(--nav-height);
   }
 
   .view-top-half h2 {
