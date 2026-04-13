@@ -494,7 +494,7 @@ export const sw = {
     });
   },
 
-      closeModal() {
+  closeModal() {
     const overlay = $('bottom-sheet-overlay');
     if(overlay) {
       overlay.classList.add('opacity-0', 'pointer-events-none');
@@ -504,18 +504,21 @@ export const sw = {
     this.els.modal.setAttribute("inert", "");
     this.els.modal.setAttribute("aria-hidden", "true");
     
-    // ШАГ 1: Принудительно убираем инлайн-стили, оставшиеся от перетаскивания.
-    // Это позволяет CSS-классам снова управлять анимацией.
+    // --- КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ ---
+
+    // ШАГ 1: Немедленно сбрасываем все инлайн-стили, которые могли остаться от перетаскивания.
+    // Это возвращает управление анимацией обратно к CSS-классам.
     this.els.modal.style.transition = "";
     this.els.modal.style.transform = "";
-    
-    // ШАГ 2: Запускаем анимацию "уезда" в следующем кадре.
-    // Это дает браузеру время обработать сброс стилей из Шага 1.
-    requestAnimationFrame(() => {
-        this.els.modal.classList.add("translate-y-full");
-    });
 
-    // ШАГ 3: После завершения CSS-анимации полностью скрываем элемент.
+    // ШАГ 2: Заставляем браузер применить сброс стилей из Шага 1, прочитав свойство layout.
+    // Это классический и самый надежный способ избежать гонки состояний.
+    void this.els.modal.offsetHeight; 
+
+    // ШАГ 3: Теперь, когда элемент "чист", мы можем безопасно запустить CSS-анимацию.
+    this.els.modal.classList.add("translate-y-full");
+
+    // ШАГ 4: После завершения анимации скрываем элемент с помощью `display: none`.
     setTimeout(() => {
       this.els.modal.classList.add("hidden");
       this.els.modal.classList.remove("flex");

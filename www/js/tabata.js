@@ -200,7 +200,7 @@ export const tb = {
     });
   },
 
-      closeModal() {
+  closeModal() {
     const overlay = $('bottom-sheet-overlay');
     if(overlay) {
       overlay.classList.add('opacity-0', 'pointer-events-none');
@@ -214,16 +214,19 @@ export const tb = {
     this.els.modal.setAttribute("inert", "");
     this.els.modal.setAttribute("aria-hidden", "true");
 
-    // ШАГ 1: Принудительно убираем инлайн-стили, оставшиеся от перетаскивания.
+    // --- КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ ---
+
+    // ШАГ 1: Немедленно сбрасываем все инлайн-стили.
     this.els.modal.style.transition = "";
     this.els.modal.style.transform = "";
 
-    // ШАГ 2: Запускаем анимацию "уезда" в следующем кадре.
-    requestAnimationFrame(() => {
-        this.els.modal.classList.add("translate-y-full");
-    });
+    // ШАГ 2: Заставляем браузер применить сброс стилей.
+    void this.els.modal.offsetHeight; 
+
+    // ШАГ 3: Теперь запускаем CSS-анимацию.
+    this.els.modal.classList.add("translate-y-full");
     
-    // ШАГ 3: После завершения CSS-анимации полностью скрываем элемент.
+    // ШАГ 4: После завершения анимации скрываем элемент.
     setTimeout(() => {
       this.els.modal.classList.add("hidden");
       this.els.modal.classList.remove("flex");
