@@ -497,13 +497,19 @@ export const sw = {
       overlay.onclick = null;
     }
 
+    // ВАЖНОЕ ИЗМЕНЕНИЕ: Устанавливаем атрибуты и классы для скрытия
     this.els.modal.classList.add("translate-y-full");
     this.els.modal.setAttribute("inert", "");
     this.els.modal.setAttribute("aria-hidden", "true");
+
+    // Сбрасываем инлайн-стили, которые могли остаться от перетаскивания
+    this.els.modal.style.transition = ""; // Сбрасываем transition, чтобы работала CSS анимация
+    this.els.modal.style.transform = ""; // Сбрасываем transform
+
     setTimeout(() => {
       this.els.modal.classList.add("hidden");
       this.els.modal.classList.remove("flex");
-    }, 400);
+    }, 400); // Задержка равна длительности анимации из CSS
   },
 
   sortSessions(type) {

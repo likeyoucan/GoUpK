@@ -111,18 +111,13 @@ function initSwipeToClose() {
     },
   ];
 
-  // Эти переменные будут использоваться для отслеживания состояния перетаскивания
-  // между разными функциями-обработчиками.
   let isDragging = false;
   let startY = 0;
   let currentY = 0;
-  let activeModal = null; // Храним ссылку на активную модалку
+  let activeModal = null;
   let activeCloseFn = null;
 
-  // --- ОБЩИЕ ФУНКЦИИ-ОБРАБОТЧИКИ ДЛЯ МЫШИ И КАСАНИЙ ---
-
   const handleDragStart = (e, modal, closeFn) => {
-    // Проверяем, открыта ли модалка, чтобы не инициировать свайп на скрытом элементе
     if (
       modal.classList.contains("hidden") ||
       modal.classList.contains("translate-y-full")
@@ -132,15 +127,12 @@ function initSwipeToClose() {
     activeModal = modal;
     activeCloseFn = closeFn;
 
-    // Получаем координату Y из события касания или мыши
     startY = e.touches ? e.touches[0].clientY : e.clientY;
     currentY = startY;
     isDragging = true;
 
-    // Отключаем анимацию на время перетаскивания для плавности
-    activeModal.style.transition = "none";
+    activeModal.style.transition = "none"; // Отключаем CSS-анимацию на время перетаскивания
 
-    // Для мыши: предотвращаем стандартное поведение (например, выделение текста)
     if (e.type === "mousedown") {
       e.preventDefault();
     }
@@ -149,11 +141,9 @@ function initSwipeToClose() {
   const handleDragMove = (e) => {
     if (!isDragging || !activeModal) return;
 
-    // Получаем текущую координату Y
     currentY = e.touches ? e.touches[0].clientY : e.clientY;
     const deltaY = currentY - startY;
 
-    // Позволяем тащить только вниз
     if (deltaY > 0) {
       activeModal.style.transform = `translateY(${deltaY}px)`;
     }
@@ -164,55 +154,55 @@ function initSwipeToClose() {
 
     isDragging = false;
 
-    // Возвращаем анимацию для плавного "схлопывания" или закрытия
-    activeModal.style.transition = "transform 400ms ease-out";
     const deltaY = currentY - startY;
 
-    // Если сдвинули достаточно далеко, закрываем
     if (deltaY > 100) {
-      if (activeCloseFn) activeCloseFn();
+      // Если сдвинули достаточно для закрытия
+      if (activeCloseFn) {
+        // Мы не сбрасываем стили здесь, т.к. функция closeFn это сделает
+        activeCloseFn();
+      }
     } else {
-      // Иначе возвращаем на место
-      activeModal.style.transform = "translateY(0)";
+      // Если не сдвинули, анимируем возврат на место
+      activeModal.style.transition = "transform 400ms ease-out";
+      activeModal.style.transform = "translateY(0px)";
+
+      // ВАЖНО: После анимации возврата, убираем инлайн-стиль, чтобы не мешал
+      setTimeout(() => {
+        if (activeModal) {
+          activeModal.style.transition = "";
+          activeModal.style.transform = "";
+        }
+      }, 400);
     }
 
-    // Сбрасываем стили и активные элементы через 400мс
-    setTimeout(() => {
-      if (activeModal && !activeModal.classList.contains("translate-y-full")) {
-        activeModal.style.transform = "";
-        activeModal.style.transition = "";
-      }
-      activeModal = null;
-      activeCloseFn = null;
-    }, 400);
+    // Сбрасываем активные элементы
+    activeModal = null;
+    activeCloseFn = null;
   };
 
-  // --- НАВЕШИВАЕМ ОБРАБОТЧИКИ ---
-
-  // Обработчики на конкретных хендлерах для начала перетаскивания
   modals.forEach(({ id, handlerId, closeFn }) => {
     const modal = document.getElementById(id);
     const touchArea = document.getElementById(handlerId);
     if (!modal || !touchArea) return;
 
-    // Начало свайпа касанием
     touchArea.addEventListener(
       "touchstart",
       (e) => handleDragStart(e, modal, closeFn),
       { passive: true },
     );
-    // Начало перетаскивания мышкой
     touchArea.addEventListener("mousedown", (e) =>
       handleDragStart(e, modal, closeFn),
     );
   });
 
-  // Глобальные обработчики для движения и окончания (чтобы работало вне хендлера)
   document.addEventListener("touchmove", handleDragMove, { passive: true });
   document.addEventListener("mousemove", handleDragMove);
 
   document.addEventListener("touchend", handleDragEnd);
   document.addEventListener("mouseup", handleDragEnd);
+  // Добавляем mouseleave на случай, если пользователь отпустит кнопку за пределами окна
+  document.addEventListener("mouseleave", handleDragEnd);
 }
 
 // =========================================
