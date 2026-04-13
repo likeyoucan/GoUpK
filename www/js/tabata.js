@@ -163,10 +163,10 @@ export const tb = {
     return name;
   },
 
-  openModal(idToEdit = null) {
-    const overlay = $("bottom-sheet-overlay");
-    if (overlay) {
-      overlay.classList.remove("opacity-0", "pointer-events-none");
+    openModal(idToEdit = null) {
+    const overlay = $('bottom-sheet-overlay');
+    if(overlay) {
+      overlay.classList.remove('opacity-0', 'pointer-events-none');
       overlay.onclick = () => this.closeModal();
     }
 
@@ -186,36 +186,47 @@ export const tb = {
       this.els.editRest.value = 10;
       this.els.editRounds.value = 8;
     }
+
+    // ШАГ 1: Делаем модалку видимой, но пока за экраном
     this.els.modal.classList.remove("hidden");
     this.els.modal.classList.add("flex");
     this.els.modal.removeAttribute("inert");
     this.els.modal.removeAttribute("aria-hidden");
+    
+    // ШАГ 2: В следующем кадре запускаем анимацию "выезда" и фокус
     requestAnimationFrame(() => {
       this.els.modal.classList.remove("translate-y-full");
       setTimeout(() => this.els.editName?.focus(), 300);
     });
   },
 
-  closeModal() {
+    closeModal() {
     const overlay = $('bottom-sheet-overlay');
     if(overlay) {
       overlay.classList.add('opacity-0', 'pointer-events-none');
       overlay.onclick = null;
     }
-
-    // ВАЖНОЕ ИЗМЕНЕНИЕ: Устанавливаем атрибуты и классы для скрытия
-    this.els.modal.classList.add("translate-y-full");
+    
+    if (document.activeElement.closest("form")) {
+      document.activeElement.blur();
+    }
+    
     this.els.modal.setAttribute("inert", "");
     this.els.modal.setAttribute("aria-hidden", "true");
 
-    // Сбрасываем инлайн-стили, которые могли остаться от перетаскивания
-    this.els.modal.style.transition = ""; // Сбрасываем transition, чтобы работала CSS анимация
-    this.els.modal.style.transform = ""; // Сбрасываем transform
+    // ШАГ 1: Запускаем анимацию "уезда"
+    this.els.modal.classList.add("translate-y-full");
 
+    // Сбрасываем инлайн-стили от перетаскивания, если они есть
+    this.els.modal.style.transition = "";
+    this.els.modal.style.transform = "";
+
+    // ШАГ 2: После завершения анимации полностью скрываем элемент
     setTimeout(() => {
       this.els.modal.classList.add("hidden");
       this.els.modal.classList.remove("flex");
-    }, 400); // Задержка равна длительности анимации из CSS
+      this.editingWorkoutId = null;
+    }, 400); // 400ms - длительность вашей анимации
   },
 
   saveWorkout() {

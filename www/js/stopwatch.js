@@ -481,35 +481,41 @@ export const sw = {
     }
 
     this.sortSessions(this.currentSort);
+
+    // ШАГ 1: Делаем модалку видимой, но пока за экраном
     this.els.modal.classList.remove("hidden");
     this.els.modal.classList.add("flex");
     this.els.modal.removeAttribute("inert");
     this.els.modal.removeAttribute("aria-hidden");
+
+    // ШАГ 2: В следующем кадре запускаем анимацию "выезда"
     requestAnimationFrame(() => {
       this.els.modal.classList.remove("translate-y-full");
     });
   },
 
-  closeModal() {
+    closeModal() {
     const overlay = $('bottom-sheet-overlay');
     if(overlay) {
       overlay.classList.add('opacity-0', 'pointer-events-none');
       overlay.onclick = null;
     }
 
-    // ВАЖНОЕ ИЗМЕНЕНИЕ: Устанавливаем атрибуты и классы для скрытия
-    this.els.modal.classList.add("translate-y-full");
     this.els.modal.setAttribute("inert", "");
     this.els.modal.setAttribute("aria-hidden", "true");
+    
+    // ШАГ 1: Запускаем анимацию "уезда"
+    this.els.modal.classList.add("translate-y-full");
+    
+    // Сбрасываем инлайн-стили от перетаскивания, если они есть
+    this.els.modal.style.transition = "";
+    this.els.modal.style.transform = "";
 
-    // Сбрасываем инлайн-стили, которые могли остаться от перетаскивания
-    this.els.modal.style.transition = ""; // Сбрасываем transition, чтобы работала CSS анимация
-    this.els.modal.style.transform = ""; // Сбрасываем transform
-
+    // ШАГ 2: После завершения анимации полностью скрываем элемент
     setTimeout(() => {
       this.els.modal.classList.add("hidden");
       this.els.modal.classList.remove("flex");
-    }, 400); // Задержка равна длительности анимации из CSS
+    }, 400); // 400ms - длительность вашей анимации
   },
 
   sortSessions(type) {
