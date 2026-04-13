@@ -56,7 +56,7 @@ export const navigation = {
           textSpan.classList.remove("text-gray-400");
           textSpan.classList.add("primary-text");
         }
-        if (iconSvg) iconSvg.setAttribute("stroke-width", "2.5");
+        if (iconSvg) iconSvg.setAttribute("stroke-width", "2");
       } else {
         iconDiv.classList.remove("primary-text");
         iconDiv.classList.add("text-gray-400");
@@ -64,7 +64,7 @@ export const navigation = {
           textSpan.classList.remove("primary-text");
           textSpan.classList.add("text-gray-400");
         }
-        if (iconSvg) iconSvg.setAttribute("stroke-width", "2");
+        if (iconSvg) iconSvg.setAttribute("stroke-width", "1.5");
       }
     });
   },
