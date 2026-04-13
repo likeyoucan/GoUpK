@@ -315,7 +315,9 @@ html.dark .app-bg.has-vignette::before {
     width: 50%;
     height: 100%;
     justify-content: flex-start;
-    padding-top: 2rem;
+  }
+  .view-bottom-half > div.w-full {
+    height: clamp(54px, 10dvh, 90px);
   }
 
   #view-timer .view-bottom-half {
