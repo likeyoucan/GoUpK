@@ -164,7 +164,7 @@ function initSwipeToClose() {
       }
     } else {
       // Если не сдвинули, анимируем возврат на место
-      activeModal.style.transition = "transform 400ms ease-out";
+      activeModal.style.transition = "transform 400ms cubic-bezier(0.32, 0.72, 0, 1)";
       activeModal.style.transform = "translateY(0px)";
 
       // ВАЖНО: После анимации возврата, убираем инлайн-стиль, чтобы не мешал
