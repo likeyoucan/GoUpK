@@ -200,7 +200,7 @@ export const tb = {
     });
   },
 
-    closeModal() {
+      closeModal() {
     const overlay = $('bottom-sheet-overlay');
     if(overlay) {
       overlay.classList.add('opacity-0', 'pointer-events-none');
@@ -214,19 +214,21 @@ export const tb = {
     this.els.modal.setAttribute("inert", "");
     this.els.modal.setAttribute("aria-hidden", "true");
 
-    // ШАГ 1: Запускаем анимацию "уезда"
-    this.els.modal.classList.add("translate-y-full");
-
-    // Сбрасываем инлайн-стили от перетаскивания, если они есть
+    // ШАГ 1: Принудительно убираем инлайн-стили, оставшиеся от перетаскивания.
     this.els.modal.style.transition = "";
     this.els.modal.style.transform = "";
 
-    // ШАГ 2: После завершения анимации полностью скрываем элемент
+    // ШАГ 2: Запускаем анимацию "уезда" в следующем кадре.
+    requestAnimationFrame(() => {
+        this.els.modal.classList.add("translate-y-full");
+    });
+    
+    // ШАГ 3: После завершения CSS-анимации полностью скрываем элемент.
     setTimeout(() => {
       this.els.modal.classList.add("hidden");
       this.els.modal.classList.remove("flex");
       this.editingWorkoutId = null;
-    }, 400); // 400ms - длительность вашей анимации
+    }, 400); // Длительность анимации
   },
 
   saveWorkout() {

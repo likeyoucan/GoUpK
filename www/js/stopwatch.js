@@ -494,7 +494,7 @@ export const sw = {
     });
   },
 
-    closeModal() {
+      closeModal() {
     const overlay = $('bottom-sheet-overlay');
     if(overlay) {
       overlay.classList.add('opacity-0', 'pointer-events-none');
@@ -504,18 +504,22 @@ export const sw = {
     this.els.modal.setAttribute("inert", "");
     this.els.modal.setAttribute("aria-hidden", "true");
     
-    // ШАГ 1: Запускаем анимацию "уезда"
-    this.els.modal.classList.add("translate-y-full");
-    
-    // Сбрасываем инлайн-стили от перетаскивания, если они есть
+    // ШАГ 1: Принудительно убираем инлайн-стили, оставшиеся от перетаскивания.
+    // Это позволяет CSS-классам снова управлять анимацией.
     this.els.modal.style.transition = "";
     this.els.modal.style.transform = "";
+    
+    // ШАГ 2: Запускаем анимацию "уезда" в следующем кадре.
+    // Это дает браузеру время обработать сброс стилей из Шага 1.
+    requestAnimationFrame(() => {
+        this.els.modal.classList.add("translate-y-full");
+    });
 
-    // ШАГ 2: После завершения анимации полностью скрываем элемент
+    // ШАГ 3: После завершения CSS-анимации полностью скрываем элемент.
     setTimeout(() => {
       this.els.modal.classList.add("hidden");
       this.els.modal.classList.remove("flex");
-    }, 400); // 400ms - длительность вашей анимации
+    }, 400); // Длительность анимации
   },
 
   sortSessions(type) {
