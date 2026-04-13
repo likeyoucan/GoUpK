@@ -29,6 +29,7 @@ export const tm = {
     this.els = {
       inputs: $("tm-inputs"),
       resetBtn: $("tm-resetBtn"),
+      resetBtnWrap: $("tm-resetBtn-wrap"),
       circleBtn: $("tm-circleBtn"),
       status: $("tm-statusText"),
       display: $("tm-mainDisplay"),
@@ -235,17 +236,17 @@ export const tm = {
     if (!this.els.inputs) return;
     if (this.isRunning) {
       this.els.inputs.classList.add("hidden", "opacity-0");
-      this.els.resetBtn?.classList.add("hidden");
+      this.els.resetBtnWrap?.classList.add("hidden");
       this.els.status?.classList.add("hidden");
       this.els.display?.classList.remove("is-go");
     } else if (this.isPaused) {
       this.els.inputs.classList.add("hidden", "opacity-0");
-      this.els.resetBtn?.classList.remove("hidden");
+      this.els.resetBtnWrap?.classList.remove("hidden");
       this.els.status?.classList.remove("hidden");
       updateText(this.els.status, t("pause"));
     } else {
       this.els.inputs.classList.remove("hidden", "opacity-0");
-      this.els.resetBtn?.classList.add("hidden");
+      this.els.resetBtnWrap?.classList.add("hidden");
       this.els.status?.classList.add("hidden");
       this.els.display?.classList.add("is-go");
       updateText(this.els.display, "GO");
