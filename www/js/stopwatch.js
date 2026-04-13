@@ -473,8 +473,10 @@ export const sw = {
     showToast(t("history_cleared"));
   },
 
-  openModal() {
+    openModal() {
     const overlay = $('bottom-sheet-overlay');
+    const modal = this.els.modal;
+
     if(overlay) {
       overlay.classList.remove('opacity-0', 'pointer-events-none');
       overlay.onclick = () => this.closeModal();
@@ -482,47 +484,46 @@ export const sw = {
 
     this.sortSessions(this.currentSort);
 
-    // ШАГ 1: Делаем модалку видимой, но пока за экраном
-    this.els.modal.classList.remove("hidden");
-    this.els.modal.classList.add("flex");
-    this.els.modal.removeAttribute("inert");
-    this.els.modal.removeAttribute("aria-hidden");
+    // 1. Подготовка: делаем видимым, но ставим за экран без анимации.
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+    modal.style.transition = 'none'; 
+    modal.style.transform = 'translateY(100%)';
+    modal.removeAttribute("inert");
+    modal.removeAttribute("aria-hidden");
 
-    // ШАГ 2: В следующем кадре запускаем анимацию "выезда"
-    requestAnimationFrame(() => {
-      this.els.modal.classList.remove("translate-y-full");
-    });
+    // 2. Заставляем браузер применить начальное состояние
+    void modal.offsetHeight;
+
+    // 3. Запускаем анимацию "выезда"
+    modal.style.transition = 'transform 400ms cubic-bezier(0.32, 0.72, 0, 1)';
+    modal.style.transform = 'translateY(0%)';
   },
 
-  closeModal() {
+    closeModal() {
     const overlay = $('bottom-sheet-overlay');
+    const modal = this.els.modal;
+
     if(overlay) {
       overlay.classList.add('opacity-0', 'pointer-events-none');
       overlay.onclick = null;
     }
-
-    this.els.modal.setAttribute("inert", "");
-    this.els.modal.setAttribute("aria-hidden", "true");
     
-    // --- КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ ---
+    modal.setAttribute("inert", "");
+    modal.setAttribute("aria-hidden", "true");
 
-    // ШАГ 1: Немедленно сбрасываем все инлайн-стили, которые могли остаться от перетаскивания.
-    // Это возвращает управление анимацией обратно к CSS-классам.
-    this.els.modal.style.transition = "";
-    this.els.modal.style.transform = "";
+    // 1. Запускаем анимацию "уезда"
+    modal.style.transition = 'transform 400ms cubic-bezier(0.32, 0.72, 0, 1)';
+    modal.style.transform = 'translateY(100%)';
 
-    // ШАГ 2: Заставляем браузер применить сброс стилей из Шага 1, прочитав свойство layout.
-    // Это классический и самый надежный способ избежать гонки состояний.
-    void this.els.modal.offsetHeight; 
-
-    // ШАГ 3: Теперь, когда элемент "чист", мы можем безопасно запустить CSS-анимацию.
-    this.els.modal.classList.add("translate-y-full");
-
-    // ШАГ 4: После завершения анимации скрываем элемент с помощью `display: none`.
+    // 2. ПОСЛЕ анимации: скрываем и полностью сбрасываем стили
     setTimeout(() => {
-      this.els.modal.classList.add("hidden");
-      this.els.modal.classList.remove("flex");
-    }, 400); // Длительность анимации
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+      // КРИТИЧЕСКИ ВАЖНО: готовим к следующему открытию
+      modal.style.transition = '';
+      modal.style.transform = '';
+    }, 400); 
   },
 
   sortSessions(type) {

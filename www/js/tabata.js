@@ -163,13 +163,16 @@ export const tb = {
     return name;
   },
 
-    openModal(idToEdit = null) {
+      openModal(idToEdit = null) {
     const overlay = $('bottom-sheet-overlay');
+    const modal = this.els.modal;
+
     if(overlay) {
       overlay.classList.remove('opacity-0', 'pointer-events-none');
       overlay.onclick = () => this.closeModal();
     }
-
+    
+    // ... (ваша логика заполнения формы) ...
     this.els.nameError?.classList.add("hidden");
     this.editingWorkoutId = idToEdit;
     if (idToEdit) {
@@ -186,22 +189,30 @@ export const tb = {
       this.els.editRest.value = 10;
       this.els.editRounds.value = 8;
     }
+    // ... конец логики формы
 
-    // ШАГ 1: Делаем модалку видимой, но пока за экраном
-    this.els.modal.classList.remove("hidden");
-    this.els.modal.classList.add("flex");
-    this.els.modal.removeAttribute("inert");
-    this.els.modal.removeAttribute("aria-hidden");
+    // 1. Подготовка:
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+    modal.style.transition = 'none'; 
+    modal.style.transform = 'translateY(100%)';
+    modal.removeAttribute("inert");
+    modal.removeAttribute("aria-hidden");
+
+    // 2. Принудительная перерисовка
+    void modal.offsetHeight;
+
+    // 3. Запуск анимации
+    modal.style.transition = 'transform 400ms cubic-bezier(0.32, 0.72, 0, 1)';
+    modal.style.transform = 'translateY(0%)';
     
-    // ШАГ 2: В следующем кадре запускаем анимацию "выезда" и фокус
-    requestAnimationFrame(() => {
-      this.els.modal.classList.remove("translate-y-full");
-      setTimeout(() => this.els.editName?.focus(), 300);
-    });
+    setTimeout(() => this.els.editName?.focus(), 300);
   },
 
-  closeModal() {
+   closeModal() {
     const overlay = $('bottom-sheet-overlay');
+    const modal = this.els.modal;
+
     if(overlay) {
       overlay.classList.add('opacity-0', 'pointer-events-none');
       overlay.onclick = null;
@@ -211,27 +222,22 @@ export const tb = {
       document.activeElement.blur();
     }
     
-    this.els.modal.setAttribute("inert", "");
-    this.els.modal.setAttribute("aria-hidden", "true");
+    modal.setAttribute("inert", "");
+    modal.setAttribute("aria-hidden", "true");
 
-    // --- КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ ---
+    // 1. Запускаем анимацию "уезда"
+    modal.style.transition = 'transform 400ms cubic-bezier(0.32, 0.72, 0, 1)';
+    modal.style.transform = 'translateY(100%)';
 
-    // ШАГ 1: Немедленно сбрасываем все инлайн-стили.
-    this.els.modal.style.transition = "";
-    this.els.modal.style.transform = "";
-
-    // ШАГ 2: Заставляем браузер применить сброс стилей.
-    void this.els.modal.offsetHeight; 
-
-    // ШАГ 3: Теперь запускаем CSS-анимацию.
-    this.els.modal.classList.add("translate-y-full");
-    
-    // ШАГ 4: После завершения анимации скрываем элемент.
+    // 2. ПОСЛЕ анимации: скрываем и полностью сбрасываем стили
     setTimeout(() => {
-      this.els.modal.classList.add("hidden");
-      this.els.modal.classList.remove("flex");
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
       this.editingWorkoutId = null;
-    }, 400); // Длительность анимации
+      // КРИТИЧЕСКИ ВАЖНО: готовим к следующему открытию
+      modal.style.transition = '';
+      modal.style.transform = '';
+    }, 400); 
   },
 
   saveWorkout() {

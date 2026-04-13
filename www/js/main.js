@@ -99,16 +99,8 @@ const resetModal = {
 };
 function initSwipeToClose() {
   const modals = [
-    {
-      id: "sw-sessions-modal",
-      handlerId: "sw-modal-handler",
-      closeFn: () => sw.closeModal(),
-    },
-    {
-      id: "tb-modal",
-      handlerId: "tb-modal-handler",
-      closeFn: () => tb.closeModal(),
-    },
+    { id: "sw-sessions-modal", handlerId: "sw-modal-handler", closeFn: () => sw.closeModal() },
+    { id: "tb-modal", handlerId: "tb-modal-handler", closeFn: () => tb.closeModal() },
   ];
 
   let isDragging = false;
@@ -118,12 +110,8 @@ function initSwipeToClose() {
   let activeCloseFn = null;
 
   const handleDragStart = (e, modal, closeFn) => {
-    if (
-      modal.classList.contains("hidden") ||
-      modal.classList.contains("translate-y-full")
-    )
-      return;
-
+    if (modal.classList.contains('hidden')) return;
+    
     activeModal = modal;
     activeCloseFn = closeFn;
 
@@ -131,43 +119,32 @@ function initSwipeToClose() {
     currentY = startY;
     isDragging = true;
 
-    activeModal.style.transition = "none"; // Отключаем CSS-анимацию на время перетаскивания
-
-    if (e.type === "mousedown") {
-      e.preventDefault();
-    }
+    activeModal.style.transition = 'none'; 
+    if (e.type === 'mousedown') e.preventDefault();
   };
 
   const handleDragMove = (e) => {
     if (!isDragging || !activeModal) return;
-
+    
     currentY = e.touches ? e.touches[0].clientY : e.clientY;
     const deltaY = currentY - startY;
 
-    if (deltaY > 0) {
-      activeModal.style.transform = `translateY(${deltaY}px)`;
-    }
+    if (deltaY > 0) activeModal.style.transform = `translateY(${deltaY}px)`;
   };
 
   const handleDragEnd = () => {
     if (!isDragging || !activeModal) return;
 
-    isDragging = false;
-
     const deltaY = currentY - startY;
 
     if (deltaY > 100) {
-      // Если сдвинули достаточно для закрытия
-      if (activeCloseFn) {
-        // Мы не сбрасываем стили здесь, т.к. функция closeFn это сделает
-        activeCloseFn();
-      }
-    } else {
-      // Если не сдвинули, анимируем возврат на место
+      if (activeCloseFn) activeCloseFn();
+    } else { 
+      // Анимируем возврат на место
       activeModal.style.transition = "transform 400ms cubic-bezier(0.32, 0.72, 0, 1)";
       activeModal.style.transform = "translateY(0px)";
 
-      // ВАЖНО: После анимации возврата, убираем инлайн-стиль, чтобы не мешал
+      // И СБРАСЫВАЕМ СТИЛИ после анимации
       setTimeout(() => {
         if (activeModal) {
           activeModal.style.transition = "";
@@ -175,8 +152,8 @@ function initSwipeToClose() {
         }
       }, 400);
     }
-
-    // Сбрасываем активные элементы
+    
+    isDragging = false;
     activeModal = null;
     activeCloseFn = null;
   };
@@ -186,23 +163,15 @@ function initSwipeToClose() {
     const touchArea = document.getElementById(handlerId);
     if (!modal || !touchArea) return;
 
-    touchArea.addEventListener(
-      "touchstart",
-      (e) => handleDragStart(e, modal, closeFn),
-      { passive: true },
-    );
-    touchArea.addEventListener("mousedown", (e) =>
-      handleDragStart(e, modal, closeFn),
-    );
+    touchArea.addEventListener('touchstart', (e) => handleDragStart(e, modal, closeFn), { passive: true });
+    touchArea.addEventListener('mousedown', (e) => handleDragStart(e, modal, closeFn));
   });
 
-  document.addEventListener("touchmove", handleDragMove, { passive: true });
-  document.addEventListener("mousemove", handleDragMove);
-
-  document.addEventListener("touchend", handleDragEnd);
-  document.addEventListener("mouseup", handleDragEnd);
-  // Добавляем mouseleave на случай, если пользователь отпустит кнопку за пределами окна
-  document.addEventListener("mouseleave", handleDragEnd);
+  document.addEventListener('touchmove', handleDragMove, { passive: true });
+  document.addEventListener('mousemove', handleDragMove);
+  document.addEventListener('touchend', handleDragEnd);
+  document.addEventListener('mouseup', handleDragEnd);
+  document.addEventListener('mouseleave', handleDragEnd); 
 }
 
 // =========================================
