@@ -1108,7 +1108,8 @@ select option {
 
 @media (max-width: 380px) {
   .timer-adjust-btn {
-    @apply w-12 h-12;
+   @apply w-16 h-16 rounded-full flex items-center justify-center shadow-md
+  active:scale-95 transition-transform focus:outline-none;
   }
   .timer-adjust-btn svg {
     @apply w-6 h-6;
