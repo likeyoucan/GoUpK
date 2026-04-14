@@ -1104,3 +1104,6 @@ select option {
     transition-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
   }
 }
+.is-dragging {
+  transition: none !important;
+}

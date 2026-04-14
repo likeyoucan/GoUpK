@@ -114,12 +114,13 @@ function initSwipeToClose() {
     
     activeModal = modal;
     activeCloseFn = closeFn;
-
-    startY = e.touches ? e.touches[0].clientY : e.clientY;
-    currentY = startY;
     isDragging = true;
-
-    activeModal.style.transition = 'none'; 
+    
+    startY = e.touches ? e.touches[0].clientY : e.clientY;
+    
+    // Временно отключаем CSS-анимацию через класс
+    activeModal.classList.add('is-dragging');
+    
     if (e.type === 'mousedown') e.preventDefault();
   };
 
@@ -129,38 +130,29 @@ function initSwipeToClose() {
     currentY = e.touches ? e.touches[0].clientY : e.clientY;
     const deltaY = currentY - startY;
 
-    if (deltaY >= 0) { // Позволяем тащить только вниз, >= 0 для начального смещения
-        activeModal.style.transform = `translateY(${deltaY}px)`;
+    if (deltaY >= 0) {
+      activeModal.style.transform = `translateY(${deltaY}px)`;
     }
   };
 
   const handleDragEnd = () => {
     if (!isDragging || !activeModal) return;
-    isDragging = false;
+    
+    // Возвращаем CSS-анимацию
+    activeModal.classList.remove('is-dragging');
 
     const deltaY = currentY - startY;
 
     if (deltaY > 100) {
+      // Просто вызываем стандартную функцию закрытия
       if (activeCloseFn) activeCloseFn();
     } else { 
-      // Если свайп был, но недостаточный - анимируем возврат через JS
-      if (deltaY > 0) {
-          activeModal.style.transition = "transform 400ms cubic-bezier(0.32, 0.72, 0, 1)";
-          activeModal.style.transform = "translateY(0px)";
-          
-          // После анимации возврата, убираем инлайн-стили
-          setTimeout(() => {
-              if (activeModal) {
-                  activeModal.style.transition = "";
-                  activeModal.style.transform = "";
-              }
-          }, 400);
-      } else {
-          // Если свайпа почти не было, просто сбрасываем стили
-          activeModal.style.transform = "";
-      }
+      // Если не закрыли, плавно возвращаем на место силами CSS
+      // Браузер анимирует transform от текущего значения до `none` (0)
+      activeModal.style.transform = '';
     }
     
+    isDragging = false;
     activeModal = null;
     activeCloseFn = null;
   };

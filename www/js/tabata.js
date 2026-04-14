@@ -164,14 +164,13 @@ export const tb = {
     return name;
   },
 
-  openModal(idToEdit = null) {
+  openModal() {
+    // Отменяем запланированное закрытие, если оно было
     if (this.closeTimeoutId) {
       clearTimeout(this.closeTimeoutId);
       this.closeTimeoutId = null;
     }
 
-    // ... (весь ваш код по заполнению формы)
-    
     const overlay = $('bottom-sheet-overlay');
     const modal = this.els.modal;
 
@@ -180,46 +179,33 @@ export const tb = {
       overlay.onclick = () => this.closeModal();
     }
     
-    this.els.nameError?.classList.add("hidden");
-    this.editingWorkoutId = idToEdit;
-    if (idToEdit) {
-      const w = this.workouts.find((x) => x.id === idToEdit);
-      if (w) {
-        this.els.editName.value = w.name;
-        this.els.editWork.value = w.work;
-        this.els.editRest.value = w.rest;
-        this.els.editRounds.value = w.rounds;
-      }
-    } else {
-      this.els.editName.value = this.getUniqueName(t("tabata"));
-      this.els.editWork.value = 20;
-      this.els.editRest.value = 10;
-      this.els.editRounds.value = 8;
-    }
-    
+    if (this.sortSessions) this.sortSessions(this.currentSort); // для stopwatch.js
+    if (this.els.editName) this.els.editName.focus(); // для tabata.js
+
+    // 1. Делаем элемент видимым (он еще за экраном из-за `translate-y-full`)
     modal.classList.remove("hidden");
     modal.classList.add("flex");
     modal.removeAttribute("inert");
     modal.removeAttribute("aria-hidden");
-
+    
+    // 2. В следующем кадре запускаем CSS-анимацию
     requestAnimationFrame(() => {
       modal.classList.remove("translate-y-full");
-      setTimeout(() => this.els.editName?.focus(), 300);
     });
   },
 
-   closeModal() {
+  closeModal() {
     const modal = this.els.modal;
-    if (this.closeTimeoutId || modal.classList.contains('translate-y-full')) {
-        return;
-    }
+
+    // Предотвращаем двойное закрытие
+    if (modal.classList.contains('translate-y-full')) return;
 
     const overlay = $('bottom-sheet-overlay');
 
     if (modal.contains(document.activeElement)) {
       document.activeElement.blur();
     }
-    
+
     if(overlay) {
       overlay.classList.add('opacity-0', 'pointer-events-none');
       overlay.onclick = null;
@@ -227,18 +213,15 @@ export const tb = {
     
     modal.setAttribute("inert", "");
     modal.setAttribute("aria-hidden", "true");
-
-    modal.style.transition = '';
-    modal.style.transform = '';
     
-    void modal.offsetHeight;
-
+    // 1. Запускаем CSS-анимацию закрытия
     modal.classList.add("translate-y-full");
 
+    // 2. После анимации скрываем элемент и сохраняем ID таймера
     this.closeTimeoutId = setTimeout(() => {
       modal.classList.add("hidden");
       modal.classList.remove("flex");
-      this.editingWorkoutId = null;
+      if (this.editingWorkoutId !== undefined) this.editingWorkoutId = null; // для tabata.js
       this.closeTimeoutId = null;
     }, 400); 
   },
