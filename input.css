@@ -1118,11 +1118,6 @@ body.hide-nav-labels .nav-btn {
   gap: 0;
 }
 
-#swipe-area-left,
-#swipe-area-right {
-  touch-action: pan-y;
-}
-
 @layer utilities {
   .transition-ios {
     transition-timing-function: cubic-bezier(0.32, 0.72, 0, 1);

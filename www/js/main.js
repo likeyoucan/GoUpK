@@ -276,69 +276,63 @@ document.addEventListener("DOMContentLoaded", () => {
     lastBgTap = now;
   });
 
-  // =========================================
-  // НОВАЯ ЛОГИКА СВАЙПОВ (через боковые зоны)
-  // =========================================
-  function setupSwipeNavigation() {
-    const tabs = ["stopwatch", "timer", "tabata", "settings"];
-    let touchStartX = 0;
-    let touchStartY = 0;
+    // =======================================================
+  // ФИНАЛЬНАЯ ЛОГИКА СВАЙП-НАВИГАЦИИ (ГИБРИДНЫЙ ПОДХОД)
+  // =======================================================
+  let touchStartX = 0;
+  let touchStartY = 0;
+  const tabs = ["stopwatch", "timer", "tabata", "settings"];
 
-    const handleTouchStart = (e) => {
-      // Игнорируем, если открыто какое-либо модальное окно
-      if (document.querySelector('[role="dialog"]:not(.hidden)')) {
-        touchStartX = 0;
-        return;
-      }
-      touchStartX = e.touches[0].clientX;
-      touchStartY = e.touches[0].clientY;
-    };
-
-    const handleTouchEnd = (e) => {
-      if (touchStartX === 0) return;
-
-      const touchEndX = e.changedTouches[0].clientX;
-      const touchEndY = e.changedTouches[0].clientY;
-      const deltaX = touchEndX - touchStartX;
-      const deltaY = touchEndY - touchStartY;
-
-      if (Math.abs(deltaX) > 50 && Math.abs(deltaY) < 80) {
-        // Чуть смягчили условия
-        const currentIdx = tabs.indexOf(navigation.activeView);
-        const direction =
-          e.currentTarget.id === "swipe-area-left" ? "right" : "left";
-
-        // Свайп вправо (назад)
-        if (direction === "right" && deltaX > 0 && currentIdx > 0) {
-          navigation.switchView(tabs[currentIdx - 1]);
-        }
-        // Свайп влево (вперед)
-        else if (
-          direction === "left" &&
-          deltaX < 0 &&
-          currentIdx < tabs.length - 1
-        ) {
-          navigation.switchView(tabs[currentIdx + 1]);
-        }
-      }
+  document.addEventListener('touchstart', (e) => {
+    // 1. Игнорируем свайпы, если открыто модальное окно
+    if (document.querySelector('[role="dialog"]:not(.hidden)')) {
       touchStartX = 0;
-    };
-
-    const leftArea = $("swipe-area-left");
-    const rightArea = $("swipe-area-right");
-
-    if (leftArea && rightArea) {
-      [leftArea, rightArea].forEach((area) => {
-        area.addEventListener("touchstart", handleTouchStart, {
-          passive: true,
-        });
-        area.addEventListener("touchend", handleTouchEnd, { passive: true });
-      });
+      return;
     }
-  }
 
-  // Вызываем новую функцию в `DOMContentLoaded`
-  setupSwipeNavigation();
+    // 2. Игнорируем свайпы, если касание началось на интерактивном элементе
+    // Это наш основной "фильтр безопасности"
+    const isInteractive = e.target.closest(
+      'button, a, input, select, .scroll-lock, .no-scrollbar, [role="button"], [data-ring]'
+    );
+    if (isInteractive) {
+      touchStartX = 0;
+      return;
+    }
+
+    // 3. Запоминаем начальные координаты, если все проверки пройдены
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+
+  }, { passive: true });
+
+  document.addEventListener('touchend', (e) => {
+    // Выходим, если касание было отфильтровано на этапе touchstart
+    if (touchStartX === 0) return;
+
+    const touchEndX = e.changedTouches[0].clientX;
+    const touchEndY = e.changedTouches[0].clientY;
+    const deltaX = touchEndX - touchStartX;
+    const deltaY = touchEndY - touchStartY;
+
+    // Проверяем, был ли жест похож на горизонтальный свайп
+    // Увеличиваем порог deltaX до 80px для большей надежности
+    if (Math.abs(deltaX) > 80 && Math.abs(deltaY) < 80) {
+      const currentIdx = tabs.indexOf(navigation.activeView);
+      
+      // Свайп влево (переход вперед)
+      if (deltaX < 0 && currentIdx < tabs.length - 1) {
+        navigation.switchView(tabs[currentIdx + 1]);
+      } 
+      // Свайп вправо (переход назад)
+      else if (deltaX > 0 && currentIdx > 0) {
+        navigation.switchView(tabs[currentIdx - 1]);
+      }
+    }
+
+    // Сбрасываем координаты для следующего жеста
+    touchStartX = 0;
+  }, { passive: true });
 
   // =========================================
   // 4. СИСТЕМНАЯ ИНТЕГРАЦИЯ ANDROID
