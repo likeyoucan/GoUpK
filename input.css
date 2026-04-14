@@ -326,10 +326,10 @@ html.dark .app-bg.has-vignette::before {
     padding-top: 0;
   }
   .view-bottom-half > div.w-full {
-    height: clamp(54px, 10dvh, 90px);
+    height: 120px;
   }
   .view-bottom-half > div.w-full.h-30 {
-    height: clamp(54px, 10dvh, 120px);
+    height: 120px;
   }
   #tb-activeName {
     padding-top: 8px;
