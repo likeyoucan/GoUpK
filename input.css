@@ -324,8 +324,8 @@ html.dark .app-bg.has-vignette::before {
     height: 100%;
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    align-items: center;
+    justify-content: center; /* Центрирует по вертикали */
+    align-items: center; /* Центрирует по горизонтали */
     padding-top: 0;
   }
 
@@ -1098,20 +1098,6 @@ select option {
   ::view-transition-old(*),
   ::view-transition-new(*) {
     animation: none !important;
-  }
-}
-
-.timer-adjust-btn {
-  @apply w-16 h-16 rounded-full flex items-center justify-center shadow-md
-  active:scale-95 transition-transform focus:outline-none;
-}
-
-@media (max-width: 380px) {
-  .timer-adjust-btn {
-    @apply w-12 h-12;
-  }
-  .timer-adjust-btn svg {
-    @apply w-6 h-6;
   }
 }
 
