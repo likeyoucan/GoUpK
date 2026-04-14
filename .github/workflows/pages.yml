@@ -9,7 +9,7 @@ concurrency:
 
 on:
   push:
-    branches: ["main", "theme_upd"]
+    branches: ["main", "big_upd"]
   workflow_dispatch:
 
 permissions:
