@@ -1076,6 +1076,11 @@ html.js-nav-backward::view-transition-new(root) {
 /* =========================================
    19. ФИКСЫ И ДОСТУПНОСТЬ
 ========================================= */
+
+#btn-open-reset{
+  cursor: pointer;
+}
+
 button:disabled {
   opacity: 0.3;
   cursor: not-allowed;
