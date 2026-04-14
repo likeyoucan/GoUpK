@@ -318,7 +318,6 @@ html.dark .app-bg.has-vignette::before {
     max-height: 360px;
   }
 
-  /* СТАЛО */
   .view-bottom-half {
     width: 50%;
     height: 100%;
@@ -331,6 +330,10 @@ html.dark .app-bg.has-vignette::before {
 
   #tb-activeName {
     padding-top: 8px;
+  }
+
+  #tm-adjust-controls{
+    margin: 0;
   }
 }
 

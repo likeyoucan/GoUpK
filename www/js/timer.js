@@ -15,11 +15,11 @@ import { t } from "./i18n.js?v=VERSION";
 let timeRemainingMs = 0;
 
 function getAdjustmentAmount(remainingSeconds) {
-  if (remainingSeconds >= 3600) return 900;
-  if (remainingSeconds >= 1800) return 300;
-  if (remainingSeconds >= 900) return 60;
-  if (remainingSeconds >= 300) return 30;
-  if (remainingSeconds >= 60) return 15;
+  if (remainingSeconds > 3600) return 900;
+  if (remainingSeconds > 1800) return 300;
+  if (remainingSeconds > 900) return 60;
+  if (remainingSeconds > 300) return 30;
+  if (remainingSeconds > 60) return 15;
   return 5;
 }
 
