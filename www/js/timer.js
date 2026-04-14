@@ -13,25 +13,16 @@ import { sm } from "./sound.js?v=VERSION";
 import { t } from "./i18n.js?v=VERSION";
 
 let timeRemainingMs = 0;
-/**
- * Определяет величину шага для изменения времени в секундах.
- * @param {number} remainingSeconds - Оставшееся время в секундах.
- * @returns {number} - Величина шага в секундах.
- */
+
 function getAdjustmentAmount(remainingSeconds) {
-  if (remainingSeconds >= 3600) return 900; // 15 мин
-  if (remainingSeconds >= 1800) return 300; // 5 мин
-  if (remainingSeconds >= 900) return 60; // 1 мин
-  if (remainingSeconds >= 300) return 30; // 30 сек
-  if (remainingSeconds >= 60) return 15; // 15 сек
-  return 5; // 5 сек
+  if (remainingSeconds >= 3600) return 900;
+  if (remainingSeconds >= 1800) return 300;
+  if (remainingSeconds >= 900) return 60;
+  if (remainingSeconds >= 300) return 30;
+  if (remainingSeconds >= 60) return 15;
+  return 5;
 }
 
-/**
- * Форматирует секунды в строку (e.g., "5s", "1m").
- * @param {number} seconds - Количество секунд.
- * @returns {string} - Отформатированная строка.
- */
 function formatAdjustmentText(seconds) {
   if (seconds < 60) {
     return `${seconds}s`;
@@ -39,7 +30,6 @@ function formatAdjustmentText(seconds) {
     return `${seconds / 60}m`;
   }
 }
-
 
 export const tm = {
   totalDuration: 0,
@@ -122,13 +112,17 @@ export const tm = {
     this.setupScrollInteraction(this.els.s, 59, true);
 
     bgWorker.addEventListener("message", (e) => {
-      if (e.data.type === "tick") {
+      if (e.data.type === 'tick') {
         const remaining = e.data.time;
         timeRemainingMs = remaining;
-        if (this.isRunning) {
 
-          this.updateDisplay(remaining);
-          this.updateAdjustButtons();
+        if (remaining > this.totalDuration) {
+          this.totalDuration = remaining;
+        }
+
+        if (this.isRunning) {
+            this.updateDisplay(remaining);
+            this.updateAdjustButtons();
         }
 
         if (remaining <= 0 && this.isRunning) {
@@ -144,18 +138,18 @@ export const tm = {
       }
     });
 
-    this.els.adjustPlusBtn?.addEventListener("click", () => {
-      sm.play("tick");
-      sm.vibrate(50);
-      const adjustmentMs = this.currentAdjustmentSec * 1000;
-      bgWorker.postMessage({ command: "adjust", time: adjustmentMs });
+    this.els.adjustPlusBtn?.addEventListener('click', () => {
+        sm.play('tick');
+        sm.vibrate(50);
+        const adjustmentMs = this.currentAdjustmentSec * 1000;
+        bgWorker.postMessage({ command: 'adjust', time: adjustmentMs });
     });
 
-    this.els.adjustMinusBtn?.addEventListener("click", () => {
-      sm.play("tick");
-      sm.vibrate(50);
-      const adjustmentMs = -this.currentAdjustmentSec * 1000;
-      bgWorker.postMessage({ command: "adjust", time: adjustmentMs });
+    this.els.adjustMinusBtn?.addEventListener('click', () => {
+        sm.play('tick');
+        sm.vibrate(50);
+        const adjustmentMs = -this.currentAdjustmentSec * 1000;
+        bgWorker.postMessage({ command: 'adjust', time: adjustmentMs });
     });
   },
 
@@ -176,24 +170,9 @@ export const tm = {
       sm.play("click");
       sm.vibrate(10);
     };
-    input.addEventListener(
-      "wheel",
-      (e) => {
-        e.preventDefault();
-        updateVal(e.deltaY > 0 ? -1 : 1);
-      },
-      { passive: false },
-    );
-    input.addEventListener(
-      "touchstart",
-      (e) => {
-        startY = e.touches[0].clientY;
-      },
-      { passive: true },
-    );
-    input.addEventListener(
-      "touchmove",
-      (e) => {
+    input.addEventListener("wheel", (e) => { e.preventDefault(); updateVal(e.deltaY > 0 ? -1 : 1); }, { passive: false });
+    input.addEventListener("touchstart", (e) => { startY = e.touches[0].clientY; }, { passive: true });
+    input.addEventListener("touchmove", (e) => {
         const currentY = e.touches[0].clientY;
         const diff = startY - currentY;
         if (Math.abs(diff) > threshold) {
@@ -202,9 +181,7 @@ export const tm = {
           updateVal(diff > 0 ? 1 : -1);
           startY = currentY;
         }
-      },
-      { passive: false },
-    );
+      }, { passive: false });
     let isDragging = false;
     const onMouseMove = (e) => {
       if (!isDragging) return;
@@ -257,20 +234,19 @@ export const tm = {
         const s = parseInt(this.els.s?.value, 10) || 0;
         this.totalDuration = (h * 3600 + m * 60 + s) * 1000;
         duration = this.totalDuration;
+
+        timeRemainingMs = this.totalDuration;
       } else {
         duration = this.remainingAtPause;
       }
 
-      if (duration === 0) {
+      if (duration <= 0) {
         showToast(t("timer_zero"));
         this.els.inputs.classList.add("animate-shake");
-        setTimeout(
-          () => this.els.inputs.classList.remove("animate-shake"),
-          300,
-        );
+        setTimeout(() => this.els.inputs.classList.remove("animate-shake"), 300);
         return;
       }
-
+      
       this.isRunning = true;
       this.isPaused = false;
       requestWakeLock();
@@ -341,8 +317,8 @@ export const tm = {
 
   tick() {
     if (!this.isRunning) {
-      cancelAnimationFrame(this.rAF);
-      return;
+        cancelAnimationFrame(this.rAF);
+        return;
     }
     this.updateDisplay(timeRemainingMs);
     this.rAF = requestAnimationFrame(() => this.tick());
@@ -365,10 +341,10 @@ export const tm = {
     updateText(this.els.display, timeStr);
     updateTitle(timeStr);
     if (this.els.ring && this.totalDuration > 0) {
-      this.els.ring.style.strokeDashoffset =
-        this.ringLength -
-        (Math.max(0, this.totalDuration - rem) / this.totalDuration) *
-          this.ringLength;
+      const elapsed = this.totalDuration - rem;
+      const progress = elapsed / this.totalDuration;
+      
+      this.els.ring.style.strokeDashoffset = this.ringLength * (1 - progress);
     }
   },
 };
