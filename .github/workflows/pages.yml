@@ -9,7 +9,7 @@ concurrency:
 
 on:
   push:
-    branches: ["main", "big_upd"]
+    branches: ["main", "optimization_upd"]
   workflow_dispatch:
 
 permissions:
