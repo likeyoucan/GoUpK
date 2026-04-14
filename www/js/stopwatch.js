@@ -583,7 +583,7 @@ export const sw = {
     if (this.savedSessions.length === 0) {
       this.els.sessionsList.insertAdjacentHTML(
         "afterbegin",
-        `<div class="text-center app-text-sec opacity-50 mt-10 text-sm">${t(
+        `<div class="text-center app-text-sec opacity-50 mt-10 text-sm pointer-events-none">${t(
           "empty_sessions",
         )}</div>`,
       );
