@@ -1,3 +1,5 @@
+// stopwatch.js
+
 import {
   $,
   escapeHTML,
@@ -14,16 +16,10 @@ import {
   safeGetLS,
   safeRemoveLS,
   announceToScreenReader,
-} from "./utils.js";
-import { sm } from "./sound.js";
-import { t } from "./i18n.js";
-import { themeManager } from "./theme.js";
-import { createModal } from "./modal.js";
-
-// Создаем экземпляры модальных окон
-const sessionsModal = createModal("template-sw-sessions-modal");
-const nameModal = createModal("template-sw-name-modal");
-const clearModal = createModal("template-sw-clear-modal");
+} from "./utils.js?v=VERSION";
+import { sm } from "./sound.js?v=VERSION";
+import { t } from "./i18n.js?v=VERSION";
+import { themeManager } from "./theme.js?v=VERSION";
 
 export const sw = {
   closeTimeoutId: null,
@@ -41,7 +37,6 @@ export const sw = {
   ringLength: 282.74,
 
   init() {
-    // Кешируем только те элементы, которые всегда есть в DOM
     this.els = {
       display: $("sw-mainDisplay"),
       extendedDisplay: $("sw-extendedDisplay"),
@@ -52,16 +47,83 @@ export const sw = {
       ring: $("sw-progressRing"),
       saveBtn: $("sw-saveBtn"),
       openResultsBtn: $("sw-openResultsBtn"),
+      closeResultsBtn: $("sw-closeResultsBtn"),
+      modal: $("sw-sessions-modal"),
+      sessionsList: $("sw-sessionsList"),
+      sortSelect: $("sw-sortSelect"),
+      nameModal: $("sw-name-modal"),
+      nameModalContent: $("sw-name-modal-content"),
+      nameTitle: $("sw-name-title"),
+      nameInput: $("sw-name-input"),
+      nameError: $("sw-name-error"),
+      nameCancel: $("sw-name-cancel"),
+      nameConfirm: $("sw-name-confirm"),
       lapFlash: $("sw-lapFlash"),
       currentLapsHeader: $("sw-currentLapsHeader"),
+      clearAllBtn: $("sw-clearAllBtn"),
+      clearModal: $("sw-clear-modal"),
+      clearModalContent: $("sw-clear-modal-content"),
+      clearCancel: $("sw-clear-cancel"),
+      clearConfirm: $("sw-clear-confirm"),
     };
     if (this.els.ring) {
       this.els.ring.style.strokeDasharray = this.ringLength;
       this.els.ring.style.strokeDashoffset = this.ringLength;
     }
-
-    this.setupEventListeners();
-
+    document.addEventListener("timerStarted", (e) => {
+      if (e.detail !== "stopwatch" && this.isRunning) this.toggle();
+    });
+  bgWorker.addEventListener("message", (e) => {
+  // Это условие теперь будет срабатывать, так как воркер пришлет строку 'tick'
+  if (e.data === "tick" && this.isRunning && document.hidden) {
+    this.tick(true);
+  }
+});
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible" && this.isRunning) {
+        this.lastRender = 0;
+        this.tick();
+      }
+    });
+    this.els.btn?.addEventListener("click", () => this.toggle());
+    this.els.lapBtn?.addEventListener("click", () => this.recordLapOrReset());
+    this.els.saveBtn?.addEventListener("click", () =>
+      this.prepareSaveSession(),
+    );
+    this.els.openResultsBtn?.addEventListener("click", () => this.openModal());
+    this.els.closeResultsBtn?.addEventListener("click", () =>
+      this.closeModal(),
+    );
+    this.els.sortSelect?.addEventListener("change", (e) =>
+      this.sortSessions(e.target.value),
+    );
+    this.els.nameCancel?.addEventListener("click", () => this.closeNameModal());
+    this.els.nameInput?.addEventListener("input", () =>
+      this.els.nameError?.classList.add("hidden"),
+    );
+    this.els.clearAllBtn?.addEventListener("click", () => {
+      if (this.savedSessions.length > 0) this.openClearModal();
+    });
+    this.els.clearCancel?.addEventListener("click", () =>
+      this.closeClearModal(),
+    );
+    this.els.clearConfirm?.addEventListener("click", () =>
+      this.confirmClearAll(),
+    );
+    this.els.sessionsList?.addEventListener("click", (e) => {
+      const header = e.target.closest(".sw-session-header");
+      const renameBtn = e.target.closest(".sw-rename-btn");
+      const deleteBtn = e.target.closest(".sw-delete-btn");
+      if (renameBtn) {
+        e.stopPropagation();
+        this.prepareRenameSession(Number(renameBtn.dataset.id));
+      } else if (deleteBtn) {
+        e.stopPropagation();
+        this.deleteSession(Number(deleteBtn.dataset.id));
+      } else if (header) {
+        this.toggleSessionDetails(Number(header.dataset.id));
+      }
+    });
     try {
       const stored = safeGetLS("sw_saved_sessions");
       if (stored) {
@@ -71,76 +133,13 @@ export const sw = {
     } catch (e) {
       this.savedSessions = [];
     }
-  },
-
-  setupEventListeners() {
-    document.addEventListener("timerStarted", (e) => {
-      if (e.detail !== "stopwatch" && this.isRunning) this.toggle();
+    document.addEventListener("languageChanged", () => {
+      this.renderSavedSessions();
+      if (this.laps.length > 0) this.reRenderCurrentLaps();
     });
-
-    bgWorker.addEventListener("message", (e) => {
-      if (
-        e.data.type === "heartbeat:tick" &&
-        this.isRunning &&
-        document.hidden
-      ) {
-        this.tick(true);
-      }
-    });
-
-    document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "visible" && this.isRunning) {
-        this.lastRender = 0;
-        this.tick();
-      }
-    });
-
-    this.els.btn?.addEventListener("click", () => this.toggle());
-    this.els.lapBtn?.addEventListener("click", () => this.recordLapOrReset());
-    this.els.saveBtn?.addEventListener("click", () =>
-      this.prepareSaveSession(),
-    );
-    this.els.openResultsBtn?.addEventListener("click", () => this.openModal());
-
-    document.addEventListener("languageChanged", () => this.updateUIText());
     document.addEventListener("msChanged", () => {
       if (!this.isRunning && this.elapsedTime > 0) this.updateDisplay();
       if (this.laps.length > 0) this.reRenderCurrentLaps();
-    });
-
-    // Делегированные слушатели для модальных окон
-    document.body.addEventListener("click", (e) => {
-      if (e.target.id === "sw-closeResultsBtn") this.closeModal();
-      if (e.target.id === "sw-clearAllBtn" && this.savedSessions.length > 0)
-        this.openClearModal();
-      if (e.target.id === "sw-clear-cancel") this.closeClearModal();
-      if (e.target.id === "sw-clear-confirm") this.confirmClearAll();
-      if (e.target.id === "sw-name-cancel") this.closeNameModal();
-
-      const sessionsList = e.target.closest("#sw-sessionsList");
-      if (sessionsList) {
-        const header = e.target.closest(".sw-session-header");
-        const renameBtn = e.target.closest(".sw-rename-btn");
-        const deleteBtn = e.target.closest(".sw-delete-btn");
-        if (renameBtn) {
-          e.stopPropagation();
-          this.prepareRenameSession(Number(renameBtn.dataset.id));
-        } else if (deleteBtn) {
-          e.stopPropagation();
-          this.deleteSession(Number(deleteBtn.dataset.id));
-        } else if (header) {
-          this.toggleSessionDetails(Number(header.dataset.id));
-        }
-      }
-    });
-
-    document.body.addEventListener("change", (e) => {
-      if (e.target.id === "sw-sortSelect") this.sortSessions(e.target.value);
-    });
-
-    document.body.addEventListener("input", (e) => {
-      if (e.target.id === "sw-name-input")
-        $("sw-name-error")?.classList.add("hidden");
     });
   },
 
@@ -168,7 +167,7 @@ export const sw = {
     if (this.isRunning) {
       this.isRunning = false;
       this.pauseTime = Date.now();
-      bgWorker.postMessage({ command: "stop" });
+      bgWorker.postMessage("stop");
       cancelAnimationFrame(this.rAF);
       releaseWakeLock();
       updateTitle("");
@@ -177,7 +176,10 @@ export const sw = {
       this.els.lapBtn.classList.remove("app-surface", "app-text");
       this.els.lapBtn.classList.add("bg-red-500", "text-white", "is-reset");
       announceToScreenReader(
-        `${t("stopwatch")} ${t("pause")}. ${this.formatTime(this.elapsedTime, false)}`,
+        `${t("stopwatch")} ${t("pause")}. ${this.formatTime(
+          this.elapsedTime,
+          false,
+        )}`,
       );
     } else {
       document.dispatchEvent(
@@ -187,7 +189,7 @@ export const sw = {
       this.isRunning = true;
       this.pauseTime = 0;
       requestWakeLock();
-      bgWorker.postMessage({ command: "start", mode: "heartbeat" });
+      bgWorker.postMessage("start");
       this.tick();
       this.els.status.classList.add("hidden");
       this.els.display.classList.remove("is-go");
@@ -242,6 +244,28 @@ export const sw = {
     }
   },
 
+  createLapElement(lap, isLatest = false) {
+    const bgClass = isLatest ? "bg-black/5 dark:bg-white/5" : "";
+    const textColor = isLatest ? "primary-text" : "app-text";
+    const div = document.createElement("div");
+    div.className = `lap-row mt-2.5 flex justify-between items-center py-3 border-b app-border px-3 rounded-lg transition-all duration-300 ${bgClass}`;
+    div.innerHTML = `
+      <span class="text-xs app-text-sec font-medium">${t("lap_text")} ${
+        lap.index
+      }</span>
+      <div class="flex items-center gap-4">
+        <span class="font-mono text-[10px] app-text-sec opacity-60 w-16 text-right">${this.formatTime(
+          lap.total,
+          true,
+        )}</span>
+        <span class="split-time font-mono text-xs font-bold ${textColor} w-16 text-right">${this.formatTime(
+          lap.diff,
+          true,
+        )}</span>
+      </div>`;
+    return div;
+  },
+
   recordLapOrReset() {
     sm.vibrate(30);
     sm.play("click");
@@ -254,36 +278,22 @@ export const sw = {
         index: this.laps.length + 1,
       };
       this.laps.unshift(newLap);
-
       if (this.laps.length === 1) {
         this.els.lapsContainer.replaceChildren();
         this.els.currentLapsHeader.classList.remove("hidden");
         this.els.currentLapsHeader.classList.add("flex");
-      }
-
-      const prevLatest = this.els.lapsContainer.querySelector(".lap-row");
-      if (prevLatest) {
-        prevLatest.classList.remove("bg-black/5", "dark:bg-white/5");
-        const prevTime = prevLatest.querySelector(".split-time");
-        if (prevTime) {
-          prevTime.classList.remove("primary-text");
-          prevTime.classList.add("app-text");
+      } else {
+        const prevLatest = this.els.lapsContainer.firstElementChild;
+        if (prevLatest) {
+          prevLatest.classList.remove("bg-black/5", "dark:bg-white/5");
+          const prevTime = prevLatest.querySelector(".split-time");
+          if (prevTime) {
+            prevTime.classList.remove("primary-text");
+            prevTime.classList.add("app-text");
+          }
         }
       }
-
-      const lapRow = document.createElement("div");
-      lapRow.className =
-        "lap-row mt-2.5 flex justify-between items-center py-3 border-b app-border px-3 rounded-lg transition-all duration-300 bg-black/5 dark:bg-white/5";
-      lapRow.dataset.lapIndex = newLap.index;
-      lapRow.innerHTML = `
-            <span class="lap-index-text text-xs app-text-sec font-medium">${t("lap_text")} ${newLap.index}</span>
-            <div class="flex items-center gap-4">
-                <span class="lap-total-time font-mono text-[10px] app-text-sec opacity-60 w-16 text-right">${this.formatTime(newLap.total, true)}</span>
-                <span class="split-time font-mono text-xs font-bold primary-text w-16 text-right">${this.formatTime(newLap.diff, true)}</span>
-            </div>
-        `;
-      this.els.lapsContainer.prepend(lapRow);
-
+      this.els.lapsContainer.prepend(this.createLapElement(newLap, true));
       if (this.els.lapFlash) {
         this.els.lapFlash.classList.remove("flash-active");
         void this.els.lapFlash.offsetWidth;
@@ -307,59 +317,20 @@ export const sw = {
       this.els.lapsContainer.replaceChildren();
       this.els.lapsContainer.insertAdjacentHTML(
         "afterbegin",
-        `<div class="text-center app-text-sec opacity-50 mt-4 text-sm" data-i18n="no_laps">${t("no_laps")}</div>`,
+        `<div class="text-center app-text-sec opacity-50 mt-4 text-sm" data-i18n="no_laps">${t(
+          "no_laps",
+        )}</div>`,
       );
       this.updateSaveButtonVisibility();
     }
   },
 
   reRenderCurrentLaps() {
-    const header = this.els.currentLapsHeader;
-    if (header) {
-      header.querySelector('[data-i18n="lap_text"]').textContent =
-        t("lap_text");
-      header.querySelector('[data-i18n="total_time"]').textContent =
-        t("total_time");
-      header.querySelector('[data-i18n="split_time"]').textContent =
-        t("split_time");
-    }
-    this.els.lapsContainer.querySelectorAll(".lap-row").forEach((row) => {
-      const index = row.dataset.lapIndex;
-      if (!index) return;
-      const lapData = this.laps.find((lap) => lap.index == index);
-      if (!lapData) return;
-      updateText(
-        row.querySelector(".lap-index-text"),
-        `${t("lap_text")} ${lapData.index}`,
-      );
-      updateText(
-        row.querySelector(".lap-total-time"),
-        this.formatTime(lapData.total, true),
-      );
-      updateText(
-        row.querySelector(".split-time"),
-        this.formatTime(lapData.diff, true),
-      );
+    this.els.lapsContainer.replaceChildren();
+    [...this.laps].reverse().forEach((lap, i, arr) => {
+      const isLatest = i === arr.length - 1;
+      this.els.lapsContainer.prepend(this.createLapElement(lap, isLatest));
     });
-  },
-
-  updateUIText() {
-    if (this.laps.length > 0) {
-      this.reRenderCurrentLaps();
-    } else {
-      const noLapsEl = this.els.lapsContainer.querySelector(
-        '[data-i18n="no_laps"]',
-      );
-      if (noLapsEl) updateText(noLapsEl, t("no_laps"));
-    }
-    const sessionsList = $("sw-sessionsList");
-    if (!sessionsList) return;
-    sessionsList
-      .querySelectorAll("[data-i18n-text]")
-      .forEach((el) => updateText(el, t(el.getAttribute("data-i18n-text"))));
-    const emptyEl = sessionsList.querySelector(".text-center");
-    if (emptyEl && this.savedSessions.length === 0)
-      updateText(emptyEl, t("empty_sessions"));
   },
 
   updateSaveButtonVisibility() {
@@ -408,23 +379,33 @@ export const sw = {
   },
 
   openNameModal(action, defaultName, targetId = null) {
-    nameModal.open();
-    setTimeout(() => {
-      this.nameModalState.action = action;
-      this.nameModalState.targetId = targetId;
-      $("sw-name-error")?.classList.add("hidden");
+    this.nameModalState.action = action;
+    this.nameModalState.targetId = targetId;
+    this.els.nameError?.classList.add("hidden");
+    if (this.els.nameTitle)
       updateText(
-        $("sw-name-title"),
+        this.els.nameTitle,
         action === "rename" ? t("rename") : t("save_session"),
       );
-      $("sw-name-input").value = defaultName;
-      $("sw-name-input")?.focus();
-    }, 0);
+    this.els.nameInput.value = defaultName;
+    this.els.nameModal.classList.remove("hidden");
+    this.els.nameModal.classList.add("flex");
+    this.els.nameModal.removeAttribute("inert");
+    this.els.nameModal.removeAttribute("aria-hidden");
+    void this.els.nameModal.offsetWidth;
+    this.els.nameModal.classList.remove("opacity-0");
+    this.els.nameModalContent.classList.remove("opacity-0", "scale-95");
+    setTimeout(() => this.els.nameInput?.focus(), 100);
   },
 
   closeNameModal() {
-    nameModal.close();
+    this.els.nameModal.classList.add("opacity-0");
+    this.els.nameModalContent.classList.add("opacity-0", "scale-95");
     setTimeout(() => {
+      this.els.nameModal.classList.add("hidden");
+      this.els.nameModal.classList.remove("flex");
+      this.els.nameModal.setAttribute("inert", "");
+      this.els.nameModal.setAttribute("aria-hidden", "true");
       this.nameModalState = {
         action: null,
         targetId: null,
@@ -434,9 +415,9 @@ export const sw = {
   },
 
   confirmNameModal() {
-    const nameInput = $("sw-name-input");
-    const inputVal = nameInput.value.trim();
-    const finalName = inputVal !== "" ? inputVal : nameInput.placeholder;
+    const inputVal = this.els.nameInput.value.trim();
+    const finalName =
+      inputVal !== "" ? inputVal : this.els.nameInput.placeholder;
     const isDuplicate = this.savedSessions.some(
       (s) =>
         s.name.toLowerCase() === finalName.toLowerCase() &&
@@ -444,9 +425,12 @@ export const sw = {
           s.id !== this.nameModalState.targetId),
     );
     if (isDuplicate) {
-      $("sw-name-error")?.classList.remove("hidden");
-      nameInput.classList.add("animate-shake");
-      setTimeout(() => nameInput.classList.remove("animate-shake"), 300);
+      this.els.nameError?.classList.remove("hidden");
+      this.els.nameInput.classList.add("animate-shake");
+      setTimeout(
+        () => this.els.nameInput.classList.remove("animate-shake"),
+        300,
+      );
       return;
     }
     if (this.nameModalState.action === "save") {
@@ -469,11 +453,27 @@ export const sw = {
   },
 
   openClearModal() {
-    if (this.savedSessions.length > 0) clearModal.open();
+    if (this.savedSessions.length === 0) return;
+    this.els.clearModal.classList.remove("hidden");
+    this.els.clearModal.classList.add("flex");
+    this.els.clearModal.removeAttribute("inert");
+    this.els.clearModal.removeAttribute("aria-hidden");
+    void this.els.clearModal.offsetWidth;
+    this.els.clearModal.classList.remove("opacity-0");
+    this.els.clearModalContent.classList.remove("opacity-0", "scale-95");
   },
+
   closeClearModal() {
-    clearModal.close();
+    this.els.clearModal.classList.add("opacity-0");
+    this.els.clearModalContent.classList.add("opacity-0", "scale-95");
+    setTimeout(() => {
+      this.els.clearModal.classList.add("hidden");
+      this.els.clearModal.classList.remove("flex");
+      this.els.clearModal.setAttribute("inert", "");
+      this.els.clearModal.setAttribute("aria-hidden", "true");
+    }, 300);
   },
+
   confirmClearAll() {
     this.savedSessions = [];
     safeRemoveLS("sw_saved_sessions");
@@ -483,17 +483,67 @@ export const sw = {
   },
 
   openModal() {
-    sessionsModal.open();
+    // ШАГ 1: Отменяем запланированное закрытие, если оно есть
+    if (this.closeTimeoutId) {
+      clearTimeout(this.closeTimeoutId);
+      this.closeTimeoutId = null;
+    }
+
+    const overlay = $('bottom-sheet-overlay');
+    const modal = this.els.modal;
+
+    if(overlay) {
+      overlay.classList.remove('opacity-0', 'pointer-events-none');
+      overlay.onclick = () => this.closeModal();
+    }
+
     this.sortSessions(this.currentSort);
+
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+    modal.style.transition = 'none'; 
+    modal.style.transform = 'translateY(100%)';
+    modal.removeAttribute("inert");
+    modal.removeAttribute("aria-hidden");
+
+    void modal.offsetHeight;
+
+    modal.style.transition = 'transform 400ms cubic-bezier(0.32, 0.72, 0, 1)';
+    modal.style.transform = 'translateY(0%)';
   },
+
   closeModal() {
-    sessionsModal.close();
+    const overlay = $('bottom-sheet-overlay');
+    const modal = this.els.modal;
+
+    if (modal.contains(document.activeElement)) {
+      document.activeElement.blur();
+    }
+
+    if(overlay) {
+      overlay.classList.add('opacity-0', 'pointer-events-none');
+      overlay.onclick = null;
+    }
+    
+    modal.setAttribute("inert", "");
+    modal.setAttribute("aria-hidden", "true");
+
+    modal.style.transition = 'transform 400ms cubic-bezier(0.32, 0.72, 0, 1)';
+    modal.style.transform = 'translateY(100%)';
+
+    // Сохраняем ID таймера перед его запуском
+    this.closeTimeoutId = setTimeout(() => {
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+      modal.style.transition = '';
+      modal.style.transform = '';
+      this.closeTimeoutId = null; // Очищаем ID после выполнения
+    }, 400); 
   },
 
   sortSessions(type) {
     this.currentSort = type;
-    const sortSelect = $("sw-sortSelect");
-    if (sortSelect) sortSelect.value = type;
+    if (this.els.sortSelect) this.els.sortSelect.value = type;
     this.savedSessions.sort((a, b) => {
       if (type === "date_desc") return b.date - a.date;
       if (type === "date_asc") return a.date - b.date;
@@ -525,74 +575,110 @@ export const sw = {
   },
 
   renderSavedSessions() {
-    const listEl = $("sw-sessionsList");
-    if (!listEl) return;
-
-    listEl.replaceChildren();
-
-    const clearAllBtn = $("sw-clearAllBtn");
-    if (clearAllBtn) clearAllBtn.disabled = this.savedSessions.length === 0;
-
+    if (!this.els || !this.els.sessionsList) return;
+    this.els.sessionsList.replaceChildren();
+    if (this.els.clearAllBtn) {
+      this.els.clearAllBtn.disabled = this.savedSessions.length === 0;
+    }
     if (this.savedSessions.length === 0) {
-      listEl.innerHTML = `<div class="text-center app-text-sec opacity-50 mt-10 text-sm">${t("empty_sessions")}</div>`;
+      this.els.sessionsList.insertAdjacentHTML(
+        "afterbegin",
+        `<div class="text-center app-text-sec opacity-50 mt-10 text-sm">${t(
+          "empty_sessions",
+        )}</div>`,
+      );
       return;
     }
-
     const fragment = document.createDocumentFragment();
     this.savedSessions.forEach((session) => {
-      const sessionDiv = document.createElement("div");
-      sessionDiv.className =
-        "app-surface border app-border rounded-xl overflow-hidden transition-all mb-3";
       const dateObj = new Date(session.date || session.id);
-      const dateStr = `${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
-
-      sessionDiv.innerHTML = `
-        <div class="p-4 cursor-pointer flex justify-between items-center active:bg-gray-500/10 sw-session-header" data-id="${session.id}">
-            <div class="flex-1 min-w-0 pr-4">
-                <div class="font-bold app-text text-lg truncate">${escapeHTML(session.name)}</div>
-                <div class="text-xs app-text-sec mt-1">${dateStr}</div>
-            </div>
-            <div class="flex items-center gap-3 shrink-0">
-                <div class="font-mono font-bold primary-text text-lg">${this.formatTime(session.totalTime, true)}</div>
-                <svg focusable="false" aria-hidden="true" id="sw-icon-${session.id}" class="w-5 h-5 text-gray-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-            </div>
-        </div>
-        <div id="sw-details-${session.id}" class="hidden bg-black/5 dark:bg-black/20 border-t app-border p-4">
-            <div class="flex justify-end gap-2 mb-3">
-                <button type="button" data-id="${session.id}" class="sw-rename-btn px-3 py-1 bg-blue-500/10 text-blue-500 rounded-lg text-xs font-bold uppercase tracking-wider active:scale-95 transition-transform" data-i18n-text="rename">${t("rename")}</button>
-                <button type="button" data-id="${session.id}" class="sw-delete-btn px-3 py-1 bg-red-500/10 text-red-500 rounded-lg text-xs font-bold uppercase tracking-wider active:scale-95 transition-transform" data-i18n-text="delete">${t("delete")}</button>
-            </div>
-            <div class="max-h-48 overflow-y-auto no-scrollbar bg-black/5 dark:bg-white/5 rounded-lg p-2 border app-border">
-                <div class="laps-list-container"></div>
-            </div>
-        </div>
-      `;
-
-      const lapsContainer = sessionDiv.querySelector(".laps-list-container");
-      const lapsFragment = document.createDocumentFragment();
-
-      const header = document.createElement("div");
-      header.className =
-        "flex justify-between items-center py-1.5 border-b border-gray-500/30 mb-1 px-2";
-      header.innerHTML = `<span class="text-[10px] font-bold app-text-sec uppercase tracking-wider">${t("lap_text")}</span><div class="flex items-center gap-4"><span class="text-[10px] font-bold app-text-sec uppercase tracking-wider w-16 text-right">${t("total_time")}</span><span class="text-[10px] font-bold app-text-sec uppercase tracking-wider w-16 text-right">${t("split_time")}</span></div>`;
-      lapsFragment.appendChild(header);
-
-      session.laps.forEach((lap, idx) => {
-        const lapRow = document.createElement("div");
-        const isLatest = idx === 0;
-        lapRow.className = `flex justify-between items-center py-2 border-b border-gray-500/10 last:border-0 px-2 ${isLatest ? "bg-black/5 dark:bg-black/20 rounded-lg" : ""}`;
-        lapRow.innerHTML = `
-          <span class="text-xs app-text-sec font-medium">${t("lap_text")} ${lap.index}</span>
+      const dateStr = `${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString(
+        [],
+        { hour: "2-digit", minute: "2-digit" },
+      )}`;
+      let lapsHtml = `
+        <div class="flex justify-between items-center py-1.5 border-b border-gray-500/30 mb-1 px-2">
+          <span class="text-[10px] font-bold app-text-sec uppercase tracking-wider">${t(
+            "lap_text",
+          )}</span>
           <div class="flex items-center gap-4">
-            <span class="font-mono text-[10px] app-text-sec opacity-60 w-16 text-right">${this.formatTime(lap.total, true)}</span>
-            <span class="font-mono text-xs font-bold ${isLatest ? "primary-text" : "app-text"} w-16 text-right">${this.formatTime(lap.diff, true)}</span>
+            <span class="text-[10px] font-bold app-text-sec uppercase tracking-wider w-16 text-right">${t(
+              "total_time",
+            )}</span>
+            <span class="text-[10px] font-bold app-text-sec uppercase tracking-wider w-16 text-right">${t(
+              "split_time",
+            )}</span>
           </div>
-        `;
-        lapsFragment.appendChild(lapRow);
+        </div>`;
+      session.laps.forEach((lap, idx) => {
+        const isLatest = idx === 0;
+        const bgClass = isLatest
+          ? "bg-black/5 dark:bg-black/20 rounded-lg"
+          : "";
+        const textColor = isLatest ? "primary-text" : "app-text";
+        lapsHtml += `
+          <div class="flex justify-between items-center py-2 border-b border-gray-500/10 last:border-0 px-2 ${bgClass}">
+            <span class="text-xs app-text-sec font-medium">${t("lap_text")} ${
+              lap.index
+            }</span>
+            <div class="flex items-center gap-4">
+              <span class="font-mono text-[10px] app-text-sec opacity-60 w-16 text-right">${this.formatTime(
+                lap.total,
+                true,
+              )}</span>
+              <span class="font-mono text-xs font-bold ${textColor} w-16 text-right">${this.formatTime(
+                lap.diff,
+                true,
+              )}</span>
+            </div>
+          </div>`;
       });
-      lapsContainer.appendChild(lapsFragment);
-      fragment.appendChild(sessionDiv);
+      const div = document.createElement("div");
+      div.className =
+        "app-surface border app-border rounded-xl overflow-hidden transition-all mb-3";
+      div.innerHTML = `
+        <div class="p-4 cursor-pointer flex justify-between items-center active:bg-gray-500/10 sw-session-header" data-id="${
+          session.id
+        }">
+          <div class="flex-1 min-w-0 pr-4">
+            <div class="font-bold app-text text-lg truncate">${escapeHTML(
+              session.name,
+            )}</div>
+            <div class="text-xs app-text-sec mt-1">${dateStr}</div>
+          </div>
+          <div class="flex items-center gap-3 shrink-0">
+            <div class="font-mono font-bold primary-text text-lg">${this.formatTime(
+              session.totalTime,
+              true,
+            )}</div>
+            <svg focusable="false" aria-hidden="true" id="sw-icon-${
+              session.id
+            }" class="w-5 h-5 text-gray-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </div>
+        </div>
+        <div id="sw-details-${
+          session.id
+        }" class="hidden bg-black/5 dark:bg-black/20 border-t app-border p-4">
+          <div class="flex justify-end gap-2 mb-3">
+            <button type="button" data-id="${
+              session.id
+            }" class="sw-rename-btn px-3 py-1 bg-blue-500/10 text-blue-500 rounded-lg text-xs font-bold uppercase tracking-wider active:scale-95 transition-transform">${t(
+              "rename",
+            )}</button>
+            <button type="button" data-id="${
+              session.id
+            }" class="sw-delete-btn px-3 py-1 bg-red-500/10 text-red-500 rounded-lg text-xs font-bold uppercase tracking-wider active:scale-95 transition-transform">${t(
+              "delete",
+            )}</button>
+          </div>
+          <div class="max-h-48 overflow-y-auto no-scrollbar bg-black/5 dark:bg-white/5 rounded-lg p-2 border app-border">
+            ${lapsHtml}
+          </div>
+        </div>`;
+      fragment.appendChild(div);
     });
-    listEl.appendChild(fragment);
+    this.els.sessionsList.appendChild(fragment);
   },
 };
