@@ -88,7 +88,7 @@ const resetModal = {
       "app_vignette_alpha",
       "app_liquid_glass",
       "app_volume",
-      "app_hide_nav_labels",
+      "app_hide_nav_labels"
       "app_ring_width",
     ];
     keys.forEach((key) => safeRemoveLS(key));
