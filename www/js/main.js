@@ -110,7 +110,7 @@ function initSwipeToClose() {
   let activeCloseFn = null;
 
   const handleDragStart = (e, modal, closeFn) => {
-    if (modal.classList.contains('hidden')) return;
+    if (modal.classList.contains('hidden') || modal.classList.contains('translate-y-full')) return;
     
     activeModal = modal;
     activeCloseFn = closeFn;
@@ -129,31 +129,38 @@ function initSwipeToClose() {
     currentY = e.touches ? e.touches[0].clientY : e.clientY;
     const deltaY = currentY - startY;
 
-    if (deltaY > 0) activeModal.style.transform = `translateY(${deltaY}px)`;
+    if (deltaY >= 0) { // Позволяем тащить только вниз, >= 0 для начального смещения
+        activeModal.style.transform = `translateY(${deltaY}px)`;
+    }
   };
 
   const handleDragEnd = () => {
     if (!isDragging || !activeModal) return;
+    isDragging = false;
 
     const deltaY = currentY - startY;
 
     if (deltaY > 100) {
       if (activeCloseFn) activeCloseFn();
     } else { 
-      // Анимируем возврат на место
-      activeModal.style.transition = "transform 400ms cubic-bezier(0.32, 0.72, 0, 1)";
-      activeModal.style.transform = "translateY(0px)";
-
-      // И СБРАСЫВАЕМ СТИЛИ после анимации
-      setTimeout(() => {
-        if (activeModal) {
-          activeModal.style.transition = "";
+      // Если свайп был, но недостаточный - анимируем возврат через JS
+      if (deltaY > 0) {
+          activeModal.style.transition = "transform 400ms cubic-bezier(0.32, 0.72, 0, 1)";
+          activeModal.style.transform = "translateY(0px)";
+          
+          // После анимации возврата, убираем инлайн-стили
+          setTimeout(() => {
+              if (activeModal) {
+                  activeModal.style.transition = "";
+                  activeModal.style.transform = "";
+              }
+          }, 400);
+      } else {
+          // Если свайпа почти не было, просто сбрасываем стили
           activeModal.style.transform = "";
-        }
-      }, 400);
+      }
     }
     
-    isDragging = false;
     activeModal = null;
     activeCloseFn = null;
   };

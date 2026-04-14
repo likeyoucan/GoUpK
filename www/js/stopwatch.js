@@ -481,7 +481,6 @@ export const sw = {
   },
 
   openModal() {
-    // ШАГ 1: Отменяем запланированное закрытие, если оно есть
     if (this.closeTimeoutId) {
       clearTimeout(this.closeTimeoutId);
       this.closeTimeoutId = null;
@@ -497,22 +496,26 @@ export const sw = {
 
     this.sortSessions(this.currentSort);
 
+    // 1. Делаем элемент видимым (он все еще за экраном из-за translate-y-full)
     modal.classList.remove("hidden");
     modal.classList.add("flex");
-    modal.style.transition = 'none'; 
-    modal.style.transform = 'translateY(100%)';
     modal.removeAttribute("inert");
     modal.removeAttribute("aria-hidden");
 
-    void modal.offsetHeight;
-
-    modal.style.transition = 'transform 400ms cubic-bezier(0.32, 0.72, 0, 1)';
-    modal.style.transform = 'translateY(0%)';
+    // 2. В следующем кадре убираем translate-y-full, чтобы запустить CSS-анимацию
+    requestAnimationFrame(() => {
+      modal.classList.remove("translate-y-full");
+    });
   },
 
   closeModal() {
-    const overlay = $('bottom-sheet-overlay');
     const modal = this.els.modal;
+    // Если окно уже скрывается, ничего не делаем
+    if (this.closeTimeoutId || modal.classList.contains('translate-y-full')) {
+        return;
+    }
+
+    const overlay = $('bottom-sheet-overlay');
 
     if (modal.contains(document.activeElement)) {
       document.activeElement.blur();
@@ -525,17 +528,22 @@ export const sw = {
     
     modal.setAttribute("inert", "");
     modal.setAttribute("aria-hidden", "true");
+    
+    // 1. Сбрасываем инлайн-стили от JS-перетаскивания
+    modal.style.transition = '';
+    modal.style.transform = '';
 
-    modal.style.transition = 'transform 400ms cubic-bezier(0.32, 0.72, 0, 1)';
-    modal.style.transform = 'translateY(100%)';
+    // 2. Принудительная перерисовка, чтобы сброс стилей применился
+    void modal.offsetHeight;
 
-    // Сохраняем ID таймера перед его запуском
+    // 3. Запускаем CSS-анимацию, добавляя класс
+    modal.classList.add("translate-y-full");
+
+    // 4. Сохраняем ID таймера для скрытия
     this.closeTimeoutId = setTimeout(() => {
       modal.classList.add("hidden");
       modal.classList.remove("flex");
-      modal.style.transition = '';
-      modal.style.transform = '';
-      this.closeTimeoutId = null; // Очищаем ID после выполнения
+      this.closeTimeoutId = null; 
     }, 400); 
   },
 
