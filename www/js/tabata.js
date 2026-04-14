@@ -14,9 +14,12 @@ import {
   safeSetLS,
   safeGetLS,
   announceToScreenReader,
-} from "./utils.js?v=VERSION";
-import { sm } from "./sound.js?v=VERSION";
-import { t } from "./i18n.js?v=VERSION";
+} from "./utils.js";
+import { sm } from "./sound.js";
+import { t } from "./i18n.js";
+import { createModal } from "./modal.js";
+
+const tbModal = createModal("template-tb-modal");
 
 export const tb = {
   closeTimeoutId: null,
@@ -42,7 +45,6 @@ export const tb = {
     this.els = {
       listSection: $("tb-list-section"),
       runningControls: $("tb-runningControls"),
-      modal: $("tb-modal"),
       list: $("tb-workoutsList"),
       startBtn: $("tb-startBtn"),
       stopBtn: $("tb-stopBtn"),
@@ -53,24 +55,14 @@ export const tb = {
       activeDetail: $("tb-activeDetail"),
       roundDisplay: $("tb-currentRound"),
       totalRoundsDisplay: $("tb-totalRounds"),
-      editName: $("tb-edit-name"),
-      editWork: $("tb-edit-work"),
-      editRest: $("tb-edit-rest"),
-      editRounds: $("tb-edit-rounds"),
-      nameError: $("tb-name-error"),
     };
     if (this.els.ring) {
       this.els.ring.style.strokeDasharray = this.ringLength;
       this.els.ring.style.strokeDashoffset = this.ringLength;
     }
-    document.addEventListener("timerStarted", (e) => {
-      if (e.detail !== "tabata" && this.status !== "STOPPED" && !this.paused)
-        this.pause();
-    });
-    document.addEventListener("languageChanged", () => {
-      this.renderList();
-      if (this.selectedId) this.selectWorkout(this.selectedId);
-    });
+
+    this.setupEventListeners();
+
     try {
       const stored = safeGetLS("tb_workouts");
       if (stored) {
@@ -89,6 +81,7 @@ export const tb = {
       ];
       safeSetLS("tb_workouts", JSON.stringify(this.workouts));
     }
+
     let lastSelectedId = safeGetLS("tb_selected_id");
     if (lastSelectedId) lastSelectedId = Number(lastSelectedId);
     const exists = this.workouts.find((w) => w.id === lastSelectedId);
@@ -98,49 +91,27 @@ export const tb = {
       this.selectWorkout(this.workouts[0].id);
     }
     this.renderList();
-    this.els.startBtn?.addEventListener("click", () => this.toggle());
-    this.els.stopBtn?.addEventListener("click", () => this.stop());
-    $("tb-openModalBtn")?.addEventListener("click", () => this.openModal(null));
-    $("tb-closeModalBtn")?.addEventListener("click", () => this.closeModal());
-    this.els.editName?.addEventListener("input", () =>
-      this.els.nameError?.classList.add("hidden"),
-    );
-    document.querySelectorAll("[data-tb-adj]").forEach((btn) => {
-      btn.addEventListener("click", (e) => {
-        const [id, delta] = e.currentTarget
-          .getAttribute("data-tb-adj")
-          .split(",");
-        adjustVal(id, parseInt(delta));
-      });
+  },
+
+  setupEventListeners() {
+    document.addEventListener("timerStarted", (e) => {
+      if (e.detail !== "tabata" && this.status !== "STOPPED" && !this.paused)
+        this.pause();
     });
-    this.els.list?.addEventListener("click", (e) => {
-      const delBtn = e.target.closest(".tb-del-btn");
-      const editBtn = e.target.closest(".tb-edit-btn");
-      const row = e.target.closest(".tb-workout-row");
-      if (delBtn) {
-        e.stopPropagation();
-        this.deleteWorkout(Number(delBtn.dataset.id));
-      } else if (editBtn) {
-        e.stopPropagation();
-        this.openModal(Number(editBtn.dataset.id));
-      } else if (row) {
-        this.selectWorkout(Number(row.dataset.id));
+
+    document.addEventListener("languageChanged", () => this.updateUIText());
+
+    bgWorker.addEventListener("message", (e) => {
+      if (
+        e.data.type === "heartbeat:tick" &&
+        this.status !== "STOPPED" &&
+        !this.paused &&
+        document.hidden
+      ) {
+        this.tick(true);
       }
     });
-    this.els.list?.addEventListener("keydown", (e) => {
-      const row = e.target.closest(".tb-workout-row");
-      if (e.key === "Enter" && row) this.selectWorkout(Number(row.dataset.id));
-    });
-   bgWorker.addEventListener("message", (e) => {
-  if (
-    e.data === "tick" && // Это условие будет работать с новым воркером
-    this.status !== "STOPPED" &&
-    !this.paused &&
-    document.hidden
-  ) {
-    this.tick(true);
-  }
-});
+
     document.addEventListener("visibilitychange", () => {
       if (
         document.visibilityState === "visible" &&
@@ -150,6 +121,47 @@ export const tb = {
         this.lastRender = 0;
         this.tick();
       }
+    });
+
+    this.els.startBtn?.addEventListener("click", () => this.toggle());
+    this.els.stopBtn?.addEventListener("click", () => this.stop());
+
+    $("tb-openModalBtn")?.addEventListener("click", () => this.openModal(null));
+
+    // Делегированные слушатели
+    document.body.addEventListener("click", (e) => {
+      if (e.target.id === "tb-closeModalBtn") this.closeModal();
+
+      const tbAdjBtn = e.target.closest("[data-tb-adj]");
+      if (tbAdjBtn) {
+        const [id, delta] = tbAdjBtn.getAttribute("data-tb-adj").split(",");
+        adjustVal(id, parseInt(delta));
+      }
+
+      if (this.els.list) {
+        const delBtn = e.target.closest(".tb-del-btn");
+        const editBtn = e.target.closest(".tb-edit-btn");
+        const row = e.target.closest(".tb-workout-row");
+        if (delBtn) {
+          e.stopPropagation();
+          this.deleteWorkout(Number(delBtn.dataset.id));
+        } else if (editBtn) {
+          e.stopPropagation();
+          this.openModal(Number(editBtn.dataset.id));
+        } else if (row) {
+          this.selectWorkout(Number(row.dataset.id));
+        }
+      }
+    });
+
+    document.body.addEventListener("input", (e) => {
+      if (e.target.id === "tb-edit-name")
+        $("tb-name-error")?.classList.add("hidden");
+    });
+
+    this.els.list?.addEventListener("keydown", (e) => {
+      const row = e.target.closest(".tb-workout-row");
+      if (e.key === "Enter" && row) this.selectWorkout(Number(row.dataset.id));
     });
   },
 
@@ -166,85 +178,43 @@ export const tb = {
   },
 
   openModal(idToEdit = null) {
-    // ШАГ 1: Отменяем запланированное закрытие, если оно есть
-    if (this.closeTimeoutId) {
-      clearTimeout(this.closeTimeoutId);
-      this.closeTimeoutId = null;
-    }
+    tbModal.open();
+    setTimeout(() => {
+      $("tb-name-error")?.classList.add("hidden");
+      this.editingWorkoutId = idToEdit;
+      const nameInput = $("tb-edit-name");
+      const workInput = $("tb-edit-work");
+      const restInput = $("tb-edit-rest");
+      const roundsInput = $("tb-edit-rounds");
 
-    const overlay = $("bottom-sheet-overlay");
-    const modal = this.els.modal;
-
-    if (overlay) {
-      overlay.classList.remove("opacity-0", "pointer-events-none");
-      overlay.onclick = () => this.closeModal();
-    }
-
-    // ... (ваша логика заполнения формы) ...
-    this.els.nameError?.classList.add("hidden");
-    this.editingWorkoutId = idToEdit;
-    if (idToEdit) {
-      const w = this.workouts.find((x) => x.id === idToEdit);
-      if (w) {
-        this.els.editName.value = w.name;
-        this.els.editWork.value = w.work;
-        this.els.editRest.value = w.rest;
-        this.els.editRounds.value = w.rounds;
+      if (idToEdit) {
+        const w = this.workouts.find((x) => x.id === idToEdit);
+        if (w) {
+          nameInput.value = w.name;
+          workInput.value = w.work;
+          restInput.value = w.rest;
+          roundsInput.value = w.rounds;
+        }
+      } else {
+        nameInput.value = this.getUniqueName(t("tabata"));
+        workInput.value = 20;
+        restInput.value = 10;
+        roundsInput.value = 8;
       }
-    } else {
-      this.els.editName.value = this.getUniqueName(t("tabata"));
-      this.els.editWork.value = 20;
-      this.els.editRest.value = 10;
-      this.els.editRounds.value = 8;
-    }
-
-    modal.classList.remove("hidden");
-    modal.classList.add("flex");
-    modal.style.transition = "none";
-    modal.style.transform = "translateY(100%)";
-    modal.removeAttribute("inert");
-    modal.removeAttribute("aria-hidden");
-
-    void modal.offsetHeight;
-
-    modal.style.transition = "transform 400ms cubic-bezier(0.32, 0.72, 0, 1)";
-    modal.style.transform = "translateY(0%)";
-
-    setTimeout(() => this.els.editName?.focus(), 300);
+      nameInput.focus();
+    }, 0);
   },
 
   closeModal() {
-    const overlay = $("bottom-sheet-overlay");
-    const modal = this.els.modal;
-
-    if (modal.contains(document.activeElement)) {
-      document.activeElement.blur();
-    }
-
-    if (overlay) {
-      overlay.classList.add("opacity-0", "pointer-events-none");
-      overlay.onclick = null;
-    }
-
-    modal.setAttribute("inert", "");
-    modal.setAttribute("aria-hidden", "true");
-
-    modal.style.transition = "transform 400ms cubic-bezier(0.32, 0.72, 0, 1)";
-    modal.style.transform = "translateY(100%)";
-
-    // Сохраняем ID таймера перед его запуском
-    this.closeTimeoutId = setTimeout(() => {
-      modal.classList.add("hidden");
-      modal.classList.remove("flex");
+    tbModal.close();
+    setTimeout(() => {
       this.editingWorkoutId = null;
-      modal.style.transition = "";
-      modal.style.transform = "";
-      this.closeTimeoutId = null; // Очищаем ID после выполнения
-    }, 400);
+    }, 300);
   },
 
   saveWorkout() {
-    let finalName = this.els.editName.value.trim();
+    const nameInput = $("tb-edit-name");
+    let finalName = nameInput.value.trim();
     if (!finalName) finalName = this.getUniqueName(t("tabata"));
     const exists = this.workouts.some(
       (w) =>
@@ -252,17 +222,14 @@ export const tb = {
         w.id !== this.editingWorkoutId,
     );
     if (exists) {
-      this.els.nameError?.classList.remove("hidden");
-      this.els.editName.classList.add("animate-shake");
-      setTimeout(
-        () => this.els.editName.classList.remove("animate-shake"),
-        300,
-      );
+      $("tb-name-error")?.classList.remove("hidden");
+      nameInput.classList.add("animate-shake");
+      setTimeout(() => nameInput.classList.remove("animate-shake"), 300);
       return;
     }
-    const w = Math.max(1, parseInt(this.els.editWork.value) || 20);
-    const r = Math.max(1, parseInt(this.els.editRest.value) || 10);
-    const rnd = Math.max(1, parseInt(this.els.editRounds.value) || 8);
+    const w = Math.max(1, parseInt($("tb-edit-work").value) || 20);
+    const r = Math.max(1, parseInt($("tb-edit-rest").value) || 10);
+    const rnd = Math.max(1, parseInt($("tb-edit-rounds").value) || 8);
     if (this.editingWorkoutId) {
       const index = this.workouts.findIndex(
         (x) => x.id === this.editingWorkoutId,
@@ -304,9 +271,7 @@ export const tb = {
     }
     this.workouts = this.workouts.filter((w) => w.id !== id);
     safeSetLS("tb_workouts", JSON.stringify(this.workouts));
-    if (this.selectedId === id) {
-      this.selectWorkout(this.workouts[0].id);
-    }
+    if (this.selectedId === id) this.selectWorkout(this.workouts[0].id);
     this.renderList();
   },
 
@@ -320,12 +285,7 @@ export const tb = {
     this.rest = w.rest * 1000;
     this.rounds = w.rounds;
     updateText(this.els.activeName, w.name);
-    updateText(
-      this.els.activeDetail,
-      `${w.work}${t("sec").toLowerCase()} / ${w.rest}${t(
-        "sec",
-      ).toLowerCase()} • ${w.rounds} ${t("rds")}`,
-    );
+    this.updateUIText(); // Обновляем детали активной тренировки
     this.renderList();
   },
 
@@ -338,42 +298,45 @@ export const tb = {
       const isAct = w.id === this.selectedId;
       div.tabIndex = 0;
       div.setAttribute("role", "button");
-      div.className = `tb-workout-row p-4 rounded-xl flex justify-between items-center transition-all cursor-pointer mb-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-color)] ${
-        isAct
-          ? "app-surface border-2 border-[var(--primary-color)] shadow-md"
-          : "app-surface border app-border shadow-sm"
-      }`;
+      div.className = `tb-workout-row p-4 rounded-xl flex justify-between items-center transition-all cursor-pointer mb-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-color)] ${isAct ? "app-surface border-2 border-[var(--primary-color)] shadow-md" : "app-surface border app-border shadow-sm"}`;
       div.dataset.id = w.id;
       div.innerHTML = `
         <div class="flex-1 min-w-0 pr-2">
-          <div class="font-bold truncate ${
-            isAct ? "primary-text" : "app-text"
-          }">${escapeHTML(w.name)}</div>
-          <div class="text-xs app-text-sec mt-1">${w.work}${t(
-            "sec",
-          ).toLowerCase()} / ${w.rest}${t("sec").toLowerCase()} • ${w.rounds} ${t(
-            "rds",
-          )}</div>
+            <div class="font-bold truncate ${isAct ? "primary-text" : "app-text"}">${escapeHTML(w.name)}</div>
+            <div class="text-xs app-text-sec mt-1">${w.work}${t("sec").toLowerCase()} / ${w.rest}${t("sec").toLowerCase()} • ${w.rounds} <span data-i18n-text="rds">${t("rds")}</span></div>
         </div>
         <div class="flex gap-1 shrink-0">
-          <button type="button" aria-label="${t(
-            "edit",
-          )}" data-id="${w.id}" class="tb-edit-btn text-gray-400 hover:primary-text p-2 focus:outline-none custom-focus rounded-lg active:scale-95">
-            <svg focusable="false" aria-hidden="true" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
-            </svg>
-          </button>
-          <button type="button" aria-label="${t(
-            "delete",
-          )}" data-id="${w.id}" class="tb-del-btn text-red-500 opacity-50 hover:opacity-100 p-2 focus:outline-none custom-focus rounded-lg active:scale-95">
-            <svg focusable="false" aria-hidden="true" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-          </button>
-        </div>`;
+            <button type="button" aria-label="${t("edit")}" data-i18n-aria="edit" data-id="${w.id}" class="tb-edit-btn text-gray-400 hover:primary-text p-2 focus:outline-none custom-focus rounded-lg active:scale-95">
+                <svg focusable="false" aria-hidden="true" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+            </button>
+            <button type="button" aria-label="${t("delete")}" data-i18n-aria="delete" data-id="${w.id}" class="tb-del-btn text-red-500 opacity-50 hover:opacity-100 p-2 focus:outline-none custom-focus rounded-lg active:scale-95">
+                <svg focusable="false" aria-hidden="true" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+      `;
       fragment.appendChild(div);
     });
     this.els.list.appendChild(fragment);
+  },
+
+  updateUIText() {
+    if (this.selectedId) {
+      const w = this.workouts.find((k) => k.id === this.selectedId);
+      if (w) {
+        updateText(
+          this.els.activeDetail,
+          `${w.work}${t("sec").toLowerCase()} / ${w.rest}${t("sec").toLowerCase()} • ${w.rounds} ${t("rds")}`,
+        );
+      }
+    }
+    this.els.list
+      ?.querySelectorAll("[data-i18n-text]")
+      .forEach((el) => updateText(el, t(el.getAttribute("data-i18n-text"))));
+    this.els.list
+      ?.querySelectorAll("[data-i18n-aria]")
+      .forEach((el) =>
+        el.setAttribute("aria-label", t(el.getAttribute("data-i18n-aria"))),
+      );
   },
 
   toggle() {
