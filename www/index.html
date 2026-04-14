@@ -300,29 +300,46 @@
               >
                 Countdown
               </h2>
-              <div
-                class="timer-circle-wrap relative shrink-0 flex items-center justify-center"
-                data-ring="tm"
-              >
-                <button
-                  type="button"
-                  id="tm-circleBtn"
-                  aria-label="Start or Stop Timer"
-                  class="absolute inset-0 flex flex-col items-center justify-center rounded-full focus:outline-none focus-visible:ring-4 focus-visible:ring-[var(--primary-color)] group active:scale-95 transition-transform overflow-hidden cursor-pointer"
+                            <div class="w-full flex items-center justify-center gap-4 px-4">
+                <!-- Кнопка МИНУС -->
+                <button type="button" id="tm-minus-btn" aria-label="Decrease time" class="hidden timer-adjust-btn">
+                  <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M20 12H4"></path>
+                  </svg>
+                </button>
+                
+                <!-- Существующий круг таймера -->
+                <div
+                  class="timer-circle-wrap relative shrink-0 flex items-center justify-center"
+                  data-ring="tm"
                 >
-                  <span
-                    id="tm-statusText"
-                    aria-live="assertive"
-                    data-i18n="pause"
-                    class="hidden text-sm font-bold tracking-widest uppercase mb-1 app-text-sec"
-                    >PAUSE</span
+                  <button
+                    type="button"
+                    id="tm-circleBtn"
+                    aria-label="Start or Stop Timer"
+                    class="absolute inset-0 flex flex-col items-center justify-center rounded-full focus:outline-none focus-visible:ring-4 focus-visible:ring-[var(--primary-color)] group active:scale-95 transition-transform overflow-hidden cursor-pointer"
                   >
-                  <span
-                    id="tm-mainDisplay"
-                    aria-hidden="true"
-                    class="font-mono font-bold tracking-tighter tabular-nums primary-text timer-display is-go"
-                    >GO</span
-                  >
+                    <span
+                      id="tm-statusText"
+                      aria-live="assertive"
+                      data-i18n="pause"
+                      class="hidden text-sm font-bold tracking-widest uppercase mb-1 app-text-sec"
+                      >PAUSE</span
+                    >
+                    <span
+                      id="tm-mainDisplay"
+                      aria-hidden="true"
+                      class="font-mono font-bold tracking-tighter tabular-nums primary-text timer-display is-go"
+                      >GO</span
+                    >
+                  </button>
+                </div>
+                
+                <!-- Кнопка ПЛЮС -->
+                <button type="button" id="tm-plus-btn" aria-label="Increase time" class="hidden timer-adjust-btn">
+                  <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path>
+                  </svg>
                 </button>
               </div>
             </div>
@@ -869,25 +886,30 @@
                     />
                   </div>
 
-                   <div class="p-4 border-t app-border">
+                  <div class="p-4 border-t app-border">
                     <div class="flex justify-between items-center mb-3">
-                      <label 
-                        for="ringWidthSlider" 
-                        class="font-medium app-text text-sm" 
-                        data-i18n="ring_width">Ring Thickness</label>
-                      <span 
-                        id="ringWidthDisplay" 
-                        class="font-bold primary-text text-xs">4 px</span>
+                      <label
+                        for="ringWidthSlider"
+                        class="font-medium app-text text-sm"
+                        data-i18n="ring_width"
+                        >Ring Thickness</label
+                      >
+                      <span
+                        id="ringWidthDisplay"
+                        class="font-bold primary-text text-xs"
+                        >4 px</span
+                      >
                     </div>
-                    <input 
-                      type="range" 
-                      min="1" 
-                      max="12" 
-                      value="4" 
-                      step="0.5" 
-                      id="ringWidthSlider" 
-                      aria-label="Ring Thickness" 
-                      class="w-full" />
+                    <input
+                      type="range"
+                      min="1"
+                      max="12"
+                      value="4"
+                      step="0.5"
+                      id="ringWidthSlider"
+                      aria-label="Ring Thickness"
+                      class="w-full"
+                    />
                   </div>
                 </div>
               </div>
@@ -1094,18 +1116,28 @@
                     </label>
                   </div>
 
-                  <div class="flex items-center justify-between p-4 border-t app-border">
-                    <label 
-                      for="toggle-nav-labels" 
-                      class="font-medium app-text text-sm cursor-pointer" 
-                      data-i18n="hide_nav_labels">Hide Nav Labels</label>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                      <input type="checkbox" id="toggle-nav-labels" class="sr-only" />
+                  <div
+                    class="flex items-center justify-between p-4 border-t app-border"
+                  >
+                    <label
+                      for="toggle-nav-labels"
+                      class="font-medium app-text text-sm cursor-pointer"
+                      data-i18n="hide_nav_labels"
+                      >Hide Nav Labels</label
+                    >
+                    <label
+                      class="relative inline-flex items-center cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        id="toggle-nav-labels"
+                        class="sr-only"
+                      />
                       <div class="custom-toggle"></div>
                     </label>
                   </div>
 
-                  <div class="p-4 border-t app-border flex flex-col gap-2 mt-4">
+                  <div class="p-4 border-t app-border flex flex-col gap-2">
                     <button
                       type="button"
                       id="btn-open-reset"

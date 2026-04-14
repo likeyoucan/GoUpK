@@ -1101,6 +1101,20 @@ select option {
   }
 }
 
+.timer-adjust-btn {
+  @apply w-16 h-16 rounded-full flex items-center justify-center app-surface app-text-sec border app-border shadow-md
+  active:scale-95 transition-transform focus:outline-none custom-focus;
+}
+
+@media (max-width: 380px) {
+  .timer-adjust-btn {
+    @apply w-12 h-12;
+  }
+  .timer-adjust-btn svg {
+    @apply w-6 h-6;
+  }
+}
+
 body.hide-nav-labels .nav-btn span {
   display: none;
 }

@@ -37,6 +37,8 @@ export const tm = {
       h: $("tm-h"),
       m: $("tm-m"),
       s: $("tm-s"),
+      plusBtn: $("tm-plus-btn"),
+      minusBtn: $("tm-minus-btn"),
     };
     if (this.els.ring) {
       this.els.ring.style.strokeDasharray = this.ringLength;
@@ -47,6 +49,8 @@ export const tm = {
     });
     this.els.circleBtn?.addEventListener("click", () => this.toggle());
     this.els.resetBtn?.addEventListener("click", () => this.reset(true));
+    this.els.plusBtn?.addEventListener("click", () => this.adjustTime(1));
+    this.els.minusBtn?.addEventListener("click", () => this.adjustTime(-1));
     $("tm-form")?.addEventListener("submit", (e) => {
       e.preventDefault();
       document.activeElement?.blur();
@@ -239,17 +243,20 @@ export const tm = {
       this.els.resetBtnWrap?.classList.add("hidden");
       this.els.status?.classList.add("hidden");
       this.els.display?.classList.remove("is-go");
+      adjustBtns.forEach((btn) => btn?.classList.remove("hidden")); // Показать кнопки
     } else if (this.isPaused) {
       this.els.inputs.classList.add("hidden", "opacity-0");
       this.els.resetBtnWrap?.classList.remove("hidden");
       this.els.status?.classList.remove("hidden");
       updateText(this.els.status, t("pause"));
+      adjustBtns.forEach((btn) => btn?.classList.add("hidden")); // Скрыть кнопки
     } else {
       this.els.inputs.classList.remove("hidden", "opacity-0");
       this.els.resetBtnWrap?.classList.add("hidden");
       this.els.status?.classList.add("hidden");
       this.els.display?.classList.add("is-go");
       updateText(this.els.display, "GO");
+      adjustBtns.forEach((btn) => btn?.classList.add("hidden")); // Скрыть кнопки
     }
   },
 
@@ -306,5 +313,46 @@ export const tm = {
         (Math.max(0, this.totalDuration - rem) / this.totalDuration) *
           this.ringLength;
     }
+  },
+
+  adjustTime(direction) {
+    // direction: 1 for plus, -1 for minus
+    if (!this.isRunning) return;
+
+    const remainingMs = this.targetTime - performance.now();
+    let adjustmentMs = 0;
+
+    if (remainingMs < 60 * 1000) {
+      // меньше 1 минуты
+      adjustmentMs = 5 * 1000; // +- 5 сек
+    } else if (remainingMs < 5 * 60 * 1000) {
+      // 1-5 минут
+      adjustmentMs = 15 * 1000; // +- 15 сек
+    } else if (remainingMs < 15 * 60 * 1000) {
+      // 5-15 минут
+      adjustmentMs = 30 * 1000; // +- 30 сек
+    } else if (remainingMs < 30 * 60 * 1000) {
+      // 15-30 минут
+      adjustmentMs = 1 * 60 * 1000; // +- 1 мин
+    } else if (remainingMs < 60 * 60 * 1000) {
+      // 30-60 минут
+      adjustmentMs = 5 * 60 * 1000; // +- 5 мин
+    } else {
+      // 1 час и больше
+      adjustmentMs = 15 * 60 * 1000; // +- 15 мин
+    }
+
+    this.targetTime += adjustmentMs * direction;
+    this.totalDuration += adjustmentMs * direction;
+
+    if (this.targetTime < performance.now()) {
+      this.targetTime = performance.now();
+    }
+    if (this.totalDuration < 0) {
+      this.totalDuration = 0;
+    }
+
+    sm.vibrate(20);
+    this.updateDisplay(this.targetTime - performance.now());
   },
 };
