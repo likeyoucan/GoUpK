@@ -300,76 +300,29 @@
               >
                 Countdown
               </h2>
-              <div class="w-full flex items-center justify-center gap-4 px-4">
-                <!-- Кнопка МИНУС -->
+              <div
+                class="timer-circle-wrap relative shrink-0 flex items-center justify-center"
+                data-ring="tm"
+              >
                 <button
                   type="button"
-                  id="tm-minus-btn"
-                  aria-label="Decrease time"
-                  class="hidden timer-adjust-btn app-surface app-text-sec border app-border custom-focus"
+                  id="tm-circleBtn"
+                  aria-label="Start or Stop Timer"
+                  class="absolute inset-0 flex flex-col items-center justify-center rounded-full focus:outline-none focus-visible:ring-4 focus-visible:ring-[var(--primary-color)] group active:scale-95 transition-transform overflow-hidden cursor-pointer"
                 >
-                  <svg
-                    class="w-8 h-8"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    stroke-width="2.5"
+                  <span
+                    id="tm-statusText"
+                    aria-live="assertive"
+                    data-i18n="pause"
+                    class="hidden text-sm font-bold tracking-widest uppercase mb-1 app-text-sec"
+                    >PAUSE</span
                   >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      d="M20 12H4"
-                    ></path>
-                  </svg>
-                </button>
-
-                <!-- Существующий круг таймера -->
-                <div
-                  class="timer-circle-wrap relative shrink-0 flex items-center justify-center"
-                  data-ring="tm"
-                >
-                  <button
-                    type="button"
-                    id="tm-circleBtn"
-                    aria-label="Start or Stop Timer"
-                    class="absolute inset-0 flex flex-col items-center justify-center rounded-full focus:outline-none focus-visible:ring-4 focus-visible:ring-[var(--primary-color)] group active:scale-95 transition-transform overflow-hidden cursor-pointer"
+                  <span
+                    id="tm-mainDisplay"
+                    aria-hidden="true"
+                    class="font-mono font-bold tracking-tighter tabular-nums primary-text timer-display is-go"
+                    >GO</span
                   >
-                    <span
-                      id="tm-statusText"
-                      aria-live="assertive"
-                      data-i18n="pause"
-                      class="hidden text-sm font-bold tracking-widest uppercase mb-1 app-text-sec"
-                      >PAUSE</span
-                    >
-                    <span
-                      id="tm-mainDisplay"
-                      aria-hidden="true"
-                      class="font-mono font-bold tracking-tighter tabular-nums primary-text timer-display is-go"
-                      >GO</span
-                    >
-                  </button>
-                </div>
-
-                <!-- Кнопка ПЛЮС -->
-                <button
-                  type="button"
-                  id="tm-plus-btn"
-                  aria-label="Increase time"
-                  class="hidden timer-adjust-btn app-surface app-text-sec border app-border custom-focus"
-                >
-                  <svg
-                    class="w-8 h-8"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    stroke-width="2.5"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      d="M12 4v16m8-8H4"
-                    ></path>
-                  </svg>
                 </button>
               </div>
             </div>
