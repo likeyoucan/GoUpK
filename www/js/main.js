@@ -31,8 +31,8 @@ function injectSVG() {
     const pointerEventsClass = type === "tm" ? "pointer-events-none" : "";
     const svgHTML = `
       <svg focusable="false" class="w-full h-full transform ${pointerEventsClass}" viewBox="0 0 100 100" aria-hidden="true">
-        <circle class="app-text opacity-10" stroke-width="4" stroke="currentColor" fill="transparent" r="45" cx="50" cy="50" />
-        <circle id="${ringId}" class="progress-ring__circle primary-stroke" stroke-width="4" stroke-linecap="round" fill="transparent" r="45" cx="50" cy="50" />
+        <circle class="app-text opacity-10" stroke-width="var(--ring-stroke-width, 4)" stroke="currentColor" fill="transparent" r="45" cx="50" cy="50" />
+        <circle id="${ringId}" class="progress-ring__circle primary-stroke" stroke-width="var(--ring-stroke-width, 4)" stroke-linecap="round" fill="transparent" r="45" cx="50" cy="50" />
       </svg>
     `;
     container.insertAdjacentHTML("afterbegin", svgHTML);
@@ -88,6 +88,7 @@ const resetModal = {
       "app_vignette_alpha",
       "app_liquid_glass",
       "app_volume",
+      "app_ring_width",
     ];
     keys.forEach((key) => safeRemoveLS(key));
     this.close();
@@ -99,8 +100,16 @@ const resetModal = {
 };
 function initSwipeToClose() {
   const modals = [
-    { id: "sw-sessions-modal", handlerId: "sw-modal-handler", closeFn: () => sw.closeModal() },
-    { id: "tb-modal", handlerId: "tb-modal-handler", closeFn: () => tb.closeModal() },
+    {
+      id: "sw-sessions-modal",
+      handlerId: "sw-modal-handler",
+      closeFn: () => sw.closeModal(),
+    },
+    {
+      id: "tb-modal",
+      handlerId: "tb-modal-handler",
+      closeFn: () => tb.closeModal(),
+    },
   ];
 
   let isDragging = false;
@@ -110,8 +119,8 @@ function initSwipeToClose() {
   let activeCloseFn = null;
 
   const handleDragStart = (e, modal, closeFn) => {
-    if (modal.classList.contains('hidden')) return;
-    
+    if (modal.classList.contains("hidden")) return;
+
     activeModal = modal;
     activeCloseFn = closeFn;
 
@@ -119,13 +128,13 @@ function initSwipeToClose() {
     currentY = startY;
     isDragging = true;
 
-    activeModal.style.transition = 'none'; 
-    if (e.type === 'mousedown') e.preventDefault();
+    activeModal.style.transition = "none";
+    if (e.type === "mousedown") e.preventDefault();
   };
 
   const handleDragMove = (e) => {
     if (!isDragging || !activeModal) return;
-    
+
     currentY = e.touches ? e.touches[0].clientY : e.clientY;
     const deltaY = currentY - startY;
 
@@ -139,9 +148,10 @@ function initSwipeToClose() {
 
     if (deltaY > 100) {
       if (activeCloseFn) activeCloseFn();
-    } else { 
+    } else {
       // Анимируем возврат на место
-      activeModal.style.transition = "transform 400ms cubic-bezier(0.32, 0.72, 0, 1)";
+      activeModal.style.transition =
+        "transform 400ms cubic-bezier(0.32, 0.72, 0, 1)";
       activeModal.style.transform = "translateY(0px)";
 
       // И СБРАСЫВАЕМ СТИЛИ после анимации
@@ -152,7 +162,7 @@ function initSwipeToClose() {
         }
       }, 400);
     }
-    
+
     isDragging = false;
     activeModal = null;
     activeCloseFn = null;
@@ -163,15 +173,21 @@ function initSwipeToClose() {
     const touchArea = document.getElementById(handlerId);
     if (!modal || !touchArea) return;
 
-    touchArea.addEventListener('touchstart', (e) => handleDragStart(e, modal, closeFn), { passive: true });
-    touchArea.addEventListener('mousedown', (e) => handleDragStart(e, modal, closeFn));
+    touchArea.addEventListener(
+      "touchstart",
+      (e) => handleDragStart(e, modal, closeFn),
+      { passive: true },
+    );
+    touchArea.addEventListener("mousedown", (e) =>
+      handleDragStart(e, modal, closeFn),
+    );
   });
 
-  document.addEventListener('touchmove', handleDragMove, { passive: true });
-  document.addEventListener('mousemove', handleDragMove);
-  document.addEventListener('touchend', handleDragEnd);
-  document.addEventListener('mouseup', handleDragEnd);
-  document.addEventListener('mouseleave', handleDragEnd); 
+  document.addEventListener("touchmove", handleDragMove, { passive: true });
+  document.addEventListener("mousemove", handleDragMove);
+  document.addEventListener("touchend", handleDragEnd);
+  document.addEventListener("mouseup", handleDragEnd);
+  document.addEventListener("mouseleave", handleDragEnd);
 }
 
 // =========================================
