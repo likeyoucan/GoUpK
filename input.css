@@ -823,16 +823,17 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
 /* Стили для оверлея под модальными окнами при эффекте стекла (без размытия) */
 :root.glass-effect body #bottom-sheet-overlay {
   background-color: rgba(255, 255, 255, 0.4);
-
+  backdrop-filter: blur(2px);
 }
 
 :root.dark.glass-effect body #bottom-sheet-overlay {
   background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
 }
 :root.glass-effect body #tb-modal,
 :root.glass-effect body #sw-sessions-modal {
   background-color: rgba(255, 255, 255, 0.4);
-  backdrop-filter: blur(20px) saturate(150%);
+  backdrop-filter: blur(18px) saturate(150%);
 }
 
 :root.dark.glass-effect body #tb-modal,
