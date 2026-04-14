@@ -276,51 +276,69 @@ document.addEventListener("DOMContentLoaded", () => {
     lastBgTap = now;
   });
 
-  let touchStartX = 0;
-  let touchStartY = 0;
-  const tabs = ["stopwatch", "timer", "tabata", "settings"];
-  const viewsContainer = $("viewsContainer");
+  // =========================================
+  // НОВАЯ ЛОГИКА СВАЙПОВ (через боковые зоны)
+  // =========================================
+  function setupSwipeNavigation() {
+    const tabs = ["stopwatch", "timer", "tabata", "settings"];
+    let touchStartX = 0;
+    let touchStartY = 0;
 
-  viewsContainer.addEventListener(
-    "touchstart",
-    (e) => {
-      if (
-        e.target.closest(
-          ".scroll-lock, .no-scrollbar, input, button, select, [data-ring]",
-        )
-      ) {
+    const handleTouchStart = (e) => {
+      // Игнорируем, если открыто какое-либо модальное окно
+      if (document.querySelector('[role="dialog"]:not(.hidden)')) {
         touchStartX = 0;
         return;
       }
       touchStartX = e.touches[0].clientX;
       touchStartY = e.touches[0].clientY;
-    },
-    { passive: true },
-  );
+    };
 
+    const handleTouchEnd = (e) => {
+      if (touchStartX === 0) return;
 
-  viewsContainer.addEventListener("touchend", (e) => {
+      const touchEndX = e.changedTouches[0].clientX;
+      const touchEndY = e.changedTouches[0].clientY;
+      const deltaX = touchEndX - touchStartX;
+      const deltaY = touchEndY - touchStartY;
 
-    if (touchStartX === 0) {
-      return;
-    }
+      if (Math.abs(deltaX) > 50 && Math.abs(deltaY) < 80) {
+        // Чуть смягчили условия
+        const currentIdx = tabs.indexOf(navigation.activeView);
+        const direction =
+          e.currentTarget.id === "swipe-area-left" ? "right" : "left";
 
-    const touchEndX = e.changedTouches[0].clientX;
-    const touchEndY = e.changedTouches[0].clientY;
-    const deltaX = touchEndX - touchStartX;
-    const deltaY = touchEndY - touchStartY;
-
-    if (Math.abs(deltaX) > 80 && Math.abs(deltaY) < 50) {
-      const currentIdx = tabs.indexOf(navigation.activeView);
-      if (deltaX < 0 && currentIdx < tabs.length - 1) {
-        navigation.switchView(tabs[currentIdx + 1]);
-      } else if (deltaX > 0 && currentIdx > 0) {
-        navigation.switchView(tabs[currentIdx - 1]);
+        // Свайп вправо (назад)
+        if (direction === "right" && deltaX > 0 && currentIdx > 0) {
+          navigation.switchView(tabs[currentIdx - 1]);
+        }
+        // Свайп влево (вперед)
+        else if (
+          direction === "left" &&
+          deltaX < 0 &&
+          currentIdx < tabs.length - 1
+        ) {
+          navigation.switchView(tabs[currentIdx + 1]);
+        }
       }
-    }
+      touchStartX = 0;
+    };
 
-    touchStartX = 0;
-  });
+    const leftArea = $("swipe-area-left");
+    const rightArea = $("swipe-area-right");
+
+    if (leftArea && rightArea) {
+      [leftArea, rightArea].forEach((area) => {
+        area.addEventListener("touchstart", handleTouchStart, {
+          passive: true,
+        });
+        area.addEventListener("touchend", handleTouchEnd, { passive: true });
+      });
+    }
+  }
+
+  // Вызываем новую функцию в `DOMContentLoaded`
+  setupSwipeNavigation();
 
   // =========================================
   // 4. СИСТЕМНАЯ ИНТЕГРАЦИЯ ANDROID
