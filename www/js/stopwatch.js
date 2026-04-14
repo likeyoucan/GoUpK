@@ -22,6 +22,7 @@ import { t } from "./i18n.js?v=VERSION";
 import { themeManager } from "./theme.js?v=VERSION";
 
 export const sw = {
+  closeTimeoutId: null,
   startTime: 0,
   elapsedTime: 0,
   isRunning: false,
@@ -480,59 +481,62 @@ export const sw = {
   },
 
   openModal() {
-    const overlay = $("bottom-sheet-overlay");
+    // ШАГ 1: Отменяем запланированное закрытие, если оно есть
+    if (this.closeTimeoutId) {
+      clearTimeout(this.closeTimeoutId);
+      this.closeTimeoutId = null;
+    }
+
+    const overlay = $('bottom-sheet-overlay');
     const modal = this.els.modal;
 
-    if (overlay) {
-      overlay.classList.remove("opacity-0", "pointer-events-none");
+    if(overlay) {
+      overlay.classList.remove('opacity-0', 'pointer-events-none');
       overlay.onclick = () => this.closeModal();
     }
 
     this.sortSessions(this.currentSort);
 
-    // 1. Подготовка: делаем видимым, но ставим за экран без анимации.
     modal.classList.remove("hidden");
     modal.classList.add("flex");
-    modal.style.transition = "none";
-    modal.style.transform = "translateY(100%)";
+    modal.style.transition = 'none'; 
+    modal.style.transform = 'translateY(100%)';
     modal.removeAttribute("inert");
     modal.removeAttribute("aria-hidden");
 
-    // 2. Заставляем браузер применить начальное состояние
     void modal.offsetHeight;
 
-    // 3. Запускаем анимацию "выезда"
-    modal.style.transition = "transform 400ms cubic-bezier(0.32, 0.72, 0, 1)";
-    modal.style.transform = "translateY(0%)";
+    modal.style.transition = 'transform 400ms cubic-bezier(0.32, 0.72, 0, 1)';
+    modal.style.transform = 'translateY(0%)';
   },
 
   closeModal() {
-    const overlay = $("bottom-sheet-overlay");
+    const overlay = $('bottom-sheet-overlay');
     const modal = this.els.modal;
 
-    // --- ИСПРАВЛЕНИЕ ФОКУСА ---
-    // Если какой-либо элемент внутри модалки в фокусе, снимаем его.
     if (modal.contains(document.activeElement)) {
       document.activeElement.blur();
     }
 
-    if (overlay) {
-      overlay.classList.add("opacity-0", "pointer-events-none");
+    if(overlay) {
+      overlay.classList.add('opacity-0', 'pointer-events-none');
       overlay.onclick = null;
     }
-
+    
     modal.setAttribute("inert", "");
     modal.setAttribute("aria-hidden", "true");
 
-    modal.style.transition = "transform 400ms cubic-bezier(0.32, 0.72, 0, 1)";
-    modal.style.transform = "translateY(100%)";
+    modal.style.transition = 'transform 400ms cubic-bezier(0.32, 0.72, 0, 1)';
+    modal.style.transform = 'translateY(100%)';
 
-    setTimeout(() => {
+    // Сохраняем ID таймера перед его запуском
+    this.closeTimeoutId = setTimeout(() => {
       modal.classList.add("hidden");
       modal.classList.remove("flex");
-      modal.style.transition = "";
-      modal.style.transform = "";
-    }, 400);
+      modal.style.transition = '';
+      modal.style.transform = '';
+      this.closeTimeoutId = null; // Очищаем ID после выполнения
+    }, 400); 
   },
 
   sortSessions(type) {

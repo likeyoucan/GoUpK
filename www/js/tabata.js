@@ -19,6 +19,7 @@ import { sm } from "./sound.js?v=VERSION";
 import { t } from "./i18n.js?v=VERSION";
 
 export const tb = {
+  closeTimeoutId: null,
   workouts: [],
   selectedId: null,
   work: 20,
@@ -172,6 +173,21 @@ export const tb = {
       overlay.onclick = () => this.closeModal();
     }
 
+  openModal(idToEdit = null) {
+    // ШАГ 1: Отменяем запланированное закрытие, если оно есть
+    if (this.closeTimeoutId) {
+      clearTimeout(this.closeTimeoutId);
+      this.closeTimeoutId = null;
+    }
+    
+    const overlay = $('bottom-sheet-overlay');
+    const modal = this.els.modal;
+
+    if(overlay) {
+      overlay.classList.remove('opacity-0', 'pointer-events-none');
+      overlay.onclick = () => this.closeModal();
+    }
+    
     // ... (ваша логика заполнения формы) ...
     this.els.nameError?.classList.add("hidden");
     this.editingWorkoutId = idToEdit;
@@ -189,54 +205,50 @@ export const tb = {
       this.els.editRest.value = 10;
       this.els.editRounds.value = 8;
     }
-    // ... конец логики формы
 
-    // 1. Подготовка:
     modal.classList.remove("hidden");
     modal.classList.add("flex");
-    modal.style.transition = "none";
-    modal.style.transform = "translateY(100%)";
+    modal.style.transition = 'none'; 
+    modal.style.transform = 'translateY(100%)';
     modal.removeAttribute("inert");
     modal.removeAttribute("aria-hidden");
 
-    // 2. Принудительная перерисовка
     void modal.offsetHeight;
 
-    // 3. Запуск анимации
-    modal.style.transition = "transform 400ms cubic-bezier(0.32, 0.72, 0, 1)";
-    modal.style.transform = "translateY(0%)";
-
+    modal.style.transition = 'transform 400ms cubic-bezier(0.32, 0.72, 0, 1)';
+    modal.style.transform = 'translateY(0%)';
+    
     setTimeout(() => this.els.editName?.focus(), 300);
   },
 
   closeModal() {
-    const overlay = $("bottom-sheet-overlay");
+    const overlay = $('bottom-sheet-overlay');
     const modal = this.els.modal;
 
-    // --- ИСПРАВЛЕНИЕ ФОКУСА ---
-    // Заменяем старую проверку на более надежную.
     if (modal.contains(document.activeElement)) {
       document.activeElement.blur();
     }
-
-    if (overlay) {
-      overlay.classList.add("opacity-0", "pointer-events-none");
+    
+    if(overlay) {
+      overlay.classList.add('opacity-0', 'pointer-events-none');
       overlay.onclick = null;
     }
-
+    
     modal.setAttribute("inert", "");
     modal.setAttribute("aria-hidden", "true");
 
-    modal.style.transition = "transform 400ms cubic-bezier(0.32, 0.72, 0, 1)";
-    modal.style.transform = "translateY(100%)";
+    modal.style.transition = 'transform 400ms cubic-bezier(0.32, 0.72, 0, 1)';
+    modal.style.transform = 'translateY(100%)';
 
-    setTimeout(() => {
+    // Сохраняем ID таймера перед его запуском
+    this.closeTimeoutId = setTimeout(() => {
       modal.classList.add("hidden");
       modal.classList.remove("flex");
       this.editingWorkoutId = null;
-      modal.style.transition = "";
-      modal.style.transform = "";
-    }, 400);
+      modal.style.transition = '';
+      modal.style.transform = '';
+      this.closeTimeoutId = null; // Очищаем ID после выполнения
+    }, 400); 
   },
 
   saveWorkout() {
