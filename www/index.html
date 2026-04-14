@@ -418,6 +418,65 @@
                   Reset
                 </button>
               </div>
+
+              <div
+                id="tm-adjust-controls"
+                class="hidden w-full flex-col items-center justify-center gap-4 mt-2"
+              >
+                <div class="flex items-center justify-center gap-4">
+                  <!-- Кнопка МИНУС -->
+                  <button
+                    type="button"
+                    id="tm-adjust-minus"
+                    aria-label="Decrease time"
+                    class="flex flex-col items-center justify-center w-20 h-20 app-surface app-text rounded-2xl shadow-sm active:scale-95 transition-transform focus:outline-none custom-focus"
+                  >
+                    <svg
+                      class="w-6 h-6"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      stroke-width="2.5"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M20 12H4"
+                      ></path>
+                    </svg>
+                    <span
+                      id="tm-minus-value"
+                      class="text-xs font-bold mt-1"
+                    ></span>
+                  </button>
+
+                  <!-- Кнопка ПЛЮС -->
+                  <button
+                    type="button"
+                    id="tm-adjust-plus"
+                    aria-label="Increase time"
+                    class="flex flex-col items-center justify-center w-20 h-20 app-surface app-text rounded-2xl shadow-sm active:scale-95 transition-transform focus:outline-none custom-focus"
+                  >
+                    <svg
+                      class="w-6 h-6"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      stroke-width="2.5"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M12 4v16m8-8H4"
+                      ></path>
+                    </svg>
+                    <span
+                      id="tm-plus-value"
+                      class="text-xs font-bold mt-1"
+                    ></span>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 

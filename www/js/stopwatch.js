@@ -73,10 +73,12 @@ export const sw = {
     document.addEventListener("timerStarted", (e) => {
       if (e.detail !== "stopwatch" && this.isRunning) this.toggle();
     });
-    bgWorker.addEventListener("message", (e) => {
-      if (e.data === "tick" && this.isRunning && document.hidden)
-        this.tick(true);
-    });
+  bgWorker.addEventListener("message", (e) => {
+  // Это условие теперь будет срабатывать, так как воркер пришлет строку 'tick'
+  if (e.data === "tick" && this.isRunning && document.hidden) {
+    this.tick(true);
+  }
+});
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "visible" && this.isRunning) {
         this.lastRender = 0;

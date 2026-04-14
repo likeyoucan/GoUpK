@@ -1,5 +1,3 @@
-// timer.js
-
 import {
   $,
   showToast,
@@ -14,6 +12,35 @@ import {
 import { sm } from "./sound.js?v=VERSION";
 import { t } from "./i18n.js?v=VERSION";
 
+let timeRemainingMs = 0;
+/**
+ * Определяет величину шага для изменения времени в секундах.
+ * @param {number} remainingSeconds - Оставшееся время в секундах.
+ * @returns {number} - Величина шага в секундах.
+ */
+function getAdjustmentAmount(remainingSeconds) {
+  if (remainingSeconds >= 3600) return 900; // 15 мин
+  if (remainingSeconds >= 1800) return 300; // 5 мин
+  if (remainingSeconds >= 900) return 60; // 1 мин
+  if (remainingSeconds >= 300) return 30; // 30 сек
+  if (remainingSeconds >= 60) return 15; // 15 сек
+  return 5; // 5 сек
+}
+
+/**
+ * Форматирует секунды в строку (e.g., "5s", "1m").
+ * @param {number} seconds - Количество секунд.
+ * @returns {string} - Отформатированная строка.
+ */
+function formatAdjustmentText(seconds) {
+  if (seconds < 60) {
+    return `${seconds}s`;
+  } else {
+    return `${seconds / 60}m`;
+  }
+}
+
+
 export const tm = {
   totalDuration: 0,
   targetTime: 0,
@@ -24,6 +51,7 @@ export const tm = {
   lastRender: 0,
   els: {},
   ringLength: 282.74,
+  currentAdjustmentSec: 0,
 
   init() {
     this.els = {
@@ -37,20 +65,30 @@ export const tm = {
       h: $("tm-h"),
       m: $("tm-m"),
       s: $("tm-s"),
+      adjustControls: $("tm-adjust-controls"),
+      adjustPlusBtn: $("tm-adjust-plus"),
+      adjustMinusBtn: $("tm-adjust-minus"),
+      plusValueSpan: $("tm-plus-value"),
+      minusValueSpan: $("tm-minus-value"),
     };
+
     if (this.els.ring) {
       this.els.ring.style.strokeDasharray = this.ringLength;
       this.els.ring.style.strokeDashoffset = this.ringLength;
     }
+
     document.addEventListener("timerStarted", (e) => {
       if (e.detail !== "timer" && this.isRunning) this.toggle();
     });
+
     this.els.circleBtn?.addEventListener("click", () => this.toggle());
     this.els.resetBtn?.addEventListener("click", () => this.reset(true));
+
     $("tm-form")?.addEventListener("submit", (e) => {
       e.preventDefault();
       document.activeElement?.blur();
     });
+
     [this.els.m, this.els.s].forEach((i) => {
       if (!i) return;
       i.addEventListener("focus", () => {
@@ -64,6 +102,7 @@ export const tm = {
         i.value = pad(i.value || 0);
       });
     });
+
     if (this.els.h) {
       this.els.h.addEventListener("focus", () => {
         if (this.els.h.value === "00" || this.els.h.value === "0")
@@ -77,18 +116,46 @@ export const tm = {
         this.els.h.value = pad(this.els.h.value || 0);
       });
     }
+
     this.setupScrollInteraction(this.els.h, 99, false);
     this.setupScrollInteraction(this.els.m, 59, true);
     this.setupScrollInteraction(this.els.s, 59, true);
+
     bgWorker.addEventListener("message", (e) => {
-      if (e.data === "tick" && this.isRunning && document.hidden)
-        this.tick(true);
-    });
-    document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "visible" && this.isRunning) {
-        this.lastRender = 0;
-        this.tick();
+      if (e.data.type === "tick") {
+        const remaining = e.data.time;
+        timeRemainingMs = remaining;
+        if (this.isRunning) {
+
+          this.updateDisplay(remaining);
+          this.updateAdjustButtons();
+        }
+
+        if (remaining <= 0 && this.isRunning) {
+          this.isRunning = false;
+          sm.vibrate([200, 100, 200, 100, 400]);
+          sm.play("complete");
+          announceToScreenReader(t("timer_finished"));
+          requestAnimationFrame(() => {
+            showToast(t("timer_finished"));
+            this.reset(false);
+          });
+        }
       }
+    });
+
+    this.els.adjustPlusBtn?.addEventListener("click", () => {
+      sm.play("tick");
+      sm.vibrate(50);
+      const adjustmentMs = this.currentAdjustmentSec * 1000;
+      bgWorker.postMessage({ command: "adjust", time: adjustmentMs });
+    });
+
+    this.els.adjustMinusBtn?.addEventListener("click", () => {
+      sm.play("tick");
+      sm.vibrate(50);
+      const adjustmentMs = -this.currentAdjustmentSec * 1000;
+      bgWorker.postMessage({ command: "adjust", time: adjustmentMs });
     });
   },
 
@@ -173,8 +240,8 @@ export const tm = {
     if (this.isRunning) {
       this.isRunning = false;
       this.isPaused = true;
-      this.remainingAtPause = Math.max(0, this.targetTime - performance.now());
-      bgWorker.postMessage("stop");
+      this.remainingAtPause = timeRemainingMs;
+      bgWorker.postMessage({ command: "stop" });
       cancelAnimationFrame(this.rAF);
       releaseWakeLock();
       updateTitle("");
@@ -183,29 +250,33 @@ export const tm = {
       document.dispatchEvent(
         new CustomEvent("timerStarted", { detail: "timer" }),
       );
+      let duration;
       if (!this.isPaused) {
         const h = parseInt(this.els.h?.value, 10) || 0;
         const m = parseInt(this.els.m?.value, 10) || 0;
         const s = parseInt(this.els.s?.value, 10) || 0;
         this.totalDuration = (h * 3600 + m * 60 + s) * 1000;
-        if (this.totalDuration === 0) {
-          showToast(t("timer_zero"));
-          this.els.inputs.classList.add("animate-shake");
-          setTimeout(
-            () => this.els.inputs.classList.remove("animate-shake"),
-            300,
-          );
-          return;
-        }
-        this.targetTime = performance.now() + this.totalDuration;
+        duration = this.totalDuration;
       } else {
-        this.targetTime = performance.now() + this.remainingAtPause;
+        duration = this.remainingAtPause;
       }
+
+      if (duration === 0) {
+        showToast(t("timer_zero"));
+        this.els.inputs.classList.add("animate-shake");
+        setTimeout(
+          () => this.els.inputs.classList.remove("animate-shake"),
+          300,
+        );
+        return;
+      }
+
       this.isRunning = true;
       this.isPaused = false;
       requestWakeLock();
       this.updateUIState();
-      bgWorker.postMessage("start");
+      bgWorker.postMessage({ command: "start", time: duration });
+      this.updateAdjustButtons();
       this.tick();
     }
   },
@@ -215,7 +286,7 @@ export const tm = {
     sm.play("click");
     this.isRunning = false;
     this.isPaused = false;
-    bgWorker.postMessage("stop");
+    bgWorker.postMessage({ command: "reset" });
     cancelAnimationFrame(this.rAF);
     releaseWakeLock();
     updateTitle("");
@@ -239,49 +310,42 @@ export const tm = {
       this.els.resetBtnWrap?.classList.add("hidden");
       this.els.status?.classList.add("hidden");
       this.els.display?.classList.remove("is-go");
+      this.els.adjustControls?.classList.remove("hidden");
+      this.els.adjustControls?.classList.add("flex");
     } else if (this.isPaused) {
       this.els.inputs.classList.add("hidden", "opacity-0");
       this.els.resetBtnWrap?.classList.remove("hidden");
       this.els.status?.classList.remove("hidden");
       updateText(this.els.status, t("pause"));
+      this.els.adjustControls?.classList.add("hidden");
+      this.els.adjustControls?.classList.remove("flex");
     } else {
       this.els.inputs.classList.remove("hidden", "opacity-0");
       this.els.resetBtnWrap?.classList.add("hidden");
       this.els.status?.classList.add("hidden");
       this.els.display?.classList.add("is-go");
       updateText(this.els.display, "GO");
+      this.els.adjustControls?.classList.add("hidden");
+      this.els.adjustControls?.classList.remove("flex");
     }
   },
 
-  tick(isBackground = false) {
+  updateAdjustButtons() {
     if (!this.isRunning) return;
-    const now = performance.now();
-    const remaining = Math.max(0, this.targetTime - now);
-    if (now - this.lastRender >= 16 || isBackground) {
-      if (!isBackground) {
-        this.updateDisplay(remaining);
-      } else {
-        const sTotal = Math.ceil(remaining / 1000);
-        updateTitle(this.getFormattedTime(sTotal));
-      }
-      this.lastRender = now;
-    }
-    if (remaining <= 0) {
-      this.isRunning = false;
-      bgWorker.postMessage("stop");
-      sm.vibrate([200, 100, 200, 100, 400]);
-      sm.play("complete");
-      announceToScreenReader(t("timer_finished"));
-      requestAnimationFrame(() => {
-        showToast(t("timer_finished"));
-        this.reset(false);
-      });
+    const remainingSeconds = Math.ceil(timeRemainingMs / 1000);
+    this.currentAdjustmentSec = getAdjustmentAmount(remainingSeconds);
+    const text = formatAdjustmentText(this.currentAdjustmentSec);
+    updateText(this.els.plusValueSpan, `+ ${text}`);
+    updateText(this.els.minusValueSpan, `- ${text}`);
+  },
+
+  tick() {
+    if (!this.isRunning) {
+      cancelAnimationFrame(this.rAF);
       return;
     }
-    if (!isBackground) {
-      cancelAnimationFrame(this.rAF);
-      this.rAF = requestAnimationFrame(() => this.tick());
-    }
+    this.updateDisplay(timeRemainingMs);
+    this.rAF = requestAnimationFrame(() => this.tick());
   },
 
   getFormattedTime(sTotal) {

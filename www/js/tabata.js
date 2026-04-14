@@ -131,15 +131,16 @@ export const tb = {
       const row = e.target.closest(".tb-workout-row");
       if (e.key === "Enter" && row) this.selectWorkout(Number(row.dataset.id));
     });
-    bgWorker.addEventListener("message", (e) => {
-      if (
-        e.data === "tick" &&
-        this.status !== "STOPPED" &&
-        !this.paused &&
-        document.hidden
-      )
-        this.tick(true);
-    });
+   bgWorker.addEventListener("message", (e) => {
+  if (
+    e.data === "tick" && // Это условие будет работать с новым воркером
+    this.status !== "STOPPED" &&
+    !this.paused &&
+    document.hidden
+  ) {
+    this.tick(true);
+  }
+});
     document.addEventListener("visibilitychange", () => {
       if (
         document.visibilityState === "visible" &&
