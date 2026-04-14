@@ -96,7 +96,7 @@ html.dark {
 body {
   height: 100vh;
   height: 100dvh;
-  background-color: #000;
+  background-color: var(--surface-color, #000);
   color: var(--text-color);
   font-family:
     system-ui,
@@ -325,7 +325,7 @@ html.dark .app-bg.has-vignette::before {
     align-items: center; /* Центрирует по горизонтали */
     padding-top: 0;
   }
-  
+
   #tb-activeName {
     padding-top: 8px;
   }
