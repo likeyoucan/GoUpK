@@ -6,6 +6,10 @@ export const navigation = {
   activeView: "stopwatch",
   clockInterval: null,
 
+  init() {
+    this.initClock();
+  },
+
   switchView(viewId) {
     if (this.activeView === viewId) return;
 
@@ -63,5 +67,25 @@ export const navigation = {
         if (iconSvg) iconSvg.setAttribute("stroke-width", "1.5");
       }
     });
+  },
+
+  initClock() {
+    const clockEl = $("clock");
+    if (!clockEl) return;
+
+    if (this.clockInterval) {
+      clearInterval(this.clockInterval);
+      this.clockInterval = null;
+    }
+
+    const update = () => {
+      const now = new Date();
+      const h = String(now.getHours()).padStart(2, "0");
+      const m = String(now.getMinutes()).padStart(2, "0");
+      clockEl.textContent =
+        now.getSeconds() % 2 === 0 ? `${h}:${m}` : `${h} ${m}`;
+    };
+    update();
+    this.clockInterval = setInterval(update, 1000);
   },
 };
