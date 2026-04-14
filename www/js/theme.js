@@ -9,6 +9,7 @@ export const themeManager = {
   isAdaptiveBg: true,
   hasVignette: false,
   isLiquidGlass: false,
+  hideNavLabels: false,
   vignetteAlpha: 0.5,
   ringWidth: 4,
   themeBtns: [],
@@ -72,6 +73,12 @@ export const themeManager = {
       this.updateVignette();
     });
 
+    $("toggle-nav-labels")?.addEventListener("change", (e) => {
+      this.hideNavLabels = e.target.checked;
+      safeSetLS("app_hide_nav_labels", this.hideNavLabels);
+      this.applyNavLabelsVisibility();
+    });
+
     $("vignetteSlider")?.addEventListener("input", (e) => {
       this.vignetteAlpha = parseFloat(e.target.value);
       safeSetLS("app_vignette_alpha", this.vignetteAlpha);
@@ -122,6 +129,7 @@ export const themeManager = {
     this.isAdaptiveBg = safeGetLS("app_adaptive_bg") !== "false";
     this.hasVignette = safeGetLS("app_vignette") === "true";
     this.isLiquidGlass = safeGetLS("app_liquid_glass") === "true";
+    this.hideNavLabels = safeGetLS("app_hide_nav_labels") === "true";
     this.vignetteAlpha = parseFloat(safeGetLS("app_vignette_alpha")) || 0.5;
     this.showMs = safeGetLS("app_show_ms") !== "false";
 
@@ -129,6 +137,7 @@ export const themeManager = {
     this.setBgColor(safeGetLS("theme_bg_color") || "default");
     this.setFontSize(safeGetLS("font_size") || 16);
     this.setRingWidth(safeGetLS("app_ring_width") || 4);
+    this.applyNavLabelsVisibility();
 
     this.updateGlass();
     this.updateVignette();
@@ -137,6 +146,8 @@ export const themeManager = {
       $("toggle-adaptive-bg").checked = this.isAdaptiveBg;
     if ($("toggle-glass")) $("toggle-glass").checked = this.isLiquidGlass;
     if ($("toggle-vignette")) $("toggle-vignette").checked = this.hasVignette;
+    if ($("toggle-nav-labels"))
+      $("toggle-nav-labels").checked = this.hideNavLabels;
     if ($("vignetteSlider")) $("vignetteSlider").value = this.vignetteAlpha;
     if ($("toggle-ms")) $("toggle-ms").checked = this.showMs;
     if ($("fontSlider")) $("fontSlider").value = safeGetLS("font_size") || 16;
@@ -447,6 +458,14 @@ export const themeManager = {
     if ($("fontSizeDisplay"))
       $("fontSizeDisplay").textContent = numSize + " px";
     safeSetLS("font_size", numSize);
+  },
+
+  applyNavLabelsVisibility() {
+    if (this.hideNavLabels) {
+      document.body.classList.add("hide-nav-labels");
+    } else {
+      document.body.classList.remove("hide-nav-labels");
+    }
   },
 
   setRingWidth(width) {

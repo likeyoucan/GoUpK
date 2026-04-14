@@ -1100,6 +1100,16 @@ select option {
     animation: none !important;
   }
 }
+
+body.hide-nav-labels .nav-btn span {
+  display: none;
+}
+
+body.hide-nav-labels .nav-btn {
+  justify-content: center;
+  gap: 0;
+}
+
 @layer utilities {
   .transition-ios {
     transition-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
