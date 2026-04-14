@@ -276,80 +276,89 @@ document.addEventListener("DOMContentLoaded", () => {
     lastBgTap = now;
   });
 
-    // =======================================================
+  // =======================================================
   // ФИНАЛЬНАЯ ГИБРИДНАЯ ЛОГИКА СВАЙП-НАВИГАЦИИ
   // =======================================================
-  const appContainer = $('app');
-  const swipeAreaLeft = $('swipe-area-left');
-  const swipeAreaRight = $('swipe-area-right');
+  const appContainer = $("app");
+  const swipeAreaLeft = $("swipe-area-left");
+  const swipeAreaRight = $("swipe-area-right");
   const tabs = ["stopwatch", "timer", "tabata", "settings"];
 
   let touchStartX = 0;
   let touchStartY = 0;
   let isSwipeActive = false; // Флаг, что свайп начался в правильной зоне
 
-  appContainer.addEventListener('touchstart', (e) => {
-    // 1. Игнорируем, если открыто модальное окно
-    if (document.querySelector('[role="dialog"]:not(.hidden)')) {
-      return;
-    }
-
-    const touch = e.touches[0];
-    const x = touch.clientX;
-
-    // 2. Получаем "виртуальные" границы наших зон
-    const leftRect = swipeAreaLeft.getBoundingClientRect();
-    const rightRect = swipeAreaRight.getBoundingClientRect();
-
-    // 3. Проверяем, началось ли касание ВНУТРИ одной из зон
-    const isInLeftArea = x >= leftRect.left && x <= leftRect.right;
-    const isInRightArea = x >= rightRect.left && x <= rightRect.right;
-
-    if (isInLeftArea || isInRightArea) {
-      isSwipeActive = true; // Активируем свайп
-      touchStartX = x;
-      touchStartY = touch.clientY;
-      appContainer.classList.add('is-swiping'); // Делаем зоны "физическими"
-    }
-  }, { passive: true });
-
-
-  appContainer.addEventListener('touchend', (e) => {
-    // Выходим, если свайп не был активирован
-    if (!isSwipeActive) return;
-
-    const touch = e.changedTouches[0];
-    const deltaX = touch.clientX - touchStartX;
-    const deltaY = touch.clientY - touchStartY;
-
-    if (Math.abs(deltaX) > 60 && Math.abs(deltaY) < 100) {
-      const currentIdx = tabs.indexOf(navigation.activeView);
-      
-      // Свайп влево (переход вперед)
-      if (deltaX < 0 && currentIdx < tabs.length - 1) {
-        navigation.switchView(tabs[currentIdx + 1]);
-      } 
-      // Свайп вправо (переход назад)
-      else if (deltaX > 0 && currentIdx > 0) {
-        navigation.switchView(tabs[currentIdx - 1]);
+  appContainer.addEventListener(
+    "touchstart",
+    (e) => {
+      // 1. Игнорируем, если открыто модальное окно
+      if (document.querySelector('[role="dialog"]:not(.hidden)')) {
+        return;
       }
-    }
 
-    // В любом случае, деактивируем свайп и возвращаем зоны в "прозрачное" состояние
-    isSwipeActive = false;
-    touchStartX = 0;
-    appContainer.classList.remove('is-swiping');
+      const touch = e.touches[0];
+      const x = touch.clientX;
 
-  }, { passive: true });
+      // 2. Получаем "виртуальные" границы наших зон
+      const leftRect = swipeAreaLeft.getBoundingClientRect();
+      const rightRect = swipeAreaRight.getBoundingClientRect();
 
+      // 3. Проверяем, началось ли касание ВНУТРИ одной из зон
+      const isInLeftArea = x >= leftRect.left && x <= leftRect.right;
+      const isInRightArea = x >= rightRect.left && x <= rightRect.right;
+
+      if (isInLeftArea || isInRightArea) {
+        isSwipeActive = true; // Активируем свайп
+        touchStartX = x;
+        touchStartY = touch.clientY;
+        appContainer.classList.add("is-swiping"); // Делаем зоны "физическими"
+      }
+    },
+    { passive: true },
+  );
+
+  appContainer.addEventListener(
+    "touchend",
+    (e) => {
+      // Выходим, если свайп не был активирован
+      if (!isSwipeActive) return;
+
+      const touch = e.changedTouches[0];
+      const deltaX = touch.clientX - touchStartX;
+      const deltaY = touch.clientY - touchStartY;
+
+      if (Math.abs(deltaX) > 60 && Math.abs(deltaY) < 100) {
+        const currentIdx = tabs.indexOf(navigation.activeView);
+
+        // Свайп влево (переход вперед)
+        if (deltaX < 0 && currentIdx < tabs.length - 1) {
+          navigation.switchView(tabs[currentIdx + 1]);
+        }
+        // Свайп вправо (переход назад)
+        else if (deltaX > 0 && currentIdx > 0) {
+          navigation.switchView(tabs[currentIdx - 1]);
+        }
+      }
+
+      // В любом случае, деактивируем свайп и возвращаем зоны в "прозрачное" состояние
+      isSwipeActive = false;
+      touchStartX = 0;
+      appContainer.classList.remove("is-swiping");
+    },
+    { passive: true },
+  );
 
   // Дополнительная безопасность: если палец ушел за пределы экрана
-  appContainer.addEventListener('touchcancel', () => {
-    if (!isSwipeActive) return;
-    isSwipeActive = false;
-    touchStartX = 0;
-    appContainer.classList.remove('is-swiping');
-  }, { passive: true });
+  appContainer.addEventListener(
+    "touchcancel",
+    () => {
+      if (!isSwipeActive) return;
+      isSwipeActive = false;
+      touchStartX = 0;
+      appContainer.classList.remove("is-swiping");
+    },
+    { passive: true },
+  );
 
   // =========================================
   // 4. СИСТЕМНАЯ ИНТЕГРАЦИЯ ANDROID
