@@ -1118,6 +1118,18 @@ body.hide-nav-labels .nav-btn {
   gap: 0;
 }
 
+#swipe-area-left,
+#swipe-area-right {
+  /* По умолчанию зоны "прозрачны" для кликов и касаний */
+  pointer-events: none;
+}
+
+#app.is-swiping #swipe-area-left,
+#app.is-swiping #swipe-area-right {
+  /* Когда начинается свайп, зоны становятся "активными", чтобы поймать touchend */
+  pointer-events: auto;
+}
+
 @layer utilities {
   .transition-ios {
     transition-timing-function: cubic-bezier(0.32, 0.72, 0, 1);

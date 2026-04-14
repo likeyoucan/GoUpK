@@ -277,47 +277,52 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
     // =======================================================
-  // ФИНАЛЬНАЯ ЛОГИКА СВАЙП-НАВИГАЦИИ (ГИБРИДНЫЙ ПОДХОД)
+  // ФИНАЛЬНАЯ ГИБРИДНАЯ ЛОГИКА СВАЙП-НАВИГАЦИИ
   // =======================================================
-  let touchStartX = 0;
-  let touchStartY = 0;
+  const appContainer = $('app');
+  const swipeAreaLeft = $('swipe-area-left');
+  const swipeAreaRight = $('swipe-area-right');
   const tabs = ["stopwatch", "timer", "tabata", "settings"];
 
-  document.addEventListener('touchstart', (e) => {
-    // 1. Игнорируем свайпы, если открыто модальное окно
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let isSwipeActive = false; // Флаг, что свайп начался в правильной зоне
+
+  appContainer.addEventListener('touchstart', (e) => {
+    // 1. Игнорируем, если открыто модальное окно
     if (document.querySelector('[role="dialog"]:not(.hidden)')) {
-      touchStartX = 0;
       return;
     }
 
-    // 2. Игнорируем свайпы, если касание началось на интерактивном элементе
-    // Это наш основной "фильтр безопасности"
-    const isInteractive = e.target.closest(
-      'button, a, input, select, .scroll-lock, .no-scrollbar, [role="button"], [data-ring]'
-    );
-    if (isInteractive) {
-      touchStartX = 0;
-      return;
+    const touch = e.touches[0];
+    const x = touch.clientX;
+
+    // 2. Получаем "виртуальные" границы наших зон
+    const leftRect = swipeAreaLeft.getBoundingClientRect();
+    const rightRect = swipeAreaRight.getBoundingClientRect();
+
+    // 3. Проверяем, началось ли касание ВНУТРИ одной из зон
+    const isInLeftArea = x >= leftRect.left && x <= leftRect.right;
+    const isInRightArea = x >= rightRect.left && x <= rightRect.right;
+
+    if (isInLeftArea || isInRightArea) {
+      isSwipeActive = true; // Активируем свайп
+      touchStartX = x;
+      touchStartY = touch.clientY;
+      appContainer.classList.add('is-swiping'); // Делаем зоны "физическими"
     }
-
-    // 3. Запоминаем начальные координаты, если все проверки пройдены
-    touchStartX = e.touches[0].clientX;
-    touchStartY = e.touches[0].clientY;
-
   }, { passive: true });
 
-  document.addEventListener('touchend', (e) => {
-    // Выходим, если касание было отфильтровано на этапе touchstart
-    if (touchStartX === 0) return;
 
-    const touchEndX = e.changedTouches[0].clientX;
-    const touchEndY = e.changedTouches[0].clientY;
-    const deltaX = touchEndX - touchStartX;
-    const deltaY = touchEndY - touchStartY;
+  appContainer.addEventListener('touchend', (e) => {
+    // Выходим, если свайп не был активирован
+    if (!isSwipeActive) return;
 
-    // Проверяем, был ли жест похож на горизонтальный свайп
-    // Увеличиваем порог deltaX до 80px для большей надежности
-    if (Math.abs(deltaX) > 80 && Math.abs(deltaY) < 80) {
+    const touch = e.changedTouches[0];
+    const deltaX = touch.clientX - touchStartX;
+    const deltaY = touch.clientY - touchStartY;
+
+    if (Math.abs(deltaX) > 60 && Math.abs(deltaY) < 100) {
       const currentIdx = tabs.indexOf(navigation.activeView);
       
       // Свайп влево (переход вперед)
@@ -330,8 +335,20 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    // Сбрасываем координаты для следующего жеста
+    // В любом случае, деактивируем свайп и возвращаем зоны в "прозрачное" состояние
+    isSwipeActive = false;
     touchStartX = 0;
+    appContainer.classList.remove('is-swiping');
+
+  }, { passive: true });
+
+
+  // Дополнительная безопасность: если палец ушел за пределы экрана
+  appContainer.addEventListener('touchcancel', () => {
+    if (!isSwipeActive) return;
+    isSwipeActive = false;
+    touchStartX = 0;
+    appContainer.classList.remove('is-swiping');
   }, { passive: true });
 
   // =========================================
