@@ -275,24 +275,41 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     lastBgTap = now;
   });
+
   let touchStartX = 0;
   let touchStartY = 0;
   const tabs = ["stopwatch", "timer", "tabata", "settings"];
-  document.addEventListener(
+  const viewsContainer = $("viewsContainer");
+
+  viewsContainer.addEventListener(
     "touchstart",
     (e) => {
+      if (
+        e.target.closest(
+          ".scroll-lock, .no-scrollbar, input, button, select, [data-ring]",
+        )
+      ) {
+        touchStartX = 0;
+        return;
+      }
       touchStartX = e.touches[0].clientX;
       touchStartY = e.touches[0].clientY;
     },
     { passive: true },
   );
-  document.addEventListener("touchend", (e) => {
-    if (e.target.closest(".scroll-lock, .no-scrollbar, input, button, select"))
+
+
+  viewsContainer.addEventListener("touchend", (e) => {
+
+    if (touchStartX === 0) {
       return;
+    }
+
     const touchEndX = e.changedTouches[0].clientX;
     const touchEndY = e.changedTouches[0].clientY;
     const deltaX = touchEndX - touchStartX;
     const deltaY = touchEndY - touchStartY;
+
     if (Math.abs(deltaX) > 80 && Math.abs(deltaY) < 50) {
       const currentIdx = tabs.indexOf(navigation.activeView);
       if (deltaX < 0 && currentIdx < tabs.length - 1) {
@@ -301,6 +318,8 @@ document.addEventListener("DOMContentLoaded", () => {
         navigation.switchView(tabs[currentIdx - 1]);
       }
     }
+
+    touchStartX = 0;
   });
 
   // =========================================
