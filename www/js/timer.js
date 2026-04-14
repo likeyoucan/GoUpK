@@ -234,8 +234,8 @@ export const tm = {
         const s = parseInt(this.els.s?.value, 10) || 0;
         this.totalDuration = (h * 3600 + m * 60 + s) * 1000;
         duration = this.totalDuration;
-
         timeRemainingMs = this.totalDuration;
+        this.currentAdjustmentSec = 0;
       } else {
         duration = this.remainingAtPause;
       }
@@ -309,7 +309,12 @@ export const tm = {
   updateAdjustButtons() {
     if (!this.isRunning) return;
     const remainingSeconds = Math.ceil(timeRemainingMs / 1000);
-    this.currentAdjustmentSec = getAdjustmentAmount(remainingSeconds);
+    const newAdjustmentSec = getAdjustmentAmount(remainingSeconds);
+
+    if (newAdjustmentSec === this.currentAdjustmentSec) {
+      return; 
+    
+    this.currentAdjustmentSec = newAdjustmentSec; // Обновляем текущий шаг
     const text = formatAdjustmentText(this.currentAdjustmentSec);
     updateText(this.els.plusValueSpan, `+ ${text}`);
     updateText(this.els.minusValueSpan, `- ${text}`);
