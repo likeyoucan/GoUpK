@@ -33,6 +33,9 @@ export const navigation = {
         el.removeAttribute("aria-hidden");
         el.removeAttribute("inert");
       } else {
+        if (el.contains(document.activeElement)) {
+          document.activeElement.blur();
+        }
         el.classList.add("opacity-0", "pointer-events-none");
         el.classList.remove("z-10");
         el.setAttribute("aria-hidden", "true");
