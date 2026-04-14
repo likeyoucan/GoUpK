@@ -191,7 +191,7 @@ button {
     border-radius: 2.5rem;
     box-shadow:
       0 0 0 1px rgba(255, 255, 255, 0.08),
-      0 30px 80px rgba(0, 0, 0, 0.6);
+      0 10px 30px rgba(17, 17, 17, 0.3);
     padding: 0;
   }
 }
@@ -216,7 +216,7 @@ button {
     border-radius: 2.5rem;
     box-shadow:
       0 0 0 1px rgba(255, 255, 255, 0.08),
-      0 30px 80px rgba(0, 0, 0, 0.6);
+      0 10px 30px rgba(17, 17, 17, 0.3);
     padding: 0;
   }
 }
