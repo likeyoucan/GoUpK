@@ -481,7 +481,7 @@ export const sw = {
   },
 
   openModal() {
-    // Отменяем запланированное закрытие, если оно было
+    // ШАГ 1: Отменяем запланированное закрытие, если оно есть
     if (this.closeTimeoutId) {
       clearTimeout(this.closeTimeoutId);
       this.closeTimeoutId = null;
@@ -494,29 +494,25 @@ export const sw = {
       overlay.classList.remove('opacity-0', 'pointer-events-none');
       overlay.onclick = () => this.closeModal();
     }
-    
-    if (this.sortSessions) this.sortSessions(this.currentSort); // для stopwatch.js
-    if (this.els.editName) this.els.editName.focus(); // для tabata.js
 
-    // 1. Делаем элемент видимым (он еще за экраном из-за `translate-y-full`)
+    this.sortSessions(this.currentSort);
+
     modal.classList.remove("hidden");
     modal.classList.add("flex");
+    modal.style.transition = 'none'; 
+    modal.style.transform = 'translateY(100%)';
     modal.removeAttribute("inert");
     modal.removeAttribute("aria-hidden");
-    
-    // 2. В следующем кадре запускаем CSS-анимацию
-    requestAnimationFrame(() => {
-      modal.classList.remove("translate-y-full");
-    });
+
+    void modal.offsetHeight;
+
+    modal.style.transition = 'transform 400ms cubic-bezier(0.32, 0.72, 0, 1)';
+    modal.style.transform = 'translateY(0%)';
   },
 
   closeModal() {
-    const modal = this.els.modal;
-
-    // Предотвращаем двойное закрытие
-    if (modal.classList.contains('translate-y-full')) return;
-
     const overlay = $('bottom-sheet-overlay');
+    const modal = this.els.modal;
 
     if (modal.contains(document.activeElement)) {
       document.activeElement.blur();
@@ -529,16 +525,17 @@ export const sw = {
     
     modal.setAttribute("inert", "");
     modal.setAttribute("aria-hidden", "true");
-    
-    // 1. Запускаем CSS-анимацию закрытия
-    modal.classList.add("translate-y-full");
 
-    // 2. После анимации скрываем элемент и сохраняем ID таймера
+    modal.style.transition = 'transform 400ms cubic-bezier(0.32, 0.72, 0, 1)';
+    modal.style.transform = 'translateY(100%)';
+
+    // Сохраняем ID таймера перед его запуском
     this.closeTimeoutId = setTimeout(() => {
       modal.classList.add("hidden");
       modal.classList.remove("flex");
-      if (this.editingWorkoutId !== undefined) this.editingWorkoutId = null; // для tabata.js
-      this.closeTimeoutId = null;
+      modal.style.transition = '';
+      modal.style.transform = '';
+      this.closeTimeoutId = null; // Очищаем ID после выполнения
     }, 400); 
   },
 

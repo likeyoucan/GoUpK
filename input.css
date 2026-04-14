@@ -173,7 +173,7 @@ button {
   padding-left: var(--safe-left);
   padding-right: var(--safe-right);
   background-color: var(--bg-color);
-  border: 1px solid transparent;
+  
 }
 
 .app-bg {
@@ -1103,7 +1103,4 @@ select option {
   .transition-ios {
     transition-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
   }
-}
-.is-dragging {
-  transition: none !important;
 }

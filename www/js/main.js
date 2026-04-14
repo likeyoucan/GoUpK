@@ -110,17 +110,16 @@ function initSwipeToClose() {
   let activeCloseFn = null;
 
   const handleDragStart = (e, modal, closeFn) => {
-    if (modal.classList.contains('hidden') || modal.classList.contains('translate-y-full')) return;
+    if (modal.classList.contains('hidden')) return;
     
     activeModal = modal;
     activeCloseFn = closeFn;
-    isDragging = true;
-    
+
     startY = e.touches ? e.touches[0].clientY : e.clientY;
-    
-    // Временно отключаем CSS-анимацию через класс
-    activeModal.classList.add('is-dragging');
-    
+    currentY = startY;
+    isDragging = true;
+
+    activeModal.style.transition = 'none'; 
     if (e.type === 'mousedown') e.preventDefault();
   };
 
@@ -130,26 +129,28 @@ function initSwipeToClose() {
     currentY = e.touches ? e.touches[0].clientY : e.clientY;
     const deltaY = currentY - startY;
 
-    if (deltaY >= 0) {
-      activeModal.style.transform = `translateY(${deltaY}px)`;
-    }
+    if (deltaY > 0) activeModal.style.transform = `translateY(${deltaY}px)`;
   };
 
   const handleDragEnd = () => {
     if (!isDragging || !activeModal) return;
-    
-    // Возвращаем CSS-анимацию
-    activeModal.classList.remove('is-dragging');
 
     const deltaY = currentY - startY;
 
     if (deltaY > 100) {
-      // Просто вызываем стандартную функцию закрытия
       if (activeCloseFn) activeCloseFn();
     } else { 
-      // Если не закрыли, плавно возвращаем на место силами CSS
-      // Браузер анимирует transform от текущего значения до `none` (0)
-      activeModal.style.transform = '';
+      // Анимируем возврат на место
+      activeModal.style.transition = "transform 400ms cubic-bezier(0.32, 0.72, 0, 1)";
+      activeModal.style.transform = "translateY(0px)";
+
+      // И СБРАСЫВАЕМ СТИЛИ после анимации
+      setTimeout(() => {
+        if (activeModal) {
+          activeModal.style.transition = "";
+          activeModal.style.transform = "";
+        }
+      }, 400);
     }
     
     isDragging = false;
