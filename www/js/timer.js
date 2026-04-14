@@ -112,7 +112,7 @@ export const tm = {
     this.setupScrollInteraction(this.els.s, 59, true);
 
     bgWorker.addEventListener("message", (e) => {
-      if (e.data.type === 'tick') {
+      if (e.data.type === "tick") {
         const remaining = e.data.time;
         timeRemainingMs = remaining;
 
@@ -121,8 +121,8 @@ export const tm = {
         }
 
         if (this.isRunning) {
-            this.updateDisplay(remaining);
-            this.updateAdjustButtons();
+          this.updateDisplay(remaining);
+          this.updateAdjustButtons();
         }
 
         if (remaining <= 0 && this.isRunning) {
@@ -138,18 +138,18 @@ export const tm = {
       }
     });
 
-    this.els.adjustPlusBtn?.addEventListener('click', () => {
-        sm.play('tick');
-        sm.vibrate(50);
-        const adjustmentMs = this.currentAdjustmentSec * 1000;
-        bgWorker.postMessage({ command: 'adjust', time: adjustmentMs });
+    this.els.adjustPlusBtn?.addEventListener("click", () => {
+      sm.play("tick");
+      sm.vibrate(50);
+      const adjustmentMs = this.currentAdjustmentSec * 1000;
+      bgWorker.postMessage({ command: "adjust", time: adjustmentMs });
     });
 
-    this.els.adjustMinusBtn?.addEventListener('click', () => {
-        sm.play('tick');
-        sm.vibrate(50);
-        const adjustmentMs = -this.currentAdjustmentSec * 1000;
-        bgWorker.postMessage({ command: 'adjust', time: adjustmentMs });
+    this.els.adjustMinusBtn?.addEventListener("click", () => {
+      sm.play("tick");
+      sm.vibrate(50);
+      const adjustmentMs = -this.currentAdjustmentSec * 1000;
+      bgWorker.postMessage({ command: "adjust", time: adjustmentMs });
     });
   },
 
@@ -170,9 +170,24 @@ export const tm = {
       sm.play("click");
       sm.vibrate(10);
     };
-    input.addEventListener("wheel", (e) => { e.preventDefault(); updateVal(e.deltaY > 0 ? -1 : 1); }, { passive: false });
-    input.addEventListener("touchstart", (e) => { startY = e.touches[0].clientY; }, { passive: true });
-    input.addEventListener("touchmove", (e) => {
+    input.addEventListener(
+      "wheel",
+      (e) => {
+        e.preventDefault();
+        updateVal(e.deltaY > 0 ? -1 : 1);
+      },
+      { passive: false },
+    );
+    input.addEventListener(
+      "touchstart",
+      (e) => {
+        startY = e.touches[0].clientY;
+      },
+      { passive: true },
+    );
+    input.addEventListener(
+      "touchmove",
+      (e) => {
         const currentY = e.touches[0].clientY;
         const diff = startY - currentY;
         if (Math.abs(diff) > threshold) {
@@ -181,7 +196,9 @@ export const tm = {
           updateVal(diff > 0 ? 1 : -1);
           startY = currentY;
         }
-      }, { passive: false });
+      },
+      { passive: false },
+    );
     let isDragging = false;
     const onMouseMove = (e) => {
       if (!isDragging) return;
@@ -243,10 +260,13 @@ export const tm = {
       if (duration <= 0) {
         showToast(t("timer_zero"));
         this.els.inputs.classList.add("animate-shake");
-        setTimeout(() => this.els.inputs.classList.remove("animate-shake"), 300);
+        setTimeout(
+          () => this.els.inputs.classList.remove("animate-shake"),
+          300,
+        );
         return;
       }
-      
+
       this.isRunning = true;
       this.isPaused = false;
       requestWakeLock();
@@ -312,7 +332,8 @@ export const tm = {
     const newAdjustmentSec = getAdjustmentAmount(remainingSeconds);
 
     if (newAdjustmentSec === this.currentAdjustmentSec) {
-      return; 
+      return;
+    }
     
     this.currentAdjustmentSec = newAdjustmentSec; // Обновляем текущий шаг
     const text = formatAdjustmentText(this.currentAdjustmentSec);
@@ -322,8 +343,8 @@ export const tm = {
 
   tick() {
     if (!this.isRunning) {
-        cancelAnimationFrame(this.rAF);
-        return;
+      cancelAnimationFrame(this.rAF);
+      return;
     }
     this.updateDisplay(timeRemainingMs);
     this.rAF = requestAnimationFrame(() => this.tick());
@@ -348,7 +369,7 @@ export const tm = {
     if (this.els.ring && this.totalDuration > 0) {
       const elapsed = this.totalDuration - rem;
       const progress = elapsed / this.totalDuration;
-      
+
       this.els.ring.style.strokeDashoffset = this.ringLength * (1 - progress);
     }
   },
