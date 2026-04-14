@@ -55,6 +55,7 @@ export const translations = {
     date_new: "Newest first",
     date_old: "Oldest first",
     name_az: "Name (A-Z)",
+    name_za: "Name (Z-A)",
     result_fast: "Result (Fastest)",
     empty_sessions: "No saved sessions",
     session_saved: "Session saved!",
@@ -145,6 +146,7 @@ export const translations = {
     date_new: "Сначала новые",
     date_old: "Сначала старые",
     name_az: "По имени (А-Я)",
+    name_za: "По имени (Я-А)",
     result_fast: "По результату",
     empty_sessions: "Нет результатов",
     session_saved: "Сохранено!",
@@ -230,7 +232,8 @@ export const langManager = {
       }
 
       const existingTextNode = Array.from(el.childNodes).find(
-        (node) => node.nodeType === Node.TEXT_NODE && node.nodeValue.trim() !== ""
+        (node) =>
+          node.nodeType === Node.TEXT_NODE && node.nodeValue.trim() !== "",
       );
 
       if (existingTextNode) {

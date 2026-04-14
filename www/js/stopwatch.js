@@ -546,6 +546,7 @@ export const sw = {
       if (type === "date_desc") return b.date - a.date;
       if (type === "date_asc") return a.date - b.date;
       if (type === "name_az") return a.name.localeCompare(b.name);
+      if (type === "name_za") return b.name.localeCompare(a.name);
       if (type === "result_fast") return a.totalTime - b.totalTime;
       return 0;
     });
