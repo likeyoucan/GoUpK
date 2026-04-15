@@ -4,7 +4,7 @@ import {
   $,
   escapeHTML,
   showToast,
-  formatTimeStr,
+  formatTime, // [РЕФАКТОРИНГ] Используем единую функцию formatTime
   adjustVal,
   updateText,
   updateTitle,
@@ -18,7 +18,7 @@ import {
 import { sm } from "./sound.js?v=VERSION";
 import { t } from "./i18n.js?v=VERSION";
 import { modalManager } from "./modal.js?v=VERSION";
-import { store } from "./store.js?v=VERSION"; // [РЕФАКТОРИНГ] Импортируем store
+import { store } from "./store.js?v=VERSION";
 
 export const tb = {
   workouts: [],
@@ -164,8 +164,6 @@ export const tb = {
 
   start() {
     document.dispatchEvent(new CustomEvent("timerStarted", { detail: "tabata" }));
-    
-    // [РЕФАКТОРИНГ] Сообщаем store, что табата стала активной
     store.setActiveTimer("tabata");
 
     this.currentRound = 1; this.status = "READY"; this.phaseDuration = 5000; this.phaseEndTime = performance.now() + this.phaseDuration;
@@ -177,7 +175,6 @@ export const tb = {
   },
 
   pause() {
-    // [РЕФАКТОРИНГ] При паузе таймер больше не считается активным для фоновых задач
     store.clearActiveTimer();
     
     this.paused = true; bgWorker.postMessage("stop"); cancelAnimationFrame(this.rAF);
@@ -187,8 +184,6 @@ export const tb = {
 
   resume() {
     document.dispatchEvent(new CustomEvent("timerStarted", { detail: "tabata" }));
-
-    // [РЕФАКТОРИНГ] При возобновлении снова сообщаем, что табата активна
     store.setActiveTimer("tabata");
     
     this.paused = false; this.phaseEndTime = performance.now() + this.remainingAtPause; this.lastBeepSec = 0;
@@ -197,8 +192,6 @@ export const tb = {
 
   stop() {
     sm.vibrate(30); sm.play("click");
-
-    // [РЕФАКТОРИНГ] Сообщаем store, что таймер остановлен
     store.clearActiveTimer();
     
     bgWorker.postMessage("stop"); cancelAnimationFrame(this.rAF);
@@ -215,7 +208,10 @@ export const tb = {
     if (rem <= 0) { const isDeepSleepWakeup = rem < -2000; this.nextPhase(isDeepSleepWakeup ? Math.abs(rem) : 0); return; }
     if (now - this.lastRender >= 16 || isBackground) {
       if (!isBackground) this.render(rem);
-      else { const sTotal = Math.max(0, Math.ceil(rem / 1000)); updateTitle(`${this.status}: ${formatTimeStr(sTotal, false)}`); }
+      else { 
+        // [ИЗМЕНЕНО] Используем новую функцию formatTime
+        updateTitle(`${this.status}: ${formatTime(rem)}`);
+      }
       this.lastRender = now;
     }
     if (!isBackground) { cancelAnimationFrame(this.rAF); this.rAF = requestAnimationFrame(() => this.tick()); }
@@ -265,10 +261,14 @@ export const tb = {
   },
 
   render(rem) {
-    const sTotal = Math.max(0, Math.ceil(rem / 1000));
+    const sTotal = Math.ceil(rem / 1000);
     if (sTotal <= 3 && sTotal > 0 && this.lastBeepSec !== sTotal) { sm.play("tick"); this.lastBeepSec = sTotal; }
-    const timeStr = formatTimeStr(sTotal, false);
-    updateText(this.els.timer, timeStr); updateTitle(`${this.status}: ${timeStr}`);
+    
+    // [ИЗМЕНЕНО] Используем новую функцию formatTime
+    const timeStr = formatTime(rem);
+    updateText(this.els.timer, timeStr);
+    updateTitle(`${this.status}: ${timeStr}`);
+    
     if (this.els.ring) this.els.ring.style.strokeDashoffset = this.ringLength - (Math.max(0, this.phaseDuration - rem) / this.phaseDuration) * this.ringLength;
   },
 };

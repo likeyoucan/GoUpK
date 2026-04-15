@@ -6,9 +6,9 @@ export const escapeHTML = (str) =>
   str.replace(
     /[&<>'"]/g,
     (tag) =>
-      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[
         tag
-      ] || tag,
+      ] || tag)
   );
 
 export const updateText = (el, text) => {
@@ -25,13 +25,16 @@ export const updateTitle = (text) => {
 export const safeSetLS = (key, value) => {
   try {
     localStorage.setItem(key, value);
-  } catch (e) {}
+  } catch (e) {
+    console.error("Failed to write to localStorage:", e);
+  }
 };
 
 export const safeGetLS = (key) => {
   try {
     return localStorage.getItem(key);
   } catch (e) {
+    console.error("Failed to read from localStorage:", e);
     return null;
   }
 };
@@ -39,7 +42,9 @@ export const safeGetLS = (key) => {
 export const safeRemoveLS = (key) => {
   try {
     localStorage.removeItem(key);
-  } catch (e) {}
+  } catch (e) {
+    console.error("Failed to remove from localStorage:", e);
+  }
 };
 
 let wakeLock = null;
@@ -51,7 +56,10 @@ export const requestWakeLock = async () => {
       wakeLock.addEventListener("release", () => {
         wakeLock = null;
       });
-    } catch (err) {}
+    } catch (err) {
+        // Ошибка может возникнуть, если документ неактивен, и это нормально.
+        // console.error(`${err.name}, ${err.message}`);
+    }
   }
 };
 
@@ -63,6 +71,7 @@ export const releaseWakeLock = () => {
         wakeLock = null;
       })
       .catch(() => {
+        // Ошибки здесь можно игнорировать
         wakeLock = null;
       });
   }
@@ -96,53 +105,67 @@ export const adjustVal = (id, delta) => {
 
 export const pad = (num) => String(num).padStart(2, "0");
 
-export const formatTimeStr = (totalSeconds, showHoursIfZero = false) => {
-  const h = Math.floor(totalSeconds / 3600);
-  const m = Math.floor((totalSeconds % 3600) / 60);
-  const s = Math.floor(totalSeconds % 60);
-  if (h > 0 || showHoursIfZero) return `${pad(h)}:${pad(m)}:${pad(s)}`;
-  return `${pad(m)}:${pad(s)}`;
-};
 
-export const formatMsTime = (ms, showMs = true) => {
+/**
+ * [РЕФАКТОРИНГ] Новая универсальная функция форматирования времени.
+ * Заменяет formatTimeStr, formatMsTime, formatMainDisplay и getExtendedDisplay.
+ * @param {number} ms - Время в миллисекундах.
+ * @param {object} options - Опции форматирования.
+ * @param {boolean} [options.showMs=false] - Показывать миллисекунды?
+ * @param {boolean} [options.forceHours=false] - Всегда показывать часы, даже если их 0?
+ * @param {boolean} [options.showDays=false] - Показывать дни? (для getExtendedDisplay)
+ * @param {string} [options.daySuffix='d'] - Суффикс для дней.
+ * @param {string} [options.hourSuffix='h'] - Суффикс для часов.
+ * @returns {string} - Отформатированная строка времени.
+ */
+export function formatTime(ms, options = {}) {
+  const {
+    showMs = false,
+    forceHours = false,
+    showDays = false,
+    daySuffix = 'd',
+    hourSuffix = 'h'
+  } = options;
+
+  // Логика для формата "дни и часы" (замена getExtendedDisplay)
+  if (showDays) {
+    const totalS = Math.floor(ms / 1000);
+    const d = Math.floor(totalS / 86400);
+    const h = Math.floor((totalS % 86400) / 3600);
+    if (d > 0) return `${d}${daySuffix} ${h}${hourSuffix}`;
+    if (h > 0) return `${h}${hourSuffix}`;
+    return "";
+  }
+  
   const totalS = Math.floor(ms / 1000);
   const h = Math.floor(totalS / 3600);
   const m = Math.floor((totalS % 3600) / 60);
-  const s = Math.floor(totalS % 60);
-  const milli = Math.floor((ms % 1000) / 10);
+  const s = totalS % 60;
 
-  let str = `${pad(m)}:${pad(s)}`;
-  if (showMs) str += `.${pad(milli)}`;
+  let timeParts = [];
+  if (h > 0 || forceHours) {
+    timeParts.push(h);
+  }
+  timeParts.push(pad(m));
+  timeParts.push(pad(s));
+  
+  let result = timeParts.join(":");
 
-  if (h > 0) return `${h}:${str}`;
-  return str;
-};
+  if (showMs) {
+    const milli = Math.floor((ms % 1000) / 10);
+    result += `.${pad(milli)}`;
+  }
+  
+  return result;
+}
 
-export const formatMainDisplay = (ms, showMs = true) => {
-  const totalS = Math.floor(ms / 1000);
-  const m = Math.floor((totalS % 3600) / 60);
-  const s = Math.floor(totalS % 60);
-  const milli = Math.floor((ms % 1000) / 10);
-
-  let str = `${pad(m)}:${pad(s)}`;
-  if (showMs) str += `.${pad(milli)}`;
-  return str;
-};
-
-export const getExtendedDisplay = (ms, strDay = "d", strHour = "h") => {
-  const totalS = Math.floor(ms / 1000);
-  const d = Math.floor(totalS / 86400);
-  const h = Math.floor((totalS % 86400) / 3600);
-
-  if (d > 0) return `${d}${strDay} ${h}${strHour}`;
-  if (h > 0) return `${h}${strHour}`;
-  return "";
-};
-
+// --- Worker Initialization ---
 const createWorker = () => {
   try {
-    return new Worker("./js/worker.js");
+    return new Worker("./js/worker.js?v=VERSION"); // Добавлен query string для кеширования
   } catch (e) {
+    console.error("Failed to create background worker:", e);
+    // Возвращаем "пустышку", чтобы приложение не упало, если воркер не создался
     return {
       postMessage: () => {},
       addEventListener: () => {},
