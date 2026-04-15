@@ -1,4 +1,4 @@
-// modal.js
+// www/js/modal.js (ФИНАЛЬНАЯ ИСПРАВЛЕННАЯ ВЕРСИЯ)
 
 import { $ } from "./utils.js?v=VERSION";
 
@@ -12,26 +12,57 @@ class ModalManager {
     this.startY = 0;
     this.currentY = 0;
     this.activeSheet = null;
+    this.modalContainer = null;
   }
 
   init(config) {
-    config.forEach(modalConfig => {
+    this.modalContainer = $("modal-container");
+    if (!this.modalContainer) {
+      console.error("Modal container with id 'modal-container' not found!");
+      return;
+    }
+
+    config.forEach((modalConfig) => {
       const modalEl = $(modalConfig.id);
       if (!modalEl) return;
 
       this.modals[modalConfig.id] = {
         ...modalConfig,
         el: modalEl,
-        overlay: $(modalConfig.overlayId || 'bottom-sheet-overlay'),
-        content: modalConfig.contentId ? $(modalConfig.contentId) : modalEl.firstElementChild,
+        overlay: $(modalConfig.overlayId || "bottom-sheet-overlay"),
+        content: modalConfig.contentId
+          ? $(modalConfig.contentId)
+          : modalEl.firstElementChild,
       };
 
-      modalEl.querySelectorAll('[data-modal-close]').forEach(btn => {
-        btn.addEventListener('click', () => this.close(modalConfig.id));
+      modalEl.querySelectorAll("[data-modal-close]").forEach((btn) => {
+        btn.addEventListener("click", () => this.close(modalConfig.id));
       });
+
+      // ==============================================================
+      // <<< ВОТ ИСПРАВЛЕНИЕ: Предотвращаем "просачивание" клика
+      // ==============================================================
+      if (modalConfig.type === "alert" && this.modals[modalConfig.id].content) {
+        this.modals[modalConfig.id].content.addEventListener("click", (e) => {
+          e.stopPropagation();
+        });
+      }
+      // ==============================================================
     });
 
     this._bindGlobalListeners();
+  }
+
+  _toggleInert(shouldBeInert) {
+    Array.from(document.body.children).forEach((child) => {
+      if (child.id !== "modal-container" && child.tagName !== "SCRIPT") {
+        if (shouldBeInert) {
+          child.setAttribute("inert", "");
+        } else {
+          child.removeAttribute("inert");
+        }
+      }
+    });
   }
 
   open(id, data = {}) {
@@ -44,29 +75,28 @@ class ModalManager {
     }
 
     this.lastFocusedElement = document.activeElement;
-    
+
     if (this.activeStack.length === 0) {
-        const mainContent = document.querySelector('main');
-        if (mainContent) mainContent.setAttribute('inert', '');
+      this._toggleInert(true);
     }
 
     if (modal.overlay) {
-      modal.overlay.classList.remove('opacity-0', 'pointer-events-none');
+      modal.overlay.classList.remove("opacity-0", "pointer-events-none");
       modal.overlay.onclick = () => {
         if (this.activeStack[this.activeStack.length - 1] === id) {
           this.closeCurrent();
         }
       };
     }
-    
-    modal.el.classList.remove('hidden');
-    modal.el.classList.add(modal.type === 'alert' ? 'flex' : 'flex');
-    modal.el.removeAttribute('inert');
-    modal.el.removeAttribute('aria-hidden');
 
-    if (modal.type === 'bottom-sheet') {
-      modal.el.style.transition = 'none';
-      modal.el.style.transform = 'translateY(100%)';
+    modal.el.classList.remove("hidden");
+    modal.el.classList.add(modal.type === "alert" ? "flex" : "flex");
+    modal.el.removeAttribute("inert");
+    modal.el.removeAttribute("aria-hidden");
+
+    if (modal.type === "bottom-sheet") {
+      modal.el.style.transition = "none";
+      modal.el.style.transform = "translateY(100%)";
     }
 
     if (modal.onOpen) {
@@ -74,13 +104,14 @@ class ModalManager {
     }
 
     requestAnimationFrame(() => {
-      if (modal.type === 'bottom-sheet') {
-        modal.el.style.transition = 'transform 400ms cubic-bezier(0.32, 0.72, 0, 1)';
-        modal.el.style.transform = 'translateY(0%)';
-      } else if (modal.type === 'alert') {
-        modal.el.classList.remove('opacity-0');
+      if (modal.type === "bottom-sheet") {
+        modal.el.style.transition =
+          "transform 400ms cubic-bezier(0.32, 0.72, 0, 1)";
+        modal.el.style.transform = "translateY(0%)";
+      } else if (modal.type === "alert") {
+        modal.el.classList.remove("opacity-0");
         if (modal.content) {
-            modal.content.classList.remove('opacity-0', 'scale-95');
+          modal.content.classList.remove("opacity-0", "scale-95");
         }
       }
     });
@@ -96,51 +127,53 @@ class ModalManager {
       document.activeElement.blur();
     }
 
-    modal.el.setAttribute('inert', '');
-    modal.el.setAttribute('aria-hidden', 'true');
+    modal.el.setAttribute("inert", "");
+    modal.el.setAttribute("aria-hidden", "true");
 
-    if (modal.type === 'bottom-sheet') {
-      modal.el.style.transition = 'transform 400ms cubic-bezier(0.32, 0.72, 0, 1)';
-      modal.el.style.transform = 'translateY(100%)';
-    } else if (modal.type === 'alert') {
-      modal.el.classList.add('opacity-0');
-       if (modal.content) {
-            modal.content.classList.add('opacity-0', 'scale-95');
-        }
+    if (modal.type === "bottom-sheet") {
+      modal.el.style.transition =
+        "transform 400ms cubic-bezier(0.32, 0.72, 0, 1)";
+      modal.el.style.transform = "translateY(100%)";
+    } else if (modal.type === "alert") {
+      modal.el.classList.add("opacity-0");
+      if (modal.content) {
+        modal.content.classList.add("opacity-0", "scale-95");
+      }
     }
 
-    this.activeStack = this.activeStack.filter(activeId => activeId !== id);
+    this.activeStack = this.activeStack.filter((activeId) => activeId !== id);
 
     const isLastModal = this.activeStack.length === 0;
     if (isLastModal && modal.overlay) {
-        modal.overlay.classList.add('opacity-0', 'pointer-events-none');
-        modal.overlay.onclick = null;
+      modal.overlay.classList.add("opacity-0", "pointer-events-none");
+      modal.overlay.onclick = null;
     }
 
-    this.closeTimeoutId = setTimeout(() => {
-      modal.el.classList.add('hidden');
-      modal.el.classList.remove(modal.type === 'alert' ? 'flex' : 'flex');
-      
-      if (modal.type === 'bottom-sheet') {
-        modal.el.style.transition = '';
-        modal.el.style.transform = '';
-      }
-      this.closeTimeoutId = null;
+    this.closeTimeoutId = setTimeout(
+      () => {
+        modal.el.classList.add("hidden");
+        modal.el.classList.remove(modal.type === "alert" ? "flex" : "flex");
 
-      if (isLastModal) {
-         const mainContent = document.querySelector('main');
-         if(mainContent) mainContent.removeAttribute('inert');
-        if (this.lastFocusedElement) {
-          this.lastFocusedElement.focus();
-          this.lastFocusedElement = null;
+        if (modal.type === "bottom-sheet") {
+          modal.el.style.transition = "";
+          modal.el.style.transform = "";
         }
-      }
-      
-      if (modal.onClose) {
-        modal.onClose();
-      }
+        this.closeTimeoutId = null;
 
-    }, modal.type === 'bottom-sheet' ? 400 : 300);
+        if (isLastModal) {
+          this._toggleInert(false);
+          if (this.lastFocusedElement) {
+            this.lastFocusedElement.focus();
+            this.lastFocusedElement = null;
+          }
+        }
+
+        if (modal.onClose) {
+          modal.onClose();
+        }
+      },
+      modal.type === "bottom-sheet" ? 400 : 300,
+    );
   }
 
   closeCurrent() {
@@ -155,46 +188,46 @@ class ModalManager {
   }
 
   _bindGlobalListeners() {
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && this.hasActiveModal()) {
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && this.hasActiveModal()) {
         e.preventDefault();
         this.closeCurrent();
       }
     });
-
-    document.addEventListener('touchstart', (e) => this._handleDragStart(e), { passive: true });
-    document.addEventListener('mousedown', (e) => this._handleDragStart(e));
-    document.addEventListener('touchmove', (e) => this._handleDragMove(e), { passive: true });
-    document.addEventListener('mousemove', (e) => this._handleDragMove(e));
-    document.addEventListener('touchend', () => this._handleDragEnd());
-    document.addEventListener('mouseup', () => this._handleDragEnd());
-    document.addEventListener('mouseleave', () => this._handleDragEnd());
+    document.addEventListener("touchstart", (e) => this._handleDragStart(e), {
+      passive: true,
+    });
+    document.addEventListener("mousedown", (e) => this._handleDragStart(e));
+    document.addEventListener("touchmove", (e) => this._handleDragMove(e), {
+      passive: true,
+    });
+    document.addEventListener("mousemove", (e) => this._handleDragMove(e));
+    document.addEventListener("touchend", () => this._handleDragEnd());
+    document.addEventListener("mouseup", () => this._handleDragEnd());
+    document.addEventListener("mouseleave", () => this._handleDragEnd());
   }
 
   _handleDragStart(e) {
     if (!this.hasActiveModal()) return;
     const currentId = this.activeStack[this.activeStack.length - 1];
     const modal = this.modals[currentId];
-    if (modal.type !== 'bottom-sheet') return;
-    
+    if (modal.type !== "bottom-sheet") return;
     const handler = $(modal.handlerId);
     if (!handler || !handler.contains(e.target)) return;
-
     this.activeSheet = modal.el;
     this.startY = e.touches ? e.touches[0].clientY : e.clientY;
     this.currentY = this.startY;
     this.isDragging = true;
     this.activeSheet.style.transition = "none";
-    if (e.type === 'mousedown') e.preventDefault();
+    if (e.type === "mousedown") e.preventDefault();
   }
 
   _handleDragMove(e) {
     if (!this.isDragging || !this.activeSheet) return;
     this.currentY = e.touches ? e.touches[0].clientY : e.clientY;
     const deltaY = this.currentY - this.startY;
-    if (deltaY > 0) {
+    if (deltaY > 0)
       this.activeSheet.style.transform = `translateY(${deltaY}px)`;
-    }
   }
 
   _handleDragEnd() {
@@ -203,7 +236,8 @@ class ModalManager {
     if (deltaY > 100) {
       this.closeCurrent();
     } else {
-      this.activeSheet.style.transition = "transform 400ms cubic-bezier(0.32, 0.72, 0, 1)";
+      this.activeSheet.style.transition =
+        "transform 400ms cubic-bezier(0.32, 0.72, 0, 1)";
       this.activeSheet.style.transform = "translateY(0px)";
       setTimeout(() => {
         if (this.activeSheet) {
