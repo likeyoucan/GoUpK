@@ -1947,6 +1947,28 @@
 
     <!-- [РЕФАКТОРИНГ] Шаблоны для безопасной генерации элементов -->
 
+    <!-- Шаблон для строки с результатами круга секундомера -->
+    <template id="sw-lap-row-template">
+      <div
+        class="flex justify-between items-center py-2 border-b border-gray-500/10 last:border-0 px-2"
+      >
+        <span
+          class="text-xs app-text-sec font-medium"
+          data-template="lap-index"
+        ></span>
+        <div class="flex items-center gap-4">
+          <span
+            class="font-mono text-[10px] app-text-sec opacity-60 w-16 text-right"
+            data-template="lap-total"
+          ></span>
+          <span
+            class="font-mono text-xs font-bold app-text w-16 text-right"
+            data-template="lap-split"
+          ></span>
+        </div>
+      </div>
+    </template>
+
     <!-- Шаблон для строки с результатами секундомера -->
     <template id="sw-session-template">
       <div

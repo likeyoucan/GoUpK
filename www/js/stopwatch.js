@@ -2,9 +2,7 @@
 
 import {
   $,
-  escapeHTML,
-  showToast,
-  formatTime, // [РЕФАКТОРИНГ] Используем единую функцию formatTime
+  formatTime,
   updateText,
   updateTitle,
   requestWakeLock,
@@ -14,6 +12,7 @@ import {
   safeGetLS,
   safeRemoveLS,
   announceToScreenReader,
+  showToast,
 } from "./utils.js?v=VERSION";
 import { sm } from "./sound.js?v=VERSION";
 import { t } from "./i18n.js?v=VERSION";
@@ -119,7 +118,6 @@ const stopwatchModule = {
     });
   },
 
-  // [ИЗМЕНЕНО] Упрощенная обертка для новой функции formatTime
   formatTime(ms, forceMs = null) {
     const showMilliseconds = forceMs !== null ? forceMs : themeManager.showMs;
     const shouldForceHours = this.elapsedTime >= 3600000;
@@ -147,7 +145,6 @@ const stopwatchModule = {
 
     if (this.isRunning) {
       store.clearActiveTimer();
-
       this.isRunning = false;
       this.pauseTime = Date.now();
       bgWorker.postMessage("stop");
@@ -165,9 +162,7 @@ const stopwatchModule = {
       document.dispatchEvent(
         new CustomEvent("timerStarted", { detail: "stopwatch" }),
       );
-
       store.setActiveTimer("stopwatch");
-
       this.startTime = performance.now() - this.elapsedTime;
       this.isRunning = true;
       this.pauseTime = 0;
@@ -199,12 +194,10 @@ const stopwatchModule = {
     }
   },
 
-  // [ИЗМЕНЕНО] Обновлен для использования новой функции formatTime
   updateDisplay() {
     const showMs = themeManager.showMs;
     const shouldForceHours = this.elapsedTime >= 3600000;
 
-    // Используем formatTime для основного дисплея, но без часов, если они не нужны
     const mainDisplayParts = formatTime(this.elapsedTime, { showMs }).split(
       ":",
     );
@@ -219,7 +212,6 @@ const stopwatchModule = {
         daySuffix: t("day_short"),
         hourSuffix: t("hour_short"),
       });
-
       if (extStr) {
         updateText(this.els.extendedDisplay, extStr);
         this.els.extendedDisplay.classList.remove("hidden");
@@ -242,7 +234,7 @@ const stopwatchModule = {
         this.elapsedTime - (this.laps.length > 0 ? this.laps[0].total : 0);
       this.laps.unshift({
         total: this.elapsedTime,
-        diff: diff,
+        diff,
         index: this.laps.length + 1,
       });
       if (this.laps.length === 1) {
@@ -253,10 +245,9 @@ const stopwatchModule = {
         const prevLatest = this.els.lapsContainer.firstElementChild;
         if (prevLatest) {
           prevLatest.classList.remove("bg-black/5", "dark:bg-white/5");
-          prevLatest
-            .querySelector(".split-time")
-            ?.classList.remove("primary-text");
-          prevLatest.querySelector(".split-time")?.classList.add("app-text");
+          const splitTimeEl = prevLatest.querySelector(".split-time");
+          splitTimeEl?.classList.remove("primary-text");
+          splitTimeEl?.classList.add("app-text");
         }
       }
       this.els.lapsContainer.prepend(this.createLapElement(this.laps[0], true));
@@ -267,10 +258,7 @@ const stopwatchModule = {
       }
       this.updateSaveButtonVisibility();
     } else if (this.elapsedTime > 0) {
-      if (store.isActive("stopwatch")) {
-        store.clearActiveTimer();
-      }
-
+      if (store.isActive("stopwatch")) store.clearActiveTimer();
       this.elapsedTime = 0;
       this.laps = [];
       this.pauseTime = 0;
@@ -291,17 +279,48 @@ const stopwatchModule = {
     }
   },
 
-  // [ИЗМЕНЕНО] Обновлен для использования новой функции formatTime
   createLapElement(lap, isLatest = false) {
+    const lapTemplate = $("sw-lap-row-template");
+    if (!lapTemplate) return document.createElement("div");
+
+    const clone = lapTemplate.content.cloneNode(true);
+    const div = clone.firstElementChild;
+
+    div.classList.add(
+      "lap-row",
+      "mt-2.5",
+      "py-3",
+      "border-b",
+      "app-border",
+      "px-3",
+      "rounded-lg",
+      "transition-all",
+      "duration-300",
+    );
+    div.classList.remove("py-2", "border-gray-500/10", "px-2");
+    if (isLatest) div.classList.add("bg-black/5", "dark:bg-white/5");
+
     const shouldForceHours = this.elapsedTime >= 3600000;
-    const div = document.createElement("div");
-    div.className = `lap-row mt-2.5 flex justify-between items-center py-3 border-b app-border px-3 rounded-lg transition-all duration-300 ${isLatest ? "bg-black/5 dark:bg-white/5" : ""}`;
-    div.innerHTML = `
-      <span class="text-xs app-text-sec font-medium">${t("lap_text")} ${lap.index}</span>
-      <div class="flex items-center gap-4">
-        <span class="font-mono text-[10px] app-text-sec opacity-60 w-16 text-right">${formatTime(lap.total, { showMs: true, forceHours: shouldForceHours })}</span>
-        <span class="split-time font-mono text-xs font-bold ${isLatest ? "primary-text" : "app-text"} w-16 text-right">${formatTime(lap.diff, { showMs: true, forceHours: shouldForceHours })}</span>
-      </div>`;
+
+    div.querySelector('[data-template="lap-index"]').textContent =
+      `${t("lap_text")} ${lap.index}`;
+    div.querySelector('[data-template="lap-total"]').textContent = formatTime(
+      lap.total,
+      { showMs: true, forceHours: shouldForceHours },
+    );
+
+    const splitTimeEl = div.querySelector('[data-template="lap-split"]');
+    splitTimeEl.textContent = formatTime(lap.diff, {
+      showMs: true,
+      forceHours: shouldForceHours,
+    });
+    splitTimeEl.classList.add("split-time");
+
+    if (isLatest) {
+      splitTimeEl.classList.remove("app-text");
+      splitTimeEl.classList.add("primary-text");
+    }
+
     return div;
   },
 
@@ -445,8 +464,8 @@ const stopwatchModule = {
   },
 
   toggleSessionDetails(id) {
-    const detailsEl = $(`sw-details-${id}`),
-      iconEl = $(`sw-icon-${id}`);
+    const detailsEl = $(`sw-details-${id}`);
+    const iconEl = $(`sw-icon-${id}`);
     if (!detailsEl) return;
     if (detailsEl.classList.contains("hidden")) {
       detailsEl.classList.remove("hidden");
@@ -457,14 +476,11 @@ const stopwatchModule = {
     }
   },
 
-  // [ИЗМЕНЕНО] Обновлен для использования новой функции formatTime
   renderSavedSessions() {
     if (!this.els || !this.els.sessionsList) return;
     this.els.sessionsList.replaceChildren();
-
     const clearAllBtn = $("sw-clearAllBtn");
     if (clearAllBtn) clearAllBtn.disabled = this.savedSessions.length === 0;
-
     if (this.savedSessions.length === 0) {
       this.els.sessionsList.insertAdjacentHTML(
         "afterbegin",
@@ -472,20 +488,18 @@ const stopwatchModule = {
       );
       return;
     }
-
     const fragment = document.createDocumentFragment();
-    const template = $("sw-session-template"); // Находим наш шаблон
-    if (!template) return;
+    const sessionTemplate = $("sw-session-template");
+    const lapTemplate = $("sw-lap-row-template");
+    if (!sessionTemplate || !lapTemplate) return;
 
     this.savedSessions.forEach((session) => {
-      const clone = template.content.cloneNode(true);
+      const clone = sessionTemplate.content.cloneNode(true);
       const sessionElement = clone.firstElementChild;
-
       const shouldForceHours = session.totalTime >= 3600000;
       const dateObj = new Date(session.date || session.id);
       const dateStr = `${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
 
-      // Безопасно заполняем данные через textContent
       sessionElement.querySelector('[data-template="name"]').textContent =
         session.name;
       sessionElement.querySelector('[data-template="date"]').textContent =
@@ -496,7 +510,6 @@ const stopwatchModule = {
           forceHours: shouldForceHours,
         });
 
-      // Устанавливаем ID для обработчиков событий
       sessionElement.querySelector('[data-template-id="header"]').dataset.id =
         session.id;
       sessionElement.querySelector(
@@ -506,7 +519,6 @@ const stopwatchModule = {
         '[data-template-id="deleteBtn"]',
       ).dataset.id = session.id;
 
-      // Устанавливаем уникальные ID для раскрывающихся элементов
       const detailsEl = sessionElement.querySelector(
         '[data-template-id="details"]',
       );
@@ -514,7 +526,6 @@ const stopwatchModule = {
       detailsEl.id = `sw-details-${session.id}`;
       iconEl.id = `sw-icon-${session.id}`;
 
-      // Переводим текст кнопок
       sessionElement.querySelector(
         '[data-template-id="renameBtn"]',
       ).textContent = t("rename");
@@ -522,25 +533,33 @@ const stopwatchModule = {
         '[data-template-id="deleteBtn"]',
       ).textContent = t("delete");
 
-      // Генерируем и вставляем список кругов
       const lapsContainer = sessionElement.querySelector(
         '[data-template="lapsContainer"]',
       );
-      let lapsHtml = `<div class="flex justify-between items-center py-1.5 border-b border-gray-500/30 mb-1 px-2"><span class="text-[10px] font-bold app-text-sec uppercase tracking-wider">${t("lap_text")}</span><div class="flex items-center gap-4"><span class="text-[10px] font-bold app-text-sec uppercase tracking-wider w-16 text-right">${t("total_time")}</span><span class="text-[10px] font-bold app-text-sec uppercase tracking-wider w-16 text-right">${t("split_time")}</span></div></div>`;
+      const headerDiv = document.createElement("div");
+      headerDiv.className =
+        "flex justify-between items-center py-1.5 border-b border-gray-500/30 mb-1 px-2";
+      headerDiv.innerHTML = `<span class="text-[10px] font-bold app-text-sec uppercase tracking-wider">${t("lap_text")}</span><div class="flex items-center gap-4"><span class="text-[10px] font-bold app-text-sec uppercase tracking-wider w-16 text-right">${t("total_time")}</span><span class="text-[10px] font-bold app-text-sec uppercase tracking-wider w-16 text-right">${t("split_time")}</span></div>`;
+      lapsContainer.appendChild(headerDiv);
+
       session.laps.forEach((lap) => {
-        lapsHtml += `<div class="flex justify-between items-center py-2 border-b border-gray-500/10 last:border-0 px-2"><span class="text-xs app-text-sec font-medium">${t("lap_text")} ${lap.index}</span><div class="flex items-center gap-4"><span class="font-mono text-[10px] app-text-sec opacity-60 w-16 text-right">${formatTime(lap.total, { showMs: true, forceHours: shouldForceHours })}</span><span class="font-mono text-xs font-bold app-text w-16 text-right">${formatTime(lap.diff, { showMs: true, forceHours: shouldForceHours })}</span></div></div>`;
+        const lapClone = lapTemplate.content.cloneNode(true);
+        const lapElement = lapClone.firstElementChild;
+
+        lapElement.querySelector('[data-template="lap-index"]').textContent =
+          `${t("lap_text")} ${lap.index}`;
+        lapElement.querySelector('[data-template="lap-total"]').textContent =
+          formatTime(lap.total, { showMs: true, forceHours: shouldForceHours });
+        lapElement.querySelector('[data-template="lap-split"]').textContent =
+          formatTime(lap.diff, { showMs: true, forceHours: shouldForceHours });
+
+        lapsContainer.appendChild(lapElement);
       });
-      // Здесь innerHTML используется для списка кругов, что менее рискованно,
-      // т.к. данные (lap.total, lap.diff) являются числами из нашей же системы.
-      // Но для 100% безопасности можно было бы и их генерировать через DOM-элементы.
-      lapsContainer.innerHTML = lapsHtml;
 
       fragment.appendChild(sessionElement);
     });
-
     this.els.sessionsList.appendChild(fragment);
   },
 };
 
-// Экспортируем наш объект, чтобы он был доступен как `sw` в других файлах.
 export const sw = stopwatchModule;
