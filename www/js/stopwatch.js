@@ -1,21 +1,10 @@
 // stopwatch.js
 
 import {
-  $,
-  escapeHTML,
-  showToast,
-  formatMsTime,
-  formatMainDisplay,
-  getExtendedDisplay,
-  updateText,
-  updateTitle,
-  requestWakeLock,
-  releaseWakeLock,
-  bgWorker,
-  safeSetLS,
-  safeGetLS,
-  safeRemoveLS,
-  announceToScreenReader,
+  $, escapeHTML, showToast, formatMsTime, formatMainDisplay,
+  getExtendedDisplay, updateText, updateTitle, requestWakeLock,
+  releaseWakeLock, bgWorker, safeSetLS, safeGetLS,
+  safeRemoveLS, announceToScreenReader,
 } from "./utils.js?v=VERSION";
 import { sm } from "./sound.js?v=VERSION";
 import { t } from "./i18n.js?v=VERSION";
@@ -78,17 +67,12 @@ export const sw = {
       }
     });
 
+    // ОБРАБОТЧИКИ СОБЫТИЙ
     this.els.btn?.addEventListener("click", () => this.toggle());
     this.els.lapBtn?.addEventListener("click", () => this.recordLapOrReset());
-    this.els.saveBtn?.addEventListener("click", () =>
-      this.prepareSaveSession(),
-    );
-    this.els.sortSelect?.addEventListener("change", (e) =>
-      this.sortSessions(e.target.value),
-    );
-    this.els.nameInput?.addEventListener("input", () =>
-      this.els.nameError?.classList.add("hidden"),
-    );
+    this.els.saveBtn?.addEventListener("click", () => this.prepareSaveSession()); // <<< ВОТ ЭТА СТРОКА БЫЛА ПРОПУЩЕНА
+    this.els.sortSelect?.addEventListener("change", (e) => this.sortSessions(e.target.value));
+    this.els.nameInput?.addEventListener("input", () => this.els.nameError?.classList.add("hidden"));
 
     this.els.sessionsList?.addEventListener("click", (e) => {
       const header = e.target.closest(".sw-session-header");
@@ -123,14 +107,12 @@ export const sw = {
     });
   },
 
-  formatTime: (ms, forceMs = null) =>
-    formatMsTime(ms, forceMs !== null ? forceMs : themeManager.showMs),
-
+  formatTime: (ms, forceMs = null) => formatMsTime(ms, forceMs !== null ? forceMs : themeManager.showMs),
+  
   getUniqueName: (baseName) => {
     let name = baseName;
     let counter = 1;
-    const exists = (n) =>
-      this.savedSessions.some((s) => s.name.toLowerCase() === n.toLowerCase());
+    const exists = (n) => this.savedSessions.some((s) => s.name.toLowerCase() === n.toLowerCase());
     while (exists(name)) {
       name = `${baseName} ${counter}`;
       counter++;
@@ -153,13 +135,9 @@ export const sw = {
       updateText(this.els.lapBtn, t("reset"));
       this.els.lapBtn.classList.remove("app-surface", "app-text");
       this.els.lapBtn.classList.add("bg-red-500", "text-white", "is-reset");
-      announceToScreenReader(
-        `${t("stopwatch")} ${t("pause")}. ${this.formatTime(this.elapsedTime, false)}`,
-      );
+      announceToScreenReader(`${t("stopwatch")} ${t("pause")}. ${this.formatTime(this.elapsedTime, false)}`);
     } else {
-      document.dispatchEvent(
-        new CustomEvent("timerStarted", { detail: "stopwatch" }),
-      );
+      document.dispatchEvent(new CustomEvent("timerStarted", { detail: "stopwatch" }));
       this.startTime = performance.now() - this.elapsedTime;
       this.isRunning = true;
       this.pauseTime = 0;
@@ -198,11 +176,7 @@ export const sw = {
     const showMs = themeManager.showMs;
     updateText(this.els.display, formatMainDisplay(this.elapsedTime, showMs));
     if (this.els.extendedDisplay) {
-      const extStr = getExtendedDisplay(
-        this.elapsedTime,
-        t("day_short"),
-        t("hour_short"),
-      );
+      const extStr = getExtendedDisplay(this.elapsedTime, t("day_short"), t("hour_short"));
       if (extStr) {
         updateText(this.els.extendedDisplay, extStr);
         this.els.extendedDisplay.classList.remove("hidden");
@@ -212,9 +186,7 @@ export const sw = {
     }
     updateTitle(this.formatTime(this.elapsedTime, false));
     if (this.els.ring) {
-      this.els.ring.style.strokeDashoffset =
-        this.ringLength -
-        ((this.elapsedTime % 60000) / 60000) * this.ringLength;
+      this.els.ring.style.strokeDashoffset = this.ringLength - ((this.elapsedTime % 60000) / 60000) * this.ringLength;
     }
   },
 
@@ -234,13 +206,8 @@ export const sw = {
     sm.vibrate(30);
     sm.play("click");
     if (this.isRunning) {
-      const diff =
-        this.elapsedTime - (this.laps.length > 0 ? this.laps[0].total : 0);
-      this.laps.unshift({
-        total: this.elapsedTime,
-        diff: diff,
-        index: this.laps.length + 1,
-      });
+      const diff = this.elapsedTime - (this.laps.length > 0 ? this.laps[0].total : 0);
+      this.laps.unshift({ total: this.elapsedTime, diff: diff, index: this.laps.length + 1 });
       if (this.laps.length === 1) {
         this.els.lapsContainer.replaceChildren();
         this.els.currentLapsHeader.classList.remove("hidden");
@@ -249,9 +216,7 @@ export const sw = {
         const prevLatest = this.els.lapsContainer.firstElementChild;
         if (prevLatest) {
           prevLatest.classList.remove("bg-black/5", "dark:bg-white/5");
-          prevLatest
-            .querySelector(".split-time")
-            ?.classList.remove("primary-text");
+          prevLatest.querySelector(".split-time")?.classList.remove("primary-text");
           prevLatest.querySelector(".split-time")?.classList.add("app-text");
         }
       }
@@ -277,10 +242,7 @@ export const sw = {
       this.els.currentLapsHeader.classList.add("hidden");
       this.els.currentLapsHeader.classList.remove("flex");
       this.els.lapsContainer.replaceChildren();
-      this.els.lapsContainer.insertAdjacentHTML(
-        "afterbegin",
-        `<div class="text-center app-text-sec opacity-50 mt-4 text-sm" data-i18n="no_laps">${t("no_laps")}</div>`,
-      );
+      this.els.lapsContainer.insertAdjacentHTML("afterbegin", `<div class="text-center app-text-sec opacity-50 mt-4 text-sm" data-i18n="no_laps">${t("no_laps")}</div>`);
       this.updateSaveButtonVisibility();
     }
   },
@@ -288,9 +250,7 @@ export const sw = {
   reRenderCurrentLaps() {
     this.els.lapsContainer.replaceChildren();
     [...this.laps].reverse().forEach((lap, i, arr) => {
-      this.els.lapsContainer.prepend(
-        this.createLapElement(lap, i === arr.length - 1),
-      );
+      this.els.lapsContainer.prepend(this.createLapElement(lap, i === arr.length - 1));
     });
   },
 
@@ -443,30 +403,22 @@ export const sw = {
   renderSavedSessions() {
     if (!this.els || !this.els.sessionsList) return;
     this.els.sessionsList.replaceChildren();
-
+    
     const clearAllBtn = $("sw-clearAllBtn");
     if (clearAllBtn) {
       clearAllBtn.disabled = this.savedSessions.length === 0;
     }
 
     if (this.savedSessions.length === 0) {
-      this.els.sessionsList.insertAdjacentHTML(
-        "afterbegin",
-        `<div class="text-center app-text-sec opacity-50 mt-10 text-sm pointer-events-none">${t(
-          "empty_sessions",
-        )}</div>`,
-      );
+      this.els.sessionsList.insertAdjacentHTML("afterbegin", `<div class="text-center app-text-sec opacity-50 mt-10 text-sm pointer-events-none">${t("empty_sessions")}</div>`);
       return;
     }
 
     const fragment = document.createDocumentFragment();
     this.savedSessions.forEach((session) => {
       const dateObj = new Date(session.date || session.id);
-      const dateStr = `${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString(
-        [],
-        { hour: "2-digit", minute: "2-digit" },
-      )}`;
-
+      const dateStr = `${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+      
       let lapsHtml = `
         <div class="flex justify-between items-center py-1.5 border-b border-gray-500/30 mb-1 px-2">
           <span class="text-[10px] font-bold app-text-sec uppercase tracking-wider">${t("lap_text")}</span>
@@ -475,12 +427,10 @@ export const sw = {
             <span class="text-[10px] font-bold app-text-sec uppercase tracking-wider w-16 text-right">${t("split_time")}</span>
           </div>
         </div>`;
-
+        
       session.laps.forEach((lap, idx) => {
         const isLatest = idx === 0;
-        const bgClass = isLatest
-          ? "bg-black/5 dark:bg-black/20 rounded-lg"
-          : "";
+        const bgClass = isLatest ? "bg-black/5 dark:bg-black/20 rounded-lg" : "";
         const textColor = isLatest ? "primary-text" : "app-text";
         lapsHtml += `
           <div class="flex justify-between items-center py-2 border-b border-gray-500/10 last:border-0 px-2 ${bgClass}">
@@ -491,10 +441,9 @@ export const sw = {
             </div>
           </div>`;
       });
-
+      
       const div = document.createElement("div");
-      div.className =
-        "app-surface border app-border rounded-xl overflow-hidden transition-all mb-3";
+      div.className = "app-surface border app-border rounded-xl overflow-hidden transition-all mb-3";
       div.innerHTML = `
         <div class="p-4 cursor-pointer flex justify-between items-center active:bg-gray-500/10 sw-session-header" data-id="${session.id}">
           <div class="flex-1 min-w-0 pr-4">
