@@ -1,4 +1,4 @@
-// stopwatch.js
+// Файл: js/stopwatch.js
 
 import {
   $,
@@ -21,6 +21,7 @@ import { sm } from "./sound.js?v=VERSION";
 import { t } from "./i18n.js?v=VERSION";
 import { themeManager } from "./theme.js?v=VERSION";
 import { modalManager } from "./modal.js?v=VERSION";
+import { store } from "./store.js?v=VERSION"; // [РЕФАКТОРИНГ] Импортируем store
 
 // Создаем объект-модуль
 const stopwatchModule = {
@@ -127,7 +128,6 @@ const stopwatchModule = {
   getUniqueName(baseName) {
     let name = baseName,
       counter = 1;
-    // `this` теперь гарантированно указывает на `stopwatchModule`
     const exists = (n) =>
       this.savedSessions.some((s) => s.name.toLowerCase() === n.toLowerCase());
     while (exists(name)) {
@@ -140,7 +140,11 @@ const stopwatchModule = {
     sm.vibrate(50);
     sm.play("click");
     sm.unlock();
+
     if (this.isRunning) {
+      // [РЕФАКТОРИНГ] Сообщаем store, что таймер больше не активен
+      store.clearActiveTimer();
+      
       this.isRunning = false;
       this.pauseTime = Date.now();
       bgWorker.postMessage("stop");
@@ -158,6 +162,10 @@ const stopwatchModule = {
       document.dispatchEvent(
         new CustomEvent("timerStarted", { detail: "stopwatch" }),
       );
+      
+      // [РЕФАКТОРИНГ] Сообщаем store, что секундомер стал активным
+      store.setActiveTimer("stopwatch");
+
       this.startTime = performance.now() - this.elapsedTime;
       this.isRunning = true;
       this.pauseTime = 0;
@@ -245,6 +253,12 @@ const stopwatchModule = {
       }
       this.updateSaveButtonVisibility();
     } else if (this.elapsedTime > 0) {
+      // Это блок сброса
+      if (store.isActive('stopwatch')) {
+          // [РЕФАКТОРИНГ] Убеждаемся, что store очищен, если сброс происходит в состоянии паузы.
+          store.clearActiveTimer();
+      }
+
       this.elapsedTime = 0;
       this.laps = [];
       this.pauseTime = 0;

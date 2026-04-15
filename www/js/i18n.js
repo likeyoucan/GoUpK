@@ -1,4 +1,4 @@
-// i18n.js
+// Файл: js/i18n.js
 
 import { safeGetLS, safeSetLS } from "./utils.js?v=VERSION";
 

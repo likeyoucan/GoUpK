@@ -1,4 +1,4 @@
-// utils.js
+// Файл: js/utils.js
 
 export const $ = (id) => document.getElementById(id);
 

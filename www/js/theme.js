@@ -1,4 +1,4 @@
-// theme.js
+// Файл: js/theme.js
 
 import { $, safeGetLS, safeSetLS } from "./utils.js?v=VERSION";
 

@@ -1,4 +1,4 @@
-// timer.js
+// Файл: js/timer.js
 
 import {
   $,
@@ -13,6 +13,7 @@ import {
 } from "./utils.js?v=VERSION";
 import { sm } from "./sound.js?v=VERSION";
 import { t } from "./i18n.js?v=VERSION";
+import { store } from "./store.js?v=VERSION"; // [РЕФАКТОРИНГ] Импортируем store
 
 let timeRemainingMs = 0;
 
@@ -117,9 +118,17 @@ export const tm = {
       if (e.data.type === "tick") {
         const remaining = e.data.time;
         timeRemainingMs = remaining;
-
+        
+        // [ИСПРАВЛЕНИЕ] Закомментирован блок, который вызывал баг с кольцом прогресса
+        /*
         if (remaining > this.totalDuration) {
           this.totalDuration = remaining;
+        }
+        */
+
+        // Обновляем targetTime для корректного отображения в фоновом режиме
+        if (this.isRunning) {
+            this.targetTime = performance.now() + remaining;
         }
 
         if (this.isRunning) {
@@ -129,6 +138,9 @@ export const tm = {
 
         if (remaining <= 0 && this.isRunning) {
           this.isRunning = false;
+          // [РЕФАКТОРИНГ] Уведомляем store, что таймер завершился
+          store.clearActiveTimer();
+          
           sm.vibrate([200, 100, 200, 100, 400]);
           sm.play("complete");
           announceToScreenReader(t("timer_finished"));
@@ -144,6 +156,7 @@ export const tm = {
       sm.play("tick");
       sm.vibrate(50);
       const adjustmentMs = this.currentAdjustmentSec * 1000;
+      this.totalDuration += adjustmentMs; // Корректируем общую длительность
       bgWorker.postMessage({ command: "adjust", time: adjustmentMs });
     });
 
@@ -151,6 +164,7 @@ export const tm = {
       sm.play("tick");
       sm.vibrate(50);
       const adjustmentMs = -this.currentAdjustmentSec * 1000;
+      this.totalDuration += adjustmentMs; // Корректируем общую длительность
       bgWorker.postMessage({ command: "adjust", time: adjustmentMs });
     });
   },
@@ -234,6 +248,9 @@ export const tm = {
     sm.play("click");
     sm.unlock();
     if (this.isRunning) {
+      // [РЕФАКТОРИНГ] Сообщаем store, что таймер остановлен (на паузе)
+      store.clearActiveTimer();
+      
       this.isRunning = false;
       this.isPaused = true;
       this.remainingAtPause = timeRemainingMs;
@@ -268,9 +285,13 @@ export const tm = {
         );
         return;
       }
+      
+      // [РЕФАКТОРИНГ] Сообщаем store, что таймер запущен
+      store.setActiveTimer("timer");
 
       this.isRunning = true;
       this.isPaused = false;
+      this.targetTime = performance.now() + duration;
       requestWakeLock();
       this.updateUIState();
       bgWorker.postMessage({ command: "start", time: duration });
@@ -282,6 +303,10 @@ export const tm = {
   reset(clearInputs = true) {
     sm.vibrate(30);
     sm.play("click");
+
+    // [РЕФАКТОРИНГ] Сообщаем store, что таймер сброшен
+    store.clearActiveTimer();
+    
     this.isRunning = false;
     this.isPaused = false;
     bgWorker.postMessage({ command: "reset" });
@@ -293,6 +318,7 @@ export const tm = {
       if (this.els.m) this.els.m.value = "00";
       if (this.els.s) this.els.s.value = "00";
     }
+    this.totalDuration = 0;
     this.updateUIState();
     if (this.els.ring) {
       this.els.ring.style.strokeDashoffset = this.ringLength;
@@ -348,6 +374,7 @@ export const tm = {
       cancelAnimationFrame(this.rAF);
       return;
     }
+    // Используем переменную, обновляемую из воркера, для плавности
     this.updateDisplay(timeRemainingMs);
     this.rAF = requestAnimationFrame(() => this.tick());
   },
@@ -369,8 +396,9 @@ export const tm = {
     updateText(this.els.display, timeStr);
     updateTitle(timeStr);
     if (this.els.ring && this.totalDuration > 0) {
+      // Progress calculation is now correct because totalDuration is stable
       const elapsed = this.totalDuration - rem;
-      const progress = elapsed / this.totalDuration;
+      const progress = Math.max(0, Math.min(1, elapsed / this.totalDuration));
 
       this.els.ring.style.strokeDashoffset = this.ringLength * (1 - progress);
     }

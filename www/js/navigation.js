@@ -1,4 +1,4 @@
-// navigation.js
+// Файл: js/navigation.js
 
 import { $ } from "./utils.js?v=VERSION";
 

@@ -1,4 +1,4 @@
-// sound.js
+// Файл: js/sound.js
 
 import { $, safeGetLS, safeSetLS } from "./utils.js?v=VERSION";
 

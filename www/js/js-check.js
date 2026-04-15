@@ -1,3 +1,3 @@
-// js-check.js
+// Файл: js/js-check.js
 
 document.documentElement.classList.add("js");
