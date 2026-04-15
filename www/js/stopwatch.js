@@ -123,7 +123,10 @@ const stopwatchModule = {
   formatTime(ms, forceMs = null) {
     const showMilliseconds = forceMs !== null ? forceMs : themeManager.showMs;
     const shouldForceHours = this.elapsedTime >= 3600000;
-    return formatTime(ms, { showMs: showMilliseconds, forceHours: shouldForceHours });
+    return formatTime(ms, {
+      showMs: showMilliseconds,
+      forceHours: shouldForceHours,
+    });
   },
 
   getUniqueName(baseName) {
@@ -144,7 +147,7 @@ const stopwatchModule = {
 
     if (this.isRunning) {
       store.clearActiveTimer();
-      
+
       this.isRunning = false;
       this.pauseTime = Date.now();
       bgWorker.postMessage("stop");
@@ -162,7 +165,7 @@ const stopwatchModule = {
       document.dispatchEvent(
         new CustomEvent("timerStarted", { detail: "stopwatch" }),
       );
-      
+
       store.setActiveTimer("stopwatch");
 
       this.startTime = performance.now() - this.elapsedTime;
@@ -200,17 +203,21 @@ const stopwatchModule = {
   updateDisplay() {
     const showMs = themeManager.showMs;
     const shouldForceHours = this.elapsedTime >= 3600000;
-    
+
     // Используем formatTime для основного дисплея, но без часов, если они не нужны
-    const mainDisplayParts = formatTime(this.elapsedTime, { showMs }).split(':');
-    const mainDisplayStr = shouldForceHours ? mainDisplayParts.join(':') : mainDisplayParts.slice(-2).join(':');
+    const mainDisplayParts = formatTime(this.elapsedTime, { showMs }).split(
+      ":",
+    );
+    const mainDisplayStr = shouldForceHours
+      ? mainDisplayParts.join(":")
+      : mainDisplayParts.slice(-2).join(":");
     updateText(this.els.display, mainDisplayStr);
 
     if (this.els.extendedDisplay) {
       const extStr = formatTime(this.elapsedTime, {
         showDays: true,
         daySuffix: t("day_short"),
-        hourSuffix: t("hour_short")
+        hourSuffix: t("hour_short"),
       });
 
       if (extStr) {
@@ -260,8 +267,8 @@ const stopwatchModule = {
       }
       this.updateSaveButtonVisibility();
     } else if (this.elapsedTime > 0) {
-      if (store.isActive('stopwatch')) {
-          store.clearActiveTimer();
+      if (store.isActive("stopwatch")) {
+        store.clearActiveTimer();
       }
 
       this.elapsedTime = 0;
@@ -454,34 +461,83 @@ const stopwatchModule = {
   renderSavedSessions() {
     if (!this.els || !this.els.sessionsList) return;
     this.els.sessionsList.replaceChildren();
+
     const clearAllBtn = $("sw-clearAllBtn");
     if (clearAllBtn) clearAllBtn.disabled = this.savedSessions.length === 0;
+
     if (this.savedSessions.length === 0) {
       this.els.sessionsList.insertAdjacentHTML(
         "afterbegin",
-        `<div class="text-center app-text-sec opacity-50 mt-10 text-sm pointer-events-none">${t("empty_sessions")}</div>`,
+        `<div class="text-center app-text-sec opacity-50 mt-10 text-sm pointer-events-none" data-i18n="empty_sessions">${t("empty_sessions")}</div>`,
       );
       return;
     }
+
     const fragment = document.createDocumentFragment();
+    const template = $("sw-session-template"); // Находим наш шаблон
+    if (!template) return;
+
     this.savedSessions.forEach((session) => {
-      const dateObj = new Date(session.date || session.id),
-        dateStr = `${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
-      
+      const clone = template.content.cloneNode(true);
+      const sessionElement = clone.firstElementChild;
+
       const shouldForceHours = session.totalTime >= 3600000;
+      const dateObj = new Date(session.date || session.id);
+      const dateStr = `${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+
+      // Безопасно заполняем данные через textContent
+      sessionElement.querySelector('[data-template="name"]').textContent =
+        session.name;
+      sessionElement.querySelector('[data-template="date"]').textContent =
+        dateStr;
+      sessionElement.querySelector('[data-template="totalTime"]').textContent =
+        formatTime(session.totalTime, {
+          showMs: true,
+          forceHours: shouldForceHours,
+        });
+
+      // Устанавливаем ID для обработчиков событий
+      sessionElement.querySelector('[data-template-id="header"]').dataset.id =
+        session.id;
+      sessionElement.querySelector(
+        '[data-template-id="renameBtn"]',
+      ).dataset.id = session.id;
+      sessionElement.querySelector(
+        '[data-template-id="deleteBtn"]',
+      ).dataset.id = session.id;
+
+      // Устанавливаем уникальные ID для раскрывающихся элементов
+      const detailsEl = sessionElement.querySelector(
+        '[data-template-id="details"]',
+      );
+      const iconEl = sessionElement.querySelector('[data-template-id="icon"]');
+      detailsEl.id = `sw-details-${session.id}`;
+      iconEl.id = `sw-icon-${session.id}`;
+
+      // Переводим текст кнопок
+      sessionElement.querySelector(
+        '[data-template-id="renameBtn"]',
+      ).textContent = t("rename");
+      sessionElement.querySelector(
+        '[data-template-id="deleteBtn"]',
+      ).textContent = t("delete");
+
+      // Генерируем и вставляем список кругов
+      const lapsContainer = sessionElement.querySelector(
+        '[data-template="lapsContainer"]',
+      );
       let lapsHtml = `<div class="flex justify-between items-center py-1.5 border-b border-gray-500/30 mb-1 px-2"><span class="text-[10px] font-bold app-text-sec uppercase tracking-wider">${t("lap_text")}</span><div class="flex items-center gap-4"><span class="text-[10px] font-bold app-text-sec uppercase tracking-wider w-16 text-right">${t("total_time")}</span><span class="text-[10px] font-bold app-text-sec uppercase tracking-wider w-16 text-right">${t("split_time")}</span></div></div>`;
-      session.laps.forEach((lap, idx) => {
-        const isLatest = idx === 0,
-          bgClass = isLatest ? "bg-black/5 dark:bg-black/20 rounded-lg" : "",
-          textColor = isLatest ? "primary-text" : "app-text";
-        lapsHtml += `<div class="flex justify-between items-center py-2 border-b border-gray-500/10 last:border-0 px-2 ${bgClass}"><span class="text-xs app-text-sec font-medium">${t("lap_text")} ${lap.index}</span><div class="flex items-center gap-4"><span class="font-mono text-[10px] app-text-sec opacity-60 w-16 text-right">${formatTime(lap.total, { showMs: true, forceHours: shouldForceHours })}</span><span class="font-mono text-xs font-bold ${textColor} w-16 text-right">${formatTime(lap.diff, { showMs: true, forceHours: shouldForceHours })}</span></div></div>`;
+      session.laps.forEach((lap) => {
+        lapsHtml += `<div class="flex justify-between items-center py-2 border-b border-gray-500/10 last:border-0 px-2"><span class="text-xs app-text-sec font-medium">${t("lap_text")} ${lap.index}</span><div class="flex items-center gap-4"><span class="font-mono text-[10px] app-text-sec opacity-60 w-16 text-right">${formatTime(lap.total, { showMs: true, forceHours: shouldForceHours })}</span><span class="font-mono text-xs font-bold app-text w-16 text-right">${formatTime(lap.diff, { showMs: true, forceHours: shouldForceHours })}</span></div></div>`;
       });
-      const div = document.createElement("div");
-      div.className =
-        "app-surface border app-border rounded-xl overflow-hidden transition-all mb-3";
-      div.innerHTML = `<div class="p-4 cursor-pointer flex justify-between items-center active:bg-gray-500/10 sw-session-header" data-id="${session.id}"><div class="flex-1 min-w-0 pr-4"><div class="font-bold app-text text-lg truncate">${escapeHTML(session.name)}</div><div class="text-xs app-text-sec mt-1">${dateStr}</div></div><div class="flex items-center gap-3 shrink-0"><div class="font-mono font-bold primary-text text-lg">${formatTime(session.totalTime, { showMs: true, forceHours: shouldForceHours })}</div><svg focusable="false" aria-hidden="true" id="sw-icon-${session.id}" class="w-5 h-5 text-gray-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></div></div><div id="sw-details-${session.id}" class="hidden bg-black/5 dark:bg-black/20 border-t app-border p-4"><div class="flex justify-end gap-2 mb-3"><button type="button" data-id="${session.id}" class="sw-rename-btn px-3 py-1 bg-blue-500/10 text-blue-500 rounded-lg text-xs font-bold uppercase tracking-wider active:scale-95 transition-transform">${t("rename")}</button><button type="button" data-id="${session.id}" class="sw-delete-btn px-3 py-1 bg-red-500/10 text-red-500 rounded-lg text-xs font-bold uppercase tracking-wider active:scale-95 transition-transform">${t("delete")}</button></div><div class="max-h-48 overflow-y-auto no-scrollbar bg-black/5 dark:bg-white/5 rounded-lg p-2 border app-border">${lapsHtml}</div></div>`;
-      fragment.appendChild(div);
+      // Здесь innerHTML используется для списка кругов, что менее рискованно,
+      // т.к. данные (lap.total, lap.diff) являются числами из нашей же системы.
+      // Но для 100% безопасности можно было бы и их генерировать через DOM-элементы.
+      lapsContainer.innerHTML = lapsHtml;
+
+      fragment.appendChild(sessionElement);
     });
+
     this.els.sessionsList.appendChild(fragment);
   },
 };

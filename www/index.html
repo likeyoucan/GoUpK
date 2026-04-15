@@ -1945,6 +1945,133 @@
       </div>
     </div>
 
+    <!-- [РЕФАКТОРИНГ] Шаблоны для безопасной генерации элементов -->
+
+    <!-- Шаблон для строки с результатами секундомера -->
+    <template id="sw-session-template">
+      <div
+        class="app-surface border app-border rounded-xl overflow-hidden transition-all mb-3"
+      >
+        <div
+          class="p-4 cursor-pointer flex justify-between items-center active:bg-gray-500/10 sw-session-header"
+          data-template-id="header"
+        >
+          <div class="flex-1 min-w-0 pr-4">
+            <div
+              class="font-bold app-text text-lg truncate"
+              data-template="name"
+            ></div>
+            <div class="text-xs app-text-sec mt-1" data-template="date"></div>
+          </div>
+          <div class="flex items-center gap-3 shrink-0">
+            <div
+              class="font-mono font-bold primary-text text-lg"
+              data-template="totalTime"
+            ></div>
+            <svg
+              focusable="false"
+              aria-hidden="true"
+              class="w-5 h-5 text-gray-400 transition-transform duration-300"
+              data-template-id="icon"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M19 9l-7 7-7-7"
+              ></path>
+            </svg>
+          </div>
+        </div>
+        <div
+          class="hidden bg-black/5 dark:bg-black/20 border-t app-border p-4"
+          data-template-id="details"
+        >
+          <div class="flex justify-end gap-2 mb-3">
+            <button
+              type="button"
+              class="sw-rename-btn px-3 py-1 bg-blue-500/10 text-blue-500 rounded-lg text-xs font-bold uppercase tracking-wider active:scale-95 transition-transform"
+              data-i18n="rename"
+              data-template-id="renameBtn"
+            ></button>
+            <button
+              type="button"
+              class="sw-delete-btn px-3 py-1 bg-red-500/10 text-red-500 rounded-lg text-xs font-bold uppercase tracking-wider active:scale-95 transition-transform"
+              data-i18n="delete"
+              data-template-id="deleteBtn"
+            ></button>
+          </div>
+          <div
+            class="max-h-48 overflow-y-auto no-scrollbar bg-black/5 dark:bg-white/5 rounded-lg p-2 border app-border"
+            data-template="lapsContainer"
+          >
+            <!-- Сюда будут вставляться круги -->
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- Шаблон для строки с тренировкой Табата -->
+    <template id="tb-workout-template">
+      <div
+        class="tb-workout-row p-4 rounded-xl flex justify-between items-center transition-all cursor-pointer mb-2 focus:outline-none"
+        role="button"
+        tabindex="0"
+      >
+        <div class="flex-1 min-w-0 pr-2">
+          <div class="font-bold truncate" data-template="name"></div>
+          <div class="text-xs app-text-sec mt-1" data-template="details"></div>
+        </div>
+        <div class="flex gap-1 shrink-0">
+          <button
+            type="button"
+            class="tb-edit-btn text-gray-400 hover:primary-text p-2 focus:outline-none custom-focus rounded-lg active:scale-95"
+            data-template-id="editBtn"
+          >
+            <svg
+              focusable="false"
+              aria-hidden="true"
+              class="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              stroke-width="2"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+              ></path>
+            </svg>
+          </button>
+          <button
+            type="button"
+            class="tb-del-btn text-red-500 opacity-50 hover:opacity-100 p-2 focus:outline-none custom-focus rounded-lg active:scale-95"
+            data-template-id="deleteBtn"
+          >
+            <svg
+              focusable="false"
+              aria-hidden="true"
+              class="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              stroke-width="2"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+              ></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </template>
+
     <div
       class="no-js-warning bg-white text-black p-6 rounded-2xl font-bold shadow-2xl text-center max-w-sm mx-4 absolute z-50"
     >
