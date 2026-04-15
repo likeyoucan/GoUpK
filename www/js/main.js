@@ -1,10 +1,9 @@
-// main.js
-
 import {
   $,
   showToast,
   safeRemoveLS,
   requestWakeLock,
+  releaseWakeLock,
 } from "./utils.js?v=VERSION";
 import { langManager, t } from "./i18n.js?v=VERSION";
 import { themeManager } from "./theme.js?v=VERSION";
@@ -22,8 +21,8 @@ function injectSVG() {
     tb: "tb-progressRing",
   };
   document.querySelectorAll("[data-ring]").forEach((container) => {
-    const type = container.getAttribute("data-ring");
-    const ringId = svgs[type];
+    const type = container.getAttribute("data-ring"),
+      ringId = svgs[type];
     if (!ringId || container.querySelector("svg")) return;
     const pointerEventsClass = type === "tm" ? "pointer-events-none" : "";
     const svgHTML = `
@@ -111,6 +110,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   setTimeout(() => document.body.classList.remove("preload"), 50);
 
+  // --- Обработчики открытия модальных окон ---
   $("sw-openResultsBtn")?.addEventListener("click", () =>
     modalManager.open("sw-sessions-modal"),
   );
@@ -124,6 +124,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (sw.savedSessions.length > 0) modalManager.open("sw-clear-modal");
   });
 
+  // --- Обработчики подтверждения в модальных окнах ---
   $("reset-confirm")?.addEventListener("click", confirmReset);
   $("sw-clear-confirm")?.addEventListener("click", () => sw.confirmClearAll());
   $("sw-name-modal-content")?.addEventListener("submit", (e) => {
@@ -135,11 +136,14 @@ document.addEventListener("DOMContentLoaded", () => {
     tb.saveWorkout();
   });
 
-  document.querySelectorAll("[data-nav]").forEach((btn) => {
-    btn.addEventListener("click", (e) =>
-      navigation.switchView(e.currentTarget.getAttribute("data-nav")),
+  // --- Глобальные обработчики действий ---
+  document
+    .querySelectorAll("[data-nav]")
+    .forEach((btn) =>
+      btn.addEventListener("click", (e) =>
+        navigation.switchView(e.currentTarget.getAttribute("data-nav")),
+      ),
     );
-  });
 
   document.addEventListener("keydown", (e) => {
     if (
@@ -155,25 +159,30 @@ document.addEventListener("DOMContentLoaded", () => {
       if (view === "stopwatch") sw.toggle();
       else if (view === "timer") tm.toggle();
       else if (view === "tabata") tb.toggle();
-    } else if (e.key.toLowerCase() === "l" && view === "stopwatch") {
+    } else if (e.key.toLowerCase() === "l" && view === "stopwatch")
       sw.recordLapOrReset();
-    } else if (e.key.toLowerCase() === "r") {
+    else if (e.key.toLowerCase() === "r") {
       if (view === "timer") tm.reset(true);
       else if (view === "tabata") tb.stop();
     }
   });
 
   let lastBgTap = 0;
-  $("view-stopwatch")?.addEventListener("touchstart", (e) => {
-    if (e.target.closest("button, .scroll-lock, .selectable-data")) return;
-    const now = Date.now();
-    if (now - lastBgTap < 300 && sw.isRunning) {
-      e.preventDefault();
-      sw.recordLapOrReset();
-    }
-    lastBgTap = now;
-  });
+  $("view-stopwatch")?.addEventListener(
+    "touchstart",
+    (e) => {
+      if (e.target.closest("button, .scroll-lock, .selectable-data")) return;
+      const now = Date.now();
+      if (now - lastBgTap < 300 && sw.isRunning) {
+        e.preventDefault();
+        sw.recordLapOrReset();
+      }
+      lastBgTap = now;
+    },
+    { passive: false },
+  );
 
+  // --- Логика свайп-навигации ---
   const appContainer = $("app"),
     swipeAreaLeft = $("swipe-area-left"),
     swipeAreaRight = $("swipe-area-right");
@@ -224,14 +233,16 @@ document.addEventListener("DOMContentLoaded", () => {
   appContainer.addEventListener(
     "touchcancel",
     () => {
-      if (!isSwipeActive) return;
-      isSwipeActive = false;
-      touchStartX = 0;
-      appContainer.classList.remove("is-swiping");
+      if (isSwipeActive) {
+        isSwipeActive = false;
+        touchStartX = 0;
+        appContainer.classList.remove("is-swiping");
+      }
     },
     { passive: true },
   );
 
+  // --- Системная интеграция Android ---
   if (window.Capacitor && window.Capacitor.isNativePlatform()) {
     const {
       StatusBar,
@@ -243,7 +254,6 @@ document.addEventListener("DOMContentLoaded", () => {
       StatusBar.setStyle({ style: "DARK" }).catch(() => {});
     }
 
-    // ИСПРАВЛЕННАЯ ЛОГИКА КНОПКИ НАЗАД
     if (App) {
       App.addListener("backButton", () => {
         if (modalManager.hasActiveModal()) {
@@ -258,11 +268,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (App && FgService) {
       let fgInterval = null;
-
       async function updateForegroundNotification() {
-        let title = "Stopwatch Pro";
-        let body = "Running in background";
-
+        let title = "Stopwatch Pro",
+          body = "Running in background";
         if (sw.isRunning) {
           title = "⏱ Stopwatch";
           body = sw.formatTime(sw.elapsedTime, false);
@@ -271,19 +279,18 @@ document.addEventListener("DOMContentLoaded", () => {
           const rem = Math.max(0, tm.targetTime - performance.now());
           body = tm.getFormattedTime(Math.ceil(rem / 1000));
         } else if (tb.status !== "STOPPED" && !tb.paused) {
-          const activeName = $("tb-activeName")?.textContent || "Tabata";
-          title = `🏋️ ${activeName}`;
-          const rem = Math.max(0, tb.phaseEndTime - performance.now());
-          const sTotal = Math.ceil(rem / 1000);
+          const activeName = $("tb-activeName")?.textContent || "Tabata",
+            rem = Math.max(0, tb.phaseEndTime - performance.now()),
+            sTotal = Math.ceil(rem / 1000);
           let phaseStr =
             tb.status === "WORK"
               ? "Work"
               : tb.status === "REST"
                 ? "Rest"
                 : "Get Ready";
+          title = `🏋️ ${activeName}`;
           body = `Round ${tb.currentRound}/${tb.rounds} • ${phaseStr}: ${sTotal}s`;
         } else {
-          // Если ни один таймер не работает, останавливаем сервис
           if (fgInterval) {
             clearInterval(fgInterval);
             fgInterval = null;
@@ -291,13 +298,11 @@ document.addEventListener("DOMContentLoaded", () => {
           await FgService.stop().catch(() => {});
           return;
         }
-
-        // Запускаем или обновляем уведомление
         await FgService.start({
-          id: 101, // Статичный ID для уведомления
+          id: 101,
           title,
           body,
-          smallIcon: "ic_stat_name", // Имя иконки без расширения из папки res/drawable
+          smallIcon: "ic_stat_name",
         }).catch(() => {});
       }
 
@@ -306,25 +311,19 @@ document.addEventListener("DOMContentLoaded", () => {
           sw.isRunning ||
           tm.isRunning ||
           (tb.status !== "STOPPED" && !tb.paused);
-
         if (!isActive && isTimerRunning) {
-          // Приложение свернуто, и таймер работает
-          sm.unlock(); // Разблокируем аудиоконтекст для звуков в фоне
-          requestWakeLock(); // Запрашиваем WakeLock, чтобы процессор не уснул
-
-          await updateForegroundNotification(); // Первоначальный запуск уведомления
-
-          if (!fgInterval) {
-            // Запускаем интервал для обновления уведомления каждую секунду
+          sm.unlock();
+          requestWakeLock();
+          await updateForegroundNotification();
+          if (!fgInterval)
             fgInterval = setInterval(updateForegroundNotification, 1000);
-          }
         } else if (isActive) {
-          // Приложение развернуто
           if (fgInterval) {
             clearInterval(fgInterval);
             fgInterval = null;
           }
           await FgService.stop().catch(() => {});
+          releaseWakeLock(); // Release wakelock when app becomes active again
         }
       });
     }
