@@ -1,11 +1,8 @@
 // tabata.js
 
-// www/js/tabata.js
-
 import {
-  $, escapeHTML, showToast, formatTimeStr, adjustVal,
-  updateText, updateTitle, requestWakeLock, releaseWakeLock,
-  bgWorker, safeSetLS, safeGetLS, announceToScreenReader,
+  $, escapeHTML, showToast, formatTimeStr, adjustVal, updateText, updateTitle,
+  requestWakeLock, releaseWakeLock, bgWorker, safeSetLS, safeGetLS, announceToScreenReader,
 } from "./utils.js?v=VERSION";
 import { sm } from "./sound.js?v=VERSION";
 import { t } from "./i18n.js?v=VERSION";
@@ -65,19 +62,20 @@ export const tb = {
       if (this.selectedId) this.selectWorkout(this.selectedId);
     });
 
-    // ... (логика загрузки тренировок из LS без изменений) ...
     try {
       const stored = safeGetLS("tb_workouts");
-      if (stored) {
+      if (stored && JSON.parse(stored).length > 0) {
           this.workouts = JSON.parse(stored);
-      } else { throw new Error("No data"); }
+      } else { throw new Error("No valid data in localStorage"); }
     } catch (e) {
       this.workouts = [{ id: 1, name: "Standard Tabata", work: 20, rest: 10, rounds: 8 }];
       safeSetLS("tb_workouts", JSON.stringify(this.workouts));
     }
+
     let lastSelectedId = safeGetLS("tb_selected_id");
-    lastSelectedId = lastSelectedId ? Number(lastSelectedId) : this.workouts[0]?.id;
-    this.selectWorkout(lastSelectedId || this.workouts[0]?.id);
+    const exists = this.workouts.find(w => w.id === Number(lastSelectedId));
+    lastSelectedId = exists ? Number(lastSelectedId) : this.workouts[0]?.id;
+    this.selectWorkout(lastSelectedId);
 
     this.renderList();
     
@@ -107,7 +105,6 @@ export const tb = {
       }
     });
 
-    // ... (остальные обработчики init без изменений) ...
     bgWorker.addEventListener("message", (e) => {
       if (e.data === "tick" && this.status !== "STOPPED" && !this.paused && document.hidden) {
         this.tick(true);
@@ -121,14 +118,21 @@ export const tb = {
     });
   },
 
-  getUniqueName: (baseName) => { /* ... без изменений ... */ },
+  getUniqueName(baseName) {
+    let name = baseName;
+    let counter = 1;
+    while (this.workouts.some((w) => w.name.toLowerCase() === name.toLowerCase())) {
+      name = `${baseName} ${counter++}`;
+    }
+    return name;
+  },
 
   prepareEdit(idToEdit = null) {
     this.els.nameError?.classList.add("hidden");
     this.editingWorkoutId = idToEdit;
     
     const titleEl = $('tb-modal-title');
-    if(titleEl) updateText(titleEl, idToEdit ? t('edit') + ' ' + t('my_workouts') : t('create_workout'));
+    if(titleEl) updateText(titleEl, idToEdit ? t('edit') : t('create_workout'));
 
     if (idToEdit) {
       const w = this.workouts.find((x) => x.id === idToEdit);
@@ -236,26 +240,16 @@ export const tb = {
       div.dataset.id = w.id;
       div.innerHTML = `
         <div class="flex-1 min-w-0 pr-2">
-          <div class="font-bold truncate ${
-            isAct ? "primary-text" : "app-text"
-          }">${escapeHTML(w.name)}</div>
-          <div class="text-xs app-text-sec mt-1">${w.work}${t(
-            "sec",
-          ).toLowerCase()} / ${w.rest}${t("sec").toLowerCase()} • ${w.rounds} ${t(
-            "rds",
-          )}</div>
+          <div class="font-bold truncate ${isAct ? "primary-text" : "app-text"}">${escapeHTML(w.name)}</div>
+          <div class="text-xs app-text-sec mt-1">${w.work}${t("sec").toLowerCase()} / ${w.rest}${t("sec").toLowerCase()} • ${w.rounds} ${t("rds")}</div>
         </div>
         <div class="flex gap-1 shrink-0">
-          <button type="button" aria-label="${t(
-            "edit",
-          )}" data-id="${w.id}" class="tb-edit-btn text-gray-400 hover:primary-text p-2 focus:outline-none custom-focus rounded-lg active:scale-95">
+          <button type="button" aria-label="${t("edit")}" data-id="${w.id}" class="tb-edit-btn text-gray-400 hover:primary-text p-2 focus:outline-none custom-focus rounded-lg active:scale-95">
             <svg focusable="false" aria-hidden="true" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
             </svg>
           </button>
-          <button type="button" aria-label="${t(
-            "delete",
-          )}" data-id="${w.id}" class="tb-del-btn text-red-500 opacity-50 hover:opacity-100 p-2 focus:outline-none custom-focus rounded-lg active:scale-95">
+          <button type="button" aria-label="${t("delete")}" data-id="${w.id}" class="tb-del-btn text-red-500 opacity-50 hover:opacity-100 p-2 focus:outline-none custom-focus rounded-lg active:scale-95">
             <svg focusable="false" aria-hidden="true" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
@@ -276,9 +270,7 @@ export const tb = {
   },
 
   start() {
-    document.dispatchEvent(
-      new CustomEvent("timerStarted", { detail: "tabata" }),
-    );
+    document.dispatchEvent(new CustomEvent("timerStarted", { detail: "tabata" }));
     this.currentRound = 1;
     this.status = "READY";
     this.phaseDuration = 5000;
@@ -308,9 +300,7 @@ export const tb = {
   },
 
   resume() {
-    document.dispatchEvent(
-      new CustomEvent("timerStarted", { detail: "tabata" }),
-    );
+    document.dispatchEvent(new CustomEvent("timerStarted", { detail: "tabata" }));
     this.paused = false;
     this.phaseEndTime = performance.now() + this.remainingAtPause;
     this.lastBeepSec = 0;
@@ -370,35 +360,24 @@ export const tb = {
     if (missedTime > 0) {
       let remainingMissed = missedTime;
       while (remainingMissed > 0 && this.status !== "STOPPED") {
-        if (this.status === "READY") {
-          let step = Math.min(remainingMissed, this.phaseDuration);
-          remainingMissed -= step;
-          this.phaseDuration -= step;
-          if (this.phaseDuration <= 0) {
-            this.status = "WORK";
-            this.phaseDuration = this.work;
+        let currentPhaseDuration = 0;
+        if (this.status === 'READY') currentPhaseDuration = this.phaseDuration;
+        else if (this.status === 'WORK') currentPhaseDuration = this.work;
+        else if (this.status === 'REST') currentPhaseDuration = this.rest;
+        
+        let step = Math.min(remainingMissed, currentPhaseDuration);
+        remainingMissed -= step;
+        currentPhaseDuration -= step;
+
+        if (currentPhaseDuration <= 0) {
+          if (this.status === 'READY') { this.status = 'WORK'; this.phaseDuration = this.work + currentPhaseDuration; }
+          else if (this.status === 'WORK') { 
+              if (this.currentRound >= this.rounds) { this.stop(); return; }
+              this.status = 'REST'; this.phaseDuration = this.rest + currentPhaseDuration;
           }
-        } else if (this.status === "WORK") {
-          let step = Math.min(remainingMissed, this.phaseDuration);
-          remainingMissed -= step;
-          this.phaseDuration -= step;
-          if (this.phaseDuration <= 0) {
-            if (this.currentRound >= this.rounds) {
-              this.stop();
-              return;
-            }
-            this.status = "REST";
-            this.phaseDuration = this.rest;
-          }
-        } else if (this.status === "REST") {
-          let step = Math.min(remainingMissed, this.phaseDuration);
-          remainingMissed -= step;
-          this.phaseDuration -= step;
-          if (this.phaseDuration <= 0) {
-            this.currentRound++;
-            this.status = "WORK";
-            this.phaseDuration = this.work;
-          }
+          else if (this.status === 'REST') { this.currentRound++; this.status = 'WORK'; this.phaseDuration = this.work + currentPhaseDuration; }
+        } else {
+            this.phaseDuration = currentPhaseDuration;
         }
       }
       this.phaseEndTime = performance.now() + this.phaseDuration;
