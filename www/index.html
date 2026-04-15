@@ -14,7 +14,7 @@
   - img-src / font-src: разрешает локальные ресурсы и data-uri (иконки).
   - capacitor:// и http://localhost: необходимы для работы нативных движков iOS/Android.
 -->
-    <meta
+    <!-- <meta
       http-equiv="Content-Security-Policy"
       content="
   default-src 'self'; 
@@ -28,7 +28,7 @@
   form-action 'self';
   upgrade-insecure-requests;
 "
-    />
+    /> -->
 
     <meta
       http-equiv="Permissions-Policy"
@@ -77,6 +77,14 @@
     <title>Stopwatch Pro</title>
 
     <script src="./js/js-check.js?v=VERSION"></script>
+
+    <script src="//cdn.jsdelivr.net/npm/eruda"></script>
+    <script src="//cdn.jsdelivr.net/npm/eruda-fps"></script>
+    <script>
+      eruda.init();
+      eruda.add(erudaFps);
+    </script>
+
     <link rel="stylesheet" href="js-check.css?v=VERSION" />
     <link rel="stylesheet" href="styles.css?v=VERSION" />
   </head>
@@ -1525,7 +1533,8 @@
               type="button"
               id="tb-closeModalBtn"
               aria-label="Close"
-              class="app-text-sec hover:app-text transition-colors focus:outline-none active:scale-90 custom-focus rounded-lg flex items-center justify-center min-w-[44px] min-h-[44px] -mr-2" data-modal-close
+              class="app-text-sec hover:app-text transition-colors focus:outline-none active:scale-90 custom-focus rounded-lg flex items-center justify-center min-w-[44px] min-h-[44px] -mr-2"
+              data-modal-close
             >
               <svg
                 focusable="false"
@@ -1782,7 +1791,8 @@
           aria-labelledby="sw-clear-title"
           inert
           aria-hidden="true"
-          class="hidden absolute inset-0 z-[110] bg-black/80 items-center justify-center p-6 transition-opacity duration-300 opacity-0" data-modal-close
+          class="hidden absolute inset-0 z-[110] bg-black/80 items-center justify-center p-6 transition-opacity duration-300 opacity-0"
+          data-modal-close
         >
           <div
             class="app-surface w-full max-w-sm rounded-3xl p-6 shadow-2xl border app-border flex flex-col gap-4 transform transition-all duration-300 opacity-0 scale-95"
@@ -1829,7 +1839,8 @@
           aria-modal="true"
           inert
           aria-hidden="true"
-          class="hidden absolute inset-0 z-[110] bg-black/80 items-center justify-center p-6 transition-opacity duration-300 opacity-0" data-modal-close
+          class="hidden absolute inset-0 z-[110] bg-black/80 items-center justify-center p-6 transition-opacity duration-300 opacity-0"
+          data-modal-close
         >
           <form
             id="sw-name-modal-content"
@@ -1888,7 +1899,8 @@
           aria-labelledby="reset-modal-title"
           inert
           aria-hidden="true"
-          class="hidden absolute inset-0 z-[110] bg-black/80 items-center justify-center p-6 transition-opacity duration-300 opacity-0" data-modal-close
+          class="hidden absolute inset-0 z-[110] bg-black/80 items-center justify-center p-6 transition-opacity duration-300 opacity-0"
+          data-modal-close
         >
           <div
             class="app-surface w-full max-w-sm rounded-3xl p-6 shadow-2xl border app-border flex flex-col gap-4 transform transition-all duration-300 opacity-0 scale-95"
