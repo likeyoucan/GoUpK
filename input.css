@@ -433,7 +433,6 @@ html.dark .app-bg.has-vignette::before {
   pointer-events: none;
 }
 
-#modal-container.active,
 #modal-container.active > * {
   /* Когда контейнер активен, он и его дети могут принимать события */
   pointer-events: auto;
