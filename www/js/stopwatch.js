@@ -10,6 +10,7 @@ import { themeManager } from "./theme.js?v=VERSION";
 import { modalManager } from "./modal.js?v=VERSION";
 
 export const sw = {
+  // --- Свойства объекта ---
   startTime: 0,
   elapsedTime: 0,
   isRunning: false,
@@ -23,7 +24,18 @@ export const sw = {
   nameModalState: { action: null, targetId: null, pendingSession: null },
   ringLength: 282.74,
 
+  // --- Основной метод инициализации ---
   init() {
+    // =================================================================
+    // ВАЖНОЕ ИСПРАВЛЕНИЕ: Привязка контекста `this` ко всем методам
+    // =================================================================
+    for (const key in this) {
+      if (typeof this[key] === 'function') {
+        this[key] = this[key].bind(this);
+      }
+    }
+
+    // --- Кэширование элементов DOM ---
     this.els = {
       display: $("sw-mainDisplay"), extendedDisplay: $("sw-extendedDisplay"), status: $("sw-statusText"),
       btn: $("sw-startStopBtn"), lapBtn: $("sw-lapBtn"), lapsContainer: $("sw-lapsContainer"),
@@ -33,11 +45,15 @@ export const sw = {
       lapFlash: $("sw-lapFlash"), currentLapsHeader: $("sw-currentLapsHeader"),
     };
 
-    if (this.els.ring) { this.els.ring.style.strokeDasharray = this.ringLength; this.els.ring.style.strokeDashoffset = this.ringLength; }
+    if (this.els.ring) {
+      this.els.ring.style.strokeDasharray = this.ringLength;
+      this.els.ring.style.strokeDashoffset = this.ringLength;
+    }
 
-    this.els.btn?.addEventListener("click", () => this.toggle());
-    this.els.lapBtn?.addEventListener("click", () => this.recordLapOrReset());
-    this.els.saveBtn?.addEventListener("click", () => this.prepareSaveSession());
+    // --- Назначение обработчиков событий ---
+    this.els.btn?.addEventListener("click", this.toggle);
+    this.els.lapBtn?.addEventListener("click", this.recordLapOrReset);
+    this.els.saveBtn?.addEventListener("click", this.prepareSaveSession);
     this.els.sortSelect?.addEventListener("change", (e) => this.sortSessions(e.target.value));
     this.els.nameInput?.addEventListener("input", () => this.els.nameError?.classList.add("hidden"));
     this.els.sessionsList?.addEventListener("click", (e) => {
@@ -49,18 +65,31 @@ export const sw = {
       else if (header) { this.toggleSessionDetails(Number(header.dataset.id)); }
     });
 
+    // --- Системные слушатели ---
     document.addEventListener("timerStarted", (e) => { if (e.detail !== "stopwatch" && this.isRunning) this.toggle(); });
     bgWorker.addEventListener("message", (e) => { if (e.data === "tick" && this.isRunning && document.hidden) this.tick(true); });
     document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && this.isRunning) { this.lastRender = 0; this.tick(); } });
-    try { const stored = safeGetLS("sw_saved_sessions"); this.savedSessions = stored ? JSON.parse(stored) : []; } catch (e) { this.savedSessions = []; }
+    
+    // --- Загрузка данных и локализация ---
+    try {
+      const stored = safeGetLS("sw_saved_sessions");
+      this.savedSessions = stored ? JSON.parse(stored) : [];
+    } catch (e) {
+      this.savedSessions = [];
+    }
+    
     document.addEventListener("languageChanged", () => { this.renderSavedSessions(); if (this.laps.length > 0) this.reRenderCurrentLaps(); });
     document.addEventListener("msChanged", () => { if (!this.isRunning && this.elapsedTime > 0) this.updateDisplay(); if (this.laps.length > 0) this.reRenderCurrentLaps(); });
   },
   
-  formatTime: (ms, forceMs = null) => formatMsTime(ms, forceMs !== null ? forceMs : themeManager.showMs),
+  // --- Остальные методы объекта ---
+  formatTime(ms, forceMs = null) {
+    return formatMsTime(ms, forceMs !== null ? forceMs : themeManager.showMs);
+  },
 
-  getUniqueName: (baseName) => {
+  getUniqueName(baseName) {
     let name = baseName, counter = 1;
+    // Теперь `this.savedSessions` будет всегда доступен
     const exists = (n) => this.savedSessions.some((s) => s.name.toLowerCase() === n.toLowerCase());
     while (exists(name)) { name = `${baseName} ${counter++}`; }
     return name;
@@ -94,7 +123,7 @@ export const sw = {
       else updateTitle(this.formatTime(this.elapsedTime, false));
       this.lastRender = now;
     }
-    if (!isBackground) { cancelAnimationFrame(this.rAF); this.rAF = requestAnimationFrame(() => this.tick()); }
+    if (!isBackground) { cancelAnimationFrame(this.rAF); this.rAF = requestAnimationFrame(this.tick); }
   },
 
   updateDisplay() {
