@@ -1,4 +1,4 @@
-// www/js/worker.js
+// worker.js
 
 let intervalId = null;
 let remainingTime = 0;
