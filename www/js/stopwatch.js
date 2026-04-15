@@ -1,3 +1,5 @@
+// stopwatch.js
+
 import {
   $,
   escapeHTML,

@@ -1,3 +1,5 @@
+// modal.js
+
 import { $ } from "./utils.js?v=VERSION";
 
 class ModalManager {

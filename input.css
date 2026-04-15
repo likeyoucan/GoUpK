@@ -174,7 +174,6 @@ button {
   padding-left: var(--safe-left);
   padding-right: var(--safe-right);
   background-color: var(--bg-color);
-  
 }
 
 .app-bg {
@@ -332,7 +331,7 @@ html.dark .app-bg.has-vignette::before {
     padding-top: 8px;
   }
 
-  #tm-adjust-controls{
+  #tm-adjust-controls {
     margin: 0;
   }
 }
@@ -1095,7 +1094,7 @@ html.js-nav-backward::view-transition-new(root) {
    19. ФИКСЫ И ДОСТУПНОСТЬ
 ========================================= */
 
-#btn-open-reset{
+#btn-open-reset {
   cursor: pointer;
 }
 

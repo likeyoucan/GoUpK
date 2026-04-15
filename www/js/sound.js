@@ -53,13 +53,19 @@ export const sm = {
       safeSetLS("app_sound_theme", this.theme);
       this.play("click");
     });
-    
+
     const unlockHandler = () => {
       this.unlock();
     };
-    
-    document.addEventListener("click", unlockHandler, { once: true, capture: true });
-    document.addEventListener("touchstart", unlockHandler, { once: true, passive: true });
+
+    document.addEventListener("click", unlockHandler, {
+      once: true,
+      capture: true,
+    });
+    document.addEventListener("touchstart", unlockHandler, {
+      once: true,
+      passive: true,
+    });
   },
 
   applySettings() {
@@ -122,7 +128,7 @@ export const sm = {
         navigator.vibrate(
           Array.isArray(pattern)
             ? pattern.map(applyLevel)
-            : applyLevel(pattern)
+            : applyLevel(pattern),
         );
       } catch (e) {}
     }
@@ -135,7 +141,7 @@ export const sm = {
     duration,
     volMultiplier = 1,
     slideToFreq = null,
-    sustain = false
+    sustain = false,
   ) {
     if (!this.audioCtx) return;
     const osc = this.audioCtx.createOscillator();
@@ -157,13 +163,13 @@ export const sm = {
       gainNode.gain.linearRampToValueAtTime(peakVol, startTime + attackTime);
       gainNode.gain.linearRampToValueAtTime(
         peakVol,
-        startTime + duration - releaseTime
+        startTime + duration - releaseTime,
       );
       gainNode.gain.linearRampToValueAtTime(0.001, startTime + duration);
     } else {
       gainNode.gain.linearRampToValueAtTime(
         peakVol,
-        startTime + Math.min(0.02, duration * 0.1)
+        startTime + Math.min(0.02, duration * 0.1),
       );
       gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
     }
@@ -173,13 +179,16 @@ export const sm = {
       if (sustain) {
         osc.frequency.linearRampToValueAtTime(
           slideToFreq,
-          startTime + duration * 0.4
+          startTime + duration * 0.4,
         );
-        osc.frequency.linearRampToValueAtTime(slideToFreq, startTime + duration);
+        osc.frequency.linearRampToValueAtTime(
+          slideToFreq,
+          startTime + duration,
+        );
       } else {
         osc.frequency.exponentialRampToValueAtTime(
           slideToFreq,
-          startTime + duration
+          startTime + duration,
         );
       }
     }
@@ -233,7 +242,7 @@ export const sm = {
             time,
             duration,
             0.7,
-            100
+            100,
           );
           this.playNote(isFinal ? 1500 : 1000, "sine", time, duration, 0.8, 50);
           if (isFinal) {

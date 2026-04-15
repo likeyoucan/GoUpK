@@ -1,90 +1,234 @@
+// tabata.js
+
 import {
-  $, escapeHTML, showToast, formatTimeStr, adjustVal, updateText, updateTitle,
-  requestWakeLock, releaseWakeLock, bgWorker, safeSetLS, safeGetLS, announceToScreenReader,
+  $,
+  escapeHTML,
+  showToast,
+  formatTimeStr,
+  adjustVal,
+  updateText,
+  updateTitle,
+  requestWakeLock,
+  releaseWakeLock,
+  bgWorker,
+  safeSetLS,
+  safeGetLS,
+  announceToScreenReader,
 } from "./utils.js?v=VERSION";
 import { sm } from "./sound.js?v=VERSION";
 import { t } from "./i18n.js?v=VERSION";
 import { modalManager } from "./modal.js?v=VERSION";
 
 export const tb = {
-  workouts: [], selectedId: null, work: 20, rest: 10, rounds: 8, currentRound: 1,
-  status: "STOPPED", phaseDuration: 0, phaseEndTime: 0, remainingAtPause: 0,
-  rAF: null, lastRender: 0, paused: false, els: {}, lastBeepSec: 0, editingWorkoutId: null, ringLength: 282.74,
+  workouts: [],
+  selectedId: null,
+  work: 20,
+  rest: 10,
+  rounds: 8,
+  currentRound: 1,
+  status: "STOPPED",
+  phaseDuration: 0,
+  phaseEndTime: 0,
+  remainingAtPause: 0,
+  rAF: null,
+  lastRender: 0,
+  paused: false,
+  els: {},
+  lastBeepSec: 0,
+  editingWorkoutId: null,
+  ringLength: 282.74,
 
   init() {
     this.els = {
-      listSection: $("tb-list-section"), runningControls: $("tb-runningControls"), list: $("tb-workoutsList"),
-      startBtn: $("tb-startBtn"), stopBtn: $("tb-stopBtn"), ring: $("tb-progressRing"), status: $("tb-statusText"),
-      timer: $("tb-mainTimer"), activeName: $("tb-activeName"), activeDetail: $("tb-activeDetail"),
-      roundDisplay: $("tb-currentRound"), totalRoundsDisplay: $("tb-totalRounds"), editName: $("tb-edit-name"),
-      editWork: $("tb-edit-work"), editRest: $("tb-edit-rest"), editRounds: $("tb-edit-rounds"), nameError: $("tb-name-error"),
+      listSection: $("tb-list-section"),
+      runningControls: $("tb-runningControls"),
+      list: $("tb-workoutsList"),
+      startBtn: $("tb-startBtn"),
+      stopBtn: $("tb-stopBtn"),
+      ring: $("tb-progressRing"),
+      status: $("tb-statusText"),
+      timer: $("tb-mainTimer"),
+      activeName: $("tb-activeName"),
+      activeDetail: $("tb-activeDetail"),
+      roundDisplay: $("tb-currentRound"),
+      totalRoundsDisplay: $("tb-totalRounds"),
+      editName: $("tb-edit-name"),
+      editWork: $("tb-edit-work"),
+      editRest: $("tb-edit-rest"),
+      editRounds: $("tb-edit-rounds"),
+      nameError: $("tb-name-error"),
     };
-    
-    if (this.els.ring) { this.els.ring.style.strokeDasharray = this.ringLength; this.els.ring.style.strokeDashoffset = this.ringLength; }
+
+    if (this.els.ring) {
+      this.els.ring.style.strokeDasharray = this.ringLength;
+      this.els.ring.style.strokeDashoffset = this.ringLength;
+    }
 
     this.els.startBtn?.addEventListener("click", () => this.toggle());
     this.els.stopBtn?.addEventListener("click", () => this.stop());
-    this.els.editName?.addEventListener("input", () => this.els.nameError?.classList.add("hidden"));
-    document.querySelectorAll("[data-tb-adj]").forEach((btn) => btn.addEventListener("click", (e) => { const [id, delta] = e.currentTarget.getAttribute("data-tb-adj").split(","); adjustVal(id, parseInt(delta)); }));
+    this.els.editName?.addEventListener("input", () =>
+      this.els.nameError?.classList.add("hidden"),
+    );
+    document.querySelectorAll("[data-tb-adj]").forEach((btn) =>
+      btn.addEventListener("click", (e) => {
+        const [id, delta] = e.currentTarget
+          .getAttribute("data-tb-adj")
+          .split(",");
+        adjustVal(id, parseInt(delta));
+      }),
+    );
     this.els.list?.addEventListener("click", (e) => {
-        const delBtn = e.target.closest(".tb-del-btn"), editBtn = e.target.closest(".tb-edit-btn"), row = e.target.closest(".tb-workout-row");
-        if (delBtn) { e.stopPropagation(); this.deleteWorkout(Number(delBtn.dataset.id)); }
-        else if (editBtn) { e.stopPropagation(); modalManager.open('tb-modal', { idToEdit: Number(editBtn.dataset.id) }); }
-        else if (row) { this.selectWorkout(Number(row.dataset.id)); }
+      const delBtn = e.target.closest(".tb-del-btn"),
+        editBtn = e.target.closest(".tb-edit-btn"),
+        row = e.target.closest(".tb-workout-row");
+      if (delBtn) {
+        e.stopPropagation();
+        this.deleteWorkout(Number(delBtn.dataset.id));
+      } else if (editBtn) {
+        e.stopPropagation();
+        modalManager.open("tb-modal", { idToEdit: Number(editBtn.dataset.id) });
+      } else if (row) {
+        this.selectWorkout(Number(row.dataset.id));
+      }
     });
 
-    document.addEventListener("timerStarted", (e) => { if (e.detail !== "tabata" && this.status !== "STOPPED" && !this.paused) this.pause(); });
-    document.addEventListener("languageChanged", () => { this.renderList(); if (this.selectedId) this.selectWorkout(this.selectedId); });
-    try { const stored = safeGetLS("tb_workouts"); if (stored && JSON.parse(stored).length > 0) this.workouts = JSON.parse(stored); else throw new Error(); }
-    catch(e) { this.workouts = [{ id: 1, name: "Standard Tabata", work: 20, rest: 10, rounds: 8 }]; safeSetLS("tb_workouts", JSON.stringify(this.workouts)); }
-    const lastSelectedId = safeGetLS("tb_selected_id"), exists = this.workouts.find(w => w.id === Number(lastSelectedId));
+    document.addEventListener("timerStarted", (e) => {
+      if (e.detail !== "tabata" && this.status !== "STOPPED" && !this.paused)
+        this.pause();
+    });
+    document.addEventListener("languageChanged", () => {
+      this.renderList();
+      if (this.selectedId) this.selectWorkout(this.selectedId);
+    });
+    try {
+      const stored = safeGetLS("tb_workouts");
+      if (stored && JSON.parse(stored).length > 0)
+        this.workouts = JSON.parse(stored);
+      else throw new Error();
+    } catch (e) {
+      this.workouts = [
+        { id: 1, name: "Standard Tabata", work: 20, rest: 10, rounds: 8 },
+      ];
+      safeSetLS("tb_workouts", JSON.stringify(this.workouts));
+    }
+    const lastSelectedId = safeGetLS("tb_selected_id"),
+      exists = this.workouts.find((w) => w.id === Number(lastSelectedId));
     this.selectWorkout(exists ? Number(lastSelectedId) : this.workouts[0]?.id);
     this.renderList();
-    bgWorker.addEventListener("message", (e) => { if (e.data === "tick" && this.status !== "STOPPED" && !this.paused && document.hidden) this.tick(true); });
-    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && this.status !== "STOPPED" && !this.paused) { this.lastRender = 0; this.tick(); } });
+    bgWorker.addEventListener("message", (e) => {
+      if (
+        e.data === "tick" &&
+        this.status !== "STOPPED" &&
+        !this.paused &&
+        document.hidden
+      )
+        this.tick(true);
+    });
+    document.addEventListener("visibilitychange", () => {
+      if (
+        document.visibilityState === "visible" &&
+        this.status !== "STOPPED" &&
+        !this.paused
+      ) {
+        this.lastRender = 0;
+        this.tick();
+      }
+    });
   },
 
   getUniqueName(baseName) {
-    let name = baseName, counter = 1;
-    while (this.workouts.some((w) => w.name.toLowerCase() === name.toLowerCase())) { name = `${baseName} ${counter++}`; }
+    let name = baseName,
+      counter = 1;
+    while (
+      this.workouts.some((w) => w.name.toLowerCase() === name.toLowerCase())
+    ) {
+      name = `${baseName} ${counter++}`;
+    }
     return name;
   },
 
   prepareEdit(idToEdit = null) {
-    this.els.nameError?.classList.add("hidden"); this.editingWorkoutId = idToEdit;
-    const titleEl = $('tb-modal-title');
-    if (titleEl) updateText(titleEl, idToEdit ? t('edit') : t('create_workout'));
+    this.els.nameError?.classList.add("hidden");
+    this.editingWorkoutId = idToEdit;
+    const titleEl = $("tb-modal-title");
+    if (titleEl)
+      updateText(titleEl, idToEdit ? t("edit") : t("create_workout"));
     if (idToEdit) {
       const w = this.workouts.find((x) => x.id === idToEdit);
-      if (w) { this.els.editName.value = w.name; this.els.editWork.value = w.work; this.els.editRest.value = w.rest; this.els.editRounds.value = w.rounds; }
+      if (w) {
+        this.els.editName.value = w.name;
+        this.els.editWork.value = w.work;
+        this.els.editRest.value = w.rest;
+        this.els.editRounds.value = w.rounds;
+      }
     } else {
-      this.els.editName.value = this.getUniqueName(t("tabata")); this.els.editWork.value = 20; this.els.editRest.value = 10; this.els.editRounds.value = 8;
+      this.els.editName.value = this.getUniqueName(t("tabata"));
+      this.els.editWork.value = 20;
+      this.els.editRest.value = 10;
+      this.els.editRounds.value = 8;
     }
     setTimeout(() => this.els.editName?.focus(), 300);
   },
 
   saveWorkout() {
-    let finalName = this.els.editName.value.trim(); if (!finalName) finalName = this.getUniqueName(t("tabata"));
-    const exists = this.workouts.some((w) => w.name.toLowerCase() === finalName.toLowerCase() && w.id !== this.editingWorkoutId);
+    let finalName = this.els.editName.value.trim();
+    if (!finalName) finalName = this.getUniqueName(t("tabata"));
+    const exists = this.workouts.some(
+      (w) =>
+        w.name.toLowerCase() === finalName.toLowerCase() &&
+        w.id !== this.editingWorkoutId,
+    );
     if (exists) {
-      this.els.nameError?.classList.remove("hidden"); this.els.editName.classList.add("animate-shake");
-      setTimeout(() => this.els.editName.classList.remove("animate-shake"), 300); return;
+      this.els.nameError?.classList.remove("hidden");
+      this.els.editName.classList.add("animate-shake");
+      setTimeout(
+        () => this.els.editName.classList.remove("animate-shake"),
+        300,
+      );
+      return;
     }
-    const w = Math.max(1, parseInt(this.els.editWork.value) || 20), r = Math.max(1, parseInt(this.els.editRest.value) || 10), rnd = Math.max(1, parseInt(this.els.editRounds.value) || 8);
+    const w = Math.max(1, parseInt(this.els.editWork.value) || 20),
+      r = Math.max(1, parseInt(this.els.editRest.value) || 10),
+      rnd = Math.max(1, parseInt(this.els.editRounds.value) || 8);
     let workoutIdToSelect = this.editingWorkoutId;
     if (this.editingWorkoutId) {
-      const index = this.workouts.findIndex((x) => x.id === this.editingWorkoutId);
-      if (index !== -1) this.workouts[index] = { ...this.workouts[index], name: finalName, work: w, rest: r, rounds: rnd };
+      const index = this.workouts.findIndex(
+        (x) => x.id === this.editingWorkoutId,
+      );
+      if (index !== -1)
+        this.workouts[index] = {
+          ...this.workouts[index],
+          name: finalName,
+          work: w,
+          rest: r,
+          rounds: rnd,
+        };
     } else {
-      const newW = { id: Date.now(), name: finalName, work: w, rest: r, rounds: rnd }; this.workouts.push(newW); workoutIdToSelect = newW.id;
+      const newW = {
+        id: Date.now(),
+        name: finalName,
+        work: w,
+        rest: r,
+        rounds: rnd,
+      };
+      this.workouts.push(newW);
+      workoutIdToSelect = newW.id;
     }
-    safeSetLS("tb_workouts", JSON.stringify(this.workouts)); this.renderList(); this.selectWorkout(workoutIdToSelect);
+    safeSetLS("tb_workouts", JSON.stringify(this.workouts));
+    this.renderList();
+    this.selectWorkout(workoutIdToSelect);
     modalManager.closeCurrent();
   },
 
   deleteWorkout(id) {
-    if (this.status !== "STOPPED") { showToast(t("active_timer")); return; }
-    if (this.workouts.length <= 1) { showToast(t("cannot_delete")); return; }
+    if (this.status !== "STOPPED") {
+      showToast(t("active_timer"));
+      return;
+    }
+    if (this.workouts.length <= 1) {
+      showToast(t("cannot_delete"));
+      return;
+    }
     this.workouts = this.workouts.filter((w) => w.id !== id);
     safeSetLS("tb_workouts", JSON.stringify(this.workouts));
     if (this.selectedId === id) this.selectWorkout(this.workouts[0].id);
@@ -93,20 +237,30 @@ export const tb = {
 
   selectWorkout(id) {
     if (this.status !== "STOPPED") return;
-    const w = this.workouts.find((k) => k.id === id); if (!w) return;
-    this.selectedId = id; safeSetLS("tb_selected_id", id);
-    this.work = w.work * 1000; this.rest = w.rest * 1000; this.rounds = w.rounds;
+    const w = this.workouts.find((k) => k.id === id);
+    if (!w) return;
+    this.selectedId = id;
+    safeSetLS("tb_selected_id", id);
+    this.work = w.work * 1000;
+    this.rest = w.rest * 1000;
+    this.rounds = w.rounds;
     updateText(this.els.activeName, w.name);
-    updateText(this.els.activeDetail, `${w.work}${t("sec").toLowerCase()} / ${w.rest}${t("sec").toLowerCase()} • ${w.rounds} ${t("rds")}`);
+    updateText(
+      this.els.activeDetail,
+      `${w.work}${t("sec").toLowerCase()} / ${w.rest}${t("sec").toLowerCase()} • ${w.rounds} ${t("rds")}`,
+    );
     this.renderList();
   },
 
   renderList() {
     if (!this.els.list) return;
-    this.els.list.replaceChildren(); const fragment = document.createDocumentFragment();
+    this.els.list.replaceChildren();
+    const fragment = document.createDocumentFragment();
     this.workouts.forEach((w) => {
-      const div = document.createElement("div"), isAct = w.id === this.selectedId;
-      div.tabIndex = 0; div.setAttribute("role", "button");
+      const div = document.createElement("div"),
+        isAct = w.id === this.selectedId;
+      div.tabIndex = 0;
+      div.setAttribute("role", "button");
       div.className = `tb-workout-row p-4 rounded-xl flex justify-between items-center transition-all cursor-pointer mb-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-color)] ${isAct ? "app-surface border-2 border-[var(--primary-color)] shadow-md" : "app-surface border app-border shadow-sm"}`;
       div.dataset.id = w.id;
       div.innerHTML = `<div class="flex-1 min-w-0 pr-2"><div class="font-bold truncate ${isAct ? "primary-text" : "app-text"}">${escapeHTML(w.name)}</div><div class="text-xs app-text-sec mt-1">${w.work}${t("sec").toLowerCase()} / ${w.rest}${t("sec").toLowerCase()} • ${w.rounds} ${t("rds")}</div></div><div class="flex gap-1 shrink-0"><button type="button" aria-label="${t("edit")}" data-id="${w.id}" class="tb-edit-btn text-gray-400 hover:primary-text p-2 focus:outline-none custom-focus rounded-lg active:scale-95"><svg focusable="false" aria-hidden="true" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg></button><button type="button" aria-label="${t("delete")}" data-id="${w.id}" class="tb-del-btn text-red-500 opacity-50 hover:opacity-100 p-2 focus:outline-none custom-focus rounded-lg active:scale-95"><svg focusable="false" aria-hidden="true" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg></button></div>`;
@@ -114,105 +268,202 @@ export const tb = {
     });
     this.els.list.appendChild(fragment);
   },
-  
+
   toggle() {
-    sm.vibrate(50); sm.play("click"); sm.unlock();
+    sm.vibrate(50);
+    sm.play("click");
+    sm.unlock();
     if (this.status === "STOPPED") this.start();
     else if (this.paused) this.resume();
     else this.pause();
   },
 
   start() {
-    document.dispatchEvent(new CustomEvent("timerStarted", { detail: "tabata" }));
-    this.currentRound = 1; this.status = "READY"; this.phaseDuration = 5000; this.phaseEndTime = performance.now() + this.phaseDuration;
-    this.paused = false; this.lastBeepSec = 0;
-    this.els.listSection.classList.add("hidden"); this.els.runningControls.classList.remove("hidden");
-    this.els.runningControls.classList.add("flex"); updateText(this.els.totalRoundsDisplay, this.rounds);
-    this.els.status.classList.remove("hidden"); this.els.timer.classList.remove("is-go");
-    requestWakeLock(); this.updatePhaseStyles(); bgWorker.postMessage("start"); this.tick();
+    document.dispatchEvent(
+      new CustomEvent("timerStarted", { detail: "tabata" }),
+    );
+    this.currentRound = 1;
+    this.status = "READY";
+    this.phaseDuration = 5000;
+    this.phaseEndTime = performance.now() + this.phaseDuration;
+    this.paused = false;
+    this.lastBeepSec = 0;
+    this.els.listSection.classList.add("hidden");
+    this.els.runningControls.classList.remove("hidden");
+    this.els.runningControls.classList.add("flex");
+    updateText(this.els.totalRoundsDisplay, this.rounds);
+    this.els.status.classList.remove("hidden");
+    this.els.timer.classList.remove("is-go");
+    requestWakeLock();
+    this.updatePhaseStyles();
+    bgWorker.postMessage("start");
+    this.tick();
   },
 
   pause() {
-    this.paused = true; bgWorker.postMessage("stop"); cancelAnimationFrame(this.rAF);
+    this.paused = true;
+    bgWorker.postMessage("stop");
+    cancelAnimationFrame(this.rAF);
     this.remainingAtPause = this.phaseEndTime - performance.now();
-    updateText(this.els.status, t("pause")); releaseWakeLock(); updateTitle("");
+    updateText(this.els.status, t("pause"));
+    releaseWakeLock();
+    updateTitle("");
   },
 
   resume() {
-    document.dispatchEvent(new CustomEvent("timerStarted", { detail: "tabata" }));
-    this.paused = false; this.phaseEndTime = performance.now() + this.remainingAtPause; this.lastBeepSec = 0;
-    requestWakeLock(); bgWorker.postMessage("start"); this.tick(); this.updatePhaseStyles();
+    document.dispatchEvent(
+      new CustomEvent("timerStarted", { detail: "tabata" }),
+    );
+    this.paused = false;
+    this.phaseEndTime = performance.now() + this.remainingAtPause;
+    this.lastBeepSec = 0;
+    requestWakeLock();
+    bgWorker.postMessage("start");
+    this.tick();
+    this.updatePhaseStyles();
   },
 
   stop() {
-    sm.vibrate(30); sm.play("click"); bgWorker.postMessage("stop"); cancelAnimationFrame(this.rAF);
-    this.status = "STOPPED"; this.paused = false; releaseWakeLock(); updateTitle("");
-    this.els.listSection.classList.remove("hidden"); this.els.runningControls.classList.remove("flex");
-    this.els.runningControls.classList.add("hidden"); this.els.status.classList.add("hidden");
-    updateText(this.els.timer, "GO"); this.els.timer.classList.add("is-go");
+    sm.vibrate(30);
+    sm.play("click");
+    bgWorker.postMessage("stop");
+    cancelAnimationFrame(this.rAF);
+    this.status = "STOPPED";
+    this.paused = false;
+    releaseWakeLock();
+    updateTitle("");
+    this.els.listSection.classList.remove("hidden");
+    this.els.runningControls.classList.remove("flex");
+    this.els.runningControls.classList.add("hidden");
+    this.els.status.classList.add("hidden");
+    updateText(this.els.timer, "GO");
+    this.els.timer.classList.add("is-go");
     if (this.els.ring) this.els.ring.style.strokeDashoffset = this.ringLength;
   },
 
   tick(isBackground = false) {
     if (this.status === "STOPPED" || this.paused) return;
-    const now = performance.now(), rem = this.phaseEndTime - now;
-    if (rem <= 0) { const isDeepSleepWakeup = rem < -2000; this.nextPhase(isDeepSleepWakeup ? Math.abs(rem) : 0); return; }
+    const now = performance.now(),
+      rem = this.phaseEndTime - now;
+    if (rem <= 0) {
+      const isDeepSleepWakeup = rem < -2000;
+      this.nextPhase(isDeepSleepWakeup ? Math.abs(rem) : 0);
+      return;
+    }
     if (now - this.lastRender >= 16 || isBackground) {
       if (!isBackground) this.render(rem);
-      else { const sTotal = Math.max(0, Math.ceil(rem / 1000)); updateTitle(`${this.status}: ${formatTimeStr(sTotal, false)}`); }
+      else {
+        const sTotal = Math.max(0, Math.ceil(rem / 1000));
+        updateTitle(`${this.status}: ${formatTimeStr(sTotal, false)}`);
+      }
       this.lastRender = now;
     }
-    if (!isBackground) { cancelAnimationFrame(this.rAF); this.rAF = requestAnimationFrame(() => this.tick()); }
+    if (!isBackground) {
+      cancelAnimationFrame(this.rAF);
+      this.rAF = requestAnimationFrame(() => this.tick());
+    }
   },
 
   nextPhase(missedTime = 0) {
-    if (missedTime === 0) sm.vibrate([100, 50, 100]); this.lastBeepSec = 0;
+    if (missedTime === 0) sm.vibrate([100, 50, 100]);
+    this.lastBeepSec = 0;
     if (missedTime > 0) {
       let remainingMissed = missedTime;
       while (remainingMissed > 0 && this.status !== "STOPPED") {
-        let currentPhaseDuration = (this.status === 'READY') ? this.phaseDuration : (this.status === 'WORK') ? this.work : this.rest;
+        let currentPhaseDuration =
+          this.status === "READY"
+            ? this.phaseDuration
+            : this.status === "WORK"
+              ? this.work
+              : this.rest;
         let step = Math.min(remainingMissed, currentPhaseDuration);
-        remainingMissed -= step; currentPhaseDuration -= step;
+        remainingMissed -= step;
+        currentPhaseDuration -= step;
         if (currentPhaseDuration <= 0) {
-          if (this.status === 'READY') { this.status = 'WORK'; this.phaseDuration = this.work + currentPhaseDuration; }
-          else if (this.status === 'WORK') { 
-              if (this.currentRound >= this.rounds) { this.stop(); return; }
-              this.status = 'REST'; this.phaseDuration = this.rest + currentPhaseDuration;
+          if (this.status === "READY") {
+            this.status = "WORK";
+            this.phaseDuration = this.work + currentPhaseDuration;
+          } else if (this.status === "WORK") {
+            if (this.currentRound >= this.rounds) {
+              this.stop();
+              return;
+            }
+            this.status = "REST";
+            this.phaseDuration = this.rest + currentPhaseDuration;
+          } else if (this.status === "REST") {
+            this.currentRound++;
+            this.status = "WORK";
+            this.phaseDuration = this.work + currentPhaseDuration;
           }
-          else if (this.status === 'REST') { this.currentRound++; this.status = 'WORK'; this.phaseDuration = this.work + currentPhaseDuration; }
         } else this.phaseDuration = currentPhaseDuration;
       }
       this.phaseEndTime = performance.now() + this.phaseDuration;
     } else {
-      if (this.status === "READY") { this.status = "WORK"; this.phaseDuration = this.work; sm.play("work_start"); }
-      else if (this.status === "WORK") {
+      if (this.status === "READY") {
+        this.status = "WORK";
+        this.phaseDuration = this.work;
+        sm.play("work_start");
+      } else if (this.status === "WORK") {
         if (this.currentRound >= this.rounds) {
-          sm.vibrate([200, 100, 200, 100, 400]); sm.play("complete"); announceToScreenReader(t("tabata_complete"));
-          requestAnimationFrame(() => { showToast(t("tabata_complete")); this.stop(); }); return;
+          sm.vibrate([200, 100, 200, 100, 400]);
+          sm.play("complete");
+          announceToScreenReader(t("tabata_complete"));
+          requestAnimationFrame(() => {
+            showToast(t("tabata_complete"));
+            this.stop();
+          });
+          return;
         }
-        this.status = "REST"; this.phaseDuration = this.rest; sm.play("rest_start");
+        this.status = "REST";
+        this.phaseDuration = this.rest;
+        sm.play("rest_start");
+      } else if (this.status === "REST") {
+        this.currentRound++;
+        this.status = "WORK";
+        this.phaseDuration = this.work;
+        sm.play("work_start");
       }
-      else if (this.status === "REST") { this.currentRound++; this.status = "WORK"; this.phaseDuration = this.work; sm.play("work_start"); }
       this.phaseEndTime = performance.now() + this.phaseDuration;
     }
-    this.updatePhaseStyles(); this.tick();
+    this.updatePhaseStyles();
+    this.tick();
   },
 
   updatePhaseStyles() {
-    if (!this.els.ring) return; updateText(this.els.roundDisplay, this.currentRound);
+    if (!this.els.ring) return;
+    updateText(this.els.roundDisplay, this.currentRound);
     const statusEl = this.els.status;
     statusEl.classList.remove("primary-text", "text-blue-500", "app-text-sec");
-    this.els.ring.classList.remove("primary-stroke"); this.els.ring.style.stroke = "";
-    if (this.status === "WORK") { updateText(statusEl, t("work")); statusEl.classList.add("primary-text"); this.els.ring.classList.add("primary-stroke"); }
-    else if (this.status === "REST") { updateText(statusEl, t("rest")); statusEl.classList.add("text-blue-500"); this.els.ring.style.stroke = "#3b82f6"; }
-    else { updateText(statusEl, t("get_ready")); statusEl.classList.add("app-text-sec"); this.els.ring.classList.add("primary-stroke"); }
+    this.els.ring.classList.remove("primary-stroke");
+    this.els.ring.style.stroke = "";
+    if (this.status === "WORK") {
+      updateText(statusEl, t("work"));
+      statusEl.classList.add("primary-text");
+      this.els.ring.classList.add("primary-stroke");
+    } else if (this.status === "REST") {
+      updateText(statusEl, t("rest"));
+      statusEl.classList.add("text-blue-500");
+      this.els.ring.style.stroke = "#3b82f6";
+    } else {
+      updateText(statusEl, t("get_ready"));
+      statusEl.classList.add("app-text-sec");
+      this.els.ring.classList.add("primary-stroke");
+    }
   },
 
   render(rem) {
     const sTotal = Math.max(0, Math.ceil(rem / 1000));
-    if (sTotal <= 3 && sTotal > 0 && this.lastBeepSec !== sTotal) { sm.play("tick"); this.lastBeepSec = sTotal; }
+    if (sTotal <= 3 && sTotal > 0 && this.lastBeepSec !== sTotal) {
+      sm.play("tick");
+      this.lastBeepSec = sTotal;
+    }
     const timeStr = formatTimeStr(sTotal, false);
-    updateText(this.els.timer, timeStr); updateTitle(`${this.status}: ${timeStr}`);
-    if (this.els.ring) this.els.ring.style.strokeDashoffset = this.ringLength - (Math.max(0, this.phaseDuration - rem) / this.phaseDuration) * this.ringLength;
+    updateText(this.els.timer, timeStr);
+    updateTitle(`${this.status}: ${timeStr}`);
+    if (this.els.ring)
+      this.els.ring.style.strokeDashoffset =
+        this.ringLength -
+        (Math.max(0, this.phaseDuration - rem) / this.phaseDuration) *
+          this.ringLength;
   },
 };
