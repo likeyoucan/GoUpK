@@ -420,6 +420,25 @@ html.dark .app-bg.has-vignette::before {
 /* =========================================
    11. МОДАЛЬНЫЕ ОКНА (BOTTOM SHEETS)
 ========================================= */
+
+#modal-container {
+  position: absolute;
+  inset: 0;
+  z-index: 50; /* Должен быть выше z-index свайп-зон */
+  pointer-events: none; /* По умолчанию прозрачен для кликов */
+}
+
+#modal-container > * {
+  /* Все прямые потомки (оверлей, модальные окна) по умолчанию неактивны */
+  pointer-events: none;
+}
+
+#modal-container.active,
+#modal-container.active > * {
+  /* Когда контейнер активен, он и его дети могут принимать события */
+  pointer-events: auto;
+}
+
 #tb-saveModalBtn,
 #sw-sessionsList {
   margin-bottom: var(--safe-bottom);
