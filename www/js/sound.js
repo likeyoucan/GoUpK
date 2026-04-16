@@ -6,16 +6,14 @@ export const sm = {
   audioCtx: null,
   soundEnabled: true,
   vibroEnabled: true,
-  vibroLevel: 1, // Глобальный множитель от 0.5 до 2
+  vibroLevel: 1,
   volume: 1,
   theme: "classic",
-
-  // [ИЗМЕНЕНИЕ 2] Карта базовых интенсивностей для разных действий
   vibroIntensities: {
-    light: 0.5, // Для мелких действий (клики по навигации)
-    medium: 1, // Стандартная вибрация (сброс, lap)
-    strong: 1.5, // Для важных действий (старт/стоп таймеров)
-    tactile: 0.8, // Для тактильного отклика на слайдерах
+    light: 0.5,
+    medium: 1,
+    strong: 1.5,
+    tactile: 0.8,
   },
 
   unlock() {
@@ -38,24 +36,27 @@ export const sm = {
     $("toggle-vibro")?.addEventListener("change", (e) => {
       this.vibroEnabled = e.target.checked;
       safeSetLS("app_vibro", this.vibroEnabled);
-      this.updateVibroUI();
+      // [ИСПРАВЛЕНИЕ] Отправляем событие вместо прямого управления UI
+      document.dispatchEvent(
+        new CustomEvent("vibroToggled", {
+          detail: { enabled: this.vibroEnabled },
+        }),
+      );
       if (this.vibroEnabled) this.vibrate(50, "medium");
     });
 
     $("vibroSlider")?.addEventListener("input", (e) => {
-      // Значения слайдера 0, 1, 2, 3, 4 соответствуют множителям
       const levels = [0.5, 0.75, 1, 1.5, 2];
       this.vibroLevel = levels[e.target.value] || 1;
       safeSetLS("app_vibro_level", this.vibroLevel);
-      // Не вибрируем на 'input', чтобы не было слишком назойливо
     });
-    // Вибрируем по отпусканию для теста
+
     $("vibroSlider")?.addEventListener("change", () =>
       this.vibrate(50, "strong"),
     );
 
     $("volumeSlider")?.addEventListener("input", (e) => {
-      this.vibrate(10, "tactile"); // Легкая вибрация при изменении
+      this.vibrate(10, "tactile");
       this.volume = parseFloat(e.target.value);
       const display = $("volumeDisplay");
       if (display) display.textContent = Math.round(this.volume * 100) + "%";
@@ -69,9 +70,7 @@ export const sm = {
       this.play("click");
     });
 
-    const unlockHandler = () => {
-      this.unlock();
-    };
+    const unlockHandler = () => this.unlock();
     document.addEventListener("click", unlockHandler, {
       once: true,
       capture: true,
@@ -96,12 +95,14 @@ export const sm = {
     if ($("toggle-vibro")) $("toggle-vibro").checked = this.vibroEnabled;
     if ($("vibroSlider")) {
       const levels = [0.5, 0.75, 1, 1.5, 2];
-      const closestIndex = levels.reduce((prev, curr, index) => {
-        return Math.abs(curr - this.vibroLevel) <
+      const closestIndex = levels.reduce(
+        (prev, curr, index) =>
+          Math.abs(curr - this.vibroLevel) <
           Math.abs(levels[prev] - this.vibroLevel)
-          ? index
-          : prev;
-      }, 0);
+            ? index
+            : prev,
+        0,
+      );
       $("vibroSlider").value = closestIndex;
     }
     if ($("volumeSlider")) {
@@ -112,7 +113,12 @@ export const sm = {
     if ($("soundThemeSelect")) $("soundThemeSelect").value = this.theme;
 
     this.updateVolumeUI();
-    this.updateVibroUI();
+    // [ИСПРАВЛЕНИЕ] Отправляем событие при загрузке, чтобы UI в theme.js обновился
+    document.dispatchEvent(
+      new CustomEvent("vibroToggled", {
+        detail: { enabled: this.vibroEnabled },
+      }),
+    );
   },
 
   resetSettings() {
@@ -135,12 +141,8 @@ export const sm = {
     }
   },
 
-  updateVibroUI() {
-    const container = $("vibro-level-container");
-    if (container) {
-      container.classList.toggle("hidden", !this.vibroEnabled);
-    }
-  },
+  // [ИСПРАВЛЕНИЕ] Эта функция удалена, так как ее логика перенесена в theme.js
+  // updateVibroUI() { ... }
 
   initAudio() {
     if (this.audioCtx || !this.soundEnabled) return;
@@ -152,27 +154,21 @@ export const sm = {
     }
   },
 
-  // [ИЗМЕНЕНИЕ 2] Обновленная функция вибрации
   vibrate(basePattern, intensityKey = "medium") {
     if (!this.vibroEnabled || !navigator.vibrate) return;
     try {
-      // Получаем базовый множитель для типа действия (light, medium, strong)
       const intensityMultiplier = this.vibroIntensities[intensityKey] || 1;
-      // Применяем глобальный множитель из настроек
       const finalMultiplier = intensityMultiplier * this.vibroLevel;
-
       const applyLevel = (val) =>
         Math.max(1, Math.min(1000, Math.round(val * finalMultiplier)));
-
       const pattern = Array.isArray(basePattern)
         ? basePattern.map(applyLevel)
         : applyLevel(basePattern);
       navigator.vibrate(pattern);
-    } catch (e) {
-      // Игнорируем ошибки, если вибрация не поддерживается или отключена
-    }
+    } catch (e) {}
   },
 
+  // ... функции playNote и play остаются без изменений
   playNote(
     freq,
     type,
@@ -233,11 +229,9 @@ export const sm = {
     osc.start(startTime);
     osc.stop(startTime + duration);
   },
-
   play(type) {
     if (!this.soundEnabled || !this.audioCtx || this.volume === 0) return;
     this.unlock();
-
     if (this.theme === "classic") {
       if (type === "click") this.playNote(2000, "square", 0, 0.05, 0.2);
       else if (type === "tick") this.playNote(2500, "square", 0, 0.05, 0.3);

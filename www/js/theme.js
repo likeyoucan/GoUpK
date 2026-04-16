@@ -13,6 +13,7 @@ import { sm } from "./sound.js?v=VERSION";
 const MAX_CUSTOM_COLORS = 50;
 
 export const themeManager = {
+  // ... все свойства остаются без изменений ...
   currentMode: "system",
   currentAccent: "",
   currentBg: "default",
@@ -62,6 +63,7 @@ export const themeManager = {
   customAccentColors: [],
   customBgColors: [],
 
+  // ... функции _createColorButtonEl, _removeActionButton, _handleActionButtonLogic, updateColorSelectionUI, updateSliderLabel, init - остаются без изменений ...
   _createColorButtonEl(color, isCustom) {
     const wrapper = document.createElement("div");
     wrapper.className = "custom-color-wrapper shrink-0 rounded-full";
@@ -80,7 +82,6 @@ export const themeManager = {
     wrapper.appendChild(button);
     return wrapper;
   },
-
   _removeActionButton(container) {
     const actionBtn = container.querySelector(".color-action-btn.is-visible");
     if (actionBtn) {
@@ -90,16 +91,13 @@ export const themeManager = {
       }, 300);
     }
   },
-
   _handleActionButtonLogic(type, hex) {
     const isAccent = type === "accent";
     const container = $(
       isAccent ? "accent-colors-container" : "bg-colors-container",
     );
     if (!container) return;
-
     container.querySelector(".color-action-btn")?.remove();
-
     let activeWrapper = container.querySelector(
       `.custom-color-wrapper[data-color="${hex}"]`,
     );
@@ -109,7 +107,6 @@ export const themeManager = {
         activeWrapper = picker.closest(".relative");
     }
     if (!activeWrapper) return;
-
     const allStandard = isAccent
       ? this.standardAccentColors
       : this.standardBgColors;
@@ -117,14 +114,12 @@ export const themeManager = {
     const isCustom = allCustom.includes(hex);
     const isStandard = allStandard.includes(hex);
     const isKnown = isCustom || isStandard || hex === "default";
-
     let actionBtnHTML = null;
     if (isCustom) {
       actionBtnHTML = `<button type="button" data-action="delete" aria-label="${t("delete")}" class="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-full bg-red-500/10 text-red-500 hover:bg-red-500/20 focus:outline-none custom-focus"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 12h-15"></path></svg></button>`;
     } else if (!isKnown && hex.startsWith("#")) {
       actionBtnHTML = `<button type="button" data-action="add" aria-label="${t("add_color")}" class="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-full bg-green-500/10 text-green-500 hover:bg-green-500/20 focus:outline-none custom-focus"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"></path></svg></button>`;
     }
-
     if (actionBtnHTML && activeWrapper) {
       const actionBtnWrapper = document.createElement("div");
       actionBtnWrapper.className = "color-action-btn";
@@ -135,14 +130,12 @@ export const themeManager = {
       });
     }
   },
-
   updateColorSelectionUI(type, hex) {
     const isAccent = type === "accent";
     const container = $(
       isAccent ? "accent-colors-container" : "bg-colors-container",
     );
     if (!container) return;
-
     container
       .querySelectorAll(".custom-color-wrapper, .relative")
       .forEach((el) => {
@@ -162,7 +155,6 @@ export const themeManager = {
           }
         }
       });
-
     let activeWrapper = container.querySelector(
       `.custom-color-wrapper[data-color="${hex}"]`,
     );
@@ -171,7 +163,6 @@ export const themeManager = {
       if (picker && picker.value === hex)
         activeWrapper = picker.closest(".relative");
     }
-
     if (activeWrapper) {
       activeWrapper.classList.add(
         "ring-[var(--primary-color)]",
@@ -187,16 +178,12 @@ export const themeManager = {
         let lum = 0.5;
         if (hex !== "default")
           lum = this.getLuminance(...Object.values(this.hexToRGB(hex)));
-
-        // [ИСПРАВЛЕНИЕ] Используем CSS переменные вместо статичных цветов
         const iconColorVar =
           lum > 0.4 ? "var(--text-color)" : "var(--surface-color)";
-
         button.innerHTML = `<svg focusable="false" aria-hidden="true" class="w-5 h-5" style="color: ${iconColorVar};" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4.5 12.75l6 6 9-13.5"></path></svg>`;
       }
     }
   },
-
   updateSliderLabel(sliderId, labelId, labelsArray) {
     const slider = $(sliderId);
     const label = $(labelId);
@@ -212,13 +199,11 @@ export const themeManager = {
     const offset = thumbWidth / 2 - percent * thumbWidth;
     label.style.left = `calc(${percent * 100}% - ${offset}px)`;
   },
-
   init() {
     this.applySettings();
     this.bindEvents();
     document.dispatchEvent(new Event("languageChanged"));
   },
-
   applySettings() {
     try {
       this.customAccentColors =
@@ -297,6 +282,11 @@ export const themeManager = {
 
   bindEvents() {
     document.addEventListener("languageChanged", () => this.syncSliderUIs());
+    // [ИСПРАВЛЕНИЕ] Добавляем слушатель для события из sound.js
+    document.addEventListener("vibroToggled", (e) => {
+      this.updateVibroSliderUI(e.detail.enabled);
+    });
+
     $("toggle-sw-minute-beep")?.addEventListener("change", (e) => {
       this.swMinuteBeep = e.target.checked;
       safeSetLS("app_sw_minute_beep", this.swMinuteBeep);
@@ -391,10 +381,10 @@ export const themeManager = {
       });
   },
 
+  // ... (функции setMode, _internalSetMode, handleColorClick, renderColorSection, deleteCustomColor, addCustomColor, setColor, setBgColor, resetSettings, applyBgTheme, getLuminance) ...
   setMode(mode) {
     this._internalSetMode(mode, true);
   },
-
   _internalSetMode(mode, useTransition) {
     if (useTransition) document.body.classList.add("is-updating-theme");
     this.currentMode = mode;
@@ -426,7 +416,6 @@ export const themeManager = {
         document.body.classList.remove("is-updating-theme"),
       );
   },
-
   handleColorClick(event, type) {
     const target = event.target;
     const isAccent = type === "accent";
@@ -434,7 +423,6 @@ export const themeManager = {
       isAccent ? "accent-colors-container" : "bg-colors-container",
     );
     const colorWrapper = target.closest(".custom-color-wrapper");
-
     if (colorWrapper) {
       const color = colorWrapper.dataset.color;
       const existingActionBtn = colorWrapper.previousElementSibling;
@@ -450,7 +438,6 @@ export const themeManager = {
       isAccent ? this.setColor(color, true) : this.setBgColor(color, true);
       return;
     }
-
     const actionBtn = target.closest(".color-action-btn button");
     if (actionBtn) {
       sm.vibrate(40, "medium");
@@ -464,6 +451,13 @@ export const themeManager = {
         ) {
           const colorToDelete = colorToDeleteWrapper.dataset.color;
           this.deleteCustomColor(type, colorToDelete);
+          colorToDeleteWrapper.classList.remove(
+            "ring-[var(--primary-color)]",
+            "ring-2",
+            "ring-offset-2",
+            "ring-offset-surface",
+            "shadow-lg",
+          );
           this._removeActionButton(container);
           colorToDeleteWrapper.classList.add("is-deleting");
           setTimeout(() => {
@@ -484,7 +478,6 @@ export const themeManager = {
       }
     }
   },
-
   renderColorSection(type) {
     const isAccent = type === "accent";
     const container = $(
@@ -514,7 +507,6 @@ export const themeManager = {
     this.updateColorSelectionUI(type, activeColor);
     container.scrollLeft = scrollLeft;
   },
-
   deleteCustomColor(type, color) {
     const isAccent = type === "accent";
     let customColors = isAccent ? this.customAccentColors : this.customBgColors;
@@ -528,7 +520,6 @@ export const themeManager = {
       safeSetLS(key, JSON.stringify(customColors));
     }
   },
-
   addCustomColor(type, color) {
     const isAccent = type === "accent";
     const customColors = isAccent
@@ -550,7 +541,6 @@ export const themeManager = {
       isAccent ? this.setColor(color, true) : this.setBgColor(color, true);
     }
   },
-
   setColor(hex, showAction = true) {
     this.currentAccent = hex;
     safeSetLS("theme_color", hex);
@@ -562,7 +552,6 @@ export const themeManager = {
     this.updateColorSelectionUI("accent", hex);
     if (showAction) this._handleActionButtonLogic("accent", hex);
   },
-
   setBgColor(hex, showAction = true) {
     this.currentBg = hex;
     safeSetLS("theme_bg_color", hex);
@@ -574,7 +563,6 @@ export const themeManager = {
     this.updateColorSelectionUI("bg", hex);
     if (showAction) this._handleActionButtonLogic("bg", hex);
   },
-
   resetSettings() {
     const themeKeys = [
       "theme_mode",
@@ -647,6 +635,7 @@ export const themeManager = {
     });
     return a[0] * 0.2126 + a[1] * 0.7152 + a[2] * 0.0722;
   },
+
   updateVignette() {
     const bg = document.querySelector(".app-bg");
     if (!bg) return;
@@ -661,10 +650,38 @@ export const themeManager = {
         "--vignette-alpha",
         this.vignetteAlpha * 0.4,
       );
+      // [ИСПРАВЛЕНИЕ] Обновляем позицию подписи, когда слайдер становится видимым
+      requestAnimationFrame(() => {
+        this.updateSliderLabel(
+          "vignetteSlider",
+          "vignette-label",
+          this.vignetteLabels,
+        );
+      });
     } else {
       bg.classList.remove("has-vignette");
     }
   },
+
+  // [ИСПРАВЛЕНИЕ] Новая функция для централизованного управления UI слайдера вибрации
+  updateVibroSliderUI(isEnabled) {
+    const container = $("vibro-level-container");
+    if (container) {
+      container.classList.toggle("hidden", !isEnabled);
+      container.classList.toggle("flex", isEnabled);
+      if (isEnabled) {
+        requestAnimationFrame(() => {
+          this.updateSliderLabel(
+            "vibroSlider",
+            "vibro-label",
+            this.vibroLabels,
+          );
+        });
+      }
+    }
+  },
+
+  // ... (остальные функции остаются без изменений) ...
   updateGlass() {
     document.documentElement.classList.toggle(
       "glass-effect",
