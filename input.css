@@ -90,9 +90,11 @@ html.dark {
   -webkit-tap-highlight-color: transparent;
 }
 
-.preload * {
+.preload *,
+.theme-transition-disable * {
   transition: none !important;
 }
+
 
 body {
   height: 100vh;
