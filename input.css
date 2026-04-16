@@ -1168,7 +1168,8 @@ body.hide-nav-labels .nav-btn {
   color: var(--primary-color);
   font-weight: bold;
   white-space: nowrap;
-  opacity: 0; /* По умолчанию скрыта */
+  /* [ИЗМЕНЕНИЕ] Делаем метку видимой по умолчанию, но полупрозрачной */
+  opacity: 0.7;
   transition: opacity 0.2s;
 }
 

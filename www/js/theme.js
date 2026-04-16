@@ -100,17 +100,14 @@ export const themeManager = {
 
     container.querySelector(".color-action-btn")?.remove();
 
-    // [ИСПРАВЛЕНИЕ] Унифицированный и правильный способ поиска активного элемента
     let activeWrapper = container.querySelector(
       `.custom-color-wrapper[data-color="${hex}"]`,
     );
     if (!activeWrapper) {
       const picker = isAccent ? $("customColorInput") : $("customBgInput");
-      if (picker && picker.value === hex) {
+      if (picker && picker.value === hex)
         activeWrapper = picker.closest(".relative");
-      }
     }
-
     if (!activeWrapper) return;
 
     const allStandard = isAccent
@@ -204,7 +201,7 @@ export const themeManager = {
     label.textContent = t(labelsArray[val]);
     const min = parseFloat(slider.min);
     const max = parseFloat(slider.max);
-    const percent = (val - min) / (max - min);
+    const percent = max - min > 0 ? (val - min) / (max - min) : 0;
     const thumbWidth = 24;
     const trackWidth = slider.offsetWidth;
     if (trackWidth === 0) return;
@@ -282,6 +279,7 @@ export const themeManager = {
       );
       $("vibroSlider").value = closestIndex;
     }
+    this.syncSliderUIs();
   },
 
   syncSliderUIs() {
@@ -547,6 +545,11 @@ export const themeManager = {
     document.documentElement.style.setProperty("--primary-color", hex);
     const { h } = this.hexToHSL(hex);
     document.documentElement.style.setProperty("--accent-h", h);
+
+    // [ИСПРАВЛЕНИЕ] Всегда синхронизируем значение color picker
+    const picker = $("customColorInput");
+    if (picker) picker.value = hex;
+
     this.updateColorSelectionUI("accent", hex);
     if (showAction) this._handleActionButtonLogic("accent", hex);
   },
@@ -556,6 +559,11 @@ export const themeManager = {
     safeSetLS("theme_bg_color", hex);
     const isDark = document.documentElement.classList.contains("dark");
     this.applyBgTheme(hex, isDark);
+
+    // [ИСПРАВЛЕНИЕ] Всегда синхронизируем значение color picker, с фолбэком для 'default'
+    const picker = $("customBgInput");
+    if (picker) picker.value = hex === "default" ? "#f3f4f6" : hex;
+
     this.updateColorSelectionUI("bg", hex);
     if (showAction) this._handleActionButtonLogic("bg", hex);
   },
