@@ -187,8 +187,12 @@ export const themeManager = {
         let lum = 0.5;
         if (hex !== "default")
           lum = this.getLuminance(...Object.values(this.hexToRGB(hex)));
-        const iconColor = lum > 0.4 ? "black" : "white";
-        button.innerHTML = `<svg focusable="false" aria-hidden="true" class="w-5 h-5" style="color: ${iconColor};" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4.5 12.75l6 6 9-13.5"></path></svg>`;
+
+        // [ИСПРАВЛЕНИЕ] Используем CSS переменные вместо статичных цветов
+        const iconColorVar =
+          lum > 0.4 ? "var(--text-color)" : "var(--surface-color)";
+
+        button.innerHTML = `<svg focusable="false" aria-hidden="true" class="w-5 h-5" style="color: ${iconColorVar};" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4.5 12.75l6 6 9-13.5"></path></svg>`;
       }
     }
   },
@@ -415,6 +419,8 @@ export const themeManager = {
       if (bgPicker) bgPicker.value = isDark ? "#1c1c1e" : "#f3f4f6";
     }
     this.applyBgTheme(this.currentBg, isDark);
+    this.updateColorSelectionUI("accent", this.currentAccent);
+    this.updateColorSelectionUI("bg", this.currentBg);
     if (useTransition)
       requestAnimationFrame(() =>
         document.body.classList.remove("is-updating-theme"),
@@ -460,10 +466,8 @@ export const themeManager = {
           this.deleteCustomColor(type, colorToDelete);
           this._removeActionButton(container);
           colorToDeleteWrapper.classList.add("is-deleting");
-          // [ИСПРАВЛЕНИЕ] Вложенный setTimeout для предотвращения "скачка" рамки
           setTimeout(() => {
             colorToDeleteWrapper.remove();
-            // Ставим таймаут 0, чтобы выделение применилось в следующем цикле событий
             setTimeout(() => {
               const newActiveColor = isAccent
                 ? this.standardAccentColors[0]
