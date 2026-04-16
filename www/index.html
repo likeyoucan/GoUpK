@@ -702,11 +702,7 @@
                       id="accent-colors-container"
                       class="flex items-center gap-4 overflow-x-auto scroll-lock no-scrollbar py-2 px-2 -mx-2"
                     >
-                      <div
-                        id="accent-action-slot"
-                        class="w-9 h-9 shrink-0"
-                      ></div>
-                      <!-- Кнопки цветов и color-picker будут добавлены сюда из JS -->
+                      <!-- Полностью управляется из JS -->
                     </div>
                   </div>
                   <div class="p-4 border-b app-border">
@@ -719,8 +715,7 @@
                       id="bg-colors-container"
                       class="flex items-center gap-4 overflow-x-auto scroll-lock no-scrollbar py-2 px-2 -mx-2"
                     >
-                      <div id="bg-action-slot" class="w-9 h-9 shrink-0"></div>
-                      <!-- Кнопки цветов и color-picker будут добавлены сюда из JS -->
+                      <!-- Полностью управляется из JS -->
                     </div>
                   </div>
 
@@ -803,15 +798,10 @@
                               id="vignetteSlider"
                               class="w-full"
                             />
-                            <div
-                              id="vignette-labels"
-                              class="slider-labels w-full"
-                            >
-                              <span data-i18n="vignette_min">min</span>
-                              <span data-i18n="vignette_low">low</span>
-                              <span data-i18n="vignette_medium">mid</span>
-                              <span data-i18n="vignette_high">high</span>
-                              <span data-i18n="vignette_max">max</span>
+                            <div class="thumb-label-container">
+                              <span id="vignette-label" class="thumb-label"
+                                >mid</span
+                              >
                             </div>
                           </div>
                         </div>
@@ -1079,12 +1069,10 @@
                             id="vibroSlider"
                             class="w-full"
                           />
-                          <div id="vibro-labels" class="slider-labels w-full">
-                            <span data-i18n="vibro_min">min</span>
-                            <span data-i18n="vibro_low">low</span>
-                            <span data-i18n="vibro_medium">mid</span>
-                            <span data-i18n="vibro_high">high</span>
-                            <span data-i18n="vibro_max">max</span>
+                          <div class="thumb-label-container">
+                            <span id="vibro-label" class="thumb-label"
+                              >mid</span
+                            >
                           </div>
                         </div>
                       </div>

@@ -111,6 +111,7 @@ export const translations = {
     bg_limit_msg: "Max 50 custom background colors",
     name_too_long: "Name cannot exceed 50 characters",
     vignette_depth: "Intensity",
+    default_color: "Default",
   },
   ru: {
     theme_classic: "Классика",
@@ -221,6 +222,7 @@ export const translations = {
     bg_limit_msg: "Максимум 50 своих цветов фона",
     name_too_long: "Название не может превышать 50 символов",
     vignette_depth: "Интенсивность",
+     default_color: "По умполчанию",
   },
 };
 
