@@ -57,7 +57,6 @@ export const themeManager = {
     this.renderColorSection("accent");
     this.renderColorSection("bg");
 
-    // Вызываем setMode без отключения анимаций, т.к. это первая загрузка (уже есть класс .preload)
     this._internalSetMode(safeGetLS("theme_mode") || "system", false);
 
     this.setColor(safeGetLS("theme_color") || "#22c55e");
@@ -180,12 +179,10 @@ export const themeManager = {
       });
   },
 
-  // [ИЗМЕНЕНИЕ] Публичная функция, которая вызывает внутреннюю с отключением анимаций
   setMode(mode) {
     this._internalSetMode(mode, true);
   },
 
-  // [ИЗМЕНЕНИЕ] Внутренняя функция для смены темы. Второй аргумент управляет анимацией.
   _internalSetMode(mode, useTransitionDisable) {
     if (useTransitionDisable) {
       document.body.classList.add("theme-transition-disable");
@@ -209,37 +206,70 @@ export const themeManager = {
       (mode === "system" &&
         window.matchMedia("(prefers-color-scheme: dark)").matches);
 
-    // Применяем ВСЕ изменения, зависимые от темы, пока анимации отключены
     document.documentElement.classList.toggle("dark", isDark);
     document.documentElement.style.colorScheme = isDark ? "dark" : "light";
     this.applyBgTheme(this.currentBg, isDark);
-    this.renderColorSection("bg"); // Перерисовываем кнопки, чтобы цвет `default` был правильным
+    this.renderColorSection("bg");
 
+    // Восстанавливаем переходы после отрисовки
     if (useTransitionDisable) {
-      // Даем браузеру один кадр на применение всех изменений без анимации
-      setTimeout(() => {
+      requestAnimationFrame(() => {
         document.body.classList.remove("theme-transition-disable");
-      }, 0);
+      });
     }
   },
 
+  // [ИЗМЕНЕНИЕ] Обработчик кликов теперь управляет обновлением DOM
   handleColorClick(event, type) {
     const target = event.target;
+    const isAccent = type === "accent";
 
     const colorBtn = target.closest(".color-btn");
     if (colorBtn) {
       const color = colorBtn.dataset.color;
-      type === "accent" ? this.setColor(color) : this.setBgColor(color);
-      this.checkAndShowAddButton(type, color); // Скрываем "+" если выбрали существующий цвет
+      isAccent ? this.setColor(color) : this.setBgColor(color);
+      this.checkAndShowAddButton(type, color);
       return;
     }
 
     const deleteBtn = target.closest(".delete-color-btn");
     if (deleteBtn) {
       event.stopPropagation();
-      const color = deleteBtn.dataset.color;
-      this.deleteCustomColor(type, color);
+      const colorToDelete = deleteBtn.dataset.color;
+      const newActiveColor = this.deleteCustomColor(type, colorToDelete);
+
+      // Перерисовываем DOM
+      this.renderColorSection(type);
+
+      // А теперь, после перерисовки, устанавливаем новый активный цвет
+      if (newActiveColor) {
+        isAccent
+          ? this.setColor(newActiveColor)
+          : this.setBgColor(newActiveColor);
+      }
     }
+  },
+
+  // [ИЗМЕНЕНИЕ] deleteCustomColor теперь возвращает цвет, который нужно сделать активным
+  deleteCustomColor(type, color) {
+    const isAccent = type === "accent";
+    let customColors = isAccent ? this.customAccentColors : this.customBgColors;
+    const key = isAccent ? "custom_accent_colors" : "custom_bg_colors";
+
+    const index = customColors.indexOf(color);
+    if (index > -1) {
+      customColors.splice(index, 1);
+      if (isAccent) this.customAccentColors = customColors;
+      else this.customBgColors = customColors;
+
+      safeSetLS(key, JSON.stringify(customColors));
+
+      // Если удалили активный цвет, возвращаем цвет по умолчанию
+      if (safeGetLS(isAccent ? "theme_color" : "theme_bg_color") === color) {
+        return isAccent ? this.standardAccentColors[0] : "default";
+      }
+    }
+    return null; // Возвращаем null, если активный цвет не менялся
   },
 
   renderColorSection(type) {
@@ -286,7 +316,6 @@ export const themeManager = {
       </div>`;
   },
 
-  // [ИЗМЕНЕНИЕ] Функция для управления видимостью кнопки "+"
   checkAndShowAddButton(type, color) {
     const isAccent = type === "accent";
     const addBtn = $(isAccent ? "add-accent-color-btn" : "add-bg-color-btn");
@@ -296,7 +325,7 @@ export const themeManager = {
       ...(isAccent ? this.standardAccentColors : this.standardBgColors),
       ...(isAccent ? this.customAccentColors : this.customBgColors),
     ];
-    const isNewColor = !allColors.includes(color);
+    const isNewColor = !allColors.includes(color) && color.startsWith("#");
 
     addBtn.classList.toggle("hidden", !isNewColor);
     addBtn.classList.toggle("flex", isNewColor);
@@ -318,28 +347,6 @@ export const themeManager = {
       safeSetLS(key, JSON.stringify(customColors));
       this.renderColorSection(type);
       isAccent ? this.setColor(color) : this.setBgColor(color);
-      this.checkAndShowAddButton(type, color); // Скроет кнопку после добавления
-    }
-  },
-
-  deleteCustomColor(type, color) {
-    const isAccent = type === "accent";
-    let customColors = isAccent ? this.customAccentColors : this.customBgColors;
-    const key = isAccent ? "custom_accent_colors" : "custom_bg_colors";
-
-    const index = customColors.indexOf(color);
-    if (index > -1) {
-      customColors.splice(index, 1);
-      if (isAccent) this.customAccentColors = customColors;
-      else this.customBgColors = customColors;
-      safeSetLS(key, JSON.stringify(customColors));
-      if (safeGetLS(isAccent ? "theme_color" : "theme_bg_color") === color) {
-        isAccent
-          ? this.setColor(this.standardAccentColors[0])
-          : this.setBgColor("default");
-      }
-      this.renderColorSection(type);
-      this.checkAndShowAddButton(type, color); // Перепроверяем состояние кнопки
     }
   },
 
@@ -362,28 +369,6 @@ export const themeManager = {
     this.applySettings();
   },
 
-  setMode(mode) {
-    this.currentMode = mode;
-    safeSetLS("theme_mode", mode);
-    document.querySelectorAll('[id^="theme-"]').forEach((b) => {
-      b.classList.remove("app-surface", "shadow-sm", "app-text");
-      b.classList.add("app-text-sec");
-    });
-    const activeBtn = $(`theme-${mode}`);
-    if (activeBtn) {
-      activeBtn.classList.remove("app-text-sec");
-      activeBtn.classList.add("app-surface", "shadow-sm", "app-text");
-    }
-    const isDark =
-      mode === "dark" ||
-      (mode === "system" &&
-        window.matchMedia("(prefers-color-scheme: dark)").matches);
-    document.documentElement.classList.toggle("dark", isDark);
-    document.documentElement.style.colorScheme = isDark ? "dark" : "light";
-    this.applyBgTheme(this.currentBg, isDark);
-    this.renderColorSection("bg");
-  },
-
   setColor(hex) {
     safeSetLS("theme_color", hex);
     document.documentElement.style.setProperty("--primary-color", hex);
@@ -394,7 +379,6 @@ export const themeManager = {
         "#accent-colors-container .color-btn, #accent-colors-container input",
       ),
       hex,
-      "customColorInput",
     );
     this.checkAndShowAddButton("accent", hex);
   },
@@ -409,12 +393,11 @@ export const themeManager = {
         "#bg-colors-container .color-btn, #bg-colors-container input",
       ),
       hex,
-      "customBgInput",
     );
     this.checkAndShowAddButton("bg", hex);
   },
 
-  updateButtons(btnCollection, hex, customId) {
+  updateButtons(btnCollection, hex) {
     let foundOnButton = false;
     btnCollection.forEach((b) => {
       const isPicker = b.type === "color";
@@ -439,19 +422,20 @@ export const themeManager = {
           "dark:ring-offset-gray-900",
         );
         if (!isPicker) {
+          const lum = this.getLuminance(
+            ...Object.values(this.hexToRGB(targetColor)),
+          );
           const iconColor =
-            targetColor === "default" ||
-            this.getLuminance(...Object.values(this.hexToRGB(targetColor))) >
-              0.5
-              ? "black"
-              : "white";
+            targetColor === "default" || lum > 0.5 ? "black" : "white";
           elementToStyle.innerHTML = `<svg focusable="false" aria-hidden="true" class="w-5 h-5" style="color: ${iconColor};" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>`;
           foundOnButton = true;
         }
       }
     });
 
-    const pickerWrapper = $(customId)?.closest(".relative");
+    const pickerWrapper = Array.from(btnCollection)
+      .find((b) => b.type === "color")
+      ?.closest(".relative");
     if (!pickerWrapper) return;
 
     if (!foundOnButton && hex.startsWith("#")) {
@@ -465,7 +449,6 @@ export const themeManager = {
     }
   },
 
-  // Вспомогательные функции (без изменений)
   applyBgTheme(hex, isDark) {
     const root = document.documentElement;
     document.body.classList.remove("force-light-text", "force-dark-text");

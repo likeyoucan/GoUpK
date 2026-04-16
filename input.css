@@ -90,15 +90,21 @@ html.dark {
   -webkit-tap-highlight-color: transparent;
 }
 
-.preload *,
-.theme-transition-disable * {
+.preload * {
   transition: none !important;
 }
+
+body.theme-transition-disable {
+  transition: background-color 0s !important;
+}
+
 
 
 body {
   height: 100vh;
   height: 100dvh;
+  /* [ИЗМЕНЕНИЕ] Добавляем плавный переход к body */
+  transition: background-color 0.3s; 
   background-color: var(--surface-color, #000);
   color: var(--text-color);
   font-family:
