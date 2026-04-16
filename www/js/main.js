@@ -232,8 +232,10 @@ document.addEventListener("DOMContentLoaded", () => {
             title = "⏱ Stopwatch";
             body = sw.formatTime(sw.elapsedTime, false);
             break;
-          case 'timer':
-            title = "⏳ Timer";
+           getRemainingTime() {
+    if (!this.isRunning && !this.isPaused) return 0;
+    return timeRemainingMs;
+  },
             // NOTE: Эта логика все еще зависит от внутреннего состояния tm.js.
             // В идеале, tm.js должен предоставлять функцию для получения оставшегося времени.
             const remTm = Math.max(0, tm.targetTime - performance.now());
