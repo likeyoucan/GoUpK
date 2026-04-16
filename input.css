@@ -1149,12 +1149,6 @@ body.hide-nav-labels .nav-btn {
   pointer-events: auto;
 }
 
-/* [ИЗМЕНЕНИЕ 1] Добавляем отступ для контейнеров цветов */
-#accent-colors-container,
-#bg-colors-container {
-  padding-left: calc(2.25rem + 1rem); /* w-9 + gap-4 */
-}
-
 /* [ИЗМЕНЕНИЕ 3] Стили для подписей слайдеров */
 .slider-labels {
   position: absolute;
