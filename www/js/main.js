@@ -132,9 +132,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Глобальный обработчик для кнопок навигации
   document.querySelectorAll("[data-nav]").forEach((btn) => {
-    btn.addEventListener("click", (e) =>
-      navigation.switchView(e.currentTarget.getAttribute("data-nav")),
-    );
+    btn.addEventListener("click", (e) => {
+      // [ИЗМЕНЕНИЕ 2] Добавлена вибрация при клике на навигацию
+      sm.vibrate(20);
+      navigation.switchView(e.currentTarget.getAttribute("data-nav"));
+    });
   });
 
   // Глобальный обработчик для горячих клавиш (Space, L, R)

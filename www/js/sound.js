@@ -38,9 +38,14 @@ export const sm = {
       this.vibroLevel = parseFloat(e.target.value);
       safeSetLS("app_vibro_level", this.vibroLevel);
     });
-    $("vibroSlider")?.addEventListener("change", () => this.vibrate(50));
+    // [ИЗМЕНЕНИЕ 2] Вибрация теперь зависит от уровня на слайдере
+    $("vibroSlider")?.addEventListener("change", () =>
+      this.vibrate(50 * this.vibroLevel)
+    );
 
     $("volumeSlider")?.addEventListener("input", (e) => {
+      // [ИЗМЕНЕНИЕ 2] Добавлена вибрация для слайдера громкости
+      this.vibrate(10);
       this.volume = parseFloat(e.target.value);
       const display = $("volumeDisplay");
       if (display) display.textContent = Math.round(this.volume * 100) + "%";
@@ -219,6 +224,10 @@ export const sm = {
   play(type) {
     if (!this.soundEnabled || !this.audioCtx || this.volume === 0) return;
     this.unlock();
+    if (type === "minute_beep") {
+      this.playNote(1500, "sine", 0, 0.1, 0.3);
+      return;
+    }
     if (this.theme === "classic") {
       if (type === "click") this.playNote(2000, "square", 0, 0.05, 0.2);
       else if (type === "tick") this.playNote(2500, "square", 0, 0.05, 0.3);

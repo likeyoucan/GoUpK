@@ -35,6 +35,8 @@ const stopwatchModule = {
   pauseTime: 0,
   nameModalState: { action: null, targetId: null, pendingSession: null },
   ringLength: 282.74,
+  // [ИЗМЕНЕНИЕ 1] Новое свойство для отслеживания минут
+  lastMinuteBeep: 0,
 
   // --- Основной метод инициализации ---
   init() {
@@ -164,6 +166,8 @@ const stopwatchModule = {
       );
       store.setActiveTimer("stopwatch");
       this.startTime = performance.now() - this.elapsedTime;
+      // [ИЗМЕНЕНИЕ 1] Устанавливаем текущую минуту при старте, чтобы избежать мгновенного сигнала
+      this.lastMinuteBeep = Math.floor(this.elapsedTime / 60000);
       this.isRunning = true;
       this.pauseTime = 0;
       requestWakeLock();
@@ -183,6 +187,18 @@ const stopwatchModule = {
     if (!this.isRunning) return;
     const now = performance.now();
     this.elapsedTime = now - this.startTime;
+    // [ИЗМЕНЕНИЕ 1] Логика ежеминутного сигнала
+    const currentMinute = Math.floor(this.elapsedTime / 60000);
+    if (
+      themeManager.swMinuteBeep &&
+      currentMinute > this.lastMinuteBeep &&
+      this.elapsedTime > 1000
+    ) {
+      this.lastMinuteBeep = currentMinute;
+      sm.play("minute_beep");
+      sm.vibrate(40);
+    }
+
     if (now - this.lastRender >= 16 || isBackground) {
       if (!isBackground) this.updateDisplay();
       else updateTitle(this.formatTime(this.elapsedTime, false));
@@ -262,6 +278,7 @@ const stopwatchModule = {
       this.elapsedTime = 0;
       this.laps = [];
       this.pauseTime = 0;
+      this.lastMinuteBeep = 0;
       updateText(this.els.display, "GO");
       this.els.display.classList.add("is-go");
       this.els.status.classList.add("hidden");

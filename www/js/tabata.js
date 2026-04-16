@@ -72,11 +72,13 @@ export const tb = {
     );
     document.querySelectorAll("[data-tb-adj]").forEach((btn) =>
       btn.addEventListener("click", (e) => {
+        // [ИЗМЕНЕНИЕ 2] Добавлена вибрация
+        sm.vibrate(20);
         const [id, delta] = e.currentTarget
           .getAttribute("data-tb-adj")
           .split(",");
         adjustVal(id, parseInt(delta));
-      }),
+      })
     );
     this.els.list?.addEventListener("click", (e) => {
       const delBtn = e.target.closest(".tb-del-btn"),

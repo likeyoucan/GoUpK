@@ -14,7 +14,7 @@
   - img-src / font-src: разрешает локальные ресурсы и data-uri (иконки).
   - capacitor:// и http://localhost: необходимы для работы нативных движков iOS/Android.
 -->
-    <meta
+    <!-- <meta
       http-equiv="Content-Security-Policy"
       content="
   default-src 'self'; 
@@ -28,7 +28,7 @@
   form-action 'self';
   upgrade-insecure-requests;
 "
-    />
+    /> -->
 
     <meta
       http-equiv="Permissions-Policy"
@@ -756,6 +756,14 @@
                         />
                       </div>
                     </div>
+
+                    <!-- [ИЗМЕНЕНИЕ 3] Динамический контейнер для цветов акцента -->
+                    <div
+                      id="accent-colors-container"
+                      class="flex flex-wrap gap-4 overflow-x-auto scroll-lock no-scrollbar py-2 px-2 -mx-2"
+                    >
+                      <!-- Кнопки цветов будут добавлены сюда из JS -->
+                    </div>
                   </div>
 
                   <div class="p-4 border-b app-border">
@@ -828,6 +836,13 @@
                           class="absolute inset-0 w-[150%] h-[150%] -top-1 -left-1 opacity-0 cursor-pointer z-10"
                         />
                       </div>
+                    </div>
+
+                    <div
+                      id="bg-colors-container"
+                      class="flex flex-wrap gap-4 overflow-x-auto scroll-lock no-scrollbar py-2 px-2 -mx-2"
+                    >
+                      <!-- Кнопки цветов будут добавлены сюда из JS -->
                     </div>
                   </div>
 
@@ -1032,6 +1047,28 @@
                     </label>
                   </div>
 
+                  <!-- [ИЗМЕНЕНИЕ 1] Добавлен переключатель для ежеминутного сигнала секундомера -->
+                  <div
+                    class="flex items-center justify-between p-4 border-t app-border"
+                  >
+                    <label
+                      for="toggle-sw-minute-beep"
+                      class="font-medium app-text text-sm cursor-pointer"
+                      data-i18n="sw_minute_beep"
+                      >Stopwatch minute beep</label
+                    >
+                    <label
+                      class="relative inline-flex items-center cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        id="toggle-sw-minute-beep"
+                        class="sr-only"
+                      />
+                      <div class="custom-toggle"></div>
+                    </label>
+                  </div>
+
                   <div
                     class="flex items-center justify-between p-4 border-t app-border"
                   >
@@ -1146,6 +1183,35 @@
                         id="vibroSlider"
                         class="w-32"
                       />
+                    </div>
+
+                    <!-- [ИЗМЕНЕНИЕ 2] Добавлены подписи для слайдера вибрации -->
+                    <div class="flex justify-between px-1 -mt-1">
+                      <span
+                        class="text-[10px] app-text-sec"
+                        data-i18n="vibro_min"
+                        >min</span
+                      >
+                      <span
+                        class="text-[10px] app-text-sec"
+                        data-i18n="vibro_low"
+                        >low</span
+                      >
+                      <span
+                        class="text-[10px] app-text-sec"
+                        data-i18n="vibro_medium"
+                        >mid</span
+                      >
+                      <span
+                        class="text-[10px] app-text-sec"
+                        data-i18n="vibro_high"
+                        >high</span
+                      >
+                      <span
+                        class="text-[10px] app-text-sec"
+                        data-i18n="vibro_max"
+                        >max</span
+                      >
                     </div>
                   </div>
 
@@ -1942,6 +2008,10 @@
             </div>
           </div>
         </div>
+
+        <!-- ... (скрытые инпуты для кастомных цветов) ... -->
+        <input type="color" id="customColorInput" class="hidden" />
+        <input type="color" id="customBgInput" class="hidden" />
       </div>
     </div>
 

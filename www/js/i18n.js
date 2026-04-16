@@ -95,6 +95,13 @@ export const translations = {
     feedback: "Feedback",
     version: "Version",
     developed_by: "Developed by",
+    sw_minute_beep: "Stopwatch minute beep",
+    add_color: "Add color",
+    vibro_min: "min",
+    vibro_low: "low",
+    vibro_medium: "mid",
+    vibro_high: "high",
+    vibro_max: "max",
   },
   ru: {
     theme_classic: "Классика",
@@ -189,6 +196,13 @@ export const translations = {
     feedback: "Обратная связь",
     version: "Версия",
     developed_by: "Разработано:",
+    sw_minute_beep: "Сигнал каждую минуту",
+    add_color: "Добавить цвет",
+    vibro_min: "мин",
+    vibro_low: "низ",
+    vibro_medium: "срд",
+    vibro_high: "выс",
+    vibro_max: "макс",
   },
 };
 
