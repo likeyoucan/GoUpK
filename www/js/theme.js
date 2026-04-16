@@ -15,7 +15,7 @@ const MAX_CUSTOM_COLORS = 50;
 export const themeManager = {
   // --- Свойства ---
   currentMode: "system",
-  currentAccent: "", // [ИЗМЕНЕНИЕ 1] Добавляем свойство для текущего цвета
+  currentAccent: "",
   currentBg: "default",
   showMs: true,
   isAdaptiveBg: true,
@@ -64,8 +64,6 @@ export const themeManager = {
   customAccentColors: [],
   customBgColors: [],
 
-  // --- Внутренние вспомогательные функции ---
-
   _createColorButtonEl(color, isCustom) {
     const wrapper = document.createElement("div");
     wrapper.className = "custom-color-wrapper shrink-0 rounded-full";
@@ -87,7 +85,6 @@ export const themeManager = {
     return wrapper;
   },
 
-  // [ИЗМЕНЕНИЕ 2] Новая функция для управления кнопкой действия
   _handleActionButtonLogic(type, hex) {
     const isAccent = type === "accent";
     const container = $(
@@ -95,9 +92,7 @@ export const themeManager = {
     );
     if (!container) return;
 
-    // Удаляем старую кнопку действия, если она есть
-    const oldActionBtn = container.querySelector(".color-action-btn");
-    if (oldActionBtn) oldActionBtn.remove();
+    container.querySelector(".color-action-btn")?.remove();
 
     const activeWrapper =
       container.querySelector(`.custom-color-wrapper[data-color="${hex}"]`) ||
@@ -134,7 +129,6 @@ export const themeManager = {
     }
   },
 
-  // [ИЗМЕНЕНИЕ 3] Функция теперь отвечает только за визуальное выделение
   updateColorSelectionUI(type, hex) {
     const isAccent = type === "accent";
     const container = $(
@@ -142,7 +136,6 @@ export const themeManager = {
     );
     if (!container) return;
 
-    // Снимаем выделение со всех кнопок
     container
       .querySelectorAll(".custom-color-wrapper, .relative")
       .forEach((el) => {
@@ -153,7 +146,6 @@ export const themeManager = {
           "ring-offset-surface",
           "shadow-lg",
         );
-        // Убираем галочку, если она была
         if (el.classList.contains("custom-color-wrapper")) {
           const btn = el.querySelector("button");
           if (btn.dataset.iconAdded) {
@@ -164,12 +156,10 @@ export const themeManager = {
         }
       });
 
-    // Находим и выделяем активную кнопку
     let activeWrapper = container.querySelector(
       `.custom-color-wrapper[data-color="${hex}"]`,
     );
     if (!activeWrapper) {
-      // Если это кастомный цвет из color picker
       const picker = isAccent ? $("customColorInput") : $("customBgInput");
       if (picker && picker.value === hex) {
         activeWrapper = picker.closest(".relative");
@@ -185,7 +175,6 @@ export const themeManager = {
         "shadow-lg",
       );
 
-      // Добавляем галочку, если это обычная кнопка
       if (activeWrapper.classList.contains("custom-color-wrapper")) {
         const button = activeWrapper.querySelector("button");
         button.dataset.originalContent = button.innerHTML;
@@ -210,9 +199,7 @@ export const themeManager = {
 
     const min = parseFloat(slider.min);
     const max = parseFloat(slider.max);
-
     const percent = (val - min) / (max - min);
-
     const thumbWidth = 24;
     const trackWidth = slider.offsetWidth;
     if (trackWidth === 0) return;
@@ -241,12 +228,12 @@ export const themeManager = {
 
     this._internalSetMode(safeGetLS("theme_mode") || "system", false);
 
-    // [ИЗМЕНЕНИЕ 1] Устанавливаем свойство
     this.currentAccent =
       safeGetLS("theme_color") || this.standardAccentColors[0];
-    this.setColor(this.currentAccent, false); // Не показываем кнопку действия при загрузке
+    this.setColor(this.currentAccent, false);
 
-    this.setBgColor(safeGetLS("theme_bg_color") || "default", false);
+    this.currentBg = safeGetLS("theme_bg_color") || "default";
+    this.setBgColor(this.currentBg, false);
 
     this.isAdaptiveBg = safeGetLS("app_adaptive_bg") !== "false";
     this.hasVignette = safeGetLS("app_vignette") === "true";
@@ -276,7 +263,6 @@ export const themeManager = {
     if ($("toggle-ms")) $("toggle-ms").checked = this.showMs;
     if ($("toggle-sw-minute-beep"))
       $("toggle-sw-minute-beep").checked = this.swMinuteBeep;
-
     if ($("fontSlider")) $("fontSlider").value = safeGetLS("font_size") || 16;
     if ($("ringWidthSlider"))
       $("ringWidthSlider").value = safeGetLS("app_ring_width") || 4;
@@ -430,7 +416,6 @@ export const themeManager = {
     if (useTransition) {
       document.body.classList.add("is-updating-theme");
     }
-
     this.currentMode = mode;
     safeSetLS("theme_mode", mode);
 
@@ -450,7 +435,6 @@ export const themeManager = {
         window.matchMedia("(prefers-color-scheme: dark)").matches);
     document.documentElement.classList.toggle("dark", isDark);
     document.documentElement.style.colorScheme = isDark ? "dark" : "light";
-
     this.applyBgTheme(this.currentBg, isDark);
 
     if (useTransition) {
@@ -460,15 +444,33 @@ export const themeManager = {
     }
   },
 
-  // [ИЗМЕНЕНИЕ 4] Обработчик кликов теперь вызывает _handleActionButtonLogic
+  // [ИЗМЕНЕНИЕ] Улучшенная логика для скрытия/показа кнопки действия
   handleColorClick(event, type) {
     const target = event.target;
     const isAccent = type === "accent";
+    const container = $(
+      isAccent ? "accent-colors-container" : "bg-colors-container",
+    );
     const colorWrapper = target.closest(".custom-color-wrapper");
 
     if (colorWrapper) {
-      sm.vibrate(20, "light");
       const color = colorWrapper.dataset.color;
+      const existingActionBtn = colorWrapper.previousElementSibling;
+
+      // Проверяем, есть ли уже кнопка действия у этого элемента. Если да - это второй клик.
+      if (
+        existingActionBtn &&
+        existingActionBtn.classList.contains("color-action-btn")
+      ) {
+        // Удаляем кнопку и выходим.
+        existingActionBtn.remove();
+        return;
+      }
+
+      // Если это первый клик - удаляем любую другую видимую кнопку действия.
+      container.querySelector(".color-action-btn")?.remove();
+
+      sm.vibrate(20, "light");
       if (isAccent) {
         this.setColor(color, true);
       } else {
@@ -485,11 +487,12 @@ export const themeManager = {
 
       if (action === "delete") {
         const newActiveColor = this.deleteCustomColor(type, activeColor);
-        this.renderColorSection(type);
+        this.renderColorSection(type); // Перерисовываем секцию
         if (newActiveColor) {
+          // Устанавливаем новый цвет (обычно дефолтный), но не показываем для него кнопку действия
           isAccent
-            ? this.setColor(newActiveColor, true)
-            : this.setBgColor(newActiveColor, true);
+            ? this.setColor(newActiveColor, false)
+            : this.setBgColor(newActiveColor, false);
         }
       } else if (action === "add") {
         this.addCustomColor(type, activeColor);
@@ -503,6 +506,10 @@ export const themeManager = {
       isAccent ? "accent-colors-container" : "bg-colors-container",
     );
     if (!container) return;
+
+    // Запоминаем текущую прокрутку
+    const scrollLeft = container.scrollLeft;
+
     container.innerHTML = "";
     const standardColors = isAccent
       ? this.standardAccentColors
@@ -524,6 +531,9 @@ export const themeManager = {
 
     const activeColor = isAccent ? this.currentAccent : this.currentBg;
     this.updateColorSelectionUI(type, activeColor);
+
+    // Восстанавливаем прокрутку
+    container.scrollLeft = scrollLeft;
   },
 
   deleteCustomColor(type, color) {
@@ -533,8 +543,9 @@ export const themeManager = {
     const index = customColors.indexOf(color);
     if (index > -1) {
       customColors.splice(index, 1);
-      if (isAccent) this.customAccentColors = customColors;
-      else this.customBgColors = customColors;
+      isAccent
+        ? (this.customAccentColors = customColors)
+        : (this.customBgColors = customColors);
       safeSetLS(key, JSON.stringify(customColors));
 
       const newActiveColor = isAccent
@@ -572,15 +583,13 @@ export const themeManager = {
     }
   },
 
-  // [ИЗМЕНЕНИЕ 5] Добавлен параметр showAction
   setColor(hex, showAction = true) {
-    this.currentAccent = hex; // [ИЗМЕНЕНИЕ 1] Обновляем свойство
+    this.currentAccent = hex;
     safeSetLS("theme_color", hex);
     document.documentElement.style.setProperty("--primary-color", hex);
     const { h } = this.hexToHSL(hex);
     document.documentElement.style.setProperty("--accent-h", h);
 
-    // Обновляем UI
     this.updateColorSelectionUI("accent", hex);
     if (showAction) {
       this._handleActionButtonLogic("accent", hex);
@@ -593,7 +602,6 @@ export const themeManager = {
     const isDark = document.documentElement.classList.contains("dark");
     this.applyBgTheme(hex, isDark);
 
-    // Обновляем UI
     this.updateColorSelectionUI("bg", hex);
     if (showAction) {
       this._handleActionButtonLogic("bg", hex);
@@ -616,16 +624,7 @@ export const themeManager = {
       "app_sw_minute_beep",
     ];
     themeKeys.forEach(safeRemoveLS);
-
-    // [ИСПРАВЛЕНИЕ] Сохраняем кастомные цвета при сбросе
-    const customAccentColors = safeGetLS("custom_accent_colors");
-    const customBgColors = safeGetLS("custom_bg_colors");
-
     this.applySettings();
-
-    if (customAccentColors)
-      safeSetLS("custom_accent_colors", customAccentColors);
-    if (customBgColors) safeSetLS("custom_bg_colors", customBgColors);
   },
 
   applyBgTheme(hex, isDark) {
