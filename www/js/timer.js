@@ -47,11 +47,6 @@ export const tm = {
   ringLength: 282.74,
   currentAdjustmentSec: 0,
 
-  getRemainingTime() {
-    if (!this.isRunning && !this.isPaused) return 0;
-    return timeRemainingMs;
-  },
-
   init() {
     this.els = {
       inputs: $("tm-inputs"),
@@ -124,7 +119,7 @@ export const tm = {
       if (e.data.type === "tick") {
         const remaining = e.data.time;
         timeRemainingMs = remaining;
-
+        
         // [ИСПРАВЛЕНИЕ] Закомментирован блок, который вызывал баг с кольцом прогресса
         /*
         if (remaining > this.totalDuration) {
@@ -133,15 +128,15 @@ export const tm = {
         */
 
         if (this.isRunning) {
-          this.targetTime = performance.now() + remaining;
-          this.updateDisplay(remaining);
-          this.updateAdjustButtons();
+            this.targetTime = performance.now() + remaining;
+            this.updateDisplay(remaining);
+            this.updateAdjustButtons();
         }
 
         if (remaining <= 0 && this.isRunning) {
           this.isRunning = false;
           store.clearActiveTimer();
-
+          
           sm.vibrate([200, 100, 200, 100, 400]);
           sm.play("complete");
           announceToScreenReader(t("timer_finished"));
@@ -187,24 +182,9 @@ export const tm = {
       sm.play("click");
       sm.vibrate(10);
     };
-    input.addEventListener(
-      "wheel",
-      (e) => {
-        e.preventDefault();
-        updateVal(e.deltaY > 0 ? -1 : 1);
-      },
-      { passive: false },
-    );
-    input.addEventListener(
-      "touchstart",
-      (e) => {
-        startY = e.touches[0].clientY;
-      },
-      { passive: true },
-    );
-    input.addEventListener(
-      "touchmove",
-      (e) => {
+    input.addEventListener("wheel", (e) => { e.preventDefault(); updateVal(e.deltaY > 0 ? -1 : 1); }, { passive: false });
+    input.addEventListener("touchstart", (e) => { startY = e.touches[0].clientY; }, { passive: true });
+    input.addEventListener("touchmove", (e) => {
         const currentY = e.touches[0].clientY;
         const diff = startY - currentY;
         if (Math.abs(diff) > threshold) {
@@ -213,9 +193,7 @@ export const tm = {
           updateVal(diff > 0 ? 1 : -1);
           startY = currentY;
         }
-      },
-      { passive: false },
-    );
+      }, { passive: false });
     let isDragging = false;
     const onMouseMove = (e) => {
       if (!isDragging) return;
@@ -250,7 +228,7 @@ export const tm = {
     sm.unlock();
     if (this.isRunning) {
       store.clearActiveTimer();
-
+      
       this.isRunning = false;
       this.isPaused = true;
       this.remainingAtPause = timeRemainingMs;
@@ -260,9 +238,7 @@ export const tm = {
       updateTitle("");
       this.updateUIState();
     } else {
-      document.dispatchEvent(
-        new CustomEvent("timerStarted", { detail: "timer" }),
-      );
+      document.dispatchEvent(new CustomEvent("timerStarted", { detail: "timer" }));
       let duration;
       if (!this.isPaused) {
         const h = parseInt(this.els.h?.value, 10) || 0;
@@ -279,13 +255,10 @@ export const tm = {
       if (duration <= 0) {
         showToast(t("timer_zero"));
         this.els.inputs.classList.add("animate-shake");
-        setTimeout(
-          () => this.els.inputs.classList.remove("animate-shake"),
-          300,
-        );
+        setTimeout(() => this.els.inputs.classList.remove("animate-shake"), 300);
         return;
       }
-
+      
       store.setActiveTimer("timer");
 
       this.isRunning = true;
@@ -303,7 +276,7 @@ export const tm = {
     sm.vibrate(30);
     sm.play("click");
     store.clearActiveTimer();
-
+    
     this.isRunning = false;
     this.isPaused = false;
     bgWorker.postMessage({ command: "reset" });
@@ -359,7 +332,7 @@ export const tm = {
     if (newAdjustmentSec === this.currentAdjustmentSec) {
       return;
     }
-
+    
     this.currentAdjustmentSec = newAdjustmentSec;
     const text = formatAdjustmentText(this.currentAdjustmentSec);
     updateText(this.els.plusValueSpan, `+ ${text}`);
@@ -378,8 +351,8 @@ export const tm = {
   // [РЕФАКТОРИНГ] Используем единую функцию formatTime из utils.js
   updateDisplay(rem) {
     const hInput = parseInt(this.els.h?.value, 10) || 0;
-    const forceHours = hInput > 0 || this.totalDuration >= 3600000;
-
+    const forceHours = hInput > 0 || (this.totalDuration >= 3600000);
+    
     const timeStr = formatTime(rem, { forceHours });
 
     updateText(this.els.display, timeStr);
