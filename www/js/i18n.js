@@ -1,6 +1,6 @@
 // Файл: js/i18n.js
 
-import { safeGetLS, safeSetLS } from "./utils.js?v=VERSION";
+import { safeGetLS, safeSetLS, safeRemoveLS } from "./utils.js?v=VERSION";
 
 export const translations = {
   en: {
@@ -218,6 +218,14 @@ export const langManager = {
         }
       });
     }
+  },
+
+   // [РЕШЕНИЕ] Добавляем новый метод для сброса настроек языка
+  resetSettings() {
+    safeRemoveLS("app_lang");
+    
+    // Переинициализируем менеджер, чтобы он определил язык системы заново
+    this.init();
   },
 
   setLang(lang, isAuto = false) {

@@ -1,6 +1,6 @@
 // Файл: js/theme.js
 
-import { $, safeGetLS, safeSetLS } from "./utils.js?v=VERSION";
+import { $, safeGetLS, safeSetLS, safeRemoveLS } from "./utils.js?v=VERSION";
 
 export const themeManager = {
   currentMode: "system",
@@ -162,6 +162,28 @@ export const themeManager = {
         $("customColorInput").value = "#22c55e";
       }
     }
+  },
+
+  // [РЕШЕНИЕ] Добавляем новый метод для сброса настроек темы
+  resetSettings() {
+    const themeKeys = [
+      "theme_mode",
+      "theme_color",
+      "theme_bg_color",
+      "font_size",
+      "app_adaptive_bg",
+      "app_vignette",
+      "app_vignette_alpha",
+      "app_liquid_glass",
+      "app_hide_nav_labels",
+      "app_ring_width",
+      "app_show_ms", // Этот ключ тоже относится к интерфейсу
+    ];
+    themeKeys.forEach(safeRemoveLS);
+
+    // После удаления ключей, вызываем applySettings(),
+    // чтобы применить значения по умолчанию.
+    this.applySettings();
   },
 
   updateAdaptiveClass() {

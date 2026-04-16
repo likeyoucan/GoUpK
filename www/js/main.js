@@ -59,20 +59,6 @@ function confirmReset() {
     themeManager.resetSettings(); // Предполагается, что вы добавили этот метод в theme.js
     sm.resetSettings();         // Предполагается, что вы добавили этот метод в sound.js
     langManager.resetSettings();    // Предполагается, что вы добавили этот метод в i18n.js
-    // ...и так далее для других модулей с настройками
-
-    // Если методы resetSettings не реализованы, можно временно оставить старый код:
-    /*
-    const keys = [
-      "app_lang", "app_sound", "app_vibro", "app_vibro_level", "app_sound_theme", "app_show_ms",
-      "theme_mode", "theme_color", "theme_bg_color", "font_size", "app_adaptive_bg", "app_vignette",
-      "app_vignette_alpha", "app_liquid_glass", "app_volume", "app_hide_nav_labels", "app_ring_width",
-    ];
-    keys.forEach((key) => safeRemoveLS(key));
-    themeManager.applySettings();
-    langManager.init();
-    sm.applySettings();
-    */
 
     setTimeout(() => showToast(t("settings_reset_success")), 450);
 }

@@ -1,6 +1,6 @@
 // Файл: js/sound.js
 
-import { $, safeGetLS, safeSetLS } from "./utils.js?v=VERSION";
+import { $, safeGetLS, safeSetLS, safeRemoveLS } from "./utils.js?v=VERSION";
 
 export const sm = {
   audioCtx: null,
@@ -90,6 +90,20 @@ export const sm = {
 
     this.updateVolumeUI();
     this.updateVibroUI();
+  },
+
+   resetSettings() {
+    const soundKeys = [
+      "app_sound", 
+      "app_vibro", 
+      "app_vibro_level", 
+      "app_sound_theme", 
+      "app_volume"
+    ];
+    soundKeys.forEach(safeRemoveLS);
+
+    // Применяем значения по умолчанию
+    this.applySettings();
   },
 
   updateVolumeUI() {
