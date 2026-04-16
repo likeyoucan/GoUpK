@@ -98,8 +98,6 @@ body.theme-transition-disable {
   transition: background-color 0s !important;
 }
 
-
-
 body {
   height: 100vh;
   height: 100dvh;
@@ -1149,32 +1147,54 @@ body.hide-nav-labels .nav-btn {
   pointer-events: auto;
 }
 
-/* [ИЗМЕНЕНИЕ 3] Стили для подписей слайдеров */
-.slider-labels {
+/* [ИЗМЕНЕНИЕ 2] Новые стили для метки, движущейся за ползунком */
+.thumb-label-container {
   position: absolute;
   top: 100%;
   left: 0;
   right: 0;
   height: 1.25rem; /* ~h-5 */
-  pointer-events: none; /* Чтобы не мешали кликать по слайдеру */
-  margin-top: -0.25rem; /* Немного приподнимем */
+  pointer-events: none;
+  margin-top: -0.25rem;
 }
 
-.slider-labels span {
+.thumb-label {
   position: absolute;
-  top: 0;
-  transition: opacity 0.2s ease-in-out;
-  opacity: 0;
-  white-space: nowrap;
-  transform: translateX(-50%); /* Центрируем подпись */
+  transform: translateX(-50%); /* Центрируем подпись под ползунком */
   font-size: 10px;
-  color: var(--text-secondary);
-}
-
-.slider-labels span.is-active {
-  opacity: 1;
   color: var(--primary-color);
   font-weight: bold;
+  white-space: nowrap;
+  opacity: 0; /* По умолчанию скрыта */
+  transition: opacity 0.2s;
+}
+
+/* Показываем метку, когда пользователь взаимодействует со слайдером */
+input[type="range"]:active + .thumb-label-container > .thumb-label,
+input[type="range"]:focus + .thumb-label-container > .thumb-label {
+  opacity: 1;
+}
+
+/* [ИЗМЕНЕНИЕ 1] Стили для анимированной кнопки действия (+/-) */
+.color-action-btn {
+  width: 0;
+  opacity: 0;
+  margin-left: 0;
+  margin-right: 0;
+  overflow: hidden;
+  /* Анимируем ширину, прозрачность и отступы */
+  transition:
+    width 0.25s ease-out,
+    opacity 0.2s ease-out,
+    margin-left 0.25s ease-out,
+    margin-right 0.25s ease-out;
+}
+
+.color-action-btn.is-visible {
+  width: 2.25rem; /* w-9 */
+  opacity: 1;
+  margin-left: -0.5rem; /* Придвигаемся к активному элементу */
+  margin-right: 0.5rem; /* Отталкиваем следующий элемент */
 }
 
 @layer utilities {
