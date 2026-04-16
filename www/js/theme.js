@@ -5,6 +5,7 @@ import { t } from "./i18n.js?v=VERSION";
 import { sm } from "./sound.js?v=VERSION";
 
 export const themeManager = {
+  // --- Свойства ---
   currentMode: "system",
   currentBg: "default",
   showMs: true,
@@ -39,283 +40,7 @@ export const themeManager = {
   customAccentColors: [],
   customBgColors: [],
 
-  init() {
-    this.applySettings();
-    this.bindEvents();
-  },
-
-  applySettings() {
-    try {
-      this.customAccentColors =
-        JSON.parse(safeGetLS("custom_accent_colors")) || [];
-      this.customBgColors = JSON.parse(safeGetLS("custom_bg_colors")) || [];
-    } catch (e) {
-      this.customAccentColors = [];
-      this.customBgColors = [];
-    }
-
-    this.renderColorSection("accent");
-    this.renderColorSection("bg");
-
-    this._internalSetMode(safeGetLS("theme_mode") || "system", false);
-
-    this.setColor(safeGetLS("theme_color") || "#22c55e");
-    this.isAdaptiveBg = safeGetLS("app_adaptive_bg") !== "false";
-    this.hasVignette = safeGetLS("app_vignette") === "true";
-    this.isLiquidGlass = safeGetLS("app_liquid_glass") === "true";
-    this.hideNavLabels = safeGetLS("app_hide_nav_labels") === "true";
-    this.vignetteAlpha = parseFloat(safeGetLS("app_vignette_alpha")) || 0.5;
-    this.showMs = safeGetLS("app_show_ms") !== "false";
-    this.swMinuteBeep = safeGetLS("app_sw_minute_beep") !== "false";
-
-    this.updateAdaptiveClass();
-    this.setBgColor(safeGetLS("theme_bg_color") || "default");
-    this.setFontSize(safeGetLS("font_size") || 16);
-    this.setRingWidth(safeGetLS("app_ring_width") || 4);
-    this.applyNavLabelsVisibility();
-    this.updateGlass();
-    this.updateVignette();
-
-    if ($("toggle-adaptive-bg"))
-      $("toggle-adaptive-bg").checked = this.isAdaptiveBg;
-    if ($("toggle-glass")) $("toggle-glass").checked = this.isLiquidGlass;
-    if ($("toggle-vignette")) $("toggle-vignette").checked = this.hasVignette;
-    if ($("toggle-nav-labels"))
-      $("toggle-nav-labels").checked = this.hideNavLabels;
-    if ($("toggle-ms")) $("toggle-ms").checked = this.showMs;
-    if ($("toggle-sw-minute-beep"))
-      $("toggle-sw-minute-beep").checked = this.swMinuteBeep;
-
-    if ($("vignetteSlider")) {
-      $("vignetteSlider").value = this.vignetteAlpha * 10;
-      this.updateSliderLabel("vignetteSlider", "vignette-labels", 11, [
-        "0%",
-        "100%",
-      ]);
-    }
-    if ($("vibroSlider")) {
-      const levels = [0.5, 0.75, 1, 1.5, 2];
-      const closestIndex = levels.reduce(
-        (prev, curr, index) =>
-          Math.abs(curr - (parseFloat(safeGetLS("app_vibro_level")) || 1)) <
-          Math.abs(
-            levels[prev] - (parseFloat(safeGetLS("app_vibro_level")) || 1),
-          )
-            ? index
-            : prev,
-        0,
-      );
-      $("vibroSlider").value = closestIndex;
-      this.updateSliderLabel("vibroSlider", "vibro-labels", 5);
-    }
-    if ($("fontSlider")) $("fontSlider").value = safeGetLS("font_size") || 16;
-    if ($("ringWidthSlider"))
-      $("ringWidthSlider").value = safeGetLS("app_ring_width") || 4;
-  },
-
-  bindEvents() {
-    $("toggle-sw-minute-beep")?.addEventListener("change", (e) => {
-      this.swMinuteBeep = e.target.checked;
-      safeSetLS("app_sw_minute_beep", this.swMinuteBeep);
-    });
-    $("toggle-ms")?.addEventListener("change", (e) => {
-      this.showMs = e.target.checked;
-      safeSetLS("app_show_ms", this.showMs);
-      document.dispatchEvent(new CustomEvent("msChanged"));
-    });
-    $("toggle-adaptive-bg")?.addEventListener("change", (e) => {
-      this.isAdaptiveBg = e.target.checked;
-      safeSetLS("app_adaptive_bg", this.isAdaptiveBg);
-      this.updateAdaptiveClass();
-      this.applyBgTheme(
-        this.currentBg,
-        document.documentElement.classList.contains("dark"),
-      );
-    });
-    $("toggle-glass")?.addEventListener("change", (e) => {
-      this.isLiquidGlass = e.target.checked;
-      safeSetLS("app_liquid_glass", this.isLiquidGlass);
-      this.updateGlass();
-    });
-    $("toggle-vignette")?.addEventListener("change", (e) => {
-      this.hasVignette = e.target.checked;
-      safeSetLS("app_vignette", this.hasVignette);
-      this.updateVignette();
-    });
-    $("toggle-nav-labels")?.addEventListener("change", (e) => {
-      this.hideNavLabels = e.target.checked;
-      safeSetLS("app_hide_nav_labels", this.hideNavLabels);
-      this.applyNavLabelsVisibility();
-    });
-
-    $("vignetteSlider")?.addEventListener("input", (e) => {
-      sm.vibrate(10, "tactile");
-      this.vignetteAlpha = parseFloat(e.target.value) / 10;
-      this.updateVignette();
-      this.updateSliderLabel("vignetteSlider", "vignette-labels", 11, [
-        "0%",
-        "100%",
-      ]);
-    });
-    $("vignetteSlider")?.addEventListener("change", () =>
-      safeSetLS("app_vignette_alpha", this.vignetteAlpha),
-    );
-
-    $("fontSlider")?.addEventListener("input", (e) => {
-      sm.vibrate(10, "tactile");
-      this.setFontSize(e.target.value);
-    });
-    $("ringWidthSlider")?.addEventListener("input", (e) => {
-      sm.vibrate(10, "tactile");
-      this.setRingWidth(e.target.value);
-    });
-
-    $("vibroSlider")?.addEventListener("input", (e) => {
-      this.updateSliderLabel("vibroSlider", "vibro-labels", 5);
-    });
-    $("vibroSlider")?.addEventListener("change", (e) => {
-      const levels = [0.5, 0.75, 1, 1.5, 2];
-      this.vibroLevel = levels[e.target.value] || 1;
-      safeSetLS("app_vibro_level", this.vibroLevel);
-      sm.vibrate(50, "strong");
-    });
-
-    document
-      .querySelectorAll('[id^="theme-"]')
-      .forEach((btn) =>
-        btn.addEventListener("click", (e) =>
-          this.setMode(e.currentTarget.getAttribute("data-theme-mode")),
-        ),
-      );
-
-    $("accent-colors-container")?.addEventListener("click", (e) =>
-      this.handleColorClick(e, "accent"),
-    );
-    $("bg-colors-container")?.addEventListener("click", (e) =>
-      this.handleColorClick(e, "bg"),
-    );
-
-    document.body.addEventListener("input", (e) => {
-      if (e.target.id === "customColorInput") this.setColor(e.target.value);
-      if (e.target.id === "customBgInput") this.setBgColor(e.target.value);
-    });
-
-    window
-      .matchMedia("(prefers-color-scheme: dark)")
-      .addEventListener("change", () => {
-        if (this.currentMode === "system") this.setMode("system");
-      });
-  },
-
-  setMode(mode) {
-    this._internalSetMode(mode, true);
-  },
-
-  _internalSetMode(mode, useTransitionDisable) {
-    if (useTransitionDisable)
-      document.body.classList.add("theme-transition-disable");
-
-    this.currentMode = mode;
-    safeSetLS("theme_mode", mode);
-
-    document.querySelectorAll('[id^="theme-"]').forEach((b) => {
-      b.classList.remove("app-surface", "shadow-sm", "app-text");
-      b.classList.add("app-text-sec");
-    });
-    const activeBtn = $(`theme-${mode}`);
-    if (activeBtn) {
-      activeBtn.classList.remove("app-text-sec");
-      activeBtn.classList.add("app-surface", "shadow-sm", "app-text");
-    }
-
-    const isDark =
-      mode === "dark" ||
-      (mode === "system" &&
-        window.matchMedia("(prefers-color-scheme: dark)").matches);
-
-    document.documentElement.classList.toggle("dark", isDark);
-    document.documentElement.style.colorScheme = isDark ? "dark" : "light";
-    this.applyBgTheme(this.currentBg, isDark);
-    this.renderColorSection("bg");
-
-    if (useTransitionDisable) {
-      requestAnimationFrame(() =>
-        document.body.classList.remove("theme-transition-disable"),
-      );
-    }
-  },
-
-  handleColorClick(event, type) {
-    const target = event.target;
-    const isAccent = type === "accent";
-
-    const colorWrapper = target.closest(".custom-color-wrapper");
-    if (colorWrapper) {
-      isAccent
-        ? this.setColor(colorWrapper.dataset.color)
-        : this.setBgColor(colorWrapper.dataset.color);
-      return;
-    }
-
-    const actionBtn = target.closest(
-      "#" + (isAccent ? "accent-action-slot" : "bg-action-slot") + " button",
-    );
-    if (actionBtn) {
-      const action = actionBtn.dataset.action;
-      const activeColor = safeGetLS(
-        isAccent ? "theme_color" : "theme_bg_color",
-      );
-
-      if (action === "delete") {
-        const newActiveColor = this.deleteCustomColor(type, activeColor);
-        this.renderColorSection(type);
-        if (newActiveColor)
-          isAccent
-            ? this.setColor(newActiveColor)
-            : this.setBgColor(newActiveColor);
-      } else if (action === "add") {
-        this.addCustomColor(type, activeColor);
-      }
-    }
-  },
-
-  renderColorSection(type) {
-    const isAccent = type === "accent";
-    const container = $(
-      isAccent ? "accent-colors-container" : "bg-colors-container",
-    );
-    if (!container) return;
-
-    container
-      .querySelectorAll(':scope > *:not([id$="-action-slot"])')
-      .forEach((el) => el.remove());
-
-    const standardColors = isAccent
-      ? this.standardAccentColors
-      : this.standardBgColors;
-    const customColors = isAccent
-      ? this.customAccentColors
-      : this.customBgColors;
-
-    const fragment = document.createDocumentFragment();
-
-    [...standardColors, ...customColors].forEach((color) => {
-      const isCustom = customColors.includes(color);
-      fragment.appendChild(this._createColorButtonEl(color, isCustom));
-    });
-
-    const pickerId = isAccent ? "customColorInput" : "customBgInput";
-    const pickerHTML = `
-      <div class="relative w-9 h-9 shrink-0 group rounded-full overflow-hidden border border-black/20 dark:border-white/20 transition-transform active:scale-90 focus-within:ring-4 focus-within:ring-[var(--primary-color)]">
-        <div class="absolute inset-0 bg-[conic-gradient(from_0deg,red,orange,yellow,green,blue,indigo,violet,red)] opacity-90 group-hover:opacity-100 transition-opacity pointer-events-none z-0"></div>
-        <input type="color" id="${pickerId}" aria-label="Custom Color" class="absolute inset-0 w-[150%] h-[150%] -top-1 -left-1 opacity-0 cursor-pointer z-10" />
-      </div>`;
-    const tempDiv = document.createElement("div");
-    tempDiv.innerHTML = pickerHTML;
-    fragment.appendChild(tempDiv.firstChild);
-
-    container.appendChild(fragment);
-  },
+  // --- [ИСПРАВЛЕНИЕ] Вспомогательные функции перенесены наверх ---
 
   _createColorButtonEl(color, isCustom) {
     const wrapper = document.createElement("div");
@@ -334,41 +59,19 @@ export const themeManager = {
     return wrapper;
   },
 
-  deleteCustomColor(type, color) {
+  checkAndShowAddButton(type, color) {
     const isAccent = type === "accent";
-    let customColors = isAccent ? this.customAccentColors : this.customBgColors;
-    const key = isAccent ? "custom_accent_colors" : "custom_bg_colors";
+    const addBtn = $(isAccent ? "add-accent-color-btn" : "add-bg-color-btn");
+    if (!addBtn) return;
 
-    const index = customColors.indexOf(color);
-    if (index > -1) {
-      customColors.splice(index, 1);
-      if (isAccent) this.customAccentColors = customColors;
-      else this.customBgColors = customColors;
-      safeSetLS(key, JSON.stringify(customColors));
-      if (safeGetLS(isAccent ? "theme_color" : "theme_bg_color") === color) {
-        return isAccent ? this.standardAccentColors[0] : "default";
-      }
-    }
-    return null;
-  },
-
-  addCustomColor(type, color) {
-    const isAccent = type === "accent";
-    const customColors = isAccent
-      ? this.customAccentColors
-      : this.customBgColors;
     const allColors = [
       ...(isAccent ? this.standardAccentColors : this.standardBgColors),
-      ...customColors,
+      ...(isAccent ? this.customAccentColors : this.customBgColors),
     ];
+    const isNewColor = !allColors.includes(color) && color.startsWith("#");
 
-    if (!allColors.includes(color)) {
-      customColors.push(color);
-      const key = isAccent ? "custom_accent_colors" : "custom_bg_colors";
-      safeSetLS(key, JSON.stringify(customColors));
-      this.renderColorSection(type);
-      isAccent ? this.setColor(color) : this.setBgColor(color);
-    }
+    addBtn.classList.toggle("hidden", !isNewColor);
+    addBtn.classList.toggle("flex", isNewColor);
   },
 
   updateActionSlot(type, hex) {
@@ -394,22 +97,6 @@ export const themeManager = {
          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
        </button>`;
     }
-  },
-
-  setColor(hex) {
-    safeSetLS("theme_color", hex);
-    document.documentElement.style.setProperty("--primary-color", hex);
-    const { h } = this.hexToHSL(hex);
-    document.documentElement.style.setProperty("--accent-h", h);
-    this.updateButtonsAndSlot("accent", hex);
-  },
-
-  setBgColor(hex) {
-    this.currentBg = hex;
-    safeSetLS("theme_bg_color", hex);
-    const isDark = document.documentElement.classList.contains("dark");
-    this.applyBgTheme(hex, isDark);
-    this.updateButtonsAndSlot("bg", hex);
   },
 
   updateButtonsAndSlot(type, hex) {
@@ -477,12 +164,16 @@ export const themeManager = {
     if (!slider || !container) return;
 
     if (container.children.length === 0) {
+      const i18nKeys = Array.from(container.children).map(
+        (child) => child.dataset.i18n,
+      );
+      container.innerHTML = ""; // Очищаем на случай повторного вызова
       for (let i = 0; i < numSteps; i++) {
         const label = document.createElement("span");
         if (customLabels) {
           label.textContent = customLabels[i];
         } else {
-          label.dataset.i18n = container.children[i]?.dataset.i18n || "";
+          label.dataset.i18n = i18nKeys[i] || "";
           label.textContent = t(label.dataset.i18n);
         }
         label.style.left = `${(i / (numSteps - 1)) * 100}%`;
@@ -495,6 +186,331 @@ export const themeManager = {
     allLabels.forEach((label, index) => {
       label.classList.toggle("is-active", index === currentIndex);
     });
+  },
+
+  // --- Основные и публичные методы ---
+
+  init() {
+    this.applySettings();
+    this.bindEvents();
+  },
+
+  applySettings() {
+    try {
+      this.customAccentColors =
+        JSON.parse(safeGetLS("custom_accent_colors")) || [];
+      this.customBgColors = JSON.parse(safeGetLS("custom_bg_colors")) || [];
+    } catch (e) {}
+
+    this.renderColorSection("accent");
+    this.renderColorSection("bg");
+
+    this._internalSetMode(safeGetLS("theme_mode") || "system", false);
+
+    this.setColor(safeGetLS("theme_color") || "#22c55e");
+    this.isAdaptiveBg = safeGetLS("app_adaptive_bg") !== "false";
+    this.hasVignette = safeGetLS("app_vignette") === "true";
+    this.isLiquidGlass = safeGetLS("app_liquid_glass") === "true";
+    this.hideNavLabels = safeGetLS("app_hide_nav_labels") === "true";
+    this.vignetteAlpha = parseFloat(safeGetLS("app_vignette_alpha")) || 0.5;
+    this.showMs = safeGetLS("app_show_ms") !== "false";
+    this.swMinuteBeep = safeGetLS("app_sw_minute_beep") !== "false";
+
+    this.updateAdaptiveClass();
+    this.setBgColor(safeGetLS("theme_bg_color") || "default");
+    this.setFontSize(safeGetLS("font_size") || 16);
+    this.setRingWidth(safeGetLS("app_ring_width") || 4);
+    this.applyNavLabelsVisibility();
+    this.updateGlass();
+    this.updateVignette();
+
+    if ($("toggle-adaptive-bg"))
+      $("toggle-adaptive-bg").checked = this.isAdaptiveBg;
+    if ($("toggle-glass")) $("toggle-glass").checked = this.isLiquidGlass;
+    if ($("toggle-vignette")) $("toggle-vignette").checked = this.hasVignette;
+    if ($("toggle-nav-labels"))
+      $("toggle-nav-labels").checked = this.hideNavLabels;
+    if ($("toggle-ms")) $("toggle-ms").checked = this.showMs;
+    if ($("toggle-sw-minute-beep"))
+      $("toggle-sw-minute-beep").checked = this.swMinuteBeep;
+
+    if ($("vignetteSlider")) {
+      $("vignetteSlider").value = this.vignetteAlpha * 10;
+      this.updateSliderLabel("vignetteSlider", "vignette-labels", 11, [
+        "0%",
+        "",
+        "",
+        "",
+        "",
+        "50%",
+        "",
+        "",
+        "",
+        "",
+        "100%",
+      ]);
+    }
+    if ($("vibroSlider")) {
+      const levels = [0.5, 0.75, 1, 1.5, 2];
+      const vibroValue = parseFloat(safeGetLS("app_vibro_level")) || 1;
+      const closestIndex = levels.reduce(
+        (prev, curr, index) =>
+          Math.abs(curr - vibroValue) < Math.abs(levels[prev] - vibroValue)
+            ? index
+            : prev,
+        0,
+      );
+      $("vibroSlider").value = closestIndex;
+      this.updateSliderLabel("vibroSlider", "vibro-labels", 5);
+    }
+    if ($("fontSlider")) $("fontSlider").value = safeGetLS("font_size") || 16;
+    if ($("ringWidthSlider"))
+      $("ringWidthSlider").value = safeGetLS("app_ring_width") || 4;
+  },
+
+  bindEvents() {
+    $("toggle-sw-minute-beep")?.addEventListener("change", (e) => {
+      this.swMinuteBeep = e.target.checked;
+      safeSetLS("app_sw_minute_beep", this.swMinuteBeep);
+    });
+    $("toggle-ms")?.addEventListener("change", (e) => {
+      this.showMs = e.target.checked;
+      safeSetLS("app_show_ms", this.showMs);
+      document.dispatchEvent(new CustomEvent("msChanged"));
+    });
+    $("toggle-adaptive-bg")?.addEventListener("change", (e) => {
+      this.isAdaptiveBg = e.target.checked;
+      safeSetLS("app_adaptive_bg", this.isAdaptiveBg);
+      this.updateAdaptiveClass();
+      this.applyBgTheme(
+        this.currentBg,
+        document.documentElement.classList.contains("dark"),
+      );
+    });
+    $("toggle-glass")?.addEventListener("change", (e) => {
+      this.isLiquidGlass = e.target.checked;
+      safeSetLS("app_liquid_glass", this.isLiquidGlass);
+      this.updateGlass();
+    });
+    $("toggle-vignette")?.addEventListener("change", (e) => {
+      this.hasVignette = e.target.checked;
+      safeSetLS("app_vignette", this.hasVignette);
+      this.updateVignette();
+    });
+    $("toggle-nav-labels")?.addEventListener("change", (e) => {
+      this.hideNavLabels = e.target.checked;
+      safeSetLS("app_hide_nav_labels", this.hideNavLabels);
+      this.applyNavLabelsVisibility();
+    });
+
+    $("vignetteSlider")?.addEventListener("input", (e) => {
+      sm.vibrate(10, "tactile");
+      this.vignetteAlpha = parseFloat(e.target.value) / 10;
+      this.updateVignette();
+      this.updateSliderLabel("vignetteSlider", "vignette-labels", 11, [
+        "0%",
+        "",
+        "",
+        "",
+        "",
+        "50%",
+        "",
+        "",
+        "",
+        "",
+        "100%",
+      ]);
+    });
+    $("vignetteSlider")?.addEventListener("change", () =>
+      safeSetLS("app_vignette_alpha", this.vignetteAlpha),
+    );
+
+    $("fontSlider")?.addEventListener("input", (e) => {
+      sm.vibrate(10, "tactile");
+      this.setFontSize(e.target.value);
+    });
+    $("ringWidthSlider")?.addEventListener("input", (e) => {
+      sm.vibrate(10, "tactile");
+      this.setRingWidth(e.target.value);
+    });
+
+    $("vibroSlider")?.addEventListener("input", (e) => {
+      this.updateSliderLabel("vibroSlider", "vibro-labels", 5);
+    });
+    $("vibroSlider")?.addEventListener("change", (e) => {
+      const levels = [0.5, 0.75, 1, 1.5, 2];
+      this.vibroLevel = levels[e.target.value] || 1;
+      safeSetLS("app_vibro_level", this.vibroLevel);
+      sm.vibrate(50, "strong");
+    });
+
+    document
+      .querySelectorAll('[id^="theme-"]')
+      .forEach((btn) =>
+        btn.addEventListener("click", (e) =>
+          this.setMode(e.currentTarget.getAttribute("data-theme-mode")),
+        ),
+      );
+
+    document.body.addEventListener("click", (e) => {
+      if (e.target.closest("#accent-colors-container"))
+        this.handleColorClick(e, "accent");
+      if (e.target.closest("#bg-colors-container"))
+        this.handleColorClick(e, "bg");
+    });
+
+    document.body.addEventListener("input", (e) => {
+      if (e.target.id === "customColorInput") this.setColor(e.target.value);
+      if (e.target.id === "customBgInput") this.setBgColor(e.target.value);
+    });
+
+    window
+      .matchMedia("(prefers-color-scheme: dark)")
+      .addEventListener("change", () => {
+        if (this.currentMode === "system") this.setMode("system");
+      });
+  },
+
+  setMode(mode) {
+    this._internalSetMode(mode, true);
+  },
+
+  _internalSetMode(mode, useTransitionDisable) {
+    if (useTransitionDisable)
+      document.body.classList.add("theme-transition-disable");
+    this.currentMode = mode;
+    safeSetLS("theme_mode", mode);
+    document.querySelectorAll('[id^="theme-"]').forEach((b) => {
+      b.classList.remove("app-surface", "shadow-sm", "app-text");
+      b.classList.add("app-text-sec");
+    });
+    const activeBtn = $(`theme-${mode}`);
+    if (activeBtn) {
+      activeBtn.classList.remove("app-text-sec");
+      activeBtn.classList.add("app-surface", "shadow-sm", "app-text");
+    }
+    const isDark =
+      mode === "dark" ||
+      (mode === "system" &&
+        window.matchMedia("(prefers-color-scheme: dark)").matches);
+    document.documentElement.classList.toggle("dark", isDark);
+    document.documentElement.style.colorScheme = isDark ? "dark" : "light";
+    this.applyBgTheme(this.currentBg, isDark);
+    this.renderColorSection("bg");
+    if (useTransitionDisable)
+      requestAnimationFrame(() =>
+        document.body.classList.remove("theme-transition-disable"),
+      );
+  },
+
+  handleColorClick(event, type) {
+    const target = event.target;
+    const isAccent = type === "accent";
+    const colorWrapper = target.closest(".custom-color-wrapper");
+    if (colorWrapper) {
+      isAccent
+        ? this.setColor(colorWrapper.dataset.color)
+        : this.setBgColor(colorWrapper.dataset.color);
+      return;
+    }
+    const actionBtn = target.closest(
+      "#" + (isAccent ? "accent-action-slot" : "bg-action-slot") + " button",
+    );
+    if (actionBtn) {
+      const action = actionBtn.dataset.action;
+      const activeColor = safeGetLS(
+        isAccent ? "theme_color" : "theme_bg_color",
+      );
+      if (action === "delete") {
+        const newActiveColor = this.deleteCustomColor(type, activeColor);
+        this.renderColorSection(type);
+        if (newActiveColor)
+          isAccent
+            ? this.setColor(newActiveColor)
+            : this.setBgColor(newActiveColor);
+      } else if (action === "add") {
+        this.addCustomColor(type, activeColor);
+      }
+    }
+  },
+
+  deleteCustomColor(type, color) {
+    const isAccent = type === "accent";
+    let customColors = isAccent ? this.customAccentColors : this.customBgColors;
+    const key = isAccent ? "custom_accent_colors" : "custom_bg_colors";
+    const index = customColors.indexOf(color);
+    if (index > -1) {
+      customColors.splice(index, 1);
+      if (isAccent) this.customAccentColors = customColors;
+      else this.customBgColors = customColors;
+      safeSetLS(key, JSON.stringify(customColors));
+      if (safeGetLS(isAccent ? "theme_color" : "theme_bg_color") === color) {
+        return isAccent ? this.standardAccentColors[0] : "default";
+      }
+    }
+    return null;
+  },
+
+  renderColorSection(type) {
+    const isAccent = type === "accent";
+    const container = $(
+      isAccent ? "accent-colors-container" : "bg-colors-container",
+    );
+    if (!container) return;
+    container
+      .querySelectorAll(':scope > *:not([id$="-action-slot"])')
+      .forEach((el) => el.remove());
+    const standardColors = isAccent
+      ? this.standardAccentColors
+      : this.standardBgColors;
+    const customColors = isAccent
+      ? this.customAccentColors
+      : this.customBgColors;
+    const fragment = document.createDocumentFragment();
+    [...standardColors, ...customColors].forEach((color) => {
+      const isCustom = customColors.includes(color);
+      fragment.appendChild(this._createColorButtonEl(color, isCustom));
+    });
+    const pickerId = isAccent ? "customColorInput" : "customBgInput";
+    const pickerHTML = `<div class="relative w-9 h-9 shrink-0 group rounded-full overflow-hidden border border-black/20 dark:border-white/20 transition-transform active:scale-90 focus-within:ring-4 focus-within:ring-[var(--primary-color)]"><div class="absolute inset-0 bg-[conic-gradient(from_0deg,red,orange,yellow,green,blue,indigo,violet,red)] opacity-90 group-hover:opacity-100 transition-opacity pointer-events-none z-0"></div><input type="color" id="${pickerId}" aria-label="Custom Color" class="absolute inset-0 w-[150%] h-[150%] -top-1 -left-1 opacity-0 cursor-pointer z-10" /></div>`;
+    const tempDiv = document.createElement("div");
+    tempDiv.innerHTML = pickerHTML;
+    fragment.appendChild(tempDiv.firstChild);
+    container.appendChild(fragment);
+  },
+
+  addCustomColor(type, color) {
+    const isAccent = type === "accent";
+    const customColors = isAccent
+      ? this.customAccentColors
+      : this.customBgColors;
+    const allColors = [
+      ...(isAccent ? this.standardAccentColors : this.standardBgColors),
+      ...customColors,
+    ];
+    if (!allColors.includes(color)) {
+      customColors.push(color);
+      const key = isAccent ? "custom_accent_colors" : "custom_bg_colors";
+      safeSetLS(key, JSON.stringify(customColors));
+      this.renderColorSection(type);
+      isAccent ? this.setColor(color) : this.setBgColor(color);
+    }
+  },
+
+  setColor(hex) {
+    safeSetLS("theme_color", hex);
+    document.documentElement.style.setProperty("--primary-color", hex);
+    const { h } = this.hexToHSL(hex);
+    document.documentElement.style.setProperty("--accent-h", h);
+    this.updateButtonsAndSlot("accent", hex);
+  },
+
+  setBgColor(hex) {
+    this.currentBg = hex;
+    safeSetLS("theme_bg_color", hex);
+    const isDark = document.documentElement.classList.contains("dark");
+    this.applyBgTheme(hex, isDark);
+    this.updateButtonsAndSlot("bg", hex);
   },
 
   resetSettings() {
