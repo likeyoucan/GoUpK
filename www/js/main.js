@@ -1,4 +1,4 @@
-// Файл: js/main.js
+// Файл: www/js/main.js
 
 import {
   $,
@@ -6,6 +6,7 @@ import {
   safeRemoveLS,
   requestWakeLock,
   releaseWakeLock,
+  formatTime, // <-- [ИСПРАВЛЕНИЕ] Импортируем утилиту форматирования времени
 } from "./utils.js?v=VERSION";
 import { langManager, t } from "./i18n.js?v=VERSION";
 import { themeManager } from "./theme.js?v=VERSION";
@@ -130,10 +131,11 @@ document.addEventListener("DOMContentLoaded", () => {
     tb.saveWorkout();
   });
 
-    // Глобальный обработчик для кнопок навигации
+  // Глобальный обработчик для кнопок навигации
   document.querySelectorAll("[data-nav]").forEach((btn) => {
     btn.addEventListener("click", (e) => {
-      sm.vibrate(20, 'light'); // <--- Заменяем здесь
+      // [ИСПРАВЛЕНИЕ] Используем новую систему интенсивности вибрации
+      sm.vibrate(20, "light");
       navigation.switchView(e.currentTarget.getAttribute("data-nav"));
     });
   });
@@ -285,9 +287,8 @@ document.addEventListener("DOMContentLoaded", () => {
           case "timer":
             title = "⏳ Timer";
             const remTm = tm.getRemainingTime();
-            body = formatTime(remTm); // Используем общую функцию форматирования
-            break;
-            body = tm.getFormattedTime(Math.ceil(remTm / 1000));
+            // [ИСПРАВЛЕНИЕ] Используем импортированную функцию и убираем дубль
+            body = formatTime(remTm);
             break;
           case "tabata":
             const activeName = $("tb-activeName")?.textContent || "Tabata";
@@ -322,7 +323,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       App.addListener("appStateChange", async ({ isActive }) => {
-
         const activeTimer = store.getActiveTimer();
         const isTimerRunning = !!activeTimer;
 
