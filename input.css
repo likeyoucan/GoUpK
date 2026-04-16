@@ -1200,21 +1200,6 @@ input[type="range"]:focus + .thumb-label-container > .thumb-label {
   margin-right: 0.5rem; /* Отталкиваем следующий элемент */
 }
 
-.custom-color-wrapper {
-  /* Добавляем transition для новых свойств */
-  transition: transform 0.25s ease, opacity 0.25s ease, width 0.25s ease, margin 0.25s ease;
-}
-
-.custom-color-wrapper.is-deleting {
-  /* Свойства для анимации исчезновения */
-  transform: scale(0.8);
-  opacity: 0;
-  width: 0 !important; /* !important, чтобы перебить inline-стили, если они есть */
-  margin-left: 0 !important;
-  margin-right: 0 !important;
-  pointer-events: none;
-}
-
 @layer utilities {
   .transition-ios {
     transition-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
