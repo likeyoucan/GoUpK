@@ -72,7 +72,6 @@ export const translations = {
     sound: "Sound",
     vibration: "Vibration",
     vibro_level: "Depth",
-    vignette_depth: "Depth",
     sound_theme: "Sound Theme",
     theme_sport: "Sport",
     theme_vibe: "Vibe",
@@ -102,6 +101,16 @@ export const translations = {
     vibro_medium: "mid",
     vibro_high: "high",
     vibro_max: "max",
+    vignette_min: "min",
+    vignette_low: "low",
+    vignette_medium: "mid",
+    vignette_high: "high",
+    vignette_max: "max",
+    limit_reached: "Limit reached",
+    accent_limit_msg: "Max 50 custom accent colors",
+    bg_limit_msg: "Max 50 custom background colors",
+    name_too_long: "Name cannot exceed 50 characters",
+    vignette_depth: "Intensity",
   },
   ru: {
     theme_classic: "Классика",
@@ -172,7 +181,6 @@ export const translations = {
     sound: "Звук",
     vibration: "Вибрация",
     vibro_level: "Глубина",
-    vignette_depth: "Интенсивность",
     sound_theme: "Тема звуков",
     theme_sport: "Спорт",
     theme_vibe: "Вайб",
@@ -203,6 +211,16 @@ export const translations = {
     vibro_medium: "срд",
     vibro_high: "выс",
     vibro_max: "макс",
+    vignette_min: "мин",
+    vignette_low: "низ",
+    vignette_medium: "срд",
+    vignette_high: "выс",
+    vignette_max: "макс",
+    limit_reached: "Достигнут лимит",
+    accent_limit_msg: "Максимум 50 своих цветов акцента",
+    bg_limit_msg: "Максимум 50 своих цветов фона",
+    name_too_long: "Название не может превышать 50 символов",
+    vignette_depth: "Интенсивность",
   },
 };
 
@@ -236,7 +254,7 @@ export const langManager = {
 
   resetSettings() {
     safeRemoveLS("app_lang");
-    
+
     // Переинициализируем менеджер, чтобы он определил язык системы заново
     this.init();
   },

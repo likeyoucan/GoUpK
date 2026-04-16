@@ -90,7 +90,7 @@
   </head>
 
   <body
-    class="preload flex items-center justify-center h-[100dvh] w-full overflow-hidden bg-black text-base select-none"
+    class="preload flex items-center justify-center h-[100dvh] w-full overflow-hidden bg-surface text-base select-none"
   >
     <div id="sr-only-announce" aria-live="polite" class="sr-only"></div>
 
@@ -112,7 +112,7 @@
         <path
           stroke-linecap="round"
           stroke-linejoin="round"
-          d="M5 13l4 4L19 7"
+          d="M4.5 12.75l6 6 9-13.5"
         ></path>
       </svg>
       <span id="toast-msg" class="font-bold text-sm tracking-wide"></span>
@@ -580,13 +580,19 @@
                   ></div>
                 </div>
               </div>
+
+              <!-- [ИЗМЕНЕНИЕ 3] Добавлен `relative` и новый span -->
               <div
                 id="tb-runningControls"
-                class="hidden w-full flex-col items-center justify-center h-full px-6"
+                class="hidden w-full flex-col items-center justify-center h-full px-6 relative"
                 style="
                   padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
                 "
               >
+                <span
+                  id="tb-runningWorkoutName"
+                  class="text-lg font-bold app-text absolute left-6 truncate max-w-[calc(100%-12rem)]"
+                ></span>
                 <div
                   class="flex items-center gap-2 mb-8 app-surface px-6 py-2 rounded-full shadow-sm border app-border"
                 >
@@ -685,13 +691,13 @@
                     </div>
                   </div>
 
+                  <!-- [ИЗМЕНЕНИЕ 1] Блок кастомных цветов с экшн-слотом -->
                   <div class="p-4 border-b app-border">
                     <span
                       class="block font-medium app-text text-sm mb-3"
                       data-i18n="accent_color"
                       >Accent Color</span
                     >
-                    <!-- [ИЗМЕНЕНИЕ 1] Контейнер с "экшн-слотом" слева -->
                     <div
                       id="accent-colors-container"
                       class="flex items-center gap-4 overflow-x-auto scroll-lock no-scrollbar py-2 px-2 -mx-2"
@@ -775,18 +781,41 @@
                         </label>
                       </div>
 
-                       <!-- [ИЗМЕНЕНИЕ 2, 3] Изменена структура для слайдера виньетки -->
-          <div id="vignette-depth-container" class="hidden flex-col gap-1 transition-opacity duration-300">
-            <div class="flex w-full items-center justify-between">
-                <label for="vignetteSlider" class="text-xs app-text-sec" data-i18n="vignette_depth">Depth</label>
-                <div class="relative w-32">
-                    <input type="range" min="0" max="10" value="5" step="1" id="vignetteSlider" class="w-full"/>
-                    <div id="vignette-labels" class="slider-labels w-full">
-                        <!-- Ярлыки будут добавлены JS -->
-                    </div>
-                </div>
-            </div>
-
+                      <!-- [ИЗМЕНЕНИЕ 2] Обновленный слайдер интенсивности виньетки -->
+                      <div
+                        id="vignette-depth-container"
+                        class="hidden flex-col gap-1 transition-opacity duration-300"
+                      >
+                        <div class="flex w-full items-center justify-between">
+                          <label
+                            for="vignetteSlider"
+                            class="text-xs app-text-sec"
+                            data-i18n="vignette_depth"
+                            >Intensity</label
+                          >
+                          <div class="relative w-40">
+                            <input
+                              type="range"
+                              min="0"
+                              max="4"
+                              value="2"
+                              step="1"
+                              id="vignetteSlider"
+                              class="w-full"
+                            />
+                            <div
+                              id="vignette-labels"
+                              class="slider-labels w-full"
+                            >
+                              <span data-i18n="vignette_min">min</span>
+                              <span data-i18n="vignette_low">low</span>
+                              <span data-i18n="vignette_medium">mid</span>
+                              <span data-i18n="vignette_high">high</span>
+                              <span data-i18n="vignette_max">max</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
@@ -1029,22 +1058,37 @@
                       </label>
                     </div>
 
-                     <!-- [ИЗМЕНЕНИЕ 2, 3] Изменена структура для слайдера вибрации -->
-          <div id="vibro-level-container" class="hidden flex-col gap-1 transition-opacity duration-300">
-            <div class="flex w-full items-center justify-between">
-                <label for="vibroSlider" class="text-xs app-text-sec" data-i18n="vibro_level">Depth</label>
-                <div class="relative w-32">
-                    <input type="range" min="0" max="4" value="2" step="1" id="vibroSlider" class="w-full"/>
-                    <div id="vibro-labels" class="slider-labels w-full">
-                        <span data-i18n="vibro_min">min</span>
-                        <span data-i18n="vibro_low">low</span>
-                        <span data-i18n="vibro_medium">mid</span>
-                        <span data-i18n="vibro_high">high</span>
-                        <span data-i18n="vibro_max">max</span>
+                    <div
+                      id="vibro-level-container"
+                      class="hidden flex-col gap-1 transition-opacity duration-300"
+                    >
+                      <div class="flex w-full items-center justify-between">
+                        <label
+                          for="vibroSlider"
+                          class="text-xs app-text-sec"
+                          data-i18n="vibro_level"
+                          >Level</label
+                        >
+                        <div class="relative w-40">
+                          <input
+                            type="range"
+                            min="0"
+                            max="4"
+                            value="2"
+                            step="1"
+                            id="vibroSlider"
+                            class="w-full"
+                          />
+                          <div id="vibro-labels" class="slider-labels w-full">
+                            <span data-i18n="vibro_min">min</span>
+                            <span data-i18n="vibro_low">low</span>
+                            <span data-i18n="vibro_medium">mid</span>
+                            <span data-i18n="vibro_high">high</span>
+                            <span data-i18n="vibro_max">max</span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                </div>
-            </div>
-
                   </div>
 
                   <div
@@ -1122,7 +1166,7 @@
                   class="flex flex-col items-center justify-center pt-8 pb-4 opacity-50"
                 >
                   <span class="text-xs font-bold app-text tracking-widest"
-                    >WATCH PRO</span
+                    >STOPWATCH PRO</span
                   >
                   <div
                     class="text-[10px] app-text-sec mt-1 font-mono flex items-center gap-1"
@@ -1463,10 +1507,12 @@
                 data-i18n="name"
                 >Name</label
               >
+              <!-- [ИЗМЕНЕНИЕ 5] Добавлен maxlength -->
               <input
                 type="text"
                 id="tb-edit-name"
                 required
+                maxlength="50"
                 enterkeyhint="done"
                 class="w-full min-h-[44px] bg-transparent border-b-2 app-border py-2 text-xl font-bold app-text outline-none transition-colors primary-focus-border"
                 placeholder="Tabata"
@@ -1753,10 +1799,12 @@
               Session Name
             </h3>
             <div class="flex flex-col">
+              <!-- [ИЗМЕНЕНИЕ 5] Добавлен maxlength -->
               <input
                 type="text"
                 id="sw-name-input"
                 required
+                maxlength="50"
                 enterkeyhint="done"
                 aria-label="Session Name"
                 class="w-full min-h-[44px] bg-transparent border-b-2 app-border py-2 text-lg font-bold app-text outline-none primary-focus-border transition-colors"
@@ -1841,7 +1889,7 @@
           </div>
         </div>
 
-        <!-- ... (скрытые инпуты для кастомных цветов) ... -->
+        <!-- Скрытые инпуты для кастомных цветов -->
         <input type="color" id="customColorInput" class="hidden" />
         <input type="color" id="customBgInput" class="hidden" />
       </div>

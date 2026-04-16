@@ -141,7 +141,7 @@ const stopwatchModule = {
   },
 
   toggle() {
-    sm.vibrate(50, 'strong');
+    sm.vibrate(50, "strong");
     sm.play("click");
     sm.unlock();
 
@@ -196,7 +196,7 @@ const stopwatchModule = {
     ) {
       this.lastMinuteBeep = currentMinute;
       sm.play("minute_beep");
-      sm.vibrate(40, 'light'); 
+      sm.vibrate(40, "light");
     }
 
     if (now - this.lastRender >= 16 || isBackground) {
@@ -243,7 +243,7 @@ const stopwatchModule = {
   },
 
   recordLapOrReset() {
-    sm.vibrate(30, 'medium');
+    sm.vibrate(30, "medium");
     sm.play("click");
     if (this.isRunning) {
       const diff =
@@ -418,6 +418,19 @@ const stopwatchModule = {
     const inputVal = this.els.nameInput.value.trim();
     const finalName =
       inputVal !== "" ? inputVal : this.els.nameInput.placeholder;
+
+    // [ИЗМЕНЕНИЕ 5] Проверка длины имени
+    if (finalName.length > 50) {
+      this.els.nameError.textContent = t("name_too_long");
+      this.els.nameError?.classList.remove("hidden");
+      this.els.nameInput.classList.add("animate-shake");
+      setTimeout(
+        () => this.els.nameInput.classList.remove("animate-shake"),
+        300,
+      );
+      return;
+    }
+
     const isDuplicate = this.savedSessions.some(
       (s) =>
         s.name.toLowerCase() === finalName.toLowerCase() &&
@@ -425,6 +438,7 @@ const stopwatchModule = {
           s.id !== this.nameModalState.targetId),
     );
     if (isDuplicate) {
+      this.els.nameError.textContent = t("name_exists"); // Убедимся, что текст ошибки правильный
       this.els.nameError?.classList.remove("hidden");
       this.els.nameInput.classList.add("animate-shake");
       setTimeout(

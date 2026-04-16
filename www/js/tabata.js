@@ -58,6 +58,7 @@ export const tb = {
       editRest: $("tb-edit-rest"),
       editRounds: $("tb-edit-rounds"),
       nameError: $("tb-name-error"),
+      runningWorkoutName: $("tb-runningWorkoutName"),
     };
 
     if (this.els.ring) {
@@ -73,12 +74,12 @@ export const tb = {
     document.querySelectorAll("[data-tb-adj]").forEach((btn) =>
       btn.addEventListener("click", (e) => {
         // [ИЗМЕНЕНИЕ 2] Добавлена вибрация
-        sm.vibrate(20, 'light');
+        sm.vibrate(20, "light");
         const [id, delta] = e.currentTarget
           .getAttribute("data-tb-adj")
           .split(",");
         adjustVal(id, parseInt(delta));
-      })
+      }),
     );
     this.els.list?.addEventListener("click", (e) => {
       const delBtn = e.target.closest(".tb-del-btn"),
@@ -176,12 +177,26 @@ export const tb = {
   saveWorkout() {
     let finalName = this.els.editName.value.trim();
     if (!finalName) finalName = this.getUniqueName(t("tabata"));
+
+    // [ИЗМЕНЕНИЕ 5] Проверка длины имени
+    if (finalName.length > 50) {
+      updateText(this.els.nameError, t("name_too_long"));
+      this.els.nameError?.classList.remove("hidden");
+      this.els.editName.classList.add("animate-shake");
+      setTimeout(
+        () => this.els.editName.classList.remove("animate-shake"),
+        300,
+      );
+      return;
+    }
+
     const exists = this.workouts.some(
       (w) =>
         w.name.toLowerCase() === finalName.toLowerCase() &&
         w.id !== this.editingWorkoutId,
     );
     if (exists) {
+      updateText(this.els.nameError, t('name_exists')); // Убедимся, что текст ошибки правильный
       this.els.nameError?.classList.remove("hidden");
       this.els.editName.classList.add("animate-shake");
       setTimeout(
@@ -311,7 +326,7 @@ export const tb = {
   },
 
   toggle() {
-    sm.vibrate(50, 'strong');
+    sm.vibrate(50, "strong");
     sm.play("click");
     sm.unlock();
     if (this.status === "STOPPED") this.start();
@@ -324,6 +339,12 @@ export const tb = {
       new CustomEvent("timerStarted", { detail: "tabata" }),
     );
     store.setActiveTimer("tabata");
+
+    // [ИЗМЕНЕНИЕ 3] Получаем и отображаем имя тренировки
+    const workout = this.workouts.find(w => w.id === this.selectedId);
+    if (workout && this.els.runningWorkoutName) {
+      updateText(this.els.runningWorkoutName, workout.name);
+    }
 
     this.currentRound = 1;
     this.status = "READY";
@@ -371,9 +392,14 @@ export const tb = {
   },
 
   stop() {
-    sm.vibrate(30, 'medium');
+    sm.vibrate(30, "medium");
     sm.play("click");
     store.clearActiveTimer();
+
+    // [ИЗМЕНЕНИЕ 3] Очищаем имя тренировки при остановке
+    if (this.els.runningWorkoutName) {
+      updateText(this.els.runningWorkoutName, "");
+    }
 
     bgWorker.postMessage("stop");
     cancelAnimationFrame(this.rAF);
@@ -413,7 +439,7 @@ export const tb = {
   },
 
   nextPhase(missedTime = 0) {
-    if (missedTime === 0) sm.vibrate([100, 50, 100], 'strong');
+    if (missedTime === 0) sm.vibrate([100, 50, 100], "strong");
     this.lastBeepSec = 0;
     if (missedTime > 0) {
       let remainingMissed = missedTime;
