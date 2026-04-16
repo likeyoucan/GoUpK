@@ -22,7 +22,8 @@ export const themeManager = {
   isLiquidGlass: false,
   hideNavLabels: false,
   vignetteAlpha: 0.5,
-  vignetteLevels: [0, 0.25, 0.5, 0.75, 1],
+  // [ИСПРАВЛЕНИЕ] Минимальное значение изменено с 0 на 0.1
+  vignetteLevels: [0.1, 0.25, 0.5, 0.75, 1],
   vignetteLabels: [
     "vignette_min",
     "vignette_low",
@@ -185,11 +186,11 @@ export const themeManager = {
 
     const min = parseFloat(slider.min);
     const max = parseFloat(slider.max);
+
     const percent = (val - min) / (max - min);
 
     const thumbWidth = 24;
     const trackWidth = slider.offsetWidth;
-    // Если ширина трека 0 (элемент скрыт), выходим, чтобы избежать NaN
     if (trackWidth === 0) return;
 
     const offset = thumbWidth / 2 - percent * thumbWidth;
@@ -201,6 +202,7 @@ export const themeManager = {
   init() {
     this.applySettings();
     this.bindEvents();
+    document.dispatchEvent(new Event("languageChanged"));
   },
 
   applySettings() {
@@ -217,7 +219,6 @@ export const themeManager = {
 
     this._internalSetMode(safeGetLS("theme_mode") || "system", false);
 
-    // [ИСПРАВЛЕНИЕ 1] Возвращаем вызовы для применения цветов при загрузке
     this.setColor(safeGetLS("theme_color") || this.standardAccentColors[0]);
     this.setBgColor(safeGetLS("theme_bg_color") || "default");
 
@@ -225,7 +226,12 @@ export const themeManager = {
     this.hasVignette = safeGetLS("app_vignette") === "true";
     this.isLiquidGlass = safeGetLS("app_liquid_glass") === "true";
     this.hideNavLabels = safeGetLS("app_hide_nav_labels") === "true";
-    this.vignetteAlpha = parseFloat(safeGetLS("app_vignette_alpha")) || 0.5;
+
+    // [ИСПРАВЛЕНИЕ] Улучшенная логика загрузки значения, чтобы 0 не игнорировался
+    const storedVignetteAlpha = safeGetLS("app_vignette_alpha");
+    this.vignetteAlpha =
+      storedVignetteAlpha !== null ? parseFloat(storedVignetteAlpha) : 0.5; // 0.5 - значение по умолчанию (mid)
+
     this.showMs = safeGetLS("app_show_ms") !== "false";
     this.swMinuteBeep = safeGetLS("app_sw_minute_beep") !== "false";
 
@@ -250,7 +256,6 @@ export const themeManager = {
     if ($("ringWidthSlider"))
       $("ringWidthSlider").value = safeGetLS("app_ring_width") || 4;
 
-    // Устанавливаем значения слайдеров, но не позицию метки (она будет установлена позже)
     if ($("vignetteSlider")) {
       const closestIndex = this.vignetteLevels.reduce(
         (prev, curr, index) =>
@@ -277,7 +282,6 @@ export const themeManager = {
     }
   },
 
-  // [ИСПРАВЛЕНИЕ 3] Новая функция для синхронизации UI слайдеров
   syncSliderUIs() {
     this.updateSliderLabel(
       "vignetteSlider",
@@ -288,7 +292,6 @@ export const themeManager = {
   },
 
   bindEvents() {
-    // Обновляем метки при смене языка
     document.addEventListener("languageChanged", () => this.syncSliderUIs());
 
     $("toggle-sw-minute-beep")?.addEventListener("change", (e) => {
