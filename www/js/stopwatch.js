@@ -141,7 +141,7 @@ const stopwatchModule = {
   },
 
   toggle() {
-    sm.vibrate(50);
+    sm.vibrate(50, 'strong');
     sm.play("click");
     sm.unlock();
 
@@ -196,7 +196,7 @@ const stopwatchModule = {
     ) {
       this.lastMinuteBeep = currentMinute;
       sm.play("minute_beep");
-      sm.vibrate(40);
+      sm.vibrate(40, 'light'); 
     }
 
     if (now - this.lastRender >= 16 || isBackground) {
@@ -243,7 +243,7 @@ const stopwatchModule = {
   },
 
   recordLapOrReset() {
-    sm.vibrate(30);
+    sm.vibrate(30, 'medium');
     sm.play("click");
     if (this.isRunning) {
       const diff =

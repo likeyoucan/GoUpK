@@ -130,11 +130,10 @@ document.addEventListener("DOMContentLoaded", () => {
     tb.saveWorkout();
   });
 
-  // Глобальный обработчик для кнопок навигации
+    // Глобальный обработчик для кнопок навигации
   document.querySelectorAll("[data-nav]").forEach((btn) => {
     btn.addEventListener("click", (e) => {
-      // [ИЗМЕНЕНИЕ 2] Добавлена вибрация при клике на навигацию
-      sm.vibrate(20);
+      sm.vibrate(20, 'light'); // <--- Заменяем здесь
       navigation.switchView(e.currentTarget.getAttribute("data-nav"));
     });
   });

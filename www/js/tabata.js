@@ -73,7 +73,7 @@ export const tb = {
     document.querySelectorAll("[data-tb-adj]").forEach((btn) =>
       btn.addEventListener("click", (e) => {
         // [ИЗМЕНЕНИЕ 2] Добавлена вибрация
-        sm.vibrate(20);
+        sm.vibrate(20, 'light');
         const [id, delta] = e.currentTarget
           .getAttribute("data-tb-adj")
           .split(",");
@@ -311,7 +311,7 @@ export const tb = {
   },
 
   toggle() {
-    sm.vibrate(50);
+    sm.vibrate(50, 'strong');
     sm.play("click");
     sm.unlock();
     if (this.status === "STOPPED") this.start();
@@ -371,7 +371,7 @@ export const tb = {
   },
 
   stop() {
-    sm.vibrate(30);
+    sm.vibrate(30, 'medium');
     sm.play("click");
     store.clearActiveTimer();
 
@@ -413,7 +413,7 @@ export const tb = {
   },
 
   nextPhase(missedTime = 0) {
-    if (missedTime === 0) sm.vibrate([100, 50, 100]);
+    if (missedTime === 0) sm.vibrate([100, 50, 100], 'strong');
     this.lastBeepSec = 0;
     if (missedTime > 0) {
       let remainingMissed = missedTime;

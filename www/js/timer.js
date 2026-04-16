@@ -135,7 +135,7 @@ export const tm = {
           this.isRunning = false;
           store.clearActiveTimer();
 
-          sm.vibrate([200, 100, 200, 100, 400]);
+          sm.vibrate([200, 100, 200, 100, 400], 'strong');
           sm.play("complete");
           announceToScreenReader(t("timer_finished"));
           requestAnimationFrame(() => {
@@ -148,7 +148,7 @@ export const tm = {
 
     this.els.adjustPlusBtn?.addEventListener("click", () => {
       sm.play("tick");
-      sm.vibrate(50);
+      sm.vibrate(50, 'medium');
       const adjustmentMs = this.currentAdjustmentSec * 1000;
       this.totalDuration += adjustmentMs;
       bgWorker.postMessage({ command: "adjust", time: adjustmentMs });
@@ -156,7 +156,7 @@ export const tm = {
 
     this.els.adjustMinusBtn?.addEventListener("click", () => {
       sm.play("tick");
-      sm.vibrate(50);
+      sm.vibrate(50, 'medium');
       const adjustmentMs = -this.currentAdjustmentSec * 1000;
       this.totalDuration += adjustmentMs;
       bgWorker.postMessage({ command: "adjust", time: adjustmentMs });
@@ -178,7 +178,7 @@ export const tm = {
       }
       input.value = pad(val);
       sm.play("click");
-      sm.vibrate(10);
+      sm.vibrate(10, 'tactile'); 
     };
     input.addEventListener(
       "wheel",
@@ -238,7 +238,7 @@ export const tm = {
   },
 
   toggle() {
-    sm.vibrate(50);
+    sm.vibrate(50, 'strong');
     sm.play("click");
     sm.unlock();
     if (this.isRunning) {
@@ -293,7 +293,7 @@ export const tm = {
   },
 
   reset(clearInputs = true) {
-    sm.vibrate(30);
+    sm.vibrate(30, 'medium');
     sm.play("click");
     store.clearActiveTimer();
 

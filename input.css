@@ -103,8 +103,6 @@ body.theme-transition-disable {
 body {
   height: 100vh;
   height: 100dvh;
-  /* [ИЗМЕНЕНИЕ] Добавляем плавный переход к body */
-  transition: background-color 0.3s; 
   background-color: var(--surface-color, #000);
   color: var(--text-color);
   font-family:
@@ -1149,6 +1147,25 @@ body.hide-nav-labels .nav-btn {
 #app.is-swiping #swipe-area-left,
 #app.is-swiping #swipe-area-right {
   pointer-events: auto;
+}
+
+/* [ИЗМЕНЕНИЕ 3] Стили для подписей слайдеров */
+.slider-labels {
+  position: relative;
+  height: 1.25rem; /* ~h-5 */
+}
+
+.slider-labels span {
+  position: absolute;
+  top: 0;
+  transition: opacity 0.2s ease-in-out;
+  opacity: 0;
+  white-space: nowrap;
+  transform: translateX(-50%); /* Центрируем подпись */
+}
+
+.slider-labels span.is-active {
+  opacity: 1;
 }
 
 @layer utilities {
