@@ -685,63 +685,35 @@
                     </div>
                   </div>
 
-                  <div class="p-4 border-b app-border">
-                    <span
-                      class="block font-medium app-text text-sm mb-3"
-                      data-i18n="accent_color"
-                      >Accent Color</span
-                    >
-                    <!-- [ИЗМЕНЕНИЕ] Контейнер для цветов акцента -->
-                    <div
-                      id="accent-colors-container"
-                      class="flex items-center gap-4 overflow-x-auto scroll-lock no-scrollbar py-2 px-2 -mx-2"
-                    >
-                      <!-- Стандартные и кастомные кнопки будут здесь -->
-                      <div
-                        class="relative w-9 h-9 shrink-0 group rounded-full overflow-hidden border border-black/20 dark:border-white/20 transition-transform active:scale-90 focus-within:ring-4 focus-within:ring-[var(--primary-color)]"
-                      >
-                        <div
-                          class="absolute inset-0 bg-[conic-gradient(from_0deg,red,orange,yellow,green,blue,indigo,violet,red)] opacity-90 group-hover:opacity-100 transition-opacity pointer-events-none z-0"
-                        ></div>
-                        <input
-                          type="color"
-                          id="customColorInput"
-                          aria-label="Custom Accent Color"
-                          class="absolute inset-0 w-[150%] h-[150%] -top-1 -left-1 opacity-0 cursor-pointer z-10"
-                        />
-                      </div>
-                      <!-- Кнопка "+" будет добавлена сюда через JS -->
-                    </div>
-                  </div>
+        <div class="p-4 border-b app-border">
+          <span class="block font-medium app-text text-sm mb-3" data-i18n="accent_color">Accent Color</span>
+          <div id="accent-colors-container" class="flex items-center gap-4 overflow-x-auto scroll-lock no-scrollbar py-2 px-2 -mx-2">
+            <!-- Стандартные и кастомные кнопки будут здесь -->
+            <div class="relative w-9 h-9 shrink-0 group rounded-full overflow-hidden border border-black/20 dark:border-white/20 transition-transform active:scale-90 focus-within:ring-4 focus-within:ring-[var(--primary-color)]">
+              <div class="absolute inset-0 bg-[conic-gradient(from_0deg,red,orange,yellow,green,blue,indigo,violet,red)] opacity-90 group-hover:opacity-100 transition-opacity pointer-events-none z-0"></div>
+              <input type="color" id="customColorInput" aria-label="Custom Accent Color" class="absolute inset-0 w-[150%] h-[150%] -top-1 -left-1 opacity-0 cursor-pointer z-10" />
+            </div>
+            <!-- [ИЗМЕНЕНИЕ] Кнопка "+" теперь здесь и скрыта по умолчанию -->
+            <button type="button" id="add-accent-color-btn" aria-label="${t("add_color")}" class="hidden add-color-btn w-9 h-9 flex items-center justify-center rounded-full shrink-0 transition-transform active:scale-90 border-2 border-dashed app-border app-text-sec hover:bg-black/5 dark:hover:bg-white/5 focus:outline-none custom-focus">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
+            </button>
+          </div>
+        </div>
 
-                  <div class="p-4 border-b app-border">
-                    <span
-                      class="block font-medium app-text text-sm mb-3"
-                      data-i18n="bg_color"
-                      >Background Color</span
-                    >
-                    <!-- [ИЗМЕНЕНИЕ] Контейнер для фоновых цветов -->
-                    <div
-                      id="bg-colors-container"
-                      class="flex items-center gap-4 overflow-x-auto scroll-lock no-scrollbar py-2 px-2 -mx-2"
-                    >
-                      <!-- Стандартные и кастомные кнопки будут здесь -->
-                      <div
-                        class="relative w-9 h-9 shrink-0 group rounded-full overflow-hidden border border-black/20 dark:border-white/20 transition-transform active:scale-90 focus-within:ring-4 focus-within:ring-[var(--primary-color)]"
-                      >
-                        <div
-                          class="absolute inset-0 bg-[conic-gradient(from_0deg,red,orange,yellow,green,blue,indigo,violet,red)] opacity-50 group-hover:opacity-100 transition-opacity pointer-events-none z-0"
-                        ></div>
-                        <input
-                          type="color"
-                          id="customBgInput"
-                          aria-label="Custom Background Color"
-                          class="absolute inset-0 w-[150%] h-[150%] -top-1 -left-1 opacity-0 cursor-pointer z-10"
-                        />
-                      </div>
-                      <!-- Кнопка "+" будет добавлена сюда через JS -->
-                    </div>
-                  </div>
+        <div class="p-4 border-b app-border">
+          <span class="block font-medium app-text text-sm mb-3" data-i18n="bg_color">Background Color</span>
+          <div id="bg-colors-container" class="flex items-center gap-4 overflow-x-auto scroll-lock no-scrollbar py-2 px-2 -mx-2">
+            <!-- Стандартные и кастомные кнопки будут здесь -->
+            <div class="relative w-9 h-9 shrink-0 group rounded-full overflow-hidden border border-black/20 dark:border-white/20 transition-transform active:scale-90 focus-within:ring-4 focus-within:ring-[var(--primary-color)]">
+              <div class="absolute inset-0 bg-[conic-gradient(from_0deg,red,orange,yellow,green,blue,indigo,violet,red)] opacity-50 group-hover:opacity-100 transition-opacity pointer-events-none z-0"></div>
+              <input type="color" id="customBgInput" aria-label="Custom Background Color" class="absolute inset-0 w-[150%] h-[150%] -top-1 -left-1 opacity-0 cursor-pointer z-10" />
+            </div>
+            <!-- [ИЗМЕНЕНИЕ] Кнопка "+" теперь здесь и скрыта по умолчанию -->
+            <button type="button" id="add-bg-color-btn" aria-label="${t("add_color")}" class="hidden add-color-btn w-9 h-9 flex items-center justify-center rounded-full shrink-0 transition-transform active:scale-90 border-2 border-dashed app-border app-text-sec hover:bg-black/5 dark:hover:bg-white/5 focus:outline-none custom-focus">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
+            </button>
+          </div>
+        </div>
 
                   <div class="p-4 border-b app-border flex flex-col gap-4">
                     <div class="flex items-center justify-between">
