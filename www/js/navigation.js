@@ -1,6 +1,8 @@
 // Файл: js/navigation.js
 
 import { $ } from "./utils.js?v=VERSION";
+// [ИСПРАВЛЕНИЕ 3] Импортируем themeManager
+import { themeManager } from "./theme.js?v=VERSION";
 
 export const navigation = {
   activeView: "stopwatch",
@@ -32,6 +34,10 @@ export const navigation = {
         el.classList.add("z-10");
         el.removeAttribute("aria-hidden");
         el.removeAttribute("inert");
+        // [ИСПРАВЛЕНИЕ 3] Вызываем синхронизацию слайдеров, когда их контейнер становится видимым
+        if (id === "settings") {
+          themeManager.syncSliderUIs();
+        }
       } else {
         if (el.contains(document.activeElement)) {
           document.activeElement.blur();
@@ -53,19 +59,19 @@ export const navigation = {
       const iconSvg = iconDiv.querySelector("svg");
 
       if (id === activeId) {
-        iconDiv.classList.remove("text-gray-400");
+        iconDiv.classList.remove("app-text-sec");
         iconDiv.classList.add("primary-text");
         if (textSpan) {
-          textSpan.classList.remove("text-gray-400");
+          textSpan.classList.remove("app-text-sec");
           textSpan.classList.add("primary-text");
         }
-        if (iconSvg) iconSvg.setAttribute("stroke-width", "2");
+        if (iconSvg) iconSvg.setAttribute("stroke-width", "2.5");
       } else {
         iconDiv.classList.remove("primary-text");
-        iconDiv.classList.add("text-gray-400");
+        iconDiv.classList.add("app-text-sec");
         if (textSpan) {
           textSpan.classList.remove("primary-text");
-          textSpan.classList.add("text-gray-400");
+          textSpan.classList.add("app-text-sec");
         }
         if (iconSvg) iconSvg.setAttribute("stroke-width", "1.5");
       }

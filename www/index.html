@@ -581,33 +581,39 @@
                 </div>
               </div>
 
-              <!-- [ИЗМЕНЕНИЕ 3] Добавлен `relative` и новый span -->
               <div
                 id="tb-runningControls"
-                class="hidden w-full flex-col items-center justify-center h-full px-6 relative"
+                class="hidden w-full flex-col items-center justify-center h-full px-6"
                 style="
                   padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
                 "
               >
-                <span
-                  id="tb-runningWorkoutName"
-                  class="text-lg font-bold app-text absolute left-6 truncate max-w-[calc(100%-12rem)]"
-                ></span>
-                <div
-                  class="flex items-center gap-2 mb-8 app-surface px-6 py-2 rounded-full shadow-sm border app-border"
-                >
+                <!-- [ИЗМЕНЕНИЕ] Новый flex-контейнер для имени и раундов -->
+                <div class="w-full flex items-center justify-between mb-8">
+                  <!-- Название тренировки (слева) -->
                   <span
-                    class="text-sm font-bold opacity-60 app-text"
-                    data-i18n="round"
-                    >ROUND</span
+                    id="tb-runningWorkoutName"
+                    class="text-lg font-bold app-text truncate pr-4"
+                  ></span>
+
+                  <!-- Счетчик раундов (справа) -->
+                  <div
+                    class="flex-shrink-0 flex items-center gap-2 app-surface px-4 sm:px-6 py-2 rounded-full shadow-sm border app-border"
                   >
-                  <span class="text-xl font-bold app-text"
-                    ><span id="tb-currentRound">1</span>/<span
-                      id="tb-totalRounds"
-                      >8</span
-                    ></span
-                  >
+                    <span
+                      class="text-sm font-bold opacity-60 app-text"
+                      data-i18n="round"
+                      >ROUND</span
+                    >
+                    <span class="text-xl font-bold app-text">
+                      <span id="tb-currentRound">1</span>/<span
+                        id="tb-totalRounds"
+                        >8</span
+                      >
+                    </span>
+                  </div>
                 </div>
+
                 <button
                   type="button"
                   id="tb-stopBtn"
