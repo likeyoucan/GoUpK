@@ -22,7 +22,6 @@ export const themeManager = {
   isLiquidGlass: false,
   hideNavLabels: false,
   vignetteAlpha: 0.5,
-  // [ИСПРАВЛЕНИЕ] Минимальное значение изменено с 0 на 0.1
   vignetteLevels: [0.1, 0.25, 0.5, 0.75, 1],
   vignetteLabels: [
     "vignette_min",
@@ -197,8 +196,6 @@ export const themeManager = {
     label.style.left = `calc(${percent * 100}% - ${offset}px)`;
   },
 
-  // --- Основные методы ---
-
   init() {
     this.applySettings();
     this.bindEvents();
@@ -227,10 +224,9 @@ export const themeManager = {
     this.isLiquidGlass = safeGetLS("app_liquid_glass") === "true";
     this.hideNavLabels = safeGetLS("app_hide_nav_labels") === "true";
 
-    // [ИСПРАВЛЕНИЕ] Улучшенная логика загрузки значения, чтобы 0 не игнорировался
     const storedVignetteAlpha = safeGetLS("app_vignette_alpha");
     this.vignetteAlpha =
-      storedVignetteAlpha !== null ? parseFloat(storedVignetteAlpha) : 0.5; // 0.5 - значение по умолчанию (mid)
+      storedVignetteAlpha !== null ? parseFloat(storedVignetteAlpha) : 0.5;
 
     this.showMs = safeGetLS("app_show_ms") !== "false";
     this.swMinuteBeep = safeGetLS("app_sw_minute_beep") !== "false";
@@ -303,7 +299,9 @@ export const themeManager = {
       safeSetLS("app_show_ms", this.showMs);
       document.dispatchEvent(new CustomEvent("msChanged"));
     });
+
     $("toggle-adaptive-bg")?.addEventListener("change", (e) => {
+      document.body.classList.add("is-updating-theme");
       this.isAdaptiveBg = e.target.checked;
       safeSetLS("app_adaptive_bg", this.isAdaptiveBg);
       this.updateAdaptiveClass();
@@ -311,7 +309,11 @@ export const themeManager = {
         this.currentBg,
         document.documentElement.classList.contains("dark"),
       );
+      requestAnimationFrame(() =>
+        document.body.classList.remove("is-updating-theme"),
+      );
     });
+
     $("toggle-glass")?.addEventListener("change", (e) => {
       this.isLiquidGlass = e.target.checked;
       safeSetLS("app_liquid_glass", this.isLiquidGlass);
@@ -389,7 +391,44 @@ export const themeManager = {
       });
   },
 
-  // Остальная часть файла без изменений
+  setMode(mode) {
+    this._internalSetMode(mode, true);
+  },
+
+  _internalSetMode(mode, useTransition) {
+    if (useTransition) {
+      document.body.classList.add("is-updating-theme");
+    }
+
+    this.currentMode = mode;
+    safeSetLS("theme_mode", mode);
+
+    document.querySelectorAll('[id^="theme-"]').forEach((b) => {
+      b.classList.remove("app-surface", "shadow-sm", "app-text");
+      b.classList.add("app-text-sec");
+    });
+    const activeBtn = $(`theme-${mode}`);
+    if (activeBtn) {
+      activeBtn.classList.remove("app-text-sec");
+      activeBtn.classList.add("app-surface", "shadow-sm", "app-text");
+    }
+
+    const isDark =
+      mode === "dark" ||
+      (mode === "system" &&
+        window.matchMedia("(prefers-color-scheme: dark)").matches);
+    document.documentElement.classList.toggle("dark", isDark);
+    document.documentElement.style.colorScheme = isDark ? "dark" : "light";
+
+    this.applyBgTheme(this.currentBg, isDark);
+
+    if (useTransition) {
+      requestAnimationFrame(() =>
+        document.body.classList.remove("is-updating-theme"),
+      );
+    }
+  },
+
   handleColorClick(event, type) {
     const target = event.target;
     const isAccent = type === "accent";
@@ -421,6 +460,7 @@ export const themeManager = {
       }
     }
   },
+
   renderColorSection(type) {
     const isAccent = type === "accent";
     const container = $(
@@ -450,35 +490,7 @@ export const themeManager = {
       (isAccent ? this.standardAccentColors[0] : "default");
     this.updateColorSelectionUI(type, activeColor);
   },
-  setMode(mode) {
-    this._internalSetMode(mode, true);
-  },
-  _internalSetMode(mode, useTransitionDisable) {
-    if (useTransitionDisable)
-      document.body.classList.add("theme-transition-disable");
-    this.currentMode = mode;
-    safeSetLS("theme_mode", mode);
-    document.querySelectorAll('[id^="theme-"]').forEach((b) => {
-      b.classList.remove("app-surface", "shadow-sm", "app-text");
-      b.classList.add("app-text-sec");
-    });
-    const activeBtn = $(`theme-${mode}`);
-    if (activeBtn) {
-      activeBtn.classList.remove("app-text-sec");
-      activeBtn.classList.add("app-surface", "shadow-sm", "app-text");
-    }
-    const isDark =
-      mode === "dark" ||
-      (mode === "system" &&
-        window.matchMedia("(prefers-color-scheme: dark)").matches);
-    document.documentElement.classList.toggle("dark", isDark);
-    document.documentElement.style.colorScheme = isDark ? "dark" : "light";
-    this.applyBgTheme(this.currentBg, isDark);
-    if (useTransitionDisable)
-      requestAnimationFrame(() =>
-        document.body.classList.remove("theme-transition-disable"),
-      );
-  },
+
   deleteCustomColor(type, color) {
     const isAccent = type === "accent";
     let customColors = isAccent ? this.customAccentColors : this.customBgColors;
@@ -495,6 +507,7 @@ export const themeManager = {
     }
     return null;
   },
+
   addCustomColor(type, color) {
     const isAccent = type === "accent";
     const customColors = isAccent
@@ -516,6 +529,7 @@ export const themeManager = {
       isAccent ? this.setColor(color) : this.setBgColor(color);
     }
   },
+
   setColor(hex) {
     safeSetLS("theme_color", hex);
     document.documentElement.style.setProperty("--primary-color", hex);
@@ -523,6 +537,7 @@ export const themeManager = {
     document.documentElement.style.setProperty("--accent-h", h);
     this.updateColorSelectionUI("accent", hex);
   },
+
   setBgColor(hex) {
     this.currentBg = hex;
     safeSetLS("theme_bg_color", hex);
@@ -530,7 +545,9 @@ export const themeManager = {
     this.applyBgTheme(hex, isDark);
     this.updateColorSelectionUI("bg", hex);
   },
+
   resetSettings() {
+    // [ИСПРАВЛЕНИЕ] Удалены "custom_accent_colors" и "custom_bg_colors" из списка сброса.
     const themeKeys = [
       "theme_mode",
       "theme_color",
@@ -544,12 +561,12 @@ export const themeManager = {
       "app_ring_width",
       "app_show_ms",
       "app_sw_minute_beep",
-      "custom_accent_colors",
-      "custom_bg_colors",
     ];
     themeKeys.forEach(safeRemoveLS);
+    // applySettings() перезагрузит все настройки, включая список кастомных цветов из localStorage
     this.applySettings();
   },
+
   applyBgTheme(hex, isDark) {
     const root = document.documentElement;
     document.body.classList.remove("force-light-text", "force-dark-text");

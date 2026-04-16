@@ -94,8 +94,11 @@ html.dark {
   transition: none !important;
 }
 
-body.theme-transition-disable {
-  transition: background-color 0s !important;
+body.is-updating-theme,
+body.is-updating-theme .app-bg,
+body.is-updating-theme .app-surface {
+  transition-duration: 0s !important;
+  background-color: transparent !important;
 }
 
 body {
