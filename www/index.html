@@ -694,7 +694,7 @@
                     <!-- [ИЗМЕНЕНИЕ 1] Контейнер с "экшн-слотом" слева -->
                     <div
                       id="accent-colors-container"
-                      class="flex items-center gap-4 overflow-x-auto scroll-lock no-scrollbar py-2 px-2 -mx-2"
+                      class="relative flex items-center gap-4 overflow-x-auto scroll-lock no-scrollbar py-2 px-2 -mx-2"
                     >
                       <div
                         id="accent-action-slot"
@@ -711,7 +711,7 @@
                     >
                     <div
                       id="bg-colors-container"
-                      class="flex items-center gap-4 overflow-x-auto scroll-lock no-scrollbar py-2 px-2 -mx-2"
+                      class="rs="rive flex items-center gap-4 overflow-x-auto scroll-lock no-scrollbar py-2 px-2 -mx-2"
                     >
                       <div id="bg-action-slot" class="w-9 h-9 shrink-0"></div>
                       <!-- Кнопки цветов и color-picker будут добавлены сюда из JS -->
@@ -790,34 +790,18 @@
                         </label>
                       </div>
 
-                      <div
-                        id="vignette-depth-container"
-                        class="hidden flex-col items-center gap-1 transition-opacity duration-300"
-                      >
-                        <div class="flex w-full items-center justify-between">
-                          <label
-                            for="vignetteSlider"
-                            class="text-xs app-text-sec"
-                            data-i18n="vignette_depth"
-                            >Depth</label
-                          >
-                          <input
-                            type="range"
-                            min="0"
-                            max="10"
-                            value="5"
-                            step="1"
-                            id="vignetteSlider"
-                            class="w-32"
-                          />
-                        </div>
-                        <div
-                          id="vignette-labels"
-                          class="slider-labels w-32 -ml-8"
-                        >
-                          <!-- Ярлыки будут добавлены JS -->
-                        </div>
-                      </div>
+                       <!-- [ИЗМЕНЕНИЕ 2, 3] Изменена структура для слайдера виньетки -->
+          <div id="vignette-depth-container" class="hidden flex-col gap-1 transition-opacity duration-300">
+            <div class="flex w-full items-center justify-between">
+                <label for="vignetteSlider" class="text-xs app-text-sec" data-i18n="vignette_depth">Depth</label>
+                <div class="relative w-32">
+                    <input type="range" min="0" max="10" value="5" step="1" id="vignetteSlider" class="w-full"/>
+                    <div id="vignette-labels" class="slider-labels w-full">
+                        <!-- Ярлыки будут добавлены JS -->
+                    </div>
+                </div>
+            </div>
+
                     </div>
                   </div>
 
@@ -1060,41 +1044,22 @@
                       </label>
                     </div>
 
-                    <div
-                      id="vibro-level-container"
-                      class="hidden flex-col items-center gap-1 transition-opacity duration-300"
-                    >
-                      <div class="flex w-full items-center justify-between">
-                        <label
-                          for="vibroSlider"
-                          class="text-xs app-text-sec"
-                          data-i18n="vibro_level"
-                          >Depth</label
-                        >
-                        <input
-                          type="range"
-                          min="0"
-                          max="4"
-                          value="2"
-                          step="1"
-                          id="vibroSlider"
-                          class="w-32"
-                        />
-                      </div>
-                      <div id="vibro-labels" class="slider-labels w-32 -ml-8">
-                        <span style="left: 0%" data-i18n="vibro_min">min</span>
-                        <span style="left: 25%" data-i18n="vibro_low">low</span>
-                        <span style="left: 50%" data-i18n="vibro_medium"
-                          >mid</span
-                        >
-                        <span style="left: 75%" data-i18n="vibro_high"
-                          >high</span
-                        >
-                        <span style="left: 100%" data-i18n="vibro_max"
-                          >max</span
-                        >
-                      </div>
+                     <!-- [ИЗМЕНЕНИЕ 2, 3] Изменена структура для слайдера вибрации -->
+          <div id="vibro-level-container" class="hidden flex-col gap-1 transition-opacity duration-300">
+            <div class="flex w-full items-center justify-between">
+                <label for="vibroSlider" class="text-xs app-text-sec" data-i18n="vibro_level">Depth</label>
+                <div class="relative w-32">
+                    <input type="range" min="0" max="4" value="2" step="1" id="vibroSlider" class="w-full"/>
+                    <div id="vibro-labels" class="slider-labels w-full">
+                        <span data-i18n="vibro_min">min</span>
+                        <span data-i18n="vibro_low">low</span>
+                        <span data-i18n="vibro_medium">mid</span>
+                        <span data-i18n="vibro_high">high</span>
+                        <span data-i18n="vibro_max">max</span>
                     </div>
+                </div>
+            </div>
+
                   </div>
 
                   <div

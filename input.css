@@ -1149,10 +1149,21 @@ body.hide-nav-labels .nav-btn {
   pointer-events: auto;
 }
 
+/* [ИЗМЕНЕНИЕ 1] Добавляем отступ для контейнеров цветов */
+#accent-colors-container,
+#bg-colors-container {
+  padding-left: calc(2.25rem + 1rem); /* w-9 + gap-4 */
+}
+
 /* [ИЗМЕНЕНИЕ 3] Стили для подписей слайдеров */
 .slider-labels {
-  position: relative;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
   height: 1.25rem; /* ~h-5 */
+  pointer-events: none; /* Чтобы не мешали кликать по слайдеру */
+  margin-top: -0.25rem; /* Немного приподнимем */
 }
 
 .slider-labels span {
@@ -1162,10 +1173,14 @@ body.hide-nav-labels .nav-btn {
   opacity: 0;
   white-space: nowrap;
   transform: translateX(-50%); /* Центрируем подпись */
+  font-size: 10px;
+  color: var(--text-secondary);
 }
 
 .slider-labels span.is-active {
   opacity: 1;
+  color: var(--primary-color);
+  font-weight: bold;
 }
 
 @layer utilities {
