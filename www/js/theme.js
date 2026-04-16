@@ -13,7 +13,6 @@ import { sm } from "./sound.js?v=VERSION";
 const MAX_CUSTOM_COLORS = 50;
 
 export const themeManager = {
-  // --- Свойства ---
   currentMode: "system",
   currentAccent: "",
   currentBg: "default",
@@ -40,7 +39,6 @@ export const themeManager = {
   ],
   ringWidth: 4,
   swMinuteBeep: true,
-
   standardAccentColors: [
     "#22c55e",
     "#3b82f6",
@@ -64,19 +62,15 @@ export const themeManager = {
   customAccentColors: [],
   customBgColors: [],
 
-  // --- Внутренние вспомогательные функции ---
-
   _createColorButtonEl(color, isCustom) {
     const wrapper = document.createElement("div");
     wrapper.className = "custom-color-wrapper shrink-0 rounded-full";
     wrapper.dataset.color = color;
     wrapper.dataset.custom = isCustom;
-
     const button = document.createElement("button");
     button.type = "button";
     button.className =
       "color-btn w-9 h-9 flex items-center justify-center rounded-full shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus";
-
     if (color === "default") {
       button.classList.add("default-bg-btn");
       button.ariaLabel = t("default_color");
@@ -87,12 +81,10 @@ export const themeManager = {
     return wrapper;
   },
 
-  // [ИЗМЕНЕНИЕ] Новая функция для плавного удаления кнопки
   _removeActionButton(container) {
     const actionBtn = container.querySelector(".color-action-btn.is-visible");
     if (actionBtn) {
       actionBtn.classList.remove("is-visible");
-      // Удаляем элемент из DOM после завершения анимации (250ms + буфер 50ms)
       setTimeout(() => {
         actionBtn.remove();
       }, 300);
@@ -106,7 +98,6 @@ export const themeManager = {
     );
     if (!container) return;
 
-    // Удаляем старую кнопку (без анимации, т.к. новая сейчас появится)
     container.querySelector(".color-action-btn")?.remove();
 
     const activeWrapper =
@@ -135,9 +126,7 @@ export const themeManager = {
       const actionBtnWrapper = document.createElement("div");
       actionBtnWrapper.className = "color-action-btn";
       actionBtnWrapper.innerHTML = actionBtnHTML;
-
       activeWrapper.parentNode.insertBefore(actionBtnWrapper, activeWrapper);
-
       requestAnimationFrame(() => {
         actionBtnWrapper.classList.add("is-visible");
       });
@@ -176,9 +165,8 @@ export const themeManager = {
     );
     if (!activeWrapper) {
       const picker = isAccent ? $("customColorInput") : $("customBgInput");
-      if (picker && picker.value === hex) {
+      if (picker && picker.value === hex)
         activeWrapper = picker.closest(".relative");
-      }
     }
 
     if (activeWrapper) {
@@ -189,7 +177,6 @@ export const themeManager = {
         "ring-offset-surface",
         "shadow-lg",
       );
-
       if (activeWrapper.classList.contains("custom-color-wrapper")) {
         const button = activeWrapper.querySelector("button");
         button.dataset.originalContent = button.innerHTML;
@@ -207,7 +194,6 @@ export const themeManager = {
     const slider = $(sliderId);
     const label = $(labelId);
     if (!slider || !label) return;
-
     const val = parseInt(slider.value, 10);
     label.textContent = t(labelsArray[val]);
     const min = parseFloat(slider.min);
@@ -231,22 +217,15 @@ export const themeManager = {
       this.customAccentColors =
         JSON.parse(safeGetLS("custom_accent_colors")) || [];
       this.customBgColors = JSON.parse(safeGetLS("custom_bg_colors")) || [];
-    } catch (e) {
-      /* ... */
-    }
-
+    } catch (e) {}
     this.renderColorSection("accent");
     this.renderColorSection("bg");
-
     this._internalSetMode(safeGetLS("theme_mode") || "system", false);
-
     this.currentAccent =
       safeGetLS("theme_color") || this.standardAccentColors[0];
     this.setColor(this.currentAccent, false);
-
     this.currentBg = safeGetLS("theme_bg_color") || "default";
     this.setBgColor(this.currentBg, false);
-
     this.isAdaptiveBg = safeGetLS("app_adaptive_bg") !== "false";
     this.hasVignette = safeGetLS("app_vignette") === "true";
     this.isLiquidGlass = safeGetLS("app_liquid_glass") === "true";
@@ -256,14 +235,12 @@ export const themeManager = {
       storedVignetteAlpha !== null ? parseFloat(storedVignetteAlpha) : 0.5;
     this.showMs = safeGetLS("app_show_ms") !== "false";
     this.swMinuteBeep = safeGetLS("app_sw_minute_beep") !== "false";
-
     this.updateAdaptiveClass();
     this.setFontSize(safeGetLS("font_size") || 16);
     this.setRingWidth(safeGetLS("app_ring_width") || 4);
     this.applyNavLabelsVisibility();
     this.updateGlass();
     this.updateVignette();
-
     if ($("toggle-adaptive-bg"))
       $("toggle-adaptive-bg").checked = this.isAdaptiveBg;
     if ($("toggle-glass")) $("toggle-glass").checked = this.isLiquidGlass;
@@ -276,7 +253,6 @@ export const themeManager = {
     if ($("fontSlider")) $("fontSlider").value = safeGetLS("font_size") || 16;
     if ($("ringWidthSlider"))
       $("ringWidthSlider").value = safeGetLS("app_ring_width") || 4;
-
     if ($("vignetteSlider")) {
       const closestIndex = this.vignetteLevels.reduce(
         (prev, curr, index) =>
@@ -449,7 +425,6 @@ export const themeManager = {
       const color = colorWrapper.dataset.color;
       const existingActionBtn = colorWrapper.previousElementSibling;
 
-      // [ИЗМЕНЕНИЕ] Логика второго клика
       if (
         existingActionBtn &&
         existingActionBtn.classList.contains("color-action-btn")
@@ -458,7 +433,7 @@ export const themeManager = {
         return;
       }
 
-      this._removeActionButton(container); // Плавное удаление любой другой кнопки
+      this._removeActionButton(container);
       sm.vibrate(20, "light");
       isAccent ? this.setColor(color, true) : this.setBgColor(color, true);
       return;
@@ -468,21 +443,31 @@ export const themeManager = {
     if (actionBtn) {
       sm.vibrate(40, "medium");
       const action = actionBtn.dataset.action;
-      const activeColor = isAccent ? this.currentAccent : this.currentBg;
 
       if (action === "delete") {
-        this._removeActionButton(container); // Плавно убираем кнопку
-        const newActiveColor = this.deleteCustomColor(type, activeColor);
-        // Делаем небольшую задержку, чтобы удаление кнопки успело сработать перед перерисовкой
-        setTimeout(() => {
-          this.renderColorSection(type);
-          if (newActiveColor) {
+        const actionBtnWrapper = actionBtn.parentElement;
+        const colorToDeleteWrapper = actionBtnWrapper.nextElementSibling;
+
+        if (
+          colorToDeleteWrapper &&
+          colorToDeleteWrapper.classList.contains("custom-color-wrapper")
+        ) {
+          const colorToDelete = colorToDeleteWrapper.dataset.color;
+          this.deleteCustomColor(type, colorToDelete);
+          this._removeActionButton(container);
+          colorToDeleteWrapper.classList.add("is-deleting");
+          setTimeout(() => {
+            colorToDeleteWrapper.remove();
+            const newActiveColor = isAccent
+              ? this.standardAccentColors[0]
+              : "default";
             isAccent
               ? this.setColor(newActiveColor, false)
               : this.setBgColor(newActiveColor, false);
-          }
-        }, 150);
+          }, 300);
+        }
       } else if (action === "add") {
+        const activeColor = isAccent ? this.currentAccent : this.currentBg;
         this.addCustomColor(type, activeColor);
       }
     }
@@ -494,7 +479,6 @@ export const themeManager = {
       isAccent ? "accent-colors-container" : "bg-colors-container",
     );
     if (!container) return;
-
     const scrollLeft = container.scrollLeft;
     container.innerHTML = "";
     const standardColors = isAccent
@@ -530,17 +514,7 @@ export const themeManager = {
         ? (this.customAccentColors = customColors)
         : (this.customBgColors = customColors);
       safeSetLS(key, JSON.stringify(customColors));
-      const newActiveColor = isAccent
-        ? this.standardAccentColors[0]
-        : "default";
-      if (isAccent) {
-        this.currentAccent = newActiveColor;
-      } else {
-        this.currentBg = newActiveColor;
-      }
-      return newActiveColor;
     }
-    return null;
   },
 
   addCustomColor(type, color) {
@@ -572,9 +546,7 @@ export const themeManager = {
     const { h } = this.hexToHSL(hex);
     document.documentElement.style.setProperty("--accent-h", h);
     this.updateColorSelectionUI("accent", hex);
-    if (showAction) {
-      this._handleActionButtonLogic("accent", hex);
-    }
+    if (showAction) this._handleActionButtonLogic("accent", hex);
   },
 
   setBgColor(hex, showAction = true) {
@@ -583,9 +555,7 @@ export const themeManager = {
     const isDark = document.documentElement.classList.contains("dark");
     this.applyBgTheme(hex, isDark);
     this.updateColorSelectionUI("bg", hex);
-    if (showAction) {
-      this._handleActionButtonLogic("bg", hex);
-    }
+    if (showAction) this._handleActionButtonLogic("bg", hex);
   },
 
   resetSettings() {
@@ -606,7 +576,6 @@ export const themeManager = {
     themeKeys.forEach(safeRemoveLS);
     this.applySettings();
   },
-
   applyBgTheme(hex, isDark) {
     const root = document.documentElement;
     document.body.classList.remove("force-light-text", "force-dark-text");
@@ -654,7 +623,6 @@ export const themeManager = {
       }
     }
   },
-
   getLuminance(r, g, b) {
     const a = [r, g, b].map((v) => {
       v /= 255;
