@@ -120,7 +120,7 @@ export const translations = {
     hr: "Ч",
     min: "МИН",
     sec: "СЕК",
-    tabata_interval: "Интервалы",
+    tabata_interval: "Табата Интервалы",
     my_workouts: "Мои тренировки",
     create_new: "+ Своя",
     round: "РАУНД",
