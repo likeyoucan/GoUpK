@@ -1,6 +1,12 @@
 // Файл: js/main.js
 
-import { $, showToast, safeRemoveLS, requestWakeLock, releaseWakeLock } from "./utils.js?v=VERSION";
+import {
+  $,
+  showToast,
+  safeRemoveLS,
+  requestWakeLock,
+  releaseWakeLock,
+} from "./utils.js?v=VERSION";
 import { langManager, t } from "./i18n.js?v=VERSION";
 import { themeManager } from "./theme.js?v=VERSION";
 import { navigation } from "./navigation.js?v=VERSION";
@@ -19,7 +25,7 @@ function injectSVG() {
   const svgs = {
     sw: "sw-progressRing",
     tm: "tm-progressRing",
-    tb: "tb-progressRing"
+    tb: "tb-progressRing",
   };
   document.querySelectorAll("[data-ring]").forEach((container) => {
     const type = container.getAttribute("data-ring");
@@ -40,11 +46,27 @@ function injectSVG() {
  * Используется модулем ModalManager для их инициализации.
  */
 const modalConfig = [
-  { id: 'sw-sessions-modal', type: 'bottom-sheet', handlerId: 'sw-modal-handler', onOpen: () => sw.sortSessions(sw.currentSort) },
-  { id: 'tb-modal', type: 'bottom-sheet', handlerId: 'tb-modal-handler', onOpen: (data) => tb.prepareEdit(data.idToEdit), onClose: () => tb.editingWorkoutId = null },
-  { id: 'reset-modal', type: 'alert', contentId: 'reset-modal-content' },
-  { id: 'sw-clear-modal', type: 'alert', contentId: 'sw-clear-modal-content' },
-  { id: 'sw-name-modal', type: 'alert', contentId: 'sw-name-modal-content', onOpen: (data) => sw.prepareNameForm(data) },
+  {
+    id: "sw-sessions-modal",
+    type: "bottom-sheet",
+    handlerId: "sw-modal-handler",
+    onOpen: () => sw.sortSessions(sw.currentSort),
+  },
+  {
+    id: "tb-modal",
+    type: "bottom-sheet",
+    handlerId: "tb-modal-handler",
+    onOpen: (data) => tb.prepareEdit(data.idToEdit),
+    onClose: () => (tb.editingWorkoutId = null),
+  },
+  { id: "reset-modal", type: "alert", contentId: "reset-modal-content" },
+  { id: "sw-clear-modal", type: "alert", contentId: "sw-clear-modal-content" },
+  {
+    id: "sw-name-modal",
+    type: "alert",
+    contentId: "sw-name-modal-content",
+    onOpen: (data) => sw.prepareNameForm(data),
+  },
 ];
 
 /**
@@ -53,16 +75,15 @@ const modalConfig = [
  * Это делает код более модульным и надежным.
  */
 function confirmReset() {
-    modalManager.closeCurrent();
-    
-    // Вызываем сброс в каждом ответственном модуле
-    themeManager.resetSettings(); // Предполагается, что вы добавили этот метод в theme.js
-    sm.resetSettings();         // Предполагается, что вы добавили этот метод в sound.js
-    langManager.resetSettings();    // Предполагается, что вы добавили этот метод в i18n.js
+  modalManager.closeCurrent();
 
-    setTimeout(() => showToast(t("settings_reset_success")), 450);
+  // Вызываем сброс в каждом ответственном модуле
+  themeManager.resetSettings(); // Предполагается, что вы добавили этот метод в theme.js
+  sm.resetSettings(); // Предполагается, что вы добавили этот метод в sound.js
+  langManager.resetSettings(); // Предполагается, что вы добавили этот метод в i18n.js
+
+  setTimeout(() => showToast(t("settings_reset_success")), 450);
 }
-
 
 /**
  * Основная точка входа в приложение.
@@ -79,7 +100,7 @@ document.addEventListener("DOMContentLoaded", () => {
   tm.init();
   tb.init();
   navigation.init();
-  
+
   // 2. Затем инициализируем менеджер модальных окон, передавая ему конфигурацию.
   modalManager.init(modalConfig);
 
@@ -89,11 +110,17 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- Назначение обработчиков событий для элементов UI ---
 
   // Обработчики открытия модальных окон
-  $("sw-openResultsBtn")?.addEventListener("click", () => modalManager.open('sw-sessions-modal'));
-  $("tb-openModalBtn")?.addEventListener("click", () => modalManager.open('tb-modal', { idToEdit: null }));
-  $("btn-open-reset")?.addEventListener("click", () => modalManager.open('reset-modal'));
+  $("sw-openResultsBtn")?.addEventListener("click", () =>
+    modalManager.open("sw-sessions-modal"),
+  );
+  $("tb-openModalBtn")?.addEventListener("click", () =>
+    modalManager.open("tb-modal", { idToEdit: null }),
+  );
+  $("btn-open-reset")?.addEventListener("click", () =>
+    modalManager.open("reset-modal"),
+  );
   $("sw-clearAllBtn")?.addEventListener("click", () => {
-    if (sw.savedSessions.length > 0) modalManager.open('sw-clear-modal');
+    if (sw.savedSessions.length > 0) modalManager.open("sw-clear-modal");
   });
 
   // Обработчики подтверждения действий в модальных окнах
@@ -110,12 +137,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Глобальный обработчик для кнопок навигации
   document.querySelectorAll("[data-nav]").forEach((btn) => {
-    btn.addEventListener("click", (e) => navigation.switchView(e.currentTarget.getAttribute("data-nav")));
+    btn.addEventListener("click", (e) =>
+      navigation.switchView(e.currentTarget.getAttribute("data-nav")),
+    );
   });
 
   // Глобальный обработчик для горячих клавиш (Space, L, R)
   document.addEventListener("keydown", (e) => {
-    if (modalManager.hasActiveModal() || e.target.closest('input, textarea, select, button, [contenteditable="true"]')) {
+    if (
+      modalManager.hasActiveModal() ||
+      e.target.closest(
+        'input, textarea, select, button, [contenteditable="true"]',
+      )
+    ) {
       return; // Игнорируем, если открыто модальное окно или фокус на элементе ввода
     }
     const view = navigation.activeView;
@@ -134,66 +168,91 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Обработчик двойного касания на экране секундомера для записи круга
   let lastBgTap = 0;
-  $("view-stopwatch")?.addEventListener("touchstart", (e) => {
-    if (e.target.closest("button, .scroll-lock, .selectable-data")) return;
-    const now = Date.now();
-    if (now - lastBgTap < 300 && sw.isRunning) {
-      e.preventDefault();
-      sw.recordLapOrReset();
-    }
-    lastBgTap = now;
-  }, { passive: false });
+  $("view-stopwatch")?.addEventListener(
+    "touchstart",
+    (e) => {
+      if (e.target.closest("button, .scroll-lock, .selectable-data")) return;
+      const now = Date.now();
+      if (now - lastBgTap < 300 && sw.isRunning) {
+        e.preventDefault();
+        sw.recordLapOrReset();
+      }
+      lastBgTap = now;
+    },
+    { passive: false },
+  );
 
   // --- Логика свайп-навигации между вкладками ---
   const appContainer = $("app");
   const swipeAreaLeft = $("swipe-area-left");
   const swipeAreaRight = $("swipe-area-right");
   const tabs = ["stopwatch", "timer", "tabata", "settings"];
-  let touchStartX = 0, touchStartY = 0, isSwipeActive = false;
-
-  appContainer.addEventListener("touchstart", (e) => {
-    if (modalManager.hasActiveModal()) return;
-    const touch = e.touches[0];
-    const x = touch.clientX;
-    const leftRect = swipeAreaLeft.getBoundingClientRect();
-    const rightRect = swipeAreaRight.getBoundingClientRect();
-    if ((x >= leftRect.left && x <= leftRect.right) || (x >= rightRect.left && x <= rightRect.right)) {
-      isSwipeActive = true;
-      touchStartX = x;
-      touchStartY = touch.clientY;
-      appContainer.classList.add("is-swiping");
-    }
-  }, { passive: true });
-
-  appContainer.addEventListener("touchend", (e) => {
-    if (!isSwipeActive) return;
-    const touch = e.changedTouches[0];
-    const deltaX = touch.clientX - touchStartX;
-    const deltaY = touch.clientY - touchStartY;
-    if (Math.abs(deltaX) > 60 && Math.abs(deltaY) < 100) {
-      const currentIdx = tabs.indexOf(navigation.activeView);
-      if (deltaX < 0 && currentIdx < tabs.length - 1) {
-        navigation.switchView(tabs[currentIdx + 1]);
-      } else if (deltaX > 0 && currentIdx > 0) {
-        navigation.switchView(tabs[currentIdx - 1]);
-      }
-    }
+  let touchStartX = 0,
+    touchStartY = 0,
     isSwipeActive = false;
-    touchStartX = 0;
-    appContainer.classList.remove("is-swiping");
-  }, { passive: true });
 
-  appContainer.addEventListener("touchcancel", () => {
-    if (isSwipeActive) {
+  appContainer.addEventListener(
+    "touchstart",
+    (e) => {
+      if (modalManager.hasActiveModal()) return;
+      const touch = e.touches[0];
+      const x = touch.clientX;
+      const leftRect = swipeAreaLeft.getBoundingClientRect();
+      const rightRect = swipeAreaRight.getBoundingClientRect();
+      if (
+        (x >= leftRect.left && x <= leftRect.right) ||
+        (x >= rightRect.left && x <= rightRect.right)
+      ) {
+        isSwipeActive = true;
+        touchStartX = x;
+        touchStartY = touch.clientY;
+        appContainer.classList.add("is-swiping");
+      }
+    },
+    { passive: true },
+  );
+
+  appContainer.addEventListener(
+    "touchend",
+    (e) => {
+      if (!isSwipeActive) return;
+      const touch = e.changedTouches[0];
+      const deltaX = touch.clientX - touchStartX;
+      const deltaY = touch.clientY - touchStartY;
+      if (Math.abs(deltaX) > 60 && Math.abs(deltaY) < 100) {
+        const currentIdx = tabs.indexOf(navigation.activeView);
+        if (deltaX < 0 && currentIdx < tabs.length - 1) {
+          navigation.switchView(tabs[currentIdx + 1]);
+        } else if (deltaX > 0 && currentIdx > 0) {
+          navigation.switchView(tabs[currentIdx - 1]);
+        }
+      }
       isSwipeActive = false;
       touchStartX = 0;
       appContainer.classList.remove("is-swiping");
-    }
-  }, { passive: true });
+    },
+    { passive: true },
+  );
+
+  appContainer.addEventListener(
+    "touchcancel",
+    () => {
+      if (isSwipeActive) {
+        isSwipeActive = false;
+        touchStartX = 0;
+        appContainer.classList.remove("is-swiping");
+      }
+    },
+    { passive: true },
+  );
 
   // --- Системная интеграция с Capacitor для нативных платформ (Android/iOS) ---
   if (window.Capacitor && window.Capacitor.isNativePlatform()) {
-    const { StatusBar, App, CapacitorAndroidForegroundService: FgService } = window.Capacitor.Plugins;
+    const {
+      StatusBar,
+      App,
+      CapacitorAndroidForegroundService: FgService,
+    } = window.Capacitor.Plugins;
 
     // Управление статус-баром
     if (StatusBar) {
@@ -203,11 +262,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Обработка системной кнопки "назад" на Android
     if (App) {
-      App.addListener('backButton', () => {
+      App.addListener("backButton", () => {
         if (modalManager.hasActiveModal()) {
           modalManager.closeCurrent();
-        } else if (navigation.activeView !== 'stopwatch') {
-          navigation.switchView('stopwatch');
+        } else if (navigation.activeView !== "stopwatch") {
+          navigation.switchView("stopwatch");
         } else {
           App.minimizeApp();
         }
@@ -221,32 +280,37 @@ document.addEventListener("DOMContentLoaded", () => {
       /**
        * [РЕФАКТОРИНГ] Обновляет уведомление в фоновом режиме.
        * Теперь принимает имя активного таймера и использует switch, а не if/else.
-       * @param {string | null} activeTimer 
+       * @param {string | null} activeTimer
        */
       async function updateForegroundNotification(activeTimer) {
         let title = "Stopwatch Pro";
         let body = "Running in background";
 
         switch (activeTimer) {
-          case 'stopwatch':
+          case "stopwatch":
             title = "⏱ Stopwatch";
             body = sw.formatTime(sw.elapsedTime, false);
             break;
-           getRemainingTime() {
-    if (!this.isRunning && !this.isPaused) return 0;
-    return timeRemainingMs;
-  },
+          case "timer":
+            title = "⏳ Timer";
             // NOTE: Эта логика все еще зависит от внутреннего состояния tm.js.
             // В идеале, tm.js должен предоставлять функцию для получения оставшегося времени.
-            const remTm = Math.max(0, tm.targetTime - performance.now());
+            const remTm = tm.getRemainingTime();
+            body = formatTime(remTm); // Используем общую функцию форматирования
+            break;
             body = tm.getFormattedTime(Math.ceil(remTm / 1000));
             break;
-          case 'tabata':
+          case "tabata":
             const activeName = $("tb-activeName")?.textContent || "Tabata";
             title = `🏋️ ${activeName}`;
             const remTb = Math.max(0, tb.phaseEndTime - performance.now());
             const sTotal = Math.ceil(remTb / 1000);
-            let phaseStr = tb.status === "WORK" ? t("work") : tb.status === "REST" ? t("rest") : t("get_ready");
+            let phaseStr =
+              tb.status === "WORK"
+                ? t("work")
+                : tb.status === "REST"
+                  ? t("rest")
+                  : t("get_ready");
             body = `${t("round")} ${tb.currentRound}/${tb.rounds} • ${phaseStr}: ${sTotal}s`;
             break;
           default:
@@ -277,10 +341,13 @@ document.addEventListener("DOMContentLoaded", () => {
           sm.unlock();
           requestWakeLock();
           // Передаем имя активного таймера в функцию уведомлений
-          await updateForegroundNotification(activeTimer); 
+          await updateForegroundNotification(activeTimer);
           if (!fgInterval) {
             // И здесь тоже
-            fgInterval = setInterval(() => updateForegroundNotification(store.getActiveTimer()), 1000);
+            fgInterval = setInterval(
+              () => updateForegroundNotification(store.getActiveTimer()),
+              1000,
+            );
           }
         } else if (isActive) {
           if (fgInterval) {
