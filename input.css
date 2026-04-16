@@ -322,8 +322,8 @@ html.dark .app-bg.has-vignette::before {
     height: 100%;
     display: flex;
     flex-direction: column;
-    justify-content: center; /* Центрирует по вертикали */
-    align-items: center; /* Центрирует по горизонтали */
+    justify-content: center;
+    align-items: center;
     padding-top: 0;
   }
 
@@ -428,12 +428,10 @@ html.dark .app-bg.has-vignette::before {
 }
 
 #modal-container > * {
-  /* Все прямые потомки (оверлей, модальные окна) по умолчанию неактивны */
   pointer-events: none;
 }
 
 #modal-container.active > * {
-  /* Когда контейнер активен, он и его дети могут принимать события */
   pointer-events: auto;
 }
 
@@ -1137,13 +1135,11 @@ body.hide-nav-labels .nav-btn {
 
 #swipe-area-left,
 #swipe-area-right {
-  /* По умолчанию зоны "прозрачны" для кликов и касаний */
   pointer-events: none;
 }
 
 #app.is-swiping #swipe-area-left,
 #app.is-swiping #swipe-area-right {
-  /* Когда начинается свайп, зоны становятся "активными", чтобы поймать touchend */
   pointer-events: auto;
 }
 

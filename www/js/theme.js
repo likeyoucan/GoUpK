@@ -164,7 +164,6 @@ export const themeManager = {
     }
   },
 
-  // [РЕШЕНИЕ] Добавляем новый метод для сброса настроек темы
   resetSettings() {
     const themeKeys = [
       "theme_mode",
@@ -177,7 +176,7 @@ export const themeManager = {
       "app_liquid_glass",
       "app_hide_nav_labels",
       "app_ring_width",
-      "app_show_ms", // Этот ключ тоже относится к интерфейсу
+      "app_show_ms",
     ];
     themeKeys.forEach(safeRemoveLS);
 

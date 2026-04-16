@@ -220,7 +220,6 @@ export const langManager = {
     }
   },
 
-   // [РЕШЕНИЕ] Добавляем новый метод для сброса настроек языка
   resetSettings() {
     safeRemoveLS("app_lang");
     

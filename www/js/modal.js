@@ -263,7 +263,6 @@ class ModalManager {
     this.currentY = e.touches ? e.touches[0].clientY : e.clientY;
     const deltaY = this.currentY - this.startY;
     if (deltaY > 0) {
-      // Позволяем тянуть только вниз
       this.activeSheet.style.transform = `translateY(${deltaY}px)`;
     }
   }
@@ -277,7 +276,6 @@ class ModalManager {
     if (!this.isDragging || !this.activeSheet) return;
     const deltaY = this.currentY - this.startY;
     if (deltaY > 100) {
-      // Порог для закрытия
       this.closeCurrent();
     } else {
       // Возвращаем на место с анимацией

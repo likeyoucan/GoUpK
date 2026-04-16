@@ -4,7 +4,7 @@ import {
   $,
   escapeHTML,
   showToast,
-  formatTime, // [РЕФАКТОРИНГ] Используем единую функцию formatTime
+  formatTime,
   adjustVal,
   updateText,
   updateTitle,
@@ -258,7 +258,7 @@ export const tb = {
     this.els.list.replaceChildren();
 
     const fragment = document.createDocumentFragment();
-    const template = $("tb-workout-template"); // Находим наш шаблон
+    const template = $("tb-workout-template");
     if (!template) return;
 
     this.workouts.forEach((w) => {
@@ -272,7 +272,7 @@ export const tb = {
       workoutElement.classList.toggle("app-border", !isAct);
       workoutElement.classList.toggle("shadow-sm", !isAct);
 
-      workoutElement.classList.toggle("app-surface", isAct); // Да, дважды, чтобы гарантировать
+      workoutElement.classList.toggle("app-surface", isAct);
       workoutElement.classList.toggle("border-2", isAct);
       workoutElement.classList.toggle("border-[var(--primary-color)]", isAct);
       workoutElement.classList.toggle("shadow-md", isAct);
@@ -400,7 +400,6 @@ export const tb = {
     if (now - this.lastRender >= 16 || isBackground) {
       if (!isBackground) this.render(rem);
       else {
-        // [ИЗМЕНЕНО] Используем новую функцию formatTime
         updateTitle(`${this.status}: ${formatTime(rem)}`);
       }
       this.lastRender = now;
@@ -505,7 +504,6 @@ export const tb = {
       this.lastBeepSec = sTotal;
     }
 
-    // [ИЗМЕНЕНО] Используем новую функцию formatTime
     const timeStr = formatTime(rem);
     updateText(this.els.timer, timeStr);
     updateTitle(`${this.status}: ${timeStr}`);

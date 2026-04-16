@@ -4,7 +4,7 @@ import {
   $,
   showToast,
   pad,
-  formatTime, // [РЕФАКТОРИНГ] Используем единую функцию formatTime
+  formatTime,
   updateText,
   updateTitle,
   requestWakeLock,
@@ -124,13 +124,6 @@ export const tm = {
       if (e.data.type === "tick") {
         const remaining = e.data.time;
         timeRemainingMs = remaining;
-
-        // [ИСПРАВЛЕНИЕ] Закомментирован блок, который вызывал баг с кольцом прогресса
-        /*
-        if (remaining > this.totalDuration) {
-          this.totalDuration = remaining;
-        }
-        */
 
         if (this.isRunning) {
           this.targetTime = performance.now() + remaining;
@@ -375,7 +368,6 @@ export const tm = {
     this.rAF = requestAnimationFrame(() => this.tick());
   },
 
-  // [РЕФАКТОРИНГ] Используем единую функцию formatTime из utils.js
   updateDisplay(rem) {
     const hInput = parseInt(this.els.h?.value, 10) || 0;
     const forceHours = hInput > 0 || this.totalDuration >= 3600000;

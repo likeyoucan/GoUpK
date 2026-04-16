@@ -71,7 +71,6 @@ export const releaseWakeLock = () => {
         wakeLock = null;
       })
       .catch(() => {
-        // Ошибки здесь можно игнорировать
         wakeLock = null;
       });
   }
@@ -107,7 +106,7 @@ export const pad = (num) => String(num).padStart(2, "0");
 
 
 /**
- * [РЕФАКТОРИНГ] Новая универсальная функция форматирования времени.
+ * Функция форматирования времени.
  * Заменяет formatTimeStr, formatMsTime, formatMainDisplay и getExtendedDisplay.
  * @param {number} ms - Время в миллисекундах.
  * @param {object} options - Опции форматирования.

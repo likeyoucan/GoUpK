@@ -15,7 +15,7 @@ import { tm } from "./timer.js?v=VERSION";
 import { tb } from "./tabata.js?v=VERSION";
 import { sm } from "./sound.js?v=VERSION";
 import { modalManager } from "./modal.js?v=VERSION";
-import { store } from "./store.js?v=VERSION"; // [РЕФАКТОРИНГ] Импортируем наш новый store
+import { store } from "./store.js?v=VERSION";
 
 /**
  * Динамически вставляет SVG-кольца прогресса в контейнеры с атрибутом [data-ring].
@@ -69,18 +69,13 @@ const modalConfig = [
   },
 ];
 
-/**
- * [РЕФАКТОРИНГ] Функция для подтверждения сброса всех настроек приложения.
- * Теперь она вызывает методы сброса в каждом модуле, вместо того чтобы хранить список ключей.
- * Это делает код более модульным и надежным.
- */
 function confirmReset() {
   modalManager.closeCurrent();
 
   // Вызываем сброс в каждом ответственном модуле
-  themeManager.resetSettings(); // Предполагается, что вы добавили этот метод в theme.js
-  sm.resetSettings(); // Предполагается, что вы добавили этот метод в sound.js
-  langManager.resetSettings(); // Предполагается, что вы добавили этот метод в i18n.js
+  themeManager.resetSettings();
+  sm.resetSettings();
+  langManager.resetSettings();
 
   setTimeout(() => showToast(t("settings_reset_success")), 450);
 }
@@ -277,11 +272,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (App && FgService) {
       let fgInterval = null;
 
-      /**
-       * [РЕФАКТОРИНГ] Обновляет уведомление в фоновом режиме.
-       * Теперь принимает имя активного таймера и использует switch, а не if/else.
-       * @param {string | null} activeTimer
-       */
       async function updateForegroundNotification(activeTimer) {
         let title = "Stopwatch Pro";
         let body = "Running in background";
@@ -293,8 +283,6 @@ document.addEventListener("DOMContentLoaded", () => {
             break;
           case "timer":
             title = "⏳ Timer";
-            // NOTE: Эта логика все еще зависит от внутреннего состояния tm.js.
-            // В идеале, tm.js должен предоставлять функцию для получения оставшегося времени.
             const remTm = tm.getRemainingTime();
             body = formatTime(remTm); // Используем общую функцию форматирования
             break;
@@ -333,7 +321,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       App.addListener("appStateChange", async ({ isActive }) => {
-        // [РЕФАКТОРИНГ] Используем store для определения, активен ли какой-либо таймер.
+
         const activeTimer = store.getActiveTimer();
         const isTimerRunning = !!activeTimer;
 
@@ -343,7 +331,6 @@ document.addEventListener("DOMContentLoaded", () => {
           // Передаем имя активного таймера в функцию уведомлений
           await updateForegroundNotification(activeTimer);
           if (!fgInterval) {
-            // И здесь тоже
             fgInterval = setInterval(
               () => updateForegroundNotification(store.getActiveTimer()),
               1000,
