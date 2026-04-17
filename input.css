@@ -495,7 +495,6 @@ html.dark .app-bg.has-vignette::before {
 @media (max-height: 700px) and (orientation: portrait) {
   .timer-circle-wrap {
     max-height: 40vh;
-    max-width: 200px;
   }
 
   h2 {
