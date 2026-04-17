@@ -1,5 +1,5 @@
 // Файл: www/js/theme.js
-// ПОЛНАЯ И ОКОНЧАТЕЛЬНО ИСПРАВЛЕННАЯ ВЕРСИЯ
+// ПОЛНАЯ ВЕРСИЯ С ИСПРАВЛЕНИЕМ ОШИБКИ 'syncSliderUIs is not a function'
 
 import {
   $,
@@ -255,6 +255,11 @@ export const themeManager = {
   },
 
   setColor(hex, showAction = false, doScroll = true) {
+    if (!showAction) {
+      const container = $("accent-colors-container");
+      if (container) this._removeActionButton(container);
+    }
+
     this.currentAccent = hex;
     safeSetLS("theme_color", hex);
     document.documentElement.style.setProperty("--primary-color", hex);
@@ -263,12 +268,18 @@ export const themeManager = {
     const picker = $("customColorInput");
     if (picker) picker.value = hex;
     this.updateColorSelectionUI("accent", hex, doScroll);
+
     if (showAction) {
       this._handleActionButtonLogic("accent", hex);
     }
   },
 
   setBgColor(hex, showAction = false, doScroll = true) {
+    if (!showAction) {
+      const container = $("bg-colors-container");
+      if (container) this._removeActionButton(container);
+    }
+
     this.currentBg = hex;
     safeSetLS("theme_bg_color", hex);
     const isDark = document.documentElement.classList.contains("dark");
@@ -282,83 +293,14 @@ export const themeManager = {
     }
   },
 
-  // Остальной код файла остается без изменений
-  updateColorSelectionUI(type, hex, doScroll = true) {
-    const isAccent = type === "accent";
-    const container = $(
-      isAccent ? "accent-colors-container" : "bg-colors-container",
+  // *** ВОТ ВОССТАНОВЛЕННАЯ ФУНКЦИЯ ***
+  syncSliderUIs() {
+    this.updateSliderLabel(
+      "vignetteSlider",
+      "vignette-label",
+      this.vignetteLabels,
     );
-    if (!container) return;
-    container
-      .querySelectorAll(".custom-color-wrapper, .relative")
-      .forEach((el) => {
-        el.classList.remove(
-          "ring-[var(--primary-color)]",
-          "ring-2",
-          "ring-offset-2",
-          "ring-offset-surface",
-          "shadow-lg",
-        );
-        if (el.classList.contains("custom-color-wrapper")) {
-          const btn = el.querySelector("button");
-          if (btn && btn.dataset.iconAdded) {
-            btn.innerHTML = btn.dataset.originalContent || "";
-            delete btn.dataset.iconAdded;
-            delete btn.dataset.originalContent;
-          }
-        } else if (el.classList.contains("relative")) {
-          el.querySelector(".injected-checkmark")?.remove();
-        }
-      });
-    let activeWrapper = container.querySelector(
-      `.custom-color-wrapper[data-color="${hex}"]`,
-    );
-    if (!activeWrapper) {
-      const picker = $(isAccent ? "customColorInput" : "customBgInput");
-      if (picker && picker.value === hex)
-        activeWrapper = picker.closest(".relative");
-    }
-    if (activeWrapper) {
-      activeWrapper.classList.add(
-        "ring-[var(--primary-color)]",
-        "ring-2",
-        "ring-offset-2",
-        "ring-offset-surface",
-        "shadow-lg",
-      );
-      let iconColorVar;
-      const isPicker = activeWrapper.classList.contains("relative");
-      const isDefaultButton = hex === "default";
-      if (isPicker) {
-        iconColorVar = "#ffffff";
-      } else if (isDefaultButton) {
-        const isDarkTheme = document.documentElement.classList.contains("dark");
-        iconColorVar = isDarkTheme ? "#ffffff" : "#1f2937";
-      } else {
-        const lum = this.getLuminance(...Object.values(this.hexToRGB(hex)));
-        iconColorVar = lum > 0.5 ? "#1f2937" : "#ffffff";
-      }
-      const checkmarkSVG = `<svg focusable="false" aria-hidden="true" class="w-5 h-5" style="color: ${iconColorVar};" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4.5 12.75l6 6 9-13.5"></path></svg>`;
-      if (activeWrapper.classList.contains("custom-color-wrapper")) {
-        const button = activeWrapper.querySelector("button");
-        button.dataset.originalContent = button.innerHTML;
-        button.dataset.iconAdded = "true";
-        button.innerHTML = checkmarkSVG;
-      } else if (activeWrapper.classList.contains("relative")) {
-        const checkmarkWrapper = document.createElement("div");
-        checkmarkWrapper.className =
-          "injected-checkmark absolute inset-0 flex items-center justify-center z-20 pointer-events-none";
-        checkmarkWrapper.innerHTML = checkmarkSVG;
-        activeWrapper.appendChild(checkmarkWrapper);
-      }
-      if (doScroll) {
-        activeWrapper.scrollIntoView({
-          behavior: "smooth",
-          block: "nearest",
-          inline: "nearest",
-        });
-      }
-    }
+    this.updateSliderLabel("vibroSlider", "vibro-label", this.vibroLabels);
   },
 
   bindEvents() {
@@ -500,7 +442,8 @@ export const themeManager = {
   init() {
     this.applySettings();
     this.bindEvents();
-    document.dispatchEvent(new Event("languageChanged"));
+    // Этот вызов можно убрать, так как applySettings уже вызывает syncSliderUIs
+    // document.dispatchEvent(new Event("languageChanged"));
   },
 
   applySettings() {
@@ -567,6 +510,7 @@ export const themeManager = {
       );
       $("vibroSlider").value = closestIndex;
     }
+    // Вызываем здесь, чтобы при первой загрузке метки слайдеров были на месте
     this.syncSliderUIs();
   },
 
@@ -665,6 +609,8 @@ export const themeManager = {
       "app_ring_width",
       "app_show_ms",
       "app_sw_minute_beep",
+      "custom_accent_colors",
+      "custom_bg_colors",
     ];
     themeKeys.forEach(safeRemoveLS);
     this.applySettings();
