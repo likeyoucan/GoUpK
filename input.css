@@ -613,6 +613,7 @@ html.dark.no-adaptive .default-bg-btn {
   -ms-overflow-style: none;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
+  touch-action: pan-x;
 }
 
 .scroll-lock {
@@ -1198,7 +1199,11 @@ input[type="range"]:focus + .thumb-label-container > .thumb-label {
 
 .custom-color-wrapper {
   /* Добавляем transition для новых свойств */
-  transition: transform 0.25s ease, opacity 0.25s ease, width 0.25s ease, margin 0.25s ease;
+  transition:
+    transform 0.25s ease,
+    opacity 0.25s ease,
+    width 0.25s ease,
+    margin 0.25s ease;
 }
 
 .custom-color-wrapper.is-deleting {
