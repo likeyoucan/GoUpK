@@ -1178,82 +1178,54 @@ input[type="range"]:focus + .thumb-label-container > .thumb-label {
   opacity: 1;
 }
 
-/* --- Базовый контейнер для каждого цвета и для пикера --- */
-.custom-color-wrapper {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-  /* Плавный переход для всех свойств, участвующих в анимациях */
-  transition:
-    transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-    opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-    max-width 0.35s cubic-bezier(0.4, 0, 0.2, 1),
-    padding 0.35s cubic-bezier(0.4, 0, 0.2, 1),
-    margin 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* --- Стиль для активного (выбранного) цвета --- */
-.custom-color-wrapper.is-active .color-btn,
-.custom-color-wrapper.is-active.custom-color-picker-wrapper {
-  transform: scale(1.1);
-  box-shadow: 0 0 0 2px var(--surface-color), 0 0 0 4px var(--primary-color);
-}
-
-/* --- Стили для кастомного пикера цвета --- */
-.custom-color-picker-wrapper .custom-color-bg-layer {
-  transition:
-    background-color 0.3s ease,
-    opacity 0.3s ease;
-}
-/* Когда выбран кастомный цвет, скрываем градиент и показываем сплошной фон */
-.custom-color-picker-wrapper.has-custom-color .custom-color-bg-layer {
-  background-image: none;
-  background-color: var(--custom-picker-bg, transparent);
-}
-
-/* --- Кнопка "Добавить" / "Удалить" --- */
 .color-action-btn {
+  /* Вместо width используем max-width для плавной анимации без рывков */
   max-width: 0;
   opacity: 0;
+  margin-left: 0;
+  margin-right: 0;
   overflow: hidden;
+  flex-shrink: 0;
+  /* Добавляем transform для эффекта "выезжания" */
   transform: scaleX(0.5);
   transform-origin: left;
   transition:
-    max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    max-width 0.25s ease-out,
     opacity 0.2s ease-out,
-    transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    margin-left 0.25s ease-out,
+    margin-right 0.25s ease-out,
+    transform 0.25s ease-out;
 }
 
 .color-action-btn.is-visible {
-  max-width: 4rem; /* Достаточно места для кнопки и отступа */
+  max-width: 2.25rem; /* w-9 */
   opacity: 1;
+  margin-left: 0.25rem; /* ml-1 */
+  margin-right: -0.25rem; /* -mr-1 */
   transform: scaleX(1);
 }
-.color-action-btn.is-visible button {
-  margin-left: 0.5rem;
+
+/* СТИЛИ ДЛЯ АНИМАЦИИ УДАЛЕНИЯ */
+.custom-color-wrapper,
+.color-action-btn {
+  /* Добавляем transition для max-width и margin, чтобы контейнер плавно схлопывался */
+  transition:
+    transform 0.25s ease-out,
+    opacity 0.25s ease-out,
+    max-width 0.25s ease-out,
+    margin-left 0.25s ease-out,
+    margin-right 0.25s ease-out;
 }
 
-/* --- Анимация ДОБАВЛЕНИЯ нового цвета --- */
-.custom-color-wrapper.is-newly-added {
-  opacity: 0;
-  transform: scale(0.5);
-  max-width: 0;
-}
-
-/* --- Анимация УДАЛЕНИЯ цвета и кнопки действия --- */
 .custom-color-wrapper.is-deleting,
 .color-action-btn.is-deleting {
   transform: scale(0.5);
   opacity: 0;
-  max-width: 0 !important;
-  padding: 0 !important;
-  margin: 0 !important;
   pointer-events: none;
-}
-/* Добавляем задержку для соседних элементов, чтобы они сдвигались после исчезновения */
-#accent-colors-container,
-#bg-colors-container {
-  transition: gap 0.2s ease 0.1s;
+  /* Схлопываем элемент до нуля */
+  max-width: 0px !important;
+  margin-left: 0px !important;
+  margin-right: 0px !important;
 }
 
 @layer utilities {
