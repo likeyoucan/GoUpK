@@ -27,7 +27,7 @@ export const tb = {
   rest: 10,
   rounds: 8,
   currentRound: 1,
-  status: "STOPPED", // "STOPPED", "READY", "WORK", "REST"
+  status: "STOPPED",
   phaseDuration: 0,
   phaseEndTime: 0,
   remainingAtPause: 0,
@@ -73,7 +73,6 @@ export const tb = {
     );
     document.querySelectorAll("[data-tb-adj]").forEach((btn) =>
       btn.addEventListener("click", (e) => {
-        // [ИЗМЕНЕНИЕ 2] Добавлена вибрация
         sm.vibrate(20, "light");
         const [id, delta] = e.currentTarget
           .getAttribute("data-tb-adj")
@@ -178,7 +177,6 @@ export const tb = {
     let finalName = this.els.editName.value.trim();
     if (!finalName) finalName = this.getUniqueName(t("tabata"));
 
-    // [ИЗМЕНЕНИЕ 5] Проверка длины имени
     if (finalName.length > 50) {
       updateText(this.els.nameError, t("name_too_long"));
       this.els.nameError?.classList.remove("hidden");
@@ -340,7 +338,6 @@ export const tb = {
     );
     store.setActiveTimer("tabata");
 
-    // [ИЗМЕНЕНИЕ 3] Получаем и отображаем имя тренировки
     const workout = this.workouts.find(w => w.id === this.selectedId);
     if (workout && this.els.runningWorkoutName) {
       updateText(this.els.runningWorkoutName, workout.name);
@@ -396,7 +393,6 @@ export const tb = {
     sm.play("click");
     store.clearActiveTimer();
 
-    // [ИЗМЕНЕНИЕ 3] Очищаем имя тренировки при остановке
     if (this.els.runningWorkoutName) {
       updateText(this.els.runningWorkoutName, "");
     }

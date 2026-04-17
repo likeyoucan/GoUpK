@@ -36,7 +36,6 @@ export const sm = {
     $("toggle-vibro")?.addEventListener("change", (e) => {
       this.vibroEnabled = e.target.checked;
       safeSetLS("app_vibro", this.vibroEnabled);
-      // [ИСПРАВЛЕНИЕ] Отправляем событие вместо прямого управления UI
       document.dispatchEvent(
         new CustomEvent("vibroToggled", {
           detail: { enabled: this.vibroEnabled },
@@ -113,7 +112,6 @@ export const sm = {
     if ($("soundThemeSelect")) $("soundThemeSelect").value = this.theme;
 
     this.updateVolumeUI();
-    // [ИСПРАВЛЕНИЕ] Отправляем событие при загрузке, чтобы UI в theme.js обновился
     document.dispatchEvent(
       new CustomEvent("vibroToggled", {
         detail: { enabled: this.vibroEnabled },
@@ -141,8 +139,6 @@ export const sm = {
     }
   },
 
-  // [ИСПРАВЛЕНИЕ] Эта функция удалена, так как ее логика перенесена в theme.js
-  // updateVibroUI() { ... }
 
   initAudio() {
     if (this.audioCtx || !this.soundEnabled) return;
@@ -168,7 +164,6 @@ export const sm = {
     } catch (e) {}
   },
 
-  // ... функции playNote и play остаются без изменений
   playNote(
     freq,
     type,

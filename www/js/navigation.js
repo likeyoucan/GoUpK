@@ -1,7 +1,6 @@
 // Файл: js/navigation.js
 
 import { $ } from "./utils.js?v=VERSION";
-// [ИСПРАВЛЕНИЕ 3] Импортируем themeManager
 import { themeManager } from "./theme.js?v=VERSION";
 
 export const navigation = {
@@ -34,7 +33,6 @@ export const navigation = {
         el.classList.add("z-10");
         el.removeAttribute("aria-hidden");
         el.removeAttribute("inert");
-        // [ИСПРАВЛЕНИЕ 3] Вызываем синхронизацию слайдеров, когда их контейнер становится видимым
         if (id === "settings") {
           themeManager.syncSliderUIs();
         }

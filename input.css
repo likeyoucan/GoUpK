@@ -1150,25 +1150,23 @@ body.hide-nav-labels .nav-btn {
   pointer-events: auto;
 }
 
-/* [ИЗМЕНЕНИЕ 2] Новые стили для метки, движущейся за ползунком */
 .thumb-label-container {
   position: absolute;
   top: 100%;
   left: 0;
   right: 0;
-  height: 1.25rem; /* ~h-5 */
+  height: 1.25rem;
   pointer-events: none;
   margin-top: -0.16rem;
 }
 
 .thumb-label {
   position: absolute;
-  transform: translateX(-50%); /* Центрируем подпись под ползунком */
+  transform: translateX(-50%);
   font-size: 10px;
   color: var(--primary-color);
   font-weight: bold;
   white-space: nowrap;
-  /* [ИЗМЕНЕНИЕ] Делаем метку видимой по умолчанию, но полупрозрачной */
   opacity: 0.7;
   transition: opacity 0.2s;
 }
@@ -1179,7 +1177,6 @@ input[type="range"]:focus + .thumb-label-container > .thumb-label {
   opacity: 1;
 }
 
-/* [ИЗМЕНЕНИЕ 1] Стили для анимированной кнопки действия (+/-) */
 .color-action-btn {
   width: 0;
   opacity: 0;
@@ -1206,10 +1203,9 @@ input[type="range"]:focus + .thumb-label-container > .thumb-label {
 }
 
 .custom-color-wrapper.is-deleting {
-  /* Свойства для анимации исчезновения */
   transform: scale(0.8);
   opacity: 0;
-  width: 0 !important; /* !important, чтобы перебить inline-стили, если они есть */
+  width: 0 !important;
   margin-left: 0 !important;
   margin-right: 0 !important;
   pointer-events: none;

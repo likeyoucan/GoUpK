@@ -6,7 +6,7 @@ import {
   safeRemoveLS,
   requestWakeLock,
   releaseWakeLock,
-  formatTime, // <-- [ИСПРАВЛЕНИЕ] Импортируем утилиту форматирования времени
+  formatTime,
 } from "./utils.js?v=VERSION";
 import { langManager, t } from "./i18n.js?v=VERSION";
 import { themeManager } from "./theme.js?v=VERSION";
@@ -134,7 +134,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // Глобальный обработчик для кнопок навигации
   document.querySelectorAll("[data-nav]").forEach((btn) => {
     btn.addEventListener("click", (e) => {
-      // [ИСПРАВЛЕНИЕ] Используем новую систему интенсивности вибрации
       sm.vibrate(20, "light");
       navigation.switchView(e.currentTarget.getAttribute("data-nav"));
     });
@@ -148,7 +147,7 @@ document.addEventListener("DOMContentLoaded", () => {
         'input, textarea, select, button, [contenteditable="true"]',
       )
     ) {
-      return; // Игнорируем, если открыто модальное окно или фокус на элементе ввода
+      return;
     }
     const view = navigation.activeView;
     if (e.code === "Space") {
@@ -287,7 +286,6 @@ document.addEventListener("DOMContentLoaded", () => {
           case "timer":
             title = "⏳ Timer";
             const remTm = tm.getRemainingTime();
-            // [ИСПРАВЛЕНИЕ] Используем импортированную функцию и убираем дубль
             body = formatTime(remTm);
             break;
           case "tabata":

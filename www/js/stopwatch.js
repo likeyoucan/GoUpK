@@ -20,9 +20,7 @@ import { themeManager } from "./theme.js?v=VERSION";
 import { modalManager } from "./modal.js?v=VERSION";
 import { store } from "./store.js?v=VERSION";
 
-// Создаем объект-модуль
 const stopwatchModule = {
-  // --- Свойства объекта ---
   startTime: 0,
   elapsedTime: 0,
   isRunning: false,
@@ -35,7 +33,6 @@ const stopwatchModule = {
   pauseTime: 0,
   nameModalState: { action: null, targetId: null, pendingSession: null },
   ringLength: 282.74,
-  // [ИЗМЕНЕНИЕ 1] Новое свойство для отслеживания минут
   lastMinuteBeep: 0,
 
   // --- Основной метод инициализации ---
@@ -166,7 +163,6 @@ const stopwatchModule = {
       );
       store.setActiveTimer("stopwatch");
       this.startTime = performance.now() - this.elapsedTime;
-      // [ИЗМЕНЕНИЕ 1] Устанавливаем текущую минуту при старте, чтобы избежать мгновенного сигнала
       this.lastMinuteBeep = Math.floor(this.elapsedTime / 60000);
       this.isRunning = true;
       this.pauseTime = 0;
@@ -187,7 +183,6 @@ const stopwatchModule = {
     if (!this.isRunning) return;
     const now = performance.now();
     this.elapsedTime = now - this.startTime;
-    // [ИЗМЕНЕНИЕ 1] Логика ежеминутного сигнала
     const currentMinute = Math.floor(this.elapsedTime / 60000);
     if (
       themeManager.swMinuteBeep &&
@@ -419,7 +414,6 @@ const stopwatchModule = {
     const finalName =
       inputVal !== "" ? inputVal : this.els.nameInput.placeholder;
 
-    // [ИЗМЕНЕНИЕ 5] Проверка длины имени
     if (finalName.length > 50) {
       this.els.nameError.textContent = t("name_too_long");
       this.els.nameError?.classList.remove("hidden");
@@ -438,7 +432,7 @@ const stopwatchModule = {
           s.id !== this.nameModalState.targetId),
     );
     if (isDuplicate) {
-      this.els.nameError.textContent = t("name_exists"); // Убедимся, что текст ошибки правильный
+      this.els.nameError.textContent = t("name_exists");
       this.els.nameError?.classList.remove("hidden");
       this.els.nameInput.classList.add("animate-shake");
       setTimeout(

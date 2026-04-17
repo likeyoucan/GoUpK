@@ -13,7 +13,6 @@ import { sm } from "./sound.js?v=VERSION";
 const MAX_CUSTOM_COLORS = 50;
 
 export const themeManager = {
-  // ... все свойства остаются без изменений ...
   currentMode: "system",
   currentAccent: "",
   currentBg: "default",
@@ -63,7 +62,6 @@ export const themeManager = {
   customAccentColors: [],
   customBgColors: [],
 
-  // ... функции _createColorButtonEl, _removeActionButton, _handleActionButtonLogic, updateColorSelectionUI, updateSliderLabel, init - остаются без изменений ...
   _createColorButtonEl(color, isCustom) {
     const wrapper = document.createElement("div");
     wrapper.className = "custom-color-wrapper shrink-0 rounded-full";
@@ -282,7 +280,6 @@ export const themeManager = {
 
   bindEvents() {
     document.addEventListener("languageChanged", () => this.syncSliderUIs());
-    // [ИСПРАВЛЕНИЕ] Добавляем слушатель для события из sound.js
     document.addEventListener("vibroToggled", (e) => {
       this.updateVibroSliderUI(e.detail.enabled);
     });
@@ -381,7 +378,6 @@ export const themeManager = {
       });
   },
 
-  // ... (функции setMode, _internalSetMode, handleColorClick, renderColorSection, deleteCustomColor, addCustomColor, setColor, setBgColor, resetSettings, applyBgTheme, getLuminance) ...
   setMode(mode) {
     this._internalSetMode(mode, true);
   },
@@ -650,7 +646,6 @@ export const themeManager = {
         "--vignette-alpha",
         this.vignetteAlpha * 0.4,
       );
-      // [ИСПРАВЛЕНИЕ] Обновляем позицию подписи, когда слайдер становится видимым
       requestAnimationFrame(() => {
         this.updateSliderLabel(
           "vignetteSlider",
@@ -663,7 +658,6 @@ export const themeManager = {
     }
   },
 
-  // [ИСПРАВЛЕНИЕ] Новая функция для централизованного управления UI слайдера вибрации
   updateVibroSliderUI(isEnabled) {
     const container = $("vibro-level-container");
     if (container) {
@@ -681,7 +675,6 @@ export const themeManager = {
     }
   },
 
-  // ... (остальные функции остаются без изменений) ...
   updateGlass() {
     document.documentElement.classList.toggle(
       "glass-effect",
