@@ -1,4 +1,4 @@
-// Файл: www/js/theme.js (ФИНАЛЬНАЯ ВЕРСИЯ v5)
+// Файл: www/js/theme.js (ФИНАЛЬНАЯ ВЕРСИЯ, последняя)
 
 import {
   $,
@@ -95,9 +95,7 @@ export const themeManager = {
       isAccent ? "accent-colors-container" : "bg-colors-container",
     );
     if (!container) return;
-
     container.querySelector(".color-action-btn")?.remove();
-
     let activeWrapper = container.querySelector(
       `.custom-color-wrapper[data-color="${hex}"]`,
     );
@@ -107,10 +105,8 @@ export const themeManager = {
         activeWrapper = picker.closest(".relative");
     }
     if (!activeWrapper) return;
-
     const allCustom = isAccent ? this.customAccentColors : this.customBgColors;
     const isCustom = allCustom.includes(hex);
-
     let actionBtnHTML = null;
     if (isCustom) {
       actionBtnHTML = `<button type="button" data-action="delete" aria-label="${t("delete")}" class="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-full bg-red-500/10 text-red-500 hover:bg-red-500/20 focus:outline-none custom-focus"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 12h-15"></path></svg></button>`;
@@ -122,13 +118,11 @@ export const themeManager = {
         actionBtnHTML = `<button type="button" data-action="add" aria-label="${t("add_color")}" class="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-full bg-green-500/10 text-green-500 hover:bg-green-500/20 focus:outline-none custom-focus"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"></path></svg></button>`;
       }
     }
-
     if (actionBtnHTML && activeWrapper) {
       const actionBtnWrapper = document.createElement("div");
       actionBtnWrapper.className = "color-action-btn";
       actionBtnWrapper.innerHTML = actionBtnHTML;
       activeWrapper.parentNode.insertBefore(actionBtnWrapper, activeWrapper);
-
       requestAnimationFrame(() => {
         actionBtnWrapper.classList.add("is-visible");
         setTimeout(() => {
@@ -148,7 +142,6 @@ export const themeManager = {
       isAccent ? "accent-colors-container" : "bg-colors-container",
     );
     if (!container) return;
-
     container
       .querySelectorAll(".custom-color-wrapper, .relative")
       .forEach((el) => {
@@ -170,7 +163,6 @@ export const themeManager = {
           el.querySelector(".injected-checkmark")?.remove();
         }
       });
-
     let activeWrapper = container.querySelector(
       `.custom-color-wrapper[data-color="${hex}"]`,
     );
@@ -179,7 +171,6 @@ export const themeManager = {
       if (picker && picker.value === hex)
         activeWrapper = picker.closest(".relative");
     }
-
     if (activeWrapper) {
       activeWrapper.classList.add(
         "ring-[var(--primary-color)]",
@@ -188,18 +179,14 @@ export const themeManager = {
         "ring-offset-surface",
         "shadow-lg",
       );
-
       let iconColorVar;
-      // FIX 1: Галочка на пипетке всегда белая
       if (activeWrapper.classList.contains("relative")) {
-        iconColorVar = "var(--surface-color)";
+        iconColorVar = "#ffffff";
       } else {
         const lum = this.getLuminance(...Object.values(this.hexToRGB(hex)));
         iconColorVar = lum > 0.4 ? "var(--text-color)" : "var(--surface-color)";
       }
-
       const checkmarkSVG = `<svg focusable="false" aria-hidden="true" class="w-5 h-5" style="color: ${iconColorVar};" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4.5 12.75l6 6 9-13.5"></path></svg>`;
-
       if (activeWrapper.classList.contains("custom-color-wrapper")) {
         const button = activeWrapper.querySelector("button");
         button.dataset.originalContent = button.innerHTML;
@@ -212,7 +199,6 @@ export const themeManager = {
         checkmarkWrapper.innerHTML = checkmarkSVG;
         activeWrapper.appendChild(checkmarkWrapper);
       }
-
       if (doScroll) {
         activeWrapper.scrollIntoView({
           behavior: "smooth",
@@ -229,24 +215,19 @@ export const themeManager = {
     const container = $(
       isAccent ? "accent-colors-container" : "bg-colors-container",
     );
-
     const actionBtn = target.closest(".color-action-btn button");
     if (actionBtn) {
       sm.vibrate(40, "medium");
       const action = actionBtn.dataset.action;
-
       if (action === "add") {
         const activeColor = isAccent ? this.currentAccent : this.currentBg;
         this.addCustomColor(type, activeColor);
       } else if (action === "delete") {
-        // FIX 3: Новая, надежная логика удаления
         const actionBtnWrapper = actionBtn.parentElement;
         const colorToDeleteWrapper = actionBtnWrapper.nextElementSibling;
         if (colorToDeleteWrapper) {
           const colorToDelete = colorToDeleteWrapper.dataset.color;
-
-          actionBtnWrapper.remove(); // Убираем кнопку "минус" мгновенно
-
+          actionBtnWrapper.remove();
           colorToDeleteWrapper.classList.remove(
             "ring-[var(--primary-color)]",
             "ring-2",
@@ -255,7 +236,6 @@ export const themeManager = {
             "shadow-lg",
           );
           colorToDeleteWrapper.classList.add("is-deleting");
-
           setTimeout(() => {
             this.deleteCustomColor(type, colorToDelete);
             colorToDeleteWrapper.remove();
@@ -263,20 +243,18 @@ export const themeManager = {
               ? this.standardAccentColors[0]
               : "default";
             isAccent
-              ? this.setColor(newActiveColor, false, false) // false в конце, чтобы не скроллить
+              ? this.setColor(newActiveColor, false, false)
               : this.setBgColor(newActiveColor, false, false);
           }, 250);
         }
       }
       return;
     }
-
     const colorWrapper = target.closest(".custom-color-wrapper");
     if (colorWrapper) {
       const color = colorWrapper.dataset.color;
       const isCustom = colorWrapper.dataset.custom === "true";
       const currentSelected = isAccent ? this.currentAccent : this.currentBg;
-
       if (color === currentSelected && isCustom) {
         if (container.querySelector(".color-action-btn")) {
           this._removeActionButton(container);
@@ -296,14 +274,12 @@ export const themeManager = {
   },
 
   bindEvents() {
-    // FIX 2: Скролл колесиком на десктопе
     const addWheelScroll = (containerId) => {
       const container = $(containerId);
       if (container) {
         container.addEventListener(
           "wheel",
           (e) => {
-            // Предотвращаем вертикальный скролл страницы
             if (e.deltaY !== 0) {
               e.preventDefault();
               container.scrollLeft += e.deltaY;
@@ -315,27 +291,22 @@ export const themeManager = {
     };
     addWheelScroll("accent-colors-container");
     addWheelScroll("bg-colors-container");
-
     document.addEventListener("languageChanged", () => this.syncSliderUIs());
     document.addEventListener("vibroToggled", (e) =>
       this.updateVibroSliderUI(e.detail.enabled),
     );
-
     $("accent-colors-container")?.addEventListener("click", (e) =>
       this.handleColorClick(e, "accent"),
     );
     $("bg-colors-container")?.addEventListener("click", (e) =>
       this.handleColorClick(e, "bg"),
     );
-
     document.body.addEventListener("input", (e) => {
       if (e.target.id === "customColorInput")
         this.setColor(e.target.value, true);
       if (e.target.id === "customBgInput")
         this.setBgColor(e.target.value, true);
     });
-
-    // Остальные обработчики
     $("toggle-sw-minute-beep")?.addEventListener("change", (e) => {
       this.swMinuteBeep = e.target.checked;
       safeSetLS("app_sw_minute_beep", this.swMinuteBeep);
@@ -418,11 +389,7 @@ export const themeManager = {
       });
   },
 
-  // ... остальной код без изменений ...
-
-  // Я привожу весь оставшийся код для полноты, но в нем нет изменений
-  // по сравнению с предыдущей версией.
-  // ... (здесь идет остаток файла theme.js)
+  // Остальная часть файла без изменений...
   updateSliderLabel(sliderId, labelId, labelsArray) {
     const slider = $(sliderId);
     const label = $(labelId);
