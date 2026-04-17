@@ -1,4 +1,4 @@
-// Файл: www/js/theme.js (ФИНАЛЬНАЯ ВЕРСИЯ v6)
+// Файл: www/js/theme.js (ФИНАЛЬНАЯ ВЕРСИЯ, самая-самая последняя)
 
 import {
   $,
@@ -124,6 +124,7 @@ export const themeManager = {
       actionBtnWrapper.innerHTML = actionBtnHTML;
       activeWrapper.parentNode.insertBefore(actionBtnWrapper, activeWrapper);
       requestAnimationFrame(() => {
+        void actionBtnWrapper.offsetWidth;
         actionBtnWrapper.classList.add("is-visible");
         setTimeout(() => {
           actionBtnWrapper.scrollIntoView({
@@ -387,6 +388,7 @@ export const themeManager = {
       });
   },
 
+  // Остальная часть файла без изменений...
   updateSliderLabel(sliderId, labelId, labelsArray) {
     const slider = $(sliderId);
     const label = $(labelId);
