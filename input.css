@@ -1197,23 +1197,15 @@ input[type="range"]:focus + .thumb-label-container > .thumb-label {
 }
 
 .custom-color-wrapper {
-  /* Добавляем transition для новых свойств */
-  transition:
-    transform 0.25s ease,
-    opacity 0.25s ease,
-    width 0.25s ease;
+  /* Анимируем ТОЛЬКО визуальные свойства, не влияющие на макет */
+  transition: transform 0.2s ease-out, opacity 0.2s ease-out;
 }
 
 .custom-color-wrapper.is-deleting {
-  transform: scale(0.8);
+  /* Сжимаем и делаем прозрачным, но ПОКА не убираем из потока */
+  transform: scale(0);
   opacity: 0;
-  width: 0;
-  /* Убрали анимируемые margin, так как flex-gap сделает все сам */
   pointer-events: none;
-  position: relative;
-  z-index: 10;
-  /* Добавляем это, чтобы padding тоже анимировался до нуля */
-  padding: 0 !important;
 }
 
 @layer utilities {

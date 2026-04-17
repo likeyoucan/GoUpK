@@ -1,4 +1,4 @@
-// Файл: www/js/theme.js (ФИНАЛЬНАЯ ВЕРСИЯ, самая последняя)
+// Файл: www/js/theme.js (ФИНАЛЬНАЯ ВЕРСИЯ v6)
 
 import {
   $,
@@ -179,28 +179,19 @@ export const themeManager = {
         "ring-offset-surface",
         "shadow-lg",
       );
-
-      // <<< НАЧАЛО ИСПРАВЛЕННОЙ ЛОГИКИ ЦВЕТА ГАЛОЧКИ >>>
       let iconColorVar;
       const isPicker = activeWrapper.classList.contains("relative");
       const isDefaultButton = hex === "default";
-
       if (isPicker) {
-        // Случай 1: Пипетка. Галочка всегда белая.
         iconColorVar = "#ffffff";
       } else if (isDefaultButton) {
-        // Случай 2: Кнопка "По умолчанию". Цвет галочки зависит от темы.
         const isDarkTheme = document.documentElement.classList.contains("dark");
-        iconColorVar = isDarkTheme ? "#ffffff" : "#1f2937"; // Белый для темной темы, темный для светлой.
+        iconColorVar = isDarkTheme ? "#ffffff" : "#1f2937";
       } else {
-        // Случай 3: Любой другой цвет. Цвет галочки зависит от яркости самой кнопки.
         const lum = this.getLuminance(...Object.values(this.hexToRGB(hex)));
-        iconColorVar = lum > 0.5 ? "#1f2937" : "#ffffff"; // Темный для светлых кнопок, белый для темных.
+        iconColorVar = lum > 0.5 ? "#1f2937" : "#ffffff";
       }
-      // <<< КОНЕЦ ИСПРАВЛЕННОЙ ЛОГИКИ >>>
-
       const checkmarkSVG = `<svg focusable="false" aria-hidden="true" class="w-5 h-5" style="color: ${iconColorVar};" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4.5 12.75l6 6 9-13.5"></path></svg>`;
-
       if (activeWrapper.classList.contains("custom-color-wrapper")) {
         const button = activeWrapper.querySelector("button");
         button.dataset.originalContent = button.innerHTML;
@@ -242,13 +233,6 @@ export const themeManager = {
         if (colorToDeleteWrapper) {
           const colorToDelete = colorToDeleteWrapper.dataset.color;
           actionBtnWrapper.remove();
-          colorToDeleteWrapper.classList.remove(
-            "ring-[var(--primary-color)]",
-            "ring-2",
-            "ring-offset-2",
-            "ring-offset-surface",
-            "shadow-lg",
-          );
           colorToDeleteWrapper.classList.add("is-deleting");
           setTimeout(() => {
             this.deleteCustomColor(type, colorToDelete);
@@ -259,7 +243,7 @@ export const themeManager = {
             isAccent
               ? this.setColor(newActiveColor, false, false)
               : this.setBgColor(newActiveColor, false, false);
-          }, 250);
+          }, 200);
         }
       }
       return;
@@ -315,7 +299,7 @@ export const themeManager = {
     $("bg-colors-container")?.addEventListener("click", (e) =>
       this.handleColorClick(e, "bg"),
     );
-    document.body.addEventListener("input", (e) => {
+    document.body.addEventListener("change", (e) => {
       if (e.target.id === "customColorInput")
         this.setColor(e.target.value, true);
       if (e.target.id === "customBgInput")
@@ -403,7 +387,6 @@ export const themeManager = {
       });
   },
 
-  // Остальная часть файла без изменений...
   updateSliderLabel(sliderId, labelId, labelsArray) {
     const slider = $(sliderId);
     const label = $(labelId);
