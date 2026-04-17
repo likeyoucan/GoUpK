@@ -1,5 +1,5 @@
 // Файл: www/js/theme.js
-// ПОЛНАЯ ВЕРСИЯ С ВОССТАНОВЛЕННОЙ ФУНКЦИЕЙ updateColorSelectionUI
+// ПОЛНАЯ ВЕРСИЯ С ВОССТАНОВЛЕННОЙ ФУНКЦИЕЙ setMode
 
 import {
   $,
@@ -145,7 +145,6 @@ export const themeManager = {
     }
   },
 
-  // *** ВОТ ВОССТАНОВЛЕННАЯ ФУНКЦИЯ ***
   updateColorSelectionUI(type, hex, doScroll = true) {
     const isAccent = type === "accent";
     const container = $(
@@ -377,6 +376,11 @@ export const themeManager = {
       this.vignetteLabels,
     );
     this.updateSliderLabel("vibroSlider", "vibro-label", this.vibroLabels);
+  },
+
+  // *** ВОТ ВОССТАНОВЛЕННАЯ ФУНКЦИЯ setMode ***
+  setMode(mode) {
+    this._internalSetMode(mode, true);
   },
 
   bindEvents() {
