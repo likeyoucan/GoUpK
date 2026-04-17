@@ -1,4 +1,5 @@
 // Файл: www/js/theme.js
+// ПОЛНАЯ ИСПРАВЛЕННАЯ ВЕРСИЯ
 
 import {
   $,
@@ -81,13 +82,10 @@ export const themeManager = {
     return wrapper;
   },
 
-  // --- ИСПРАВЛЕНИЕ 1: Обновленная функция для плавного скрытия кнопки ---
   _removeActionButton(container) {
     const actionBtn = container.querySelector(".color-action-btn.is-visible");
     if (actionBtn) {
-      // Запускаем CSS-анимацию скрытия
       actionBtn.classList.remove("is-visible");
-      // Удаляем элемент из DOM только ПОСЛЕ завершения анимации
       actionBtn.addEventListener(
         "transitionend",
         () => {
@@ -98,34 +96,38 @@ export const themeManager = {
     }
   },
 
+  // ИСПРАВЛЕНИЕ #1: Упрощенная и корректная логика показа кнопок
   _handleActionButtonLogic(type, hex) {
     const isAccent = type === "accent";
     const container = $(
       isAccent ? "accent-colors-container" : "bg-colors-container",
     );
     if (!container) return;
-
-    // Плавно убираем любую предыдущую кнопку, прежде чем показать новую
+    
+    // Сначала убедимся, что старой кнопки нет
     this._removeActionButton(container);
 
     let activeWrapper = container.querySelector(
       `.custom-color-wrapper[data-color="${hex}"]`,
     );
-    if (!activeWrapper) {
+     if (!activeWrapper) {
       const picker = $(isAccent ? "customColorInput" : "customBgInput");
       if (picker && picker.value === hex)
         activeWrapper = picker.closest(".relative");
     }
     if (!activeWrapper) return;
+
     const allCustom = isAccent ? this.customAccentColors : this.customBgColors;
     const isCustom = allCustom.includes(hex);
-
     let actionBtnHTML = null;
+
     if (isCustom) {
+      // Если цвет уже кастомный, показываем кнопку "Удалить"
       actionBtnHTML = `<button type="button" data-action="delete" aria-label="${t("delete")}" class="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-full bg-red-500/10 text-red-500 hover:bg-red-500/20 focus:outline-none custom-focus"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 12h-15"></path></svg></button>`;
+    } else if (hex !== "default" && hex.startsWith("#")) {
+      // Если цвет НЕ кастомный (стандартный или из пикера), показываем кнопку "Добавить"
+      actionBtnHTML = `<button type="button" data-action="add" aria-label="${t("add_color")}" class="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-full bg-green-500/10 text-green-500 hover:bg-green-500/20 focus:outline-none custom-focus"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"></path></svg></button>`;
     }
-    // Логика добавления кнопки "add" остается прежней
-    // ...
 
     if (actionBtnHTML && activeWrapper) {
       const actionBtnWrapper = document.createElement("div");
@@ -135,13 +137,6 @@ export const themeManager = {
       requestAnimationFrame(() => {
         void actionBtnWrapper.offsetWidth;
         actionBtnWrapper.classList.add("is-visible");
-        setTimeout(() => {
-          actionBtnWrapper.scrollIntoView({
-            behavior: "smooth",
-            block: "nearest",
-            inline: "center",
-          });
-        }, 50);
       });
     }
   },
@@ -224,7 +219,7 @@ export const themeManager = {
     }
   },
 
-  // --- ИСПРАВЛЕНИЕ 2: Обновленная функция для обработки кликов ---
+  // ИСПРАВЛЕНИЕ #2: Упрощенная и корректная логика обработки кликов
   handleColorClick(event, type) {
     const target = event.target;
     const isAccent = type === "accent";
@@ -233,40 +228,30 @@ export const themeManager = {
     );
     const actionBtn = target.closest(".color-action-btn button");
 
-    // 1. Если кликнули на саму кнопку "удалить/добавить"
     if (actionBtn) {
       sm.vibrate(40, "medium");
       const action = actionBtn.dataset.action;
       const actionBtnWrapper = actionBtn.parentElement;
-      const colorToDeleteWrapper = actionBtnWrapper.nextElementSibling;
+      const colorWrapper = actionBtnWrapper.nextElementSibling;
 
-      if (action === "add") {
-        const activeColor = isAccent ? this.currentAccent : this.currentBg;
-        this.addCustomColor(type, activeColor);
-      } else if (action === "delete" && colorToDeleteWrapper) {
-        const colorToDelete = colorToDeleteWrapper.dataset.color;
-
-        // Запускаем анимацию исчезновения для обоих элементов
+      if (action === "add" && colorWrapper) {
+        this.addCustomColor(type, colorWrapper.dataset.color);
+      } else if (action === "delete" && colorWrapper) {
+        const colorToDelete = colorWrapper.dataset.color;
+        
         actionBtnWrapper.classList.add("is-deleting");
-        colorToDeleteWrapper.classList.add("is-deleting");
+        colorWrapper.classList.add("is-deleting");
 
-        // Слушаем окончание анимации на кружке с цветом
-        colorToDeleteWrapper.addEventListener(
+        colorWrapper.addEventListener(
           "transitionend",
           () => {
-            // После анимации удаляем из хранилища и DOM
             this.deleteCustomColor(type, colorToDelete);
-            colorToDeleteWrapper.remove();
+            colorWrapper.remove();
             actionBtnWrapper.remove();
 
-            // Если удалили активный цвет, выбираем новый по умолчанию
-            const currentSelected = isAccent
-              ? this.currentAccent
-              : this.currentBg;
+            const currentSelected = isAccent ? this.currentAccent : this.currentBg;
             if (currentSelected === colorToDelete) {
-              const newActiveColor = isAccent
-                ? this.standardAccentColors[0]
-                : "default";
+              const newActiveColor = isAccent ? this.standardAccentColors[0] : "default";
               isAccent
                 ? this.setColor(newActiveColor, false, false)
                 : this.setBgColor(newActiveColor, false, false);
@@ -277,30 +262,26 @@ export const themeManager = {
       }
       return;
     }
-
-    // 2. Если кликнули на кружок с цветом
+    
     const colorWrapper = target.closest(".custom-color-wrapper");
     if (colorWrapper) {
       const color = colorWrapper.dataset.color;
       const currentSelected = isAccent ? this.currentAccent : this.currentBg;
 
-      // При любом клике на кружок - плавно убираем старую кнопку действия
-      this._removeActionButton(container);
-
-      if (color === currentSelected) {
-        // Если кликнули по уже выделенному цвету...
-        // ...показываем кнопку, только если цвет кастомный
-        const isCustom = colorWrapper.dataset.custom === "true";
-        if (isCustom) {
-          this._handleActionButtonLogic(type, color);
-        }
-      } else {
-        // Если кликнули по ДРУГОМУ цвету, просто меняем его
+      if (color !== currentSelected) {
+        // Если кликнули на НОВЫЙ цвет
         sm.vibrate(20, "light");
         if (isAccent) {
           this.setColor(color, true);
         } else {
           this.setBgColor(color, true);
+        }
+      } else {
+        // Если кликнули на ТОТ ЖЕ САМЫЙ цвет еще раз (для вызова/скрытия кнопки)
+        if (container.querySelector(".color-action-btn")) {
+          this._removeActionButton(container);
+        } else {
+          this._handleActionButtonLogic(type, color);
         }
       }
     }
@@ -310,36 +291,29 @@ export const themeManager = {
     const addWheelScroll = (containerId) => {
       const container = $(containerId);
       if (container) {
-        container.addEventListener(
-          "wheel",
-          (e) => {
-            if (e.deltaY !== 0) {
-              e.preventDefault();
-              container.scrollLeft += e.deltaY;
-            }
-          },
-          { passive: false },
-        );
+        container.addEventListener("wheel", (e) => {
+          if (e.deltaY !== 0) {
+            e.preventDefault();
+            container.scrollLeft += e.deltaY;
+          }
+        }, { passive: false });
       }
     };
     addWheelScroll("accent-colors-container");
     addWheelScroll("bg-colors-container");
+    
     document.addEventListener("languageChanged", () => this.syncSliderUIs());
-    document.addEventListener("vibroToggled", (e) =>
-      this.updateVibroSliderUI(e.detail.enabled),
-    );
-    $("accent-colors-container")?.addEventListener("click", (e) =>
-      this.handleColorClick(e, "accent"),
-    );
-    $("bg-colors-container")?.addEventListener("click", (e) =>
-      this.handleColorClick(e, "bg"),
-    );
+    document.addEventListener("vibroToggled", (e) => this.updateVibroSliderUI(e.detail.enabled));
+    
+    $("accent-colors-container")?.addEventListener("click", (e) => this.handleColorClick(e, "accent"));
+    $("bg-colors-container")?.addEventListener("click", (e) => this.handleColorClick(e, "bg"));
+    
     document.body.addEventListener("change", (e) => {
-      if (e.target.id === "customColorInput")
-        this.setColor(e.target.value, true);
-      if (e.target.id === "customBgInput")
-        this.setBgColor(e.target.value, true);
+      if (e.target.id === "customColorInput") this.setColor(e.target.value, true);
+      if (e.target.id === "customBgInput") this.setBgColor(e.target.value, true);
     });
+
+    // ... (остальные обработчики без изменений)
     $("toggle-sw-minute-beep")?.addEventListener("change", (e) => {
       this.swMinuteBeep = e.target.checked;
       safeSetLS("app_sw_minute_beep", this.swMinuteBeep);
@@ -627,10 +601,17 @@ export const themeManager = {
       safeSetLS(key, JSON.stringify(customColors));
       this.renderColorSection(type);
       isAccent ? this.setColor(color, true) : this.setBgColor(color, true);
+    } else {
+        // Если цвет уже есть, просто убираем кнопку
+        const container = $( isAccent ? "accent-colors-container" : "bg-colors-container" );
+        this._removeActionButton(container);
     }
   },
 
   setColor(hex, showAction = true, doScroll = true) {
+    const container = $("accent-colors-container");
+    if (container) this._removeActionButton(container);
+
     this.currentAccent = hex;
     safeSetLS("theme_color", hex);
     document.documentElement.style.setProperty("--primary-color", hex);
@@ -639,10 +620,17 @@ export const themeManager = {
     const picker = $("customColorInput");
     if (picker) picker.value = hex;
     this.updateColorSelectionUI("accent", hex, doScroll);
-    if (showAction) this._handleActionButtonLogic("accent", hex);
+
+    if (showAction) {
+      // Небольшая задержка, чтобы старая кнопка успела исчезнуть
+      setTimeout(() => this._handleActionButtonLogic("accent", hex), 100);
+    }
   },
 
   setBgColor(hex, showAction = true, doScroll = true) {
+    const container = $("bg-colors-container");
+    if (container) this._removeActionButton(container);
+    
     this.currentBg = hex;
     safeSetLS("theme_bg_color", hex);
     const isDark = document.documentElement.classList.contains("dark");
@@ -651,7 +639,9 @@ export const themeManager = {
     if (picker)
       picker.value = hex === "default" ? (isDark ? "#1c1c1e" : "#f3f4f6") : hex;
     this.updateColorSelectionUI("bg", hex, doScroll);
-    if (showAction) this._handleActionButtonLogic("bg", hex);
+    if (showAction) {
+      setTimeout(() => this._handleActionButtonLogic("bg", hex), 100);
+    }
   },
 
   resetSettings() {
