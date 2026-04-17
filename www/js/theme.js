@@ -1,4 +1,4 @@
-// Файл: www/js/theme.js (ФИНАЛЬНАЯ ВЕРСИЯ)
+// Файл: www/js/theme.js (ФИНАЛЬНАЯ ВЕРСИЯ v3)
 
 import {
   $,
@@ -142,6 +142,7 @@ export const themeManager = {
     }
   },
 
+  // <<< ФУНКЦИЯ С ФИНАЛЬНЫМ ИСПРАВЛЕНИЕМ >>>
   updateColorSelectionUI(type, hex) {
     const isAccent = type === "accent";
     const container = $(
@@ -149,27 +150,28 @@ export const themeManager = {
     );
     if (!container) return;
 
-    container
-      .querySelectorAll(".custom-color-wrapper, .relative")
-      .forEach((el) => {
-        el.classList.remove(
-          "ring-[var(--primary-color)]",
-          "ring-2",
-          "ring-offset-2",
-          "ring-offset-surface",
-          "shadow-lg",
-        );
-
-        if (el.classList.contains("custom-color-wrapper")) {
-          const btn = el.querySelector("button");
-          if (btn.dataset.iconAdded) {
-            btn.innerHTML = btn.dataset.originalContent || "";
-            delete btn.dataset.iconAdded;
-            delete btn.dataset.originalContent;
-          }
+    // --- Фаза очистки ---
+    container.querySelectorAll(".custom-color-wrapper, .relative").forEach((el) => {
+      // Убираем рамку выделения
+      el.classList.remove(
+        "ring-[var(--primary-color)]", "ring-2", "ring-offset-2", "ring-offset-surface", "shadow-lg"
+      );
+      
+      // Убираем галочку
+      if (el.classList.contains("custom-color-wrapper")) {
+        const btn = el.querySelector("button");
+        if (btn && btn.dataset.iconAdded) {
+          btn.innerHTML = btn.dataset.originalContent || "";
+          delete btn.dataset.iconAdded;
+          delete btn.dataset.originalContent;
         }
-      });
+      } else if (el.classList.contains("relative")) {
+        // Убираем галочку из обертки пипетки
+        el.querySelector(".injected-checkmark")?.remove();
+      }
+    });
 
+    // --- Фаза применения ---
     let activeWrapper = container.querySelector(
       `.custom-color-wrapper[data-color="${hex}"]`,
     );
@@ -180,24 +182,31 @@ export const themeManager = {
     }
 
     if (activeWrapper) {
+      // Добавляем рамку выделения
       activeWrapper.classList.add(
-        "ring-[var(--primary-color)]",
-        "ring-2",
-        "ring-offset-2",
-        "ring-offset-surface",
-        "shadow-lg",
+        "ring-[var(--primary-color)]", "ring-2", "ring-offset-2", "ring-offset-surface", "shadow-lg"
       );
+      
+      // Определяем цвет иконки-галочки
+      const lum = this.getLuminance(...Object.values(this.hexToRGB(hex)));
+      const iconColorVar = lum > 0.4 ? "var(--text-color)" : "var(--surface-color)";
+      const checkmarkSVG = `<svg focusable="false" aria-hidden="true" class="w-5 h-5" style="color: ${iconColorVar};" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4.5 12.75l6 6 9-13.5"></path></svg>`;
+
       if (activeWrapper.classList.contains("custom-color-wrapper")) {
+        // --- Логика для обычных кнопок цвета ---
         const button = activeWrapper.querySelector("button");
         button.dataset.originalContent = button.innerHTML;
         button.dataset.iconAdded = "true";
-        let lum = 0.5;
-        if (hex !== "default")
-          lum = this.getLuminance(...Object.values(this.hexToRGB(hex)));
-        const iconColorVar =
-          lum > 0.4 ? "var(--text-color)" : "var(--surface-color)";
-        button.innerHTML = `<svg focusable="false" aria-hidden="true" class="w-5 h-5" style="color: ${iconColorVar};" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4.5 12.75l6 6 9-13.5"></path></svg>`;
+        button.innerHTML = checkmarkSVG;
+      } else if (activeWrapper.classList.contains("relative")) {
+        // --- Логика для пипетки (color picker) ---
+        const checkmarkWrapper = document.createElement('div');
+        checkmarkWrapper.className = 'injected-checkmark absolute inset-0 flex items-center justify-center z-20 pointer-events-none';
+        checkmarkWrapper.innerHTML = checkmarkSVG;
+        activeWrapper.appendChild(checkmarkWrapper);
       }
+      
+      // Прокручиваем к выбранному элементу
       activeWrapper.scrollIntoView({
         behavior: "smooth",
         block: "nearest",
