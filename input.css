@@ -1178,37 +1178,54 @@ input[type="range"]:focus + .thumb-label-container > .thumb-label {
   opacity: 1;
 }
 
-/* --- Базовый контейнер для каждого цвета и для пикера --- */
-.custom-color-wrapper {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-  /* Плавный переход для всех свойств, участвующих в анимациях */
-  transition:
-    transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-    opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-    max-width 0.35s cubic-bezier(0.4, 0, 0.2, 1),
-    padding 0.35s cubic-bezier(0.4, 0, 0.2, 1),
-    margin 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+/* --- Контейнер для цветов --- */
+#accent-colors-container,
+#bg-colors-container {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: min-content; /* Колонки занимают ширину контента */
+  gap: 1rem; /* Пространство между элементами */
+  transition: gap 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* --- Стиль для активного (выбранного) цвета --- */
-.custom-color-wrapper.is-active .color-btn,
-.custom-color-wrapper.is-active.custom-color-picker-wrapper {
+/* --- Базовый контейнер для каждого цвета и для пикера --- */
+.custom-color-wrapper {
+  flex-shrink: 0;
+  /* Плавный переход для трансформации и выделения */
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.custom-color-wrapper .color-btn {
+  transition:
+    transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    background-color 0.3s ease,
+    box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* --- Стиль для активного (выбранного) элемента --- */
+.custom-color-wrapper.is-active > * {
   transform: scale(1.1);
-  box-shadow: 0 0 0 2px var(--surface-color), 0 0 0 4px var(--primary-color);
+  box-shadow:
+    0 0 0 2px var(--surface-color),
+    0 0 0 4px var(--primary-color);
 }
 
 /* --- Стили для кастомного пикера цвета --- */
 .custom-color-picker-wrapper .custom-color-bg-layer {
-  transition:
-    background-color 0.3s ease,
-    opacity 0.3s ease;
+  opacity: 1;
+  transition: opacity 0.3s ease;
 }
-/* Когда выбран кастомный цвет, скрываем градиент и показываем сплошной фон */
+/* Когда выбран кастомный цвет, градиент становится прозрачным */
 .custom-color-picker-wrapper.has-custom-color .custom-color-bg-layer {
-  background-image: none;
+  opacity: 0;
+}
+/* А фон самого пикера окрашивается */
+.custom-color-picker-wrapper.has-custom-color {
   background-color: var(--custom-picker-bg, transparent);
+  transition: background-color 0.3s ease;
+}
+.injected-checkmark {
+  transition: opacity 0.2s ease;
 }
 
 /* --- Кнопка "Добавить" / "Удалить" --- */
@@ -1217,20 +1234,20 @@ input[type="range"]:focus + .thumb-label-container > .thumb-label {
   opacity: 0;
   overflow: hidden;
   transform: scaleX(0.5);
-  transform-origin: left;
+  transform-origin: right; /* ИЗМЕНЕНО: анимация справа, т.к. кнопка слева */
   transition:
-    max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-    opacity 0.2s ease-out,
-    transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    max-width 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.25s ease-out,
+    transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .color-action-btn.is-visible {
-  max-width: 4rem; /* Достаточно места для кнопки и отступа */
+  max-width: 4rem;
   opacity: 1;
   transform: scaleX(1);
 }
 .color-action-btn.is-visible button {
-  margin-left: 0.5rem;
+  margin-right: 0.5rem; /* ИЗМЕНЕНО: отступ справа */
 }
 
 /* --- Анимация ДОБАВЛЕНИЯ нового цвета --- */
@@ -1243,17 +1260,24 @@ input[type="range"]:focus + .thumb-label-container > .thumb-label {
 /* --- Анимация УДАЛЕНИЯ цвета и кнопки действия --- */
 .custom-color-wrapper.is-deleting,
 .color-action-btn.is-deleting {
-  transform: scale(0.5);
   opacity: 0;
+  transform: scale(0);
   max-width: 0 !important;
-  padding: 0 !important;
-  margin: 0 !important;
+  /* Увеличена длительность и добавлена задержка для плавного сдвига */
+  transition-duration: 0.3s;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-delay: 0.15s; /* Задержка перед схлопыванием */
   pointer-events: none;
 }
-/* Добавляем задержку для соседних элементов, чтобы они сдвигались после исчезновения */
-#accent-colors-container,
-#bg-colors-container {
-  transition: gap 0.2s ease 0.1s;
+/* Анимация исчезновения самого кружочка (происходит мгновенно, до схлопывания) */
+.custom-color-wrapper.is-deleting > .color-btn,
+.color-action-btn.is-deleting > button {
+  opacity: 0;
+  transform: scale(0);
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+  transition-delay: 0s;
 }
 
 @layer utilities {
