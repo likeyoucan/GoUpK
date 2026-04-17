@@ -1,5 +1,4 @@
 // Файл: www/js/theme.js
-// ПОЛНАЯ ВЕРСИЯ С ВОССТАНОВЛЕННОЙ ФУНКЦИЕЙ setMode
 
 import {
   $,
@@ -378,7 +377,6 @@ export const themeManager = {
     this.updateSliderLabel("vibroSlider", "vibro-label", this.vibroLabels);
   },
 
-  // *** ВОТ ВОССТАНОВЛЕННАЯ ФУНКЦИЯ setMode ***
   setMode(mode) {
     this._internalSetMode(mode, true);
   },
