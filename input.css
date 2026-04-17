@@ -454,7 +454,7 @@ html.dark .app-bg.has-vignette::before {
   .view-top-half {
     padding-top: 0.5rem;
     height: auto;
-    width: 45%;
+    width: 50%;
     flex: none;
   }
 
@@ -466,7 +466,7 @@ html.dark .app-bg.has-vignette::before {
   }
 
   .view-bottom-half {
-    height: 90%;
+    height: 50%;
     width: 50%;
     flex: none;
     justify-content: center;
@@ -503,11 +503,11 @@ html.dark .app-bg.has-vignette::before {
   }
 
   .view-top-half {
-    height: 45%;
+    height: 50%;
   }
 
   .view-bottom-half {
-    height: 55%;
+    height: 50%;
   }
 
   .timer-input {
