@@ -1,4 +1,4 @@
-// Файл: www/js/theme.js (ФИНАЛЬНАЯ ВЕРСИЯ, самая-самая последняя)
+// Файл: www/js/theme.js
 
 import {
   $,
@@ -388,7 +388,6 @@ export const themeManager = {
       });
   },
 
-  // Остальная часть файла без изменений...
   updateSliderLabel(sliderId, labelId, labelsArray) {
     const slider = $(sliderId);
     const label = $(labelId);

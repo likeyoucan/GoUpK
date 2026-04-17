@@ -1171,7 +1171,6 @@ body.hide-nav-labels .nav-btn {
   transition: opacity 0.2s;
 }
 
-/* Показываем метку, когда пользователь взаимодействует со слайдером */
 input[type="range"]:active + .thumb-label-container > .thumb-label,
 input[type="range"]:focus + .thumb-label-container > .thumb-label {
   opacity: 1;
@@ -1183,8 +1182,7 @@ input[type="range"]:focus + .thumb-label-container > .thumb-label {
   margin-left: 0;
   margin-right: 0;
   overflow: hidden;
-  flex-shrink: 0; /* <-- ДОБАВИТЬ ЭТО */
-  /* Анимируем только нужные свойства */
+  flex-shrink: 0;
   transition:
     width 0.25s ease-out,
     opacity 0.2s ease-out;
@@ -1193,16 +1191,13 @@ input[type="range"]:focus + .thumb-label-container > .thumb-label {
 .color-action-btn.is-visible {
   width: 2.25rem; /* w-9 */
   opacity: 1;
-  /* Строка с margin-right: -0.5rem; полностью удалена */
 }
 
 .custom-color-wrapper {
-  /* Анимируем ТОЛЬКО визуальные свойства, не влияющие на макет */
   transition: transform 0.2s ease-out, opacity 0.2s ease-out;
 }
 
 .custom-color-wrapper.is-deleting {
-  /* Сжимаем и делаем прозрачным, но ПОКА не убираем из потока */
   transform: scale(0);
   opacity: 0;
   pointer-events: none;
