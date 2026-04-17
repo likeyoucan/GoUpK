@@ -1,4 +1,4 @@
-// Файл: www/js/theme.js
+// Файл: www/js/theme.js (ФИНАЛЬНАЯ ВЕРСИЯ)
 
 import {
   $,
@@ -85,10 +85,9 @@ export const themeManager = {
     const actionBtn = container.querySelector(".color-action-btn.is-visible");
     if (actionBtn) {
       actionBtn.classList.remove("is-visible");
-      // Удаляем элемент из DOM после завершения анимации
       setTimeout(() => {
         actionBtn.remove();
-      }, 250); // Длительность анимации
+      }, 250);
     }
   },
 
@@ -99,7 +98,6 @@ export const themeManager = {
     );
     if (!container) return;
 
-    // Удаляем предыдущую кнопку действия, если она есть
     container.querySelector(".color-action-btn")?.remove();
 
     let activeWrapper = container.querySelector(
@@ -135,7 +133,6 @@ export const themeManager = {
 
       requestAnimationFrame(() => {
         actionBtnWrapper.classList.add("is-visible");
-        // FIX 1: Прокручиваем к кнопке, чтобы она всегда была видна
         actionBtnWrapper.scrollIntoView({
           behavior: "smooth",
           block: "nearest",
@@ -201,6 +198,11 @@ export const themeManager = {
           lum > 0.4 ? "var(--text-color)" : "var(--surface-color)";
         button.innerHTML = `<svg focusable="false" aria-hidden="true" class="w-5 h-5" style="color: ${iconColorVar};" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4.5 12.75l6 6 9-13.5"></path></svg>`;
       }
+      activeWrapper.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+        inline: "nearest",
+      });
     }
   },
 
@@ -382,12 +384,12 @@ export const themeManager = {
           this.setMode(e.currentTarget.getAttribute("data-theme-mode")),
         ),
       );
-    document.body.addEventListener("click", (e) => {
-      if (e.target.closest("#accent-colors-container"))
-        this.handleColorClick(e, "accent");
-      if (e.target.closest("#bg-colors-container"))
-        this.handleColorClick(e, "bg");
-    });
+    $("accent-colors-container")?.addEventListener("click", (e) =>
+      this.handleColorClick(e, "accent"),
+    );
+    $("bg-colors-container")?.addEventListener("click", (e) =>
+      this.handleColorClick(e, "bg"),
+    );
     document.body.addEventListener("input", (e) => {
       if (e.target.id === "customColorInput")
         this.setColor(e.target.value, true);
@@ -399,6 +401,67 @@ export const themeManager = {
       .addEventListener("change", () => {
         if (this.currentMode === "system") this.setMode("system");
       });
+  },
+
+  handleColorClick(event, type) {
+    const target = event.target;
+    const isAccent = type === "accent";
+    const container = $(
+      isAccent ? "accent-colors-container" : "bg-colors-container",
+    );
+
+    const actionBtn = target.closest(".color-action-btn button");
+    if (actionBtn) {
+      sm.vibrate(40, "medium");
+      const action = actionBtn.dataset.action;
+
+      if (action === "add") {
+        const activeColor = isAccent ? this.currentAccent : this.currentBg;
+        this.addCustomColor(type, activeColor);
+      } else if (action === "delete") {
+        const actionBtnWrapper = actionBtn.parentElement;
+        const colorToDeleteWrapper = actionBtnWrapper.nextElementSibling;
+        if (colorToDeleteWrapper) {
+          const colorToDelete = colorToDeleteWrapper.dataset.color;
+          this._removeActionButton(container);
+          colorToDeleteWrapper.classList.add("is-deleting");
+          setTimeout(() => {
+            this.deleteCustomColor(type, colorToDelete);
+            colorToDeleteWrapper.remove();
+            const newActiveColor = isAccent
+              ? this.standardAccentColors[0]
+              : "default";
+            isAccent
+              ? this.setColor(newActiveColor, false)
+              : this.setBgColor(newActiveColor, false);
+          }, 250);
+        }
+      }
+      return;
+    }
+
+    const colorWrapper = target.closest(".custom-color-wrapper");
+    if (colorWrapper) {
+      const color = colorWrapper.dataset.color;
+      const isCustom = colorWrapper.dataset.custom === "true";
+      const currentSelected = isAccent ? this.currentAccent : this.currentBg;
+
+      if (color === currentSelected && isCustom) {
+        if (container.querySelector(".color-action-btn")) {
+          this._removeActionButton(container);
+        } else {
+          this._handleActionButtonLogic(type, color);
+        }
+      } else {
+        this._removeActionButton(container);
+        sm.vibrate(20, "light");
+        if (isAccent) {
+          this.setColor(color, true);
+        } else {
+          this.setBgColor(color, true);
+        }
+      }
+    }
   },
 
   setMode(mode) {
@@ -435,72 +498,6 @@ export const themeManager = {
       requestAnimationFrame(() =>
         document.body.classList.remove("is-updating-theme"),
       );
-  },
-
-  handleColorClick(event, type) {
-    const target = event.target;
-    const isAccent = type === "accent";
-    const container = $(
-      isAccent ? "accent-colors-container" : "bg-colors-container",
-    );
-
-    const colorWrapper = target.closest(".custom-color-wrapper");
-    if (colorWrapper) {
-      const color = colorWrapper.dataset.color;
-      const isAlreadySelected =
-        (isAccent && this.currentAccent === color) ||
-        (!isAccent && this.currentBg === color);
-      const isCustom = colorWrapper.dataset.custom === "true";
-
-      this._removeActionButton(container);
-
-      if (isAlreadySelected && isCustom) {
-        this._handleActionButtonLogic(type, color);
-      } else {
-        sm.vibrate(20, "light");
-        isAccent ? this.setColor(color, true) : this.setBgColor(color, true);
-      }
-      return;
-    }
-
-    const actionBtn = target.closest(".color-action-btn button");
-    if (actionBtn) {
-      sm.vibrate(40, "medium");
-      const action = actionBtn.dataset.action;
-
-      if (action === "add") {
-        const activeColor = isAccent ? this.currentAccent : this.currentBg;
-        this.addCustomColor(type, activeColor);
-        return;
-      }
-
-      // FIX 2: Улучшенная логика удаления цвета
-      if (action === "delete") {
-        const actionBtnWrapper = actionBtn.parentElement;
-        const colorToDeleteWrapper = actionBtnWrapper.nextElementSibling;
-        if (colorToDeleteWrapper) {
-          const colorToDelete = colorToDeleteWrapper.dataset.color;
-
-          // 1. Анимируем исчезновение самой кнопки удаления
-          this._removeActionButton(container);
-
-          // 2. Запускаем анимацию исчезновения кружка
-          colorToDeleteWrapper.classList.add("is-deleting");
-
-          // 3. После анимации (250ms) удаляем элемент и переключаемся на цвет по-умолчанию
-          setTimeout(() => {
-            this.deleteCustomColor(type, colorToDelete);
-            colorToDeleteWrapper.remove();
-            const newActiveColor = isAccent
-              ? this.standardAccentColors[0]
-              : "default";
-            isAccent
-              ? this.setColor(newActiveColor, false)
-              : this.setBgColor(newActiveColor, false);
-          }, 250); // Должно совпадать с transition-duration в CSS
-        }
-      }
-    }
   },
 
   renderColorSection(type) {

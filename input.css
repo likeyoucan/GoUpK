@@ -1183,18 +1183,17 @@ input[type="range"]:focus + .thumb-label-container > .thumb-label {
   margin-left: 0;
   margin-right: 0;
   overflow: hidden;
-  /* Анимируем ширину, прозрачность и отступы */
+  flex-shrink: 0; /* <-- ДОБАВИТЬ ЭТО */
+  /* Анимируем только нужные свойства */
   transition:
     width 0.25s ease-out,
-    opacity 0.2s ease-out,
-    margin-left 0.25s ease-out,
-    margin-right 0.25s ease-out;
+    opacity 0.2s ease-out;
 }
 
 .color-action-btn.is-visible {
-  width: 2.25rem;
+  width: 2.25rem; /* w-9 */
   opacity: 1;
-  margin-right: -0.5rem;
+  /* Строка с margin-right: -0.5rem; полностью удалена */
 }
 
 .custom-color-wrapper {
