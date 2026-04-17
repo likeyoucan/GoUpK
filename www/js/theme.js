@@ -80,22 +80,28 @@ export const themeManager = {
     wrapper.appendChild(button);
     return wrapper;
   },
+
   _removeActionButton(container) {
     const actionBtn = container.querySelector(".color-action-btn.is-visible");
     if (actionBtn) {
       actionBtn.classList.remove("is-visible");
+      // Удаляем элемент из DOM после завершения анимации
       setTimeout(() => {
         actionBtn.remove();
-      }, 300);
+      }, 250); // Длительность анимации
     }
   },
+
   _handleActionButtonLogic(type, hex) {
     const isAccent = type === "accent";
     const container = $(
       isAccent ? "accent-colors-container" : "bg-colors-container",
     );
     if (!container) return;
+
+    // Удаляем предыдущую кнопку действия, если она есть
     container.querySelector(".color-action-btn")?.remove();
+
     let activeWrapper = container.querySelector(
       `.custom-color-wrapper[data-color="${hex}"]`,
     );
@@ -105,35 +111,47 @@ export const themeManager = {
         activeWrapper = picker.closest(".relative");
     }
     if (!activeWrapper) return;
-    const allStandard = isAccent
-      ? this.standardAccentColors
-      : this.standardBgColors;
+
     const allCustom = isAccent ? this.customAccentColors : this.customBgColors;
     const isCustom = allCustom.includes(hex);
-    const isStandard = allStandard.includes(hex);
-    const isKnown = isCustom || isStandard || hex === "default";
+
     let actionBtnHTML = null;
     if (isCustom) {
       actionBtnHTML = `<button type="button" data-action="delete" aria-label="${t("delete")}" class="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-full bg-red-500/10 text-red-500 hover:bg-red-500/20 focus:outline-none custom-focus"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 12h-15"></path></svg></button>`;
-    } else if (!isKnown && hex.startsWith("#")) {
-      actionBtnHTML = `<button type="button" data-action="add" aria-label="${t("add_color")}" class="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-full bg-green-500/10 text-green-500 hover:bg-green-500/20 focus:outline-none custom-focus"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"></path></svg></button>`;
+    } else if (!isCustom && hex !== "default" && hex.startsWith("#")) {
+      const standardColors = isAccent
+        ? this.standardAccentColors
+        : this.standardBgColors;
+      if (!standardColors.includes(hex)) {
+        actionBtnHTML = `<button type="button" data-action="add" aria-label="${t("add_color")}" class="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-full bg-green-500/10 text-green-500 hover:bg-green-500/20 focus:outline-none custom-focus"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"></path></svg></button>`;
+      }
     }
+
     if (actionBtnHTML && activeWrapper) {
       const actionBtnWrapper = document.createElement("div");
       actionBtnWrapper.className = "color-action-btn";
       actionBtnWrapper.innerHTML = actionBtnHTML;
       activeWrapper.parentNode.insertBefore(actionBtnWrapper, activeWrapper);
+
       requestAnimationFrame(() => {
         actionBtnWrapper.classList.add("is-visible");
+        // FIX 1: Прокручиваем к кнопке, чтобы она всегда была видна
+        actionBtnWrapper.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+          inline: "center",
+        });
       });
     }
   },
+
   updateColorSelectionUI(type, hex) {
     const isAccent = type === "accent";
     const container = $(
       isAccent ? "accent-colors-container" : "bg-colors-container",
     );
     if (!container) return;
+
     container
       .querySelectorAll(".custom-color-wrapper, .relative")
       .forEach((el) => {
@@ -144,6 +162,7 @@ export const themeManager = {
           "ring-offset-surface",
           "shadow-lg",
         );
+
         if (el.classList.contains("custom-color-wrapper")) {
           const btn = el.querySelector("button");
           if (btn.dataset.iconAdded) {
@@ -153,6 +172,7 @@ export const themeManager = {
           }
         }
       });
+
     let activeWrapper = container.querySelector(
       `.custom-color-wrapper[data-color="${hex}"]`,
     );
@@ -161,6 +181,7 @@ export const themeManager = {
       if (picker && picker.value === hex)
         activeWrapper = picker.closest(".relative");
     }
+
     if (activeWrapper) {
       activeWrapper.classList.add(
         "ring-[var(--primary-color)]",
@@ -182,6 +203,7 @@ export const themeManager = {
       }
     }
   },
+
   updateSliderLabel(sliderId, labelId, labelsArray) {
     const slider = $(sliderId);
     const label = $(labelId);
@@ -197,11 +219,13 @@ export const themeManager = {
     const offset = thumbWidth / 2 - percent * thumbWidth;
     label.style.left = `calc(${percent * 100}% + ${offset}px)`;
   },
+
   init() {
     this.applySettings();
     this.bindEvents();
     document.dispatchEvent(new Event("languageChanged"));
   },
+
   applySettings() {
     try {
       this.customAccentColors =
@@ -283,7 +307,6 @@ export const themeManager = {
     document.addEventListener("vibroToggled", (e) => {
       this.updateVibroSliderUI(e.detail.enabled);
     });
-
     $("toggle-sw-minute-beep")?.addEventListener("change", (e) => {
       this.swMinuteBeep = e.target.checked;
       safeSetLS("app_sw_minute_beep", this.swMinuteBeep);
@@ -381,6 +404,7 @@ export const themeManager = {
   setMode(mode) {
     this._internalSetMode(mode, true);
   },
+
   _internalSetMode(mode, useTransition) {
     if (useTransition) document.body.classList.add("is-updating-theme");
     this.currentMode = mode;
@@ -412,97 +436,108 @@ export const themeManager = {
         document.body.classList.remove("is-updating-theme"),
       );
   },
+
   handleColorClick(event, type) {
     const target = event.target;
     const isAccent = type === "accent";
     const container = $(
       isAccent ? "accent-colors-container" : "bg-colors-container",
     );
+
     const colorWrapper = target.closest(".custom-color-wrapper");
     if (colorWrapper) {
       const color = colorWrapper.dataset.color;
-      const existingActionBtn = colorWrapper.previousElementSibling;
-      if (
-        existingActionBtn &&
-        existingActionBtn.classList.contains("color-action-btn")
-      ) {
-        this._removeActionButton(container);
-        return;
-      }
+      const isAlreadySelected =
+        (isAccent && this.currentAccent === color) ||
+        (!isAccent && this.currentBg === color);
+      const isCustom = colorWrapper.dataset.custom === "true";
+
       this._removeActionButton(container);
-      sm.vibrate(20, "light");
-      isAccent ? this.setColor(color, true) : this.setBgColor(color, true);
+
+      if (isAlreadySelected && isCustom) {
+        this._handleActionButtonLogic(type, color);
+      } else {
+        sm.vibrate(20, "light");
+        isAccent ? this.setColor(color, true) : this.setBgColor(color, true);
+      }
       return;
     }
+
     const actionBtn = target.closest(".color-action-btn button");
     if (actionBtn) {
       sm.vibrate(40, "medium");
       const action = actionBtn.dataset.action;
+
+      if (action === "add") {
+        const activeColor = isAccent ? this.currentAccent : this.currentBg;
+        this.addCustomColor(type, activeColor);
+        return;
+      }
+
+      // FIX 2: Улучшенная логика удаления цвета
       if (action === "delete") {
         const actionBtnWrapper = actionBtn.parentElement;
         const colorToDeleteWrapper = actionBtnWrapper.nextElementSibling;
-        if (
-          colorToDeleteWrapper &&
-          colorToDeleteWrapper.classList.contains("custom-color-wrapper")
-        ) {
+        if (colorToDeleteWrapper) {
           const colorToDelete = colorToDeleteWrapper.dataset.color;
-          this.deleteCustomColor(type, colorToDelete);
-          colorToDeleteWrapper.classList.remove(
-            "ring-[var(--primary-color)]",
-            "ring-2",
-            "ring-offset-2",
-            "ring-offset-surface",
-            "shadow-lg",
-          );
+
+          // 1. Анимируем исчезновение самой кнопки удаления
           this._removeActionButton(container);
+
+          // 2. Запускаем анимацию исчезновения кружка
           colorToDeleteWrapper.classList.add("is-deleting");
+
+          // 3. После анимации (250ms) удаляем элемент и переключаемся на цвет по-умолчанию
           setTimeout(() => {
+            this.deleteCustomColor(type, colorToDelete);
             colorToDeleteWrapper.remove();
-            setTimeout(() => {
-              const newActiveColor = isAccent
-                ? this.standardAccentColors[0]
-                : "default";
-              isAccent
-                ? this.setColor(newActiveColor, false)
-                : this.setBgColor(newActiveColor, false);
-            }, 0);
-          }, 300);
+            const newActiveColor = isAccent
+              ? this.standardAccentColors[0]
+              : "default";
+            isAccent
+              ? this.setColor(newActiveColor, false)
+              : this.setBgColor(newActiveColor, false);
+          }, 250); // Должно совпадать с transition-duration в CSS
         }
-      } else if (action === "add") {
-        const activeColor = isAccent ? this.currentAccent : this.currentBg;
-        this.addCustomColor(type, activeColor);
       }
     }
   },
+
   renderColorSection(type) {
     const isAccent = type === "accent";
     const container = $(
       isAccent ? "accent-colors-container" : "bg-colors-container",
     );
     if (!container) return;
+
     const scrollLeft = container.scrollLeft;
     container.innerHTML = "";
+
     const standardColors = isAccent
       ? this.standardAccentColors
       : this.standardBgColors;
     const customColors = isAccent
       ? this.customAccentColors
       : this.customBgColors;
+
     const fragment = document.createDocumentFragment();
     [...standardColors, ...customColors].forEach((color) => {
       const isCustom = customColors.includes(color);
       fragment.appendChild(this._createColorButtonEl(color, isCustom));
     });
+
     const pickerId = isAccent ? "customColorInput" : "customBgInput";
     const pickerHTML = `<div class="relative w-9 h-9 shrink-0 group rounded-full overflow-hidden border border-black/20 dark:border-white/20 transition-transform active:scale-90 focus-within:ring-2 focus-within:ring-[var(--primary-color)] focus-within:ring-offset-2 focus-within:ring-offset-surface"><div class="absolute inset-0 bg-[conic-gradient(from_0deg,red,orange,yellow,green,blue,indigo,violet,red)] opacity-90 group-hover:opacity-100 transition-opacity pointer-events-none z-0"></div><input type="color" id="${pickerId}" aria-label="${t("add_color")}" class="absolute inset-0 w-[150%] h-[150%] -top-1 -left-1 opacity-0 cursor-pointer z-10" /></div>`;
     const tempDiv = document.createElement("div");
     tempDiv.innerHTML = pickerHTML;
     fragment.appendChild(tempDiv.firstChild);
+
     container.appendChild(fragment);
     const activeColor = isAccent ? this.currentAccent : this.currentBg;
     this.updateColorSelectionUI(type, activeColor);
     container.scrollLeft = scrollLeft;
   },
+
   deleteCustomColor(type, color) {
     const isAccent = type === "accent";
     let customColors = isAccent ? this.customAccentColors : this.customBgColors;
@@ -516,19 +551,23 @@ export const themeManager = {
       safeSetLS(key, JSON.stringify(customColors));
     }
   },
+
   addCustomColor(type, color) {
     const isAccent = type === "accent";
     const customColors = isAccent
       ? this.customAccentColors
       : this.customBgColors;
+
     if (customColors.length >= MAX_CUSTOM_COLORS) {
       showToast(isAccent ? t("accent_limit_msg") : t("bg_limit_msg"));
       return;
     }
+
     const allColors = [
       ...(isAccent ? this.standardAccentColors : this.standardBgColors),
       ...customColors,
     ];
+
     if (!allColors.includes(color)) {
       customColors.push(color);
       const key = isAccent ? "custom_accent_colors" : "custom_bg_colors";
@@ -537,6 +576,7 @@ export const themeManager = {
       isAccent ? this.setColor(color, true) : this.setBgColor(color, true);
     }
   },
+
   setColor(hex, showAction = true) {
     this.currentAccent = hex;
     safeSetLS("theme_color", hex);
@@ -548,6 +588,7 @@ export const themeManager = {
     this.updateColorSelectionUI("accent", hex);
     if (showAction) this._handleActionButtonLogic("accent", hex);
   },
+
   setBgColor(hex, showAction = true) {
     this.currentBg = hex;
     safeSetLS("theme_bg_color", hex);
@@ -559,6 +600,7 @@ export const themeManager = {
     this.updateColorSelectionUI("bg", hex);
     if (showAction) this._handleActionButtonLogic("bg", hex);
   },
+
   resetSettings() {
     const themeKeys = [
       "theme_mode",
@@ -577,6 +619,7 @@ export const themeManager = {
     themeKeys.forEach(safeRemoveLS);
     this.applySettings();
   },
+
   applyBgTheme(hex, isDark) {
     const root = document.documentElement;
     document.body.classList.remove("force-light-text", "force-dark-text");
@@ -624,6 +667,7 @@ export const themeManager = {
       }
     }
   },
+
   getLuminance(r, g, b) {
     const a = [r, g, b].map((v) => {
       v /= 255;
@@ -681,12 +725,14 @@ export const themeManager = {
       this.isLiquidGlass,
     );
   },
+
   updateAdaptiveClass() {
     document.documentElement.classList.toggle(
       "no-adaptive",
       !this.isAdaptiveBg,
     );
   },
+
   hexToRGB(H) {
     if (!H || !H.startsWith("#")) return { r: 0, g: 0, b: 0 };
     let r = 0,
@@ -703,6 +749,7 @@ export const themeManager = {
     }
     return { r, g, b };
   },
+
   hexToHSL(H) {
     if (!H || !H.startsWith("#")) return { h: 142, s: 50, l: 50 };
     const { r: r255, g: g255, b: b255 } = this.hexToRGB(H);
@@ -725,6 +772,7 @@ export const themeManager = {
     if (h < 0) h += 360;
     return { h, s: +(s * 100).toFixed(1), l: +(l * 100).toFixed(1) };
   },
+
   setFontSize(s) {
     const n = Number(s);
     const c = n / 16;
@@ -732,9 +780,11 @@ export const themeManager = {
     if ($("fontSizeDisplay")) $("fontSizeDisplay").textContent = n + " px";
     safeSetLS("font_size", n);
   },
+
   applyNavLabelsVisibility() {
     document.body.classList.toggle("hide-nav-labels", this.hideNavLabels);
   },
+
   setRingWidth(w) {
     const n = Number(w);
     this.ringWidth = n;
