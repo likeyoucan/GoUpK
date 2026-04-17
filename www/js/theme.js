@@ -333,6 +333,8 @@ export const themeManager = {
     }
 
     customColors.push(color);
+    const key = isAccent ? "custom_accent_colors" : "custom_bg_colors";
+    safeSetLS(key, JSON.stringify(customColors));
 
     const newEl = this._createColorButtonEl(color, true);
     container.insertBefore(newEl, pickerWrapper);
@@ -357,15 +359,17 @@ export const themeManager = {
     document.documentElement.style.setProperty("--accent-h", h);
     this.updateColorSelectionUI("accent", hex, doScroll);
 
-    const pickerWrapper = $("accent-colors-container").querySelector(
+    const pickerWrapper = $("accent-colors-container")?.querySelector(
       ".custom-color-picker-wrapper",
     );
-    const isStandard = this.standardAccentColors.includes(hex);
-    if (!isStandard) {
-      pickerWrapper.classList.add("has-custom-color");
-      pickerWrapper.style.setProperty("--custom-picker-bg", hex);
-    } else {
-      pickerWrapper.classList.remove("has-custom-color");
+    if (pickerWrapper) {
+      const isStandard = this.standardAccentColors.includes(hex);
+      if (!isStandard) {
+        pickerWrapper.classList.add("has-custom-color");
+        pickerWrapper.style.setProperty("--custom-picker-bg", hex);
+      } else {
+        pickerWrapper.classList.remove("has-custom-color");
+      }
     }
 
     if (showAction) this._handleActionButtonLogic("accent", hex);
@@ -379,15 +383,17 @@ export const themeManager = {
     this.applyBgTheme(hex, this.isDark());
     this.updateColorSelectionUI("bg", hex, doScroll);
 
-    const pickerWrapper = $("bg-colors-container").querySelector(
+    const pickerWrapper = $("bg-colors-container")?.querySelector(
       ".custom-color-picker-wrapper",
     );
-    const isStandard = this.standardBgColors.includes(hex);
-    if (!isStandard) {
-      pickerWrapper.classList.add("has-custom-color");
-      pickerWrapper.style.setProperty("--custom-picker-bg", hex);
-    } else {
-      pickerWrapper.classList.remove("has-custom-color");
+    if (pickerWrapper) {
+      const isStandard = this.standardBgColors.includes(hex);
+      if (!isStandard) {
+        pickerWrapper.classList.add("has-custom-color");
+        pickerWrapper.style.setProperty("--custom-picker-bg", hex);
+      } else {
+        pickerWrapper.classList.remove("has-custom-color");
+      }
     }
 
     if (showAction) this._handleActionButtonLogic("bg", hex);
@@ -396,6 +402,10 @@ export const themeManager = {
 
   isDark() {
     return document.documentElement.classList.contains("dark");
+  },
+
+  setMode(mode) {
+    this._internalSetMode(mode, true);
   },
 
   bindEvents() {
@@ -528,6 +538,25 @@ export const themeManager = {
       });
   },
 
+  updateSliderLabel(sliderId, labelId, labelsArray) {
+    const slider = $(sliderId);
+    const label = $(labelId);
+    if (!slider || !label) return;
+    const val = parseInt(slider.value, 10);
+    if (labelsArray[val]) {
+      label.textContent = t(labelsArray[val]);
+    }
+    const min = parseFloat(slider.min);
+    const max = parseFloat(slider.max);
+    if (isNaN(val) || isNaN(min) || isNaN(max)) return;
+    const percent = max - min > 0 ? (val - min) / (max - min) : 0;
+    const thumbWidth = 24;
+    const trackWidth = slider.offsetWidth;
+    if (trackWidth === 0) return;
+    const offset = thumbWidth / 2 - percent * thumbWidth;
+    label.style.left = `calc(${percent * 100}% + ${offset}px)`;
+  },
+
   renderColorSection(type) {
     const isAccent = type === "accent";
     const container = $(
@@ -571,19 +600,18 @@ export const themeManager = {
     pickerWrapper.append(bgLayer, input);
     fragment.appendChild(pickerWrapper);
 
-    input.addEventListener("input", (e) => {
-      pickerWrapper.dataset.color = e.target.value;
-    });
-
     container.appendChild(fragment);
 
     const activeColor = isAccent ? this.currentAccent : this.currentBg;
     const pickerColor = isAccent
       ? this.currentAccent
       : this.currentBg === "default"
-        ? "#ffffff"
+        ? this.isDark()
+          ? "#1c1c1e"
+          : "#ffffff"
         : this.currentBg;
-    pickerWrapper.dataset.color = pickerColor;
+
+    if (pickerWrapper) pickerWrapper.dataset.color = pickerColor;
     input.value = pickerColor;
 
     this.updateColorSelectionUI(type, activeColor, false);
@@ -592,11 +620,13 @@ export const themeManager = {
   deleteCustomColor(type, color) {
     const isAccent = type === "accent";
     let customColors = isAccent ? this.customAccentColors : this.customBgColors;
+    const key = isAccent ? "custom_accent_colors" : "custom_bg_colors";
     const index = customColors.indexOf(color);
     if (index > -1) {
       customColors.splice(index, 1);
       if (isAccent) this.customAccentColors = customColors;
       else this.customBgColors = customColors;
+      safeSetLS(key, JSON.stringify(customColors));
     }
   },
 
@@ -614,9 +644,10 @@ export const themeManager = {
       "app_ring_width",
       "app_show_ms",
       "app_sw_minute_beep",
+      "custom_accent_colors",
+      "custom_bg_colors",
     ];
     themeKeys.forEach(safeRemoveLS);
-    // Кастомные цвета уже сброшены, т.к. они в памяти, и applySettings их не загружает
     this.applySettings();
   },
 
@@ -626,19 +657,27 @@ export const themeManager = {
   },
 
   applySettings() {
-    // Кастомные цвета теперь существуют только в рамках сессии
-    this.customAccentColors = [];
-    this.customBgColors = [];
+    try {
+      this.customAccentColors =
+        JSON.parse(safeGetLS("custom_accent_colors")) || [];
+      this.customBgColors = JSON.parse(safeGetLS("custom_bg_colors")) || [];
+    } catch (e) {
+      this.customAccentColors = [];
+      this.customBgColors = [];
+    }
 
     this.renderColorSection("accent");
     this.renderColorSection("bg");
 
     this._internalSetMode(safeGetLS("theme_mode") || "system", false);
+
     this.currentAccent =
       safeGetLS("theme_color") || this.standardAccentColors[0];
     this.setColor(this.currentAccent, false, false);
+
     this.currentBg = safeGetLS("theme_bg_color") || "default";
     this.setBgColor(this.currentBg, false, false);
+
     this.isAdaptiveBg = safeGetLS("app_adaptive_bg") !== "false";
     this.hasVignette = safeGetLS("app_vignette") === "true";
     this.isLiquidGlass = safeGetLS("app_liquid_glass") === "true";
@@ -648,12 +687,14 @@ export const themeManager = {
       storedVignetteAlpha !== null ? parseFloat(storedVignetteAlpha) : 0.2;
     this.showMs = safeGetLS("app_show_ms") !== "false";
     this.swMinuteBeep = safeGetLS("app_sw_minute_beep") !== "false";
+
     this.updateAdaptiveClass();
     this.setFontSize(safeGetLS("font_size") || 16);
     this.setRingWidth(safeGetLS("app_ring_width") || 4);
     this.applyNavLabelsVisibility();
     this.updateGlass();
     this.updateVignette();
+
     if ($("toggle-adaptive-bg"))
       $("toggle-adaptive-bg").checked = this.isAdaptiveBg;
     if ($("toggle-glass")) $("toggle-glass").checked = this.isLiquidGlass;
@@ -663,9 +704,11 @@ export const themeManager = {
     if ($("toggle-ms")) $("toggle-ms").checked = this.showMs;
     if ($("toggle-sw-minute-beep"))
       $("toggle-sw-minute-beep").checked = this.swMinuteBeep;
+
     if ($("fontSlider")) $("fontSlider").value = safeGetLS("font_size") || 16;
     if ($("ringWidthSlider"))
       $("ringWidthSlider").value = safeGetLS("app_ring_width") || 4;
+
     if ($("vignetteSlider")) {
       const closestIndex = this.vignetteLevels.reduce(
         (prev, curr, index) =>
@@ -689,8 +732,35 @@ export const themeManager = {
       );
       $("vibroSlider").value = closestIndex;
     }
-    this.syncSliderUIs();
+
+    this.syncSliderUIs(); // Вызов недостающей функции
   },
+
+  // ++ ДОБАВЛЕНА НЕДОСТАЮЩАЯ ФУНКЦИЯ ++
+  syncSliderUIs() {
+    // Обновляем метку для слайдера виньетирования
+    if ($("vignetteSlider")) {
+      this.updateSliderLabel(
+        "vignetteSlider",
+        "vignette-label",
+        this.vignetteLabels,
+      );
+    }
+    // Обновляем метку для слайдера вибрации
+    if ($("vibroSlider")) {
+      this.updateSliderLabel("vibroSlider", "vibro-label", this.vibroLabels);
+    }
+    // Обновляем отображение размера шрифта
+    if ($("fontSlider") && $("fontSizeDisplay")) {
+      $("fontSizeDisplay").textContent = ($("fontSlider").value || 16) + " px";
+    }
+    // Обновляем отображение толщины кольца
+    if ($("ringWidthSlider") && $("ringWidthDisplay")) {
+      const value = Number($("ringWidthSlider").value || 4);
+      $("ringWidthDisplay").textContent = `${value.toFixed(1)} px`;
+    }
+  },
+
   _internalSetMode(mode, useTransition) {
     if (useTransition) document.body.classList.add("is-updating-theme");
     this.currentMode = mode;
@@ -718,6 +788,7 @@ export const themeManager = {
         document.body.classList.remove("is-updating-theme"),
       );
   },
+
   applyBgTheme(hex, isDark) {
     const root = document.documentElement;
     document.body.classList.remove("force-light-text", "force-dark-text");
@@ -765,6 +836,7 @@ export const themeManager = {
       }
     }
   },
+
   getLuminance(r, g, b) {
     const a = [r, g, b].map((v) => {
       v /= 255;
@@ -772,6 +844,7 @@ export const themeManager = {
     });
     return a[0] * 0.2126 + a[1] * 0.7152 + a[2] * 0.0722;
   },
+
   updateVignette() {
     const bg = document.querySelector(".app-bg");
     if (!bg) return;
@@ -797,6 +870,7 @@ export const themeManager = {
       bg.classList.remove("has-vignette");
     }
   },
+
   updateVibroSliderUI(isEnabled) {
     const container = $("vibro-level-container");
     if (container) {
@@ -813,18 +887,21 @@ export const themeManager = {
       }
     }
   },
+
   updateGlass() {
     document.documentElement.classList.toggle(
       "glass-effect",
       this.isLiquidGlass,
     );
   },
+
   updateAdaptiveClass() {
     document.documentElement.classList.toggle(
       "no-adaptive",
       !this.isAdaptiveBg,
     );
   },
+
   hexToRGB(H) {
     if (!H || !H.startsWith("#")) return { r: 0, g: 0, b: 0 };
     let r = 0,
@@ -841,6 +918,7 @@ export const themeManager = {
     }
     return { r, g, b };
   },
+
   hexToHSL(H) {
     if (!H || !H.startsWith("#")) return { h: 142, s: 50, l: 50 };
     const { r: r255, g: g255, b: b255 } = this.hexToRGB(H);
@@ -863,6 +941,7 @@ export const themeManager = {
     if (h < 0) h += 360;
     return { h, s: +(s * 100).toFixed(1), l: +(l * 100).toFixed(1) };
   },
+
   setFontSize(s) {
     const n = Number(s);
     const c = n / 16;
@@ -870,9 +949,11 @@ export const themeManager = {
     if ($("fontSizeDisplay")) $("fontSizeDisplay").textContent = n + " px";
     safeSetLS("font_size", n);
   },
+
   applyNavLabelsVisibility() {
     document.body.classList.toggle("hide-nav-labels", this.hideNavLabels);
   },
+
   setRingWidth(w) {
     const n = Number(w);
     this.ringWidth = n;
