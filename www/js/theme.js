@@ -222,45 +222,76 @@ export const themeManager = {
       isAccent ? "accent-colors-container" : "bg-colors-container",
     );
     const actionBtn = target.closest(".color-action-btn button");
+
     if (actionBtn) {
       sm.vibrate(40, "medium");
       const action = actionBtn.dataset.action;
+      const actionBtnWrapper = actionBtn.parentElement;
+      const colorToDeleteWrapper = actionBtnWrapper.nextElementSibling;
+
       if (action === "add") {
         const activeColor = isAccent ? this.currentAccent : this.currentBg;
         this.addCustomColor(type, activeColor);
-      } else if (action === "delete") {
-        const actionBtnWrapper = actionBtn.parentElement;
-        const colorToDeleteWrapper = actionBtnWrapper.nextElementSibling;
-        if (colorToDeleteWrapper) {
-          const colorToDelete = colorToDeleteWrapper.dataset.color;
-          actionBtnWrapper.remove();
-          colorToDeleteWrapper.classList.add("is-deleting");
-          setTimeout(() => {
+      } else if (action === "delete" && colorToDeleteWrapper) {
+        const colorToDelete = colorToDeleteWrapper.dataset.color;
+
+        // Добавляем классы для анимации исчезновения
+        actionBtnWrapper.classList.add("is-deleting");
+        colorToDeleteWrapper.classList.add("is-deleting");
+
+        // Слушаем событие окончания анимации на кружке с цветом
+        colorToDeleteWrapper.addEventListener(
+          "transitionend",
+          () => {
+            // Удаляем цвет из хранилища и DOM
             this.deleteCustomColor(type, colorToDelete);
             colorToDeleteWrapper.remove();
-            const newActiveColor = isAccent
-              ? this.standardAccentColors[0]
-              : "default";
-            isAccent
-              ? this.setColor(newActiveColor, false, false)
-              : this.setBgColor(newActiveColor, false, false);
-          }, 200);
-        }
+            actionBtnWrapper.remove();
+
+            // Выбираем новый активный цвет, если удалили текущий
+            const currentSelected = isAccent
+              ? this.currentAccent
+              : this.currentBg;
+            if (currentSelected === colorToDelete) {
+              const newActiveColor = isAccent
+                ? this.standardAccentColors[0]
+                : "default";
+              if (isAccent) {
+                this.setColor(newActiveColor, false, false);
+              } else {
+                this.setBgColor(newActiveColor, false, false);
+              }
+            }
+          },
+          { once: true }, // обработчик сработает только один раз
+        );
       }
       return;
     }
+
     const colorWrapper = target.closest(".custom-color-wrapper");
     if (colorWrapper) {
       const color = colorWrapper.dataset.color;
-      const isCustom = colorWrapper.dataset.custom === "true";
       const currentSelected = isAccent ? this.currentAccent : this.currentBg;
-      if (color === currentSelected && isCustom) {
+
+      // Если кликнули по уже выделенному цвету
+      if (color === currentSelected) {
         if (container.querySelector(".color-action-btn")) {
           this._removeActionButton(container);
         } else {
-          this._handleActionButtonLogic(type, color);
+          // Показываем кнопку "удалить/добавить", только если цвет кастомный или еще не в кастомных
+          const isCustom = colorWrapper.dataset.custom === "true";
+          const canAdd =
+            !isCustom &&
+            color !== "default" &&
+            !this.customAccentColors.includes(color) &&
+            !this.standardAccentColors.includes(color);
+          if (isCustom || canAdd) {
+            this._handleActionButtonLogic(type, color);
+          }
         }
       } else {
+        // Если кликнули по другому цвету
         this._removeActionButton(container);
         sm.vibrate(20, "light");
         if (isAccent) {

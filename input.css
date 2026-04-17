@@ -1177,30 +1177,53 @@ input[type="range"]:focus + .thumb-label-container > .thumb-label {
 }
 
 .color-action-btn {
-  width: 0;
+  /* Вместо width используем max-width для плавной анимации без рывков */
+  max-width: 0;
   opacity: 0;
   margin-left: 0;
   margin-right: 0;
   overflow: hidden;
   flex-shrink: 0;
+  /* Добавляем transform для эффекта "выезжания" */
+  transform: scaleX(0.5);
+  transform-origin: left;
   transition:
-    width 0.25s ease-out,
-    opacity 0.2s ease-out;
+    max-width 0.25s ease-out,
+    opacity 0.2s ease-out,
+    margin-left 0.25s ease-out,
+    margin-right 0.25s ease-out,
+    transform 0.25s ease-out;
 }
 
 .color-action-btn.is-visible {
-  width: 2.25rem; /* w-9 */
+  max-width: 2.25rem; /* w-9 */
   opacity: 1;
+  margin-left: 0.25rem; /* ml-1 */
+  margin-right: -0.25rem; /* -mr-1 */
+  transform: scaleX(1);
 }
 
-.custom-color-wrapper {
-  transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+/* СТИЛИ ДЛЯ АНИМАЦИИ УДАЛЕНИЯ */
+.custom-color-wrapper,
+.color-action-btn {
+  /* Добавляем transition для max-width и margin, чтобы контейнер плавно схлопывался */
+  transition:
+    transform 0.25s ease-out,
+    opacity 0.25s ease-out,
+    max-width 0.25s ease-out,
+    margin-left 0.25s ease-out,
+    margin-right 0.25s ease-out;
 }
 
-.custom-color-wrapper.is-deleting {
-  transform: scale(0);
+.custom-color-wrapper.is-deleting,
+.color-action-btn.is-deleting {
+  transform: scale(0.5);
   opacity: 0;
   pointer-events: none;
+  /* Схлопываем элемент до нуля */
+  max-width: 0px !important;
+  margin-left: 0px !important;
+  margin-right: 0px !important;
 }
 
 @layer utilities {
