@@ -1,4 +1,4 @@
-// Файл: www/js/theme.js (ФИНАЛЬНАЯ ВЕРСИЯ v3)
+// Файл: www/js/theme.js (ФИНАЛЬНАЯ ВЕРСИЯ v4)
 
 import {
   $,
@@ -133,45 +133,43 @@ export const themeManager = {
 
       requestAnimationFrame(() => {
         actionBtnWrapper.classList.add("is-visible");
-        actionBtnWrapper.scrollIntoView({
-          behavior: "smooth",
-          block: "nearest",
-          inline: "center",
-        });
+        // FIX 1: Задержка для скролла, чтобы не срывать анимацию появления
+        setTimeout(() => {
+            actionBtnWrapper.scrollIntoView({
+                behavior: "smooth",
+                block: "nearest",
+                inline: "center",
+            });
+        }, 50);
       });
     }
   },
 
-  // <<< ФУНКЦИЯ С ФИНАЛЬНЫМ ИСПРАВЛЕНИЕМ >>>
-  updateColorSelectionUI(type, hex) {
+  updateColorSelectionUI(type, hex, doScroll = true) {
     const isAccent = type === "accent";
     const container = $(
       isAccent ? "accent-colors-container" : "bg-colors-container",
     );
     if (!container) return;
 
-    // --- Фаза очистки ---
-    container.querySelectorAll(".custom-color-wrapper, .relative").forEach((el) => {
-      // Убираем рамку выделения
-      el.classList.remove(
-        "ring-[var(--primary-color)]", "ring-2", "ring-offset-2", "ring-offset-surface", "shadow-lg"
-      );
-      
-      // Убираем галочку
-      if (el.classList.contains("custom-color-wrapper")) {
-        const btn = el.querySelector("button");
-        if (btn && btn.dataset.iconAdded) {
-          btn.innerHTML = btn.dataset.originalContent || "";
-          delete btn.dataset.iconAdded;
-          delete btn.dataset.originalContent;
+    container
+      .querySelectorAll(".custom-color-wrapper, .relative")
+      .forEach((el) => {
+        el.classList.remove(
+          "ring-[var(--primary-color)]", "ring-2", "ring-offset-2", "ring-offset-surface", "shadow-lg"
+        );
+        if (el.classList.contains("custom-color-wrapper")) {
+          const btn = el.querySelector("button");
+          if (btn && btn.dataset.iconAdded) {
+            btn.innerHTML = btn.dataset.originalContent || "";
+            delete btn.dataset.iconAdded;
+            delete btn.dataset.originalContent;
+          }
+        } else if (el.classList.contains("relative")) {
+          el.querySelector(".injected-checkmark")?.remove();
         }
-      } else if (el.classList.contains("relative")) {
-        // Убираем галочку из обертки пипетки
-        el.querySelector(".injected-checkmark")?.remove();
-      }
-    });
+      });
 
-    // --- Фаза применения ---
     let activeWrapper = container.querySelector(
       `.custom-color-wrapper[data-color="${hex}"]`,
     );
@@ -182,36 +180,34 @@ export const themeManager = {
     }
 
     if (activeWrapper) {
-      // Добавляем рамку выделения
       activeWrapper.classList.add(
         "ring-[var(--primary-color)]", "ring-2", "ring-offset-2", "ring-offset-surface", "shadow-lg"
       );
       
-      // Определяем цвет иконки-галочки
       const lum = this.getLuminance(...Object.values(this.hexToRGB(hex)));
       const iconColorVar = lum > 0.4 ? "var(--text-color)" : "var(--surface-color)";
       const checkmarkSVG = `<svg focusable="false" aria-hidden="true" class="w-5 h-5" style="color: ${iconColorVar};" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4.5 12.75l6 6 9-13.5"></path></svg>`;
 
       if (activeWrapper.classList.contains("custom-color-wrapper")) {
-        // --- Логика для обычных кнопок цвета ---
         const button = activeWrapper.querySelector("button");
         button.dataset.originalContent = button.innerHTML;
         button.dataset.iconAdded = "true";
         button.innerHTML = checkmarkSVG;
       } else if (activeWrapper.classList.contains("relative")) {
-        // --- Логика для пипетки (color picker) ---
         const checkmarkWrapper = document.createElement('div');
         checkmarkWrapper.className = 'injected-checkmark absolute inset-0 flex items-center justify-center z-20 pointer-events-none';
         checkmarkWrapper.innerHTML = checkmarkSVG;
         activeWrapper.appendChild(checkmarkWrapper);
       }
       
-      // Прокручиваем к выбранному элементу
-      activeWrapper.scrollIntoView({
-        behavior: "smooth",
-        block: "nearest",
-        inline: "nearest",
-      });
+      // FIX 2: Управляем скроллом с помощью флага doScroll
+      if (doScroll) {
+        activeWrapper.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+          inline: "nearest",
+        });
+      }
     }
   },
 
@@ -432,17 +428,25 @@ export const themeManager = {
         const colorToDeleteWrapper = actionBtnWrapper.nextElementSibling;
         if (colorToDeleteWrapper) {
           const colorToDelete = colorToDeleteWrapper.dataset.color;
+          
           this._removeActionButton(container);
+          
+          // FIX 3: Убираем стили выделения ПЕРЕД анимацией удаления
+          colorToDeleteWrapper.classList.remove(
+            "ring-[var(--primary-color)]", "ring-2", "ring-offset-2", "ring-offset-surface", "shadow-lg"
+          );
           colorToDeleteWrapper.classList.add("is-deleting");
+
           setTimeout(() => {
             this.deleteCustomColor(type, colorToDelete);
             colorToDeleteWrapper.remove();
             const newActiveColor = isAccent
               ? this.standardAccentColors[0]
               : "default";
+            // Вызываем установку цвета БЕЗ скролла
             isAccent
-              ? this.setColor(newActiveColor, false)
-              : this.setBgColor(newActiveColor, false);
+              ? this.setColor(newActiveColor, false, false)
+              : this.setBgColor(newActiveColor, false, false);
           }, 250);
         }
       }
@@ -583,7 +587,7 @@ export const themeManager = {
     }
   },
 
-  setColor(hex, showAction = true) {
+  setColor(hex, showAction = true, doScroll = true) {
     this.currentAccent = hex;
     safeSetLS("theme_color", hex);
     document.documentElement.style.setProperty("--primary-color", hex);
@@ -591,11 +595,11 @@ export const themeManager = {
     document.documentElement.style.setProperty("--accent-h", h);
     const picker = $("customColorInput");
     if (picker) picker.value = hex;
-    this.updateColorSelectionUI("accent", hex);
+    this.updateColorSelectionUI("accent", hex, doScroll);
     if (showAction) this._handleActionButtonLogic("accent", hex);
   },
 
-  setBgColor(hex, showAction = true) {
+  setBgColor(hex, showAction = true, doScroll = true) {
     this.currentBg = hex;
     safeSetLS("theme_bg_color", hex);
     const isDark = document.documentElement.classList.contains("dark");
@@ -603,7 +607,7 @@ export const themeManager = {
     const picker = $("customBgInput");
     if (picker)
       picker.value = hex === "default" ? (isDark ? "#1c1c1e" : "#f3f4f6") : hex;
-    this.updateColorSelectionUI("bg", hex);
+    this.updateColorSelectionUI("bg", hex, doScroll);
     if (showAction) this._handleActionButtonLogic("bg", hex);
   },
 
