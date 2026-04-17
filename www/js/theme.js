@@ -1,4 +1,4 @@
-// Файл: www/js/theme.js (ФИНАЛЬНАЯ ВЕРСИЯ, последняя)
+// Файл: www/js/theme.js (ФИНАЛЬНАЯ ВЕРСИЯ, самая последняя)
 
 import {
   $,
@@ -179,14 +179,28 @@ export const themeManager = {
         "ring-offset-surface",
         "shadow-lg",
       );
+
+      // <<< НАЧАЛО ИСПРАВЛЕННОЙ ЛОГИКИ ЦВЕТА ГАЛОЧКИ >>>
       let iconColorVar;
-      if (activeWrapper.classList.contains("relative")) {
+      const isPicker = activeWrapper.classList.contains("relative");
+      const isDefaultButton = hex === "default";
+
+      if (isPicker) {
+        // Случай 1: Пипетка. Галочка всегда белая.
         iconColorVar = "#ffffff";
+      } else if (isDefaultButton) {
+        // Случай 2: Кнопка "По умолчанию". Цвет галочки зависит от темы.
+        const isDarkTheme = document.documentElement.classList.contains("dark");
+        iconColorVar = isDarkTheme ? "#ffffff" : "#1f2937"; // Белый для темной темы, темный для светлой.
       } else {
+        // Случай 3: Любой другой цвет. Цвет галочки зависит от яркости самой кнопки.
         const lum = this.getLuminance(...Object.values(this.hexToRGB(hex)));
-        iconColorVar = lum > 0.4 ? "var(--text-color)" : "var(--surface-color)";
+        iconColorVar = lum > 0.5 ? "#1f2937" : "#ffffff"; // Темный для светлых кнопок, белый для темных.
       }
+      // <<< КОНЕЦ ИСПРАВЛЕННОЙ ЛОГИКИ >>>
+
       const checkmarkSVG = `<svg focusable="false" aria-hidden="true" class="w-5 h-5" style="color: ${iconColorVar};" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4.5 12.75l6 6 9-13.5"></path></svg>`;
+
       if (activeWrapper.classList.contains("custom-color-wrapper")) {
         const button = activeWrapper.querySelector("button");
         button.dataset.originalContent = button.innerHTML;
