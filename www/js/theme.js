@@ -21,8 +21,8 @@ export const themeManager = {
   hasVignette: false,
   isLiquidGlass: false,
   hideNavLabels: false,
-  vignetteAlpha: 0.3,
-  vignetteLevels: [0.1, 0.15, 0.2, 0.3, 0.5],
+  vignetteAlpha: 0.2,
+  vignetteLevels: [0.1, 0.15, 0.2, 0.2, 0.3],
   vignetteLabels: [
     "vignette_min",
     "vignette_low",
@@ -431,7 +431,7 @@ export const themeManager = {
     this.hideNavLabels = safeGetLS("app_hide_nav_labels") === "true";
     const storedVignetteAlpha = safeGetLS("app_vignette_alpha");
     this.vignetteAlpha =
-      storedVignetteAlpha !== null ? parseFloat(storedVignetteAlpha) : 0.3;
+      storedVignetteAlpha !== null ? parseFloat(storedVignetteAlpha) : 0.2;
     this.showMs = safeGetLS("app_show_ms") !== "false";
     this.swMinuteBeep = safeGetLS("app_sw_minute_beep") !== "false";
     this.updateAdaptiveClass();
