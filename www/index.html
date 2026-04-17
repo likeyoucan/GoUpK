@@ -14,7 +14,7 @@
   - img-src / font-src: разрешает локальные ресурсы и data-uri (иконки).
   - capacitor:// и http://localhost: необходимы для работы нативных движков iOS/Android.
 -->
-    <!-- <meta
+    <meta
       http-equiv="Content-Security-Policy"
       content="
   default-src 'self'; 
@@ -28,7 +28,7 @@
   form-action 'self';
   upgrade-insecure-requests;
 "
-    /> -->
+    />
 
     <meta
       http-equiv="Permissions-Policy"
@@ -78,12 +78,12 @@
 
     <script src="./js/js-check.js?v=VERSION"></script>
 
-    <script src="//cdn.jsdelivr.net/npm/eruda"></script>
+    <!-- <script src="//cdn.jsdelivr.net/npm/eruda"></script>
     <script src="//cdn.jsdelivr.net/npm/eruda-fps"></script>
     <script>
       eruda.init();
       eruda.add(erudaFps);
-    </script>
+    </script> -->
 
     <link rel="stylesheet" href="js-check.css?v=VERSION" />
     <link rel="stylesheet" href="styles.css?v=VERSION" />
@@ -588,7 +588,6 @@
                   padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
                 "
               >
-                <!-- [ИЗМЕНЕНИЕ] Новый flex-контейнер для имени и раундов -->
                 <div class="w-full flex items-center justify-between mb-8">
                   <!-- Название тренировки (слева) -->
                   <span
@@ -697,10 +696,9 @@
                     </div>
                   </div>
 
-                  <!-- [ИЗМЕНЕНИЕ 1] Блок кастомных цветов с экшн-слотом -->
                   <div class="p-4 pb-3 border-b app-border">
                     <span
-                      class="block font-medium app-text text-sm mb-3"
+                      class="block font-medium app-text text-sm mb-2"
                       data-i18n="accent_color"
                       >Accent Color</span
                     >
@@ -713,7 +711,7 @@
                   </div>
                   <div class="p-4 pb-3 border-b app-border">
                     <span
-                      class="block font-medium app-text text-sm mb-3"
+                      class="block font-medium app-text text-sm mb-2"
                       data-i18n="bg_color"
                       >Background Color</span
                     >
@@ -782,7 +780,6 @@
                         </label>
                       </div>
 
-                      <!-- [ИЗМЕНЕНИЕ 2] Обновленный слайдер интенсивности виньетки -->
                       <div
                         id="vignette-depth-container"
                         class="hidden flex-col gap-1 transition-opacity duration-300"
@@ -1501,7 +1498,6 @@
                 data-i18n="name"
                 >Name</label
               >
-              <!-- [ИЗМЕНЕНИЕ 5] Добавлен maxlength -->
               <input
                 type="text"
                 id="tb-edit-name"
@@ -1793,7 +1789,6 @@
               Session Name
             </h3>
             <div class="flex flex-col">
-              <!-- [ИЗМЕНЕНИЕ 5] Добавлен maxlength -->
               <input
                 type="text"
                 id="sw-name-input"
