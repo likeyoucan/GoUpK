@@ -1284,4 +1284,5 @@ input[type="range"]:focus + .thumb-label-container > .thumb-label {
 }
 /* А внутренний кружок делаем "вырезанным" (заливаем цветом фона) */
 .nav-btn.is-active #nav-icon-settings > circle {
-  fill: var(--surf
+ fill: var(--surface-color);
+}
