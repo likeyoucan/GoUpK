@@ -163,6 +163,7 @@ button {
   user-select: text;
 }
 
+
 /* =========================================
    3. КОНТЕЙНЕР ПРИЛОЖЕНИЯ (#app)
 ========================================= */
@@ -1210,9 +1211,7 @@ input[type="range"]:focus + .thumb-label-container > .thumb-label {
 /* --- Стиль для активного (выбранного) элемента --- */
 .custom-color-wrapper.is-active > * {
   transform: scale(1.1);
-  box-shadow:
-    0 0 0 2px var(--surface-color),
-    0 0 0 4px var(--primary-color);
+  box-shadow: 0 0 0 2px var(--surface-color), 0 0 0 4px var(--primary-color);
 }
 
 /* --- Стили для кастомного пикера цвета --- */
