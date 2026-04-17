@@ -197,7 +197,7 @@ export const themeManager = {
     const trackWidth = slider.offsetWidth;
     if (trackWidth === 0) return;
     const offset = thumbWidth / 2 - percent * thumbWidth;
-    label.style.left = `calc(${percent * 100}% - ${offset}px)`;
+    label.style.left = `calc(${percent * 100}% + ${offset}px)`;
   },
   init() {
     this.applySettings();
