@@ -270,6 +270,8 @@ html.dark .app-bg.has-vignette::before {
    5. ВЕРХНЯЯ ПОЛОВИНА ВИДОВ (ТАЙМЕР + КРУГ)
 ========================================= */
 .view-top-half {
+  margin-top: var(--safe-top);
+  margin-bottom: 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
