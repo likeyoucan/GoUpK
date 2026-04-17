@@ -1201,19 +1201,19 @@ input[type="range"]:focus + .thumb-label-container > .thumb-label {
   transition:
     transform 0.25s ease,
     opacity 0.25s ease,
-    width 0.25s ease,
-    margin 0.25s ease;
+    width 0.25s ease;
 }
 
 .custom-color-wrapper.is-deleting {
   transform: scale(0.8);
   opacity: 0;
   width: 0;
-  margin-left: 0;
-  margin-right: 0;
+  /* Убрали анимируемые margin, так как flex-gap сделает все сам */
   pointer-events: none;
   position: relative;
   z-index: 10;
+  /* Добавляем это, чтобы padding тоже анимировался до нуля */
+  padding: 0 !important;
 }
 
 @layer utilities {
