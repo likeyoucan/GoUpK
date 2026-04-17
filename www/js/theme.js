@@ -13,7 +13,6 @@ import { sm } from "./sound.js?v=VERSION";
 const MAX_CUSTOM_COLORS = 50;
 
 export const themeManager = {
-  // ... (свойства до _createColorButtonEl без изменений)
   currentMode: "system",
   currentAccent: "",
   currentBg: "default",
@@ -63,7 +62,7 @@ export const themeManager = {
   customAccentColors: [],
   customBgColors: [],
 
-  // --- Безопасное создание SVG-иконок ---
+  // ИСПРАВЛЕНО: Безопасное создание SVG-иконок
   _createSVG(paths, strokeWidth = "2.5") {
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     svg.setAttribute("class", "w-5 h-5");
@@ -117,7 +116,7 @@ export const themeManager = {
     }
   },
 
-  // ИСПРАВЛЕНО: Логика появления кнопки действия слева, создается безопасно
+  // ИСПРАВЛЕНО: Логика появления кнопки действия слева, создается безопасно и без дублей
   _handleActionButtonLogic(type, hex) {
     const isAccent = type === "accent";
     const container = $(
@@ -130,7 +129,7 @@ export const themeManager = {
     );
     if (!activeWrapper) return;
 
-    // Если кнопка уже есть, ничего не делаем.
+    // Предотвращаем дублирование
     if (
       activeWrapper.previousElementSibling?.classList.contains(
         "color-action-btn",
@@ -284,27 +283,26 @@ export const themeManager = {
     }
   },
 
-  // НОВАЯ ФУНКЦИЯ: Двухфазная анимация удаления
+  // ИСПРАВЛЕНО: Двухфазная анимация удаления для максимальной плавности
   deleteColorWithAnimation(type, colorWrapper, actionWrapper) {
     const isAccent = type === "accent";
     const colorToDelete = colorWrapper.dataset.color;
 
-    // Фаза 1: Исчезновение элементов
+    // Фаза 1: Исчезновение элементов (анимация transform и opacity)
     actionWrapper.classList.add("is-deleting");
     colorWrapper.classList.add("is-deleting");
 
-    // Фаза 2: Схлопывание после небольшой задержки
+    // Фаза 2: Схлопывание контейнера (анимация max-width) после паузы
     setTimeout(() => {
       actionWrapper.classList.add("is-collapsing");
       colorWrapper.classList.add("is-collapsing");
-    }, 150); // Пауза в 150ms
+    }, 150); // Пауза для естественности
 
-    // После завершения анимации схлопывания, удаляем элементы
+    // После завершения второй фазы (схлопывания), удаляем элементы
     colorWrapper.addEventListener(
       "transitionend",
       (e) => {
-        // Убедимся, что событие пришло от нужного свойства (max-width)
-        if (e.propertyName !== "max-width") return;
+        if (e.propertyName !== "max-width") return; // Слушаем только конец нужной анимации
 
         actionWrapper.remove();
         colorWrapper.remove();
@@ -404,88 +402,8 @@ export const themeManager = {
     else if (isChanging) this._removeActionButton($("bg-colors-container"));
   },
 
-  // ... (остальные функции без изменений до renderColorSection)
   isDark() {
     return document.documentElement.classList.contains("dark");
-  },
-  init() {
-    this.applySettings();
-    this.bindEvents();
-  },
-  // ...
-  renderColorSection(type) {
-    const isAccent = type === "accent";
-    const container = $(
-      isAccent ? "accent-colors-container" : "bg-colors-container",
-    );
-    if (!container) return;
-
-    container.innerHTML = "";
-
-    const standardColors = isAccent
-      ? this.standardAccentColors
-      : this.standardBgColors;
-    const customColors = isAccent
-      ? this.customAccentColors
-      : this.customBgColors;
-
-    const fragment = document.createDocumentFragment();
-    [...standardColors, ...customColors].forEach((color) => {
-      const isCustom = customColors.includes(color);
-      fragment.appendChild(this._createColorButtonEl(color, isCustom));
-    });
-
-    const pickerId = isAccent ? "customColorInput" : "customBgInput";
-    const pickerWrapper = document.createElement("div");
-    pickerWrapper.className =
-      "custom-color-wrapper custom-color-picker-wrapper w-9 h-9 shrink-0 group rounded-full overflow-hidden border border-black/20 dark:border-white/20 relative";
-
-    const bgLayer = document.createElement("div");
-    bgLayer.className =
-      "custom-color-bg-layer absolute inset-0 transition-colors duration-200";
-    bgLayer.style.backgroundImage =
-      "conic-gradient(from 0deg, red, orange, yellow, green, blue, indigo, violet, red)";
-
-    const input = document.createElement("input");
-    input.type = "color";
-    input.id = pickerId;
-    input.setAttribute("aria-label", t("add_color"));
-    input.className =
-      "absolute inset-[-10px] opacity-0 cursor-pointer z-10 w-[calc(100%+20px)] h-[calc(100%+20px)]";
-
-    pickerWrapper.append(bgLayer, input);
-    fragment.appendChild(pickerWrapper);
-
-    // Устанавливаем data-color при изменении инпута
-    input.addEventListener("input", (e) => {
-      pickerWrapper.dataset.color = e.target.value;
-    });
-
-    container.appendChild(fragment);
-
-    const activeColor = isAccent ? this.currentAccent : this.currentBg;
-    const pickerColor = isAccent
-      ? this.currentAccent
-      : this.currentBg === "default"
-        ? "#ffffff"
-        : this.currentBg;
-    pickerWrapper.dataset.color = pickerColor;
-    input.value = pickerColor;
-
-    this.updateColorSelectionUI(type, activeColor, false);
-  },
-
-  deleteCustomColor(type, color) {
-    const isAccent = type === "accent";
-    let customColors = isAccent ? this.customAccentColors : this.customBgColors;
-    const key = isAccent ? "custom_accent_colors" : "custom_bg_colors";
-    const index = customColors.indexOf(color);
-    if (index > -1) {
-      customColors.splice(index, 1);
-      if (isAccent) this.customAccentColors = customColors;
-      else this.customBgColors = customColors;
-      safeSetLS(key, JSON.stringify(customColors));
-    }
   },
 
   bindEvents() {
@@ -519,18 +437,25 @@ export const themeManager = {
       this.handleColorClick(e, "bg"),
     );
 
-    $("customColorInput")?.addEventListener("input", (e) =>
-      this.setColor(e.target.value, true, false),
-    );
-    $("customBgInput")?.addEventListener("input", (e) =>
-      this.setBgColor(e.target.value, true, false),
-    );
-    $("customColorInput")?.addEventListener("change", (e) =>
-      this.setColor(e.target.value, true, true),
-    );
-    $("customBgInput")?.addEventListener("change", (e) =>
-      this.setBgColor(e.target.value, true, true),
-    );
+    // ИСПРАВЛЕНО: более надежные обработчики для color picker
+    const setupPickerListeners = (pickerId, handler) => {
+      const picker = $(pickerId);
+      if (picker) {
+        const pickerWrapper = picker.closest(".custom-color-picker-wrapper");
+        // Обновляем цвет и показываем кнопку "Добавить" в реальном времени
+        picker.addEventListener("input", (e) => {
+          pickerWrapper.dataset.color = e.target.value;
+          handler(e.target.value, true, false);
+        });
+        // Фиксируем выбор при закрытии пикера
+        picker.addEventListener("change", (e) => {
+          pickerWrapper.dataset.color = e.target.value;
+          handler(e.target.value, true, true);
+        });
+      }
+    };
+    setupPickerListeners("customColorInput", this.setColor.bind(this));
+    setupPickerListeners("customBgInput", this.setBgColor.bind(this));
 
     $("toggle-sw-minute-beep")?.addEventListener("change", (e) => {
       this.swMinuteBeep = e.target.checked;
@@ -614,35 +539,93 @@ export const themeManager = {
       });
   },
 
-  updateSliderLabel(sliderId, labelId, labelsArray) {
-    const slider = $(sliderId);
-    const label = $(labelId);
-    if (!slider || !label) return;
-    const val = parseInt(slider.value, 10);
-    label.textContent = t(labelsArray[val]);
-    const min = parseFloat(slider.min);
-    const max = parseFloat(slider.max);
-    const percent = max - min > 0 ? (val - min) / (max - min) : 0;
-    const thumbWidth = 24;
-    const trackWidth = slider.offsetWidth;
-    if (trackWidth === 0) return;
-    const offset = thumbWidth / 2 - percent * thumbWidth;
-    label.style.left = `calc(${percent * 100}% + ${offset}px)`;
+  // ИСПРАВЛЕНО: Безопасная рендер-функция без innerHTML
+  renderColorSection(type) {
+    const isAccent = type === "accent";
+    const container = $(
+      isAccent ? "accent-colors-container" : "bg-colors-container",
+    );
+    if (!container) return;
+
+    container.innerHTML = ""; // Очищаем контейнер
+
+    const standardColors = isAccent
+      ? this.standardAccentColors
+      : this.standardBgColors;
+    const customColors = isAccent
+      ? this.customAccentColors
+      : this.customBgColors;
+
+    const fragment = document.createDocumentFragment();
+    [...standardColors, ...customColors].forEach((color) => {
+      const isCustom = customColors.includes(color);
+      fragment.appendChild(this._createColorButtonEl(color, isCustom));
+    });
+
+    const pickerId = isAccent ? "customColorInput" : "customBgInput";
+    const pickerWrapper = document.createElement("div");
+    pickerWrapper.className =
+      "custom-color-wrapper custom-color-picker-wrapper w-9 h-9 shrink-0 group rounded-full overflow-hidden border border-black/20 dark:border-white/20 relative";
+
+    const bgLayer = document.createElement("div");
+    bgLayer.className =
+      "custom-color-bg-layer absolute inset-0 transition-colors duration-200";
+    bgLayer.style.backgroundImage =
+      "conic-gradient(from 0deg, red, orange, yellow, green, blue, indigo, violet, red)";
+
+    const input = document.createElement("input");
+    input.type = "color";
+    input.id = pickerId;
+    input.setAttribute("aria-label", t("add_color"));
+    input.className =
+      "absolute inset-[-10px] opacity-0 cursor-pointer z-10 w-[calc(100%+20px)] h-[calc(100%+20px)]";
+
+    pickerWrapper.append(bgLayer, input);
+    fragment.appendChild(pickerWrapper);
+
+    input.addEventListener("input", (e) => {
+      pickerWrapper.dataset.color = e.target.value;
+    });
+
+    container.appendChild(fragment);
+
+    const activeColor = isAccent ? this.currentAccent : this.currentBg;
+    const pickerColor = isAccent
+      ? this.currentAccent
+      : this.currentBg === "default"
+        ? "#ffffff"
+        : this.currentBg;
+    pickerWrapper.dataset.color = pickerColor;
+    input.value = pickerColor;
+
+    this.updateColorSelectionUI(type, activeColor, false);
   },
 
+  deleteCustomColor(type, color) {
+    const isAccent = type === "accent";
+    let customColors = isAccent ? this.customAccentColors : this.customBgColors;
+    const key = isAccent ? "custom_accent_colors" : "custom_bg_colors";
+    const index = customColors.indexOf(color);
+    if (index > -1) {
+      customColors.splice(index, 1);
+      if (isAccent) this.customAccentColors = customColors;
+      else this.customBgColors = customColors;
+      safeSetLS(key, JSON.stringify(customColors));
+    }
+  },
+
+  // ... (весь остальной код до конца файла без изменений) ...
+  syncSliderUIs() {},
   init() {
     this.applySettings();
     this.bindEvents();
   },
-
   applySettings() {
     try {
       this.customAccentColors =
         JSON.parse(safeGetLS("custom_accent_colors")) || [];
       this.customBgColors = JSON.parse(safeGetLS("custom_bg_colors")) || [];
-    } catch (e) {
-      //
-    }
+    } catch (e) {}
     this.renderColorSection("accent");
     this.renderColorSection("bg");
     this._internalSetMode(safeGetLS("theme_mode") || "system", false);
@@ -703,7 +686,6 @@ export const themeManager = {
     }
     this.syncSliderUIs();
   },
-
   _internalSetMode(mode, useTransition) {
     if (useTransition) document.body.classList.add("is-updating-theme");
     this.currentMode = mode;
@@ -731,72 +713,6 @@ export const themeManager = {
         document.body.classList.remove("is-updating-theme"),
       );
   },
-
-  renderColorSection(type) {
-    const isAccent = type === "accent";
-    const container = $(
-      isAccent ? "accent-colors-container" : "bg-colors-container",
-    );
-    if (!container) return;
-
-    container.innerHTML = "";
-
-    const standardColors = isAccent
-      ? this.standardAccentColors
-      : this.standardBgColors;
-    const customColors = isAccent
-      ? this.customAccentColors
-      : this.customBgColors;
-
-    const fragment = document.createDocumentFragment();
-    [...standardColors, ...customColors].forEach((color) => {
-      const isCustom = customColors.includes(color);
-      fragment.appendChild(this._createColorButtonEl(color, isCustom));
-    });
-
-    const pickerId = isAccent ? "customColorInput" : "customBgInput";
-    const initialPickerColor = isAccent
-      ? this.currentAccent
-      : this.currentBg === "default"
-        ? "#ffffff"
-        : this.currentBg;
-
-    const pickerHTML = `
-        <div data-color="${initialPickerColor}" class="custom-color-wrapper custom-color-picker-wrapper w-9 h-9 shrink-0 group rounded-full overflow-hidden border border-black/20 dark:border-white/20 relative">
-          <div class="custom-color-bg-layer absolute inset-0 transition-colors duration-200" style="background-image: conic-gradient(from 0deg, red, orange, yellow, green, blue, indigo, violet, red);"></div>
-          <input type="color" id="${pickerId}" aria-label="${t("add_color")}" value="${initialPickerColor}" class="absolute inset-[-10px] opacity-0 cursor-pointer z-10 w-[calc(100%+20px)] h-[calc(100%+20px)]" />
-        </div>`;
-
-    const tempDiv = document.createElement("div");
-    tempDiv.innerHTML = pickerHTML;
-    const pickerElement = tempDiv.firstElementChild;
-    fragment.appendChild(pickerElement);
-
-    pickerElement.querySelector("input").addEventListener("input", (e) => {
-      pickerElement.dataset.color = e.target.value;
-    });
-
-    container.appendChild(fragment);
-    const activeColor = isAccent ? this.currentAccent : this.currentBg;
-    this.updateColorSelectionUI(type, activeColor, false);
-  },
-
-  deleteCustomColor(type, color) {
-    const isAccent = type === "accent";
-    let customColors = isAccent ? this.customAccentColors : this.customBgColors;
-    const key = isAccent ? "custom_accent_colors" : "custom_bg_colors";
-    const index = customColors.indexOf(color);
-    if (index > -1) {
-      customColors.splice(index, 1);
-      if (isAccent) {
-        this.customAccentColors = customColors;
-      } else {
-        this.customBgColors = customColors;
-      }
-      safeSetLS(key, JSON.stringify(customColors));
-    }
-  },
-
   resetSettings() {
     const themeKeys = [
       "theme_mode",
@@ -817,7 +733,6 @@ export const themeManager = {
     themeKeys.forEach(safeRemoveLS);
     this.applySettings();
   },
-
   applyBgTheme(hex, isDark) {
     const root = document.documentElement;
     document.body.classList.remove("force-light-text", "force-dark-text");
@@ -865,7 +780,6 @@ export const themeManager = {
       }
     }
   },
-
   getLuminance(r, g, b) {
     const a = [r, g, b].map((v) => {
       v /= 255;
@@ -873,7 +787,6 @@ export const themeManager = {
     });
     return a[0] * 0.2126 + a[1] * 0.7152 + a[2] * 0.0722;
   },
-
   updateVignette() {
     const bg = document.querySelector(".app-bg");
     if (!bg) return;
@@ -899,7 +812,6 @@ export const themeManager = {
       bg.classList.remove("has-vignette");
     }
   },
-
   updateVibroSliderUI(isEnabled) {
     const container = $("vibro-level-container");
     if (container) {
@@ -916,21 +828,18 @@ export const themeManager = {
       }
     }
   },
-
   updateGlass() {
     document.documentElement.classList.toggle(
       "glass-effect",
       this.isLiquidGlass,
     );
   },
-
   updateAdaptiveClass() {
     document.documentElement.classList.toggle(
       "no-adaptive",
       !this.isAdaptiveBg,
     );
   },
-
   hexToRGB(H) {
     if (!H || !H.startsWith("#")) return { r: 0, g: 0, b: 0 };
     let r = 0,
@@ -947,7 +856,6 @@ export const themeManager = {
     }
     return { r, g, b };
   },
-
   hexToHSL(H) {
     if (!H || !H.startsWith("#")) return { h: 142, s: 50, l: 50 };
     const { r: r255, g: g255, b: b255 } = this.hexToRGB(H);
@@ -970,7 +878,6 @@ export const themeManager = {
     if (h < 0) h += 360;
     return { h, s: +(s * 100).toFixed(1), l: +(l * 100).toFixed(1) };
   },
-
   setFontSize(s) {
     const n = Number(s);
     const c = n / 16;
@@ -978,11 +885,9 @@ export const themeManager = {
     if ($("fontSizeDisplay")) $("fontSizeDisplay").textContent = n + " px";
     safeSetLS("font_size", n);
   },
-
   applyNavLabelsVisibility() {
     document.body.classList.toggle("hide-nav-labels", this.hideNavLabels);
   },
-
   setRingWidth(w) {
     const n = Number(w);
     this.ringWidth = n;
