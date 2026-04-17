@@ -1158,7 +1158,7 @@ body.hide-nav-labels .nav-btn {
   right: 0;
   height: 1.25rem; /* ~h-5 */
   pointer-events: none;
-  margin-top: -0.25rem;
+  margin-top: -0.16rem;
 }
 
 .thumb-label {
@@ -1195,10 +1195,9 @@ input[type="range"]:focus + .thumb-label-container > .thumb-label {
 }
 
 .color-action-btn.is-visible {
-  width: 2.25rem; /* w-9 */
+  width: 2.25rem;
   opacity: 1;
-  margin-left: -0.5rem; /* Придвигаемся к активному элементу */
-  margin-right: 0.5rem; /* Отталкиваем следующий элемент */
+  margin-right: -0.5rem;
 }
 
 .custom-color-wrapper {
