@@ -63,7 +63,7 @@ export const navigation = {
           textSpan.classList.remove("app-text-sec");
           textSpan.classList.add("primary-text");
         }
-        if (iconSvg) iconSvg.setAttribute("stroke-width", "2.5");
+        if (iconSvg) iconSvg.setAttribute("stroke-width", "2");
       } else {
         iconDiv.classList.remove("primary-text");
         iconDiv.classList.add("app-text-sec");
