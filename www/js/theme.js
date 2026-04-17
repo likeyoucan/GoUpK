@@ -22,7 +22,7 @@ export const themeManager = {
   isLiquidGlass: false,
   hideNavLabels: false,
   vignetteAlpha: 0.5,
-  vignetteLevels: [0.1, 0.25, 0.5, 0.75, 1],
+  vignetteLevels: [0.05, 0.01, 0.15, 0.2, 0.25],
   vignetteLabels: [
     "vignette_min",
     "vignette_low",
