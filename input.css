@@ -1232,49 +1232,65 @@ input[type="range"]:focus + .thumb-label-container > .thumb-label {
   }
 }
 
- 20. СТИЛИ АКТИВНЫХ ИКОНОК НАВИГАЦИИ
+/* =========================================
+   20. СТИЛИ АКТИВНЫХ ИКОНОК НАВИГАЦИИ
 ========================================= */
 
-/* Обёртка иконки */
-.nav-btn > div {
-  transition: color 0.3s ease-in-out;
-}
-
-/* Сама SVG иконка */
-.nav-btn svg {
-  transition:
-    fill 0.3s ease-in-out,
-    stroke 0.3s ease-in-out;
-}
-
-/* Стили для дочерних элементов SVG (пути, круги, линии) */
+/* Общие стили для всех элементов иконок для плавной анимации */
+.nav-btn svg,
 .nav-btn svg * {
-  transition: stroke 0.3s ease-in-out;
+  transition: all 0.3s ease-in-out;
 }
 
-/* Стили для активного состояния кнопки */
+/* При активации кнопки... */
 .nav-btn.is-active > div {
-  /* Убираем стандартную прозрачность */
-  opacity: 1;
+  opacity: 1; /* Убираем стандартную прозрачность для активной иконки */
 }
 
-.nav-btn.is-active svg {
-  /* Заливаем всю иконку акцентным цветом */
-  fill: var(--primary-color);
-  /* Обводку делаем цветом фона панели, чтобы создать эффект "вырезанных" линий */
-  stroke: var(--surface-color);
-  /* Толщину обводки можно оставить 1.5, чтобы линии были тоньше */
-  stroke-width: 1.5;
-}
-
-/*
-  Специальные правила для стрелок на иконках часов.
-  Мы переопределяем цвет их обводки на акцентный,
-  чтобы они "перечеркнули" основной "вырезанный" контур.
+/* 
+  Теперь самое главное: мы не заливаем всю SVG, а только её "тело".
+  А "детали" (линии, стрелки) мы перекрашиваем в цвет фона.
+  Это создаст нужный эффект "вырезанных" линий.
 */
-.nav-btn.is-active #nav-icon-stopwatch polyline,
-.nav-btn.is-active #nav-icon-timer polyline {
-  stroke: var(--primary-color);
-  /* Можно сделать их чуть толще, для лучшего эффекта */
-  stroke-width: 2; 
+
+/* --- Иконка Секундомера --- */
+.nav-btn.is-active #nav-icon-stopwatch > circle {
+  fill: var(--primary-color);
+}
+.nav-btn.is-active #nav-icon-stopwatch > * {
+  stroke: var(--surface-color);
+  stroke-width: 1.7; /* Делаем линии чуть жирнее для лучшей читаемости */
+}
+
+/* --- Иконка Таймера --- */
+.nav-btn.is-active #nav-icon-timer > circle {
+  fill: var(--primary-color);
+}
+.nav-btn.is-active #nav-icon-timer > * {
+  stroke: var(--surface-color);
+  stroke-width: 1.7;
+}
+
+/* --- Иконка Табаты --- */
+.nav-btn.is-active #nav-icon-tabata > circle {
+  fill: var(--primary-color);
+}
+.nav-btn.is-active #nav-icon-tabata > path {
+  stroke: var(--surface-color);
+}
+.nav-btn.is-active #nav-icon-tabata > * {
+  stroke-width: 1.7;
+}
+
+/* --- Иконка Настроек --- */
+/* Заливаем внешний контур шестерёнки */
+.nav-btn.is-active #nav-icon-settings > path {
+  fill: var(--primary-color);
+  stroke-width: 1.7;
+  stroke: var(--surface-color);
+}
+/* А внутренний кружок просто перекрашиваем в цвет фона */
+.nav-btn.is-active #nav-icon-settings > circle {
+  fill: var(--surface-color);
+  stroke: var(--surface-color);
 }

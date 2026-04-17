@@ -84,10 +84,13 @@ export const themeManager = {
   _removeActionButton(container) {
     const actionBtn = container.querySelector(".color-action-btn.is-visible");
     if (actionBtn) {
+      // Запускаем анимацию скрытия
       actionBtn.classList.remove("is-visible");
-      setTimeout(() => actionBtn.remove(), 250);
+      // Удаляем элемент из DOM только ПОСЛЕ завершения анимации
+      actionBtn.addEventListener('transitionend', () => {
+        actionBtn.remove();
+      }, { once: true });
     }
-  },
 
   _handleActionButtonLogic(type, hex) {
     const isAccent = type === "accent";
@@ -235,20 +238,16 @@ export const themeManager = {
       } else if (action === "delete" && colorToDeleteWrapper) {
         const colorToDelete = colorToDeleteWrapper.dataset.color;
 
-        // Добавляем классы для анимации исчезновения
         actionBtnWrapper.classList.add("is-deleting");
         colorToDeleteWrapper.classList.add("is-deleting");
 
-        // Слушаем событие окончания анимации на кружке с цветом
         colorToDeleteWrapper.addEventListener(
           "transitionend",
           () => {
-            // Удаляем цвет из хранилища и DOM
             this.deleteCustomColor(type, colorToDelete);
             colorToDeleteWrapper.remove();
             actionBtnWrapper.remove();
 
-            // Выбираем новый активный цвет, если удалили текущий
             const currentSelected = isAccent
               ? this.currentAccent
               : this.currentBg;
@@ -256,14 +255,12 @@ export const themeManager = {
               const newActiveColor = isAccent
                 ? this.standardAccentColors[0]
                 : "default";
-              if (isAccent) {
-                this.setColor(newActiveColor, false, false);
-              } else {
-                this.setBgColor(newActiveColor, false, false);
-              }
+              isAccent
+                ? this.setColor(newActiveColor, false, false)
+                : this.setBgColor(newActiveColor, false, false);
             }
           },
-          { once: true }, // обработчик сработает только один раз
+          { once: true },
         );
       }
       return;
@@ -274,25 +271,17 @@ export const themeManager = {
       const color = colorWrapper.dataset.color;
       const currentSelected = isAccent ? this.currentAccent : this.currentBg;
 
-      // Если кликнули по уже выделенному цвету
+      // При любом клике на кружок цвета, мы сначала плавно убираем старую кнопку действия
+      this._removeActionButton(container);
+
       if (color === currentSelected) {
-        if (container.querySelector(".color-action-btn")) {
-          this._removeActionButton(container);
-        } else {
-          // Показываем кнопку "удалить/добавить", только если цвет кастомный или еще не в кастомных
-          const isCustom = colorWrapper.dataset.custom === "true";
-          const canAdd =
-            !isCustom &&
-            color !== "default" &&
-            !this.customAccentColors.includes(color) &&
-            !this.standardAccentColors.includes(color);
-          if (isCustom || canAdd) {
+        // Если кликнули по уже выделенному цвету, показываем кнопку (если цвет кастомный)
+        const isCustom = colorWrapper.dataset.custom === "true";
+        if (isCustom) {
             this._handleActionButtonLogic(type, color);
-          }
         }
       } else {
-        // Если кликнули по другому цвету
-        this._removeActionButton(container);
+        // Если кликнули по другому цвету, просто меняем цвет
         sm.vibrate(20, "light");
         if (isAccent) {
           this.setColor(color, true);
