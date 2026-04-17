@@ -1212,6 +1212,8 @@ input[type="range"]:focus + .thumb-label-container > .thumb-label {
   margin-left: 0;
   margin-right: 0;
   pointer-events: none;
+  position: relative;
+  z-index: 10;
 }
 
 @layer utilities {
