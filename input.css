@@ -1231,3 +1231,50 @@ input[type="range"]:focus + .thumb-label-container > .thumb-label {
     transition-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
   }
 }
+
+ 20. СТИЛИ АКТИВНЫХ ИКОНОК НАВИГАЦИИ
+========================================= */
+
+/* Обёртка иконки */
+.nav-btn > div {
+  transition: color 0.3s ease-in-out;
+}
+
+/* Сама SVG иконка */
+.nav-btn svg {
+  transition:
+    fill 0.3s ease-in-out,
+    stroke 0.3s ease-in-out;
+}
+
+/* Стили для дочерних элементов SVG (пути, круги, линии) */
+.nav-btn svg * {
+  transition: stroke 0.3s ease-in-out;
+}
+
+/* Стили для активного состояния кнопки */
+.nav-btn.is-active > div {
+  /* Убираем стандартную прозрачность */
+  opacity: 1;
+}
+
+.nav-btn.is-active svg {
+  /* Заливаем всю иконку акцентным цветом */
+  fill: var(--primary-color);
+  /* Обводку делаем цветом фона панели, чтобы создать эффект "вырезанных" линий */
+  stroke: var(--surface-color);
+  /* Толщину обводки можно оставить 1.5, чтобы линии были тоньше */
+  stroke-width: 1.5;
+}
+
+/*
+  Специальные правила для стрелок на иконках часов.
+  Мы переопределяем цвет их обводки на акцентный,
+  чтобы они "перечеркнули" основной "вырезанный" контур.
+*/
+.nav-btn.is-active #nav-icon-stopwatch polyline,
+.nav-btn.is-active #nav-icon-timer polyline {
+  stroke: var(--primary-color);
+  /* Можно сделать их чуть толще, для лучшего эффекта */
+  stroke-width: 2; 
+}
