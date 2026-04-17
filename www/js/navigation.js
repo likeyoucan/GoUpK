@@ -50,18 +50,28 @@ export const navigation = {
   },
 
   updateIcons(activeId) {
-    document.querySelectorAll(".nav-btn").forEach((btn) => {
-      const id = btn.dataset.nav;
-      const textSpan = btn.querySelector("span");
+    ["stopwatch", "timer", "tabata", "settings"].forEach((id) => {
+      const iconDiv = $(`nav-icon-${id}`);
+      if (!iconDiv) return;
+      const textSpan = iconDiv.nextElementSibling;
+      const iconSvg = iconDiv.querySelector("svg");
 
-      // Просто переключаем один класс на родительской кнопке
-      const isActive = id === activeId;
-      btn.classList.toggle("is-active", isActive);
-
-      // Цвет текста под иконкой по-прежнему управляем классами
-      if (textSpan) {
-        textSpan.classList.toggle("primary-text", isActive);
-        textSpan.classList.toggle("app-text-sec", !isActive);
+      if (id === activeId) {
+        iconDiv.classList.remove("app-text-sec");
+        iconDiv.classList.add("primary-text");
+        if (textSpan) {
+          textSpan.classList.remove("app-text-sec");
+          textSpan.classList.add("primary-text");
+        }
+        if (iconSvg) iconSvg.setAttribute("stroke-width", "2.5");
+      } else {
+        iconDiv.classList.remove("primary-text");
+        iconDiv.classList.add("app-text-sec");
+        if (textSpan) {
+          textSpan.classList.remove("primary-text");
+          textSpan.classList.add("app-text-sec");
+        }
+        if (iconSvg) iconSvg.setAttribute("stroke-width", "1.5");
       }
     });
   },
