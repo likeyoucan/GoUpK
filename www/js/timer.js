@@ -54,6 +54,8 @@ export const tm = {
 
   init() {
     this.els = {
+      // FIX 1: Добавляем саму форму в список элементов
+      form: $("tm-form"),
       inputs: $("tm-inputs"),
       resetBtn: $("tm-resetBtn"),
       resetBtnWrap: $("tm-resetBtn-wrap"),
@@ -83,7 +85,7 @@ export const tm = {
     this.els.circleBtn?.addEventListener("click", () => this.toggle());
     this.els.resetBtn?.addEventListener("click", () => this.reset(true));
 
-    $("tm-form")?.addEventListener("submit", (e) => {
+    this.els.form?.addEventListener("submit", (e) => {
       e.preventDefault();
       document.activeElement?.blur();
     });
@@ -135,7 +137,7 @@ export const tm = {
           this.isRunning = false;
           store.clearActiveTimer();
 
-          sm.vibrate([200, 100, 200, 100, 400], 'strong');
+          sm.vibrate([200, 100, 200, 100, 400], "strong");
           sm.play("complete");
           announceToScreenReader(t("timer_finished"));
           requestAnimationFrame(() => {
@@ -148,7 +150,7 @@ export const tm = {
 
     this.els.adjustPlusBtn?.addEventListener("click", () => {
       sm.play("tick");
-      sm.vibrate(50, 'medium');
+      sm.vibrate(50, "medium");
       const adjustmentMs = this.currentAdjustmentSec * 1000;
       this.totalDuration += adjustmentMs;
       bgWorker.postMessage({ command: "adjust", time: adjustmentMs });
@@ -156,7 +158,7 @@ export const tm = {
 
     this.els.adjustMinusBtn?.addEventListener("click", () => {
       sm.play("tick");
-      sm.vibrate(50, 'medium');
+      sm.vibrate(50, "medium");
       const adjustmentMs = -this.currentAdjustmentSec * 1000;
       this.totalDuration += adjustmentMs;
       bgWorker.postMessage({ command: "adjust", time: adjustmentMs });
@@ -178,7 +180,7 @@ export const tm = {
       }
       input.value = pad(val);
       sm.play("click");
-      sm.vibrate(10, 'tactile'); 
+      sm.vibrate(10, "tactile");
     };
     input.addEventListener(
       "wheel",
@@ -238,7 +240,7 @@ export const tm = {
   },
 
   toggle() {
-    sm.vibrate(50, 'strong');
+    sm.vibrate(50, "strong");
     sm.play("click");
     sm.unlock();
     if (this.isRunning) {
@@ -271,11 +273,10 @@ export const tm = {
 
       if (duration <= 0) {
         showToast(t("timer_zero"));
-        this.els.inputs.classList.add("animate-shake");
-        setTimeout(
-          () => this.els.inputs.classList.remove("animate-shake"),
-          300,
-        );
+        // Используем form для анимации, если она есть, иначе inputs
+        const elToShake = this.els.form || this.els.inputs;
+        elToShake.classList.add("animate-shake");
+        setTimeout(() => elToShake.classList.remove("animate-shake"), 300);
         return;
       }
 
@@ -293,7 +294,7 @@ export const tm = {
   },
 
   reset(clearInputs = true) {
-    sm.vibrate(30, 'medium');
+    sm.vibrate(30, "medium");
     sm.play("click");
     store.clearActiveTimer();
 
@@ -317,24 +318,25 @@ export const tm = {
     this.els.display.classList.add("is-go");
   },
 
+  // FIX 2: Обновляем функцию для управления видимостью всей формы
   updateUIState() {
-    if (!this.els.inputs) return;
+    if (!this.els.form) return;
     if (this.isRunning) {
-      this.els.inputs.classList.add("hidden", "opacity-0");
+      this.els.form.classList.add("hidden");
       this.els.resetBtnWrap?.classList.add("hidden");
       this.els.status?.classList.add("hidden");
       this.els.display?.classList.remove("is-go");
       this.els.adjustControls?.classList.remove("hidden");
       this.els.adjustControls?.classList.add("flex");
     } else if (this.isPaused) {
-      this.els.inputs.classList.add("hidden", "opacity-0");
+      this.els.form.classList.add("hidden");
       this.els.resetBtnWrap?.classList.remove("hidden");
       this.els.status?.classList.remove("hidden");
       updateText(this.els.status, t("pause"));
       this.els.adjustControls?.classList.add("hidden");
       this.els.adjustControls?.classList.remove("flex");
     } else {
-      this.els.inputs.classList.remove("hidden", "opacity-0");
+      this.els.form.classList.remove("hidden");
       this.els.resetBtnWrap?.classList.add("hidden");
       this.els.status?.classList.add("hidden");
       this.els.display?.classList.add("is-go");
