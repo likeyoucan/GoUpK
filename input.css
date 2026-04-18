@@ -631,12 +631,6 @@ html.dark.no-adaptive .default-bg-btn {
 /* =========================================
    15. МОДАЛЬНЫЕ ОКНА — АЛЕРТЫ
 ========================================= */
-#reset-modal,
-#sw-clear-modal,
-#sw-name-modal {
-  background-color: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(8px);
-}
 
 #reset-modal-content,
 #sw-clear-modal-content,
