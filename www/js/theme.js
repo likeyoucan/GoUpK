@@ -669,6 +669,9 @@ export const themeManager = {
     this.applyBgTheme(this.currentBg, isDark);
     this._syncPickerValues();
 
+    this.updateColorSelectionUI("accent", this.currentAccent, false);
+    this.updateColorSelectionUI("bg", this.currentBg, false);
+
     if (useTransition)
       requestAnimationFrame(() =>
         document.body.classList.remove("is-updating-theme"),
