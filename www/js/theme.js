@@ -696,6 +696,9 @@ export const themeManager = {
   },
 
   applySettings() {
+    // ШАГ 1: Загружаем абсолютно все настройки из localStorage в состояние объекта.
+    // Никакие стили на этом этапе еще не применяются.
+
     try {
       this.customAccentColors =
         JSON.parse(safeGetLS("custom_accent_colors")) || [];
@@ -705,19 +708,6 @@ export const themeManager = {
       this.customBgColors = [];
     }
 
-    // --- ШАГ 1: Сначала считываем все значения в состояние объекта ---
-    const mode = safeGetLS("theme_mode") || "system";
-    this.currentAccent =
-      safeGetLS("theme_color") || this.standardAccentColors[0];
-    this.currentBg = safeGetLS("theme_bg_color") || "default";
-
-    // --- ШАГ 2: Теперь применяем считанное состояние к странице и UI ---
-    // Теперь _internalSetMode будет вызвана, когда this.currentBg уже имеет правильное значение.
-    this._internalSetMode(mode, false);
-    // И setColor будет вызвана, когда this.currentAccent имеет правильное значение.
-    this.setColor(this.currentAccent, false);
-
-    // Применяем остальные настройки
     const settingsMap = {
       app_adaptive_bg: {
         prop: "isAdaptiveBg",
@@ -771,12 +761,40 @@ export const themeManager = {
       },
     };
 
+    // Считываем значения для всех переключателей и слайдеров
     for (const [key, config] of Object.entries(settingsMap)) {
       const storedValue = safeGetLS(key);
       let value;
       if (config.type === "checked") {
         value = storedValue !== null ? storedValue === "true" : config.default;
-        this[config.prop] = value;
+        if (config.prop) this[config.prop] = value;
+      } else {
+        value = storedValue !== null ? parseFloat(storedValue) : config.default;
+      }
+      // Пока что просто запоминаем, не применяя setter'ы
+    }
+
+    // Считываем основные цвета и режим
+    this.currentAccent =
+      safeGetLS("theme_color") || this.standardAccentColors[0];
+    this.currentBg = safeGetLS("theme_bg_color") || "default";
+    const mode = safeGetLS("theme_mode") || "system";
+
+    // Считываем значения, не вошедшие в map
+    this.vignetteAlpha = parseFloat(safeGetLS("app_vignette_alpha")) || 0.2;
+
+    // ШАГ 2: Теперь, когда все состояние загружено, применяем его к UI и стилям.
+
+    // Применяем основные темы. Теперь они будут использовать корректные `this.isAdaptiveBg` и `this.currentBg`.
+    this._internalSetMode(mode, false);
+    this.setColor(this.currentAccent, false);
+
+    // Обновляем UI для всех переключателей и слайдеров
+    for (const [key, config] of Object.entries(settingsMap)) {
+      const storedValue = safeGetLS(key);
+      let value;
+      if (config.type === "checked") {
+        value = storedValue !== null ? storedValue === "true" : config.default;
       } else {
         value = storedValue !== null ? parseFloat(storedValue) : config.default;
       }
@@ -784,9 +802,7 @@ export const themeManager = {
       if (config.setter) config.setter(value);
     }
 
-    const storedVignetteAlpha = safeGetLS("app_vignette_alpha");
-    this.vignetteAlpha =
-      storedVignetteAlpha !== null ? parseFloat(storedVignetteAlpha) : 0.2;
+    // Обновляем UI для слайдеров, не вошедших в map
     if ($("vignetteSlider")) {
       const closestIndex = this.vignetteLevels.reduce(
         (prev, curr, i) =>
@@ -811,12 +827,14 @@ export const themeManager = {
       $("vibroSlider").value = closestIndex;
     }
 
+    // Применяем остальные эффекты
     this.updateAdaptiveClass();
     this.applyNavLabelsVisibility();
     this.updateGlass();
     this.updateVignette();
-    this.syncSliderUIs();
 
+    // Финальная синхронизация UI
+    this.syncSliderUIs();
     this._syncPickerValues();
   },
 
