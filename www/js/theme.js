@@ -708,6 +708,7 @@ export const themeManager = {
     this._internalSetMode(safeGetLS("theme_mode") || "system", false);
     this.currentAccent =
       safeGetLS("theme_color") || this.standardAccentColors[0];
+    this.setColor(this.currentAccent, false);
     this.currentBg = safeGetLS("theme_bg_color") || "default";
 
     const settingsMap = {
