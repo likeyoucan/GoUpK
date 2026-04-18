@@ -400,6 +400,16 @@ export const themeManager = {
     );
 
     if (wrapper) {
+      // --- ДОБАВЛЕННЫЙ БЛОК ---
+      // Немедленно убираем рамку выделения с удаляемого элемента
+      wrapper.classList.remove(
+        "ring-[var(--primary-color)]",
+        "ring-2",
+        "ring-offset-2",
+        "ring-offset-surface",
+      );
+      // --- КОНЕЦ ДОБАВЛЕННОГО БЛОКА ---
+
       wrapper.classList.add("is-collapsing");
       wrapper.addEventListener(
         "transitionend",
