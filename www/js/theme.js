@@ -244,67 +244,79 @@ export const themeManager = {
   // 2. УПРАВЛЕНИЕ ЦВЕТАМИ: ЛОГИКА И СОБЫТИЯ
   // ===================================================================
 
-_handleColorClick(event, type) {
+  // ИСПРАВЛЕННАЯ И ОКОНЧАТЕЛЬНАЯ ВЕРСИЯ
+  _handleColorClick(event, type) {
     const swatchWrapper = event.target.closest(".color-swatch-wrapper");
     const pickerWrapper = event.target.closest(".color-picker-wrapper");
     const actionBtn = event.target.closest(".color-action-btn");
 
+    // Обработка клика по самой кнопке действия (Добавить/Удалить)
     if (actionBtn) {
-      if (actionBtn.dataset.action === 'delete') {
+      if (actionBtn.dataset.action === "delete") {
         this._deleteColorWithAnimation(actionBtn.dataset.color, type);
-      } else if (actionBtn.dataset.action === 'add') {
+      } else if (actionBtn.dataset.action === "add") {
         this.addCustomColor(type);
       }
       return;
     }
 
+    // Обработка клика по кружку с цветом
     if (swatchWrapper) {
-        const color = swatchWrapper.dataset.color;
-        const isCustom = swatchWrapper.dataset.custom === "true";
-        const currentSelected = type === "accent" ? this.currentAccent : this.currentBg;
+      const color = swatchWrapper.dataset.color;
+      const isCustom = swatchWrapper.dataset.custom === "true";
+      const currentSelected =
+        type === "accent" ? this.currentAccent : this.currentBg;
 
-        if (color !== currentSelected) {
-            // --- ЭТО БЛОК ВЫБОРА НОВОГО ЦВЕТА ---
-            sm.vibrate(20, "light");
-            
-            // 1. Выбираем цвет (это также скроет старую кнопку действия)
-            if (type === "accent") this.setColor(color, false)
-            else this.setBgColor(color, false);
+      if (color !== currentSelected) {
+        // --- СЛУЧАЙ 1: ВЫБОР НОВОГО, НЕВЫДЕЛЕННОГО ЦВЕТА ---
+        sm.vibrate(20, "light");
 
-            // 2. СРАЗУ ЖЕ проверяем, если он кастомный, то показываем кнопку "Удалить"
-            if (isCustom) {
-                this._showActionButton(swatchWrapper, 'delete');
-            }
+        // 1. Выбираем цвет (это также скроет любую старую кнопку действия)
+        if (type === "accent") this.setColor(color, false);
+        else this.setBgColor(color, false);
+      } else {
+        // --- СЛУЧАЙ 2: ПОВТОРНЫЙ КЛИК ПО УЖЕ ВЫДЕЛЕННОМУ ЦВЕТУ ---
+        // Этот блок срабатывает, только если цвет уже выделен.
 
-        } else if (isCustom) {
-            // --- ЭТО БЛОК ПОВТОРНОГО КЛИКА ПО УЖЕ ВЫБРАННОМУ ЦВЕТУ ---
-            // Если кнопка уже видна, прячем ее.
-            if (this.activeActionTarget === swatchWrapper) {
-                this._hideActionButton();
-            }
-        }
-    } else if (pickerWrapper) {
-        const picker = pickerWrapper.querySelector('input[type="color"]');
-        const color = picker.value.toLowerCase();
-        const currentSelected = (type === 'accent' ? this.currentAccent : this.currentBg).toLowerCase();
-
-        if (color !== currentSelected) {
-          if (type === 'accent') this.setColor(color, false)
-          else this.setBgColor(color, false);
-        }
-        
-        if (this.activeActionTarget === pickerWrapper) {
+        // Показываем/прячем кнопку только для кастомных цветов.
+        if (isCustom) {
+          if (this.activeActionTarget === swatchWrapper) {
+            // Если кнопка уже видна -> прячем ее.
             this._hideActionButton();
-        } else {
-            this._showActionButton(pickerWrapper, 'add');
+          } else {
+            // Если кнопки нет -> показываем ее.
+            this._showActionButton(swatchWrapper, "delete");
+          }
         }
+      }
     }
-},
+    // Обработка клика по "радужному" кругу (Color Picker)
+    else if (pickerWrapper) {
+      const picker = pickerWrapper.querySelector('input[type="color"]');
+      const color = picker.value.toLowerCase();
+      const currentSelected = (
+        type === "accent" ? this.currentAccent : this.currentBg
+      ).toLowerCase();
 
-_showActionButton(targetWrapper, action) {
+      // Если выбран цвет через пикер, который не является текущим, просто выделяем его
+      if (color !== currentSelected) {
+        if (type === "accent") this.setColor(color, false);
+        else this.setBgColor(color, false);
+      }
+
+      // Показываем/прячем кнопку "Добавить"
+      if (this.activeActionTarget === pickerWrapper) {
+        this._hideActionButton();
+      } else {
+        this._showActionButton(pickerWrapper, "add");
+      }
+    }
+  },
+
+  _showActionButton(targetWrapper, action) {
     // Сначала прячем любую кнопку, которая может быть уже видна
     if (this.activeActionTarget && this.activeActionTarget !== targetWrapper) {
-        this._hideActionButton();
+      this._hideActionButton();
     }
 
     sm.vibrate(30, "medium");
@@ -313,20 +325,22 @@ _showActionButton(targetWrapper, action) {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.dataset.action = action;
-    
-    const isAdd = action === 'add';
-    const color = isAdd ? targetWrapper.querySelector('input[type="color"]').value : targetWrapper.dataset.color;
+
+    const isAdd = action === "add";
+    const color = isAdd
+      ? targetWrapper.querySelector('input[type="color"]').value
+      : targetWrapper.dataset.color;
     btn.dataset.color = color;
 
     btn.setAttribute("aria-label", t(isAdd ? "add_color" : "delete"));
-    btn.className = `color-action-btn w-8 h-8 flex items-center justify-center rounded-full text-white shadow-lg focus:outline-none custom-focus active:scale-90 transition-transform ${isAdd ? 'bg-green-500' : 'bg-red-500'}`;
-    
+    btn.className = `color-action-btn w-8 h-8 flex items-center justify-center rounded-full text-white shadow-lg focus:outline-none custom-focus active:scale-90 transition-transform ${isAdd ? "bg-green-500" : "bg-red-500"}`;
+
     const pathData = isAdd ? "M12 4.5v15m7.5-7.5h-15" : "M19.5 12h-15";
     const icon = createSVGIcon(pathData, ["w-5", "h-5"]);
-    
+
     btn.append(icon);
     targetWrapper.append(btn);
-},
+  },
 
   _hideActionButton() {
     if (!this.activeActionTarget) return;
@@ -338,9 +352,11 @@ _showActionButton(targetWrapper, action) {
     this.activeActionTarget = null;
   },
 
-addCustomColor(type) {
+  addCustomColor(type) {
     const isAccent = type === "accent";
-    const customColors = isAccent ? this.customAccentColors : this.customBgColors;
+    const customColors = isAccent
+      ? this.customAccentColors
+      : this.customBgColors;
 
     if (customColors.length >= MAX_CUSTOM_COLORS) {
       showToast(isAccent ? t("accent_limit_msg") : t("bg_limit_msg"));
@@ -348,33 +364,40 @@ addCustomColor(type) {
     }
 
     const picker = $(isAccent ? "customColorInput" : "customBgInput");
-    const color = picker.value.toLowerCase(); 
+    const color = picker.value.toLowerCase();
 
-    const standardColors = isAccent ? this.standardAccentColors : this.standardBgColors;
-    const allColors = [...standardColors, ...customColors].map(c => c.toLowerCase());
+    const standardColors = isAccent
+      ? this.standardAccentColors
+      : this.standardBgColors;
+    const allColors = [...standardColors, ...customColors].map((c) =>
+      c.toLowerCase(),
+    );
 
     this._hideActionButton();
 
     if (allColors.includes(color)) {
       showToast(t("color_already_exists"));
       sm.vibrate(30, "medium");
-      if (isAccent) this.setColor(color)
+      if (isAccent) this.setColor(color);
       else this.setBgColor(color);
     } else {
       sm.vibrate(40, "medium");
       customColors.push(color);
-      safeSetLS(isAccent ? "custom_accent_colors" : "custom_bg_colors", JSON.stringify(customColors));
-      
+      safeSetLS(
+        isAccent ? "custom_accent_colors" : "custom_bg_colors",
+        JSON.stringify(customColors),
+      );
+
       // Создаем и добавляем DOM-элемент
       this._addColorToDOM(color, type);
-      
+
       // Просто выбираем его (ставим рамку), без показа кнопки
       if (isAccent) this.setColor(color);
       else this.setBgColor(color);
-      
+
       // Строка this._showActionButton(newSwatch, 'delete'); удалена
     }
-},
+  },
 
   _deleteColorWithAnimation(color, type) {
     sm.vibrate(40, "medium");
@@ -504,14 +527,16 @@ addCustomColor(type) {
     return wrapper;
   },
 
-_addColorToDOM(color, type) {
+  _addColorToDOM(color, type) {
     const swatch = this._createColorSwatch(color, true);
-    const container = $(type === "accent" ? "accent-colors-container" : "bg-colors-container");
+    const container = $(
+      type === "accent" ? "accent-colors-container" : "bg-colors-container",
+    );
     const picker = container.querySelector(".color-picker-wrapper");
     if (picker) container.insertBefore(swatch, picker);
     else container.append(swatch);
     return swatch; // <-- ВАЖНО: возвращаем элемент
-},
+  },
 
   updateColorSelectionUI(type, hex, doScroll = true) {
     const container = $(
@@ -594,7 +619,7 @@ _addColorToDOM(color, type) {
   // ===================================================================
   // 4. СЕТТЕРЫ И ОСТАЛЬНЫЕ ФУНКЦИИ (без изменений)
   // ===================================================================
-setColor(hex, doScroll = true) {
+  setColor(hex, doScroll = true) {
     this._hideActionButton(); // Эта строка важна
     this.currentAccent = hex;
     safeSetLS("theme_color", hex);
@@ -605,9 +630,9 @@ setColor(hex, doScroll = true) {
     const picker = $("customColorInput");
     if (picker) picker.value = hex;
     this.updateColorSelectionUI("accent", hex, doScroll);
-},
+  },
 
-setBgColor(hex, doScroll = true) {
+  setBgColor(hex, doScroll = true) {
     this._hideActionButton(); // И эта
     this.currentBg = hex;
     safeSetLS("theme_bg_color", hex);
@@ -615,9 +640,10 @@ setBgColor(hex, doScroll = true) {
     this.applyBgTheme(hex, isDark);
 
     const picker = $("customBgInput");
-    if (picker) picker.value = hex === "default" ? (isDark ? "#1c1c1e" : "#f3f4f6") : hex;
+    if (picker)
+      picker.value = hex === "default" ? (isDark ? "#1c1c1e" : "#f3f4f6") : hex;
     this.updateColorSelectionUI("bg", hex, doScroll);
-},
+  },
 
   setMode(mode) {
     this._internalSetMode(mode, true);
