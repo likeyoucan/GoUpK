@@ -1215,12 +1215,12 @@ input[type="range"]:focus + .thumb-label-container > .thumb-label {
   animation: fadeInScale 0.3s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 
+/* Добавляем отступ сверху, чтобы было место для кнопок */
 #accent-colors-container,
 #bg-colors-container {
-  /* Добавляем отступ сверху, чтобы было место для кнопки */
-  padding-top: 1rem; 
-  /* Устанавливаем высоту с учетом отступа */
-  height: calc(3rem + 1rem); /* h-12 + pt-4 */
+  padding-top: 1rem;
+  height: calc(3rem + 1rem); /* h-12 (48px) + pt-4 (16px) */
+  margin-top: -0.5rem; /* Компенсируем визуальный отступ */
 }
 
 .color-swatch-wrapper.is-collapsing {

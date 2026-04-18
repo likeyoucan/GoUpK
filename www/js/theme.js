@@ -1,4 +1,4 @@
-// Файл: www/js/theme.js
+// Файл: www/js/theme.js - ИСПРАВЛЕННАЯ ВЕРСИЯ
 
 import {
   $,
@@ -11,6 +11,32 @@ import { t } from "./i18n.js?v=VERSION";
 import { sm } from "./sound.js?v=VERSION";
 
 const MAX_CUSTOM_COLORS = 50;
+
+/**
+ * Вспомогательная функция для безопасного создания SVG иконок.
+ * @param {string} pathData - Значение атрибута 'd' для элемента <path>.
+ * @param {string[]} [classes=[]] - Массив CSS-классов для SVG элемента.
+ * @returns {SVGElement} - Готовый SVG элемент.
+ */
+function createSVGIcon(pathData, classes = []) {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("fill", "none");
+  svg.setAttribute("stroke", "currentColor");
+  svg.setAttribute("stroke-width", "2.5");
+  svg.setAttribute("focusable", "false");
+  svg.setAttribute("aria-hidden", "true");
+  if (classes.length) svg.classList.add(...classes);
+
+  path.setAttribute("d", pathData);
+  path.setAttribute("stroke-linecap", "round");
+  path.setAttribute("stroke-linejoin", "round");
+
+  svg.appendChild(path);
+  return svg;
+}
 
 export const themeManager = {
   // --- Состояние ---
@@ -115,7 +141,6 @@ export const themeManager = {
         this.setBgColor(e.target.value, false);
     });
 
-    // ... (остальные обработчики без изменений) ...
     const toggleListeners = {
       "toggle-sw-minute-beep": (val) => {
         this.swMinuteBeep = val;
@@ -182,7 +207,7 @@ export const themeManager = {
     };
     for (const [id, callback] of Object.entries(sliderListeners)) {
       const slider = $(id);
-      slider?.addEventListener("input", (e) => sm.vibrate(10, "tactile"));
+      slider?.addEventListener("input", () => sm.vibrate(10, "tactile"));
       slider?.addEventListener("change", (e) => callback(e.target.value));
     }
     $("fontSlider")?.addEventListener("input", (e) =>
@@ -254,9 +279,10 @@ export const themeManager = {
       }
     } else if (pickerWrapper) {
       const picker = pickerWrapper.querySelector('input[type="color"]');
-      const color = picker.value;
-      const currentSelected =
-        type === "accent" ? this.currentAccent : this.currentBg;
+      const color = picker.value.toLowerCase();
+      const currentSelected = (
+        type === "accent" ? this.currentAccent : this.currentBg
+      ).toLowerCase();
 
       if (color !== currentSelected) {
         if (type === "accent") this.setColor(color, false);
@@ -289,17 +315,10 @@ export const themeManager = {
     btn.setAttribute("aria-label", t(isAdd ? "add_color" : "delete"));
     btn.className = `color-action-btn w-8 h-8 flex items-center justify-center rounded-full text-white shadow-lg focus:outline-none custom-focus active:scale-90 transition-transform ${isAdd ? "bg-green-500" : "bg-red-500"}`;
 
-    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    svg.setAttribute("class", "w-5 h-5");
-    svg.setAttribute("viewBox", "0 0 24 24");
-    svg.setAttribute("stroke-width", "2.5");
-    svg.setAttribute("stroke", "currentColor");
-    svg.setAttribute("fill", "none");
-    svg.innerHTML = isAdd
-      ? `<path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"></path>`
-      : `<path stroke-linecap="round" stroke-linejoin="round" d="M19.5 12h-15"></path>`;
+    const pathData = isAdd ? "M12 4.5v15m7.5-7.5h-15" : "M19.5 12h-15";
+    const icon = createSVGIcon(pathData, ["w-5", "h-5"]);
 
-    btn.append(svg);
+    btn.append(icon);
     targetWrapper.append(btn);
   },
 
@@ -526,15 +545,8 @@ export const themeManager = {
             ? "#1f2937"
             : "#ffffff";
 
-      const svgIcon = document.createElementNS(
-        "http://www.w3.org/2000/svg",
-        "svg",
-      );
-      svgIcon.setAttribute("focusable", "false");
-      svgIcon.setAttribute("aria-hidden", "true");
-      svgIcon.setAttribute("class", "w-5 h-5");
+      const svgIcon = createSVGIcon("M4.5 12.75l6 6 9-13.5", ["w-5", "h-5"]);
       svgIcon.style.color = iconColor;
-      svgIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4.5 12.75l6 6 9-13.5"></path>`;
 
       if (isPicker) {
         svgIcon.classList.add(
@@ -562,7 +574,6 @@ export const themeManager = {
   // ===================================================================
   // 4. СЕТТЕРЫ И ОСТАЛЬНЫЕ ФУНКЦИИ (без изменений)
   // ===================================================================
-  // ... (весь код из секций 4 и 5 предыдущего ответа остается здесь без изменений)
   setColor(hex, doScroll = true) {
     this._hideActionButton();
     this.currentAccent = hex;
