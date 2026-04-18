@@ -244,74 +244,76 @@ export const themeManager = {
   // 2. УПРАВЛЕНИЕ ЦВЕТАМИ: ЛОГИКА И СОБЫТИЯ
   // ===================================================================
 
-  // ИСПРАВЛЕННАЯ И ОКОНЧАТЕЛЬНАЯ ВЕРСИЯ
-  _handleColorClick(event, type) {
+// ИСПРАВЛЕННАЯ И ОКОНЧАТЕЛЬНАЯ ВЕРСИЯ
+_handleColorClick(event, type) {
     const swatchWrapper = event.target.closest(".color-swatch-wrapper");
     const pickerWrapper = event.target.closest(".color-picker-wrapper");
     const actionBtn = event.target.closest(".color-action-btn");
 
-    // Обработка клика по самой кнопке действия (Добавить/Удалить)
+    // 1. Обработка клика по самой кнопке действия (Добавить/Удалить)
     if (actionBtn) {
-      if (actionBtn.dataset.action === "delete") {
+      if (actionBtn.dataset.action === 'delete') {
         this._deleteColorWithAnimation(actionBtn.dataset.color, type);
-      } else if (actionBtn.dataset.action === "add") {
+      } else if (actionBtn.dataset.action === 'add') {
         this.addCustomColor(type);
       }
       return;
     }
 
-    // Обработка клика по кружку с цветом
+    // 2. Обработка клика по кружку с цветом
     if (swatchWrapper) {
-      const color = swatchWrapper.dataset.color;
-      const isCustom = swatchWrapper.dataset.custom === "true";
-      const currentSelected =
-        type === "accent" ? this.currentAccent : this.currentBg;
+        const color = swatchWrapper.dataset.color;
+        const isCustom = swatchWrapper.dataset.custom === "true";
+        const currentSelected = type === "accent" ? this.currentAccent : this.currentBg;
 
-      if (color !== currentSelected) {
-        // --- СЛУЧАЙ 1: ВЫБОР НОВОГО, НЕВЫДЕЛЕННОГО ЦВЕТА ---
-        sm.vibrate(20, "light");
+        if (color !== currentSelected) {
+            // --- СЛУЧАЙ 1: ВЫБОР НОВОГО, НЕВЫДЕЛЕННОГО ЦВЕТА ---
+            sm.vibrate(20, "light");
 
-        // 1. Выбираем цвет (это также скроет любую старую кнопку действия)
-        if (type === "accent") this.setColor(color, false);
-        else this.setBgColor(color, false);
-      } else {
-        // --- СЛУЧАЙ 2: ПОВТОРНЫЙ КЛИК ПО УЖЕ ВЫДЕЛЕННОМУ ЦВЕТУ ---
-        // Этот блок срабатывает, только если цвет уже выделен.
+            // 1.1. Выбираем цвет. Эта функция внутри себя вызовет _hideActionButton(),
+            // чтобы убрать любую старую кнопку действия.
+            if (type === "accent") this.setColor(color, false);
+            else this.setBgColor(color, false);
 
-        // Показываем/прячем кнопку только для кастомных цветов.
-        if (isCustom) {
-          if (this.activeActionTarget === swatchWrapper) {
-            // Если кнопка уже видна -> прячем ее.
-            this._hideActionButton();
-          } else {
-            // Если кнопки нет -> показываем ее.
-            this._showActionButton(swatchWrapper, "delete");
-          }
+            // 1.2. СРАЗУ ЖЕ после выбора, если цвет кастомный, показываем кнопку "Удалить".
+            if (isCustom) {
+                this._showActionButton(swatchWrapper, 'delete');
+            }
+
+        } else {
+            // --- СЛУЧАЙ 2: ПОВТОРНЫЙ КЛИК ПО УЖЕ ВЫДЕЛЕННОМУ ЦВЕТУ ---
+            // Если цвет уже выбран, мы просто показываем/прячем кнопку.
+            if (isCustom) {
+                if (this.activeActionTarget === swatchWrapper) {
+                    // Если кнопка уже видна -> прячем ее.
+                    this._hideActionButton();
+                } else {
+                    // Если кнопки нет (например, после создания) -> показываем ее.
+                    this._showActionButton(swatchWrapper, 'delete');
+                }
+            }
         }
-      }
-    }
-    // Обработка клика по "радужному" кругу (Color Picker)
+    } 
+    // 3. Обработка клика по "радужному" кругу (Color Picker)
     else if (pickerWrapper) {
-      const picker = pickerWrapper.querySelector('input[type="color"]');
-      const color = picker.value.toLowerCase();
-      const currentSelected = (
-        type === "accent" ? this.currentAccent : this.currentBg
-      ).toLowerCase();
+        const picker = pickerWrapper.querySelector('input[type="color"]');
+        const color = picker.value.toLowerCase();
+        const currentSelected = (type === 'accent' ? this.currentAccent : this.currentBg).toLowerCase();
 
-      // Если выбран цвет через пикер, который не является текущим, просто выделяем его
-      if (color !== currentSelected) {
-        if (type === "accent") this.setColor(color, false);
-        else this.setBgColor(color, false);
-      }
-
-      // Показываем/прячем кнопку "Добавить"
-      if (this.activeActionTarget === pickerWrapper) {
-        this._hideActionButton();
-      } else {
-        this._showActionButton(pickerWrapper, "add");
-      }
+        // Если выбран цвет через пикер, который не является текущим, просто выделяем его
+        if (color !== currentSelected) {
+          if (type === 'accent') this.setColor(color, false);
+          else this.setBgColor(color, false);
+        }
+        
+        // Показываем/прячем кнопку "Добавить"
+        if (this.activeActionTarget === pickerWrapper) {
+            this._hideActionButton();
+        } else {
+            this._showActionButton(pickerWrapper, 'add');
+        }
     }
-  },
+},
 
   _showActionButton(targetWrapper, action) {
     // Сначала прячем любую кнопку, которая может быть уже видна
