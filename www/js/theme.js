@@ -362,15 +362,14 @@ addCustomColor(type) {
       customColors.push(color);
       safeSetLS(isAccent ? "custom_accent_colors" : "custom_bg_colors", JSON.stringify(customColors));
       
-      // 1. Создаем и получаем DOM-элемент
-      const newSwatch = this._addColorToDOM(color, type);
+      // Создаем и добавляем DOM-элемент
+      this._addColorToDOM(color, type);
       
-      // 2. Выбираем его (ставим рамку)
+      // Просто выбираем его (ставим рамку), без показа кнопки
       if (isAccent) this.setColor(color);
       else this.setBgColor(color);
       
-      // 3. СРАЗУ ЖЕ показываем на нем кнопку "Удалить"
-      this._showActionButton(newSwatch, 'delete');
+      // Строка this._showActionButton(newSwatch, 'delete'); удалена
     }
 },
 
