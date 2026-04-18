@@ -44,7 +44,8 @@ function createSVGIcon(pathData, classes = []) {
  * @param {string} rgb - Строка в формате 'rgb(r, g, b)'.
  * @returns {string} - Строка в формате '#rrggbb'.
  */
-function _rgbToHex(rgb) { // <--- ПЕРЕМЕСТИЛИ СЮДА
+function _rgbToHex(rgb) {
+  // <--- ПЕРЕМЕСТИЛИ СЮДА
   const match = rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
   if (!match) return rgb; // Возвращаем как есть, если формат не rgb
   const toHex = (c) => ("0" + parseInt(c, 10).toString(16)).slice(-2);
@@ -630,7 +631,7 @@ export const themeManager = {
       ).backgroundColor;
 
       // Конвертируем 'rgb(r, g, b)' в '#rrggbb' для пикера.
-      bgPicker.value = this._rgbToHex(computedBgColor);
+      bgPicker.value = _rgbToHex(computedBgColor);
     }
   },
 
