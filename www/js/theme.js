@@ -624,28 +624,25 @@ export const themeManager = {
   // 4. СЕТТЕРЫ И ОСТАЛЬНЫЕ ФУНКЦИИ (без изменений)
   // ===================================================================
   setColor(hex, doScroll = true) {
-    this._hideActionButton(); // Эта строка важна
+    this._hideActionButton();
     this.currentAccent = hex;
     safeSetLS("theme_color", hex);
     document.documentElement.style.setProperty("--primary-color", hex);
     const { h } = this.hexToHSL(hex);
     document.documentElement.style.setProperty("--accent-h", h);
 
-    const picker = $("customColorInput");
-    if (picker) picker.value = hex;
+    this._syncPickerValues(); // Вызываем синхронизацию
     this.updateColorSelectionUI("accent", hex, doScroll);
   },
 
   setBgColor(hex, doScroll = true) {
-    this._hideActionButton(); // И эта
+    this._hideActionButton();
     this.currentBg = hex;
     safeSetLS("theme_bg_color", hex);
     const isDark = document.documentElement.classList.contains("dark");
     this.applyBgTheme(hex, isDark);
 
-    const picker = $("customBgInput");
-    if (picker)
-      picker.value = hex === "default" ? (isDark ? "#1c1c1e" : "#f3f4f6") : hex;
+    this._syncPickerValues(); // Вызываем синхронизацию
     this.updateColorSelectionUI("bg", hex, doScroll);
   },
 
@@ -653,37 +650,121 @@ export const themeManager = {
     this._internalSetMode(mode, true);
   },
 
-  // ИСПРАВЛЕННАЯ ВЕРСИЯ
-  _internalSetMode(mode, useTransition) {
-    if (useTransition) document.body.classList.add("is-updating-theme");
-    this.currentMode = mode;
-    safeSetLS("theme_mode", mode);
-    document.querySelectorAll('[id^="theme-"]').forEach((b) => {
-      b.classList.remove("app-surface", "shadow-sm", "app-text");
-      b.classList.add("app-text-sec");
-    });
-    const activeBtn = $(`theme-${mode}`);
-    if (activeBtn) {
-      activeBtn.classList.remove("app-text-sec");
-      activeBtn.classList.add("app-surface", "shadow-sm", "app-text");
+  applySettings() {
+    try {
+      this.customAccentColors =
+        JSON.parse(safeGetLS("custom_accent_colors")) || [];
+      this.customBgColors = JSON.parse(safeGetLS("custom_bg_colors")) || [];
+    } catch (e) {
+      this.customAccentColors = [];
+      this.customBgColors = [];
     }
-    const isDark =
-      mode === "dark" ||
-      (mode === "system" &&
-        window.matchMedia("(prefers-color-scheme: dark)").matches);
-    document.documentElement.classList.toggle("dark", isDark);
-    document.documentElement.style.colorScheme = isDark ? "dark" : "light";
-    if (this.currentBg === "default") {
-      const bgPicker = $("customBgInput");
-      if (bgPicker) bgPicker.value = isDark ? "#1c1c1e" : "#f3f4f6";
+
+    this._internalSetMode(safeGetLS("theme_mode") || "system", false);
+    this.currentAccent =
+      safeGetLS("theme_color") || this.standardAccentColors[0];
+    this.currentBg = safeGetLS("theme_bg_color") || "default";
+
+    const settingsMap = {
+      app_adaptive_bg: {
+        prop: "isAdaptiveBg",
+        default: true,
+        el: "toggle-adaptive-bg",
+        type: "checked",
+      },
+      app_vignette: {
+        prop: "hasVignette",
+        default: false,
+        el: "toggle-vignette",
+        type: "checked",
+      },
+      app_liquid_glass: {
+        prop: "isLiquidGlass",
+        default: false,
+        el: "toggle-glass",
+        type: "checked",
+      },
+      app_hide_nav_labels: {
+        prop: "hideNavLabels",
+        default: false,
+        el: "toggle-nav-labels",
+        type: "checked",
+      },
+      app_show_ms: {
+        prop: "showMs",
+        default: true,
+        el: "toggle-ms",
+        type: "checked",
+      },
+      app_sw_minute_beep: {
+        prop: "swMinuteBeep",
+        default: true,
+        el: "toggle-sw-minute-beep",
+        type: "checked",
+      },
+      font_size: {
+        prop: null,
+        default: 16,
+        el: "fontSlider",
+        type: "value",
+        setter: this.setFontSize.bind(this),
+      },
+      app_ring_width: {
+        prop: null,
+        default: 4,
+        el: "ringWidthSlider",
+        type: "value",
+        setter: this.setRingWidth.bind(this),
+      },
+    };
+
+    for (const [key, config] of Object.entries(settingsMap)) {
+      const storedValue = safeGetLS(key);
+      let value;
+      if (config.type === "checked") {
+        value = storedValue !== null ? storedValue === "true" : config.default;
+        this[config.prop] = value;
+      } else {
+        value = storedValue !== null ? parseFloat(storedValue) : config.default;
+      }
+      if ($(config.el)) $(config.el)[config.type] = value;
+      if (config.setter) config.setter(value);
     }
-    this.applyBgTheme(this.currentBg, isDark);
-    // Строки с updateColorSelectionUI() отсюда удалены.
-    // Они будут вызваны в нужный момент в конце функции init().
-    if (useTransition)
-      requestAnimationFrame(() =>
-        document.body.classList.remove("is-updating-theme"),
+
+    const storedVignetteAlpha = safeGetLS("app_vignette_alpha");
+    this.vignetteAlpha =
+      storedVignetteAlpha !== null ? parseFloat(storedVignetteAlpha) : 0.2;
+    if ($("vignetteSlider")) {
+      const closestIndex = this.vignetteLevels.reduce(
+        (prev, curr, i) =>
+          Math.abs(curr - this.vignetteAlpha) <
+          Math.abs(this.vignetteLevels[prev] - this.vignetteAlpha)
+            ? i
+            : prev,
+        0,
       );
+      $("vignetteSlider").value = closestIndex;
+    }
+    if ($("vibroSlider")) {
+      const levels = [0.5, 0.75, 1, 1.5, 2];
+      const vibroValue = parseFloat(safeGetLS("app_vibro_level")) || 1;
+      const closestIndex = levels.reduce(
+        (prev, curr, i) =>
+          Math.abs(curr - vibroValue) < Math.abs(levels[prev] - vibroValue)
+            ? i
+            : prev,
+        0,
+      );
+      $("vibroSlider").value = closestIndex;
+    }
+
+    this.updateAdaptiveClass();
+    this.applyNavLabelsVisibility();
+    this.updateGlass();
+    this.updateVignette();
+    this.syncSliderUIs();
+
+    this._syncPickerValues(); // Вызываем синхронизацию в конце
   },
 
   setFontSize(s) {
