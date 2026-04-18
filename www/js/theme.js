@@ -606,12 +606,14 @@ export const themeManager = {
 
     const bgPicker = $("customBgInput");
     if (bgPicker) {
-      bgPicker.value =
-        this.currentBg === "default"
-          ? isDark
-            ? "#1c1c1e"
-            : "#f3f4f6"
-          : this.currentBg;
+      // Если текущий фон - это кастомный цвет, используем его.
+      // Если выбран "default" или стандартный цвет, сбрасываем пикер
+      // на базовый черный/белый, чтобы было удобно начинать выбор нового цвета.
+      if (this.currentBg.startsWith("#")) {
+        bgPicker.value = this.currentBg;
+      } else {
+        bgPicker.value = isDark ? "#000000" : "#ffffff";
+      }
     }
   },
 
