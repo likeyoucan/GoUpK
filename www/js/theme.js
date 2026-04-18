@@ -465,13 +465,13 @@ export const themeManager = {
     const pickerId = type === "accent" ? "customColorInput" : "customBgInput";
 
     const wrapper = document.createElement("div");
-    // Класс overflow-hidden удален
     wrapper.className =
       "color-picker-wrapper relative w-9 h-9 shrink-0 group rounded-full border border-black/20 dark:border-white/20 transition-transform active:scale-90 focus-within:ring-2 focus-within:ring-[var(--primary-color)] focus-within:ring-offset-2 focus-within:ring-offset-surface";
 
     const gradientBg = document.createElement("div");
+    // ДОБАВЛЯЕМ rounded-full прямо сюда
     gradientBg.className =
-      "absolute inset-0 bg-[conic-gradient(from_0deg,red,orange,yellow,green,blue,indigo,violet,red)] opacity-90 group-hover:opacity-100 transition-opacity pointer-events-none z-0";
+      "absolute inset-0 rounded-full bg-[conic-gradient(from_0deg,red,orange,yellow,green,blue,indigo,violet,red)] opacity-90 group-hover:opacity-100 transition-opacity pointer-events-none z-0";
 
     const input = document.createElement("input");
     input.type = "color";
