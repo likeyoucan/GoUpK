@@ -113,18 +113,12 @@ export const themeManager = {
   // ===================================================================
 
   init() {
-    // 1. Загружаем все настройки в состояние объекта
     this.applySettings();
-    // 2. Навешиваем обработчики событий
     this._bindEvents();
-    // 3. Пересоздаем DOM-элементы для выбора цветов
     this._populateColorSection("accent");
     this._populateColorSection("bg");
-    // 4. Обновляем UI (рамки вокруг выбранных цветов)
     this.updateColorSelectionUI("accent", this.currentAccent, false);
     this.updateColorSelectionUI("bg", this.currentBg, false);
-    // 5. И ТОЛЬКО ТЕПЕРЬ, когда все DOM-элементы созданы, синхронизируем значения в пикерах
-    this._syncPickerValues(); 
   },
 
   _bindEvents() {
@@ -508,6 +502,19 @@ export const themeManager = {
   _createColorPicker(type) {
     const pickerId = type === "accent" ? "customColorInput" : "customBgInput";
 
+    // Определяем, какое значение должно быть у пикера в момент его создания
+    let initialValue;
+    if (type === "accent") {
+      // Для акцента берем текущее значение из состояния
+      initialValue = this.currentAccent;
+    } else {
+      // Для фона получаем реальный вычисленный цвет со страницы
+      const computedBgColor = window.getComputedStyle(
+        document.body,
+      ).backgroundColor;
+      initialValue = this._rgbToHex(computedBgColor);
+    }
+
     const wrapper = document.createElement("div");
     wrapper.className =
       "color-picker-wrapper relative w-9 h-9 shrink-0 group rounded-full border border-black/20 dark:border-white/20 transition-transform active:scale-90 focus-within:ring-2 focus-within:ring-[var(--primary-color)] focus-within:ring-offset-2 focus-within:ring-offset-surface";
@@ -519,6 +526,13 @@ export const themeManager = {
     const input = document.createElement("input");
     input.type = "color";
     input.id = pickerId;
+
+    // --- ВОТ ГЛАВНОЕ ИЗМЕНЕНИЕ ---
+    // Устанавливаем значение ПРИ СОЗДАНИИ элемента
+    if (initialValue) {
+      input.value = initialValue;
+    }
+
     input.setAttribute("aria-label", t("add_color"));
     input.className =
       "absolute inset-0 w-[150%] h-[150%] -top-1 -left-1 opacity-0 cursor-pointer z-10";
