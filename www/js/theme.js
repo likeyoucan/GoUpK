@@ -595,37 +595,32 @@ export const themeManager = {
         });
     }
   },
-  _syncPickerValues() {
-    const isDark = document.documentElement.classList.contains("dark");
 
-    // 1. Синхронизируем пикер акцентного цвета (здесь все было правильно)
+  _rgbToHex(rgb) {
+    const match = rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
+    if (!match) return rgb; // Возвращаем как есть, если формат не rgb
+    const toHex = (c) => ("0" + parseInt(c, 10).toString(16)).slice(-2);
+    return `#${toHex(match[1])}${toHex(match[2])}${toHex(match[3])}`;
+  },
+
+  _syncPickerValues() {
+    // 1. Синхронизируем пикер акцентного цвета (он работает правильно)
     const accentPicker = $("customColorInput");
     if (accentPicker) {
       accentPicker.value = this.currentAccent;
     }
 
-    // 2. Синхронизируем пикер фонового цвета (здесь исправлена логика)
+    // 2. Синхронизируем пикер фонового цвета (новая, надежная логика)
     const bgPicker = $("customBgInput");
     if (bgPicker) {
-      let pickerValue;
+      // Получаем актуальный, вычисленный браузером цвет фона страницы
+      const computedBgColor = window.getComputedStyle(
+        document.body,
+      ).backgroundColor;
 
-      if (this.currentBg.startsWith("#")) {
-        // Если выбран стандартный или кастомный цвет (уже в HEX-формате),
-        // то просто используем его.
-        pickerValue = this.currentBg;
-      } else {
-        // Если выбрана опция "default", нам нужно определить, какой
-        // фактический HEX-цвет этому соответствует.
-        // Эта логика должна точно повторять логику из `applyBgTheme`.
-        if (isDark) {
-          // В темной теме фон по умолчанию - черный.
-          pickerValue = "#000000";
-        } else {
-          // В светлой теме фон по умолчанию - светло-серый.
-          pickerValue = "#f3f4f6";
-        }
-      }
-      bgPicker.value = pickerValue.toLowerCase();
+      // `getComputedStyle` возвращает цвет в формате 'rgb(r, g, b)'.
+      // Пикеру нужен формат '#rrggbb', поэтому конвертируем.
+      bgPicker.value = this._rgbToHex(computedBgColor);
     }
   },
 
