@@ -1215,6 +1215,14 @@ input[type="range"]:focus + .thumb-label-container > .thumb-label {
   animation: fadeInScale 0.3s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 
+#accent-colors-container,
+#bg-colors-container {
+  /* Добавляем отступ сверху, чтобы было место для кнопки */
+  padding-top: 1rem; 
+  /* Устанавливаем высоту с учетом отступа */
+  height: calc(3rem + 1rem); /* h-12 + pt-4 */
+}
+
 .color-swatch-wrapper.is-collapsing {
   max-width: 0 !important;
   margin-left: 0 !important;
@@ -1224,7 +1232,7 @@ input[type="range"]:focus + .thumb-label-container > .thumb-label {
 }
 
 /* Кнопка "Удалить" над кружком */
-.color-delete-btn {
+.color-action-btn {
   position: absolute;
   top: -0.75rem; /* Сдвигаем выше кружка */
   left: 50%;
@@ -1233,14 +1241,10 @@ input[type="range"]:focus + .thumb-label-container > .thumb-label {
   animation: fadeInScale 0.2s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 
-.color-delete-btn.is-hiding {
+.color-action-btn.is-hiding {
   animation: fadeOutScale 0.2s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 
-/* Кнопка "Добавить" в заголовке */
-.color-add-btn {
-  animation: fadeInScale 0.3s 0.1s cubic-bezier(0.4, 0, 0.2, 1) both;
-}
 
 /* Стили для color picker */
 .color-picker-wrapper {
