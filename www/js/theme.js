@@ -106,7 +106,7 @@ export const themeManager = {
     this._populateColorSection("bg");
     this.updateColorSelectionUI("accent", this.currentAccent, false);
     this.updateColorSelectionUI("bg", this.currentBg, false);
-    this._syncPickerValues(); // <--- И ЭТУ СТРОКУ ТОЖЕ
+    this._syncPickerValues(); // <-- СТРОКА НА МЕСТЕ
   },
 
   _bindEvents() {
@@ -604,29 +604,28 @@ export const themeManager = {
     }
   },
 
-  _syncPickerValues() {
+    _syncPickerValues() {
     // 1. Синхронизируем пикер акцентного цвета
     const accentPicker = $("customColorInput");
-    if (accentPicker) {
-      // Прямо используем this.currentAccent, так как он является
-      // единственным источником правды для акцентного цвета.
-      // Проверяем, что значение не пустое, чтобы избежать сброса в черный.
-      if (this.currentAccent) {
-        accentPicker.value = this.currentAccent;
-      }
+    if (accentPicker && this.currentAccent) {
+      accentPicker.value = this.currentAccent;
     }
 
     // 2. Синхронизируем пикер фонового цвета
     const bgPicker = $("customBgInput");
     if (bgPicker) {
-      // Используем getComputedStyle, так как это самый надежный способ
-      // узнать реальный цвет фона при любых настройках.
-      const computedBgColor = window.getComputedStyle(
-        document.body,
-      ).backgroundColor;
-
-      // Конвертируем 'rgb(r, g, b)' в '#rrggbb' для пикера.
-      bgPicker.value = this._rgbToHex(computedBgColor);
+      let initialValue;
+      // Используем this.currentBg, чтобы показать исходный цвет,
+      // а не результат работы адаптивного режима.
+      if (this.currentBg.startsWith("#")) {
+        // Если это уже HEX-цвет, просто используем его
+        initialValue = this.currentBg;
+      } else {
+        // Если это "default", вычисляем базовый цвет для пикера
+        const isDark = document.documentElement.classList.contains("dark");
+        initialValue = isDark ? "#000000" : "#f3f4f6";
+      }
+      bgPicker.value = initialValue;
     }
   },
 
@@ -884,6 +883,7 @@ export const themeManager = {
     // Это гарантирует, что галочки будут на месте после перерисовки.
     this.updateColorSelectionUI("accent", this.currentAccent, false);
     this.updateColorSelectionUI("bg", this.currentBg, false);
+     this._syncPickerValues(); // <-- СТРОКА НА МЕСТЕ
   },
 
   // ===================================================================
