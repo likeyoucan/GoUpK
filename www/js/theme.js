@@ -1,5 +1,4 @@
 // Файл: www/js/theme.js
-// --- ПОЛНАЯ И ОКОНЧАТЕЛЬНАЯ ВЕРСИЯ ---
 
 import {
   $,
@@ -106,7 +105,7 @@ export const themeManager = {
     this._populateColorSection("bg");
     this.updateColorSelectionUI("accent", this.currentAccent, false);
     this.updateColorSelectionUI("bg", this.currentBg, false);
-    this._syncPickerValues(); // <-- СТРОКА НА МЕСТЕ
+    this._syncPickerValues();
   },
 
   _bindEvents() {
@@ -616,7 +615,6 @@ export const themeManager = {
     if (bgPicker) {
       let initialValue;
       // Используем this.currentBg, чтобы показать исходный цвет,
-      // а не результат работы адаптивного режима.
       if (this.currentBg.startsWith("#")) {
         // Если это уже HEX-цвет, просто используем его
         initialValue = this.currentBg;
@@ -785,7 +783,7 @@ export const themeManager = {
       } else {
         value = storedValue !== null ? parseFloat(storedValue) : config.default;
       }
-      // Пока что просто запоминаем, не применяя setter'ы
+      // Пока что просто запоминаем, не применяя setter
     }
 
     // Считываем основные цвета и режим
@@ -883,7 +881,7 @@ export const themeManager = {
     // Это гарантирует, что галочки будут на месте после перерисовки.
     this.updateColorSelectionUI("accent", this.currentAccent, false);
     this.updateColorSelectionUI("bg", this.currentBg, false);
-     this._syncPickerValues(); // <-- СТРОКА НА МЕСТЕ
+     this._syncPickerValues();
   },
 
   // ===================================================================
