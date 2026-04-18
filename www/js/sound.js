@@ -129,7 +129,8 @@ export const sm = {
     ];
     soundKeys.forEach(safeRemoveLS);
 
-    this.init();
+    // Просто вызываем applySettings(), чтобы обновить UI, но НЕ init()
+    this.applySettings();
   },
 
   updateVolumeUI() {

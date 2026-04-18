@@ -812,18 +812,35 @@ export const themeManager = {
     this._syncPickerValues();
   },
 
-resetSettings() {
-    // Список ключей для удаления
-    const themeKeys = [ 
-      "theme_mode", "theme_color", "theme_bg_color", "font_size", 
-      "app_adaptive_bg", "app_vignette", "app_vignette_alpha", 
-      "app_liquid_glass", "app_hide_nav_labels", "app_ring_width", 
-      "app_show_ms", "app_sw_minute_beep" 
+  resetSettings() {
+    // Список ключей для удаления (кастомные цвета НЕ трогаем)
+    const themeKeys = [
+      "theme_mode",
+      "theme_color",
+      "theme_bg_color",
+      "font_size",
+      "app_adaptive_bg",
+      "app_vignette",
+      "app_vignette_alpha",
+      "app_liquid_glass",
+      "app_hide_nav_labels",
+      "app_ring_width",
+      "app_show_ms",
+      "app_sw_minute_beep",
     ];
     themeKeys.forEach(safeRemoveLS);
-    
-    this.init(); 
-},
+
+    // 1. Применяем настройки по умолчанию к состоянию и простым элементам UI
+    this.applySettings();
+
+    // 2. Полностью перерисовываем секции с цветами, так как init() больше не вызывается
+    this._populateColorSection("accent");
+    this._populateColorSection("bg");
+
+    // 3. Выделяем рамкой новые цвета по умолчанию
+    this.updateColorSelectionUI("accent", this.currentAccent, false);
+    this.updateColorSelectionUI("bg", this.currentBg, false);
+  },
 
   // ===================================================================
   // 5. ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
