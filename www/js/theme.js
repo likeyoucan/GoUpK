@@ -106,6 +106,7 @@ export const themeManager = {
     this._populateColorSection("bg");
     this.updateColorSelectionUI("accent", this.currentAccent, false);
     this.updateColorSelectionUI("bg", this.currentBg, false);
+    this._syncPickerValues(); // <--- И ЭТУ СТРОКУ ТОЖЕ
   },
 
   _bindEvents() {
@@ -496,24 +497,6 @@ export const themeManager = {
   _createColorPicker(type) {
     const pickerId = type === "accent" ? "customColorInput" : "customBgInput";
 
-    // Определяем, какое значение должно быть у пикера в момент его создания
-    let initialValue;
-    if (type === "accent") {
-      // Для акцента всегда берем текущее значение из состояния
-      initialValue = this.currentAccent;
-    } else {
-      // Для фона используем this.currentBg, чтобы показать исходный цвет,
-      // а не результат работы адаптивного режима.
-      if (this.currentBg.startsWith("#")) {
-        // Если это уже HEX-цвет, просто используем его
-        initialValue = this.currentBg;
-      } else {
-        // Если это "default", вычисляем базовый цвет для пикера
-        const isDark = document.documentElement.classList.contains("dark");
-        initialValue = isDark ? "#000000" : "#f3f4f6";
-      }
-    }
-
     const wrapper = document.createElement("div");
     wrapper.className =
       "color-picker-wrapper relative w-9 h-9 shrink-0 group rounded-full border border-black/20 dark:border-white/20 transition-transform active:scale-90 focus-within:ring-2 focus-within:ring-[var(--primary-color)] focus-within:ring-offset-2 focus-within:ring-offset-surface";
@@ -525,12 +508,6 @@ export const themeManager = {
     const input = document.createElement("input");
     input.type = "color";
     input.id = pickerId;
-
-    // Устанавливаем значение ПРИ СОЗДАНИИ элемента
-    if (initialValue) {
-      input.value = initialValue;
-    }
-
     input.setAttribute("aria-label", t("add_color"));
     input.className =
       "absolute inset-0 w-[150%] h-[150%] -top-1 -left-1 opacity-0 cursor-pointer z-10";
@@ -649,7 +626,7 @@ export const themeManager = {
       ).backgroundColor;
 
       // Конвертируем 'rgb(r, g, b)' в '#rrggbb' для пикера.
-      bgPicker.value = _rgbToHex(computedBgColor);
+      bgPicker.value = this._rgbToHex(computedBgColor);
     }
   },
 
