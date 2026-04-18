@@ -440,7 +440,7 @@ export const themeManager = {
 
   _createColorSwatch(color, isCustom) {
     const wrapper = document.createElement("div");
-    wrapper.className = "color-swatch-wrapper";
+    wrapper.className = "color-swatch-wrapper rounded-full";
     wrapper.dataset.color = color;
     wrapper.dataset.custom = isCustom;
 
