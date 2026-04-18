@@ -612,7 +612,7 @@ export const themeManager = {
       if (this.currentBg.startsWith("#")) {
         bgPicker.value = this.currentBg;
       } else {
-        bgPicker.value = isDark ? "#000000" : "#ffffff";
+        bgPicker.value = isDark ? "#df3434" : "#fbff00";
       }
     }
   },
