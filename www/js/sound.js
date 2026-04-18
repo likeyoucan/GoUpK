@@ -44,16 +44,6 @@ export const sm = {
       if (this.vibroEnabled) this.vibrate(50, "medium");
     });
 
-    $("vibroSlider")?.addEventListener("input", (e) => {
-      const levels = [0.5, 0.75, 1, 1.5, 2];
-      this.vibroLevel = levels[e.target.value] || 1;
-      safeSetLS("app_vibro_level", this.vibroLevel);
-    });
-
-    $("vibroSlider")?.addEventListener("change", () =>
-      this.vibrate(50, "strong"),
-    );
-
     $("volumeSlider")?.addEventListener("input", (e) => {
       this.vibrate(10, "tactile");
       this.volume = parseFloat(e.target.value);

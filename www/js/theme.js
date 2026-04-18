@@ -705,12 +705,19 @@ export const themeManager = {
       this.customBgColors = [];
     }
 
-    this._internalSetMode(safeGetLS("theme_mode") || "system", false);
+    // --- ШАГ 1: Сначала считываем все значения в состояние объекта ---
+    const mode = safeGetLS("theme_mode") || "system";
     this.currentAccent =
       safeGetLS("theme_color") || this.standardAccentColors[0];
-    this.setColor(this.currentAccent, false);
     this.currentBg = safeGetLS("theme_bg_color") || "default";
 
+    // --- ШАГ 2: Теперь применяем считанное состояние к странице и UI ---
+    // Теперь _internalSetMode будет вызвана, когда this.currentBg уже имеет правильное значение.
+    this._internalSetMode(mode, false);
+    // И setColor будет вызвана, когда this.currentAccent имеет правильное значение.
+    this.setColor(this.currentAccent, false);
+
+    // Применяем остальные настройки
     const settingsMap = {
       app_adaptive_bg: {
         prop: "isAdaptiveBg",
