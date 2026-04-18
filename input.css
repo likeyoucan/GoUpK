@@ -1178,54 +1178,74 @@ input[type="range"]:focus + .thumb-label-container > .thumb-label {
   opacity: 1;
 }
 
-.color-action-btn {
-  /* Вместо width используем max-width для плавной анимации без рывков */
-  max-width: 0;
-  opacity: 0;
-  margin-left: 0;
-  margin-right: 0;
-  overflow: hidden;
+/* =========================================
+   СТИЛИ И АНИМАЦИИ ДЛЯ УПРАВЛЕНИЯ ЦВЕТАМИ
+========================================= */
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes fadeOutScale {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+}
+
+.color-swatch-wrapper {
+  position: relative;
   flex-shrink: 0;
-  /* Добавляем transform для эффекта "выезжания" */
-  transform: scaleX(0.5);
-  transform-origin: left;
   transition:
-    max-width 0.25s ease-out,
-    opacity 0.2s ease-out,
-    margin-left 0.25s ease-out,
-    margin-right 0.25s ease-out,
-    transform 0.25s ease-out;
-}
-
-.color-action-btn.is-visible {
+    max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    margin-right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   max-width: 2.25rem; /* w-9 */
-  opacity: 1;
-  margin-left: 0.25rem; /* ml-1 */
-  margin-right: -0.25rem; /* -mr-1 */
-  transform: scaleX(1);
+  animation: fadeInScale 0.3s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 
-/* СТИЛИ ДЛЯ АНИМАЦИИ УДАЛЕНИЯ */
-.custom-color-wrapper,
-.color-action-btn {
-  /* Добавляем transition для max-width и margin, чтобы контейнер плавно схлопывался */
-  transition:
-    transform 0.25s ease-out,
-    opacity 0.25s ease-out,
-    max-width 0.25s ease-out,
-    margin-left 0.25s ease-out,
-    margin-right 0.25s ease-out;
-}
-
-.custom-color-wrapper.is-deleting,
-.color-action-btn.is-deleting {
-  transform: scale(0.5);
-  opacity: 0;
+.color-swatch-wrapper.is-collapsing {
+  max-width: 0 !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  animation: fadeOutScale 0.25s cubic-bezier(0.4, 0, 0.2, 1) both;
   pointer-events: none;
-  /* Схлопываем элемент до нуля */
-  max-width: 0px !important;
-  margin-left: 0px !important;
-  margin-right: 0px !important;
+}
+
+/* Кнопка "Удалить" над кружком */
+.color-delete-btn {
+  position: absolute;
+  top: -0.75rem; /* Сдвигаем выше кружка */
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  animation: fadeInScale 0.2s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.color-delete-btn.is-hiding {
+  animation: fadeOutScale 0.2s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* Кнопка "Добавить" в заголовке */
+.color-add-btn {
+  animation: fadeInScale 0.3s 0.1s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* Стили для color picker */
+.color-picker-wrapper {
+  flex-shrink: 0;
+  animation: fadeInScale 0.3s 0.1s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 
 @layer utilities {
