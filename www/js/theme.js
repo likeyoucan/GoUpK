@@ -113,12 +113,18 @@ export const themeManager = {
   // ===================================================================
 
   init() {
+    // 1. Загружаем все настройки в состояние объекта
     this.applySettings();
+    // 2. Навешиваем обработчики событий
     this._bindEvents();
+    // 3. Пересоздаем DOM-элементы для выбора цветов
     this._populateColorSection("accent");
     this._populateColorSection("bg");
+    // 4. Обновляем UI (рамки вокруг выбранных цветов)
     this.updateColorSelectionUI("accent", this.currentAccent, false);
     this.updateColorSelectionUI("bg", this.currentBg, false);
+    // 5. И ТОЛЬКО ТЕПЕРЬ, когда все DOM-элементы созданы, синхронизируем значения в пикерах
+    this._syncPickerValues(); 
   },
 
   _bindEvents() {
