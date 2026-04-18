@@ -1,4 +1,5 @@
-// Файл: www/js/theme.js - ИСПРАВЛЕННАЯ ВЕРСИЯ
+// Файл: www/js/theme.js
+// --- ПОЛНАЯ И ОКОНЧАТЕЛЬНАЯ ВЕРСИЯ ---
 
 import {
   $,
@@ -45,7 +46,7 @@ export const themeManager = {
   currentBg: "default",
   customAccentColors: [],
   customBgColors: [],
-  activeActionTarget: null, // DOM-элемент, над которым висит кнопка действия
+  activeActionTarget: null,
 
   // --- Настройки ---
   showMs: true,
@@ -244,13 +245,11 @@ export const themeManager = {
   // 2. УПРАВЛЕНИЕ ЦВЕТАМИ: ЛОГИКА И СОБЫТИЯ
   // ===================================================================
 
-  // ИСПРАВЛЕННАЯ И ОКОНЧАТЕЛЬНАЯ ВЕРСИЯ
   _handleColorClick(event, type) {
     const swatchWrapper = event.target.closest(".color-swatch-wrapper");
     const pickerWrapper = event.target.closest(".color-picker-wrapper");
     const actionBtn = event.target.closest(".color-action-btn");
 
-    // 1. Обработка клика по самой кнопке действия (Добавить/Удалить)
     if (actionBtn) {
       if (actionBtn.dataset.action === "delete") {
         this._deleteColorWithAnimation(actionBtn.dataset.color, type);
@@ -260,7 +259,6 @@ export const themeManager = {
       return;
     }
 
-    // 2. Обработка клика по кружку с цветом
     if (swatchWrapper) {
       const color = swatchWrapper.dataset.color;
       const isCustom = swatchWrapper.dataset.custom === "true";
@@ -268,47 +266,35 @@ export const themeManager = {
         type === "accent" ? this.currentAccent : this.currentBg;
 
       if (color !== currentSelected) {
-        // --- СЛУЧАЙ 1: ВЫБОР НОВОГО, НЕВЫДЕЛЕННОГО ЦВЕТА ---
         sm.vibrate(20, "light");
 
-        // 1.1. Выбираем цвет. Эта функция внутри себя вызовет _hideActionButton(),
-        // чтобы убрать любую старую кнопку действия.
         if (type === "accent") this.setColor(color, false);
         else this.setBgColor(color, false);
 
-        // 1.2. СРАЗУ ЖЕ после выбора, если цвет кастомный, показываем кнопку "Удалить".
         if (isCustom) {
           this._showActionButton(swatchWrapper, "delete");
         }
       } else {
-        // --- СЛУЧАЙ 2: ПОВТОРНЫЙ КЛИК ПО УЖЕ ВЫДЕЛЕННОМУ ЦВЕТУ ---
-        // Если цвет уже выбран, мы просто показываем/прячем кнопку.
         if (isCustom) {
           if (this.activeActionTarget === swatchWrapper) {
-            // Если кнопка уже видна -> прячем ее.
             this._hideActionButton();
           } else {
-            // Если кнопки нет (например, после создания) -> показываем ее.
             this._showActionButton(swatchWrapper, "delete");
           }
         }
       }
-    }
-    // 3. Обработка клика по "радужному" кругу (Color Picker)
-    else if (pickerWrapper) {
+    } else if (pickerWrapper) {
       const picker = pickerWrapper.querySelector('input[type="color"]');
       const color = picker.value.toLowerCase();
       const currentSelected = (
         type === "accent" ? this.currentAccent : this.currentBg
       ).toLowerCase();
 
-      // Если выбран цвет через пикер, который не является текущим, просто выделяем его
       if (color !== currentSelected) {
         if (type === "accent") this.setColor(color, false);
         else this.setBgColor(color, false);
       }
 
-      // Показываем/прячем кнопку "Добавить"
       if (this.activeActionTarget === pickerWrapper) {
         this._hideActionButton();
       } else {
@@ -318,7 +304,6 @@ export const themeManager = {
   },
 
   _showActionButton(targetWrapper, action) {
-    // Сначала прячем любую кнопку, которая может быть уже видна
     if (this.activeActionTarget && this.activeActionTarget !== targetWrapper) {
       this._hideActionButton();
     }
@@ -392,14 +377,10 @@ export const themeManager = {
         JSON.stringify(customColors),
       );
 
-      // Создаем и добавляем DOM-элемент
       this._addColorToDOM(color, type);
 
-      // Просто выбираем его (ставим рамку), без показа кнопки
       if (isAccent) this.setColor(color);
       else this.setBgColor(color);
-
-      // Строка this._showActionButton(newSwatch, 'delete'); удалена
     }
   },
 
@@ -416,15 +397,12 @@ export const themeManager = {
     );
 
     if (wrapper) {
-      // --- ДОБАВЛЕННЫЙ БЛОК ---
-      // Немедленно убираем рамку выделения с удаляемого элемента
       wrapper.classList.remove(
         "ring-[var(--primary-color)]",
         "ring-2",
         "ring-offset-2",
         "ring-offset-surface",
       );
-      // --- КОНЕЦ ДОБАВЛЕННОГО БЛОКА ---
 
       wrapper.classList.add("is-collapsing");
       wrapper.addEventListener(
@@ -516,7 +494,6 @@ export const themeManager = {
       "color-picker-wrapper relative w-9 h-9 shrink-0 group rounded-full border border-black/20 dark:border-white/20 transition-transform active:scale-90 focus-within:ring-2 focus-within:ring-[var(--primary-color)] focus-within:ring-offset-2 focus-within:ring-offset-surface";
 
     const gradientBg = document.createElement("div");
-    // ДОБАВЛЯЕМ rounded-full прямо сюда
     gradientBg.className =
       "absolute inset-0 rounded-full bg-[conic-gradient(from_0deg,red,orange,yellow,green,blue,indigo,violet,red)] opacity-90 group-hover:opacity-100 transition-opacity pointer-events-none z-0";
 
@@ -539,7 +516,6 @@ export const themeManager = {
     const picker = container.querySelector(".color-picker-wrapper");
     if (picker) container.insertBefore(swatch, picker);
     else container.append(swatch);
-    return swatch; // <-- ВАЖНО: возвращаем элемент
   },
 
   updateColorSelectionUI(type, hex, doScroll = true) {
@@ -620,9 +596,29 @@ export const themeManager = {
     }
   },
 
+  _syncPickerValues() {
+    const isDark = document.documentElement.classList.contains("dark");
+
+    const accentPicker = $("customColorInput");
+    if (accentPicker) {
+      accentPicker.value = this.currentAccent;
+    }
+
+    const bgPicker = $("customBgInput");
+    if (bgPicker) {
+      bgPicker.value =
+        this.currentBg === "default"
+          ? isDark
+            ? "#1c1c1e"
+            : "#f3f4f6"
+          : this.currentBg;
+    }
+  },
+
   // ===================================================================
-  // 4. СЕТТЕРЫ И ОСТАЛЬНЫЕ ФУНКЦИИ (без изменений)
+  // 4. СЕТТЕРЫ И ГЛОБАЛЬНЫЕ НАСТРОЙКИ
   // ===================================================================
+
   setColor(hex, doScroll = true) {
     this._hideActionButton();
     this.currentAccent = hex;
@@ -631,7 +627,7 @@ export const themeManager = {
     const { h } = this.hexToHSL(hex);
     document.documentElement.style.setProperty("--accent-h", h);
 
-    this._syncPickerValues(); // Вызываем синхронизацию
+    this._syncPickerValues();
     this.updateColorSelectionUI("accent", hex, doScroll);
   },
 
@@ -642,7 +638,7 @@ export const themeManager = {
     const isDark = document.documentElement.classList.contains("dark");
     this.applyBgTheme(hex, isDark);
 
-    this._syncPickerValues(); // Вызываем синхронизацию
+    this._syncPickerValues();
     this.updateColorSelectionUI("bg", hex, doScroll);
   },
 
@@ -650,121 +646,33 @@ export const themeManager = {
     this._internalSetMode(mode, true);
   },
 
-  applySettings() {
-    try {
-      this.customAccentColors =
-        JSON.parse(safeGetLS("custom_accent_colors")) || [];
-      this.customBgColors = JSON.parse(safeGetLS("custom_bg_colors")) || [];
-    } catch (e) {
-      this.customAccentColors = [];
-      this.customBgColors = [];
+  _internalSetMode(mode, useTransition) {
+    if (useTransition) document.body.classList.add("is-updating-theme");
+    this.currentMode = mode;
+    safeSetLS("theme_mode", mode);
+    document.querySelectorAll('[id^="theme-"]').forEach((b) => {
+      b.classList.remove("app-surface", "shadow-sm", "app-text");
+      b.classList.add("app-text-sec");
+    });
+    const activeBtn = $(`theme-${mode}`);
+    if (activeBtn) {
+      activeBtn.classList.remove("app-text-sec");
+      activeBtn.classList.add("app-surface", "shadow-sm", "app-text");
     }
+    const isDark =
+      mode === "dark" ||
+      (mode === "system" &&
+        window.matchMedia("(prefers-color-scheme: dark)").matches);
+    document.documentElement.classList.toggle("dark", isDark);
+    document.documentElement.style.colorScheme = isDark ? "dark" : "light";
 
-    this._internalSetMode(safeGetLS("theme_mode") || "system", false);
-    this.currentAccent =
-      safeGetLS("theme_color") || this.standardAccentColors[0];
-    this.currentBg = safeGetLS("theme_bg_color") || "default";
+    this.applyBgTheme(this.currentBg, isDark);
+    this._syncPickerValues();
 
-    const settingsMap = {
-      app_adaptive_bg: {
-        prop: "isAdaptiveBg",
-        default: true,
-        el: "toggle-adaptive-bg",
-        type: "checked",
-      },
-      app_vignette: {
-        prop: "hasVignette",
-        default: false,
-        el: "toggle-vignette",
-        type: "checked",
-      },
-      app_liquid_glass: {
-        prop: "isLiquidGlass",
-        default: false,
-        el: "toggle-glass",
-        type: "checked",
-      },
-      app_hide_nav_labels: {
-        prop: "hideNavLabels",
-        default: false,
-        el: "toggle-nav-labels",
-        type: "checked",
-      },
-      app_show_ms: {
-        prop: "showMs",
-        default: true,
-        el: "toggle-ms",
-        type: "checked",
-      },
-      app_sw_minute_beep: {
-        prop: "swMinuteBeep",
-        default: true,
-        el: "toggle-sw-minute-beep",
-        type: "checked",
-      },
-      font_size: {
-        prop: null,
-        default: 16,
-        el: "fontSlider",
-        type: "value",
-        setter: this.setFontSize.bind(this),
-      },
-      app_ring_width: {
-        prop: null,
-        default: 4,
-        el: "ringWidthSlider",
-        type: "value",
-        setter: this.setRingWidth.bind(this),
-      },
-    };
-
-    for (const [key, config] of Object.entries(settingsMap)) {
-      const storedValue = safeGetLS(key);
-      let value;
-      if (config.type === "checked") {
-        value = storedValue !== null ? storedValue === "true" : config.default;
-        this[config.prop] = value;
-      } else {
-        value = storedValue !== null ? parseFloat(storedValue) : config.default;
-      }
-      if ($(config.el)) $(config.el)[config.type] = value;
-      if (config.setter) config.setter(value);
-    }
-
-    const storedVignetteAlpha = safeGetLS("app_vignette_alpha");
-    this.vignetteAlpha =
-      storedVignetteAlpha !== null ? parseFloat(storedVignetteAlpha) : 0.2;
-    if ($("vignetteSlider")) {
-      const closestIndex = this.vignetteLevels.reduce(
-        (prev, curr, i) =>
-          Math.abs(curr - this.vignetteAlpha) <
-          Math.abs(this.vignetteLevels[prev] - this.vignetteAlpha)
-            ? i
-            : prev,
-        0,
+    if (useTransition)
+      requestAnimationFrame(() =>
+        document.body.classList.remove("is-updating-theme"),
       );
-      $("vignetteSlider").value = closestIndex;
-    }
-    if ($("vibroSlider")) {
-      const levels = [0.5, 0.75, 1, 1.5, 2];
-      const vibroValue = parseFloat(safeGetLS("app_vibro_level")) || 1;
-      const closestIndex = levels.reduce(
-        (prev, curr, i) =>
-          Math.abs(curr - vibroValue) < Math.abs(levels[prev] - vibroValue)
-            ? i
-            : prev,
-        0,
-      );
-      $("vibroSlider").value = closestIndex;
-    }
-
-    this.updateAdaptiveClass();
-    this.applyNavLabelsVisibility();
-    this.updateGlass();
-    this.updateVignette();
-    this.syncSliderUIs();
-
-    this._syncPickerValues(); // Вызываем синхронизацию в конце
   },
 
   setFontSize(s) {
@@ -861,7 +769,6 @@ export const themeManager = {
       } else {
         value = storedValue !== null ? parseFloat(storedValue) : config.default;
       }
-
       if ($(config.el)) $(config.el)[config.type] = value;
       if (config.setter) config.setter(value);
     }
@@ -899,24 +806,7 @@ export const themeManager = {
     this.updateVignette();
     this.syncSliderUIs();
 
-    // --- НАЧАЛО НОВОГО БЛОКА ---
-    // Синхронизируем значение color picker'ов при первоначальной загрузке
-    const accentPicker = $("customColorInput");
-    if (accentPicker) {
-      accentPicker.value = this.currentAccent;
-    }
-
-    const bgPicker = $("customBgInput");
-    if (bgPicker) {
-      const isDark = document.documentElement.classList.contains("dark");
-      // Если цвет фона 'default', ставим соответствующий серый, иначе - сам цвет
-      bgPicker.value =
-        this.currentBg === "default"
-          ? isDark
-            ? "#1c1c1e"
-            : "#f3f4f6"
-          : this.currentBg;
-    }
+    this._syncPickerValues();
   },
 
   resetSettings() {
@@ -935,12 +825,17 @@ export const themeManager = {
       "app_sw_minute_beep",
     ];
     themeKeys.forEach(safeRemoveLS);
+
     this.applySettings();
     this._populateColorSection("accent");
     this._populateColorSection("bg");
     this.updateColorSelectionUI("accent", this.currentAccent, false);
     this.updateColorSelectionUI("bg", this.currentBg, false);
   },
+
+  // ===================================================================
+  // 5. ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+  // ===================================================================
 
   syncSliderUIs() {
     this.updateSliderLabel(
