@@ -1237,7 +1237,7 @@ input[type="range"]:focus + .thumb-label-container > .thumb-label {
   top: -0.75rem; /* Сдвигаем выше кружка */
   left: 50%;
   transform: translateX(-50%);
-  z-index: 10;
+  z-index: 30;
   animation: fadeInScale 0.2s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 
