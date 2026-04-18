@@ -653,6 +653,7 @@ export const themeManager = {
     this._internalSetMode(mode, true);
   },
 
+  // ИСПРАВЛЕННАЯ ВЕРСИЯ
   _internalSetMode(mode, useTransition) {
     if (useTransition) document.body.classList.add("is-updating-theme");
     this.currentMode = mode;
@@ -677,8 +678,8 @@ export const themeManager = {
       if (bgPicker) bgPicker.value = isDark ? "#1c1c1e" : "#f3f4f6";
     }
     this.applyBgTheme(this.currentBg, isDark);
-    this.updateColorSelectionUI("accent", this.currentAccent, false);
-    this.updateColorSelectionUI("bg", this.currentBg, false);
+    // Строки с updateColorSelectionUI() отсюда удалены.
+    // Они будут вызваны в нужный момент в конце функции init().
     if (useTransition)
       requestAnimationFrame(() =>
         document.body.classList.remove("is-updating-theme"),
