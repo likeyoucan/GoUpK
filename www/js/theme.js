@@ -595,25 +595,37 @@ export const themeManager = {
         });
     }
   },
-
   _syncPickerValues() {
     const isDark = document.documentElement.classList.contains("dark");
 
+    // 1. Синхронизируем пикер акцентного цвета (здесь все было правильно)
     const accentPicker = $("customColorInput");
     if (accentPicker) {
       accentPicker.value = this.currentAccent;
     }
 
+    // 2. Синхронизируем пикер фонового цвета (здесь исправлена логика)
     const bgPicker = $("customBgInput");
     if (bgPicker) {
-      // Если текущий фон - это кастомный цвет, используем его.
-      // Если выбран "default" или стандартный цвет, сбрасываем пикер
-      // на базовый черный/белый, чтобы было удобно начинать выбор нового цвета.
+      let pickerValue;
+
       if (this.currentBg.startsWith("#")) {
-        bgPicker.value = this.currentBg;
+        // Если выбран стандартный или кастомный цвет (уже в HEX-формате),
+        // то просто используем его.
+        pickerValue = this.currentBg;
       } else {
-        bgPicker.value = isDark ? "#df3434" : "#fbff00";
+        // Если выбрана опция "default", нам нужно определить, какой
+        // фактический HEX-цвет этому соответствует.
+        // Эта логика должна точно повторять логику из `applyBgTheme`.
+        if (isDark) {
+          // В темной теме фон по умолчанию - черный.
+          pickerValue = "#000000";
+        } else {
+          // В светлой теме фон по умолчанию - светло-серый.
+          pickerValue = "#f3f4f6";
+        }
       }
+      bgPicker.value = pickerValue.toLowerCase();
     }
   },
 
