@@ -332,39 +332,51 @@ export const themeManager = {
     this.activeActionTarget = null;
   },
 
-  addCustomColor(type) {
+addCustomColor(type) {
     const isAccent = type === "accent";
-    const customColors = isAccent
-      ? this.customAccentColors
-      : this.customBgColors;
+    const customColors = isAccent ? this.customAccentColors : this.customBgColors;
 
+    // 1. Проверка лимита
     if (customColors.length >= MAX_CUSTOM_COLORS) {
       showToast(isAccent ? t("accent_limit_msg") : t("bg_limit_msg"));
       return;
     }
 
     const picker = $(isAccent ? "customColorInput" : "customBgInput");
-    const color = picker.value;
-    const allColors = [
-      ...(isAccent ? this.standardAccentColors : this.standardBgColors),
-      ...customColors,
-    ];
+    // Нормализуем цвет к нижнему регистру для надежного сравнения
+    const color = picker.value.toLowerCase(); 
 
+    const standardColors = isAccent ? this.standardAccentColors : this.standardBgColors;
+    // Сравниваем с нормализованным списком всех цветов
+    const allColors = [...standardColors, ...customColors].map(c => c.toLowerCase());
+
+    // Прячем кнопку "+" в любом случае
     this._hideActionButton();
 
-    if (!allColors.includes(color)) {
+    // 2. Проверка на дубликат
+    if (allColors.includes(color)) {
+      // Если цвет уже существует:
+      showToast(t("color_already_exists"));
+      sm.vibrate(30, "medium");
+      // Просто выбираем (выделяем) уже существующий цвет
+      if (isAccent) {
+        this.setColor(color);
+      } else {
+        this.setBgColor(color);
+      }
+    } else {
+      // 3. Если цвет новый - добавляем его
       sm.vibrate(40, "medium");
       customColors.push(color);
-      safeSetLS(
-        isAccent ? "custom_accent_colors" : "custom_bg_colors",
-        JSON.stringify(customColors),
-      );
-
+      safeSetLS(isAccent ? "custom_accent_colors" : "custom_bg_colors", JSON.stringify(customColors));
       this._addColorToDOM(color, type);
-      if (isAccent) this.setColor(color);
-      else this.setBgColor(color);
+      if (isAccent) {
+        this.setColor(color);
+      } else {
+        this.setBgColor(color);
+      }
     }
-  },
+},
 
   _deleteColorWithAnimation(color, type) {
     sm.vibrate(40, "medium");
