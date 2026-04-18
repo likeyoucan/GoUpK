@@ -332,9 +332,11 @@ export const themeManager = {
     this.activeActionTarget = null;
   },
 
-addCustomColor(type) {
+  addCustomColor(type) {
     const isAccent = type === "accent";
-    const customColors = isAccent ? this.customAccentColors : this.customBgColors;
+    const customColors = isAccent
+      ? this.customAccentColors
+      : this.customBgColors;
 
     // 1. Проверка лимита
     if (customColors.length >= MAX_CUSTOM_COLORS) {
@@ -344,11 +346,15 @@ addCustomColor(type) {
 
     const picker = $(isAccent ? "customColorInput" : "customBgInput");
     // Нормализуем цвет к нижнему регистру для надежного сравнения
-    const color = picker.value.toLowerCase(); 
+    const color = picker.value.toLowerCase();
 
-    const standardColors = isAccent ? this.standardAccentColors : this.standardBgColors;
+    const standardColors = isAccent
+      ? this.standardAccentColors
+      : this.standardBgColors;
     // Сравниваем с нормализованным списком всех цветов
-    const allColors = [...standardColors, ...customColors].map(c => c.toLowerCase());
+    const allColors = [...standardColors, ...customColors].map((c) =>
+      c.toLowerCase(),
+    );
 
     // Прячем кнопку "+" в любом случае
     this._hideActionButton();
@@ -368,7 +374,10 @@ addCustomColor(type) {
       // 3. Если цвет новый - добавляем его
       sm.vibrate(40, "medium");
       customColors.push(color);
-      safeSetLS(isAccent ? "custom_accent_colors" : "custom_bg_colors", JSON.stringify(customColors));
+      safeSetLS(
+        isAccent ? "custom_accent_colors" : "custom_bg_colors",
+        JSON.stringify(customColors),
+      );
       this._addColorToDOM(color, type);
       if (isAccent) {
         this.setColor(color);
@@ -376,7 +385,7 @@ addCustomColor(type) {
         this.setBgColor(color);
       }
     }
-},
+  },
 
   _deleteColorWithAnimation(color, type) {
     sm.vibrate(40, "medium");
@@ -796,8 +805,6 @@ addCustomColor(type) {
       "app_ring_width",
       "app_show_ms",
       "app_sw_minute_beep",
-      "custom_accent_colors",
-      "custom_bg_colors",
     ];
     themeKeys.forEach(safeRemoveLS);
     this.applySettings();
