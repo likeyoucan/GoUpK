@@ -39,6 +39,18 @@ function createSVGIcon(pathData, classes = []) {
   return svg;
 }
 
+/**
+ * Вспомогательная функция для конвертации цвета из RGB в HEX.
+ * @param {string} rgb - Строка в формате 'rgb(r, g, b)'.
+ * @returns {string} - Строка в формате '#rrggbb'.
+ */
+function _rgbToHex(rgb) { // <--- ПЕРЕМЕСТИЛИ СЮДА
+  const match = rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
+  if (!match) return rgb; // Возвращаем как есть, если формат не rgb
+  const toHex = (c) => ("0" + parseInt(c, 10).toString(16)).slice(-2);
+  return `#${toHex(match[1])}${toHex(match[2])}${toHex(match[3])}`;
+}
+
 export const themeManager = {
   // --- Состояние ---
   currentMode: "system",
@@ -596,30 +608,28 @@ export const themeManager = {
     }
   },
 
-  _rgbToHex(rgb) {
-    const match = rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
-    if (!match) return rgb; // Возвращаем как есть, если формат не rgb
-    const toHex = (c) => ("0" + parseInt(c, 10).toString(16)).slice(-2);
-    return `#${toHex(match[1])}${toHex(match[2])}${toHex(match[3])}`;
-  },
-
   _syncPickerValues() {
-    // 1. Синхронизируем пикер акцентного цвета (он работает правильно)
+    // 1. Синхронизируем пикер акцентного цвета
     const accentPicker = $("customColorInput");
     if (accentPicker) {
-      accentPicker.value = this.currentAccent;
+      // Прямо используем this.currentAccent, так как он является
+      // единственным источником правды для акцентного цвета.
+      // Проверяем, что значение не пустое, чтобы избежать сброса в черный.
+      if (this.currentAccent) {
+        accentPicker.value = this.currentAccent;
+      }
     }
 
-    // 2. Синхронизируем пикер фонового цвета (новая, надежная логика)
+    // 2. Синхронизируем пикер фонового цвета
     const bgPicker = $("customBgInput");
     if (bgPicker) {
-      // Получаем актуальный, вычисленный браузером цвет фона страницы
+      // Используем getComputedStyle, так как это самый надежный способ
+      // узнать реальный цвет фона при любых настройках.
       const computedBgColor = window.getComputedStyle(
         document.body,
       ).backgroundColor;
 
-      // `getComputedStyle` возвращает цвет в формате 'rgb(r, g, b)'.
-      // Пикеру нужен формат '#rrggbb', поэтому конвертируем.
+      // Конвертируем 'rgb(r, g, b)' в '#rrggbb' для пикера.
       bgPicker.value = this._rgbToHex(computedBgColor);
     }
   },
