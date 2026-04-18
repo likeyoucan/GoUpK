@@ -1486,11 +1486,6 @@ html.dark.no-adaptive .default-bg-btn {
   scrollbar-gutter: stable;
   touch-action: pan-y;
 }
-#reset-modal, #sw-clear-modal, #sw-name-modal {
-  background-color: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-}
 #reset-modal-content, #sw-clear-modal-content, #sw-name-modal-content {
   background-color: var(--surface-color);
   border: 1px solid var(--border-color);
