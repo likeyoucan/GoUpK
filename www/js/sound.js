@@ -128,7 +128,8 @@ export const sm = {
       "app_volume",
     ];
     soundKeys.forEach(safeRemoveLS);
-    this.applySettings();
+
+    this.init();
   },
 
   updateVolumeUI() {
@@ -138,7 +139,6 @@ export const sm = {
       volSlider.parentElement.style.opacity = this.soundEnabled ? "1" : "0.5";
     }
   },
-
 
   initAudio() {
     if (this.audioCtx || !this.soundEnabled) return;

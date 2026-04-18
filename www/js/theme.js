@@ -812,29 +812,18 @@ export const themeManager = {
     this._syncPickerValues();
   },
 
-  resetSettings() {
-    const themeKeys = [
-      "theme_mode",
-      "theme_color",
-      "theme_bg_color",
-      "font_size",
-      "app_adaptive_bg",
-      "app_vignette",
-      "app_vignette_alpha",
-      "app_liquid_glass",
-      "app_hide_nav_labels",
-      "app_ring_width",
-      "app_show_ms",
-      "app_sw_minute_beep",
+resetSettings() {
+    // Список ключей для удаления
+    const themeKeys = [ 
+      "theme_mode", "theme_color", "theme_bg_color", "font_size", 
+      "app_adaptive_bg", "app_vignette", "app_vignette_alpha", 
+      "app_liquid_glass", "app_hide_nav_labels", "app_ring_width", 
+      "app_show_ms", "app_sw_minute_beep" 
     ];
     themeKeys.forEach(safeRemoveLS);
-
-    this.applySettings();
-    this._populateColorSection("accent");
-    this._populateColorSection("bg");
-    this.updateColorSelectionUI("accent", this.currentAccent, false);
-    this.updateColorSelectionUI("bg", this.currentBg, false);
-  },
+    
+    this.init(); 
+},
 
   // ===================================================================
   // 5. ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
