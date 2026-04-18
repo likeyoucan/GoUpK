@@ -465,8 +465,9 @@ export const themeManager = {
     const pickerId = type === "accent" ? "customColorInput" : "customBgInput";
 
     const wrapper = document.createElement("div");
+    // Класс overflow-hidden удален
     wrapper.className =
-      "color-picker-wrapper relative w-9 h-9 shrink-0 group rounded-full overflow-hidden border border-black/20 dark:border-white/20 transition-transform active:scale-90 focus-within:ring-2 focus-within:ring-[var(--primary-color)] focus-within:ring-offset-2 focus-within:ring-offset-surface";
+      "color-picker-wrapper relative w-9 h-9 shrink-0 group rounded-full border border-black/20 dark:border-white/20 transition-transform active:scale-90 focus-within:ring-2 focus-within:ring-[var(--primary-color)] focus-within:ring-offset-2 focus-within:ring-offset-surface";
 
     const gradientBg = document.createElement("div");
     gradientBg.className =
