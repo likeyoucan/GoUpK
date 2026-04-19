@@ -12,7 +12,6 @@ export const colorManager = {
   customBgColors: [],
   activeActionTarget: null,
   longPressTimer: null,
-  ignoreNextClick: false, // НОВЫЙ ФЛАГ для блокировки фантомного клика
 
   standardAccentColors: ["#22c55e", "#3b82f6", "#a855f7", "#ec4899", "#f97316", "#ef4444", "#6366f1", "#e11d48"],
   standardBgColors: ["default", "#60a5fa", "#c084fc", "#f472b6", "#34d399", "#facc15", "#f87171", "#2dd4bf"],
@@ -35,16 +34,14 @@ export const colorManager = {
   },
 
   _bindEvents() {
-    // Вешаем слушатели кликов на контейнеры
     this._bindContainerEvents("accent-colors-container", "accent");
     this._bindContainerEvents("bg-colors-container", "bg");
     
+    // Используем простой и надежный подход с событиями 'input' и 'change'
     const setupPickerEvents = (type) => {
         const pickerId = type === 'accent' ? 'customColorInput' : 'customBgInput';
         const picker = $(pickerId);
         if (!picker) return;
-
-        let pollingInterval = null;
 
         // 'input' для live-preview
         picker.addEventListener("input", (e) => {
@@ -54,22 +51,10 @@ export const colorManager = {
             document.dispatchEvent(new CustomEvent("colorSelected", { detail: { type, color: e.target.value, fromPicker: true } }));
         });
         
-        // При клике на пикер начинаем отслеживать закрытие окна
-        picker.addEventListener("click", () => {
-            if (pollingInterval) return;
-
-            pollingInterval = setInterval(() => {
-                if (document.hasFocus()) {
-                    clearInterval(pollingInterval);
-                    pollingInterval = null;
-
-                    // Показываем кнопку "Добавить"
-                    this._showActionButton(picker.closest('.color-picker-wrapper'), 'add');
-                    
-                    // Устанавливаем флаг, чтобы проигнорировать следующий фантомный клик
-                    this.ignoreNextClick = true;
-                }
-            }, 200);
+        // 'change' срабатывает только когда пользователь подтвердил выбор (нажал "ОК")
+        picker.addEventListener("change", () => {
+            // Показываем кнопку "Добавить"
+            this._showActionButton(picker.closest('.color-picker-wrapper'), 'add');
         });
     };
     setupPickerEvents('accent');
@@ -82,46 +67,28 @@ export const colorManager = {
 
     container.addEventListener("click", (e) => this._handleClick(e, type));
     
+    // Код для long press / context menu остается без изменений
     container.addEventListener("contextmenu", (e) => {
         const swatch = e.target.closest('.color-swatch-wrapper[data-custom="true"]');
-        if (swatch) {
-            e.preventDefault();
-            this._showActionButton(swatch, 'delete');
-        }
+        if (swatch) { e.preventDefault(); this._showActionButton(swatch, 'delete'); }
     });
-
-    // Код для long press остается без изменений
     let touchMoved = false;
     container.addEventListener("touchstart", (e) => {
         const swatch = e.target.closest('.color-swatch-wrapper[data-custom="true"]');
         if (swatch) {
             touchMoved = false;
             this.longPressTimer = setTimeout(() => {
-                if (!touchMoved) {
-                    e.preventDefault();
-                    this._showActionButton(swatch, 'delete');
-                }
+                if (!touchMoved) { e.preventDefault(); this._showActionButton(swatch, 'delete'); }
             }, LONG_PRESS_DURATION);
         }
     }, { passive: true });
-    container.addEventListener("touchmove", () => {
-        touchMoved = true;
-        if (this.longPressTimer) clearTimeout(this.longPressTimer);
-    });
-    const endTouch = () => {
-        if (this.longPressTimer) clearTimeout(this.longPressTimer);
-    };
+    container.addEventListener("touchmove", () => { touchMoved = true; if (this.longPressTimer) clearTimeout(this.longPressTimer); });
+    const endTouch = () => { if (this.longPressTimer) clearTimeout(this.longPressTimer); };
     container.addEventListener("touchend", endTouch);
     container.addEventListener("touchcancel", endTouch);
   },
 
   _handleClick(event, type) {
-    // ГЛАВНЫЙ БЛОКИРОВЩИК ФАНТОМНЫХ КЛИКОВ
-    if (this.ignoreNextClick) {
-        this.ignoreNextClick = false; // Сбрасываем флаг
-        return; // И выходим
-    }
-
     const swatch = event.target.closest(".color-swatch-wrapper");
     const pickerWrapper = event.target.closest(".color-picker-wrapper");
     const actionBtn = event.target.closest(".color-action-btn");
@@ -180,7 +147,7 @@ export const colorManager = {
         btn.style.color = iconColor;
         
         btn.append(createSVGIcon("M12 4.5v15m7.5-7.5h-15", ["w-5", "h-5"]));
-    } else { // delete
+    } else {
         btn.setAttribute("aria-label", `${t("delete")} ${color}`);
         btn.style.backgroundColor = '#ef4444';
         btn.style.color = '#ffffff';
