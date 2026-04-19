@@ -46,12 +46,6 @@ export const themeManager = {
             this.setBgColor('default');
         }
     });
-
-    document.addEventListener('revertToLastValidColor', (e) => {
-        const { type } = e.detail;
-        if (type === 'accent') this.setColor(this.currentAccent);
-        else this.setBgColor(this.currentBg);
-    });
   },
 
   applySettings() {
@@ -104,10 +98,8 @@ export const themeManager = {
   },
 
   setColor(hex, doScroll = true) {
-    if (doScroll) { // doScroll используется как флаг, что это не предпросмотр
-        this.currentAccent = hex;
-        safeSetLS("theme_color", hex);
-    }
+    this.currentAccent = hex;
+    safeSetLS("theme_color", hex);
     
     document.documentElement.style.setProperty("--primary-color", hex);
     const { h } = hexToHSL(hex);
@@ -118,10 +110,8 @@ export const themeManager = {
   },
 
   setBgColor(hex, doScroll = true) {
-    if (doScroll) {
-        this.currentBg = hex;
-        safeSetLS("theme_bg_color", hex);
-    }
+    this.currentBg = hex;
+    safeSetLS("theme_bg_color", hex);
     
     this.applyBgTheme(hex);
     
