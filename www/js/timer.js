@@ -15,6 +15,7 @@ import {
 import { sm } from "./sound.js?v=VERSION";
 import { t } from "./i18n.js?v=VERSION";
 import { store } from "./store.js?v=VERSION";
+import { uiSettingsManager } from "./ui-settings.js?v=VERSION";
 
 let timeRemainingMs = 0;
 
@@ -54,7 +55,6 @@ export const tm = {
 
   init() {
     this.els = {
-      // FIX 1: Добавляем саму форму в список элементов
       form: $("tm-form"),
       inputs: $("tm-inputs"),
       resetBtn: $("tm-resetBtn"),
@@ -273,7 +273,6 @@ export const tm = {
 
       if (duration <= 0) {
         showToast(t("timer_zero"));
-        // Используем form для анимации, если она есть, иначе inputs
         const elToShake = this.els.form || this.els.inputs;
         elToShake.classList.add("animate-shake");
         setTimeout(() => elToShake.classList.remove("animate-shake"), 300);
@@ -318,7 +317,6 @@ export const tm = {
     this.els.display.classList.add("is-go");
   },
 
-  // FIX 2: Обновляем функцию для управления видимостью всей формы
   updateUIState() {
     if (!this.els.form) return;
     if (this.isRunning) {

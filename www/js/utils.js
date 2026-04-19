@@ -58,7 +58,6 @@ export const requestWakeLock = async () => {
       });
     } catch (err) {
       // Ошибка может возникнуть, если документ неактивен, и это нормально.
-      // console.error(`${err.name}, ${err.message}`);
     }
   }
 };
@@ -104,13 +103,6 @@ export const adjustVal = (id, delta) => {
 
 export const pad = (num) => String(num).padStart(2, "0");
 
-/**
- * Генерирует уникальное имя на основе базового, проверяя его в массиве объектов.
- * @param {string} baseName - Базовое имя.
- * @param {Array<Object>} items - Массив объектов для проверки.
- * @param {string} [key='name'] - Ключ объекта, по которому проверять имя.
- * @returns {string} - Уникальное имя.
- */
 export function getUniqueName(baseName, items, key = "name") {
   let name = baseName;
   let counter = 1;
@@ -122,17 +114,6 @@ export function getUniqueName(baseName, items, key = "name") {
   return name;
 }
 
-/**
- * Функция форматирования времени.
- * @param {number} ms - Время в миллисекундах.
- * @param {object} options - Опции форматирования.
- * @param {boolean} [options.showMs=false] - Показывать миллисекунды?
- * @param {boolean} [options.forceHours=false] - Всегда показывать часы, даже если их 0?
- * @param {boolean} [options.showDays=false] - Показывать дни?
- * @param {string} [options.daySuffix='d'] - Суффикс для дней.
- * @param {string} [options.hourSuffix='h'] - Суффикс для часов.
- * @returns {string} - Отформатированная строка времени.
- */
 export function formatTime(ms, options = {}) {
   const {
     showMs = false,
@@ -173,13 +154,79 @@ export function formatTime(ms, options = {}) {
   return result;
 }
 
-// --- Worker Initialization ---
+export const getLuminance = (r, g, b) => {
+  const a = [r, g, b].map((v) => {
+    v /= 255;
+    return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+  });
+  return a[0] * 0.2126 + a[1] * 0.7152 + a[2] * 0.0722;
+};
+
+export const hexToRGB = (H) => {
+  if (!H || !H.startsWith("#")) return { r: 0, g: 0, b: 0 };
+  let r = 0,
+    g = 0,
+    b = 0;
+  if (H.length === 4) {
+    r = parseInt(H[1] + H[1], 16);
+    g = parseInt(H[2] + H[2], 16);
+    b = parseInt(H[3] + H[3], 16);
+  } else if (H.length === 7) {
+    r = parseInt(H[1] + H[2], 16);
+    g = parseInt(H[3] + H[4], 16);
+    b = parseInt(H[5] + H[6], 16);
+  }
+  return { r, g, b };
+};
+
+export const hexToHSL = (H) => {
+  if (!H || !H.startsWith("#")) return { h: 142, s: 50, l: 50 };
+  const { r: r255, g: g255, b: b255 } = hexToRGB(H);
+  let r = r255 / 255,
+    g = g255 / 255,
+    b = b255 / 255;
+  let cmin = Math.min(r, g, b),
+    cmax = Math.max(r, g, b),
+    delta = cmax - cmin;
+  let h = 0,
+    s = 0,
+    l = (cmax + cmin) / 2;
+  if (delta !== 0) {
+    s = delta / (1 - Math.abs(2 * l - 1));
+    if (cmax === r) h = ((g - b) / delta) % 6;
+    else if (cmax === g) h = (b - r) / delta + 2;
+    else h = (r - g) / delta + 4;
+  }
+  h = Math.round(h * 60);
+  if (h < 0) h += 360;
+  return { h, s: +(s * 100).toFixed(1), l: +(l * 100).toFixed(1) };
+};
+
+export const createSVGIcon = (pathData, classes = []) => {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("fill", "none");
+  svg.setAttribute("stroke", "currentColor");
+  svg.setAttribute("stroke-width", "2.5");
+  svg.setAttribute("focusable", "false");
+  svg.setAttribute("aria-hidden", "true");
+  if (classes.length) svg.classList.add(...classes);
+
+  path.setAttribute("d", pathData);
+  path.setAttribute("stroke-linecap", "round");
+  path.setAttribute("stroke-linejoin", "round");
+
+  svg.appendChild(path);
+  return svg;
+};
+
 const createWorker = () => {
   try {
     return new Worker("./js/worker.js?v=VERSION");
   } catch (e) {
     console.error("Failed to create background worker:", e);
-    // Возвращаем "пустышку", чтобы приложение не упало, если воркер не создался
     return {
       postMessage: () => {},
       addEventListener: () => {},

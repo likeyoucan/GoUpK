@@ -17,7 +17,7 @@ import {
 } from "./utils.js?v=VERSION";
 import { sm } from "./sound.js?v=VERSION";
 import { t } from "./i18n.js?v=VERSION";
-import { settingsManager } from "./ui-settings.js?v=VERSION";
+import { uiSettingsManager } from "./ui-settings.js?v=VERSION";
 import { modalManager } from "./modal.js?v=VERSION";
 import { store } from "./store.js?v=VERSION";
 
@@ -118,16 +118,6 @@ const stopwatchModule = {
     });
   },
 
-  formatTime(ms, forceMs = null) {
-    const showMilliseconds =
-      forceMs !== null ? forceMs : settingsManager.showMs;
-    const shouldForceHours = this.elapsedTime >= 3600000;
-    return formatTime(ms, {
-      showMs: showMilliseconds,
-      forceHours: shouldForceHours,
-    });
-  },
-
   toggle() {
     sm.vibrate(50, "strong");
     sm.play("click");
@@ -146,7 +136,7 @@ const stopwatchModule = {
       this.els.lapBtn.classList.remove("app-surface", "app-text");
       this.els.lapBtn.classList.add("bg-red-500", "text-white", "is-reset");
       announceToScreenReader(
-        `${t("stopwatch")} ${t("pause")}. ${this.formatTime(this.elapsedTime, false)}`,
+        `${t("stopwatch")} ${t("pause")}. ${formatTime(this.elapsedTime, { showMs: false, forceHours: this.elapsedTime >= 3600000 })}`,
       );
     } else {
       document.dispatchEvent(
@@ -176,7 +166,7 @@ const stopwatchModule = {
     this.elapsedTime = now - this.startTime;
     const currentMinute = Math.floor(this.elapsedTime / 60000);
     if (
-      settingsManager.swMinuteBeep &&
+      uiSettingsManager.swMinuteBeep &&
       currentMinute > this.lastMinuteBeep &&
       this.elapsedTime > 1000
     ) {
@@ -187,7 +177,13 @@ const stopwatchModule = {
 
     if (now - this.lastRender >= 16 || isBackground) {
       if (!isBackground) this.updateDisplay();
-      else updateTitle(this.formatTime(this.elapsedTime, false));
+      else
+        updateTitle(
+          formatTime(this.elapsedTime, {
+            showMs: false,
+            forceHours: this.elapsedTime >= 3600000,
+          }),
+        );
       this.lastRender = now;
     }
     if (!isBackground) {
@@ -197,12 +193,13 @@ const stopwatchModule = {
   },
 
   updateDisplay() {
-    const showMs = settingsManager.showMs;
+    const showMs = uiSettingsManager.showMs;
     const shouldForceHours = this.elapsedTime >= 3600000;
 
-    const mainDisplayParts = formatTime(this.elapsedTime, { showMs }).split(
-      ":",
-    );
+    const mainDisplayParts = formatTime(this.elapsedTime, {
+      showMs,
+      forceHours: shouldForceHours,
+    }).split(":");
     const mainDisplayStr = shouldForceHours
       ? mainDisplayParts.join(":")
       : mainDisplayParts.slice(-2).join(":");
@@ -221,7 +218,12 @@ const stopwatchModule = {
         this.els.extendedDisplay.classList.add("hidden");
       }
     }
-    updateTitle(this.formatTime(this.elapsedTime, false));
+    updateTitle(
+      formatTime(this.elapsedTime, {
+        showMs: false,
+        forceHours: shouldForceHours,
+      }),
+    );
     if (this.els.ring)
       this.els.ring.style.strokeDashoffset =
         this.ringLength -
@@ -309,12 +311,12 @@ const stopwatchModule = {
       `${t("lap_text")} ${lap.index}`;
     div.querySelector('[data-template="lap-total"]').textContent = formatTime(
       lap.total,
-      { showMs: true, forceHours: shouldForceHours },
+      { showMs: uiSettingsManager.showMs, forceHours: shouldForceHours },
     );
 
     const splitTimeEl = div.querySelector('[data-template="lap-split"]');
     splitTimeEl.textContent = formatTime(lap.diff, {
-      showMs: true,
+      showMs: uiSettingsManager.showMs,
       forceHours: shouldForceHours,
     });
     splitTimeEl.classList.add("split-time");
@@ -329,6 +331,13 @@ const stopwatchModule = {
 
   reRenderCurrentLaps() {
     this.els.lapsContainer.replaceChildren();
+    if (this.laps.length === 0) {
+      this.els.lapsContainer.insertAdjacentHTML(
+        "afterbegin",
+        `<div class="text-center app-text-sec opacity-50 mt-4 text-sm" data-i18n="no_laps">${t("no_laps")}</div>`,
+      );
+      return;
+    }
     [...this.laps].reverse().forEach((lap, i, arr) => {
       this.els.lapsContainer.prepend(
         this.createLapElement(lap, i === arr.length - 1),
@@ -526,7 +535,7 @@ const stopwatchModule = {
         dateStr;
       sessionElement.querySelector('[data-template="totalTime"]').textContent =
         formatTime(session.totalTime, {
-          showMs: true,
+          showMs: uiSettingsManager.showMs,
           forceHours: shouldForceHours,
         });
 
@@ -569,9 +578,15 @@ const stopwatchModule = {
         lapElement.querySelector('[data-template="lap-index"]').textContent =
           `${t("lap_text")} ${lap.index}`;
         lapElement.querySelector('[data-template="lap-total"]').textContent =
-          formatTime(lap.total, { showMs: true, forceHours: shouldForceHours });
+          formatTime(lap.total, {
+            showMs: uiSettingsManager.showMs,
+            forceHours: shouldForceHours,
+          });
         lapElement.querySelector('[data-template="lap-split"]').textContent =
-          formatTime(lap.diff, { showMs: true, forceHours: shouldForceHours });
+          formatTime(lap.diff, {
+            showMs: uiSettingsManager.showMs,
+            forceHours: shouldForceHours,
+          });
 
         lapsContainer.appendChild(lapElement);
       });

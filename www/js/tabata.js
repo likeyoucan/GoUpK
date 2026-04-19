@@ -154,8 +154,12 @@ export const tb = {
         this.els.editRounds.value = w.rounds;
       }
     } else {
-      // ИЗМЕНЕНО: Используем общую функцию getUniqueName
-      this.els.editName.value = getUniqueName(t("tabata"), this.workouts, 'name');
+      // Используем общую функцию getUniqueName из utils.js
+      this.els.editName.value = getUniqueName(
+        t("tabata"),
+        this.workouts,
+        "name",
+      );
       this.els.editWork.value = 20;
       this.els.editRest.value = 10;
       this.els.editRounds.value = 8;
@@ -165,8 +169,9 @@ export const tb = {
 
   saveWorkout() {
     let finalName = this.els.editName.value.trim();
-    // ИЗМЕНЕНО: Используем общую функцию getUniqueName
-    if (!finalName) finalName = getUniqueName(t("tabata"), this.workouts, 'name');
+    // Используем общую функцию getUniqueName если имя не введено
+    if (!finalName)
+      finalName = getUniqueName(t("tabata"), this.workouts, "name");
 
     if (finalName.length > 50) {
       updateText(this.els.nameError, t("name_too_long"));
@@ -185,7 +190,7 @@ export const tb = {
         w.id !== this.editingWorkoutId,
     );
     if (exists) {
-      updateText(this.els.nameError, t('name_exists'));
+      updateText(this.els.nameError, t("name_exists"));
       this.els.nameError?.classList.remove("hidden");
       this.els.editName.classList.add("animate-shake");
       setTimeout(
@@ -325,7 +330,7 @@ export const tb = {
     );
     store.setActiveTimer("tabata");
 
-    const workout = this.workouts.find(w => w.id === this.selectedId);
+    const workout = this.workouts.find((w) => w.id === this.selectedId);
     if (workout && this.els.runningWorkoutName) {
       updateText(this.els.runningWorkoutName, workout.name);
     }

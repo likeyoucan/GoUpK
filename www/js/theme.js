@@ -1,137 +1,142 @@
 // Файл: www/js/theme.js
 
-import { $, safeGetLS, safeSetLS } from "./utils.js?v=VERSION";
-import { settingsManager } from "./ui-settings.js?v=VERSION";
-import { colorsManager } from "./ui-colors.js?v=VERSION";
-import { hexToRGB, hexToHSL, getLuminance, isValidHex } from "./color.js?v=VERSION";
+import { $, safeGetLS, safeSetLS, safeRemoveLS, hexToHSL, hexToRGB, getLuminance } from "./utils.js?v=VERSION";
+import { uiSettingsManager } from "./ui-settings.js?v=VERSION";
+import { colorManager } from "./color-manager.js?v=VERSION";
 
 export const themeManager = {
   currentMode: "system",
+  currentAccent: "",
+  currentBg: "default",
 
   init() {
-    settingsManager.init();
-    colorsManager.init(this);
-    
-    this.setColor(colorsManager.currentAccent, false);
-    
-    this.currentMode = safeGetLS("theme_mode") || "system";
-    this._internalSetMode(this.currentMode, false);
-    
+    uiSettingsManager.init();
+    colorManager.init();
+
+    this.applySettings();
     this._bindEvents();
   },
 
   _bindEvents() {
-    document.querySelectorAll('[id^="theme-"]').forEach(btn =>
-      btn.addEventListener("click", e => this.setMode(e.currentTarget.dataset.themeMode))
+    document.querySelectorAll('[id^="theme-"]').forEach((btn) =>
+      btn.addEventListener("click", (e) => this.setMode(e.currentTarget.dataset.themeMode))
     );
+    
     window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
       if (this.currentMode === "system") this.setMode("system");
     });
-    document.addEventListener('adaptiveBgChanged', e => this.applyBgTheme(colorsManager.currentBg, e.detail.isAdaptive));
-  },
-
-  resetSettings() {
-    settingsManager.resetSettings();
-    colorsManager.resetSettings();
     
-    this.setMode("system");
-    this.setColor(colorsManager.currentAccent);
-    this.setBgColor(colorsManager.currentBg);
-  },
-
-  previewColor(hex, type) {
-    if (!isValidHex(hex)) return;
-    if (type === 'accent') {
-        document.documentElement.style.setProperty("--primary-color", hex);
-        const { h } = hexToHSL(hex);
-        document.documentElement.style.setProperty("--accent-h", h);
-    } else {
-        this.applyBgTheme(hex, settingsManager.isAdaptiveBg);
-    }
-  },
-
-  setColor(hex, doScroll = true) {
-    if (!isValidHex(hex)) return;
-    colorsManager._hideActionButton();
-    colorsManager.currentAccent = hex;
-    safeSetLS("theme_color", hex);
-    this.previewColor(hex, 'accent');
+    document.addEventListener("adaptiveBgChanged", () => this.applyBgTheme(this.currentBg));
     
-    colorsManager.updateColorSelectionUI("accent", hex, doScroll);
-    colorsManager._syncPickerValues();
+    document.addEventListener("colorSelected", (e) => {
+        const { type, color } = e.detail;
+        if (type === 'accent') this.setColor(color);
+        else this.setBgColor(color);
+    });
+
+    document.addEventListener('colorDeleted', (e) => {
+        const { type, color } = e.detail;
+        if ((type === 'accent' && this.currentAccent === color) || (type === 'bg' && this.currentBg === color)) {
+            this.setColor(colorManager.standardAccentColors[0]);
+            this.setBgColor('default');
+        }
+    });
   },
 
-  setBgColor(hex, doScroll = true) {
-    if (!isValidHex(hex)) hex = 'default';
-    colorsManager._hideActionButton();
-    colorsManager.currentBg = hex;
-    safeSetLS("theme_bg_color", hex);
-    this.previewColor(hex, 'bg');
-    
-    colorsManager.updateColorSelectionUI("bg", hex, doScroll);
-    colorsManager._syncPickerValues();
+  applySettings() {
+    this.currentAccent = safeGetLS("theme_color") || colorManager.standardAccentColors[0];
+    this.currentBg = safeGetLS("theme_bg_color") || "default";
+    this.currentMode = safeGetLS("theme_mode") || "system";
+
+    this.setMode(this.currentMode, false);
+    this.setColor(this.currentAccent, false);
+    this.setBgColor(this.currentBg, false);
   },
   
-  setMode(mode) {
-    this._internalSetMode(mode, true);
+  resetSettings() {
+    safeRemoveLS("theme_mode");
+    safeRemoveLS("theme_color");
+    safeRemoveLS("theme_bg_color");
+    
+    uiSettingsManager.resetSettings();
+    
+    // Сбрасываем цвета на дефолтные
+    this.applySettings();
   },
 
-  _internalSetMode(mode, useTransition) {
+  setMode(mode, useTransition = true) {
     if (useTransition) document.body.classList.add("is-updating-theme");
     
     this.currentMode = mode;
     safeSetLS("theme_mode", mode);
     
-    document.querySelectorAll('[id^="theme-"]').forEach(b => {
+    document.querySelectorAll('[data-theme-mode]').forEach(b => {
       b.classList.remove("app-surface", "shadow-sm", "app-text");
       b.classList.add("app-text-sec");
     });
     const activeBtn = $(`theme-${mode}`);
-    if (activeBtn) activeBtn.classList.add("app-surface", "shadow-sm", "app-text");
+    if (activeBtn) {
+      activeBtn.classList.remove("app-text-sec");
+      activeBtn.classList.add("app-surface", "shadow-sm", "app-text");
+    }
 
-    const isDark = mode === 'dark' || (mode === 'system' && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    const isDark = mode === "dark" || (mode === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
     document.documentElement.classList.toggle("dark", isDark);
     document.documentElement.style.colorScheme = isDark ? "dark" : "light";
 
-    this.applyBgTheme(colorsManager.currentBg, settingsManager.isAdaptiveBg);
-    colorsManager.updateColorSelectionUI("accent", colorsManager.currentAccent, false);
-    colorsManager.updateColorSelectionUI("bg", colorsManager.currentBg, false);
-    colorsManager._syncPickerValues();
+    this.applyBgTheme(this.currentBg);
 
     if (useTransition) {
       requestAnimationFrame(() => document.body.classList.remove("is-updating-theme"));
     }
   },
-  
-  applyBgTheme(hex, isAdaptive) {
-    const root = document.documentElement;
-    const isDark = root.classList.contains('dark');
-    document.body.classList.remove("force-light-text", "force-dark-text");
-    root.classList.toggle("no-adaptive", !isAdaptive);
 
-    if (hex === "default" || !isValidHex(hex)) {
-      root.style.setProperty("--bg-color", "");
-      root.style.setProperty("--surface-color", "");
-      return;
-    }
-
-    const { r, g, b } = hexToRGB(hex);
-    const { h, s, l } = hexToHSL(hex);
+  setColor(hex, doScroll = true) {
+    this.currentAccent = hex;
+    safeSetLS("theme_color", hex);
     
-    if (!isAdaptive) {
+    document.documentElement.style.setProperty("--primary-color", hex);
+    const { h } = hexToHSL(hex);
+    document.documentElement.style.setProperty("--accent-h", h);
+    
+    colorManager.updateSelectionUI("accent", hex, doScroll);
+    colorManager.syncPickers(this.currentAccent, this.currentBg);
+  },
+
+  setBgColor(hex, doScroll = true) {
+    this.currentBg = hex;
+    safeSetLS("theme_bg_color", hex);
+    
+    this.applyBgTheme(hex);
+    
+    colorManager.updateSelectionUI("bg", hex, doScroll);
+    colorManager.syncPickers(this.currentAccent, this.currentBg);
+  },
+  
+  applyBgTheme(hex) {
+    const root = document.documentElement;
+    const isDark = root.classList.contains("dark");
+    document.body.classList.remove("force-light-text", "force-dark-text");
+
+    if (hex === "default") {
+      root.style.removeProperty("--bg-color");
+      root.style.removeProperty("--surface-color");
+    } else {
+      const { r, g, b } = hexToRGB(hex);
+      const { h, s, l } = hexToHSL(hex);
+      
+      if (!uiSettingsManager.isAdaptiveBg) {
         root.style.setProperty("--bg-color", hex);
         root.style.setProperty("--surface-color", `color-mix(in srgb, ${hex}, ${isDark ? "white 10%" : l > 90 ? "black 5%" : "white 25%"})`);
         const luminance = getLuminance(r, g, b);
         document.body.classList.toggle("force-light-text", luminance < 0.48);
         document.body.classList.toggle("force-dark-text", luminance >= 0.48);
-    } else {
+      } else {
         const sat = isDark ? Math.min(s, 40) : Math.max(s, 20);
         root.style.setProperty("--bg-color", `hsl(${h} ${sat}% ${isDark ? 8 : 94}%)`);
         root.style.setProperty("--surface-color", `hsl(${h} ${sat}% ${isDark ? 14 : 98}%)`);
+      }
     }
+    document.documentElement.classList.toggle("no-adaptive", !uiSettingsManager.isAdaptiveBg);
   },
-  
-  syncSliderUIs() {
-      settingsManager.syncSliderUIs();
-  }
 };

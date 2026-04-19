@@ -73,7 +73,8 @@ const modalConfig = [
 function confirmReset() {
   modalManager.closeCurrent();
 
-  // Вызываем сброс в каждом ответственном модуле
+  // Вызываем сброс в каждом ответственном модуле.
+  // themeManager теперь сам вызовет reset у своих дочерних модулей.
   themeManager.resetSettings();
   sm.resetSettings();
   langManager.resetSettings();
@@ -90,7 +91,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 1. Сначала инициализируем все модули, от которых могут зависеть другие.
   langManager.init();
-  themeManager.init();
+  themeManager.init(); // themeManager.init() теперь является координатором и сам инициализирует дочерние модули
   sm.init();
   sw.init();
   tm.init();
