@@ -21,6 +21,11 @@ export const colorManager = {
     this.populateColorSection("accent");
     this.populateColorSection("bg");
     this._bindEvents();
+    // Инициализируем UI после того, как все элементы созданы
+    const accentColor = safeGetLS("theme_color") || this.standardAccentColors[0];
+    const bgColor = safeGetLS("theme_bg_color") || "default";
+    this.updateSelectionUI("accent", accentColor, false);
+    this.updateSelectionUI("bg", bgColor, false);
   },
 
   loadColors() {
@@ -34,18 +39,33 @@ export const colorManager = {
   },
 
   _bindEvents() {
-    // Вешаем слушатели кликов на контейнеры - это центральная часть логики
     this._bindContainerEvents("accent-colors-container", "accent");
     this._bindContainerEvents("bg-colors-container", "bg");
     
-    // Событие 'input' на пикере для live-preview
     const setupPickerEvents = (type) => {
         const pickerId = type === 'accent' ? 'customColorInput' : 'customBgInput';
         const picker = $(pickerId);
         if (!picker) return;
 
+        // 'input' для live-preview И ОБНОВЛЕНИЯ КНОПКИ
         picker.addEventListener("input", (e) => {
-            document.dispatchEvent(new CustomEvent("colorSelected", { detail: { type, color: e.target.value, fromPicker: true } }));
+            const newColor = e.target.value;
+            // Обновляем цвет темы в реальном времени
+            document.dispatchEvent(new CustomEvent("colorSelected", { detail: { type, color: newColor, fromPicker: true } }));
+            
+            // ИСПРАВЛЕНИЕ 1: Обновляем цвет кнопки "Добавить", если она видима
+            const pickerWrapper = picker.closest('.color-picker-wrapper');
+            if (this.activeActionTarget === pickerWrapper) {
+                const actionBtn = pickerWrapper.querySelector('.color-action-btn');
+                if (actionBtn && actionBtn.dataset.action === 'add') {
+                    actionBtn.style.backgroundColor = newColor;
+                    actionBtn.dataset.color = newColor;
+                    // Обновляем цвет иконки на кнопке
+                    const { r, g, b } = hexToRGB(newColor);
+                    const luminance = getLuminance(r, g, b);
+                    actionBtn.style.color = luminance > 0.5 ? '#1f2937' : '#ffffff';
+                }
+            }
         });
     };
     setupPickerEvents('accent');
@@ -58,7 +78,6 @@ export const colorManager = {
 
     container.addEventListener("click", (e) => this._handleClick(e, type));
     
-    // Код для long press / context menu для удаления (без изменений)
     container.addEventListener("contextmenu", (e) => {
         const swatch = e.target.closest('.color-swatch-wrapper[data-custom="true"]');
         if (swatch) { e.preventDefault(); this._showActionButton(swatch, 'delete'); }
@@ -79,13 +98,11 @@ export const colorManager = {
     container.addEventListener("touchcancel", endTouch);
   },
 
-  // ИСПРАВЛЕНО: Возвращена правильная логика из вашего рабочего примера
   _handleClick(event, type) {
     const swatch = event.target.closest(".color-swatch-wrapper");
     const pickerWrapper = event.target.closest(".color-picker-wrapper");
     const actionBtn = event.target.closest(".color-action-btn");
 
-    // КЛИК ПО КНОПКЕ "ДОБАВИТЬ" ИЛИ "УДАЛИТЬ"
     if (actionBtn) {
         event.stopPropagation();
         if (actionBtn.dataset.action === 'add') {
@@ -96,24 +113,19 @@ export const colorManager = {
         return;
     }
 
-    // КЛИК ПО ИКОНКЕ ПИКЕРА
     if (pickerWrapper) {
-        // Логика переключения (toggle) видимости кнопки
         if (this.activeActionTarget === pickerWrapper) {
             this._hideActionButton();
         } else {
             this._showActionButton(pickerWrapper, 'add');
         }
-        // Не выбираем цвет темы, просто показываем/скрываем кнопку
         return;
     }
 
-    // Если была активна кнопка, но клик был в другом месте - скрываем ее
     if (this.activeActionTarget && !this.activeActionTarget.contains(event.target)) {
       this._hideActionButton();
     }
     
-    // КЛИК ПО ОБЫЧНОМУ ЦВЕТУ
     if (swatch) {
       const color = swatch.dataset.color;
       document.dispatchEvent(new CustomEvent("colorSelected", { detail: { type, color, fromPicker: false } }));
@@ -146,14 +158,13 @@ export const colorManager = {
         btn.setAttribute("aria-label", t("add_color"));
         btn.style.backgroundColor = color;
         
-        // УЛУЧШЕНИЕ: Проверка контрастности для иконки "+"
         const { r, g, b } = hexToRGB(color);
         const luminance = getLuminance(r, g, b);
         const iconColor = luminance > 0.5 ? '#1f2937' : '#ffffff';
         btn.style.color = iconColor;
         
         btn.append(createSVGIcon("M12 4.5v15m7.5-7.5h-15", ["w-5", "h-5"]));
-    } else { // 'delete'
+    } else {
         btn.setAttribute("aria-label", `${t("delete")} ${color}`);
         btn.style.backgroundColor = '#ef4444';
         btn.style.color = '#ffffff';
@@ -181,7 +192,6 @@ export const colorManager = {
     
     const normalizedColor = color.toLowerCase();
     
-    // ПРОВЕРКА НА СУЩЕСТВОВАНИЕ ЦВЕТА
     if ([...standardColors, ...customColors].map(c => c.toLowerCase()).includes(normalizedColor)) {
         showToast(t("color_already_exists"));
         return; 
@@ -221,10 +231,10 @@ export const colorManager = {
     }
   },
 
-  // Остальные функции без изменений...
   populateColorSection(type) {
     const container = $(type === "accent" ? "accent-colors-container" : "bg-colors-container");
     if (!container) return;
+    // Оставляем пикер, удаляем только кружки
     container.querySelectorAll('.color-swatch-wrapper').forEach(el => el.remove());
     const isAccent = type === "accent";
     const colors = isAccent ? [...this.standardAccentColors, ...this.customAccentColors] : [...this.standardBgColors, ...this.customBgColors];
@@ -263,14 +273,29 @@ export const colorManager = {
   updateSelectionUI(type, color, doScroll = true) {
     const container = $(type === 'accent' ? 'accent-colors-container' : 'bg-colors-container');
     if (!container) return;
-    container.querySelectorAll('.color-swatch-wrapper').forEach(el => {
+    
+    // Снимаем выделение со всех элементов
+    container.querySelectorAll('.color-swatch-wrapper, .color-picker-wrapper').forEach(el => {
         el.classList.remove('ring-[var(--primary-color)]', 'ring-2', 'ring-offset-2', 'ring-offset-surface');
         el.querySelector('.injected-checkmark')?.remove();
     });
+
     const normalizedColor = color.toLowerCase();
-    const activeWrapper = container.querySelector(`.color-swatch-wrapper[data-color="${normalizedColor}"]`);
+    
+    // Ищем кружок с нужным цветом
+    let activeWrapper = container.querySelector(`.color-swatch-wrapper[data-color="${normalizedColor}"]`);
+    
+    // ИСПРАВЛЕНИЕ 2: Если кружок не найден, проверяем сам пикер
+    if (!activeWrapper) {
+        const picker = $(type === 'accent' ? 'customColorInput' : 'customBgInput');
+        if (picker && picker.value.toLowerCase() === normalizedColor) {
+            activeWrapper = picker.closest('.color-picker-wrapper');
+        }
+    }
+
     if (activeWrapper) {
       activeWrapper.classList.add('ring-[var(--primary-color)]', 'ring-2', 'ring-offset-2', 'ring-offset-surface');
+      
       const isDefault = normalizedColor === 'default';
       let luminance = 0;
       if (isDefault) {
@@ -280,9 +305,19 @@ export const colorManager = {
           luminance = getLuminance(r, g, b);
       }
       const iconColor = luminance > 0.5 ? '#1f2937' : '#ffffff';
+
       const svgIcon = createSVGIcon("M4.5 12.75l6 6 9-13.5", ["w-5", "h-5", "injected-checkmark"]);
+      // Добавляем класс, чтобы его было легко найти и удалить
+      svgIcon.classList.add('injected-checkmark');
+      // Для пикера позиционируем иконку по центру
+      if (activeWrapper.matches('.color-picker-wrapper')) {
+          svgIcon.classList.add('absolute', 'inset-0', 'm-auto', 'z-20', 'pointer-events-none');
+          activeWrapper.append(svgIcon);
+      } else {
+          activeWrapper.querySelector('.color-btn')?.append(svgIcon);
+      }
       svgIcon.style.color = iconColor;
-      activeWrapper.querySelector('.color-btn')?.append(svgIcon);
+
       if (doScroll) {
         activeWrapper.scrollIntoView({ behavior: 'smooth', block: 'nearest', 'inline': 'center' });
       }
