@@ -37,24 +37,23 @@ export const colorManager = {
     this._bindContainerEvents("accent-colors-container", "accent");
     this._bindContainerEvents("bg-colors-container", "bg");
     
+    // Live-preview для пикера
     const setupPickerEvents = (type) => {
-        const pickerId = type === 'accent' ? 'customColorInput' : 'customBgInput';
-        const picker = $(pickerId);
+        const picker = $(type === 'accent' ? 'customColorInput' : 'customBgInput');
         if (!picker) return;
 
+        // 'change' используется для live-preview ТЕМЫ, как в вашем рабочем коде
+        picker.addEventListener("change", (e) => {
+            document.dispatchEvent(new CustomEvent("colorSelected", { detail: { type, color: e.target.value, fromPicker: true } }));
+        });
+        
+        // 'input' используется для live-preview КНОПКИ
         picker.addEventListener("input", (e) => {
-            const newColor = e.target.value;
-            document.dispatchEvent(new CustomEvent("colorSelected", { detail: { type, color: newColor, fromPicker: true } }));
-            
             const pickerWrapper = picker.closest('.color-picker-wrapper');
             if (this.activeActionTarget === pickerWrapper) {
                 const actionBtn = pickerWrapper.querySelector('.color-action-btn[data-action="add"]');
-                if (actionBtn) this._updateAddButtonColor(actionBtn, newColor);
+                if (actionBtn) this._updateAddButtonColor(actionBtn, e.target.value);
             }
-        });
-        
-        picker.addEventListener("change", () => {
-            this._showActionButton(picker.closest('.color-picker-wrapper'), 'add');
         });
     };
     setupPickerEvents('accent');
@@ -85,28 +84,33 @@ export const colorManager = {
     container.addEventListener("touchcancel", endTouch);
   },
 
+  // ВОССТАНОВЛЕНА ВАША РАБОЧАЯ ЛОГИКА
   _handleClick(event, type) {
-    const swatch = event.target.closest(".color-swatch-wrapper");
+    const swatchWrapper = event.target.closest(".color-swatch-wrapper");
     const pickerWrapper = event.target.closest(".color-picker-wrapper");
     const actionBtn = event.target.closest(".color-action-btn");
-    
-    if (pickerWrapper) return;
-    
+
     if (actionBtn) {
         event.stopPropagation();
-        if (actionBtn.dataset.action === 'add') this.addCustomColor(type, actionBtn.dataset.color);
-        else if (actionBtn.dataset.action === 'delete') this._deleteColor(actionBtn.dataset.color, type);
+        if (actionBtn.dataset.action === "add") this.addCustomColor(type);
+        else if (actionBtn.dataset.action === "delete") this._deleteColor(actionBtn.dataset.color, type);
         return;
     }
 
-    if (this.activeActionTarget && !this.activeActionTarget.contains(event.target)) {
-      this._hideActionButton();
+    if (pickerWrapper) {
+        if (this.activeActionTarget === pickerWrapper) this._hideActionButton();
+        else this._showActionButton(pickerWrapper, "add");
+        return;
     }
     
-    if (swatch) {
-      const color = swatch.dataset.color;
-      document.dispatchEvent(new CustomEvent("colorSelected", { detail: { type, color, fromPicker: false } }));
-      if (swatch.dataset.custom === 'true') this._showActionButton(swatch, 'delete');
+    if (this.activeActionTarget && !this.activeActionTarget.contains(event.target)) {
+        this._hideActionButton();
+    }
+
+    if (swatchWrapper) {
+        const color = swatchWrapper.dataset.color;
+        document.dispatchEvent(new CustomEvent("colorSelected", { detail: { type, color, fromPicker: false } }));
+        if (swatchWrapper.dataset.custom === 'true') this._showActionButton(swatchWrapper, 'delete');
     }
   },
   
@@ -120,14 +124,13 @@ export const colorManager = {
 
   _showActionButton(targetWrapper, action) {
     if (this.activeActionTarget && this.activeActionTarget !== targetWrapper) this._hideActionButton();
-    if (this.activeActionTarget === targetWrapper) return;
-
+    
     sm.vibrate(30, "medium");
     this.activeActionTarget = targetWrapper;
     
     const isAdd = action === 'add';
     const color = isAdd ? targetWrapper.querySelector('input[type="color"]').value : targetWrapper.dataset.color;
-
+    
     const btn = document.createElement("button");
     btn.type = "button";
     btn.dataset.action = action;
@@ -156,34 +159,37 @@ export const colorManager = {
     this.activeActionTarget = null;
   },
   
-  addCustomColor(type, color) {
-    this._hideActionButton();
+  addCustomColor(type) {
     const isAccent = type === "accent";
-    const customColors = isAccent ? this.customAccentColors : this.customBgColors;
-    const standardColors = isAccent ? this.standardAccentColors : this.standardBgColors;
-    const normalizedColor = color.toLowerCase();
+    const picker = $(isAccent ? "customColorInput" : "customBgInput");
+    const color = picker.value.toLowerCase();
     
-    // ⭐ ⭐ ⭐ ГЛАВНОЕ ИСПРАВЛЕНИЕ ⭐ ⭐ ⭐
-    // Проверяем наличие цвета в ОБЩЕМ списке (стандартные + кастомные)
-    if ([...standardColors, ...customColors].map(c => c.toLowerCase()).includes(normalizedColor)) {
-        showToast(t("color_already_exists"));
-        return; 
+    const standardColors = isAccent ? this.standardAccentColors : this.standardBgColors;
+    const customColors = isAccent ? this.customAccentColors : this.customBgColors;
+    
+    // ПРАВИЛЬНАЯ ПРОВЕРКА: ищет в полном списке видимых цветов
+    if ([...standardColors, ...customColors].map(c => c.toLowerCase()).includes(color)) {
+      showToast(t("color_already_exists"));
+      return;
     }
-
+    
+    this._hideActionButton();
+    
     if (customColors.length >= MAX_CUSTOM_COLORS) {
       showToast(t(isAccent ? "accent_limit_msg" : "bg_limit_msg"));
       return;
     }
 
     sm.vibrate(40, "medium");
-    customColors.push(normalizedColor);
+    customColors.push(color);
     safeSetLS(isAccent ? "custom_accent_colors" : "custom_bg_colors", JSON.stringify(customColors));
-    this._addColorToDOM(normalizedColor, type);
-    document.dispatchEvent(new CustomEvent("colorSelected", { detail: { type, color: normalizedColor, fromPicker: false } }));
+    this._addColorToDOM(color, type);
+    document.dispatchEvent(new CustomEvent("colorSelected", { detail: { type, color, fromPicker: false } }));
   },
 
   _deleteColor(color, type) {
-    sm.vibrate(40, "medium"); this._hideActionButton();
+    sm.vibrate(40, "medium");
+    this._hideActionButton();
     const isAccent = type === 'accent';
     const container = $(isAccent ? 'accent-colors-container' : 'bg-colors-container');
     const wrapper = container.querySelector(`.color-swatch-wrapper[data-color="${color}"]`);
