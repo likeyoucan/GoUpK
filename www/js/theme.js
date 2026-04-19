@@ -34,10 +34,8 @@ export const themeManager = {
     
     document.addEventListener("colorSelected", (e) => {
         const { type, color, fromPicker } = e.detail;
-        const isFinalSelection = !fromPicker;
-
-        if (type === 'accent') this.setColor(color, isFinalSelection);
-        else this.setBgColor(color, isFinalSelection);
+        if (type === 'accent') this.setColor(color, !fromPicker);
+        else this.setBgColor(color, !fromPicker);
     });
 
     document.addEventListener('colorDeleted', (e) => {
@@ -48,12 +46,6 @@ export const themeManager = {
             this.setBgColor('default');
         }
     });
-
-    document.addEventListener('revertToLastValidColor', (e) => {
-        const { type } = e.detail;
-        if (type === 'accent') this.setColor(this.currentAccent);
-        else this.setBgColor(this.currentBg);
-    });
   },
 
   applySettings() {
@@ -62,8 +54,8 @@ export const themeManager = {
     this.currentMode = safeGetLS("theme_mode") || "system";
 
     this.setMode(this.currentMode, false);
-    this.setColor(this.currentAccent, true);
-    this.setBgColor(this.currentBg, true);
+    this.setColor(this.currentAccent, false);
+    this.setBgColor(this.currentBg, false);
   },
   
   resetSettings() {
@@ -105,35 +97,25 @@ export const themeManager = {
     }
   },
 
-  setColor(hex, isFinalSelection = true) {
-    // Если это окончательный выбор (не предпросмотр), обновляем состояние и сохраняем
-    if (isFinalSelection) {
-        this.currentAccent = hex;
-        safeSetLS("theme_color", hex);
-    }
+  setColor(hex, doScroll = true) {
+    this.currentAccent = hex;
+    safeSetLS("theme_color", hex);
     
     document.documentElement.style.setProperty("--primary-color", hex);
     const { h } = hexToHSL(hex);
     document.documentElement.style.setProperty("--accent-h", h);
     
-    // Обновляем UI (рамку/галочку) только при окончательном выборе
-    if (isFinalSelection) {
-        colorManager.updateSelectionUI("accent", hex, true);
-    }
+    colorManager.updateSelectionUI("accent", hex, doScroll);
     colorManager.syncPickers(this.currentAccent, this.currentBg);
   },
 
-  setBgColor(hex, isFinalSelection = true) {
-    if (isFinalSelection) {
-        this.currentBg = hex;
-        safeSetLS("theme_bg_color", hex);
-    }
+  setBgColor(hex, doScroll = true) {
+    this.currentBg = hex;
+    safeSetLS("theme_bg_color", hex);
     
     this.applyBgTheme(hex);
     
-    if (isFinalSelection) {
-        colorManager.updateSelectionUI("bg", hex, true);
-    }
+    colorManager.updateSelectionUI("bg", hex, doScroll);
     colorManager.syncPickers(this.currentAccent, this.currentBg);
   },
   
