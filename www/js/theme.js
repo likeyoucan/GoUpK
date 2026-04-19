@@ -46,16 +46,6 @@ export const themeManager = {
             this.setBgColor('default');
         }
     });
-
-    // ИСПРАВЛЕНИЕ: Новый обработчик для сброса пикера при ошибке
-    document.addEventListener('revertColorSelection', (e) => {
-        const { type } = e.detail;
-        if (type === 'accent') {
-            this.setColor(this.currentAccent, false);
-        } else {
-            this.setBgColor(this.currentBg, false);
-        }
-    });
   },
 
   applySettings() {
