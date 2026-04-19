@@ -34,24 +34,43 @@ export const colorManager = {
   },
 
   _bindEvents() {
-    // ИЗМЕНЕНО: Возвращаемся к простой и надежной логике
-    // 1. Вешаем слушатели кликов на контейнеры
+    // Вешаем слушатели кликов на контейнеры
     this._bindContainerEvents("accent-colors-container", "accent");
     this._bindContainerEvents("bg-colors-container", "bg");
     
-    // 2. Вешаем только 'input' на пикеры для live-preview
+    // Вешаем специальные обработчики на сами пикеры
     const setupPickerEvents = (type) => {
         const pickerId = type === 'accent' ? 'customColorInput' : 'customBgInput';
         const picker = $(pickerId);
         if (!picker) return;
 
+        let pollingInterval = null;
+
+        // 'input' для live-preview (остается без изменений)
         picker.addEventListener("input", (e) => {
-            // Если была показана кнопка "Добавить", скрываем ее при выборе нового цвета
             if (this.activeActionTarget && this.activeActionTarget === picker.closest('.color-picker-wrapper')) {
                 this._hideActionButton();
             }
-            // Отправляем событие для live-preview
             document.dispatchEvent(new CustomEvent("colorSelected", { detail: { type, color: e.target.value, fromPicker: true } }));
+        });
+        
+        // НАДЕЖНЫЙ МЕТОД: При клике начинаем отслеживать закрытие окна
+        picker.addEventListener("click", () => {
+            // Если проверка уже запущена, ничего не делаем
+            if (pollingInterval) return;
+
+            // Запускаем проверку фокуса документа
+            pollingInterval = setInterval(() => {
+                // Как только фокус вернулся на документ - значит, пикер закрыт.
+                if (document.hasFocus()) {
+                    // Останавливаем проверку
+                    clearInterval(pollingInterval);
+                    pollingInterval = null;
+
+                    // Показываем кнопку "Добавить"
+                    this._showActionButton(picker.closest('.color-picker-wrapper'), 'add');
+                }
+            }, 200); // Проверяем каждые 200мс
         });
     };
     setupPickerEvents('accent');
@@ -62,7 +81,7 @@ export const colorManager = {
     const container = $(containerId);
     if (!container) return;
 
-    // ГЛАВНЫЙ ОБРАБОТЧИК КЛИКОВ
+    // Этот обработчик теперь НЕ будет срабатывать на сам пикер, т.к. мы остановим распространение события
     container.addEventListener("click", (e) => this._handleClick(e, type));
     
     // Обработчики долгого нажатия / правого клика для удаления (остаются без изменений)
@@ -100,31 +119,24 @@ export const colorManager = {
     container.addEventListener("touchcancel", endTouch);
   },
 
-  // ИЗМЕНЕНО: Центральная функция обработки всех кликов в контейнере
+  // Упрощенный обработчик, который теперь не отвечает за клики по пикеру
   _handleClick(event, type) {
     const swatch = event.target.closest(".color-swatch-wrapper");
     const pickerWrapper = event.target.closest(".color-picker-wrapper");
     const actionBtn = event.target.closest(".color-action-btn");
 
-    // Действие 1: Клик по кнопке "Добавить" или "Удалить"
+    // Если клик был по пикеру, ничего не делаем, т.к. у него свой отдельный обработчик
+    if (pickerWrapper) return;
+    
+    // Клик по кнопке "Добавить" или "Удалить"
     if (actionBtn) {
+        event.stopPropagation(); // Предотвращаем дальнейшую обработку
         if (actionBtn.dataset.action === 'add') {
             this.addCustomColor(type, actionBtn.dataset.color);
         } else if (actionBtn.dataset.action === 'delete') {
             this._deleteColor(actionBtn.dataset.color, type);
         }
-        return; // Завершаем обработку
-    }
-
-    // Действие 2: Клик по иконке-пикеру
-    if (pickerWrapper) {
-        // Логика переключения (toggle) видимости кнопки "Добавить"
-        if (this.activeActionTarget === pickerWrapper) {
-            this._hideActionButton();
-        } else {
-            this._showActionButton(pickerWrapper, 'add');
-        }
-        return; // Завершаем обработку
+        return;
     }
 
     // Если была активна кнопка, но клик был в другом месте - скрываем ее
@@ -132,11 +144,10 @@ export const colorManager = {
       this._hideActionButton();
     }
     
-    // Действие 3: Клик по обычному кружку с цветом
+    // Клик по обычному кружку с цветом
     if (swatch) {
       const color = swatch.dataset.color;
       document.dispatchEvent(new CustomEvent("colorSelected", { detail: { type, color, fromPicker: false } }));
-      // Если цвет кастомный, покажем кнопку удаления
       if (swatch.dataset.custom === 'true') {
           this._showActionButton(swatch, 'delete');
       }
@@ -147,8 +158,8 @@ export const colorManager = {
     if (this.activeActionTarget && this.activeActionTarget !== targetWrapper) {
         this._hideActionButton();
     }
-    // Убираем проверку, чтобы кнопка могла переключаться (повторный клик скроет)
-    // if (this.activeActionTarget === targetWrapper) return;
+    // Если кнопка уже показана для этого элемента, ничего не делаем
+    if (this.activeActionTarget === targetWrapper) return;
 
     sm.vibrate(30, "medium");
     this.activeActionTarget = targetWrapper;
