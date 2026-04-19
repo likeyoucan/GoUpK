@@ -1,4 +1,4 @@
-// Файл: js/utils.js
+// Файл: www/js/utils.js
 
 export const $ = (id) => document.getElementById(id);
 
@@ -6,9 +6,9 @@ export const escapeHTML = (str) =>
   str.replace(
     /[&<>'"]/g,
     (tag) =>
-      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[
         tag
-      ] || tag)
+      ] || tag,
   );
 
 export const updateText = (el, text) => {
@@ -57,8 +57,8 @@ export const requestWakeLock = async () => {
         wakeLock = null;
       });
     } catch (err) {
-        // Ошибка может возникнуть, если документ неактивен, и это нормально.
-        // console.error(`${err.name}, ${err.message}`);
+      // Ошибка может возникнуть, если документ неактивен, и это нормально.
+      // console.error(`${err.name}, ${err.message}`);
     }
   }
 };
@@ -104,15 +104,31 @@ export const adjustVal = (id, delta) => {
 
 export const pad = (num) => String(num).padStart(2, "0");
 
+/**
+ * Генерирует уникальное имя на основе базового, проверяя его в массиве объектов.
+ * @param {string} baseName - Базовое имя.
+ * @param {Array<Object>} items - Массив объектов для проверки.
+ * @param {string} [key='name'] - Ключ объекта, по которому проверять имя.
+ * @returns {string} - Уникальное имя.
+ */
+export function getUniqueName(baseName, items, key = "name") {
+  let name = baseName;
+  let counter = 1;
+  const lowerCaseNames = items.map((item) => item[key].toLowerCase());
+
+  while (lowerCaseNames.includes(name.toLowerCase())) {
+    name = `${baseName} ${counter++}`;
+  }
+  return name;
+}
 
 /**
  * Функция форматирования времени.
- * Заменяет formatTimeStr, formatMsTime, formatMainDisplay и getExtendedDisplay.
  * @param {number} ms - Время в миллисекундах.
  * @param {object} options - Опции форматирования.
  * @param {boolean} [options.showMs=false] - Показывать миллисекунды?
  * @param {boolean} [options.forceHours=false] - Всегда показывать часы, даже если их 0?
- * @param {boolean} [options.showDays=false] - Показывать дни? (для getExtendedDisplay)
+ * @param {boolean} [options.showDays=false] - Показывать дни?
  * @param {string} [options.daySuffix='d'] - Суффикс для дней.
  * @param {string} [options.hourSuffix='h'] - Суффикс для часов.
  * @returns {string} - Отформатированная строка времени.
@@ -122,11 +138,10 @@ export function formatTime(ms, options = {}) {
     showMs = false,
     forceHours = false,
     showDays = false,
-    daySuffix = 'd',
-    hourSuffix = 'h'
+    daySuffix = "d",
+    hourSuffix = "h",
   } = options;
 
-  // Логика для формата "дни и часы" (замена getExtendedDisplay)
   if (showDays) {
     const totalS = Math.floor(ms / 1000);
     const d = Math.floor(totalS / 86400);
@@ -135,7 +150,7 @@ export function formatTime(ms, options = {}) {
     if (h > 0) return `${h}${hourSuffix}`;
     return "";
   }
-  
+
   const totalS = Math.floor(ms / 1000);
   const h = Math.floor(totalS / 3600);
   const m = Math.floor((totalS % 3600) / 60);
@@ -147,21 +162,21 @@ export function formatTime(ms, options = {}) {
   }
   timeParts.push(pad(m));
   timeParts.push(pad(s));
-  
+
   let result = timeParts.join(":");
 
   if (showMs) {
     const milli = Math.floor((ms % 1000) / 10);
     result += `.${pad(milli)}`;
   }
-  
+
   return result;
 }
 
 // --- Worker Initialization ---
 const createWorker = () => {
   try {
-    return new Worker("./js/worker.js?v=VERSION"); // Добавлен query string для кеширования
+    return new Worker("./js/worker.js?v=VERSION");
   } catch (e) {
     console.error("Failed to create background worker:", e);
     // Возвращаем "пустышку", чтобы приложение не упало, если воркер не создался

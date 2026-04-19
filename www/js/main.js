@@ -10,7 +10,7 @@ import {
 } from "./utils.js?v=VERSION";
 import { langManager, t } from "./i18n.js?v=VERSION";
 import { themeManager } from "./theme.js?v=VERSION";
-import { navigation } from "./navigation.js?v=VERSION";
+import { navigation } from я"./navigation.js?v=VERSION";
 import { sw } from "./stopwatch.js?v=VERSION";
 import { tm } from "./timer.js?v=VERSION";
 import { tb } from "./tabata.js?v=VERSION";

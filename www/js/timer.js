@@ -1,4 +1,4 @@
-// Файл: js/timer.js
+// Файл: www/js/timer.js
 
 import {
   $,

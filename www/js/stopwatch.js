@@ -1,4 +1,4 @@
-// Файл: js/stopwatch.js
+// Файл: www/js/stopwatch.js
 
 import {
   $,
@@ -13,10 +13,11 @@ import {
   safeRemoveLS,
   announceToScreenReader,
   showToast,
+  getUniqueName,
 } from "./utils.js?v=VERSION";
 import { sm } from "./sound.js?v=VERSION";
 import { t } from "./i18n.js?v=VERSION";
-import { themeManager } from "./theme.js?v=VERSION";
+import { settingsManager } from "./ui-settings.js?v=VERSION";
 import { modalManager } from "./modal.js?v=VERSION";
 import { store } from "./store.js?v=VERSION";
 
@@ -118,23 +119,13 @@ const stopwatchModule = {
   },
 
   formatTime(ms, forceMs = null) {
-    const showMilliseconds = forceMs !== null ? forceMs : themeManager.showMs;
+    const showMilliseconds =
+      forceMs !== null ? forceMs : settingsManager.showMs;
     const shouldForceHours = this.elapsedTime >= 3600000;
     return formatTime(ms, {
       showMs: showMilliseconds,
       forceHours: shouldForceHours,
     });
-  },
-
-  getUniqueName(baseName) {
-    let name = baseName,
-      counter = 1;
-    const exists = (n) =>
-      this.savedSessions.some((s) => s.name.toLowerCase() === n.toLowerCase());
-    while (exists(name)) {
-      name = `${baseName} ${counter++}`;
-    }
-    return name;
   },
 
   toggle() {
@@ -185,7 +176,7 @@ const stopwatchModule = {
     this.elapsedTime = now - this.startTime;
     const currentMinute = Math.floor(this.elapsedTime / 60000);
     if (
-      themeManager.swMinuteBeep &&
+      settingsManager.swMinuteBeep &&
       currentMinute > this.lastMinuteBeep &&
       this.elapsedTime > 1000
     ) {
@@ -206,7 +197,7 @@ const stopwatchModule = {
   },
 
   updateDisplay() {
-    const showMs = themeManager.showMs;
+    const showMs = settingsManager.showMs;
     const shouldForceHours = this.elapsedTime >= 3600000;
 
     const mainDisplayParts = formatTime(this.elapsedTime, { showMs }).split(
@@ -369,7 +360,11 @@ const stopwatchModule = {
           index: sessionLaps.length + 1,
         });
     }
-    const defaultName = this.getUniqueName(t("stopwatch"));
+    const defaultName = getUniqueName(
+      t("stopwatch"),
+      this.savedSessions,
+      "name",
+    );
     const completionTime = this.isRunning
       ? Date.now()
       : this.pauseTime || Date.now();

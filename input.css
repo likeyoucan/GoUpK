@@ -1,3 +1,5 @@
+/* Файл: www/input.css */
+
 @import "tailwindcss";
 @source "./www";
 
@@ -1201,20 +1203,7 @@ input[type="range"]:focus + .thumb-label-container > .thumb-label {
 .color-swatch-wrapper {
   position: relative;
   flex-shrink: 0;
-  transition:
-    max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-    margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-    margin-right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  max-width: 2.25rem; /* w-9 */
   animation: fadeInScale 0.3s cubic-bezier(0.4, 0, 0.2, 1) both;
-}
-
-/* Добавляем отступ сверху, чтобы было место для кнопок */
-#accent-colors-container,
-#bg-colors-container {
-  padding-top: 1rem;
-  height: calc(3rem + 1rem); /* h-12 (48px) + pt-4 (16px) */
-  overflow-y: visible;      /* <-- ДОБАВЬТЕ ЭТУ СТРОКУ */
 }
 
 .color-swatch-wrapper.is-collapsing {
@@ -1223,15 +1212,19 @@ input[type="range"]:focus + .thumb-label-container > .thumb-label {
   margin-right: 0 !important;
   animation: fadeOutScale 0.25s cubic-bezier(0.4, 0, 0.2, 1) both;
   pointer-events: none;
+  opacity: 0;
+  transition:
+    opacity 0.25s,
+    max-width 0.25s,
+    margin 0.25s;
 }
 
-/* Кнопка "Удалить" над кружком */
+/* Кнопка "Удалить" над кружком (новый стиль) */
 .color-action-btn {
   position: absolute;
-  top: -0.75rem; /* Сдвигаем выше кружка */
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 30;
+  top: -4px;
+  right: -4px;
+  z-index: 20;
   animation: fadeInScale 0.2s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 
@@ -1239,11 +1232,9 @@ input[type="range"]:focus + .thumb-label-container > .thumb-label {
   animation: fadeOutScale 0.2s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 
-
 /* Стили для color picker */
 .color-picker-wrapper {
   flex-shrink: 0;
-  animation: fadeInScale 0.3s 0.1s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 
 @layer utilities {

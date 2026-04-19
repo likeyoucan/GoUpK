@@ -1,4 +1,4 @@
-// Файл: js/navigation.js
+// Файл: www/js/navigation.js
 
 import { $ } from "./utils.js?v=VERSION";
 import { themeManager } from "./theme.js?v=VERSION";

@@ -1,8 +1,7 @@
-// Файл: js/tabata.js
+// Файл: www/js/tabata.js
 
 import {
   $,
-  escapeHTML,
   showToast,
   formatTime,
   adjustVal,
@@ -14,6 +13,7 @@ import {
   safeSetLS,
   safeGetLS,
   announceToScreenReader,
+  getUniqueName,
 } from "./utils.js?v=VERSION";
 import { sm } from "./sound.js?v=VERSION";
 import { t } from "./i18n.js?v=VERSION";
@@ -139,17 +139,6 @@ export const tb = {
     });
   },
 
-  getUniqueName(baseName) {
-    let name = baseName,
-      counter = 1;
-    while (
-      this.workouts.some((w) => w.name.toLowerCase() === name.toLowerCase())
-    ) {
-      name = `${baseName} ${counter++}`;
-    }
-    return name;
-  },
-
   prepareEdit(idToEdit = null) {
     this.els.nameError?.classList.add("hidden");
     this.editingWorkoutId = idToEdit;
@@ -165,7 +154,8 @@ export const tb = {
         this.els.editRounds.value = w.rounds;
       }
     } else {
-      this.els.editName.value = this.getUniqueName(t("tabata"));
+      // ИЗМЕНЕНО: Используем общую функцию getUniqueName
+      this.els.editName.value = getUniqueName(t("tabata"), this.workouts, 'name');
       this.els.editWork.value = 20;
       this.els.editRest.value = 10;
       this.els.editRounds.value = 8;
@@ -175,7 +165,8 @@ export const tb = {
 
   saveWorkout() {
     let finalName = this.els.editName.value.trim();
-    if (!finalName) finalName = this.getUniqueName(t("tabata"));
+    // ИЗМЕНЕНО: Используем общую функцию getUniqueName
+    if (!finalName) finalName = getUniqueName(t("tabata"), this.workouts, 'name');
 
     if (finalName.length > 50) {
       updateText(this.els.nameError, t("name_too_long"));
@@ -194,7 +185,7 @@ export const tb = {
         w.id !== this.editingWorkoutId,
     );
     if (exists) {
-      updateText(this.els.nameError, t('name_exists')); // Убедимся, что текст ошибки правильный
+      updateText(this.els.nameError, t('name_exists'));
       this.els.nameError?.classList.remove("hidden");
       this.els.editName.classList.add("animate-shake");
       setTimeout(
@@ -281,7 +272,6 @@ export const tb = {
       const workoutElement = clone.firstElementChild;
       const isAct = w.id === this.selectedId;
 
-      // Управляем классами в зависимости от состояния
       workoutElement.classList.toggle("app-surface", !isAct);
       workoutElement.classList.toggle("border", !isAct);
       workoutElement.classList.toggle("app-border", !isAct);
@@ -292,7 +282,6 @@ export const tb = {
       workoutElement.classList.toggle("border-[var(--primary-color)]", isAct);
       workoutElement.classList.toggle("shadow-md", isAct);
 
-      // Устанавливаем ID для обработчиков
       workoutElement.dataset.id = w.id;
       workoutElement.querySelector('[data-template-id="editBtn"]').dataset.id =
         w.id;
@@ -300,7 +289,6 @@ export const tb = {
         '[data-template-id="deleteBtn"]',
       ).dataset.id = w.id;
 
-      // Безопасно вставляем текст
       const nameEl = workoutElement.querySelector('[data-template="name"]');
       nameEl.textContent = w.name;
       nameEl.classList.toggle("primary-text", isAct);
@@ -309,7 +297,6 @@ export const tb = {
       workoutElement.querySelector('[data-template="details"]').textContent =
         `${w.work}${t("sec").toLowerCase()} / ${w.rest}${t("sec").toLowerCase()} • ${w.rounds} ${t("rds")}`;
 
-      // Переводим Aria-labels для доступности
       workoutElement
         .querySelector('[data-template-id="editBtn"]')
         .setAttribute("aria-label", t("edit"));

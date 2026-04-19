@@ -1,4 +1,4 @@
-// Файл: js/modal.js
+// Файл: www/js/modal.js
 
 import { $ } from "./utils.js?v=VERSION";
 

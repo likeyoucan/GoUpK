@@ -1,4 +1,4 @@
-// Файл: js/store.js
+// Файл: www/js/store.js
 
 const storeData = {
   activeTimer: null, // Хранит имя активного таймера ('stopwatch', 'timer', 'tabata') или null
