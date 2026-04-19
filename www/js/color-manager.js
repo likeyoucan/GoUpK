@@ -37,13 +37,18 @@ export const colorManager = {
     this._bindContainerEvents("accent-colors-container", "accent");
     this._bindContainerEvents("bg-colors-container", "bg");
 
-    $("customColorInput")?.addEventListener("change", (e) => {
-        this.addCustomColor('accent', e.target.value);
+    $("customColorInput")?.addEventListener("input", (e) => { // 'input' для live-preview
         document.dispatchEvent(new CustomEvent("colorSelected", { detail: { type: 'accent', color: e.target.value } }));
     });
-    $("customBgInput")?.addEventListener("change", (e) => {
-        this.addCustomColor('bg', e.target.value);
+    $("customBgInput")?.addEventListener("input", (e) => { // 'input' для live-preview
         document.dispatchEvent(new CustomEvent("colorSelected", { detail: { type: 'bg', color: e.target.value } }));
+    });
+    
+    $("customColorInput")?.addEventListener("change", (e) => { // 'change' для добавления
+        this.addCustomColor('accent', e.target.value);
+    });
+    $("customBgInput")?.addEventListener("change", (e) => { // 'change' для добавления
+        this.addCustomColor('bg', e.target.value);
     });
   },
   
@@ -53,7 +58,6 @@ export const colorManager = {
 
     container.addEventListener("click", (e) => this._handleClick(e, type));
     
-    // Правый клик для десктопа
     container.addEventListener("contextmenu", (e) => {
         const swatch = e.target.closest('.color-swatch-wrapper[data-custom="true"]');
         if (swatch) {
@@ -63,14 +67,13 @@ export const colorManager = {
     });
 
     let touchMoved = false;
-    // Долгое нажатие для мобильных
     container.addEventListener("touchstart", (e) => {
         const swatch = e.target.closest('.color-swatch-wrapper[data-custom="true"]');
         if (swatch) {
             touchMoved = false;
             this.longPressTimer = setTimeout(() => {
                 if (!touchMoved) {
-                    e.preventDefault(); // Предотвращаем клик после долгого нажатия
+                    e.preventDefault();
                     this._showDeleteButton(swatch);
                 }
             }, LONG_PRESS_DURATION);
@@ -148,15 +151,17 @@ export const colorManager = {
     
     const normalizedColor = color.toLowerCase();
 
+    // ИСПРАВЛЕНИЕ: Проверка на дубликат ПЕРЕД остальными проверками
+    if ([...standardColors, ...customColors].map(c => c.toLowerCase()).includes(normalizedColor)) {
+        showToast(t("color_already_exists"));
+        return;
+    }
+
     if (customColors.length >= MAX_CUSTOM_COLORS) {
       showToast(t(isAccent ? "accent_limit_msg" : "bg_limit_msg"));
       return;
     }
     if (!/^#[0-9a-f]{6}$/i.test(normalizedColor)) return;
-    if ([...standardColors, ...customColors].map(c => c.toLowerCase()).includes(normalizedColor)) {
-        showToast(t("color_already_exists"));
-        return;
-    }
 
     sm.vibrate(40, "medium");
     customColors.push(normalizedColor);
@@ -172,6 +177,9 @@ export const colorManager = {
     const wrapper = container.querySelector(`.color-swatch-wrapper[data-color="${color}"]`);
 
     if (wrapper) {
+      // ИСПРАВЛЕНИЕ: Немедленно отправляем событие, чтобы UI успел среагировать
+      document.dispatchEvent(new CustomEvent('colorDeleted', { detail: { type, color } }));
+
       wrapper.classList.add("is-collapsing");
       wrapper.addEventListener("transitionend", () => {
         wrapper.remove();
@@ -181,7 +189,6 @@ export const colorManager = {
           customColors.splice(index, 1);
           safeSetLS(isAccent ? 'custom_accent_colors' : 'custom_bg_colors', JSON.stringify(customColors));
         }
-        document.dispatchEvent(new CustomEvent('colorDeleted', { detail: { type, color } }));
       }, { once: true });
     }
   },
@@ -190,7 +197,6 @@ export const colorManager = {
     const container = $(type === "accent" ? "accent-colors-container" : "bg-colors-container");
     if (!container) return;
 
-    // Очищаем только swatch'и, оставляя picker на месте
     container.querySelectorAll('.color-swatch-wrapper').forEach(el => el.remove());
     
     const isAccent = type === "accent";
@@ -200,7 +206,6 @@ export const colorManager = {
     colors.forEach(color => {
         const isCustom = (isAccent ? this.customAccentColors : this.customBgColors).includes(color);
         const swatch = this._createColorSwatch(color, isCustom);
-        // Вставляем перед пикером
         if (picker) {
             container.insertBefore(swatch, picker);
         } else {
@@ -246,20 +251,43 @@ export const colorManager = {
         el.classList.remove('ring-[var(--primary-color)]', 'ring-2', 'ring-offset-2', 'ring-offset-surface');
         el.querySelector('.injected-checkmark')?.remove();
     });
+    
+    // Также убираем рамку с пикера
+    container.querySelector('.color-picker-wrapper')?.classList.remove('ring-[var(--primary-color)]', 'ring-2', 'ring-offset-2', 'ring-offset-surface');
+    container.querySelector('.injected-checkmark-picker')?.remove();
 
-    const activeWrapper = container.querySelector(`.color-swatch-wrapper[data-color="${color}"]`);
+    const normalizedColor = color.toLowerCase();
+    let activeWrapper = container.querySelector(`.color-swatch-wrapper[data-color="${normalizedColor}"]`);
+    let isPickerSelected = false;
+
+    if (!activeWrapper) {
+        // Если swatch не найден, возможно, это цвет из пикера
+        const pickerInput = $(type === 'accent' ? 'customColorInput' : 'customBgInput');
+        if (pickerInput && pickerInput.value.toLowerCase() === normalizedColor) {
+            activeWrapper = pickerInput.closest('.color-picker-wrapper');
+            isPickerSelected = true;
+        }
+    }
+
     if (activeWrapper) {
       activeWrapper.classList.add('ring-[var(--primary-color)]', 'ring-2', 'ring-offset-2', 'ring-offset-surface');
       
-      const isDefault = color === 'default';
+      const isDefault = normalizedColor === 'default';
       const isDark = document.documentElement.classList.contains('dark');
-      const luminance = isDefault ? (isDark ? 0 : 1) : getLuminance(...Object.values(hexToRGB(color)));
+      const luminance = isDefault ? (isDark ? 0 : 1) : getLuminance(...Object.values(hexToRGB(normalizedColor)));
       const iconColor = luminance > 0.5 ? '#1f2937' : '#ffffff';
 
-      const svgIcon = createSVGIcon("M4.5 12.75l6 6 9-13.5", ["w-5", "h-5", "injected-checkmark"]);
+      const svgIcon = createSVGIcon("M4.5 12.75l6 6 9-13.5", ["w-5", "h-5"]);
+      
+      if (isPickerSelected) {
+        svgIcon.classList.add('injected-checkmark-picker', 'absolute', 'inset-0', 'm-auto', 'z-20', 'pointer-events-none');
+      } else {
+        svgIcon.classList.add('injected-checkmark');
+      }
       svgIcon.style.color = iconColor;
       
-      activeWrapper.querySelector('.color-btn')?.append(svgIcon);
+      const targetElement = isPickerSelected ? activeWrapper : activeWrapper.querySelector('.color-btn');
+      targetElement?.append(svgIcon);
 
       if (doScroll) activeWrapper.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
     }
