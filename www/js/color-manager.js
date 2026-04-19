@@ -42,6 +42,8 @@ export const colorManager = {
         const picker = $(pickerId);
         if (!picker) return;
 
+        let pollingInterval = null;
+
         picker.addEventListener("input", (e) => {
             if (this.activeActionTarget && this.activeActionTarget === picker.closest('.color-picker-wrapper')) {
                 this._hideActionButton();
@@ -49,9 +51,17 @@ export const colorManager = {
             document.dispatchEvent(new CustomEvent("colorSelected", { detail: { type, color: e.target.value, fromPicker: true } }));
         });
         
-        // ИСПРАВЛЕНО: Используем 'blur' вместо 'change'
-        picker.addEventListener("blur", () => {
-            this._handlePickerInteraction(picker.closest('.color-picker-wrapper'), type);
+        // ИСПОЛЬЗУЕМ НОВУЮ ЛОГИКУ НА КЛИК
+        picker.addEventListener("click", () => {
+            if (pollingInterval) return;
+
+            pollingInterval = setInterval(() => {
+                if (document.hasFocus()) {
+                    clearInterval(pollingInterval);
+                    pollingInterval = null;
+                    this._handlePickerInteraction(picker.closest('.color-picker-wrapper'), type);
+                }
+            }, 200);
         });
     };
     setupPickerEvents('accent');
@@ -305,7 +315,7 @@ export const colorManager = {
       activeWrapper.querySelector('.color-btn')?.append(svgIcon);
 
       if (doScroll) {
-        activeWrapper.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        activeWrapper.scrollIntoView({ behavior: 'smooth', block: 'nearest', 'inline': 'center' });
       }
     }
   },
