@@ -42,15 +42,14 @@ export const colorManager = {
         const picker = $(pickerId);
         if (!picker) return;
 
-        // 'input' для live-preview
+        // 'input' для live-preview. Обновляет только цвет приложения.
         picker.addEventListener("input", (e) => {
             document.dispatchEvent(new CustomEvent("colorSelected", { detail: { type, color: e.target.value, fromPicker: true } }));
         });
         
-        // 'change' для финализации предпросмотра и показа кнопки "+"
+        // 'change' по закрытию пикера показывает кнопку "Добавить".
         picker.addEventListener("change", (e) => {
-            document.dispatchEvent(new CustomEvent("colorSelected", { detail: { type, color: e.target.value, fromPicker: false } }));
-            this._handlePickerInteraction(picker.closest('.color-picker-wrapper'), type);
+            this._showActionButton(picker.closest('.color-picker-wrapper'), 'add');
         });
     };
     setupPickerEvents('accent');
@@ -67,7 +66,7 @@ export const colorManager = {
         const swatch = e.target.closest('.color-swatch-wrapper[data-custom="true"]');
         if (swatch) {
             e.preventDefault();
-            this._showDeleteButton(swatch);
+            this._showActionButton(swatch, 'delete');
         }
     });
 
@@ -79,7 +78,7 @@ export const colorManager = {
             this.longPressTimer = setTimeout(() => {
                 if (!touchMoved) {
                     e.preventDefault();
-                    this._showDeleteButton(swatch);
+                    this._showActionButton(swatch, 'delete');
                 }
             }, LONG_PRESS_DURATION);
         }
@@ -99,9 +98,9 @@ export const colorManager = {
 
   _handleClick(event, type) {
     const swatch = event.target.closest(".color-swatch-wrapper");
-    const pickerWrapper = event.target.closest(".color-picker-wrapper");
     const actionBtn = event.target.closest(".action-btn");
 
+    // Обработка кликов по кнопкам "Добавить" или "Удалить"
     if (actionBtn) {
         if (actionBtn.dataset.action === 'add') {
             this.addCustomColor(type, actionBtn.dataset.color);
@@ -111,42 +110,25 @@ export const colorManager = {
         return;
     }
 
+    // Если кликнули мимо активной кнопки, скрываем ее
     if (this.activeActionTarget && !this.activeActionTarget.contains(event.target)) {
       this._hideActionButton();
     }
 
+    // Обработка клика по обычному кружку с цветом
     if (swatch) {
       const color = swatch.dataset.color;
       document.dispatchEvent(new CustomEvent("colorSelected", { detail: { type, color, fromPicker: false } }));
       if (swatch.dataset.custom === 'true') {
         this._showActionButton(swatch, 'delete');
       }
-    } else if (pickerWrapper) {
-      this._handlePickerInteraction(pickerWrapper, type);
     }
   },
   
-  _handlePickerInteraction(pickerWrapper, type) {
-    const isAccent = type === 'accent';
-    const picker = pickerWrapper.querySelector('input[type="color"]');
-    const color = picker.value.toLowerCase();
-    const allColors = [
-        ...(isAccent ? this.standardAccentColors : this.standardBgColors),
-        ...(isAccent ? this.customAccentColors : this.customBgColors)
-    ].map(c => c.toLowerCase());
-
-    if (allColors.includes(color)) {
-        this._hideActionButton(); // Скрываем кнопку, если цвет уже существует
-    } else {
-        this._showActionButton(pickerWrapper, 'add');
-    }
-  },
-
   _showActionButton(targetWrapper, action) {
-    if (this.activeActionTarget && this.activeActionTarget !== targetWrapper) {
+    if (this.activeActionTarget) {
         this._hideActionButton();
     }
-    if (this.activeActionTarget === targetWrapper) return;
 
     sm.vibrate(30, "medium");
     this.activeActionTarget = targetWrapper;
@@ -159,24 +141,28 @@ export const colorManager = {
     btn.type = "button";
     btn.dataset.action = action;
     btn.dataset.color = color;
-    btn.className = "action-btn absolute -top-2.5 -right-2.5 w-7 h-7 flex items-center justify-center rounded-full text-white shadow-lg focus:outline-none custom-focus active:scale-90 transition-all z-20";
+    // Базовые стили для кнопки
+    btn.className = "action-btn absolute rounded-full shadow-lg focus:outline-none custom-focus active:scale-90 transition-all z-30 flex items-center justify-center";
     btn.style.animation = 'fadeInScale 0.2s cubic-bezier(0.4, 0, 0.2, 1) both';
 
     if (action === 'add') {
         btn.setAttribute("aria-label", t("add_color"));
-        btn.classList.add("bg-green-500");
-        btn.append(createSVGIcon("M12 4.5v15m7.5-7.5h-15", ["w-4", "h-4"]));
+        // Кнопка полностью перекрывает пикер
+        btn.classList.add("inset-0", "w-9", "h-9");
+        btn.style.backgroundColor = color;
+        const luminance = getLuminance(...Object.values(hexToRGB(color)));
+        const iconColor = luminance > 0.5 ? '#1f2937' : '#ffffff';
+        const icon = createSVGIcon("M12 4.5v15m7.5-7.5h-15", ["w-5", "h-5"]);
+        icon.style.color = iconColor;
+        btn.append(icon);
     } else { // delete
         btn.setAttribute("aria-label", `${t("delete")} ${color}`);
-        btn.classList.add("bg-red-500");
+        // Кнопка маленькая и сбоку
+        btn.classList.add("-top-2.5", "-right-2.5", "w-7", "h-7", "bg-red-500", "text-white");
         btn.append(createSVGIcon("M6 18L18 6M6 6l12 12", ["w-4", "h-4"]));
     }
     
     targetWrapper.append(btn);
-  },
-  
-  _showDeleteButton(targetWrapper) {
-      this._showActionButton(targetWrapper, 'delete');
   },
 
   _hideActionButton() {
@@ -199,11 +185,14 @@ export const colorManager = {
     
     if ([...standardColors, ...customColors].map(c => c.toLowerCase()).includes(normalizedColor)) {
         showToast(t("color_already_exists"));
+        // После уведомления просто выбираем этот цвет
+        document.dispatchEvent(new CustomEvent("colorSelected", { detail: { type, color: normalizedColor, fromPicker: false } }));
         return; 
     }
 
     if (customColors.length >= MAX_CUSTOM_COLORS) {
       showToast(t(isAccent ? "accent_limit_msg" : "bg_limit_msg"));
+      document.dispatchEvent(new CustomEvent("revertToLastValidColor", { detail: { type } }));
       return;
     }
 
@@ -211,6 +200,7 @@ export const colorManager = {
     customColors.push(normalizedColor);
     safeSetLS(isAccent ? "custom_accent_colors" : "custom_bg_colors", JSON.stringify(customColors));
     this._addColorToDOM(normalizedColor, type);
+    // Выбираем только что добавленный цвет
     document.dispatchEvent(new CustomEvent("colorSelected", { detail: { type, color: normalizedColor, fromPicker: false } }));
   },
 
@@ -300,6 +290,7 @@ export const colorManager = {
     const activeWrapper = container.querySelector(`.color-swatch-wrapper[data-color="${normalizedColor}"]`);
     
     if (activeWrapper) {
+      this._hideActionButton();
       activeWrapper.classList.add('ring-[var(--primary-color)]', 'ring-2', 'ring-offset-2', 'ring-offset-surface');
       
       const isDefault = normalizedColor === 'default';
@@ -321,10 +312,11 @@ export const colorManager = {
   syncPickers(accentColor, bgColor) {
       const accentPicker = $('customColorInput');
       if (accentPicker) accentPicker.value = accentColor;
+      $('accent-picker-preview').style.backgroundColor = ''; // Сбрасываем фон, чтобы показать градиент
       
       const bgPicker = $('customBgInput');
-      if (bgPicker) {
-          bgPicker.value = bgColor.startsWith('#') ? bgColor : (document.documentElement.classList.contains('dark') ? '#000000' : '#f3f4f6');
-      }
+      const finalBg = bgColor.startsWith('#') ? bgColor : (document.documentElement.classList.contains('dark') ? '#000000' : '#f3f4f6');
+      if (bgPicker) bgPicker.value = finalBg;
+      $('bg-picker-preview').style.backgroundColor = ''; // Сбрасываем фон
   }
 };
