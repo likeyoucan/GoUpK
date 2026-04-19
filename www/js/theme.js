@@ -54,6 +54,7 @@ export const themeManager = {
   // --- Публичные методы для управления темой ---
   setColor(hex, doScroll = true) {
     if (!isValidHex(hex)) return;
+    colorsManager._hideActionButton();
     colorsManager.currentAccent = hex;
     safeSetLS("theme_color", hex);
     document.documentElement.style.setProperty("--primary-color", hex);
@@ -65,6 +66,7 @@ export const themeManager = {
   },
 
   setBgColor(hex, doScroll = true) {
+    colorsManager._hideActionButton();
     colorsManager.currentBg = hex;
     safeSetLS("theme_bg_color", hex);
     this.applyBgTheme(hex, settingsManager.isAdaptiveBg);

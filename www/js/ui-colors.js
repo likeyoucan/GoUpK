@@ -1,6 +1,12 @@
-// Файл: www/js/ui-colors.js (НОВЫЙ)
+// Файл: www/js/ui-colors.js
 
-import { $, safeGetLS, safeSetLS, showToast } from "./utils.js?v=VERSION";
+import {
+  $,
+  safeGetLS,
+  safeSetLS,
+  safeRemoveLS,
+  showToast,
+} from "./utils.js?v=VERSION";
 import { t } from "./i18n.js?v=VERSION";
 import { sm } from "./sound.js?v=VERSION";
 import {
@@ -73,6 +79,15 @@ export const colorsManager = {
     $("bg-colors-container")?.addEventListener("click", (e) =>
       this._handleColorClick(e, "bg"),
     );
+
+    // Этот листенер нужен для обновления цвета в реальном времени,
+    // но основная логика выбора/добавления перенесена в _handleColorClick
+    $("customColorInput")?.addEventListener("change", (e) =>
+      this.setColor(e.target.value),
+    );
+    $("customBgInput")?.addEventListener("change", (e) =>
+      this.setBgColor(e.target.value),
+    );
   },
 
   applySettings() {
@@ -99,11 +114,9 @@ export const colorsManager = {
     this._syncPickerValues();
   },
 
-  // --- Основная логика управления цветом ---
   setColor(hex) {
     this.coordinator.setColor(hex);
   },
-
   setBgColor(hex) {
     this.coordinator.setBgColor(hex);
   },
@@ -114,13 +127,12 @@ export const colorsManager = {
     const actionBtn = event.target.closest(".color-action-btn");
 
     if (actionBtn) {
-      if (actionBtn.dataset.action === "delete")
+      if (actionBtn.dataset.action === "delete") {
         this._deleteColorWithAnimation(actionBtn.dataset.color, type);
+      } else if (actionBtn.dataset.action === "add") {
+        this.addCustomColor(type);
+      }
       return;
-    }
-
-    if (this.activeActionTarget && this.activeActionTarget !== swatchWrapper) {
-      this._hideActionButton();
     }
 
     if (swatchWrapper) {
@@ -132,46 +144,53 @@ export const colorsManager = {
       if (color !== currentSelected) {
         sm.vibrate(20, "light");
         type === "accent" ? this.setColor(color) : this.setBgColor(color);
+        if (isCustom) this._showActionButton(swatchWrapper, "delete");
       } else if (isCustom) {
         this.activeActionTarget === swatchWrapper
           ? this._hideActionButton()
-          : this._showActionButton(swatchWrapper);
+          : this._showActionButton(swatchWrapper, "delete");
       }
     } else if (pickerWrapper) {
       const picker = pickerWrapper.querySelector('input[type="color"]');
-      picker.oninput = (e) => {
-        // Обновляем цвет в реальном времени при перетаскивании
-        const newColor = e.target.value;
-        if (!isValidHex(newColor)) return;
-        type === "accent" ? this.setColor(newColor) : this.setBgColor(newColor);
-      };
-      picker.onchange = (e) => {
-        // Сохраняем кастомный цвет по завершению выбора
-        const newColor = e.target.value.toLowerCase();
-        if (!isValidHex(newColor)) return;
-        this.addCustomColor(type, newColor);
-        picker.oninput = null; // Сбрасываем обработчик
-        picker.onchange = null;
-      };
-      picker.click(); // Открываем системный color picker
+      const color = picker.value.toLowerCase();
+      const currentSelected = (
+        type === "accent" ? this.currentAccent : this.currentBg
+      ).toLowerCase();
+
+      if (color !== currentSelected) {
+        type === "accent" ? this.setColor(color) : this.setBgColor(color);
+      }
+
+      if (this.activeActionTarget === pickerWrapper) {
+        this._hideActionButton();
+      } else {
+        this._showActionButton(pickerWrapper, "add");
+      }
     }
   },
 
-  _showActionButton(targetWrapper) {
-    if (this.activeActionTarget) this._hideActionButton();
+  _showActionButton(targetWrapper, action) {
+    if (this.activeActionTarget && this.activeActionTarget !== targetWrapper)
+      this._hideActionButton();
     sm.vibrate(30, "medium");
     this.activeActionTarget = targetWrapper;
 
-    const btn = createSVGIcon("M19.5 12h-15", ["w-5", "h-5"]);
-    const actionButton = document.createElement("button");
-    actionButton.type = "button";
-    actionButton.dataset.action = "delete";
-    actionButton.dataset.color = targetWrapper.dataset.color;
-    actionButton.setAttribute("aria-label", t("delete"));
-    actionButton.className =
-      "color-action-btn w-6 h-6 flex items-center justify-center rounded-full text-white bg-red-500 shadow-lg focus:outline-none custom-focus active:scale-90 transition-all";
-    actionButton.append(btn);
-    targetWrapper.append(actionButton);
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.dataset.action = action;
+
+    const isAdd = action === "add";
+    const color = isAdd
+      ? targetWrapper.querySelector('input[type="color"]').value
+      : targetWrapper.dataset.color;
+    btn.dataset.color = color;
+
+    btn.setAttribute("aria-label", t(isAdd ? "add_color" : "delete"));
+    btn.className = `color-action-btn w-8 h-8 flex items-center justify-center rounded-full text-white shadow-lg focus:outline-none custom-focus active:scale-90 transition-transform ${isAdd ? "bg-green-500" : "bg-red-500"}`;
+
+    const pathData = isAdd ? "M12 4.5v15m7.5-7.5h-15" : "M19.5 12h-15";
+    btn.append(createSVGIcon(pathData, ["w-5", "h-5"]));
+    targetWrapper.append(btn);
   },
 
   _hideActionButton() {
@@ -184,7 +203,7 @@ export const colorsManager = {
     this.activeActionTarget = null;
   },
 
-  addCustomColor(type, color) {
+  addCustomColor(type) {
     const isAccent = type === "accent";
     const customColors = isAccent
       ? this.customAccentColors
@@ -194,13 +213,20 @@ export const colorsManager = {
       return;
     }
 
+    const picker = $(isAccent ? "customColorInput" : "customBgInput");
+    const color = picker.value.toLowerCase();
+
     const allColors = [
       ...(isAccent ? STANDARD_ACCENT_COLORS : STANDARD_BG_COLORS),
       ...customColors,
     ].map((c) => c.toLowerCase());
 
+    this._hideActionButton();
+
     if (allColors.includes(color)) {
       showToast(t("color_already_exists"));
+      sm.vibrate(30, "medium");
+      isAccent ? this.setColor(color) : this.setBgColor(color);
     } else {
       sm.vibrate(40, "medium");
       customColors.push(color);
@@ -209,8 +235,8 @@ export const colorsManager = {
         JSON.stringify(customColors),
       );
       this._addColorToDOM(color, type);
+      isAccent ? this.setColor(color) : this.setBgColor(color);
     }
-    isAccent ? this.setColor(color) : this.setBgColor(color);
   },
 
   _deleteColorWithAnimation(color, type) {
@@ -225,9 +251,15 @@ export const colorsManager = {
     );
 
     if (wrapper) {
+      wrapper.classList.remove(
+        "ring-[var(--primary-color)]",
+        "ring-2",
+        "ring-offset-2",
+        "ring-offset-surface",
+      );
       wrapper.classList.add("is-collapsing");
       wrapper.addEventListener(
-        "animationend",
+        "transitionend",
         () => {
           wrapper.remove();
           let customColors = isAccent
@@ -255,7 +287,6 @@ export const colorsManager = {
     }
   },
 
-  // --- Рендеринг и DOM ---
   _populateColorSection(type) {
     const container = $(
       type === "accent" ? "accent-colors-container" : "bg-colors-container",
@@ -298,23 +329,13 @@ export const colorsManager = {
     const gradientBg = document.createElement("div");
     gradientBg.className =
       "absolute inset-0 rounded-full bg-[conic-gradient(from_0deg,red,orange,yellow,green,blue,indigo,violet,red)] opacity-90 group-hover:opacity-100 transition-opacity pointer-events-none z-0";
-    const plusIcon = createSVGIcon("M12 4.5v15m7.5-7.5h-15", [
-      "w-5",
-      "h-5",
-      "text-white",
-      "absolute",
-      "inset-0",
-      "m-auto",
-      "z-10",
-      "pointer-events-none",
-    ]);
     const input = document.createElement("input");
     input.type = "color";
     input.id = type === "accent" ? "customColorInput" : "customBgInput";
     input.setAttribute("aria-label", t("add_color"));
     input.className =
-      "absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20";
-    wrapper.append(gradientBg, plusIcon, input);
+      "absolute inset-0 w-[150%] h-[150%] -top-1 -left-1 opacity-0 cursor-pointer z-10";
+    wrapper.append(gradientBg, input);
     return wrapper;
   },
 
@@ -333,18 +354,32 @@ export const colorsManager = {
       type === "accent" ? "accent-colors-container" : "bg-colors-container",
     );
     if (!container) return;
-    container.querySelectorAll(".color-swatch-wrapper").forEach((el) => {
-      el.classList.remove(
-        "ring-[var(--primary-color)]",
-        "ring-2",
-        "ring-offset-2",
-        "ring-offset-surface",
-      );
-      el.querySelector(".color-btn")?.querySelector("svg")?.remove();
-    });
-    const activeWrapper = container.querySelector(
+
+    container
+      .querySelectorAll(".color-swatch-wrapper, .color-picker-wrapper")
+      .forEach((el) => {
+        el.classList.remove(
+          "ring-[var(--primary-color)]",
+          "ring-2",
+          "ring-offset-2",
+          "ring-offset-surface",
+        );
+        el.querySelector(".color-btn")?.querySelector("svg")?.remove();
+        el.querySelector(".injected-checkmark")?.remove();
+      });
+
+    let activeWrapper = container.querySelector(
       `.color-swatch-wrapper[data-color="${hex}"]`,
     );
+    if (!activeWrapper) {
+      const picker = $(
+        type === "accent" ? "customColorInput" : "customBgInput",
+      );
+      if (picker && picker.value.toLowerCase() === hex.toLowerCase()) {
+        activeWrapper = picker.closest(".color-picker-wrapper");
+      }
+    }
+
     if (activeWrapper) {
       activeWrapper.classList.add(
         "ring-[var(--primary-color)]",
@@ -352,14 +387,38 @@ export const colorsManager = {
         "ring-offset-2",
         "ring-offset-surface",
       );
+
+      const isPicker = activeWrapper.matches(".color-picker-wrapper");
       const isDefault = hex === "default";
-      const { r, g, b } = isDefault
-        ? { r: 255, g: 255, b: 255 }
-        : hexToRGB(hex);
-      const iconColor = getLuminance(r, g, b) > 0.5 ? "#1f2937" : "#ffffff";
+      const isDark = document.documentElement.classList.contains("dark");
+
+      let iconColor;
+      if (isPicker) {
+        iconColor = "#ffffff";
+      } else if (isDefault) {
+        iconColor = isDark ? "#ffffff" : "#1f2937";
+      } else {
+        const { r, g, b } = hexToRGB(hex);
+        iconColor = getLuminance(r, g, b) > 0.5 ? "#1f2937" : "#ffffff";
+      }
+
       const svgIcon = createSVGIcon("M4.5 12.75l6 6 9-13.5", ["w-5", "h-5"]);
       svgIcon.style.color = iconColor;
-      activeWrapper.querySelector(".color-btn")?.append(svgIcon);
+
+      if (isPicker) {
+        svgIcon.classList.add(
+          "injected-checkmark",
+          "absolute",
+          "inset-0",
+          "m-auto",
+          "z-20",
+          "pointer-events-none",
+        );
+        activeWrapper.append(svgIcon);
+      } else {
+        activeWrapper.querySelector(".color-btn")?.append(svgIcon);
+      }
+
       if (doScroll)
         activeWrapper.scrollIntoView({
           behavior: "smooth",
@@ -370,14 +429,19 @@ export const colorsManager = {
   },
 
   _syncPickerValues() {
-    if ($("customColorInput") && isValidHex(this.currentAccent))
-      $("customColorInput").value = this.currentAccent;
-    if ($("customBgInput")) {
-      $("customBgInput").value = isValidHex(this.currentBg)
-        ? this.currentBg
-        : document.documentElement.classList.contains("dark")
-          ? "#000000"
-          : "#f3f4f6";
+    const accentPicker = $("customColorInput");
+    if (accentPicker && isValidHex(this.currentAccent)) {
+      accentPicker.value = this.currentAccent;
+    }
+
+    const bgPicker = $("customBgInput");
+    if (bgPicker) {
+      if (isValidHex(this.currentBg)) {
+        bgPicker.value = this.currentBg;
+      } else {
+        const isDark = document.documentElement.classList.contains("dark");
+        bgPicker.value = isDark ? "#000000" : "#f3f4f6";
+      }
     }
   },
 };
