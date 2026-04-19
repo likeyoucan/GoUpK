@@ -153,22 +153,22 @@ export const colorManager = {
 
     if (!/^#[0-9a-f]{6}$/i.test(normalizedColor)) return;
 
-    // ----- ФИНАЛЬНОЕ ИСПРАВЛЕНИЕ ЗДЕСЬ -----
     if ([...standardColors, ...customColors].map(c => c.toLowerCase()).includes(normalizedColor)) {
         showToast(t("color_already_exists"));
-        // Используем setTimeout, чтобы дать уведомлению время появиться перед сбросом UI
+        // ----- ФИНАЛЬНОЕ ИСПРАВЛЕНИЕ -----
+        // Увеличиваем таймаут, чтобы он был дольше анимации появления toast (300ms)
         setTimeout(() => {
             document.dispatchEvent(new CustomEvent("revertColorSelection", { detail: { type } }));
-        }, 150); // 150ms достаточно
+        }, 350); 
+        // ---------------------------------
         return; 
     }
-    // ----- КОНЕЦ ИСПРАВЛЕНИЯ -----
 
     if (customColors.length >= MAX_CUSTOM_COLORS) {
       showToast(t(isAccent ? "accent_limit_msg" : "bg_limit_msg"));
       setTimeout(() => {
         document.dispatchEvent(new CustomEvent("revertColorSelection", { detail: { type } }));
-      }, 150);
+      }, 350);
       return;
     }
 
