@@ -160,10 +160,12 @@ export const colorManager = {
     this._hideActionButton();
     const isAccent = type === "accent";
     const customColors = isAccent ? this.customAccentColors : this.customBgColors;
+    const standardColors = isAccent ? this.standardAccentColors : this.standardBgColors;
     const normalizedColor = color.toLowerCase();
     
-    // ИСПРАВЛЕНИЕ: Проверяем наличие только в списке КАСТОМНЫХ цветов.
-    if (customColors.map(c => c.toLowerCase()).includes(normalizedColor)) {
+    // ⭐ ⭐ ⭐ ГЛАВНОЕ ИСПРАВЛЕНИЕ ⭐ ⭐ ⭐
+    // Проверяем наличие цвета в ОБЩЕМ списке (стандартные + кастомные)
+    if ([...standardColors, ...customColors].map(c => c.toLowerCase()).includes(normalizedColor)) {
         showToast(t("color_already_exists"));
         return; 
     }
