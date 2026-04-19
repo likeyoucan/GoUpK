@@ -34,27 +34,18 @@ export const colorManager = {
   },
 
   _bindEvents() {
+    // Вешаем слушатели кликов на контейнеры - это центральная часть логики
     this._bindContainerEvents("accent-colors-container", "accent");
     this._bindContainerEvents("bg-colors-container", "bg");
     
-    // Используем простой и надежный подход с событиями 'input' и 'change'
+    // Событие 'input' на пикере для live-preview
     const setupPickerEvents = (type) => {
         const pickerId = type === 'accent' ? 'customColorInput' : 'customBgInput';
         const picker = $(pickerId);
         if (!picker) return;
 
-        // 'input' для live-preview
         picker.addEventListener("input", (e) => {
-            if (this.activeActionTarget && this.activeActionTarget === picker.closest('.color-picker-wrapper')) {
-                this._hideActionButton();
-            }
             document.dispatchEvent(new CustomEvent("colorSelected", { detail: { type, color: e.target.value, fromPicker: true } }));
-        });
-        
-        // 'change' срабатывает только когда пользователь подтвердил выбор (нажал "ОК")
-        picker.addEventListener("change", () => {
-            // Показываем кнопку "Добавить"
-            this._showActionButton(picker.closest('.color-picker-wrapper'), 'add');
         });
     };
     setupPickerEvents('accent');
@@ -67,7 +58,7 @@ export const colorManager = {
 
     container.addEventListener("click", (e) => this._handleClick(e, type));
     
-    // Код для long press / context menu остается без изменений
+    // Код для long press / context menu для удаления (без изменений)
     container.addEventListener("contextmenu", (e) => {
         const swatch = e.target.closest('.color-swatch-wrapper[data-custom="true"]');
         if (swatch) { e.preventDefault(); this._showActionButton(swatch, 'delete'); }
@@ -88,13 +79,13 @@ export const colorManager = {
     container.addEventListener("touchcancel", endTouch);
   },
 
+  // ИСПРАВЛЕНО: Возвращена правильная логика из вашего рабочего примера
   _handleClick(event, type) {
     const swatch = event.target.closest(".color-swatch-wrapper");
     const pickerWrapper = event.target.closest(".color-picker-wrapper");
     const actionBtn = event.target.closest(".color-action-btn");
-    
-    if (pickerWrapper) return;
-    
+
+    // КЛИК ПО КНОПКЕ "ДОБАВИТЬ" ИЛИ "УДАЛИТЬ"
     if (actionBtn) {
         event.stopPropagation();
         if (actionBtn.dataset.action === 'add') {
@@ -105,10 +96,24 @@ export const colorManager = {
         return;
     }
 
+    // КЛИК ПО ИКОНКЕ ПИКЕРА
+    if (pickerWrapper) {
+        // Логика переключения (toggle) видимости кнопки
+        if (this.activeActionTarget === pickerWrapper) {
+            this._hideActionButton();
+        } else {
+            this._showActionButton(pickerWrapper, 'add');
+        }
+        // Не выбираем цвет темы, просто показываем/скрываем кнопку
+        return;
+    }
+
+    // Если была активна кнопка, но клик был в другом месте - скрываем ее
     if (this.activeActionTarget && !this.activeActionTarget.contains(event.target)) {
       this._hideActionButton();
     }
     
+    // КЛИК ПО ОБЫЧНОМУ ЦВЕТУ
     if (swatch) {
       const color = swatch.dataset.color;
       document.dispatchEvent(new CustomEvent("colorSelected", { detail: { type, color, fromPicker: false } }));
@@ -122,12 +127,12 @@ export const colorManager = {
     if (this.activeActionTarget && this.activeActionTarget !== targetWrapper) {
         this._hideActionButton();
     }
-    if (this.activeActionTarget === targetWrapper) return;
-
+    
     sm.vibrate(30, "medium");
     this.activeActionTarget = targetWrapper;
     
-    const color = (action === 'add')
+    const isAdd = action === 'add';
+    const color = isAdd
         ? targetWrapper.querySelector('input[type="color"]').value
         : targetWrapper.dataset.color;
 
@@ -137,17 +142,18 @@ export const colorManager = {
     btn.dataset.color = color;
     btn.className = "color-action-btn w-9 h-9 flex items-center justify-center rounded-full shadow-lg focus:outline-none custom-focus active:scale-90 transition-all";
     
-    if (action === 'add') {
+    if (isAdd) {
         btn.setAttribute("aria-label", t("add_color"));
         btn.style.backgroundColor = color;
         
+        // УЛУЧШЕНИЕ: Проверка контрастности для иконки "+"
         const { r, g, b } = hexToRGB(color);
         const luminance = getLuminance(r, g, b);
         const iconColor = luminance > 0.5 ? '#1f2937' : '#ffffff';
         btn.style.color = iconColor;
         
         btn.append(createSVGIcon("M12 4.5v15m7.5-7.5h-15", ["w-5", "h-5"]));
-    } else {
+    } else { // 'delete'
         btn.setAttribute("aria-label", `${t("delete")} ${color}`);
         btn.style.backgroundColor = '#ef4444';
         btn.style.color = '#ffffff';
@@ -175,10 +181,9 @@ export const colorManager = {
     
     const normalizedColor = color.toLowerCase();
     
+    // ПРОВЕРКА НА СУЩЕСТВОВАНИЕ ЦВЕТА
     if ([...standardColors, ...customColors].map(c => c.toLowerCase()).includes(normalizedColor)) {
         showToast(t("color_already_exists"));
-        const previousColor = isAccent ? document.documentElement.style.getPropertyValue('--primary-color') : (safeGetLS("theme_bg_color") || "default");
-        document.dispatchEvent(new CustomEvent("colorSelected", { detail: { type, color: previousColor, fromPicker: false } }));
         return; 
     }
 
@@ -203,7 +208,6 @@ export const colorManager = {
 
     if (wrapper) {
       document.dispatchEvent(new CustomEvent('colorDeleted', { detail: { type, color } }));
-
       wrapper.classList.add("is-collapsing");
       wrapper.addEventListener("transitionend", () => {
         wrapper.remove();
@@ -217,6 +221,7 @@ export const colorManager = {
     }
   },
 
+  // Остальные функции без изменений...
   populateColorSection(type) {
     const container = $(type === "accent" ? "accent-colors-container" : "bg-colors-container");
     if (!container) return;
