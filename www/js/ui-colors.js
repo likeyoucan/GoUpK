@@ -38,9 +38,7 @@ export const colorsManager = {
     $("accent-colors-container")?.addEventListener("click", e => this._handleColorClick(e, "accent"));
     $("bg-colors-container")?.addEventListener("click", e => this._handleColorClick(e, "bg"));
     
-    // ИСПРАВЛЕНО: Восстановлена оригинальная логика обработки событий пикера
-    
-    // 1. Live-preview при перетаскивании в пикере.
+    // Live-preview при перетаскивании в пикере.
     const handlePickerInput = (e, type) => {
         if (isValidHex(e.target.value)) {
             this.coordinator.previewColor(e.target.value, type);
@@ -49,14 +47,12 @@ export const colorsManager = {
     $("customColorInput")?.addEventListener("input", e => handlePickerInput(e, 'accent'));
     $("customBgInput")?.addEventListener("input", e => handlePickerInput(e, 'bg'));
 
-    // 2. Фиксация выбора и предложение сохранить после закрытия пикера.
+    // Фиксация выбора и предложение сохранить после закрытия пикера.
     const handlePickerChange = (e, type) => {
       const color = e.target.value;
       if (isValidHex(color)) {
-          // Фиксируем цвет как активный и сохраняем в localStorage.
           type === 'accent' ? this.setColor(color) : this.setBgColor(color);
       }
-      // Показываем кнопку "+"
       const pickerWrapper = e.target.closest('.color-picker-wrapper');
       if (pickerWrapper) {
         this._showActionButton(pickerWrapper, 'add');
@@ -206,9 +202,8 @@ export const colorsManager = {
   _populateColorSection(type) {
     const container = $(type === "accent" ? "accent-colors-container" : "bg-colors-container");
     if (!container) return;
-    // ИСПРАВЛЕНО: Безопасная очистка DOM
     while (container.firstChild) {
-        container.removeChild(container.firstChild);
+      container.removeChild(container.firstChild);
     }
     const isAccent = type === "accent";
     const standard = isAccent ? STANDARD_ACCENT_COLORS : STANDARD_BG_COLORS;
@@ -241,12 +236,14 @@ export const colorsManager = {
     wrapper.className = "color-picker-wrapper relative w-9 h-9 shrink-0 group rounded-full border border-black/20 dark:border-white/20 transition-transform active:scale-90";
     const gradientBg = document.createElement("div");
     gradientBg.className = "absolute inset-0 rounded-full bg-[conic-gradient(from_0deg,red,orange,yellow,green,blue,indigo,violet,red)] opacity-90 group-hover:opacity-100 transition-opacity pointer-events-none z-0";
+    // ВОССТАНОВЛЕНО: Статическая иконка "+" внутри пикера
+    const plusIcon = createSVGIcon("M12 4.5v15m7.5-7.5h-15", ["w-5", "h-5", "text-white", "absolute", "inset-0", "m-auto", "z-0", "pointer-events-none"]);
     const input = document.createElement("input");
     input.type = "color";
     input.id = type === "accent" ? "customColorInput" : "customBgInput";
     input.setAttribute("aria-label", t("add_color"));
     input.className = "absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10";
-    wrapper.append(gradientBg, input);
+    wrapper.append(gradientBg, plusIcon, input);
     return wrapper;
   },
   
