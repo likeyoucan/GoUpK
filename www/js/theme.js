@@ -49,10 +49,16 @@ export const themeManager = {
   },
 
   applySettings() {
+    // 1. Загружаем все данные из localStorage в состояние объекта
     this.currentAccent = safeGetLS("theme_color") || colorManager.standardAccentColors[0];
     this.currentBg = safeGetLS("theme_bg_color") || "default";
     this.currentMode = safeGetLS("theme_mode") || "system";
 
+    // 2. ⭐ ВАЖНЫЙ ШАГ: СРАЗУ СИНХРОНИЗИРУЕМ ЗНАЧЕНИЯ ПИКЕРОВ
+    // Теперь `updateSelectionUI` всегда будет видеть правильное значение в input.
+    colorManager.syncPickers(this.currentAccent, this.currentBg);
+
+    // 3. Теперь, когда пикеры готовы, применяем настройки и рисуем UI
     this.setMode(this.currentMode, false);
     this.setColor(this.currentAccent, false);
     this.setBgColor(this.currentBg, false);
