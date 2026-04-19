@@ -713,12 +713,11 @@
                       class="flex items-center gap-4 overflow-x-auto scroll-lock no-scrollbar py-2 px-2 -mx-2"
                     >
                       <!-- Сюда JS вставит стандартные и кастомные цвета -->
-                      <div class="color-picker-wrapper relative w-9 h-9 shrink-0 group rounded-full border border-black/20 dark:border-white/20 transition-transform active:scale-90 focus-within:ring-2 focus-within:ring-[var(--primary-color)] focus-within:ring-offset-2 focus-within:ring-offset-surface">
-                        <div id="accent-picker-preview" class="absolute inset-0 rounded-full bg-[conic-gradient(from_0deg,red,orange,yellow,green,blue,indigo,violet,red)] opacity-90 group-hover:opacity-100 transition-opacity"></div>
-                        <svg focusable="false" aria-hidden="true" class="w-5 h-5 text-gray-400 dark:text-gray-500 absolute inset-0 m-auto z-10 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                      <div class="color-picker-wrapper relative w-9 h-9 shrink-0 group rounded-full border border-dashed border-black/20 dark:border-white/20 transition-transform active:scale-90 focus-within:ring-2 focus-within:ring-[var(--primary-color)] focus-within:ring-offset-2 focus-within:ring-offset-surface">
+                        <svg focusable="false" aria-hidden="true" class="w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-[var(--primary-color)] transition-colors absolute inset-0 m-auto z-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"></path>
                         </svg>
-                        <input type="color" id="customColorInput" aria-label="Add custom accent color" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" />
+                        <input type="color" id="customColorInput" aria-label="Add custom accent color" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
                       </div>
                     </div>
                   </div>
@@ -734,12 +733,11 @@
                       class="flex items-center gap-4 overflow-x-auto scroll-lock no-scrollbar py-2 px-2 -mx-2"
                     >
                       <!-- Сюда JS вставит стандартные и кастомные цвета -->
-                      <div class="color-picker-wrapper relative w-9 h-9 shrink-0 group rounded-full border border-black/20 dark:border-white/20 transition-transform active:scale-90 focus-within:ring-2 focus-within:ring-[var(--primary-color)] focus-within:ring-offset-2 focus-within:ring-offset-surface">
-                          <div id="bg-picker-preview" class="absolute inset-0 rounded-full bg-[conic-gradient(from_0deg,red,orange,yellow,green,blue,indigo,violet,red)] opacity-90 group-hover:opacity-100 transition-opacity"></div>
-                          <svg focusable="false" aria-hidden="true" class="w-5 h-5 text-gray-400 dark:text-gray-500 absolute inset-0 m-auto z-10 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                      <div class="color-picker-wrapper relative w-9 h-9 shrink-0 group rounded-full border border-dashed border-black/20 dark:border-white/20 transition-transform active:scale-90 focus-within:ring-2 focus-within:ring-[var(--primary-color)] focus-within:ring-offset-2 focus-within:ring-offset-surface">
+                          <svg focusable="false" aria-hidden="true" class="w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-[var(--primary-color)] transition-colors absolute inset-0 m-auto z-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
                               <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"></path>
                           </svg>
-                          <input type="color" id="customBgInput" aria-label="Add custom background color" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" />
+                          <input type="color" id="customBgInput" aria-label="Add custom background color" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
                       </div>
                     </div>
                   </div>
