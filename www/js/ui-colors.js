@@ -79,7 +79,7 @@ export const colorsManager = {
       this._handleColorClick(e, "bg"),
     );
 
-    // ИСПРАВЛЕНО (Fix #1, #3): Разделение логики для live-preview и финального выбора.
+    // ИСПРАВЛЕНО: Разделена логика на live-preview и предложение сохранить.
     const handlePickerInput = (e, type) => {
       if (isValidHex(e.target.value)) {
         type === "accent"
@@ -94,18 +94,14 @@ export const colorsManager = {
       handlePickerInput(e, "bg"),
     );
 
-    const handlePickerChange = (e, type) => {
+    const handlePickerChange = (e) => {
       const pickerWrapper = e.target.closest(".color-picker-wrapper");
       if (pickerWrapper) {
         this._showActionButton(pickerWrapper, "add");
       }
     };
-    $("customColorInput")?.addEventListener("change", (e) =>
-      handlePickerChange(e, "accent"),
-    );
-    $("customBgInput")?.addEventListener("change", (e) =>
-      handlePickerChange(e, "bg"),
-    );
+    $("customColorInput")?.addEventListener("change", handlePickerChange);
+    $("customBgInput")?.addEventListener("change", handlePickerChange);
   },
 
   applySettings() {
@@ -133,6 +129,7 @@ export const colorsManager = {
 
   _handleColorClick(event, type) {
     const swatchWrapper = event.target.closest(".color-swatch-wrapper");
+    const pickerWrapper = event.target.closest(".color-picker-wrapper");
     const actionBtn = event.target.closest(".color-action-btn");
 
     if (actionBtn) {
@@ -142,7 +139,11 @@ export const colorsManager = {
       return;
     }
 
-    if (this.activeActionTarget && this.activeActionTarget !== swatchWrapper) {
+    if (
+      this.activeActionTarget &&
+      this.activeActionTarget !== swatchWrapper &&
+      this.activeActionTarget !== pickerWrapper
+    ) {
       this._hideActionButton();
     }
 
@@ -161,8 +162,14 @@ export const colorsManager = {
           ? this._hideActionButton()
           : this._showActionButton(swatchWrapper, "delete");
       }
+    } else if (pickerWrapper) {
+      // ИСПРАВЛЕНО: Этот блок теперь снова нужен для показа кнопки "+" при повторном клике.
+      if (this.activeActionTarget === pickerWrapper) {
+        this._hideActionButton();
+      } else {
+        this._showActionButton(pickerWrapper, "add");
+      }
     }
-    // Логика для pickerWrapper удалена отсюда, так как она теперь обрабатывается событиями 'input' и 'change'
   },
 
   _showActionButton(targetWrapper, action) {
@@ -212,7 +219,6 @@ export const colorsManager = {
     const picker = $(isAccent ? "customColorInput" : "customBgInput");
     const color = picker.value.toLowerCase();
 
-    // ИСПРАВЛЕНО (Fix #1): Корректная проверка на дубликаты.
     const standardColors = isAccent
       ? STANDARD_ACCENT_COLORS
       : STANDARD_BG_COLORS;
