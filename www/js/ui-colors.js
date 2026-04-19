@@ -37,9 +37,10 @@ const STANDARD_BG_COLORS = [
   "#f87171",
   "#2dd4bf",
 ];
+// Системные цвета для проверки дубликатов
+const SYSTEM_DEFAULT_COLORS = ["#f3f4f6", "#000000", "#1c1c1e", "#ffffff"];
 
 export const colorsManager = {
-  // --- Состояние ---
   currentAccent: "",
   currentBg: "default",
   customAccentColors: [],
@@ -59,6 +60,7 @@ export const colorsManager = {
   },
 
   _bindEvents() {
+    // --- Колесико мыши для скролла ---
     const addWheelScroll = (id) =>
       $(id)?.addEventListener(
         "wheel",
@@ -73,6 +75,7 @@ export const colorsManager = {
     addWheelScroll("accent-colors-container");
     addWheelScroll("bg-colors-container");
 
+    // --- Клики по палитрам ---
     $("accent-colors-container")?.addEventListener("click", (e) =>
       this._handleColorClick(e, "accent"),
     );
@@ -80,12 +83,13 @@ export const colorsManager = {
       this._handleColorClick(e, "bg"),
     );
 
-    // ВОССТАНОВЛЕНО (Fix #1): Live-обновление цвета при выборе в пикере.
-    // Этот слушатель обеспечивает обновление в реальном времени.
+    // --- События для пикеров ---
+    // Fix #1 & #3: Live-preview при перетаскивании в пикере
     const handlePickerInput = (e, type) => {
-      const color = e.target.value;
-      if (isValidHex(color)) {
-        type === "accent" ? this.setColor(color) : this.setBgColor(color);
+      if (isValidHex(e.target.value)) {
+        type === "accent"
+          ? this.setColor(e.target.value)
+          : this.setBgColor(e.target.value);
       }
     };
     $("customColorInput")?.addEventListener("input", (e) =>
@@ -94,33 +98,36 @@ export const colorsManager = {
     $("customBgInput")?.addEventListener("input", (e) =>
       handlePickerInput(e, "bg"),
     );
+
+    // Fix #1 & #3: Автоматическое добавление цвета после закрытия пикера
+    const handlePickerChange = (e, type) => {
+      if (isValidHex(e.target.value)) {
+        this.addCustomColor(type, e.target.value);
+      }
+    };
+    $("customColorInput")?.addEventListener("change", (e) =>
+      handlePickerChange(e, "accent"),
+    );
+    $("customBgInput")?.addEventListener("change", (e) =>
+      handlePickerChange(e, "bg"),
+    );
   },
 
   applySettings() {
-    try {
-      this.customAccentColors =
-        JSON.parse(safeGetLS("custom_accent_colors")) || [];
-      this.customBgColors = JSON.parse(safeGetLS("custom_bg_colors")) || [];
-    } catch (e) {
-      this.customAccentColors = [];
-      this.customBgColors = [];
-    }
+    this.customAccentColors =
+      JSON.parse(safeGetLS("custom_accent_colors")) || [];
+    this.customBgColors = JSON.parse(safeGetLS("custom_bg_colors")) || [];
     this.currentAccent = safeGetLS("theme_color") || STANDARD_ACCENT_COLORS[0];
     this.currentBg = safeGetLS("theme_bg_color") || "default";
   },
 
   resetSettings() {
-    safeRemoveLS("custom_accent_colors");
-    safeRemoveLS("custom_bg_colors");
+    // Fix #2: НЕ удаляем кастомные цвета, только ВЫБРАННЫЕ.
     safeRemoveLS("theme_color");
     safeRemoveLS("theme_bg_color");
-
-    this.applySettings(); // Загрузит дефолтные значения
-
+    this.applySettings();
     this._populateColorSection("accent");
     this._populateColorSection("bg");
-
-    // UI будет обновлен через вызовы в главном theme.js
   },
 
   setColor(hex) {
@@ -131,15 +138,18 @@ export const colorsManager = {
   },
 
   _handleColorClick(event, type) {
+    // Этот метод теперь обрабатывает только клики по кружкам и кнопкам, пикеры работают через свои события
     const swatchWrapper = event.target.closest(".color-swatch-wrapper");
-    const pickerWrapper = event.target.closest(".color-picker-wrapper");
     const actionBtn = event.target.closest(".color-action-btn");
 
     if (actionBtn) {
       if (actionBtn.dataset.action === "delete")
         this._deleteColorWithAnimation(actionBtn.dataset.color, type);
-      else if (actionBtn.dataset.action === "add") this.addCustomColor(type);
       return;
+    }
+
+    if (this.activeActionTarget && this.activeActionTarget !== swatchWrapper) {
+      this._hideActionButton();
     }
 
     if (swatchWrapper) {
@@ -151,53 +161,28 @@ export const colorsManager = {
       if (color !== currentSelected) {
         sm.vibrate(20, "light");
         type === "accent" ? this.setColor(color) : this.setBgColor(color);
-        if (isCustom) this._showActionButton(swatchWrapper, "delete");
+        if (isCustom) this._showActionButton(swatchWrapper);
       } else if (isCustom) {
         this.activeActionTarget === swatchWrapper
           ? this._hideActionButton()
-          : this._showActionButton(swatchWrapper, "delete");
-      }
-    } else if (pickerWrapper) {
-      const picker = pickerWrapper.querySelector('input[type="color"]');
-      const color = picker.value.toLowerCase();
-      const currentSelected = (
-        type === "accent" ? this.currentAccent : this.currentBg
-      ).toLowerCase();
-
-      if (color !== currentSelected) {
-        type === "accent" ? this.setColor(color) : this.setBgColor(color);
-      }
-
-      // ВОССТАНОВЛЕНО (Fix #1): Показ кнопки "Добавить" после выбора цвета в пикере.
-      if (this.activeActionTarget === pickerWrapper) {
-        this._hideActionButton();
-      } else {
-        this._showActionButton(pickerWrapper, "add");
+          : this._showActionButton(swatchWrapper);
       }
     }
   },
 
-  _showActionButton(targetWrapper, action) {
-    if (this.activeActionTarget && this.activeActionTarget !== targetWrapper)
-      this._hideActionButton();
+  _showActionButton(targetWrapper) {
+    if (this.activeActionTarget) this._hideActionButton();
     sm.vibrate(30, "medium");
     this.activeActionTarget = targetWrapper;
 
     const btn = document.createElement("button");
     btn.type = "button";
-    btn.dataset.action = action;
-
-    const isAdd = action === "add";
-    const color = isAdd
-      ? targetWrapper.querySelector('input[type="color"]').value
-      : targetWrapper.dataset.color;
-    btn.dataset.color = color;
-
-    btn.setAttribute("aria-label", t(isAdd ? "add_color" : "delete"));
-    btn.className = `color-action-btn w-8 h-8 flex items-center justify-center rounded-full text-white shadow-lg focus:outline-none custom-focus active:scale-90 transition-transform ${isAdd ? "bg-green-500" : "bg-red-500"}`;
-
-    const pathData = isAdd ? "M12 4.5v15m7.5-7.5h-15" : "M19.5 12h-15";
-    btn.append(createSVGIcon(pathData, ["w-5", "h-5"]));
+    btn.dataset.action = "delete";
+    btn.dataset.color = targetWrapper.dataset.color;
+    btn.setAttribute("aria-label", t("delete"));
+    btn.className =
+      "color-action-btn w-8 h-8 flex items-center justify-center rounded-full text-white shadow-lg focus:outline-none custom-focus active:scale-90 transition-transform bg-red-500";
+    btn.append(createSVGIcon("M19.5 12h-15", ["w-5", "h-5"]));
     targetWrapper.append(btn);
   },
 
@@ -211,30 +196,29 @@ export const colorsManager = {
     this.activeActionTarget = null;
   },
 
-  addCustomColor(type) {
+  addCustomColor(type, color) {
     const isAccent = type === "accent";
     const customColors = isAccent
       ? this.customAccentColors
       : this.customBgColors;
+
     if (customColors.length >= MAX_CUSTOM_COLORS) {
       showToast(isAccent ? t("accent_limit_msg") : t("bg_limit_msg"));
       return;
     }
 
-    const picker = $(isAccent ? "customColorInput" : "customBgInput");
-    const color = picker.value.toLowerCase();
-
-    // ВОССТАНОВЛЕНО (Fix #4): Проверка на дубликаты
+    // Fix #1: Улучшенная проверка на дубликаты
+    const standardColors = isAccent
+      ? STANDARD_ACCENT_COLORS
+      : STANDARD_BG_COLORS;
     const allColors = [
-      ...(isAccent ? STANDARD_ACCENT_COLORS : STANDARD_BG_COLORS),
+      ...standardColors,
       ...customColors,
+      ...SYSTEM_DEFAULT_COLORS,
     ].map((c) => c.toLowerCase());
 
-    this._hideActionButton();
-
-    if (allColors.includes(color)) {
+    if (allColors.includes(color.toLowerCase())) {
       showToast(t("color_already_exists"));
-      sm.vibrate(30, "medium");
     } else {
       sm.vibrate(40, "medium");
       customColors.push(color);
@@ -244,6 +228,7 @@ export const colorsManager = {
       );
       this._addColorToDOM(color, type);
     }
+    // В любом случае, применяем выбранный цвет
     isAccent ? this.setColor(color) : this.setBgColor(color);
   },
 
@@ -259,7 +244,6 @@ export const colorsManager = {
     );
 
     if (wrapper) {
-      // ИСПРАВЛЕНО (Fix #2): Сначала убираем рамку, потом анимируем.
       wrapper.classList.remove(
         "ring-[var(--primary-color)]",
         "ring-2",
@@ -268,7 +252,6 @@ export const colorsManager = {
       );
       wrapper.classList.add("is-collapsing");
 
-      // ИСПРАВЛЕНО (Fix #2): Используем 'animationend' для синхронизации с CSS.
       wrapper.addEventListener(
         "animationend",
         () => {
@@ -276,10 +259,11 @@ export const colorsManager = {
           let customColors = isAccent
             ? this.customAccentColors
             : this.customBgColors;
-          const index = customColors.indexOf(color);
+          const index = customColors
+            .map((c) => c.toLowerCase())
+            .indexOf(color.toLowerCase());
           if (index > -1) {
             customColors.splice(index, 1);
-            // ИСПРАВЛЕНО (Fix #2): Сохраняем обновленный массив в localStorage.
             safeSetLS(
               isAccent ? "custom_accent_colors" : "custom_bg_colors",
               JSON.stringify(customColors),
@@ -288,7 +272,7 @@ export const colorsManager = {
           const currentSelected = isAccent
             ? this.currentAccent
             : this.currentBg;
-          if (currentSelected === color) {
+          if (currentSelected.toLowerCase() === color.toLowerCase()) {
             isAccent
               ? this.setColor(STANDARD_ACCENT_COLORS[0])
               : this.setBgColor("default");
@@ -337,7 +321,7 @@ export const colorsManager = {
   _createColorPicker(type) {
     const wrapper = document.createElement("div");
     wrapper.className =
-      "color-picker-wrapper relative w-9 h-9 shrink-0 group rounded-full border border-black/20 dark:border-white/20 transition-transform active:scale-90 focus-within:ring-2 focus-within:ring-[var(--primary-color)] focus-within:ring-offset-2 focus-within:ring-offset-surface";
+      "color-picker-wrapper relative w-9 h-9 shrink-0 group rounded-full border border-black/20 dark:border-white/20 transition-transform active:scale-90";
     const gradientBg = document.createElement("div");
     gradientBg.className =
       "absolute inset-0 rounded-full bg-[conic-gradient(from_0deg,red,orange,yellow,green,blue,indigo,violet,red)] opacity-90 group-hover:opacity-100 transition-opacity pointer-events-none z-0";
@@ -346,7 +330,7 @@ export const colorsManager = {
     input.id = type === "accent" ? "customColorInput" : "customBgInput";
     input.setAttribute("aria-label", t("add_color"));
     input.className =
-      "absolute inset-0 w-[150%] h-[150%] -top-1 -left-1 opacity-0 cursor-pointer z-10";
+      "absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10";
     wrapper.append(gradientBg, input);
     return wrapper;
   },
@@ -380,17 +364,9 @@ export const colorsManager = {
         el.querySelector(".injected-checkmark")?.remove();
       });
 
-    let activeWrapper = container.querySelector(
+    const activeWrapper = container.querySelector(
       `.color-swatch-wrapper[data-color="${hex}"]`,
     );
-    if (!activeWrapper) {
-      const picker = $(
-        type === "accent" ? "customColorInput" : "customBgInput",
-      );
-      if (picker && picker.value.toLowerCase() === hex.toLowerCase()) {
-        activeWrapper = picker.closest(".color-picker-wrapper");
-      }
-    }
 
     if (activeWrapper) {
       activeWrapper.classList.add(
@@ -400,37 +376,19 @@ export const colorsManager = {
         "ring-offset-surface",
       );
 
-      const isPicker = activeWrapper.matches(".color-picker-wrapper");
       const isDefault = hex === "default";
       const isDark = document.documentElement.classList.contains("dark");
-
-      // ИСПРАВЛЕНО: Корректное определение цвета галочки для дефолтного фона
-      let iconColor;
-      if (isPicker) {
-        iconColor = "#ffffff";
-      } else if (isDefault) {
-        iconColor = isDark ? "#ffffff" : "#1f2937";
-      } else {
-        const { r, g, b } = hexToRGB(hex);
-        iconColor = getLuminance(r, g, b) > 0.5 ? "#1f2937" : "#ffffff";
-      }
+      const iconColor = isDefault
+        ? isDark
+          ? "#ffffff"
+          : "#1f2937"
+        : getLuminance(...Object.values(hexToRGB(hex))) > 0.5
+          ? "#1f2937"
+          : "#ffffff";
 
       const svgIcon = createSVGIcon("M4.5 12.75l6 6 9-13.5", ["w-5", "h-5"]);
       svgIcon.style.color = iconColor;
-
-      if (isPicker) {
-        svgIcon.classList.add(
-          "injected-checkmark",
-          "absolute",
-          "inset-0",
-          "m-auto",
-          "z-20",
-          "pointer-events-none",
-        );
-        activeWrapper.append(svgIcon);
-      } else {
-        activeWrapper.querySelector(".color-btn")?.append(svgIcon);
-      }
+      activeWrapper.querySelector(".color-btn")?.append(svgIcon);
 
       if (doScroll)
         activeWrapper.scrollIntoView({
@@ -443,20 +401,16 @@ export const colorsManager = {
 
   _syncPickerValues() {
     const accentPicker = $("customColorInput");
-    if (accentPicker && isValidHex(this.currentAccent)) {
+    if (accentPicker && isValidHex(this.currentAccent))
       accentPicker.value = this.currentAccent;
-    }
 
     const bgPicker = $("customBgInput");
     if (bgPicker) {
-      // ИСПРАВЛЕНО (Fix #4): Логика для определения дефолтного цвета пикера
-      if (isValidHex(this.currentBg)) {
-        bgPicker.value = this.currentBg;
-      } else {
-        // Это случай, когда this.currentBg === 'default'
-        const isDark = document.documentElement.classList.contains("dark");
-        bgPicker.value = isDark ? "#000000" : "#f3f4f6";
-      }
+      bgPicker.value = isValidHex(this.currentBg)
+        ? this.currentBg
+        : document.documentElement.classList.contains("dark")
+          ? "#000000"
+          : "#f3f4f6";
     }
   },
 };

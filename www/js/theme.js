@@ -42,16 +42,12 @@ export const themeManager = {
   },
 
   resetSettings() {
-    // ИСПРАВЛЕНО (Fix #3): Полный и корректный сброс
-    // 1. Вызываем сброс в дочерних модулях. Они очистят LS и обновят свое внутреннее состояние.
+    // Fix #2: Корректный сброс настроек
     settingsManager.resetSettings();
-    colorsManager.resetSettings();
+    colorsManager.resetSettings(); // Этот метод больше не удаляет кастомные цвета
 
-    // 2. Сбрасываем и применяем режим темы в координаторе
     this.setMode("system");
-
-    // 3. После того как дочерние модули сбросили свое состояние (включая this.currentAccent/Bg),
-    // принудительно применяем эти новые дефолтные значения ко всему приложению.
+    // Принудительно применяем дефолтные цвета, которые были установлены в colorsManager.applySettings()
     this.setColor(colorsManager.currentAccent);
     this.setBgColor(colorsManager.currentBg);
   },
