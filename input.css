@@ -624,7 +624,8 @@ html.dark.no-adaptive .default-bg-btn {
 #sw-lapsContainer,
 #tb-workoutsList,
 #view-settings,
-#sw-sessionsList  {
+#sw-sessionsList,
+#tb-modal-form {
   scrollbar-gutter: stable;
   touch-action: pan-y;
 }
@@ -1215,7 +1216,7 @@ input[type="range"]:focus + .thumb-label-container > .thumb-label {
 #bg-colors-container {
   padding-top: 1rem;
   height: calc(3rem + 1rem); /* h-12 (48px) + pt-4 (16px) */
-  overflow-y: visible;      /* <-- ДОБАВЬТЕ ЭТУ СТРОКУ */
+  overflow-y: visible; /* <-- ДОБАВЬТЕ ЭТУ СТРОКУ */
 }
 
 .color-swatch-wrapper.is-collapsing {
@@ -1239,7 +1240,6 @@ input[type="range"]:focus + .thumb-label-container > .thumb-label {
 .color-action-btn.is-hiding {
   animation: fadeOutScale 0.2s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
-
 
 /* Стили для color picker */
 .color-picker-wrapper {
