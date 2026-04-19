@@ -12,6 +12,7 @@ export const colorManager = {
   customBgColors: [],
   activeActionTarget: null,
   longPressTimer: null,
+  ignoreNextClick: false, // НОВЫЙ ФЛАГ для блокировки фантомного клика
 
   standardAccentColors: ["#22c55e", "#3b82f6", "#a855f7", "#ec4899", "#f97316", "#ef4444", "#6366f1", "#e11d48"],
   standardBgColors: ["default", "#60a5fa", "#c084fc", "#f472b6", "#34d399", "#facc15", "#f87171", "#2dd4bf"],
@@ -38,7 +39,6 @@ export const colorManager = {
     this._bindContainerEvents("accent-colors-container", "accent");
     this._bindContainerEvents("bg-colors-container", "bg");
     
-    // Вешаем специальные обработчики на сами пикеры
     const setupPickerEvents = (type) => {
         const pickerId = type === 'accent' ? 'customColorInput' : 'customBgInput';
         const picker = $(pickerId);
@@ -46,7 +46,7 @@ export const colorManager = {
 
         let pollingInterval = null;
 
-        // 'input' для live-preview (остается без изменений)
+        // 'input' для live-preview
         picker.addEventListener("input", (e) => {
             if (this.activeActionTarget && this.activeActionTarget === picker.closest('.color-picker-wrapper')) {
                 this._hideActionButton();
@@ -54,23 +54,22 @@ export const colorManager = {
             document.dispatchEvent(new CustomEvent("colorSelected", { detail: { type, color: e.target.value, fromPicker: true } }));
         });
         
-        // НАДЕЖНЫЙ МЕТОД: При клике начинаем отслеживать закрытие окна
+        // При клике на пикер начинаем отслеживать закрытие окна
         picker.addEventListener("click", () => {
-            // Если проверка уже запущена, ничего не делаем
             if (pollingInterval) return;
 
-            // Запускаем проверку фокуса документа
             pollingInterval = setInterval(() => {
-                // Как только фокус вернулся на документ - значит, пикер закрыт.
                 if (document.hasFocus()) {
-                    // Останавливаем проверку
                     clearInterval(pollingInterval);
                     pollingInterval = null;
 
                     // Показываем кнопку "Добавить"
                     this._showActionButton(picker.closest('.color-picker-wrapper'), 'add');
+                    
+                    // Устанавливаем флаг, чтобы проигнорировать следующий фантомный клик
+                    this.ignoreNextClick = true;
                 }
-            }, 200); // Проверяем каждые 200мс
+            }, 200);
         });
     };
     setupPickerEvents('accent');
@@ -81,10 +80,8 @@ export const colorManager = {
     const container = $(containerId);
     if (!container) return;
 
-    // Этот обработчик теперь НЕ будет срабатывать на сам пикер, т.к. мы остановим распространение события
     container.addEventListener("click", (e) => this._handleClick(e, type));
     
-    // Обработчики долгого нажатия / правого клика для удаления (остаются без изменений)
     container.addEventListener("contextmenu", (e) => {
         const swatch = e.target.closest('.color-swatch-wrapper[data-custom="true"]');
         if (swatch) {
@@ -93,6 +90,7 @@ export const colorManager = {
         }
     });
 
+    // Код для long press остается без изменений
     let touchMoved = false;
     container.addEventListener("touchstart", (e) => {
         const swatch = e.target.closest('.color-swatch-wrapper[data-custom="true"]');
@@ -106,12 +104,10 @@ export const colorManager = {
             }, LONG_PRESS_DURATION);
         }
     }, { passive: true });
-
     container.addEventListener("touchmove", () => {
         touchMoved = true;
         if (this.longPressTimer) clearTimeout(this.longPressTimer);
     });
-
     const endTouch = () => {
         if (this.longPressTimer) clearTimeout(this.longPressTimer);
     };
@@ -119,18 +115,21 @@ export const colorManager = {
     container.addEventListener("touchcancel", endTouch);
   },
 
-  // Упрощенный обработчик, который теперь не отвечает за клики по пикеру
   _handleClick(event, type) {
+    // ГЛАВНЫЙ БЛОКИРОВЩИК ФАНТОМНЫХ КЛИКОВ
+    if (this.ignoreNextClick) {
+        this.ignoreNextClick = false; // Сбрасываем флаг
+        return; // И выходим
+    }
+
     const swatch = event.target.closest(".color-swatch-wrapper");
     const pickerWrapper = event.target.closest(".color-picker-wrapper");
     const actionBtn = event.target.closest(".color-action-btn");
-
-    // Если клик был по пикеру, ничего не делаем, т.к. у него свой отдельный обработчик
+    
     if (pickerWrapper) return;
     
-    // Клик по кнопке "Добавить" или "Удалить"
     if (actionBtn) {
-        event.stopPropagation(); // Предотвращаем дальнейшую обработку
+        event.stopPropagation();
         if (actionBtn.dataset.action === 'add') {
             this.addCustomColor(type, actionBtn.dataset.color);
         } else if (actionBtn.dataset.action === 'delete') {
@@ -139,12 +138,10 @@ export const colorManager = {
         return;
     }
 
-    // Если была активна кнопка, но клик был в другом месте - скрываем ее
     if (this.activeActionTarget && !this.activeActionTarget.contains(event.target)) {
       this._hideActionButton();
     }
     
-    // Клик по обычному кружку с цветом
     if (swatch) {
       const color = swatch.dataset.color;
       document.dispatchEvent(new CustomEvent("colorSelected", { detail: { type, color, fromPicker: false } }));
@@ -158,7 +155,6 @@ export const colorManager = {
     if (this.activeActionTarget && this.activeActionTarget !== targetWrapper) {
         this._hideActionButton();
     }
-    // Если кнопка уже показана для этого элемента, ничего не делаем
     if (this.activeActionTarget === targetWrapper) return;
 
     sm.vibrate(30, "medium");
@@ -254,25 +250,18 @@ export const colorManager = {
     }
   },
 
-  // Остальные функции остаются без изменений...
   populateColorSection(type) {
     const container = $(type === "accent" ? "accent-colors-container" : "bg-colors-container");
     if (!container) return;
-
     container.querySelectorAll('.color-swatch-wrapper').forEach(el => el.remove());
-    
     const isAccent = type === "accent";
     const colors = isAccent ? [...this.standardAccentColors, ...this.customAccentColors] : [...this.standardBgColors, ...this.customBgColors];
     const picker = container.querySelector('.color-picker-wrapper');
-
     colors.forEach(color => {
         const isCustom = (isAccent ? this.customAccentColors : this.customBgColors).map(c => c.toLowerCase()).includes(color.toLowerCase());
         const swatch = this._createColorSwatch(color, isCustom);
-        if (picker) {
-            container.insertBefore(swatch, picker);
-        } else {
-            container.appendChild(swatch);
-        }
+        if (picker) container.insertBefore(swatch, picker);
+        else container.appendChild(swatch);
     });
   },
   
@@ -281,15 +270,12 @@ export const colorManager = {
     wrapper.className = "color-swatch-wrapper relative rounded-full";
     wrapper.dataset.color = color;
     wrapper.dataset.custom = String(isCustom);
-
     const button = document.createElement("button");
     button.type = "button";
     button.className = "color-btn w-9 h-9 flex items-center justify-center rounded-full shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus";
     button.setAttribute("aria-label", color === 'default' ? t('default_color') : color);
-
     if (color === "default") button.classList.add("default-bg-btn");
     else button.style.backgroundColor = color;
-    
     wrapper.append(button);
     return wrapper;
   },
@@ -298,28 +284,21 @@ export const colorManager = {
     const swatch = this._createColorSwatch(color, true);
     const container = $(type === "accent" ? "accent-colors-container" : "bg-colors-container");
     const picker = container.querySelector(".color-picker-wrapper");
-    if (picker) {
-        container.insertBefore(swatch, picker);
-    } else {
-        container.append(swatch);
-    }
+    if (picker) container.insertBefore(swatch, picker);
+    else container.append(swatch);
   },
 
   updateSelectionUI(type, color, doScroll = true) {
     const container = $(type === 'accent' ? 'accent-colors-container' : 'bg-colors-container');
     if (!container) return;
-
     container.querySelectorAll('.color-swatch-wrapper').forEach(el => {
         el.classList.remove('ring-[var(--primary-color)]', 'ring-2', 'ring-offset-2', 'ring-offset-surface');
         el.querySelector('.injected-checkmark')?.remove();
     });
-    
     const normalizedColor = color.toLowerCase();
     const activeWrapper = container.querySelector(`.color-swatch-wrapper[data-color="${normalizedColor}"]`);
-    
     if (activeWrapper) {
       activeWrapper.classList.add('ring-[var(--primary-color)]', 'ring-2', 'ring-offset-2', 'ring-offset-surface');
-      
       const isDefault = normalizedColor === 'default';
       let luminance = 0;
       if (isDefault) {
@@ -329,12 +308,9 @@ export const colorManager = {
           luminance = getLuminance(r, g, b);
       }
       const iconColor = luminance > 0.5 ? '#1f2937' : '#ffffff';
-
       const svgIcon = createSVGIcon("M4.5 12.75l6 6 9-13.5", ["w-5", "h-5", "injected-checkmark"]);
       svgIcon.style.color = iconColor;
-      
       activeWrapper.querySelector('.color-btn')?.append(svgIcon);
-
       if (doScroll) {
         activeWrapper.scrollIntoView({ behavior: 'smooth', block: 'nearest', 'inline': 'center' });
       }
@@ -344,7 +320,6 @@ export const colorManager = {
   syncPickers(accentColor, bgColor) {
       const accentPicker = $('customColorInput');
       if (accentPicker) accentPicker.value = accentColor;
-      
       const bgPicker = $('customBgInput');
       if (bgPicker) {
           bgPicker.value = bgColor.startsWith('#') ? bgColor : (document.documentElement.classList.contains('dark') ? '#000000' : '#f3f4f6');
