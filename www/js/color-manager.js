@@ -153,18 +153,22 @@ export const colorManager = {
 
     if (!/^#[0-9a-f]{6}$/i.test(normalizedColor)) return;
 
-    // ----- ФИНАЛЬНОЕ ИСПРАВЛЕНИЕ: Возвращаемся к оригинальной, правильной логике -----
     if ([...standardColors, ...customColors].map(c => c.toLowerCase()).includes(normalizedColor)) {
         showToast(t("color_already_exists"));
-        // Отправляем событие, чтобы UI просто выбрал этот цвет, а не пытался его откатить.
-        document.dispatchEvent(new CustomEvent("colorSelected", { detail: { type, color: normalizedColor, fromPicker: false } }));
+        // ----- ФИНАЛЬНОЕ ИСПРАВЛЕНИЕ -----
+        // Увеличиваем таймаут, чтобы он был дольше анимации появления toast (300ms)
+        setTimeout(() => {
+            document.dispatchEvent(new CustomEvent("revertColorSelection", { detail: { type } }));
+        }, 350); 
+        // ---------------------------------
         return; 
     }
 
     if (customColors.length >= MAX_CUSTOM_COLORS) {
       showToast(t(isAccent ? "accent_limit_msg" : "bg_limit_msg"));
-      // Здесь откат нужен, так как добавление не удалось
-      document.dispatchEvent(new CustomEvent("revertColorSelection", { detail: { type } }));
+      setTimeout(() => {
+        document.dispatchEvent(new CustomEvent("revertColorSelection", { detail: { type } }));
+      }, 350);
       return;
     }
 
