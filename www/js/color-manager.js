@@ -1,14 +1,6 @@
 // Файл: www/js/color-manager.js
 
-import {
-  $,
-  safeGetLS,
-  safeSetLS,
-  showToast,
-  createSVGIcon,
-  getLuminance,
-  hexToRGB,
-} from "./utils.js?v=VERSION";
+import { $, safeGetLS, safeSetLS, showToast, createSVGIcon, getLuminance, hexToRGB } from "./utils.js?v=VERSION";
 import { t } from "./i18n.js?v=VERSION";
 import { sm } from "./sound.js?v=VERSION";
 
@@ -21,26 +13,8 @@ export const colorManager = {
   activeActionTarget: null,
   longPressTimer: null,
 
-  standardAccentColors: [
-    "#22c55e",
-    "#3b82f6",
-    "#a855f7",
-    "#ec4899",
-    "#f97316",
-    "#ef4444",
-    "#6366f1",
-    "#e11d48",
-  ],
-  standardBgColors: [
-    "default",
-    "#60a5fa",
-    "#c084fc",
-    "#f472b6",
-    "#34d399",
-    "#facc15",
-    "#f87171",
-    "#2dd4bf",
-  ],
+  standardAccentColors: ["#22c55e", "#3b82f6", "#a855f7", "#ec4899", "#f97316", "#ef4444", "#6366f1", "#e11d48"],
+  standardBgColors: ["default", "#60a5fa", "#c084fc", "#f472b6", "#34d399", "#facc15", "#f87171", "#2dd4bf"],
 
   init() {
     this.loadColors();
@@ -51,8 +25,7 @@ export const colorManager = {
 
   loadColors() {
     try {
-      this.customAccentColors =
-        JSON.parse(safeGetLS("custom_accent_colors")) || [];
+      this.customAccentColors = JSON.parse(safeGetLS("custom_accent_colors")) || [];
       this.customBgColors = JSON.parse(safeGetLS("custom_bg_colors")) || [];
     } catch (e) {
       this.customAccentColors = [];
@@ -65,78 +38,61 @@ export const colorManager = {
     this._bindContainerEvents("bg-colors-container", "bg");
 
     const setupPickerEvents = (type) => {
-      const pickerId = type === "accent" ? "customColorInput" : "customBgInput";
-      const picker = $(pickerId);
-      if (!picker) return;
+        const pickerId = type === 'accent' ? 'customColorInput' : 'customBgInput';
+        const picker = $(pickerId);
+        if (!picker) return;
 
-      picker.addEventListener("input", (e) => {
-        if (
-          this.activeActionTarget &&
-          this.activeActionTarget === picker.closest(".color-picker-wrapper")
-        ) {
-          this._hideActionButton();
-        }
-        document.dispatchEvent(
-          new CustomEvent("colorSelected", {
-            detail: { type, color: e.target.value, fromPicker: true },
-          }),
-        );
-      });
-
-      picker.addEventListener("change", () => {
-        this._handlePickerInteraction(
-          picker.closest(".color-picker-wrapper"),
-          type,
-        );
-      });
+        picker.addEventListener("input", (e) => {
+            if (this.activeActionTarget && this.activeActionTarget === picker.closest('.color-picker-wrapper')) {
+                this._hideActionButton();
+            }
+            document.dispatchEvent(new CustomEvent("colorSelected", { detail: { type, color: e.target.value, fromPicker: true } }));
+        });
+        
+        // ИСПРАВЛЕНО: Используем 'blur' вместо 'change'
+        picker.addEventListener("blur", () => {
+            this._handlePickerInteraction(picker.closest('.color-picker-wrapper'), type);
+        });
     };
-    setupPickerEvents("accent");
-    setupPickerEvents("bg");
+    setupPickerEvents('accent');
+    setupPickerEvents('bg');
   },
-
+  
   _bindContainerEvents(containerId, type) {
     const container = $(containerId);
     if (!container) return;
 
     container.addEventListener("click", (e) => this._handleClick(e, type));
-
+    
     container.addEventListener("contextmenu", (e) => {
-      const swatch = e.target.closest(
-        '.color-swatch-wrapper[data-custom="true"]',
-      );
-      if (swatch) {
-        e.preventDefault();
-        this._showActionButton(swatch, "delete");
-      }
+        const swatch = e.target.closest('.color-swatch-wrapper[data-custom="true"]');
+        if (swatch) {
+            e.preventDefault();
+            this._showActionButton(swatch, 'delete');
+        }
     });
 
     let touchMoved = false;
-    container.addEventListener(
-      "touchstart",
-      (e) => {
-        const swatch = e.target.closest(
-          '.color-swatch-wrapper[data-custom="true"]',
-        );
+    container.addEventListener("touchstart", (e) => {
+        const swatch = e.target.closest('.color-swatch-wrapper[data-custom="true"]');
         if (swatch) {
-          touchMoved = false;
-          this.longPressTimer = setTimeout(() => {
-            if (!touchMoved) {
-              e.preventDefault();
-              this._showActionButton(swatch, "delete");
-            }
-          }, LONG_PRESS_DURATION);
+            touchMoved = false;
+            this.longPressTimer = setTimeout(() => {
+                if (!touchMoved) {
+                    e.preventDefault();
+                    this._showActionButton(swatch, 'delete');
+                }
+            }, LONG_PRESS_DURATION);
         }
-      },
-      { passive: true },
-    );
+    }, { passive: true });
 
     container.addEventListener("touchmove", () => {
-      touchMoved = true;
-      if (this.longPressTimer) clearTimeout(this.longPressTimer);
+        touchMoved = true;
+        if (this.longPressTimer) clearTimeout(this.longPressTimer);
     });
 
     const endTouch = () => {
-      if (this.longPressTimer) clearTimeout(this.longPressTimer);
+        if (this.longPressTimer) clearTimeout(this.longPressTimer);
     };
     container.addEventListener("touchend", endTouch);
     container.addEventListener("touchcancel", endTouch);
@@ -147,53 +103,38 @@ export const colorManager = {
     const actionBtn = event.target.closest(".color-action-btn");
 
     if (actionBtn) {
-      if (actionBtn.dataset.action === "add") {
-        this.addCustomColor(type, actionBtn.dataset.color);
-      } else if (actionBtn.dataset.action === "delete") {
-        this._deleteColor(actionBtn.dataset.color, type);
-      }
-      return;
+        if (actionBtn.dataset.action === 'add') {
+            this.addCustomColor(type, actionBtn.dataset.color);
+        } else if (actionBtn.dataset.action === 'delete') {
+            this._deleteColor(actionBtn.dataset.color, type);
+        }
+        return;
     }
 
-    if (
-      this.activeActionTarget &&
-      !this.activeActionTarget.contains(event.target)
-    ) {
+    if (this.activeActionTarget && !this.activeActionTarget.contains(event.target)) {
       this._hideActionButton();
     }
-
+    
     if (swatch) {
       const color = swatch.dataset.color;
-      document.dispatchEvent(
-        new CustomEvent("colorSelected", {
-          detail: { type, color, fromPicker: false },
-        }),
-      );
+      document.dispatchEvent(new CustomEvent("colorSelected", { detail: { type, color, fromPicker: false } }));
     }
   },
-
-  /**
-   * ИСПРАВЛЕНО: Эта функция теперь просто показывает кнопку "Добавить".
-   * @param {HTMLElement} pickerWrapper - Обертка инпута выбора цвета.
-   * @param {'accent'|'bg'} type - Тип цвета.
-   */
+  
   _handlePickerInteraction(pickerWrapper, type) {
-    // Просто показываем кнопку "Добавить" без предварительных проверок.
-    // Проверка на дубликат произойдет при нажатии на эту кнопку в функции addCustomColor.
-    this._showActionButton(pickerWrapper, "add");
+    this._showActionButton(pickerWrapper, 'add');
   },
 
   _showActionButton(targetWrapper, action) {
     if (this.activeActionTarget && this.activeActionTarget !== targetWrapper) {
-      this._hideActionButton();
+        this._hideActionButton();
     }
     if (this.activeActionTarget === targetWrapper) return;
 
     sm.vibrate(30, "medium");
     this.activeActionTarget = targetWrapper;
-
-    const color =
-      action === "add"
+    
+    const color = (action === 'add')
         ? targetWrapper.querySelector('input[type="color"]').value
         : targetWrapper.dataset.color;
 
@@ -201,27 +142,25 @@ export const colorManager = {
     btn.type = "button";
     btn.dataset.action = action;
     btn.dataset.color = color;
-    btn.className =
-      "color-action-btn w-9 h-9 flex items-center justify-center rounded-full shadow-lg focus:outline-none custom-focus active:scale-90 transition-all";
-
-    if (action === "add") {
-      btn.setAttribute("aria-label", t("add_color"));
-      btn.style.backgroundColor = color;
-
-      const { r, g, b } = hexToRGB(color);
-      const luminance = getLuminance(r, g, b);
-      const iconColor = luminance > 0.5 ? "#1f2937" : "#ffffff";
-      btn.style.color = iconColor;
-
-      btn.append(createSVGIcon("M12 4.5v15m7.5-7.5h-15", ["w-5", "h-5"]));
-    } else {
-      // delete
-      btn.setAttribute("aria-label", `${t("delete")} ${color}`);
-      btn.style.backgroundColor = "#ef4444";
-      btn.style.color = "#ffffff";
-      btn.append(createSVGIcon("M6 18L18 6M6 6l12 12", ["w-5", "h-5"]));
+    btn.className = "color-action-btn w-9 h-9 flex items-center justify-center rounded-full shadow-lg focus:outline-none custom-focus active:scale-90 transition-all";
+    
+    if (action === 'add') {
+        btn.setAttribute("aria-label", t("add_color"));
+        btn.style.backgroundColor = color;
+        
+        const { r, g, b } = hexToRGB(color);
+        const luminance = getLuminance(r, g, b);
+        const iconColor = luminance > 0.5 ? '#1f2937' : '#ffffff';
+        btn.style.color = iconColor;
+        
+        btn.append(createSVGIcon("M12 4.5v15m7.5-7.5h-15", ["w-5", "h-5"]));
+    } else { // delete
+        btn.setAttribute("aria-label", `${t("delete")} ${color}`);
+        btn.style.backgroundColor = '#ef4444';
+        btn.style.color = '#ffffff';
+        btn.append(createSVGIcon("M6 18L18 6M6 6l12 12", ["w-5", "h-5"]));
     }
-
+    
     targetWrapper.append(btn);
   },
 
@@ -229,39 +168,25 @@ export const colorManager = {
     if (!this.activeActionTarget) return;
     const btn = this.activeActionTarget.querySelector(".color-action-btn");
     if (btn) {
-      btn.classList.add("is-hiding");
+      btn.classList.add('is-hiding');
       btn.addEventListener("animationend", () => btn.remove(), { once: true });
     }
     this.activeActionTarget = null;
   },
-
+  
   addCustomColor(type, color) {
     this._hideActionButton();
     const isAccent = type === "accent";
-    const customColors = isAccent
-      ? this.customAccentColors
-      : this.customBgColors;
-    const standardColors = isAccent
-      ? this.standardAccentColors
-      : this.standardBgColors;
-
+    const customColors = isAccent ? this.customAccentColors : this.customBgColors;
+    const standardColors = isAccent ? this.standardAccentColors : this.standardBgColors;
+    
     const normalizedColor = color.toLowerCase();
-
-    if (
-      [...standardColors, ...customColors]
-        .map((c) => c.toLowerCase())
-        .includes(normalizedColor)
-    ) {
-      showToast(t("color_already_exists"));
-      const previousColor = isAccent
-        ? document.documentElement.style.getPropertyValue("--primary-color")
-        : safeGetLS("theme_bg_color") || "default";
-      document.dispatchEvent(
-        new CustomEvent("colorSelected", {
-          detail: { type, color: previousColor, fromPicker: false },
-        }),
-      );
-      return;
+    
+    if ([...standardColors, ...customColors].map(c => c.toLowerCase()).includes(normalizedColor)) {
+        showToast(t("color_already_exists"));
+        const previousColor = isAccent ? document.documentElement.style.getPropertyValue('--primary-color') : (safeGetLS("theme_bg_color") || "default");
+        document.dispatchEvent(new CustomEvent("colorSelected", { detail: { type, color: previousColor, fromPicker: false } }));
+        return; 
     }
 
     if (customColors.length >= MAX_CUSTOM_COLORS) {
@@ -271,89 +196,55 @@ export const colorManager = {
 
     sm.vibrate(40, "medium");
     customColors.push(normalizedColor);
-    safeSetLS(
-      isAccent ? "custom_accent_colors" : "custom_bg_colors",
-      JSON.stringify(customColors),
-    );
+    safeSetLS(isAccent ? "custom_accent_colors" : "custom_bg_colors", JSON.stringify(customColors));
     this._addColorToDOM(normalizedColor, type);
-    document.dispatchEvent(
-      new CustomEvent("colorSelected", {
-        detail: { type, color: normalizedColor, fromPicker: false },
-      }),
-    );
+    document.dispatchEvent(new CustomEvent("colorSelected", { detail: { type, color: normalizedColor, fromPicker: false } }));
   },
 
   _deleteColor(color, type) {
     sm.vibrate(40, "medium");
     this._hideActionButton();
-    const isAccent = type === "accent";
-    const container = $(
-      isAccent ? "accent-colors-container" : "bg-colors-container",
-    );
-    const wrapper = container.querySelector(
-      `.color-swatch-wrapper[data-color="${color}"]`,
-    );
+    const isAccent = type === 'accent';
+    const container = $(isAccent ? 'accent-colors-container' : 'bg-colors-container');
+    const wrapper = container.querySelector(`.color-swatch-wrapper[data-color="${color}"]`);
 
     if (wrapper) {
-      document.dispatchEvent(
-        new CustomEvent("colorDeleted", { detail: { type, color } }),
-      );
+      document.dispatchEvent(new CustomEvent('colorDeleted', { detail: { type, color } }));
 
       wrapper.classList.add("is-collapsing");
-      wrapper.addEventListener(
-        "transitionend",
-        () => {
-          wrapper.remove();
-          let customColors = isAccent
-            ? this.customAccentColors
-            : this.customBgColors;
-          const index = customColors
-            .map((c) => c.toLowerCase())
-            .indexOf(color.toLowerCase());
-          if (index > -1) {
-            customColors.splice(index, 1);
-            safeSetLS(
-              isAccent ? "custom_accent_colors" : "custom_bg_colors",
-              JSON.stringify(customColors),
-            );
-          }
-        },
-        { once: true },
-      );
+      wrapper.addEventListener("transitionend", () => {
+        wrapper.remove();
+        let customColors = isAccent ? this.customAccentColors : this.customBgColors;
+        const index = customColors.map(c => c.toLowerCase()).indexOf(color.toLowerCase());
+        if (index > -1) {
+          customColors.splice(index, 1);
+          safeSetLS(isAccent ? 'custom_accent_colors' : 'custom_bg_colors', JSON.stringify(customColors));
+        }
+      }, { once: true });
     }
   },
 
   populateColorSection(type) {
-    const container = $(
-      type === "accent" ? "accent-colors-container" : "bg-colors-container",
-    );
+    const container = $(type === "accent" ? "accent-colors-container" : "bg-colors-container");
     if (!container) return;
 
-    container
-      .querySelectorAll(".color-swatch-wrapper")
-      .forEach((el) => el.remove());
-
+    container.querySelectorAll('.color-swatch-wrapper').forEach(el => el.remove());
+    
     const isAccent = type === "accent";
-    const colors = isAccent
-      ? [...this.standardAccentColors, ...this.customAccentColors]
-      : [...this.standardBgColors, ...this.customBgColors];
-    const picker = container.querySelector(".color-picker-wrapper");
+    const colors = isAccent ? [...this.standardAccentColors, ...this.customAccentColors] : [...this.standardBgColors, ...this.customBgColors];
+    const picker = container.querySelector('.color-picker-wrapper');
 
-    colors.forEach((color) => {
-      const isCustom = (
-        isAccent ? this.customAccentColors : this.customBgColors
-      )
-        .map((c) => c.toLowerCase())
-        .includes(color.toLowerCase());
-      const swatch = this._createColorSwatch(color, isCustom);
-      if (picker) {
-        container.insertBefore(swatch, picker);
-      } else {
-        container.appendChild(swatch);
-      }
+    colors.forEach(color => {
+        const isCustom = (isAccent ? this.customAccentColors : this.customBgColors).map(c => c.toLowerCase()).includes(color.toLowerCase());
+        const swatch = this._createColorSwatch(color, isCustom);
+        if (picker) {
+            container.insertBefore(swatch, picker);
+        } else {
+            container.appendChild(swatch);
+        }
     });
   },
-
+  
   _createColorSwatch(color, isCustom) {
     const wrapper = document.createElement("div");
     wrapper.className = "color-swatch-wrapper relative rounded-full";
@@ -362,102 +253,70 @@ export const colorManager = {
 
     const button = document.createElement("button");
     button.type = "button";
-    button.className =
-      "color-btn w-9 h-9 flex items-center justify-center rounded-full shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus";
-    button.setAttribute(
-      "aria-label",
-      color === "default" ? t("default_color") : color,
-    );
+    button.className = "color-btn w-9 h-9 flex items-center justify-center rounded-full shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus";
+    button.setAttribute("aria-label", color === 'default' ? t('default_color') : color);
 
     if (color === "default") button.classList.add("default-bg-btn");
     else button.style.backgroundColor = color;
-
+    
     wrapper.append(button);
     return wrapper;
   },
 
   _addColorToDOM(color, type) {
     const swatch = this._createColorSwatch(color, true);
-    const container = $(
-      type === "accent" ? "accent-colors-container" : "bg-colors-container",
-    );
+    const container = $(type === "accent" ? "accent-colors-container" : "bg-colors-container");
     const picker = container.querySelector(".color-picker-wrapper");
     if (picker) {
-      container.insertBefore(swatch, picker);
+        container.insertBefore(swatch, picker);
     } else {
-      container.append(swatch);
+        container.append(swatch);
     }
   },
 
   updateSelectionUI(type, color, doScroll = true) {
-    const container = $(
-      type === "accent" ? "accent-colors-container" : "bg-colors-container",
-    );
+    const container = $(type === 'accent' ? 'accent-colors-container' : 'bg-colors-container');
     if (!container) return;
 
-    container.querySelectorAll(".color-swatch-wrapper").forEach((el) => {
-      el.classList.remove(
-        "ring-[var(--primary-color)]",
-        "ring-2",
-        "ring-offset-2",
-        "ring-offset-surface",
-      );
-      el.querySelector(".injected-checkmark")?.remove();
+    container.querySelectorAll('.color-swatch-wrapper').forEach(el => {
+        el.classList.remove('ring-[var(--primary-color)]', 'ring-2', 'ring-offset-2', 'ring-offset-surface');
+        el.querySelector('.injected-checkmark')?.remove();
     });
-
+    
     const normalizedColor = color.toLowerCase();
-    const activeWrapper = container.querySelector(
-      `.color-swatch-wrapper[data-color="${normalizedColor}"]`,
-    );
-
+    const activeWrapper = container.querySelector(`.color-swatch-wrapper[data-color="${normalizedColor}"]`);
+    
     if (activeWrapper) {
-      activeWrapper.classList.add(
-        "ring-[var(--primary-color)]",
-        "ring-2",
-        "ring-offset-2",
-        "ring-offset-surface",
-      );
-
-      const isDefault = normalizedColor === "default";
+      activeWrapper.classList.add('ring-[var(--primary-color)]', 'ring-2', 'ring-offset-2', 'ring-offset-surface');
+      
+      const isDefault = normalizedColor === 'default';
       let luminance = 0;
       if (isDefault) {
-        luminance = document.documentElement.classList.contains("dark") ? 0 : 1;
+          luminance = document.documentElement.classList.contains('dark') ? 0 : 1;
       } else {
-        const { r, g, b } = hexToRGB(normalizedColor);
-        luminance = getLuminance(r, g, b);
+          const {r, g, b} = hexToRGB(normalizedColor);
+          luminance = getLuminance(r, g, b);
       }
-      const iconColor = luminance > 0.5 ? "#1f2937" : "#ffffff";
+      const iconColor = luminance > 0.5 ? '#1f2937' : '#ffffff';
 
-      const svgIcon = createSVGIcon("M4.5 12.75l6 6 9-13.5", [
-        "w-5",
-        "h-5",
-        "injected-checkmark",
-      ]);
+      const svgIcon = createSVGIcon("M4.5 12.75l6 6 9-13.5", ["w-5", "h-5", "injected-checkmark"]);
       svgIcon.style.color = iconColor;
-
-      activeWrapper.querySelector(".color-btn")?.append(svgIcon);
+      
+      activeWrapper.querySelector('.color-btn')?.append(svgIcon);
 
       if (doScroll) {
-        activeWrapper.scrollIntoView({
-          behavior: "smooth",
-          block: "nearest",
-          inline: "center",
-        });
+        activeWrapper.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
       }
     }
   },
 
   syncPickers(accentColor, bgColor) {
-    const accentPicker = $("customColorInput");
-    if (accentPicker) accentPicker.value = accentColor;
-
-    const bgPicker = $("customBgInput");
-    if (bgPicker) {
-      bgPicker.value = bgColor.startsWith("#")
-        ? bgColor
-        : document.documentElement.classList.contains("dark")
-          ? "#000000"
-          : "#f3f4f6";
-    }
-  },
+      const accentPicker = $('customColorInput');
+      if (accentPicker) accentPicker.value = accentColor;
+      
+      const bgPicker = $('customBgInput');
+      if (bgPicker) {
+          bgPicker.value = bgColor.startsWith('#') ? bgColor : (document.documentElement.classList.contains('dark') ? '#000000' : '#f3f4f6');
+      }
+  }
 };
