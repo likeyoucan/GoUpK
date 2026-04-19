@@ -33,9 +33,9 @@ export const themeManager = {
     });
     
     document.addEventListener("colorSelected", (e) => {
-        const { type, color } = e.detail;
-        if (type === 'accent') this.setColor(color);
-        else this.setBgColor(color);
+        const { type, color, fromPicker } = e.detail;
+        if (type === 'accent') this.setColor(color, !fromPicker);
+        else this.setBgColor(color, !fromPicker);
     });
 
     document.addEventListener('colorDeleted', (e) => {
@@ -44,6 +44,16 @@ export const themeManager = {
             this.setColor(colorManager.standardAccentColors[0]);
         } else if (type === 'bg' && this.currentBg.toLowerCase() === color.toLowerCase()){
             this.setBgColor('default');
+        }
+    });
+
+    // ИСПРАВЛЕНИЕ: Новый обработчик для сброса пикера при ошибке
+    document.addEventListener('revertColorSelection', (e) => {
+        const { type } = e.detail;
+        if (type === 'accent') {
+            this.setColor(this.currentAccent, false);
+        } else {
+            this.setBgColor(this.currentBg, false);
         }
     });
   },
@@ -63,9 +73,8 @@ export const themeManager = {
     safeRemoveLS("theme_color");
     safeRemoveLS("theme_bg_color");
     
-    uiSettingsManager.resetSettings(); // Сброс настроек интерфейса
+    uiSettingsManager.resetSettings();
     
-    // Сбрасываем цвета на дефолтные и применяем их
     this.applySettings();
   },
 

@@ -5,7 +5,7 @@ import { t } from "./i18n.js?v=VERSION";
 import { sm } from "./sound.js?v=VERSION";
 
 const MAX_CUSTOM_COLORS = 50;
-const LONG_PRESS_DURATION = 500; // 500ms для долгого нажатия
+const LONG_PRESS_DURATION = 500;
 
 export const colorManager = {
   customAccentColors: [],
@@ -38,10 +38,10 @@ export const colorManager = {
     this._bindContainerEvents("bg-colors-container", "bg");
 
     $("customColorInput")?.addEventListener("input", (e) => {
-        document.dispatchEvent(new CustomEvent("colorSelected", { detail: { type: 'accent', color: e.target.value } }));
+        document.dispatchEvent(new CustomEvent("colorSelected", { detail: { type: 'accent', color: e.target.value, fromPicker: true } }));
     });
     $("customBgInput")?.addEventListener("input", (e) => {
-        document.dispatchEvent(new CustomEvent("colorSelected", { detail: { type: 'bg', color: e.target.value } }));
+        document.dispatchEvent(new CustomEvent("colorSelected", { detail: { type: 'bg', color: e.target.value, fromPicker: true } }));
     });
     
     $("customColorInput")?.addEventListener("change", (e) => {
@@ -126,7 +126,7 @@ export const colorManager = {
     btn.type = "button";
     btn.dataset.color = color;
     btn.setAttribute("aria-label", `${t("delete")} ${color}`);
-    btn.className = `delete-color-btn absolute -top-2.5 -right-2.5 w-7 h-7 flex items-center justify-center rounded-full text-white bg-red-500 shadow-lg focus:outline-none custom-focus active:scale-90 transition-all z-20`;
+    btn.className = "delete-color-btn absolute -top-2.5 -right-2.5 w-7 h-7 flex items-center justify-center rounded-full text-white bg-red-500 shadow-lg focus:outline-none custom-focus active:scale-90 transition-all z-20";
     btn.style.animation = 'fadeInScale 0.2s cubic-bezier(0.4, 0, 0.2, 1) both';
     
     const icon = createSVGIcon("M6 18L18 6M6 6l12 12", ["w-4", "h-4"]);
@@ -153,16 +153,15 @@ export const colorManager = {
 
     if (!/^#[0-9a-f]{6}$/i.test(normalizedColor)) return;
 
-    // ИСПРАВЛЕНИЕ: Проверка на дубликат и ВЫХОД с уведомлением.
     if ([...standardColors, ...customColors].map(c => c.toLowerCase()).includes(normalizedColor)) {
         showToast(t("color_already_exists"));
-        // Отправляем событие, чтобы UI вернулся к последнему валидному цвету.
-        document.dispatchEvent(new CustomEvent("colorSelected", { detail: { type, color: normalizedColor, fromPicker: true } }));
+        document.dispatchEvent(new CustomEvent("revertColorSelection", { detail: { type } }));
         return; 
     }
 
     if (customColors.length >= MAX_CUSTOM_COLORS) {
       showToast(t(isAccent ? "accent_limit_msg" : "bg_limit_msg"));
+      document.dispatchEvent(new CustomEvent("revertColorSelection", { detail: { type } }));
       return;
     }
 
@@ -170,7 +169,6 @@ export const colorManager = {
     customColors.push(normalizedColor);
     safeSetLS(isAccent ? "custom_accent_colors" : "custom_bg_colors", JSON.stringify(customColors));
     this._addColorToDOM(normalizedColor, type);
-    // Отправляем событие о выборе нового цвета, чтобы UI обновился
     document.dispatchEvent(new CustomEvent("colorSelected", { detail: { type, color: normalizedColor, fromPicker: false } }));
   },
 
@@ -251,17 +249,15 @@ export const colorManager = {
     const container = $(type === 'accent' ? 'accent-colors-container' : 'bg-colors-container');
     if (!container) return;
 
-    // Снимаем выделение со всех swatch'ей
     container.querySelectorAll('.color-swatch-wrapper').forEach(el => {
         el.classList.remove('ring-[var(--primary-color)]', 'ring-2', 'ring-offset-2', 'ring-offset-surface');
         el.querySelector('.injected-checkmark')?.remove();
     });
     
     const normalizedColor = color.toLowerCase();
-    // Ищем только среди swatch'ей, игнорируя пикер
     const activeWrapper = container.querySelector(`.color-swatch-wrapper[data-color="${normalizedColor}"]`);
     
-    // ИСПРАВЛЕНИЕ: Применяем выделение, только если swatch найден
+    // ИСПРАВЛЕНИЕ: Галочка и рамка применяются только к swatch-элементам, не к пикеру
     if (activeWrapper) {
       activeWrapper.classList.add('ring-[var(--primary-color)]', 'ring-2', 'ring-offset-2', 'ring-offset-surface');
       
