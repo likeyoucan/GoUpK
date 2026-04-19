@@ -37,7 +37,6 @@ const STANDARD_BG_COLORS = [
   "#f87171",
   "#2dd4bf",
 ];
-const SYSTEM_DEFAULT_COLORS = ["#f3f4f6", "#000000", "#1c1c1e", "#ffffff"];
 
 export const colorsManager = {
   currentAccent: "",
@@ -80,7 +79,7 @@ export const colorsManager = {
       this._handleColorClick(e, "bg"),
     );
 
-    // ВОССТАНОВЛЕНО (Fix #1, #3): Live-preview при перетаскивании в пикере.
+    // ИСПРАВЛЕНО (Fix #1, #3): Разделение логики для live-preview и финального выбора.
     const handlePickerInput = (e, type) => {
       if (isValidHex(e.target.value)) {
         type === "accent"
@@ -95,7 +94,18 @@ export const colorsManager = {
       handlePickerInput(e, "bg"),
     );
 
-    // УДАЛЕНО: Лишние 'change' слушатели, так как логика теперь в _handleColorClick и addCustomColor
+    const handlePickerChange = (e, type) => {
+      const pickerWrapper = e.target.closest(".color-picker-wrapper");
+      if (pickerWrapper) {
+        this._showActionButton(pickerWrapper, "add");
+      }
+    };
+    $("customColorInput")?.addEventListener("change", (e) =>
+      handlePickerChange(e, "accent"),
+    );
+    $("customBgInput")?.addEventListener("change", (e) =>
+      handlePickerChange(e, "bg"),
+    );
   },
 
   applySettings() {
@@ -107,10 +117,9 @@ export const colorsManager = {
   },
 
   resetSettings() {
-    // ИСПРАВЛЕНО (Fix #2): НЕ удаляем кастомные цвета из LS.
     safeRemoveLS("theme_color");
     safeRemoveLS("theme_bg_color");
-    this.applySettings(); // Загрузит дефолтные значения и оставит кастомные.
+    this.applySettings();
     this._populateColorSection("accent");
     this._populateColorSection("bg");
   },
@@ -124,7 +133,6 @@ export const colorsManager = {
 
   _handleColorClick(event, type) {
     const swatchWrapper = event.target.closest(".color-swatch-wrapper");
-    const pickerWrapper = event.target.closest(".color-picker-wrapper");
     const actionBtn = event.target.closest(".color-action-btn");
 
     if (actionBtn) {
@@ -132,6 +140,10 @@ export const colorsManager = {
         this._deleteColorWithAnimation(actionBtn.dataset.color, type);
       else if (actionBtn.dataset.action === "add") this.addCustomColor(type);
       return;
+    }
+
+    if (this.activeActionTarget && this.activeActionTarget !== swatchWrapper) {
+      this._hideActionButton();
     }
 
     if (swatchWrapper) {
@@ -149,25 +161,8 @@ export const colorsManager = {
           ? this._hideActionButton()
           : this._showActionButton(swatchWrapper, "delete");
       }
-    } else if (pickerWrapper) {
-      // ВОССТАНОВЛЕНО (Fix #1): Показ кнопки "Добавить" при клике на пикер.
-      // Live-preview уже работает через 'input' событие.
-      const picker = pickerWrapper.querySelector('input[type="color"]');
-      const color = picker.value.toLowerCase();
-      const currentSelected = (
-        type === "accent" ? this.currentAccent : this.currentBg
-      ).toLowerCase();
-
-      if (color !== currentSelected) {
-        type === "accent" ? this.setColor(color) : this.setBgColor(color);
-      }
-
-      if (this.activeActionTarget === pickerWrapper) {
-        this._hideActionButton();
-      } else {
-        this._showActionButton(pickerWrapper, "add");
-      }
     }
+    // Логика для pickerWrapper удалена отсюда, так как она теперь обрабатывается событиями 'input' и 'change'
   },
 
   _showActionButton(targetWrapper, action) {
@@ -217,10 +212,16 @@ export const colorsManager = {
     const picker = $(isAccent ? "customColorInput" : "customBgInput");
     const color = picker.value.toLowerCase();
 
+    // ИСПРАВЛЕНО (Fix #1): Корректная проверка на дубликаты.
+    const standardColors = isAccent
+      ? STANDARD_ACCENT_COLORS
+      : STANDARD_BG_COLORS;
+    const isDark = document.documentElement.classList.contains("dark");
+    const currentDefaultBg = isDark ? "#000000" : "#f3f4f6";
     const allColors = [
-      ...(isAccent ? STANDARD_ACCENT_COLORS : STANDARD_BG_COLORS),
+      ...standardColors,
       ...customColors,
-      ...SYSTEM_DEFAULT_COLORS,
+      currentDefaultBg,
     ].map((c) => c.toLowerCase());
 
     this._hideActionButton();
