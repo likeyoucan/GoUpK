@@ -37,17 +37,17 @@ export const colorManager = {
     this._bindContainerEvents("accent-colors-container", "accent");
     this._bindContainerEvents("bg-colors-container", "bg");
 
-    $("customColorInput")?.addEventListener("input", (e) => { // 'input' для live-preview
+    $("customColorInput")?.addEventListener("input", (e) => {
         document.dispatchEvent(new CustomEvent("colorSelected", { detail: { type: 'accent', color: e.target.value } }));
     });
-    $("customBgInput")?.addEventListener("input", (e) => { // 'input' для live-preview
+    $("customBgInput")?.addEventListener("input", (e) => {
         document.dispatchEvent(new CustomEvent("colorSelected", { detail: { type: 'bg', color: e.target.value } }));
     });
     
-    $("customColorInput")?.addEventListener("change", (e) => { // 'change' для добавления
+    $("customColorInput")?.addEventListener("change", (e) => {
         this.addCustomColor('accent', e.target.value);
     });
-    $("customBgInput")?.addEventListener("change", (e) => { // 'change' для добавления
+    $("customBgInput")?.addEventListener("change", (e) => {
         this.addCustomColor('bg', e.target.value);
     });
   },
@@ -107,7 +107,7 @@ export const colorManager = {
 
     if (swatch) {
       const color = swatch.dataset.color;
-      document.dispatchEvent(new CustomEvent("colorSelected", { detail: { type, color } }));
+      document.dispatchEvent(new CustomEvent("colorSelected", { detail: { type, color, fromPicker: false } }));
     }
   },
 
@@ -151,22 +151,27 @@ export const colorManager = {
     
     const normalizedColor = color.toLowerCase();
 
-    // ИСПРАВЛЕНИЕ: Проверка на дубликат ПЕРЕД остальными проверками
+    if (!/^#[0-9a-f]{6}$/i.test(normalizedColor)) return;
+
+    // ИСПРАВЛЕНИЕ: Проверка на дубликат и ВЫХОД с уведомлением.
     if ([...standardColors, ...customColors].map(c => c.toLowerCase()).includes(normalizedColor)) {
         showToast(t("color_already_exists"));
-        return;
+        // Отправляем событие, чтобы UI вернулся к последнему валидному цвету.
+        document.dispatchEvent(new CustomEvent("colorSelected", { detail: { type, color: normalizedColor, fromPicker: true } }));
+        return; 
     }
 
     if (customColors.length >= MAX_CUSTOM_COLORS) {
       showToast(t(isAccent ? "accent_limit_msg" : "bg_limit_msg"));
       return;
     }
-    if (!/^#[0-9a-f]{6}$/i.test(normalizedColor)) return;
 
     sm.vibrate(40, "medium");
     customColors.push(normalizedColor);
     safeSetLS(isAccent ? "custom_accent_colors" : "custom_bg_colors", JSON.stringify(customColors));
     this._addColorToDOM(normalizedColor, type);
+    // Отправляем событие о выборе нового цвета, чтобы UI обновился
+    document.dispatchEvent(new CustomEvent("colorSelected", { detail: { type, color: normalizedColor, fromPicker: false } }));
   },
 
   _deleteColor(color, type) {
@@ -177,7 +182,6 @@ export const colorManager = {
     const wrapper = container.querySelector(`.color-swatch-wrapper[data-color="${color}"]`);
 
     if (wrapper) {
-      // ИСПРАВЛЕНИЕ: Немедленно отправляем событие, чтобы UI успел среагировать
       document.dispatchEvent(new CustomEvent('colorDeleted', { detail: { type, color } }));
 
       wrapper.classList.add("is-collapsing");
@@ -247,28 +251,17 @@ export const colorManager = {
     const container = $(type === 'accent' ? 'accent-colors-container' : 'bg-colors-container');
     if (!container) return;
 
+    // Снимаем выделение со всех swatch'ей
     container.querySelectorAll('.color-swatch-wrapper').forEach(el => {
         el.classList.remove('ring-[var(--primary-color)]', 'ring-2', 'ring-offset-2', 'ring-offset-surface');
         el.querySelector('.injected-checkmark')?.remove();
     });
     
-    // Также убираем рамку с пикера
-    container.querySelector('.color-picker-wrapper')?.classList.remove('ring-[var(--primary-color)]', 'ring-2', 'ring-offset-2', 'ring-offset-surface');
-    container.querySelector('.injected-checkmark-picker')?.remove();
-
     const normalizedColor = color.toLowerCase();
-    let activeWrapper = container.querySelector(`.color-swatch-wrapper[data-color="${normalizedColor}"]`);
-    let isPickerSelected = false;
-
-    if (!activeWrapper) {
-        // Если swatch не найден, возможно, это цвет из пикера
-        const pickerInput = $(type === 'accent' ? 'customColorInput' : 'customBgInput');
-        if (pickerInput && pickerInput.value.toLowerCase() === normalizedColor) {
-            activeWrapper = pickerInput.closest('.color-picker-wrapper');
-            isPickerSelected = true;
-        }
-    }
-
+    // Ищем только среди swatch'ей, игнорируя пикер
+    const activeWrapper = container.querySelector(`.color-swatch-wrapper[data-color="${normalizedColor}"]`);
+    
+    // ИСПРАВЛЕНИЕ: Применяем выделение, только если swatch найден
     if (activeWrapper) {
       activeWrapper.classList.add('ring-[var(--primary-color)]', 'ring-2', 'ring-offset-2', 'ring-offset-surface');
       
@@ -277,19 +270,14 @@ export const colorManager = {
       const luminance = isDefault ? (isDark ? 0 : 1) : getLuminance(...Object.values(hexToRGB(normalizedColor)));
       const iconColor = luminance > 0.5 ? '#1f2937' : '#ffffff';
 
-      const svgIcon = createSVGIcon("M4.5 12.75l6 6 9-13.5", ["w-5", "h-5"]);
-      
-      if (isPickerSelected) {
-        svgIcon.classList.add('injected-checkmark-picker', 'absolute', 'inset-0', 'm-auto', 'z-20', 'pointer-events-none');
-      } else {
-        svgIcon.classList.add('injected-checkmark');
-      }
+      const svgIcon = createSVGIcon("M4.5 12.75l6 6 9-13.5", ["w-5", "h-5", "injected-checkmark"]);
       svgIcon.style.color = iconColor;
       
-      const targetElement = isPickerSelected ? activeWrapper : activeWrapper.querySelector('.color-btn');
-      targetElement?.append(svgIcon);
+      activeWrapper.querySelector('.color-btn')?.append(svgIcon);
 
-      if (doScroll) activeWrapper.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      if (doScroll) {
+        activeWrapper.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      }
     }
   },
 
