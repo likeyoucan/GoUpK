@@ -275,11 +275,11 @@ const stopwatchModule = {
       this.els.lapBtn.classList.add("hidden");
       this.els.currentLapsHeader.classList.add("hidden");
       this.els.currentLapsHeader.classList.remove("flex");
-      this.els.lapsContainer.replaceChildren();
-      this.els.lapsContainer.insertAdjacentHTML(
-        "afterbegin",
-        `<div class="text-center app-text-sec opacity-50 mt-4 text-sm" data-i18n="no_laps">${t("no_laps")}</div>`,
-      );
+      const noLapsDiv = document.createElement('div');
+      noLapsDiv.className = "text-center app-text-sec opacity-50 mt-4 text-sm";
+      noLapsDiv.setAttribute('data-i18n', 'no_laps');
+      noLapsDiv.textContent = t('no_laps');
+      this.els.lapsContainer.replaceChildren(noLapsDiv);
       this.updateSaveButtonVisibility();
     }
   },
@@ -332,11 +332,12 @@ const stopwatchModule = {
   reRenderCurrentLaps() {
     this.els.lapsContainer.replaceChildren();
     if (this.laps.length === 0) {
-      this.els.lapsContainer.insertAdjacentHTML(
-        "afterbegin",
-        `<div class="text-center app-text-sec opacity-50 mt-4 text-sm" data-i18n="no_laps">${t("no_laps")}</div>`,
-      );
-      return;
+        const noLapsDiv = document.createElement('div');
+        noLapsDiv.className = "text-center app-text-sec opacity-50 mt-4 text-sm";
+        noLapsDiv.setAttribute('data-i18n', 'no_laps');
+        noLapsDiv.textContent = t('no_laps');
+        this.els.lapsContainer.appendChild(noLapsDiv);
+        return;
     }
     [...this.laps].reverse().forEach((lap, i, arr) => {
       this.els.lapsContainer.prepend(
@@ -511,10 +512,11 @@ const stopwatchModule = {
     const clearAllBtn = $("sw-clearAllBtn");
     if (clearAllBtn) clearAllBtn.disabled = this.savedSessions.length === 0;
     if (this.savedSessions.length === 0) {
-      this.els.sessionsList.insertAdjacentHTML(
-        "afterbegin",
-        `<div class="text-center app-text-sec opacity-50 mt-10 text-sm pointer-events-none" data-i18n="empty_sessions">${t("empty_sessions")}</div>`,
-      );
+      const emptyDiv = document.createElement('div');
+      emptyDiv.className = "text-center app-text-sec opacity-50 mt-10 text-sm pointer-events-none";
+      emptyDiv.setAttribute('data-i18n', 'empty_sessions');
+      emptyDiv.textContent = t('empty_sessions');
+      this.els.sessionsList.appendChild(emptyDiv);
       return;
     }
     const fragment = document.createDocumentFragment();
@@ -565,11 +567,30 @@ const stopwatchModule = {
       const lapsContainer = sessionElement.querySelector(
         '[data-template="lapsContainer"]',
       );
+      
+      // ИСПРАВЛЕНИЕ: Замена innerHTML на безопасное создание элементов
       const headerDiv = document.createElement("div");
-      headerDiv.className =
-        "flex justify-between items-center py-1.5 border-b border-gray-500/30 mb-1 px-2";
-      headerDiv.innerHTML = `<span class="text-[10px] font-bold app-text-sec uppercase tracking-wider">${t("lap_text")}</span><div class="flex items-center gap-4"><span class="text-[10px] font-bold app-text-sec uppercase tracking-wider w-16 text-right">${t("total_time")}</span><span class="text-[10px] font-bold app-text-sec uppercase tracking-wider w-16 text-right">${t("split_time")}</span></div>`;
+      headerDiv.className = "flex justify-between items-center py-1.5 border-b border-gray-500/30 mb-1 px-2";
+      
+      const lapSpan = document.createElement('span');
+      lapSpan.className = "text-[10px] font-bold app-text-sec uppercase tracking-wider";
+      lapSpan.textContent = t('lap_text');
+      
+      const timesDiv = document.createElement('div');
+      timesDiv.className = "flex items-center gap-4";
+      
+      const totalSpan = document.createElement('span');
+      totalSpan.className = "text-[10px] font-bold app-text-sec uppercase tracking-wider w-16 text-right";
+      totalSpan.textContent = t('total_time');
+      
+      const splitSpan = document.createElement('span');
+      splitSpan.className = "text-[10px] font-bold app-text-sec uppercase tracking-wider w-16 text-right";
+      splitSpan.textContent = t('split_time');
+      
+      timesDiv.append(totalSpan, splitSpan);
+      headerDiv.append(lapSpan, timesDiv);
       lapsContainer.appendChild(headerDiv);
+      // Конец исправления
 
       session.laps.forEach((lap) => {
         const lapClone = lapTemplate.content.cloneNode(true);

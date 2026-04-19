@@ -154,7 +154,6 @@ export const tb = {
         this.els.editRounds.value = w.rounds;
       }
     } else {
-      // Используем общую функцию getUniqueName из utils.js
       this.els.editName.value = getUniqueName(
         t("tabata"),
         this.workouts,
@@ -169,7 +168,6 @@ export const tb = {
 
   saveWorkout() {
     let finalName = this.els.editName.value.trim();
-    // Используем общую функцию getUniqueName если имя не введено
     if (!finalName)
       finalName = getUniqueName(t("tabata"), this.workouts, "name");
 
@@ -257,10 +255,9 @@ export const tb = {
     this.rest = w.rest * 1000;
     this.rounds = w.rounds;
     updateText(this.els.activeName, w.name);
-    updateText(
-      this.els.activeDetail,
-      `${w.work}${t("sec").toLowerCase()} / ${w.rest}${t("sec").toLowerCase()} • ${w.rounds} ${t("rds")}`,
-    );
+    // ИСПРАВЛЕНИЕ: Замена `innerHTML` на безопасный `textContent`
+    const detailsText = `${w.work}${t("sec").toLowerCase()} / ${w.rest}${t("sec").toLowerCase()} • ${w.rounds} ${t("rds")}`;
+    updateText(this.els.activeDetail, detailsText);
     this.renderList();
   },
 
@@ -299,9 +296,10 @@ export const tb = {
       nameEl.classList.toggle("primary-text", isAct);
       nameEl.classList.toggle("app-text", !isAct);
 
-      workoutElement.querySelector('[data-template="details"]').textContent =
-        `${w.work}${t("sec").toLowerCase()} / ${w.rest}${t("sec").toLowerCase()} • ${w.rounds} ${t("rds")}`;
-
+      // ИСПРАВЛЕНИЕ: Замена `innerHTML` на безопасный `textContent`
+      const detailsText = `${w.work}${t("sec").toLowerCase()} / ${w.rest}${t("sec").toLowerCase()} • ${w.rounds} ${t("rds")}`;
+      workoutElement.querySelector('[data-template="details"]').textContent = detailsText;
+      
       workoutElement
         .querySelector('[data-template-id="editBtn"]')
         .setAttribute("aria-label", t("edit"));
