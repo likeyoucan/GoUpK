@@ -39,17 +39,16 @@ export const colorManager = {
 
     const setupPickerEvents = (type) => {
         const pickerId = type === 'accent' ? 'customColorInput' : 'customBgInput';
+        const previewId = type === 'accent' ? 'accent-picker-preview' : 'bg-picker-preview';
         const picker = $(pickerId);
         if (!picker) return;
 
-        // 'input' для live-preview
         picker.addEventListener("input", (e) => {
+            $(previewId).style.backgroundColor = e.target.value;
             document.dispatchEvent(new CustomEvent("colorSelected", { detail: { type, color: e.target.value, fromPicker: true } }));
         });
         
-        // 'change' для финализации предпросмотра и показа кнопки "+"
         picker.addEventListener("change", (e) => {
-            document.dispatchEvent(new CustomEvent("colorSelected", { detail: { type, color: e.target.value, fromPicker: false } }));
             this._handlePickerInteraction(picker.closest('.color-picker-wrapper'), type);
         });
     };
@@ -67,7 +66,7 @@ export const colorManager = {
         const swatch = e.target.closest('.color-swatch-wrapper[data-custom="true"]');
         if (swatch) {
             e.preventDefault();
-            this._showDeleteButton(swatch);
+            this._showActionButton(swatch, 'delete');
         }
     });
 
@@ -79,7 +78,7 @@ export const colorManager = {
             this.longPressTimer = setTimeout(() => {
                 if (!touchMoved) {
                     e.preventDefault();
-                    this._showDeleteButton(swatch);
+                    this._showActionButton(swatch, 'delete');
                 }
             }, LONG_PRESS_DURATION);
         }
@@ -136,7 +135,7 @@ export const colorManager = {
     ].map(c => c.toLowerCase());
 
     if (allColors.includes(color)) {
-        this._hideActionButton(); // Скрываем кнопку, если цвет уже существует
+        this._hideActionButton();
     } else {
         this._showActionButton(pickerWrapper, 'add');
     }
@@ -159,24 +158,20 @@ export const colorManager = {
     btn.type = "button";
     btn.dataset.action = action;
     btn.dataset.color = color;
-    btn.className = "action-btn absolute -top-2.5 -right-2.5 w-7 h-7 flex items-center justify-center rounded-full text-white shadow-lg focus:outline-none custom-focus active:scale-90 transition-all z-20";
+    btn.className = "action-btn absolute -top-2.5 -right-2.5 w-7 h-7 flex items-center justify-center rounded-full text-white shadow-lg focus:outline-none custom-focus active:scale-90 transition-all z-30";
     btn.style.animation = 'fadeInScale 0.2s cubic-bezier(0.4, 0, 0.2, 1) both';
 
     if (action === 'add') {
         btn.setAttribute("aria-label", t("add_color"));
         btn.classList.add("bg-green-500");
         btn.append(createSVGIcon("M12 4.5v15m7.5-7.5h-15", ["w-4", "h-4"]));
-    } else { // delete
+    } else {
         btn.setAttribute("aria-label", `${t("delete")} ${color}`);
         btn.classList.add("bg-red-500");
         btn.append(createSVGIcon("M6 18L18 6M6 6l12 12", ["w-4", "h-4"]));
     }
     
     targetWrapper.append(btn);
-  },
-  
-  _showDeleteButton(targetWrapper) {
-      this._showActionButton(targetWrapper, 'delete');
   },
 
   _hideActionButton() {
@@ -321,10 +316,11 @@ export const colorManager = {
   syncPickers(accentColor, bgColor) {
       const accentPicker = $('customColorInput');
       if (accentPicker) accentPicker.value = accentColor;
+      $('accent-picker-preview').style.backgroundColor = accentColor;
       
       const bgPicker = $('customBgInput');
-      if (bgPicker) {
-          bgPicker.value = bgColor.startsWith('#') ? bgColor : (document.documentElement.classList.contains('dark') ? '#000000' : '#f3f4f6');
-      }
+      const finalBg = bgColor.startsWith('#') ? bgColor : (document.documentElement.classList.contains('dark') ? '#000000' : '#f3f4f6');
+      if (bgPicker) bgPicker.value = finalBg;
+      $('bg-picker-preview').style.backgroundColor = finalBg;
   }
 };

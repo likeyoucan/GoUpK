@@ -99,7 +99,10 @@ export const themeManager = {
 
   setColor(hex, doScroll = true) {
     this.currentAccent = hex;
-    safeSetLS("theme_color", hex);
+    // Только сохраняем, если это не предпросмотр из пикера
+    if (doScroll) { // doScroll используется как флаг, что это не предпросмотр
+        safeSetLS("theme_color", hex);
+    }
     
     document.documentElement.style.setProperty("--primary-color", hex);
     const { h } = hexToHSL(hex);
@@ -111,7 +114,9 @@ export const themeManager = {
 
   setBgColor(hex, doScroll = true) {
     this.currentBg = hex;
-    safeSetLS("theme_bg_color", hex);
+    if (doScroll) {
+        safeSetLS("theme_bg_color", hex);
+    }
     
     this.applyBgTheme(hex);
     
