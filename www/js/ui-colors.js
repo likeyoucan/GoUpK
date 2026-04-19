@@ -48,7 +48,7 @@ export const colorsManager = {
   coordinator: null,
 
   init(coordinator) {
-    this.coordinator = coordinator; // Ссылка на главный themeManager
+    this.coordinator = coordinator;
     this.applySettings();
     this._bindEvents();
     this._populateColorSection("accent");
@@ -80,13 +80,19 @@ export const colorsManager = {
       this._handleColorClick(e, "bg"),
     );
 
-    // Этот листенер нужен для обновления цвета в реальном времени,
-    // но основная логика выбора/добавления перенесена в _handleColorClick
-    $("customColorInput")?.addEventListener("change", (e) =>
-      this.setColor(e.target.value),
+    // ВОССТАНОВЛЕНО (Fix #1): Live-обновление цвета при выборе в пикере.
+    // Этот слушатель обеспечивает обновление в реальном времени.
+    const handlePickerInput = (e, type) => {
+      const color = e.target.value;
+      if (isValidHex(color)) {
+        type === "accent" ? this.setColor(color) : this.setBgColor(color);
+      }
+    };
+    $("customColorInput")?.addEventListener("input", (e) =>
+      handlePickerInput(e, "accent"),
     );
-    $("customBgInput")?.addEventListener("change", (e) =>
-      this.setBgColor(e.target.value),
+    $("customBgInput")?.addEventListener("input", (e) =>
+      handlePickerInput(e, "bg"),
     );
   },
 
@@ -104,14 +110,17 @@ export const colorsManager = {
   },
 
   resetSettings() {
+    safeRemoveLS("custom_accent_colors");
+    safeRemoveLS("custom_bg_colors");
     safeRemoveLS("theme_color");
     safeRemoveLS("theme_bg_color");
-    this.applySettings();
+
+    this.applySettings(); // Загрузит дефолтные значения
+
     this._populateColorSection("accent");
     this._populateColorSection("bg");
-    this.updateColorSelectionUI("accent", this.currentAccent, false);
-    this.updateColorSelectionUI("bg", this.currentBg, false);
-    this._syncPickerValues();
+
+    // UI будет обновлен через вызовы в главном theme.js
   },
 
   setColor(hex) {
@@ -127,11 +136,9 @@ export const colorsManager = {
     const actionBtn = event.target.closest(".color-action-btn");
 
     if (actionBtn) {
-      if (actionBtn.dataset.action === "delete") {
+      if (actionBtn.dataset.action === "delete")
         this._deleteColorWithAnimation(actionBtn.dataset.color, type);
-      } else if (actionBtn.dataset.action === "add") {
-        this.addCustomColor(type);
-      }
+      else if (actionBtn.dataset.action === "add") this.addCustomColor(type);
       return;
     }
 
@@ -161,6 +168,7 @@ export const colorsManager = {
         type === "accent" ? this.setColor(color) : this.setBgColor(color);
       }
 
+      // ВОССТАНОВЛЕНО (Fix #1): Показ кнопки "Добавить" после выбора цвета в пикере.
       if (this.activeActionTarget === pickerWrapper) {
         this._hideActionButton();
       } else {
@@ -216,6 +224,7 @@ export const colorsManager = {
     const picker = $(isAccent ? "customColorInput" : "customBgInput");
     const color = picker.value.toLowerCase();
 
+    // ВОССТАНОВЛЕНО (Fix #4): Проверка на дубликаты
     const allColors = [
       ...(isAccent ? STANDARD_ACCENT_COLORS : STANDARD_BG_COLORS),
       ...customColors,
@@ -226,7 +235,6 @@ export const colorsManager = {
     if (allColors.includes(color)) {
       showToast(t("color_already_exists"));
       sm.vibrate(30, "medium");
-      isAccent ? this.setColor(color) : this.setBgColor(color);
     } else {
       sm.vibrate(40, "medium");
       customColors.push(color);
@@ -235,8 +243,8 @@ export const colorsManager = {
         JSON.stringify(customColors),
       );
       this._addColorToDOM(color, type);
-      isAccent ? this.setColor(color) : this.setBgColor(color);
     }
+    isAccent ? this.setColor(color) : this.setBgColor(color);
   },
 
   _deleteColorWithAnimation(color, type) {
@@ -251,6 +259,7 @@ export const colorsManager = {
     );
 
     if (wrapper) {
+      // ИСПРАВЛЕНО (Fix #2): Сначала убираем рамку, потом анимируем.
       wrapper.classList.remove(
         "ring-[var(--primary-color)]",
         "ring-2",
@@ -258,8 +267,10 @@ export const colorsManager = {
         "ring-offset-surface",
       );
       wrapper.classList.add("is-collapsing");
+
+      // ИСПРАВЛЕНО (Fix #2): Используем 'animationend' для синхронизации с CSS.
       wrapper.addEventListener(
-        "transitionend",
+        "animationend",
         () => {
           wrapper.remove();
           let customColors = isAccent
@@ -268,6 +279,7 @@ export const colorsManager = {
           const index = customColors.indexOf(color);
           if (index > -1) {
             customColors.splice(index, 1);
+            // ИСПРАВЛЕНО (Fix #2): Сохраняем обновленный массив в localStorage.
             safeSetLS(
               isAccent ? "custom_accent_colors" : "custom_bg_colors",
               JSON.stringify(customColors),
@@ -392,6 +404,7 @@ export const colorsManager = {
       const isDefault = hex === "default";
       const isDark = document.documentElement.classList.contains("dark");
 
+      // ИСПРАВЛЕНО: Корректное определение цвета галочки для дефолтного фона
       let iconColor;
       if (isPicker) {
         iconColor = "#ffffff";
@@ -436,9 +449,11 @@ export const colorsManager = {
 
     const bgPicker = $("customBgInput");
     if (bgPicker) {
+      // ИСПРАВЛЕНО (Fix #4): Логика для определения дефолтного цвета пикера
       if (isValidHex(this.currentBg)) {
         bgPicker.value = this.currentBg;
       } else {
+        // Это случай, когда this.currentBg === 'default'
         const isDark = document.documentElement.classList.contains("dark");
         bgPicker.value = isDark ? "#000000" : "#f3f4f6";
       }

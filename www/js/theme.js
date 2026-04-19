@@ -1,4 +1,4 @@
-// Файл: www/js/theme.js (ИЗМЕНЕН)
+// Файл: www/js/theme.js
 
 import { $, safeGetLS, safeSetLS, safeRemoveLS } from "./utils.js?v=VERSION";
 import { settingsManager } from "./ui-settings.js?v=VERSION";
@@ -14,9 +14,8 @@ export const themeManager = {
   currentMode: "system",
 
   init() {
-    // Инициализируем дочерние модули
     settingsManager.init();
-    colorsManager.init(this); // Передаем ссылку на себя для обратных вызовов
+    colorsManager.init(this);
 
     this.currentMode = safeGetLS("theme_mode") || "system";
     this._internalSetMode(this.currentMode, false);
@@ -25,7 +24,6 @@ export const themeManager = {
   },
 
   _bindEvents() {
-    // Слушаем только глобальные события, которые координируют несколько модулей
     document
       .querySelectorAll('[id^="theme-"]')
       .forEach((btn) =>
@@ -44,17 +42,22 @@ export const themeManager = {
   },
 
   resetSettings() {
+    // ИСПРАВЛЕНО (Fix #3): Полный и корректный сброс
+    // 1. Вызываем сброс в дочерних модулях. Они очистят LS и обновят свое внутреннее состояние.
     settingsManager.resetSettings();
     colorsManager.resetSettings();
 
-    // Сбрасываем и применяем режим темы
+    // 2. Сбрасываем и применяем режим темы в координаторе
     this.setMode("system");
+
+    // 3. После того как дочерние модули сбросили свое состояние (включая this.currentAccent/Bg),
+    // принудительно применяем эти новые дефолтные значения ко всему приложению.
+    this.setColor(colorsManager.currentAccent);
+    this.setBgColor(colorsManager.currentBg);
   },
 
-  // --- Публичные методы для управления темой ---
   setColor(hex, doScroll = true) {
     if (!isValidHex(hex)) return;
-    colorsManager._hideActionButton();
     colorsManager.currentAccent = hex;
     safeSetLS("theme_color", hex);
     document.documentElement.style.setProperty("--primary-color", hex);
@@ -66,7 +69,6 @@ export const themeManager = {
   },
 
   setBgColor(hex, doScroll = true) {
-    colorsManager._hideActionButton();
     colorsManager.currentBg = hex;
     safeSetLS("theme_bg_color", hex);
     this.applyBgTheme(hex, settingsManager.isAdaptiveBg);
@@ -90,9 +92,8 @@ export const themeManager = {
       b.classList.add("app-text-sec");
     });
     const activeBtn = $(`theme-${mode}`);
-    if (activeBtn) {
+    if (activeBtn)
       activeBtn.classList.add("app-surface", "shadow-sm", "app-text");
-    }
 
     const isDark =
       mode === "dark" ||
@@ -101,7 +102,6 @@ export const themeManager = {
     document.documentElement.classList.toggle("dark", isDark);
     document.documentElement.style.colorScheme = isDark ? "dark" : "light";
 
-    // Применяем фон и обновляем UI выбора цветов
     this.applyBgTheme(colorsManager.currentBg, settingsManager.isAdaptiveBg);
     colorsManager.updateColorSelectionUI(
       "accent",
@@ -155,7 +155,6 @@ export const themeManager = {
     }
   },
 
-  // Метод для синхронизации UI извне (например, при открытии настроек)
   syncSliderUIs() {
     settingsManager.syncSliderUIs();
   },
