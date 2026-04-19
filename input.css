@@ -623,7 +623,8 @@ html.dark.no-adaptive .default-bg-btn {
 
 #sw-lapsContainer,
 #tb-workoutsList,
-#view-settings {
+#view-settings,
+#sw-sessionsList  {
   scrollbar-gutter: stable;
   touch-action: pan-y;
 }
