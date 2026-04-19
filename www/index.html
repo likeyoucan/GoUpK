@@ -713,11 +713,30 @@
                       class="flex items-center gap-4 overflow-x-auto scroll-lock no-scrollbar py-2 px-2 -mx-2"
                     >
                       <!-- Сюда JS вставит стандартные и кастомные цвета -->
-                      <div class="color-picker-wrapper relative w-9 h-9 shrink-0 group rounded-full border border-dashed border-black/20 dark:border-white/20 transition-transform active:scale-90 focus-within:ring-2 focus-within:ring-[var(--primary-color)] focus-within:ring-offset-2 focus-within:ring-offset-surface">
-                        <svg focusable="false" aria-hidden="true" class="w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-[var(--primary-color)] transition-colors absolute inset-0 m-auto z-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"></path>
+                      <div
+                        class="color-picker-wrapper relative w-9 h-9 shrink-0 group rounded-full border border-dashed border-black/20 dark:border-white/20 transition-transform active:scale-90 focus-within:ring-2 focus-within:ring-[var(--primary-color)] focus-within:ring-offset-2 focus-within:ring-offset-surface"
+                      >
+                        <svg
+                          focusable="false"
+                          aria-hidden="true"
+                          class="w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-[var(--primary-color)] transition-colors absolute inset-0 m-auto z-0"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          stroke-width="2.5"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M12 4.5v15m7.5-7.5h-15"
+                          ></path>
                         </svg>
-                        <input type="color" id="customColorInput" aria-label="Add custom accent color" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                        <input
+                          type="color"
+                          id="customColorInput"
+                          aria-label="Add custom accent color"
+                          class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                        />
                       </div>
                     </div>
                   </div>
@@ -733,11 +752,30 @@
                       class="flex items-center gap-4 overflow-x-auto scroll-lock no-scrollbar py-2 px-2 -mx-2"
                     >
                       <!-- Сюда JS вставит стандартные и кастомные цвета -->
-                      <div class="color-picker-wrapper relative w-9 h-9 shrink-0 group rounded-full border border-dashed border-black/20 dark:border-white/20 transition-transform active:scale-90 focus-within:ring-2 focus-within:ring-[var(--primary-color)] focus-within:ring-offset-2 focus-within:ring-offset-surface">
-                          <svg focusable="false" aria-hidden="true" class="w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-[var(--primary-color)] transition-colors absolute inset-0 m-auto z-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"></path>
-                          </svg>
-                          <input type="color" id="customBgInput" aria-label="Add custom background color" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                      <div
+                        class="color-picker-wrapper relative w-9 h-9 shrink-0 group rounded-full border border-dashed border-black/20 dark:border-white/20 transition-transform active:scale-90 focus-within:ring-2 focus-within:ring-[var(--primary-color)] focus-within:ring-offset-2 focus-within:ring-offset-surface"
+                      >
+                        <svg
+                          focusable="false"
+                          aria-hidden="true"
+                          class="w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-[var(--primary-color)] transition-colors absolute inset-0 m-auto z-0"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          stroke-width="2.5"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M12 4.5v15m7.5-7.5h-15"
+                          ></path>
+                        </svg>
+                        <input
+                          type="color"
+                          id="customBgInput"
+                          aria-label="Add custom background color"
+                          class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                        />
                       </div>
                     </div>
                   </div>
@@ -1749,8 +1787,8 @@
           data-modal-close
         >
           <div
-            class="app-surface w-full max-w-sm rounded-3xl p-6 shadow-2xl border app-border flex flex-col gap-4 transform transition-all duration-300 opacity-0 scale-95"
             id="sw-clear-modal-content"
+            class="app-surface w-full max-w-sm rounded-3xl p-6 shadow-2xl border app-border flex flex-col gap-4 transform transition-all duration-300 opacity-0 scale-95"
           >
             <h3
               id="sw-clear-title"
@@ -1771,6 +1809,7 @@
                 id="sw-clear-cancel"
                 class="min-h-[44px] px-5 py-2 rounded-xl font-bold app-text-sec active:scale-95 transition-transform focus:outline-none custom-focus"
                 data-i18n="cancel"
+                data-modal-close
               >
                 Cancel
               </button>
@@ -1859,8 +1898,8 @@
           data-modal-close
         >
           <div
-            class="app-surface w-full max-w-sm rounded-3xl p-6 shadow-2xl border app-border flex flex-col gap-4 transform transition-all duration-300 opacity-0 scale-95"
             id="reset-modal-content"
+            class="app-surface w-full max-w-sm rounded-3xl p-6 shadow-2xl border app-border flex flex-col gap-4 transform transition-all duration-300 opacity-0 scale-95"
           >
             <h3
               id="reset-modal-title"
@@ -1896,7 +1935,6 @@
             </div>
           </div>
         </div>
-
       </div>
     </div>
 
