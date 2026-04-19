@@ -153,15 +153,22 @@ export const colorManager = {
 
     if (!/^#[0-9a-f]{6}$/i.test(normalizedColor)) return;
 
+    // ----- ФИНАЛЬНОЕ ИСПРАВЛЕНИЕ ЗДЕСЬ -----
     if ([...standardColors, ...customColors].map(c => c.toLowerCase()).includes(normalizedColor)) {
         showToast(t("color_already_exists"));
-        document.dispatchEvent(new CustomEvent("revertColorSelection", { detail: { type } }));
+        // Используем setTimeout, чтобы дать уведомлению время появиться перед сбросом UI
+        setTimeout(() => {
+            document.dispatchEvent(new CustomEvent("revertColorSelection", { detail: { type } }));
+        }, 150); // 150ms достаточно
         return; 
     }
+    // ----- КОНЕЦ ИСПРАВЛЕНИЯ -----
 
     if (customColors.length >= MAX_CUSTOM_COLORS) {
       showToast(t(isAccent ? "accent_limit_msg" : "bg_limit_msg"));
-      document.dispatchEvent(new CustomEvent("revertColorSelection", { detail: { type } }));
+      setTimeout(() => {
+        document.dispatchEvent(new CustomEvent("revertColorSelection", { detail: { type } }));
+      }, 150);
       return;
     }
 
@@ -257,7 +264,6 @@ export const colorManager = {
     const normalizedColor = color.toLowerCase();
     const activeWrapper = container.querySelector(`.color-swatch-wrapper[data-color="${normalizedColor}"]`);
     
-    // ИСПРАВЛЕНИЕ: Галочка и рамка применяются только к swatch-элементам, не к пикеру
     if (activeWrapper) {
       activeWrapper.classList.add('ring-[var(--primary-color)]', 'ring-2', 'ring-offset-2', 'ring-offset-surface');
       
