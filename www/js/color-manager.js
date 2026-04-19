@@ -42,26 +42,19 @@ export const colorManager = {
         const picker = $(pickerId);
         if (!picker) return;
 
-        let pollingInterval = null;
-
+        // 'input' для live-preview
         picker.addEventListener("input", (e) => {
+            // При выборе цвета в пикере сразу скрываем кнопку "Добавить",
+            // если она была от другого цвета
             if (this.activeActionTarget && this.activeActionTarget === picker.closest('.color-picker-wrapper')) {
                 this._hideActionButton();
             }
             document.dispatchEvent(new CustomEvent("colorSelected", { detail: { type, color: e.target.value, fromPicker: true } }));
         });
         
-        // ИСПОЛЬЗУЕМ НОВУЮ ЛОГИКУ НА КЛИК
-        picker.addEventListener("click", () => {
-            if (pollingInterval) return;
-
-            pollingInterval = setInterval(() => {
-                if (document.hasFocus()) {
-                    clearInterval(pollingInterval);
-                    pollingInterval = null;
-                    this._handlePickerInteraction(picker.closest('.color-picker-wrapper'), type);
-                }
-            }, 200);
+        // 'change' для финализации и показа кнопки "+"
+        picker.addEventListener("change", () => {
+            this._handlePickerInteraction(picker.closest('.color-picker-wrapper'), type);
         });
     };
     setupPickerEvents('accent');
@@ -72,8 +65,10 @@ export const colorManager = {
     const container = $(containerId);
     if (!container) return;
 
+    // Глобальный клик по контейнеру для обработки выбора цвета или вызова действия
     container.addEventListener("click", (e) => this._handleClick(e, type));
     
+    // Контекстное меню для показа кнопки удаления
     container.addEventListener("contextmenu", (e) => {
         const swatch = e.target.closest('.color-swatch-wrapper[data-custom="true"]');
         if (swatch) {
@@ -82,6 +77,7 @@ export const colorManager = {
         }
     });
 
+    // Длительное нажатие для показа кнопки удаления
     let touchMoved = false;
     container.addEventListener("touchstart", (e) => {
         const swatch = e.target.closest('.color-swatch-wrapper[data-custom="true"]');
@@ -89,12 +85,12 @@ export const colorManager = {
             touchMoved = false;
             this.longPressTimer = setTimeout(() => {
                 if (!touchMoved) {
-                    e.preventDefault();
+                    e.preventDefault(); // Предотвращаем клик после долгого нажатия
                     this._showActionButton(swatch, 'delete');
                 }
             }, LONG_PRESS_DURATION);
         }
-    }, { passive: true });
+    }, { passive: true }); // passive: true, т.к. e.preventDefault() вызывается асинхронно
 
     container.addEventListener("touchmove", () => {
         touchMoved = true;
@@ -112,33 +108,67 @@ export const colorManager = {
     const swatch = event.target.closest(".color-swatch-wrapper");
     const actionBtn = event.target.closest(".color-action-btn");
 
+    // Если клик по кнопке действия (добавить/удалить)
     if (actionBtn) {
         if (actionBtn.dataset.action === 'add') {
             this.addCustomColor(type, actionBtn.dataset.color);
         } else if (actionBtn.dataset.action === 'delete') {
             this._deleteColor(actionBtn.dataset.color, type);
         }
-        return;
+        return; // Завершаем обработку
     }
 
+    // Если клик был за пределами активной кнопки, скрываем ее
     if (this.activeActionTarget && !this.activeActionTarget.contains(event.target)) {
       this._hideActionButton();
     }
     
+    // Если клик по кружку с цветом
     if (swatch) {
       const color = swatch.dataset.color;
       document.dispatchEvent(new CustomEvent("colorSelected", { detail: { type, color, fromPicker: false } }));
     }
   },
   
+  /**
+   * НОВАЯ ФУНКЦИЯ
+   * Обрабатывает завершение выбора цвета в пикере.
+   * @param {HTMLElement} pickerWrapper - Обертка инпута выбора цвета.
+   * @param {'accent'|'bg'} type - Тип цвета.
+   */
   _handlePickerInteraction(pickerWrapper, type) {
-    this._showActionButton(pickerWrapper, 'add');
+    const picker = pickerWrapper.querySelector('input[type="color"]');
+    if (!picker) return;
+
+    const color = picker.value.toLowerCase();
+    const isAccent = type === 'accent';
+    const allColors = [
+        ...(isAccent ? this.standardAccentColors : this.standardBgColors),
+        ...(isAccent ? this.customAccentColors : this.customBgColors)
+    ].map(c => c.toLowerCase());
+
+    // Если цвет уже существует, скрываем кнопку действия и ничего не делаем.
+    // Уведомление будет показано при попытке добавления.
+    if (allColors.includes(color)) {
+        this._hideActionButton();
+    } else {
+        // Если цвет новый, показываем кнопку "Добавить".
+        this._showActionButton(pickerWrapper, 'add');
+    }
   },
 
+  /**
+   * ИЗМЕНЕНО: Функция расширена для поддержки действия "add".
+   * Показывает кнопку действия ("Добавить" или "Удалить") над элементом.
+   * @param {HTMLElement} targetWrapper - Элемент, над которым появится кнопка.
+   * @param {'add'|'delete'} action - Тип действия.
+   */
   _showActionButton(targetWrapper, action) {
+    // Если активна другая кнопка, скрыть ее
     if (this.activeActionTarget && this.activeActionTarget !== targetWrapper) {
         this._hideActionButton();
     }
+    // Если кнопка уже показана для этого элемента, ничего не делать
     if (this.activeActionTarget === targetWrapper) return;
 
     sm.vibrate(30, "medium");
@@ -152,22 +182,24 @@ export const colorManager = {
     btn.type = "button";
     btn.dataset.action = action;
     btn.dataset.color = color;
+    // Используем общий класс для кнопок действия
     btn.className = "color-action-btn w-9 h-9 flex items-center justify-center rounded-full shadow-lg focus:outline-none custom-focus active:scale-90 transition-all";
     
     if (action === 'add') {
         btn.setAttribute("aria-label", t("add_color"));
         btn.style.backgroundColor = color;
         
+        // ДОБАВЛЕНО: Проверка контрастности для иконки "+"
         const { r, g, b } = hexToRGB(color);
         const luminance = getLuminance(r, g, b);
-        const iconColor = luminance > 0.5 ? '#1f2937' : '#ffffff';
+        const iconColor = luminance > 0.5 ? '#1f2937' : '#ffffff'; // Темный или светлый цвет иконки
         btn.style.color = iconColor;
         
         btn.append(createSVGIcon("M12 4.5v15m7.5-7.5h-15", ["w-5", "h-5"]));
     } else { // delete
         btn.setAttribute("aria-label", `${t("delete")} ${color}`);
-        btn.style.backgroundColor = '#ef4444';
-        btn.style.color = '#ffffff';
+        btn.style.backgroundColor = '#ef4444'; // Красный фон для кнопки удаления
+        btn.style.color = '#ffffff'; // Белая иконка "х"
         btn.append(createSVGIcon("M6 18L18 6M6 6l12 12", ["w-5", "h-5"]));
     }
     
@@ -185,16 +217,18 @@ export const colorManager = {
   },
   
   addCustomColor(type, color) {
-    this._hideActionButton();
+    this._hideActionButton(); // Скрываем кнопку "Добавить" после нажатия
     const isAccent = type === "accent";
     const customColors = isAccent ? this.customAccentColors : this.customBgColors;
     const standardColors = isAccent ? this.standardAccentColors : this.standardBgColors;
     
     const normalizedColor = color.toLowerCase();
     
+    // Эта проверка уже есть и отлично подходит под нашу задачу
     if ([...standardColors, ...customColors].map(c => c.toLowerCase()).includes(normalizedColor)) {
         showToast(t("color_already_exists"));
-        const previousColor = isAccent ? document.documentElement.style.getPropertyValue('--primary-color') : (safeGetLS("theme_bg_color") || "default");
+        // Возвращаем фокус на исходный цвет, если пытались добавить дубликат
+        const previousColor = isAccent ? this.currentAccent : this.currentBg;
         document.dispatchEvent(new CustomEvent("colorSelected", { detail: { type, color: previousColor, fromPicker: false } }));
         return; 
     }
@@ -208,6 +242,7 @@ export const colorManager = {
     customColors.push(normalizedColor);
     safeSetLS(isAccent ? "custom_accent_colors" : "custom_bg_colors", JSON.stringify(customColors));
     this._addColorToDOM(normalizedColor, type);
+    // Выбираем только что добавленный цвет
     document.dispatchEvent(new CustomEvent("colorSelected", { detail: { type, color: normalizedColor, fromPicker: false } }));
   },
 
@@ -245,7 +280,7 @@ export const colorManager = {
     const picker = container.querySelector('.color-picker-wrapper');
 
     colors.forEach(color => {
-        const isCustom = (isAccent ? this.customAccentColors : this.customBgColors).map(c => c.toLowerCase()).includes(color.toLowerCase());
+        const isCustom = (isAccent ? this.customAccentColors : this.customBgColors).includes(color);
         const swatch = this._createColorSwatch(color, isCustom);
         if (picker) {
             container.insertBefore(swatch, picker);
@@ -259,7 +294,7 @@ export const colorManager = {
     const wrapper = document.createElement("div");
     wrapper.className = "color-swatch-wrapper relative rounded-full";
     wrapper.dataset.color = color;
-    wrapper.dataset.custom = String(isCustom);
+    wrapper.dataset.custom = String(isCustom); // Явно преобразуем в строку
 
     const button = document.createElement("button");
     button.type = "button";
@@ -315,7 +350,7 @@ export const colorManager = {
       activeWrapper.querySelector('.color-btn')?.append(svgIcon);
 
       if (doScroll) {
-        activeWrapper.scrollIntoView({ behavior: 'smooth', block: 'nearest', 'inline': 'center' });
+        activeWrapper.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
       }
     }
   },
