@@ -38,12 +38,11 @@ export const colorsManager = {
     $("accent-colors-container")?.addEventListener("click", e => this._handleColorClick(e, "accent"));
     $("bg-colors-container")?.addEventListener("click", e => this._handleColorClick(e, "bg"));
     
-    // ИСПРАВЛЕНО (Fix #1, #2, #3): Полное восстановление оригинальной логики.
+    // ИСПРАВЛЕНО: Восстановлена оригинальная логика обработки событий пикера
     
     // 1. Live-preview при перетаскивании в пикере.
     const handlePickerInput = (e, type) => {
         if (isValidHex(e.target.value)) {
-            // Применяем цвет к UI, но НЕ сохраняем в localStorage как активный.
             this.coordinator.previewColor(e.target.value, type);
         }
     };
@@ -87,7 +86,7 @@ export const colorsManager = {
   
   _handleColorClick(event, type) {
     const swatchWrapper = event.target.closest(".color-swatch-wrapper");
-    const pickerWrapper = event.target.closest(".color-picker-wrapper"); // Восстановлено для обработки клика по иконке пикера
+    const pickerWrapper = event.target.closest(".color-picker-wrapper");
     const actionBtn = event.target.closest(".color-action-btn");
 
     if (actionBtn) {
@@ -113,8 +112,6 @@ export const colorsManager = {
         this.activeActionTarget === swatchWrapper ? this._hideActionButton() : this._showActionButton(swatchWrapper, "delete");
       }
     } else if (pickerWrapper) {
-        // Клик по самому пикеру теперь просто открывает его,
-        // остальная логика обрабатывается в 'input' и 'change'
         pickerWrapper.querySelector('input[type="color"]')?.click();
     }
   },
@@ -209,7 +206,10 @@ export const colorsManager = {
   _populateColorSection(type) {
     const container = $(type === "accent" ? "accent-colors-container" : "bg-colors-container");
     if (!container) return;
-    container.innerHTML = '';
+    // ИСПРАВЛЕНО: Безопасная очистка DOM
+    while (container.firstChild) {
+        container.removeChild(container.firstChild);
+    }
     const isAccent = type === "accent";
     const standard = isAccent ? STANDARD_ACCENT_COLORS : STANDARD_BG_COLORS;
     const custom = isAccent ? this.customAccentColors : this.customBgColors;
