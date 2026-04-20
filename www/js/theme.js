@@ -1,4 +1,4 @@
-// Файл: www/js/theme.js (полная версия)
+// Файл: www/js/theme.js
 
 import {
   $,
@@ -8,16 +8,14 @@ import {
   hexToHSL,
   hexToRGB,
   getLuminance,
+  getCssVariable,
 } from "./utils.js?v=VERSION";
-import {
-  uiSettingsManager,
-  THEME_DEFAULT_COLORS,
-} from "./ui-settings.js?v=VERSION";
+import { uiSettingsManager } from "./ui-settings.js?v=VERSION";
 import { colorManager } from "./color-manager.js?v=VERSION";
 
 export const themeManager = {
   currentMode: "system",
-  currentAccent: "default",
+  currentAccent: "",
   currentBg: "default",
 
   init() {
@@ -63,7 +61,8 @@ export const themeManager = {
         type === "accent" &&
         this.currentAccent.toLowerCase() === color.toLowerCase()
       ) {
-        this.setColor("default");
+        // Читаем дефолт напрямую из CSS
+        this.setColor(getCssVariable("--default-accent-light"));
       } else if (
         type === "bg" &&
         this.currentBg.toLowerCase() === color.toLowerCase()
@@ -74,12 +73,19 @@ export const themeManager = {
   },
 
   applySettings() {
-    // ++ ИЗМЕНЕНИЕ 1: Дефолт для акцента теперь "default" ++
-    this.currentAccent = safeGetLS("theme_color") || "default";
+    // ++ ИЗМЕНЕНА ЛОГИКА ФОЛБЭКА ++
+    // 1. Пытаемся получить цвет из localStorage.
+    // 2. Если его там нет, читаем дефолтный цвет для светлой темы прямо из CSS.
+    this.currentAccent =
+      safeGetLS("theme_color") || getCssVariable("--default-accent-light");
     this.currentBg = safeGetLS("theme_bg_color") || "default";
     this.currentMode = safeGetLS("theme_mode") || "system";
 
+    colorManager.syncPickers(this.currentAccent, this.currentBg);
+
     this.setMode(this.currentMode, false);
+    this.setColor(this.currentAccent, false);
+    this.setBgColor(this.currentBg, false);
   },
 
   resetSettings() {
@@ -121,10 +127,11 @@ export const themeManager = {
     document.documentElement.classList.toggle("dark", isDark);
     document.documentElement.style.colorScheme = isDark ? "dark" : "light";
 
-    // ++ ИЗМЕНЕНИЕ 2: Вызываем setColor и setBgColor для пересчета цветов и UI ++
-    // Это ключевое исправление для синхронизации пикеров при смене темы.
-    this.setColor(this.currentAccent, false);
-    this.setBgColor(this.currentBg, false);
+    this.applyBgTheme(this.currentBg);
+
+    colorManager.syncPickers(this.currentAccent, this.currentBg);
+    colorManager.updateSelectionUI("accent", this.currentAccent, false);
+    colorManager.updateSelectionUI("bg", this.currentBg, false);
 
     if (useTransition) {
       requestAnimationFrame(() =>
@@ -133,34 +140,25 @@ export const themeManager = {
     }
   },
 
-  // ++ ИЗМЕНЕНИЕ 3: Функция теперь умеет разрешать 'default' в hex ++
-  setColor(color, doScroll = true) {
-    this.currentAccent = color;
-    safeSetLS("theme_color", color);
+  setColor(hex, doScroll = true) {
+    this.currentAccent = hex;
+    safeSetLS("theme_color", hex);
 
-    const resolvedColor =
-      color === "default"
-        ? THEME_DEFAULT_COLORS[this.getCurrentTheme()].accent
-        : color;
-
-    document.documentElement.style.setProperty(
-      "--primary-color",
-      resolvedColor,
-    );
-    const { h } = hexToHSL(resolvedColor);
+    document.documentElement.style.setProperty("--primary-color", hex);
+    const { h } = hexToHSL(hex);
     document.documentElement.style.setProperty("--accent-h", h);
 
-    colorManager.updateSelectionUI("accent", color, doScroll);
+    colorManager.updateSelectionUI("accent", hex, doScroll);
     colorManager.syncPickers(this.currentAccent, this.currentBg);
   },
 
-  setBgColor(color, doScroll = true) {
-    this.currentBg = color;
-    safeSetLS("theme_bg_color", color);
+  setBgColor(hex, doScroll = true) {
+    this.currentBg = hex;
+    safeSetLS("theme_bg_color", hex);
 
-    this.applyBgTheme(color);
+    this.applyBgTheme(hex);
 
-    colorManager.updateSelectionUI("bg", color, doScroll);
+    colorManager.updateSelectionUI("bg", hex, doScroll);
     colorManager.syncPickers(this.currentAccent, this.currentBg);
   },
 
@@ -175,6 +173,8 @@ export const themeManager = {
     );
 
     if (hex === "default") {
+      // Когда цвет "default", мы просто сбрасываем кастомные стили,
+      // и CSS сам подхватывает нужные значения из :root или :root.dark
       root.style.removeProperty("--bg-color");
       root.style.removeProperty("--surface-color");
     } else {

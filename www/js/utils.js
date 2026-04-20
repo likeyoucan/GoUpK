@@ -2,6 +2,14 @@
 
 export const $ = (id) => document.getElementById(id);
 
+/**
+ * Получает значение CSS переменной из :root.
+ * @param {string} variable - Имя переменной (например, '--primary-color').
+ * @returns {string} - Значение переменной.
+ */
+export const getCssVariable = (variable) => 
+  getComputedStyle(document.documentElement).getPropertyValue(variable).trim();
+
 export const escapeHTML = (str) =>
   str.replace(
     /[&<>'"]/g,

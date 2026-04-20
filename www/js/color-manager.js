@@ -12,7 +12,6 @@ import {
 import { t } from "./i18n.js?v=VERSION";
 import { sm } from "./sound.js?v=VERSION";
 import { themeManager } from "./theme.js?v=VERSION";
-import { THEME_DEFAULT_COLORS } from "./ui-settings.js?v=VERSION";
 
 const MAX_CUSTOM_COLORS = 50;
 const LONG_PRESS_DURATION = 500;
@@ -237,27 +236,27 @@ export const colorManager = {
     const picker = $(isAccent ? "customColorInput" : "customBgInput");
     const newColor = picker.value.toLowerCase();
 
-    // ++ ИЗМЕНЕНО: Более точная логика проверки ++
+    // ++ ИЗМЕНЕНА ЛОГИКА ПРОВЕРКИ ++
 
-    // 1. Собираем "запрещённый" список (blocklist) цветов.
-    // В него входят стандартные и уже добавленные кастомные цвета ТОЛЬКО того же типа.
+    // 1. Собираем "запрещённый" список из стандартных и уже добавленных кастомных цветов.
     const blocklist = isAccent
       ? [...this.standardAccentColors, ...this.customAccentColors]
       : [...this.standardBgColors, ...this.customBgColors];
 
-    // 2. Добавляем в запрещённый список дефолтный цвет для ТЕКУЩЕЙ темы.
-    const currentTheme = themeManager.getCurrentTheme();
-    const currentDefault =
-      THEME_DEFAULT_COLORS[currentTheme][isAccent ? "accent" : "background"];
-    blocklist.push(currentDefault);
+    // 2. Получаем имя НЕИЗМЕНЯЕМОЙ переменной для дефолтного цвета ТЕКУЩЕЙ темы.
+    const currentTheme = themeManager.getCurrentTheme(); // 'light' или 'dark'
+    const defaultVarName = isAccent
+      ? `--default-accent-${currentTheme}`
+      : `--default-bg-${currentTheme}`;
 
-    // 3. Нормализуем всё в нижний регистр для корректного сравнения.
-    const normalizedBlocklist = blocklist.map((c) => c.toLowerCase());
+    // 3. Читаем актуальное значение дефолтного цвета прямо из CSS и добавляем в blocklist.
+    const currentDefault = getCssVariable(defaultVarName);
+    blocklist.push(currentDefault);
 
     this._hideActionButton(); // Скрываем кнопку в любом случае
 
     // 4. Проверяем, есть ли добавляемый цвет в нашем запрещённом списке.
-    if (normalizedBlocklist.includes(newColor)) {
+    if (blocklist.map((c) => c.toLowerCase()).includes(newColor)) {
       showToast(t("color_already_exists"));
     } else {
       // Если цвета нет в списке — добавляем его.
