@@ -573,6 +573,14 @@ html.dark .app-bg.has-vignette::before {
   transition: stroke 0.3s;
 }
 
+.default-accent-btn {
+  background-color: #22c55e; /* Дефолтный для светлой темы */
+  transition: background-color 0.3s;
+}
+html.dark .default-accent-btn {
+  background-color: #4ade80; /* Дефолтный для темной темы */
+}
+
 .default-bg-btn {
   border: 1px solid var(--border-color);
   background-color: #f3f4f6;
