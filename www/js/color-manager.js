@@ -1,6 +1,5 @@
 // Файл: www/js/color-manager.js
 
-// ++ ИСПРАВЛЕНА СТРОКА ИМПОРТА: Добавлена 'getCssVariable' ++
 import {
   $,
   safeGetLS,
@@ -23,9 +22,10 @@ export const colorManager = {
   customBgColors: [],
   activeActionTarget: null,
   longPressTimer: null,
+
+  // ++ ИСПРАВЛЕНО: Убран дубликат #22c55e ++
   standardAccentColors: [
     "default",
-    "#22c55e",
     "#3b82f6",
     "#a855f7",
     "#ec4899",
@@ -326,11 +326,16 @@ export const colorManager = {
       const isCustom = (
         isAccent ? this.customAccentColors : this.customBgColors
       ).includes(color);
-      container.insertBefore(this._createColorSwatch(color, isCustom), picker);
+      // ++ ИЗМЕНЕНО: Передаём 'type' в функцию ++
+      container.insertBefore(
+        this._createColorSwatch(color, isCustom, type),
+        picker,
+      );
     });
   },
 
-  _createColorSwatch(color, isCustom) {
+  // ++ ИЗМЕНЕНО: Функция теперь принимает 'type' ++
+  _createColorSwatch(color, isCustom, type) {
     const wrapper = document.createElement("div");
     wrapper.className = "color-swatch-wrapper relative rounded-full";
     wrapper.dataset.color = color;
@@ -343,14 +348,25 @@ export const colorManager = {
       "aria-label",
       color === "default" ? t("default_color") : color,
     );
-    if (color === "default") button.classList.add("default-bg-btn");
-    else button.style.backgroundColor = color;
+
+    if (color === "default") {
+      // ++ ИСПРАВЛЕНО: Применяем разные классы в зависимости от типа ++
+      if (type === "accent") {
+        button.classList.add("default-accent-btn"); // Новый класс для акцента
+      } else {
+        button.classList.add("default-bg-btn"); // Старый класс для фона
+      }
+    } else {
+      button.style.backgroundColor = color;
+    }
+
     wrapper.append(button);
     return wrapper;
   },
 
   _addColorToDOM(color, type) {
-    const swatch = this._createColorSwatch(color, true);
+    // ++ ИЗМЕНЕНО: Передаём 'type' в функцию ++
+    const swatch = this._createColorSwatch(color, true, type);
     const container = $(
       type === "accent" ? "accent-colors-container" : "bg-colors-container",
     );
@@ -399,11 +415,20 @@ export const colorManager = {
       );
       if (!activeWrapper.matches(".color-picker-wrapper")) {
         const isDefault = normalizedColor === "default";
-        const luminance = isDefault
-          ? document.documentElement.classList.contains("dark")
-            ? 0
-            : 1
-          : getLuminance(...Object.values(hexToRGB(normalizedColor)));
+        let luminance;
+        // Определяем яркость для выбора цвета галочки
+        if (isDefault) {
+          // Для дефолта берём яркость текущего цвета (акцента или фона)
+          const cssVar = type === "accent" ? "--primary-color" : "--bg-color";
+          const currentColor =
+            getCssVariable(cssVar) ||
+            (document.documentElement.classList.contains("dark")
+              ? "#000"
+              : "#fff");
+          luminance = getLuminance(...Object.values(hexToRGB(currentColor)));
+        } else {
+          luminance = getLuminance(...Object.values(hexToRGB(normalizedColor)));
+        }
         const iconColor = luminance > 0.5 ? "#1f2937" : "#ffffff";
         const svgIcon = createSVGIcon("M4.5 12.75l6 6 9-13.5", [
           "w-5",

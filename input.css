@@ -605,6 +605,11 @@ html.dark.no-adaptive .default-bg-btn {
   background-color: #000000;
 }
 
+.default-accent-btn {
+  background-color: var(--primary-color);
+  transition: background-color 0.3s;
+}
+
 .custom-focus:focus-visible {
   outline: none;
   box-shadow: 0 0 0 4px var(--primary-color);
