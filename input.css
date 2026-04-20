@@ -578,7 +578,7 @@ html.dark .app-bg.has-vignette::before {
 }
 
 .default-accent-btn {
-  background-color: var(--default-bg-light);
+  background-color: var(--default-accent-dark);
   transition: background-color 0.3s;
 }
 
