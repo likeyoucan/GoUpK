@@ -23,7 +23,7 @@ export const colorManager = {
   longPressTimer: null,
 
   standardAccentColors: [
-    "#22c55e",
+    "#default",
     "#3b82f6",
     "#a855f7",
     "#ec4899",
