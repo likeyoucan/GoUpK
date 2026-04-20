@@ -26,7 +26,7 @@
 :root {
   color-scheme: light dark;
   --default-accent-light: #22c55e;
-  --default-bg-light: #f3f4f6;
+  --default-bg-light: #010a1d;
   --primary-color: var(--default-accent-light);
   --bg-color: var(--default-bg-light);
   --accent-h: 142;
@@ -588,7 +588,7 @@ html.dark .app-bg.has-vignette::before {
 }
 
 .default-bg-btn {
-  background-color: var(--default-bg-dark);
+  background-color: #eeff33;
   transition: background-color 0.3s;
 }
 
