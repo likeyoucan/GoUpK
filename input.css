@@ -635,8 +635,8 @@ html.dark.no-adaptive .default-bg-btn {
 ========================================= */
 
 #reset-modal-content,
-#sw-clear-modal-content,
-#sw-name-modal-content, {
+#clear-modal-content,
+#sw-name-modal-content {
   background-color: var(--surface-color);
   border: 1px solid var(--border-color);
 }
