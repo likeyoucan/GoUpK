@@ -701,58 +701,83 @@
                     </div>
                   </div>
 
-                  <!-- Для Accent Color -->
-                  <div
-                    class="color-picker-wrapper relative w-9 h-9 shrink-0 group rounded-full border border-dashed border-black/20 dark:border-white/60 transition-transform active:scale-90 focus-within:ring-2 focus-within:ring-[var(--primary-color)] focus-within:ring-offset-2 focus-within:ring-offset-surface"
-                  >
-                    <svg
-                      focusable="false"
-                      aria-hidden="true"
-                      class="w-5 h-5 text-gray-400 dark:text-gray-400 group-hover:text-[var(--primary-color)] transition-colors absolute inset-0 m-auto z-0"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      stroke-width="2.5"
+                  <!-- НОВЫЙ, УПРОЩЕННЫЙ БЛОК -->
+                  <div class="p-4 pb-3 border-b app-border">
+                    <span
+                      class="block font-medium app-text text-sm mb-3"
+                      data-i18n="accent_color"
+                      >Accent Color</span
                     >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M12 4.5v15m7.5-7.5h-15"
-                      ></path>
-                    </svg>
-                    <input
-                      type="color"
-                      id="customColorInput"
-                      aria-label="Add custom accent color"
-                      class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                    />
+                    <div
+                      id="accent-colors-container"
+                      class="flex items-center gap-4 overflow-x-auto scroll-lock no-scrollbar py-2 px-2 -mx-2"
+                    >
+                      <!-- Сюда JS вставит стандартные и кастомные цвета -->
+                      <div
+                        class="color-picker-wrapper relative w-9 h-9 shrink-0 group rounded-full border border-dashed border-black/20 border-black/20 dark:border-white/60 transition-transform active:scale-90 focus-within:ring-2 focus-within:ring-[var(--primary-color)] focus-within:ring-offset-2 focus-within:ring-offset-surface"
+                      >
+                        <svg
+                          focusable="false"
+                          aria-hidden="true"
+                          class="w-5 h-5 text-gray-400 dark:text-gray-400 dark:text-gray-400 group-hover:text-[var(--primary-color)] transition-colors absolute inset-0 m-auto z-0"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          stroke-width="2.5"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M12 4.5v15m7.5-7.5h-15"
+                          ></path>
+                        </svg>
+                        <input
+                          type="color"
+                          id="customColorInput"
+                          aria-label="Add custom accent color"
+                          class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                        />
+                      </div>
+                    </div>
                   </div>
 
-                  <!-- Для Background Color -->
-                  <div
-                    class="color-picker-wrapper relative w-9 h-9 shrink-0 group rounded-full border border-dashed border-black/20 dark:border-white/60 transition-transform active:scale-90 focus-within:ring-2 focus-within:ring-[var(--primary-color)] focus-within:ring-offset-2 focus-within:ring-offset-surface"
-                  >
-                    <svg
-                      focusable="false"
-                      aria-hidden="true"
-                      class="w-5 h-5 text-gray-400 dark:text-gray-400 group-hover:text-[var(--primary-color)] transition-colors absolute inset-0 m-auto z-0"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      stroke-width="2.5"
+                  <div class="p-4 pb-3 border-b app-border">
+                    <span
+                      class="block font-medium app-text text-sm mb-3"
+                      data-i18n="bg_color"
+                      >Background Color</span
                     >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M12 4.5v15m7.5-7.5h-15"
-                      ></path>
-                    </svg>
-                    <input
-                      type="color"
-                      id="customBgInput"
-                      aria-label="Add custom background color"
-                      class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                    />
+                    <div
+                      id="bg-colors-container"
+                      class="flex items-center gap-4 overflow-x-auto scroll-lock no-scrollbar py-2 px-2 -mx-2"
+                    >
+                      <!-- Сюда JS вставит стандартные и кастомные цвета -->
+                      <div
+                        class="color-picker-wrapper relative w-9 h-9 shrink-0 group rounded-full border border-dashed border-black/20 dark:border-white/60 transition-transform active:scale-90 focus-within:ring-2 focus-within:ring-[var(--primary-color)] focus-within:ring-offset-2 focus-within:ring-offset-surface"
+                      >
+                        <svg
+                          focusable="false"
+                          aria-hidden="true"
+                          class="w-5 h-5 text-gray-400 dark:text-gray-400 dark:text-gray-400 group-hover:text-[var(--primary-color)] transition-colors absolute inset-0 m-auto z-0"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          stroke-width="2.5"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M12 4.5v15m7.5-7.5h-15"
+                          ></path>
+                        </svg>
+                        <input
+                          type="color"
+                          id="customBgInput"
+                          aria-label="Add custom background color"
+                          class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                        />
+                      </div>
+                    </div>
                   </div>
 
                   <div class="p-4 border-b app-border flex flex-col gap-4">
