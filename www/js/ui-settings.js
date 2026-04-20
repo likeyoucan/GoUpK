@@ -218,7 +218,7 @@ export const uiSettingsManager = {
     const n = Number(s);
     document.documentElement.style.setProperty("--font-scale", n / 16);
     if ($("fontSizeDisplay")) $("fontSizeDisplay").textContent = `${n} px`;
-    safeSetLS("font_size", n); // <--- ДОБАВЛЕНО СОХРАНЕНИЕ
+    safeSetLS("font_size", n);
   },
 
   setRingWidth(w) {
@@ -227,7 +227,7 @@ export const uiSettingsManager = {
     document.documentElement.style.setProperty("--ring-stroke-width", n);
     if ($("ringWidthDisplay"))
       $("ringWidthDisplay").textContent = `${n.toFixed(1)} px`;
-    safeSetLS("app_ring_width", n); // <--- ДОБАВЛЕНО СОХРАНЕНИЕ
+    safeSetLS("app_ring_width", n);
   },
 
   updateVignette() {
