@@ -9,7 +9,10 @@ import {
   hexToRGB,
   getLuminance,
 } from "./utils.js?v=VERSION";
-import { uiSettingsManager } from "./ui-settings.js?v=VERSION";
+import {
+  uiSettingsManager,
+  THEME_DEFAULT_COLORS,
+} from "./ui-settings.js?v=VERSION";
 import { colorManager } from "./color-manager.js?v=VERSION";
 
 export const themeManager = {
