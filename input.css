@@ -578,18 +578,19 @@ html.dark .app-bg.has-vignette::before {
 }
 
 .default-accent-btn {
-  background-color: var(--default-accent-dark);
+  background-color: var(--default-accent-light);
   transition: background-color 0.3s;
 }
-
-.default-btn-btn {
-  background-color: var(--primary-color);
-  transition: background-color 0.3s;
+.dark .default-accent-btn {
+  background-color: var(--default-accent-dark);
 }
 
 .default-bg-btn {
-  background-color: var(--default-bg-dark);
+  background-color: var(--default-bg-light);
   transition: background-color 0.3s;
+}
+.dark .default-bg-btn {
+  background-color: var(--default-bg-dark);
 }
 
 .custom-focus:focus-visible {

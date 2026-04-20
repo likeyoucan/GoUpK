@@ -334,7 +334,6 @@ export const colorManager = {
     });
   },
 
-  // ++ ИЗМЕНЕНО: Функция теперь принимает 'type' ++
   _createColorSwatch(color, isCustom, type) {
     const wrapper = document.createElement("div");
     wrapper.className = "color-swatch-wrapper relative rounded-full";
@@ -350,11 +349,11 @@ export const colorManager = {
     );
 
     if (color === "default") {
-      // ++ ИСПРАВЛЕНО: Применяем разные классы в зависимости от типа ++
+      // Теперь мы применяем правильный класс в зависимости от типа
       if (type === "accent") {
-        button.classList.add("default-accent-btn"); // Новый класс для акцента
+        button.classList.add("default-accent-btn");
       } else {
-        button.classList.add("default-bg-btn"); // Старый класс для фона
+        button.classList.add("default-bg-btn");
       }
     } else {
       button.style.backgroundColor = color;
@@ -365,7 +364,6 @@ export const colorManager = {
   },
 
   _addColorToDOM(color, type) {
-    // ++ ИЗМЕНЕНО: Передаём 'type' в функцию ++
     const swatch = this._createColorSwatch(color, true, type);
     const container = $(
       type === "accent" ? "accent-colors-container" : "bg-colors-container",
