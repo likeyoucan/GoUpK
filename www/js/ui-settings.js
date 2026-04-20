@@ -4,6 +4,22 @@ import { $, safeGetLS, safeSetLS, safeRemoveLS } from "./utils.js?v=VERSION";
 import { t } from "./i18n.js?v=VERSION";
 import { sm } from "./sound.js?v=VERSION";
 
+/**
+ * ++ ДОБАВЛЕНО ++
+ * Централизованное хранилище для дефолтных цветов темы.
+ * Используется в color-manager.js для корректной проверки на дубликаты.
+ */
+export const THEME_DEFAULT_COLORS = {
+  light: {
+    accent: "#22c55e",
+    background: "#f3f4f6",
+  },
+  dark: {
+    accent: "#4ade80",
+    background: "#000000",
+  },
+};
+
 export const uiSettingsManager = {
   // Состояние
   showMs: true,
