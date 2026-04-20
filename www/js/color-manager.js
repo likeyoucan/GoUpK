@@ -237,39 +237,47 @@ export const colorManager = {
     const picker = $(isAccent ? "customColorInput" : "customBgInput");
     const newColor = picker.value.toLowerCase();
 
-    // ++ ИСПРАВЛЕНО: Создаем надежный blocklist, включающий дефолтные цвета обеих тем ++
-    const blocklist = isAccent
-      ? [
-          ...this.standardAccentColors,
-          ...this.customAccentColors,
-          "#22c55e", // Default Accent Light
-          "#4ade80", // Default Accent Dark
-        ]
-      : [
-          ...this.standardBgColors,
-          ...this.customBgColors,
-          "#f3f4f6", // Default Background Light
-          "#000000", // Default Background Dark
-        ];
+    // ++ ИСПРАВЛЕНО: Умная проверка, которая блокирует только активный дефолтный цвет ++
+    // 1. Проверяем на совпадение со стандартной палитрой и кастомными цветами
+    const baseBlocklist = (
+      isAccent
+        ? [...this.standardAccentColors, ...this.customAccentColors]
+        : [...this.standardBgColors, ...this.customBgColors]
+    ).map((c) => c.toLowerCase());
 
-    this._hideActionButton();
-
-    if (blocklist.map((c) => c.toLowerCase()).includes(newColor)) {
+    if (baseBlocklist.includes(newColor)) {
+      this._hideActionButton();
       showToast(t("color_already_exists"));
-    } else {
-      sm.vibrate(40, "medium");
-      customColors.push(newColor);
-      safeSetLS(
-        isAccent ? "custom_accent_colors" : "custom_bg_colors",
-        JSON.stringify(customColors),
-      );
-      this._addColorToDOM(newColor, type);
-      document.dispatchEvent(
-        new CustomEvent("colorSelected", {
-          detail: { type, color: newColor, fromPicker: false },
-        }),
-      );
+      return;
     }
+
+    // 2. Проверяем на совпадение с дефолтным цветом ТЕКУЩЕЙ темы
+    const currentTheme = themeManager.getCurrentTheme();
+    const activeDefaultVar = isAccent
+      ? `--default-accent-${currentTheme}`
+      : `--default-bg-${currentTheme}`;
+    const activeDefaultColor = getCssVariable(activeDefaultVar).toLowerCase();
+
+    if (newColor === activeDefaultColor) {
+      this._hideActionButton();
+      showToast(t("color_already_exists"));
+      return;
+    }
+
+    // Если все проверки пройдены
+    this._hideActionButton();
+    sm.vibrate(40, "medium");
+    customColors.push(newColor);
+    safeSetLS(
+      isAccent ? "custom_accent_colors" : "custom_bg_colors",
+      JSON.stringify(customColors),
+    );
+    this._addColorToDOM(newColor, type);
+    document.dispatchEvent(
+      new CustomEvent("colorSelected", {
+        detail: { type, color: newColor, fromPicker: false },
+      }),
+    );
   },
 
   _deleteColor(color, type) {
@@ -328,7 +336,6 @@ export const colorManager = {
       const isCustom = (
         isAccent ? this.customAccentColors : this.customBgColors
       ).includes(color);
-      // ++ ИЗМЕНЕНО: Передаём 'type' в функцию ++
       container.insertBefore(
         this._createColorSwatch(color, isCustom, type),
         picker,
@@ -336,7 +343,6 @@ export const colorManager = {
     });
   },
 
-  // ++ ИЗМЕНЕНО: Функция теперь принимает 'type' ++
   _createColorSwatch(color, isCustom, type) {
     const wrapper = document.createElement("div");
     wrapper.className = "color-swatch-wrapper relative rounded-full";
@@ -352,7 +358,6 @@ export const colorManager = {
     );
 
     if (color === "default") {
-      // ++ ИСПРАВЛЕНО: Применяем разные классы в зависимости от типа ++
       if (type === "accent") {
         button.classList.add("default-accent-btn");
       } else {
@@ -367,7 +372,6 @@ export const colorManager = {
   },
 
   _addColorToDOM(color, type) {
-    // ++ ИЗМЕНЕНО: Передаём 'type' в функцию ++
     const swatch = this._createColorSwatch(color, true, type);
     const container = $(
       type === "accent" ? "accent-colors-container" : "bg-colors-container",
@@ -468,6 +472,24 @@ export const colorManager = {
           ? getCssVariable(`--default-bg-${currentTheme}`)
           : bgColor;
       bgPicker.value = resolvedBg;
+    }
+
+    // ++ ДОБАВЛЕНО: Вызываем синхронизацию кнопки "Добавить" ++
+    this.syncActiveAddButton();
+  },
+
+  // ++ ДОБАВЛЕНО: Новая функция для синхронизации кнопки "Добавить" ++
+  syncActiveAddButton() {
+    if (!this.activeActionTarget) return;
+
+    const addButton = this.activeActionTarget.querySelector(
+      '.color-action-btn[data-action="add"]',
+    );
+    if (!addButton) return; // Активен не пикер, а кнопка удаления
+
+    const picker = this.activeActionTarget.querySelector('input[type="color"]');
+    if (picker) {
+      this._updateAddButtonColor(addButton, picker.value);
     }
   },
 };
