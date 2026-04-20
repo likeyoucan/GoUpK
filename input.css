@@ -25,9 +25,11 @@
 ========================================= */
 :root {
   color-scheme: light dark;
-  --primary-color: #22c55e;
+  --default-accent-light: #22c55e;
+  --default-bg-light: #f3f4f6;
+  --primary-color: var(--default-accent-light);
+  --bg-color: var(--default-bg-light);
   --accent-h: 142;
-  --bg-color: #f3f4f6;
   --surface-color: #ffffff;
   --text-color: #1f2937;
   --text-secondary: color-mix(
@@ -51,8 +53,10 @@
 }
 
 :root.dark {
-  --primary-color: #4ade80;
-  --bg-color: #000000;
+  --default-accent-dark: #4ade80;
+  --default-bg-dark: #000000;
+  --primary-color: var(--default-accent-dark);
+  --bg-color: var(--default-bg-dark);
   --surface-color: #1c1c1e;
   --text-color: #f9fafb;
   --text-secondary: color-mix(
