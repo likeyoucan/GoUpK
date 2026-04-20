@@ -1,5 +1,6 @@
 // Файл: www/js/color-manager.js
 
+// ++ ИСПРАВЛЕНА СТРОКА ИМПОРТА: Добавлена 'getCssVariable' ++
 import {
   $,
   safeGetLS,
@@ -8,6 +9,7 @@ import {
   createSVGIcon,
   getLuminance,
   hexToRGB,
+  getCssVariable,
 } from "./utils.js?v=VERSION";
 import { t } from "./i18n.js?v=VERSION";
 import { sm } from "./sound.js?v=VERSION";
@@ -21,9 +23,9 @@ export const colorManager = {
   customBgColors: [],
   activeActionTarget: null,
   longPressTimer: null,
-
   standardAccentColors: [
-    "#default",
+    "default",
+    "#22c55e",
     "#3b82f6",
     "#a855f7",
     "#ec4899",
@@ -236,30 +238,23 @@ export const colorManager = {
     const picker = $(isAccent ? "customColorInput" : "customBgInput");
     const newColor = picker.value.toLowerCase();
 
-    // ++ ИЗМЕНЕНА ЛОГИКА ПРОВЕРКИ ++
-
-    // 1. Собираем "запрещённый" список из стандартных и уже добавленных кастомных цветов.
     const blocklist = isAccent
       ? [...this.standardAccentColors, ...this.customAccentColors]
       : [...this.standardBgColors, ...this.customBgColors];
 
-    // 2. Получаем имя НЕИЗМЕНЯЕМОЙ переменной для дефолтного цвета ТЕКУЩЕЙ темы.
-    const currentTheme = themeManager.getCurrentTheme(); // 'light' или 'dark'
+    const currentTheme = themeManager.getCurrentTheme();
     const defaultVarName = isAccent
       ? `--default-accent-${currentTheme}`
       : `--default-bg-${currentTheme}`;
 
-    // 3. Читаем актуальное значение дефолтного цвета прямо из CSS и добавляем в blocklist.
     const currentDefault = getCssVariable(defaultVarName);
     blocklist.push(currentDefault);
 
-    this._hideActionButton(); // Скрываем кнопку в любом случае
+    this._hideActionButton();
 
-    // 4. Проверяем, есть ли добавляемый цвет в нашем запрещённом списке.
     if (blocklist.map((c) => c.toLowerCase()).includes(newColor)) {
       showToast(t("color_already_exists"));
     } else {
-      // Если цвета нет в списке — добавляем его.
       sm.vibrate(40, "medium");
       customColors.push(newColor);
       safeSetLS(
@@ -427,29 +422,25 @@ export const colorManager = {
     }
   },
 
- syncPickers(accentColor, bgColor) {
-    const accentPicker = $('customColorInput');
-    const bgPicker = $('customBgInput');
-    const currentTheme = themeManager.getCurrentTheme(); // Получаем текущую тему
+  syncPickers(accentColor, bgColor) {
+    const accentPicker = $("customColorInput");
+    const bgPicker = $("customBgInput");
+    const currentTheme = themeManager.getCurrentTheme();
 
     if (accentPicker) {
-      // ++ ИСПРАВЛЕНА ЛОГИКА ЗДЕСЬ ++
-      // Если цвет 'default', получаем его реальное значение из CSS-переменной для текущей темы
-      const resolvedAccent = accentColor === 'default'
-        ? getCssVariable(`--default-accent-${currentTheme}`)
-        : accentColor;
-      
+      const resolvedAccent =
+        accentColor === "default"
+          ? getCssVariable(`--default-accent-${currentTheme}`)
+          : accentColor;
       accentPicker.value = resolvedAccent;
     }
-    
-    if (bgPicker) {
-      // ++ И АНАЛОГИЧНАЯ ЛОГИКА ЗДЕСЬ ++
-      // Если цвет 'default', получаем его реальное значение из CSS-переменной
-      const resolvedBg = bgColor === 'default'
-        ? getCssVariable(`--default-bg-${currentTheme}`)
-        : bgColor;
 
+    if (bgPicker) {
+      const resolvedBg =
+        bgColor === "default"
+          ? getCssVariable(`--default-bg-${currentTheme}`)
+          : bgColor;
       bgPicker.value = resolvedBg;
     }
-  }
+  },
 };
