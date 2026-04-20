@@ -133,6 +133,7 @@ export const themeManager = {
     document.documentElement.style.colorScheme = isDark ? "dark" : "light";
 
     this.applyBgTheme(this.currentBg);
+    colorManager.syncPickers(this.currentAccent, this.currentBg);
     colorManager.updateSelectionUI("accent", this.currentAccent, false);
     colorManager.updateSelectionUI("bg", this.currentBg, false);
 
