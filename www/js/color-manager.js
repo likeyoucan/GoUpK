@@ -1,4 +1,4 @@
-// Файл: www/js/color-manager.js (полная версия)
+// Файл: www/js/color-manager.js
 
 import {
   $,
@@ -23,9 +23,8 @@ export const colorManager = {
   activeActionTarget: null,
   longPressTimer: null,
 
-  // ++ ИЗМЕНЕНИЕ 1: Первый цвет теперь "default" ++
   standardAccentColors: [
-    "default",
+    "#22c55e",
     "#3b82f6",
     "#a855f7",
     "#ec4899",
@@ -238,23 +237,30 @@ export const colorManager = {
     const picker = $(isAccent ? "customColorInput" : "customBgInput");
     const newColor = picker.value.toLowerCase();
 
+    // ++ ИЗМЕНЕНО: Более точная логика проверки ++
+
+    // 1. Собираем "запрещённый" список (blocklist) цветов.
+    // В него входят стандартные и уже добавленные кастомные цвета ТОЛЬКО того же типа.
+    const blocklist = isAccent
+      ? [...this.standardAccentColors, ...this.customAccentColors]
+      : [...this.standardBgColors, ...this.customBgColors];
+
+    // 2. Добавляем в запрещённый список дефолтный цвет для ТЕКУЩЕЙ темы.
     const currentTheme = themeManager.getCurrentTheme();
-    const defaultColors = THEME_DEFAULT_COLORS[currentTheme];
+    const currentDefault =
+      THEME_DEFAULT_COLORS[currentTheme][isAccent ? "accent" : "background"];
+    blocklist.push(currentDefault);
 
-    const allExistingColors = [
-      ...this.standardAccentColors,
-      ...this.standardBgColors,
-      ...this.customAccentColors,
-      ...this.customBgColors,
-      defaultColors.accent,
-      defaultColors.background,
-    ].map((c) => c.toLowerCase());
+    // 3. Нормализуем всё в нижний регистр для корректного сравнения.
+    const normalizedBlocklist = blocklist.map((c) => c.toLowerCase());
 
-    this._hideActionButton();
+    this._hideActionButton(); // Скрываем кнопку в любом случае
 
-    if (allExistingColors.includes(newColor)) {
+    // 4. Проверяем, есть ли добавляемый цвет в нашем запрещённом списке.
+    if (normalizedBlocklist.includes(newColor)) {
       showToast(t("color_already_exists"));
     } else {
+      // Если цвета нет в списке — добавляем его.
       sm.vibrate(40, "medium");
       customColors.push(newColor);
       safeSetLS(
@@ -326,16 +332,11 @@ export const colorManager = {
       const isCustom = (
         isAccent ? this.customAccentColors : this.customBgColors
       ).includes(color);
-      // ++ ИЗМЕНЕНИЕ 2: Передаем 'type' в функцию создания кружка ++
-      container.insertBefore(
-        this._createColorSwatch(color, isCustom, type),
-        picker,
-      );
+      container.insertBefore(this._createColorSwatch(color, isCustom), picker);
     });
   },
 
-  // ++ ИЗМЕНЕНИЕ 3: Функция теперь принимает 'type' ++
-  _createColorSwatch(color, isCustom, type) {
+  _createColorSwatch(color, isCustom) {
     const wrapper = document.createElement("div");
     wrapper.className = "color-swatch-wrapper relative rounded-full";
     wrapper.dataset.color = color;
@@ -348,23 +349,14 @@ export const colorManager = {
       "aria-label",
       color === "default" ? t("default_color") : color,
     );
-
-    // ++ ИЗМЕНЕНИЕ 4: Добавляем правильный класс для дефолтного кружка ++
-    if (color === "default") {
-      button.classList.add(
-        type === "accent" ? "default-accent-btn" : "default-bg-btn",
-      );
-    } else {
-      button.style.backgroundColor = color;
-    }
-
+    if (color === "default") button.classList.add("default-bg-btn");
+    else button.style.backgroundColor = color;
     wrapper.append(button);
     return wrapper;
   },
 
   _addColorToDOM(color, type) {
-    // ++ ИЗМЕНЕНИЕ 5: Передаем 'type' в функцию создания кружка ++
-    const swatch = this._createColorSwatch(color, true, type);
+    const swatch = this._createColorSwatch(color, true);
     const container = $(
       type === "accent" ? "accent-colors-container" : "bg-colors-container",
     );
@@ -436,26 +428,16 @@ export const colorManager = {
     }
   },
 
-  // ++ ИЗМЕНЕНИЕ 6: Функция теперь умеет разрешать 'default' для акцента ++
   syncPickers(accentColor, bgColor) {
     const accentPicker = $("customColorInput");
-    if (accentPicker) {
-      if (accentColor === "default") {
-        const currentTheme = themeManager.getCurrentTheme();
-        accentPicker.value = THEME_DEFAULT_COLORS[currentTheme].accent;
-      } else {
-        accentPicker.value = accentColor;
-      }
-    }
-
+    if (accentPicker) accentPicker.value = accentColor;
     const bgPicker = $("customBgInput");
     if (bgPicker) {
-      if (bgColor === "default") {
-        const currentTheme = themeManager.getCurrentTheme();
-        bgPicker.value = THEME_DEFAULT_COLORS[currentTheme].background;
-      } else {
-        bgPicker.value = bgColor;
-      }
+      bgPicker.value = bgColor.startsWith("#")
+        ? bgColor
+        : document.documentElement.classList.contains("dark")
+          ? "#000000"
+          : "#f3f4f6";
     }
   },
 };
