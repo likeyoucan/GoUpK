@@ -23,7 +23,6 @@ export const colorManager = {
   activeActionTarget: null,
   longPressTimer: null,
 
-  // ++ ИСПРАВЛЕНО: Убран дубликат #22c55e ++
   standardAccentColors: [
     "default",
     "#3b82f6",
@@ -238,17 +237,20 @@ export const colorManager = {
     const picker = $(isAccent ? "customColorInput" : "customBgInput");
     const newColor = picker.value.toLowerCase();
 
+    // ++ ИСПРАВЛЕНО: Создаем надежный blocklist, включающий дефолтные цвета обеих тем ++
     const blocklist = isAccent
-      ? [...this.standardAccentColors, ...this.customAccentColors]
-      : [...this.standardBgColors, ...this.customBgColors];
-
-    const currentTheme = themeManager.getCurrentTheme();
-    const defaultVarName = isAccent
-      ? `--default-accent-${currentTheme}`
-      : `--default-bg-${currentTheme}`;
-
-    const currentDefault = getCssVariable(defaultVarName);
-    blocklist.push(currentDefault);
+      ? [
+          ...this.standardAccentColors,
+          ...this.customAccentColors,
+          "#22c55e", // Default Accent Light
+          "#4ade80", // Default Accent Dark
+        ]
+      : [
+          ...this.standardBgColors,
+          ...this.customBgColors,
+          "#f3f4f6", // Default Background Light
+          "#000000", // Default Background Dark
+        ];
 
     this._hideActionButton();
 
@@ -334,6 +336,7 @@ export const colorManager = {
     });
   },
 
+  // ++ ИЗМЕНЕНО: Функция теперь принимает 'type' ++
   _createColorSwatch(color, isCustom, type) {
     const wrapper = document.createElement("div");
     wrapper.className = "color-swatch-wrapper relative rounded-full";
@@ -349,7 +352,7 @@ export const colorManager = {
     );
 
     if (color === "default") {
-      // Теперь мы применяем правильный класс в зависимости от типа
+      // ++ ИСПРАВЛЕНО: Применяем разные классы в зависимости от типа ++
       if (type === "accent") {
         button.classList.add("default-accent-btn");
       } else {
@@ -364,6 +367,7 @@ export const colorManager = {
   },
 
   _addColorToDOM(color, type) {
+    // ++ ИЗМЕНЕНО: Передаём 'type' в функцию ++
     const swatch = this._createColorSwatch(color, true, type);
     const container = $(
       type === "accent" ? "accent-colors-container" : "bg-colors-container",
@@ -414,15 +418,15 @@ export const colorManager = {
       if (!activeWrapper.matches(".color-picker-wrapper")) {
         const isDefault = normalizedColor === "default";
         let luminance;
-        // Определяем яркость для выбора цвета галочки
+
         if (isDefault) {
-          // Для дефолта берём яркость текущего цвета (акцента или фона)
           const cssVar = type === "accent" ? "--primary-color" : "--bg-color";
-          const currentColor =
-            getCssVariable(cssVar) ||
-            (document.documentElement.classList.contains("dark")
-              ? "#000"
-              : "#fff");
+          const currentTheme = themeManager.getCurrentTheme();
+          const defaultVarForTheme =
+            type === "accent"
+              ? getCssVariable(`--default-accent-${currentTheme}`)
+              : getCssVariable(`--default-bg-${currentTheme}`);
+          const currentColor = getCssVariable(cssVar) || defaultVarForTheme;
           luminance = getLuminance(...Object.values(hexToRGB(currentColor)));
         } else {
           luminance = getLuminance(...Object.values(hexToRGB(normalizedColor)));
