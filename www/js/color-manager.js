@@ -4,6 +4,20 @@ import { $, safeGetLS, safeSetLS, showToast, createSVGIcon, getLuminance, hexToR
 import { t } from "./i18n.js?v=VERSION";
 import { sm } from "./sound.js?v=VERSION";
 
+// --- НОВЫЙ БЛОК: Централизованное хранение дефолтных цветов ---
+// Хранит дефолтные цвета для светлой и тёмной тем.
+const DEFAULT_THEME_COLORS = {
+  accent: {
+    light: "#22c55e",
+    dark: "#4ade80",
+  },
+  bg: {
+    light: "#f3f4f6", // Default light bg
+    dark: "#000000",  // Default dark bg
+  },
+};
+// --- КОНЕЦ НОВОГО БЛОКА ---
+
 const MAX_CUSTOM_COLORS = 50;
 const LONG_PRESS_DURATION = 500;
 
@@ -37,17 +51,14 @@ export const colorManager = {
     this._bindContainerEvents("accent-colors-container", "accent");
     this._bindContainerEvents("bg-colors-container", "bg");
     
-    // Live-preview для пикера
     const setupPickerEvents = (type) => {
         const picker = $(type === 'accent' ? 'customColorInput' : 'customBgInput');
         if (!picker) return;
 
-        // 'change' для live-preview темы (как в вашем рабочем коде)
         picker.addEventListener("change", (e) => {
             document.dispatchEvent(new CustomEvent("colorSelected", { detail: { type, color: e.target.value, fromPicker: true } }));
         });
         
-        // 'input' для live-preview кнопки "Добавить"
         picker.addEventListener("input", (e) => {
             const pickerWrapper = picker.closest('.color-picker-wrapper');
             if (this.activeActionTarget === pickerWrapper) {
@@ -158,7 +169,8 @@ export const colorManager = {
     this.activeActionTarget = null;
   },
   
-  // КЛЮЧЕВАЯ ФУНКЦИЯ, ВОССТАНОВЛЕНА ИЗ ВАШЕГО РАБОЧЕГО ПРИМЕРА
+  // --- ОБНОВЛЕННАЯ ФУНКЦИЯ ---
+  // Логика проверки на дубликаты теперь учитывает все системные цвета.
   addCustomColor(type) {
     const isAccent = type === "accent";
     const customColors = isAccent ? this.customAccentColors : this.customBgColors;
@@ -171,15 +183,27 @@ export const colorManager = {
     const picker = $(isAccent ? "customColorInput" : "customBgInput");
     const color = picker.value.toLowerCase();
     
-    const standardColors = isAccent ? this.standardAccentColors : this.standardBgColors;
-    const allColors = [...standardColors, ...customColors].map(c => c.toLowerCase());
+    // 1. Собираем ПОЛНЫЙ список всех системных цветов для проверки
+    const paletteColors = isAccent ? this.standardAccentColors : this.standardBgColors;
+    const themeDefaultColors = isAccent 
+      ? [DEFAULT_THEME_COLORS.accent.light, DEFAULT_THEME_COLORS.accent.dark]
+      : [DEFAULT_THEME_COLORS.bg.light, DEFAULT_THEME_COLORS.bg.dark];
+
+    const allSystemColors = [
+      ...new Set([...paletteColors, ...themeDefaultColors])
+    ].map(c => c.toLowerCase());
+    
+    // 2. Проверяем, является ли цвет системным или уже добавленным кастомным
+    const isDefault = allSystemColors.includes(color);
+    const isAlreadyAdded = customColors.map(c => c.toLowerCase()).includes(color);
     
     // Скрываем кнопку в любом случае
     this._hideActionButton();
     
-    // Проводим проверку
-    if (allColors.includes(color)) {
+    // 3. Проводим проверку
+    if (isDefault || isAlreadyAdded) {
       showToast(t("color_already_exists"));
+      this.highlightExistingColor(type, color); // Подсвечиваем существующий цвет
     } else {
       // И только если проверки нет - добавляем
       sm.vibrate(40, "medium");
@@ -189,6 +213,20 @@ export const colorManager = {
       document.dispatchEvent(new CustomEvent("colorSelected", { detail: { type, color, fromPicker: false } }));
     }
   },
+  // --- КОНЕЦ ОБНОВЛЕННОЙ ФУНКЦИИ ---
+
+  // --- НОВАЯ ФУНКЦИЯ ---
+  // Подсвечивает и прокручивает к существующему цвету для лучшего UX
+  highlightExistingColor(type, color) {
+    const container = $(type === 'accent' ? 'accent-colors-container' : 'bg-colors-container');
+    const existingSwatch = container.querySelector(`.color-swatch-wrapper[data-color="${color.toLowerCase()}"]`);
+    if (existingSwatch) {
+      existingSwatch.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      existingSwatch.classList.add('animate-shake');
+      setTimeout(() => existingSwatch.classList.remove('animate-shake'), 400);
+    }
+  },
+  // --- КОНЕЦ НОВОЙ ФУНКЦИИ ---
 
   _deleteColor(color, type) {
     sm.vibrate(40, "medium");
