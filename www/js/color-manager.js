@@ -12,7 +12,6 @@ import {
 import { t } from "./i18n.js?v=VERSION";
 import { sm } from "./sound.js?v=VERSION";
 import { themeManager } from "./theme.js?v=VERSION";
-import { THEME_DEFAULT_COLORS } from "./ui-settings.js?v=VERSION";
 
 const MAX_CUSTOM_COLORS = 50;
 const LONG_PRESS_DURATION = 500;
