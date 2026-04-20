@@ -3,6 +3,9 @@
 import { $, safeGetLS, safeSetLS, showToast, createSVGIcon, getLuminance, hexToRGB } from "./utils.js?v=VERSION";
 import { t } from "./i18n.js?v=VERSION";
 import { sm } from "./sound.js?v=VERSION";
+// ++ ДОБАВЛЕННЫЕ ИМПОРТЫ ++
+import { themeManager } from './theme.js?v=VERSION';
+import { THEME_DEFAULT_COLORS } from './ui-settings.js?v=VERSION';
 
 const MAX_CUSTOM_COLORS = 50;
 const LONG_PRESS_DURATION = 500;
@@ -42,7 +45,7 @@ export const colorManager = {
         const picker = $(type === 'accent' ? 'customColorInput' : 'customBgInput');
         if (!picker) return;
 
-        // 'change' для live-preview темы (как в вашем рабочем коде)
+        // 'change' для live-preview темы
         picker.addEventListener("change", (e) => {
             document.dispatchEvent(new CustomEvent("colorSelected", { detail: { type, color: e.target.value, fromPicker: true } }));
         });
@@ -158,7 +161,6 @@ export const colorManager = {
     this.activeActionTarget = null;
   },
   
-  // КЛЮЧЕВАЯ ФУНКЦИЯ, ВОССТАНОВЛЕНА ИЗ ВАШЕГО РАБОЧЕГО ПРИМЕРА
   addCustomColor(type) {
     const isAccent = type === "accent";
     const customColors = isAccent ? this.customAccentColors : this.customBgColors;
@@ -169,24 +171,36 @@ export const colorManager = {
     }
 
     const picker = $(isAccent ? "customColorInput" : "customBgInput");
-    const color = picker.value.toLowerCase();
+    const newColor = picker.value.toLowerCase();
     
-    const standardColors = isAccent ? this.standardAccentColors : this.standardBgColors;
-    const allColors = [...standardColors, ...customColors].map(c => c.toLowerCase());
+    // --- ИЗМЕНЕННАЯ ЛОГИКА ПРОВЕРКИ ---
+    const currentTheme = themeManager.getCurrentTheme();
+    const defaultColors = THEME_DEFAULT_COLORS[currentTheme];
+
+    // Собираем ВСЕ существующие цвета (стандартные, кастомные и дефолтные для обеих тем) для проверки.
+    // Это предотвращает добавление цвета, который уже используется где-либо.
+    const allExistingColors = [
+      ...this.standardAccentColors,
+      ...this.standardBgColors,
+      ...this.customAccentColors,
+      ...this.customBgColors,
+      defaultColors.accent,      // Дефолтный цвет акцента для ТЕКУЩЕЙ темы
+      defaultColors.background   // Дефолтный цвет фона для ТЕКУЩЕЙ темы
+    ].map(c => c.toLowerCase());
     
-    // Скрываем кнопку в любом случае
+    // Убираем кнопку действия в любом случае
     this._hideActionButton();
     
-    // Проводим проверку
-    if (allColors.includes(color)) {
+    // Проводим проверку, приведя все к нижнему регистру
+    if (allExistingColors.includes(newColor)) {
       showToast(t("color_already_exists"));
     } else {
-      // И только если проверки нет - добавляем
+      // Если дубликата нет - добавляем цвет
       sm.vibrate(40, "medium");
-      customColors.push(color);
+      customColors.push(newColor);
       safeSetLS(isAccent ? "custom_accent_colors" : "custom_bg_colors", JSON.stringify(customColors));
-      this._addColorToDOM(color, type);
-      document.dispatchEvent(new CustomEvent("colorSelected", { detail: { type, color, fromPicker: false } }));
+      this._addColorToDOM(newColor, type);
+      document.dispatchEvent(new CustomEvent("colorSelected", { detail: { type, color: newColor, fromPicker: false } }));
     }
   },
 
