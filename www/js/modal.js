@@ -65,7 +65,6 @@ class ModalManager {
   _toggleInert(shouldBeInert) {
     const appEl = $("app");
     if (appEl) {
-      // Мы отключаем интерактивность только для основного приложения, а не для body
       const mainContent = appEl.querySelector(".app-bg");
       if (mainContent) mainContent.inert = shouldBeInert;
     }
@@ -75,7 +74,6 @@ class ModalManager {
     const modal = this.modals[id];
     if (!modal || this.activeStack.includes(id)) return;
 
-    // Активируем контейнер
     this.modalContainer.classList.add("active");
 
     if (this.closeTimeoutId) {
@@ -89,15 +87,20 @@ class ModalManager {
       this._toggleInert(true);
     }
 
-    const overlay = modal.overlay || $("bottom-sheet-overlay");
-    if (overlay) {
-      overlay.classList.remove("opacity-0");
-      overlay.onclick = () => {
-        if (this.activeStack[this.activeStack.length - 1] === id) {
-          this.closeCurrent();
-        }
-      };
+    // --- ИСПРАВЛЕННАЯ ЛОГИКА ОВЕРЛЕЯ ---
+    // Показываем общий оверлей только для шторок (bottom-sheet)
+    if (modal.type === "bottom-sheet") {
+      const overlay = $("bottom-sheet-overlay");
+      if (overlay) {
+        overlay.classList.remove("opacity-0");
+        overlay.onclick = () => {
+          if (this.activeStack[this.activeStack.length - 1] === id) {
+            this.closeCurrent();
+          }
+        };
+      }
     }
+    // Для алертов оверлеем будет их собственный фон, который задан в CSS.
 
     modal.el.classList.remove("hidden");
     modal.el.classList.add("flex");
@@ -154,14 +157,15 @@ class ModalManager {
     this.activeStack = this.activeStack.filter((activeId) => activeId !== id);
     const isLastModal = this.activeStack.length === 0;
 
+    // --- ИСПРАВЛЕННАЯ ЛОГИКА ОВЕРЛЕЯ ---
+    // Скрываем общий оверлей только когда закрывается последнее окно любого типа
     if (isLastModal) {
-      // Деактивируем контейнер
-      this.modalContainer.classList.remove("active");
-      const overlay = modal.overlay || $("bottom-sheet-overlay");
+      const overlay = $("bottom-sheet-overlay");
       if (overlay) {
         overlay.classList.add("opacity-0");
         overlay.onclick = null;
       }
+      this.modalContainer.classList.remove("active");
     }
 
     this.closeTimeoutId = setTimeout(
@@ -197,18 +201,10 @@ class ModalManager {
     }
   }
 
-  /**
-   * Проверяет, есть ли хотя бы одно активное модальное окно.
-   * @returns {boolean}
-   */
   hasActiveModal() {
     return this.activeStack.length > 0;
   }
 
-  /**
-   * Назначает глобальные слушатели событий (клавиатура, жесты).
-   * @private
-   */
   _bindGlobalListeners() {
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape" && this.hasActiveModal()) {
@@ -230,11 +226,6 @@ class ModalManager {
     document.addEventListener("mouseleave", () => this._handleDragEnd());
   }
 
-  /**
-   * Обрабатывает начало перетаскивания для закрытия окна-шторки.
-   * @param {MouseEvent|TouchEvent} e - Событие.
-   * @private
-   */
   _handleDragStart(e) {
     if (!this.hasActiveModal()) return;
 
@@ -253,11 +244,6 @@ class ModalManager {
     if (e.type === "mousedown") e.preventDefault();
   }
 
-  /**
-   * Обрабатывает движение при перетаскивании окна.
-   * @param {MouseEvent|TouchEvent} e - Событие.
-   * @private
-   */
   _handleDragMove(e) {
     if (!this.isDragging || !this.activeSheet) return;
     this.currentY = e.touches ? e.touches[0].clientY : e.clientY;
@@ -267,18 +253,12 @@ class ModalManager {
     }
   }
 
-  /**
-   * Обрабатывает окончание перетаскивания.
-   * Закрывает окно, если оно было сдвинуто достаточно далеко, или возвращает на место.
-   * @private
-   */
   _handleDragEnd() {
     if (!this.isDragging || !this.activeSheet) return;
     const deltaY = this.currentY - this.startY;
     if (deltaY > 100) {
       this.closeCurrent();
     } else {
-      // Возвращаем на место с анимацией
       this.activeSheet.style.transition =
         "transform 400ms cubic-bezier(0.32, 0.72, 0, 1)";
       this.activeSheet.style.transform = "translateY(0px)";
@@ -294,5 +274,4 @@ class ModalManager {
   }
 }
 
-// Экспортируем единственный экземпляр класса для использования в других модулях.
 export const modalManager = new ModalManager();
