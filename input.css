@@ -25,7 +25,7 @@
 ========================================= */
 :root {
   color-scheme: light dark;
-    --default-accent-light: #22c55e;
+  --default-accent-light: #22c55e;
   --default-bg-light: #f3f4f6;
   --primary-color: var(--default-accent-light);
   --bg-color: var(--default-bg-light);
@@ -53,8 +53,8 @@
 }
 
 :root.dark {
-    --default-accent-dark: #4ade80;
-  --default-bg-dark: #ff0000;
+  --default-accent-dark: #4ade80;
+  --default-bg-dark: #000000;
   --primary-color: var(--default-accent-dark);
   --bg-color: var(--default-bg-dark);
   --surface-color: #1c1c1e;
@@ -578,35 +578,17 @@ html.dark .app-bg.has-vignette::before {
 }
 
 .default-accent-btn {
-  background-color: #22c55e; /* Дефолтный для светлой темы */
+  background-color: var(--primary-color);
   transition: background-color 0.3s;
 }
-html.dark .default-accent-btn {
-  background-color: #4ade80; /* Дефолтный для темной темы */
+
+.default-btn-btn {
+  background-color: var(--primary-color);
+  transition: background-color 0.3s;
 }
 
 .default-bg-btn {
-  border: 1px solid var(--border-color);
-  background-color: #f3f4f6;
-  transition:
-    background-color 0.3s,
-    border-color 0.3s;
-}
-
-html.dark .default-bg-btn {
-  background-color: #1c1c1e;
-}
-
-html.no-adaptive .default-bg-btn {
-  background-color: #ffffff;
-}
-
-html.dark.no-adaptive .default-bg-btn {
-  background-color: #000000;
-}
-
-.default-accent-btn {
-  background-color: var(--primary-color);
+  background-color: var(--default-bg-dark);
   transition: background-color 0.3s;
 }
 
