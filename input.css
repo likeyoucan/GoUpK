@@ -582,13 +582,13 @@ html.dark .app-bg.has-vignette::before {
   transition: background-color 0.3s;
 }
 
-.default-btn-btn {
+/* .default-btn-btn {
   background-color: var(--primary-color);
   transition: background-color 0.3s;
-}
+} */
 
 .default-bg-btn {
-  background-color: #eeff33;
+  background-color: var(--default-bg-light);
   transition: background-color 0.3s;
 }
 
