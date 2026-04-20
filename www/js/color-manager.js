@@ -427,16 +427,29 @@ export const colorManager = {
     }
   },
 
-  syncPickers(accentColor, bgColor) {
-    const accentPicker = $("customColorInput");
-    if (accentPicker) accentPicker.value = accentColor;
-    const bgPicker = $("customBgInput");
-    if (bgPicker) {
-      bgPicker.value = bgColor.startsWith("#")
-        ? bgColor
-        : document.documentElement.classList.contains("dark")
-          ? "#000000"
-          : "#f3f4f6";
+ syncPickers(accentColor, bgColor) {
+    const accentPicker = $('customColorInput');
+    const bgPicker = $('customBgInput');
+    const currentTheme = themeManager.getCurrentTheme(); // Получаем текущую тему
+
+    if (accentPicker) {
+      // ++ ИСПРАВЛЕНА ЛОГИКА ЗДЕСЬ ++
+      // Если цвет 'default', получаем его реальное значение из CSS-переменной для текущей темы
+      const resolvedAccent = accentColor === 'default'
+        ? getCssVariable(`--default-accent-${currentTheme}`)
+        : accentColor;
+      
+      accentPicker.value = resolvedAccent;
     }
-  },
+    
+    if (bgPicker) {
+      // ++ И АНАЛОГИЧНАЯ ЛОГИКА ЗДЕСЬ ++
+      // Если цвет 'default', получаем его реальное значение из CSS-переменной
+      const resolvedBg = bgColor === 'default'
+        ? getCssVariable(`--default-bg-${currentTheme}`)
+        : bgColor;
+
+      bgPicker.value = resolvedBg;
+    }
+  }
 };
