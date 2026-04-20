@@ -36,6 +36,7 @@
     var(--primary-color)
   );
   --border-color: color-mix(in srgb, var(--text-color) 15%, transparent);
+  --dashed-border-color: color-mix(in srgb, var(--text-color) 20%, transparent);
   --vignette-alpha: 0.15;
   --font-scale: 1;
   --ring-stroke-width: 4;
@@ -60,6 +61,7 @@
     var(--primary-color)
   );
   --border-color: color-mix(in srgb, var(--text-color) 12%, transparent);
+  --dashed-border-color: color-mix(in srgb, var(--text-color) 30%, transparent);
 }
 
 body.force-light-text {
@@ -1001,7 +1003,7 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
 :root.glass-effect body #sw-clear-modal,
 :root.glass-effect body #sw-name-modal {
   background-color: rgba(255, 255, 255, 0.3);
-   backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
 }
 
 :root.dark.glass-effect body #reset-modal,
