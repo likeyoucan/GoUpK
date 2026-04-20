@@ -54,7 +54,7 @@
 
 :root.dark {
     --default-accent-dark: #4ade80;
-  --default-bg-dark: #ff0000;
+  --default-bg-dark: #1C1C1E;
   --primary-color: var(--default-accent-dark);
   --bg-color: var(--default-bg-dark);
   --surface-color: #1c1c1e;
