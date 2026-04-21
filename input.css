@@ -1281,8 +1281,7 @@ input[type="range"]:focus + .thumb-label-container > .thumb-label {
 .nav-btn > span {
   transition:
     transform 0.25s cubic-bezier(0.32, 0.72, 0, 1),
-    color 0.3s cubic-bezier(0.32, 0.72, 0, 1),
-    opacity 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+    color 0.3s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 /* 
@@ -1296,17 +1295,17 @@ input[type="range"]:focus + .thumb-label-container > .thumb-label {
   */
 
   /* Деликатно увеличиваем иконку на месте */
-  .nav-btn:hover > div {
-    transform: scale(1.08); /* Увеличение без смещения */
-  }
+  /* .nav-btn:hover > div {
+    transform: scale(1.08);
+  } */
 
   /* 
-    Меняем цвет и делаем текст чуть более заметным.
-    Класс .primary-text в HTML отвечает за активное состояние, 
-    а здесь мы управляем пред-активным состоянием при наведении.
+    !! ИСПРАВЛЕНИЕ: Теперь меняем цвет и у иконки, и у текста.
+    Мы обращаемся к обоим дочерним элементам (.nav-btn > div, .nav-btn > span)
+    и применяем к ним основной цвет.
   */
+  .nav-btn:hover > div,
   .nav-btn:hover > span {
     color: var(--primary-color);
-    opacity: 0.85;
   }
 }
