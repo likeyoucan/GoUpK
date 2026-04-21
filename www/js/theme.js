@@ -145,44 +145,37 @@ export const themeManager = {
     const rootEl = document.documentElement;
 
     // --- УПРАВЛЕНИЕ ОСНОВНЫМ И ВТОРИЧНЫМ ЦВЕТАМИ ---
-    rootEl.classList.remove("use-green-secondary"); // Сначала сбрасываем состояние
+    rootEl.classList.remove('use-green-secondary');
 
     if (hex === "default") {
       rootEl.style.removeProperty("--primary-color");
       rootEl.style.removeProperty("--accent-h");
-      // Для стандартной темы (зеленой) цвет отдыха принудительно синий
-      rootEl.style.setProperty("--secondary-accent-color", "#3b82f6");
+      rootEl.style.setProperty('--secondary-accent-color', '#3b82f6');
     } else {
       rootEl.style.setProperty("--primary-color", hex);
       const { h } = hexToHSL(hex);
       rootEl.style.setProperty("--accent-h", h);
-      // Убираем жесткую привязку, чтобы работали адаптивные правила
-      rootEl.style.removeProperty("--secondary-accent-color");
-
-      // ++ НОВАЯ ЛОГИКА ДЛЯ ЦВЕТА ОТДЫХА ++
-      // Если основной цвет синий/голубой...
-      const isBluish = h >= 185 && h <= 250;
+      rootEl.style.removeProperty('--secondary-accent-color');
+      
+      const isBluish = (h >= 185 && h <= 250);
       if (isBluish) {
-        // ...то активируем запасной зеленый цвет для отдыха.
-        rootEl.classList.add("use-green-secondary");
+        rootEl.classList.add('use-green-secondary');
       }
     }
 
-    // --- УМНОЕ УПРАВЛЕНИЕ "ОПАСНЫМ" ЦВЕТОМ ---
-    rootEl.classList.remove(
-      "use-orange-destructive",
-      "use-pure-red-destructive",
-    );
-
+    // --- УМНОЕ УПРАВЛЕНИЕ ЦВЕТОМ "ALERT" ---
+    // !! ИЗМЕНЕНО: Переименованы классы
+    rootEl.classList.remove('use-orange-alert', 'use-pure-red-alert');
+    
     if (hex !== "default") {
       const { h: accentHue } = hexToHSL(hex);
-      const isReddish = accentHue >= 335 || accentHue <= 20;
-      const isBluish = accentHue >= 185 && accentHue <= 250;
+      const isReddish = (accentHue >= 335 || accentHue <= 20);
+      const isBluish = (accentHue >= 185 && accentHue <= 250);
 
       if (isReddish) {
-        rootEl.classList.add("use-orange-destructive");
+        rootEl.classList.add('use-orange-alert');
       } else if (isBluish) {
-        rootEl.classList.add("use-pure-red-destructive");
+        rootEl.classList.add('use-pure-red-alert');
       }
     }
 

@@ -1302,82 +1302,70 @@ input[type="range"]:focus + .thumb-label-container > .thumb-label {
 }
 
 /* =========================================
-   21. АДАПТИВНЫЕ ЦВЕТА UI
+   21. АДАПТИВНЫЕ ЦВЕТА UI (ИМЕНОВАНИЕ "ALERT")
 ========================================= */
 
 :root {
-  /* ... (существующие переменные --secondary-accent-color, --destructive-color и т.д.) ... */
+  /* ... (secondary-accent-color и primary-color-vivid остаются без изменений) ... */
   --secondary-accent-color: hsl(calc(var(--accent-h, 142) + 140) 80% 60%);
-  --destructive-color: color-mix(in srgb, var(--primary-color) 15%, hsl(0 90% 60%) 85%);
-  --destructive-color-fg: #ffffff;
-  --destructive-fallback-orange: hsl(35, 100%, 58%);
-  --destructive-fallback-pure-red: hsl(0, 90%, 60%);
   --primary-color-vivid: hsl(var(--accent-h, 142) 95% 55%);
-  
+
   /* 
-    ++ НОВОЕ: Запасной ЗЕЛЕНЫЙ цвет для отдыха (когда тема синяя).
-    Используем цвет, похожий на стандартный акцентный.
+    !! ИЗМЕНЕНО: Переименовано в --alert-color
   */
-  --secondary-fallback-green: #22c55e;
+  --alert-color: color-mix(in srgb, var(--primary-color) 15%, hsl(0 90% 60%) 85%);
+  --alert-color-fg: #ffffff;
+
+  /* 
+    !! ИЗМЕНЕНО: Переименованы запасные цвета
+  */
+  --alert-fallback-orange: hsl(35, 100%, 58%);
+  --alert-fallback-pure-red: hsl(0, 90%, 60%);
 }
 
 :root.dark {
-  /* ... (существующие переменные) ... */
-  --secondary-fallback-green: #4ade80; /* Более яркий зеленый для темной темы */
+  --secondary-accent-color: hsl(calc(var(--accent-h, 142) + 140) 70% 65%);
+  --primary-color-vivid: hsl(var(--accent-h, 142) 90% 60%);
 }
 
 /* 
-  ++ НОВЫЕ КЛАССЫ-ПЕРЕКЛЮЧАТЕЛИ ++
+  !! ИЗМЕНЕНО: Переименованы классы-переключатели
 */
-:root.use-orange-destructive {
-  --destructive-color: var(--destructive-fallback-orange);
+:root.use-orange-alert {
+  --alert-color: var(--alert-fallback-orange);
 }
-:root.use-pure-red-destructive {
-  --destructive-color: var(--destructive-fallback-pure-red);
+:root.use-pure-red-alert {
+  --alert-color: var(--alert-fallback-pure-red);
 }
-
-/* 
-  ++ НОВЫЙ КЛАСС-ПЕРЕКЛЮЧАТЕЛЬ ДЛЯ ЦВЕТА ОТДЫХА ++
-*/
-:root.use-green-secondary {
+:root.use-green-secondary { /* Этот класс остается без изменений */
   --secondary-accent-color: var(--secondary-fallback-green);
 }
 
-
 /* --- Утилитарные классы --- */
-/* (Все остальные классы в этой секции остаются без изменений) */
+/* (secondary-accent-* и primary-vivid-* без изменений) */
+.secondary-accent-text { color: var(--secondary-accent-color); transition: color 0.3s; }
+.secondary-accent-stroke { stroke: var(--secondary-accent-color); transition: stroke 0.3s; }
+.primary-vivid-text { color: var(--primary-color-vivid); transition: color 0.3s; }
+.primary-vivid-stroke { stroke: var(--primary-color-vivid); transition: stroke 0.3s; }
 
-.secondary-accent-text {
-  color: var(--secondary-accent-color);
-  transition: color 0.3s;
-}
-.secondary-accent-stroke {
-  stroke: var(--secondary-accent-color);
-  transition: stroke 0.3s;
-}
-.primary-vivid-text {
-  color: var(--primary-color-vivid);
-  transition: color 0.3s;
-}
-.primary-vivid-stroke {
-  stroke: var(--primary-color-vivid);
-  transition: stroke 0.3s;
-}
-.bg-destructive {
-  background-color: var(--destructive-color);
-  color: var(--destructive-color-fg);
+/* 
+  !! ИЗМЕНЕНО: Переименованы утилитарные классы
+*/
+.bg-alert {
+  background-color: var(--alert-color);
+  color: var(--alert-color-fg);
   transition: background-color 0.3s;
 }
-.bg-destructive:hover {
+.bg-alert:hover {
   filter: brightness(95%);
 }
-.text-destructive {
-  color: var(--destructive-color);
+.text-alert {
+  color: var(--alert-color);
   transition: color 0.3s;
 }
 .is-reset {
-  background-color: var(--destructive-color) !important;
-  color: var(--destructive-color-fg) !important;
+  background-color: var(--alert-color) !important;
+  color: var(--alert-color-fg) !important;
   box-shadow: none !important;
 }
 .is-reset:hover {
