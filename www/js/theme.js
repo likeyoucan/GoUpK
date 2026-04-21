@@ -142,6 +142,51 @@ export const themeManager = {
     this.currentAccent = hex;
     safeSetLS("theme_color", hex);
 
+    if (hex === "default") {
+      // Для основного цвета: сбрасываем, чтобы сработал CSS из :root.
+      document.documentElement.style.removeProperty("--primary-color");
+      document.documentElement.style.removeProperty("--accent-h");
+
+      // Для цвета отдыха: принудительно ставим синий для стандартной темы.
+      document.documentElement.style.setProperty(
+        "--secondary-accent-color",
+        "#3b82f6",
+      );
+    } else {
+      // Для основного цвета: устанавливаем кастомный цвет.
+      document.documentElement.style.setProperty("--primary-color", hex);
+      const { h } = hexToHSL(hex);
+      document.documentElement.style.setProperty("--accent-h", h);
+
+      // Для цвета отдыха: убираем принудительную установку, позволяя CSS-адаптации работать.
+      document.documentElement.style.removeProperty("--secondary-accent-color");
+    }
+
+    // ++ НАЧАЛО НОВОЙ ЛОГИКИ ДЛЯ "ОПАСНОГО" ЦВЕТА ++
+    if (hex === "default") {
+      // Если тема стандартная (зеленая), то стандартный красный подходит.
+      // Убираем инлайновый стиль, чтобы сработало правило color-mix из CSS.
+      document.documentElement.style.removeProperty("--destructive-color");
+    } else {
+      const { h: accentHue } = hexToHSL(hex);
+
+      // Определяем "красную зону" оттенков (от розового до оранжево-красного)
+      const isReddish = accentHue >= 335 || accentHue <= 20;
+
+      if (isReddish) {
+        // Если основной цвет красный, ПРИНУДИТЕЛЬНО ставим "опасный" цвет
+        // на контрастный яркий оранжевый.
+        document.documentElement.style.setProperty(
+          "--destructive-color",
+          "hsl(35, 100%, 58%)",
+        ); // Пример: #ff992a
+      } else {
+        // Если основной цвет НЕ красный, убираем принудительную установку,
+        // позволяя правилу color-mix из CSS создать приятный "тонированный" красный.
+        document.documentElement.style.removeProperty("--destructive-color");
+      }
+    }
+
     // ++ ИСПРАВЛЕНО: Главная логика для 'default' ++
     if (hex === "default") {
       // Сбрасываем инлайновый стиль, чтобы сработал CSS из :root или :root.dark
