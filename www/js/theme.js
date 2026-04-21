@@ -142,29 +142,36 @@ export const themeManager = {
     this.currentAccent = hex;
     safeSetLS("theme_color", hex);
 
-    // Управляем основным и вторичным (цвет отдыха) цветами
+    const rootEl = document.documentElement;
+
+    // --- УПРАВЛЕНИЕ ОСНОВНЫМ И ВТОРИЧНЫМ ЦВЕТАМИ ---
     if (hex === "default") {
-      // Для основного цвета: сбрасываем стили, чтобы сработал CSS из :root.
-      document.documentElement.style.removeProperty("--primary-color");
-      document.documentElement.style.removeProperty("--accent-h");
-
-      // Для цвета отдыха: ПРИНУДИТЕЛЬНО устанавливаем синий цвет для стандартной темы.
-      document.documentElement.style.setProperty(
-        "--secondary-accent-color",
-        "#3b82f6",
-      );
+      rootEl.style.removeProperty("--primary-color");
+      rootEl.style.removeProperty("--accent-h");
+      rootEl.style.setProperty('--secondary-accent-color', '#3b82f6');
     } else {
-      // Для основного цвета: устанавливаем кастомный цвет.
-      document.documentElement.style.setProperty("--primary-color", hex);
+      rootEl.style.setProperty("--primary-color", hex);
       const { h } = hexToHSL(hex);
-      document.documentElement.style.setProperty("--accent-h", h);
-
-      // Для цвета отдыха: УБИРАЕМ принудительную установку,
-      // позволяя адаптивному правилу из CSS (с hue-rotate) взять управление.
-      document.documentElement.style.removeProperty("--secondary-accent-color");
+      rootEl.style.setProperty("--accent-h", h);
+      rootEl.style.removeProperty('--secondary-accent-color');
     }
 
-    // Синхронизируем UI после всех изменений
+    // --- УМНОЕ УПРАВЛЕНИЕ "ОПАСНЫМ" ЦВЕТОМ ---
+    if (hex === "default") {
+      // Стандартная тема (зеленая) не конфликтует с красным, используем стандартное тонирование.
+      rootEl.classList.remove('destructive-fallback-active');
+    } else {
+      const { h: accentHue } = hexToHSL(hex);
+
+      // Определяем "красную зону" оттенков (от розового до оранжево-красного).
+      const isReddish = (accentHue >= 335 || accentHue <= 20);
+
+      // Переключаем класс на <html> в зависимости от того, является ли цвет "красноватым".
+      // CSS сам подхватит этот класс и применит нужный цвет.
+      rootEl.classList.toggle('destructive-fallback-active', isReddish);
+    }
+
+    // Синхронизируем UI после всех изменений.
     colorManager.updateSelectionUI("accent", hex, doScroll);
     colorManager.syncPickers(this.currentAccent, this.currentBg);
   },

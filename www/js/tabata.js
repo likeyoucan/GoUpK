@@ -489,24 +489,39 @@ export const tb = {
     this.tick();
   },
 
-  updatePhaseStyles() {
+ updatePhaseStyles() {
     if (!this.els.ring) return;
     updateText(this.els.roundDisplay, this.currentRound);
     const statusEl = this.els.status;
-    statusEl.classList.remove("primary-text", "text-blue-500", "app-text-sec");
-    this.els.ring.classList.remove("primary-stroke");
-    this.els.ring.style.stroke = "";
+
+    // ++ ИСПРАВЛЕНО: Полная очистка ВСЕХ возможных классов цвета перед применением новых.
+    statusEl.classList.remove(
+      "primary-vivid-text",
+      "secondary-accent-text",
+      "app-text-sec",
+      "primary-text" // <-- Добавлен недостающий класс
+    );
+    this.els.ring.classList.remove(
+      "primary-vivid-stroke",
+      "secondary-accent-stroke",
+      "primary-stroke" // <-- Добавлен недостающий класс
+    );
+    // ++ КОНЕЦ ИСПРАВЛЕНИЯ ++
+
     if (this.status === "WORK") {
+      // "Работа": Используем супер-яркий акцентный цвет
       updateText(statusEl, t("work"));
-      statusEl.classList.add("primary-text");
-      this.els.ring.classList.add("primary-stroke");
+      statusEl.classList.add("primary-vivid-text");
+      this.els.ring.classList.add("primary-vivid-stroke");
     } else if (this.status === "REST") {
+      // "Отдых": Используем вторичный адаптивный цвет
       updateText(statusEl, t("rest"));
       statusEl.classList.add("secondary-accent-text");
       this.els.ring.classList.add("secondary-accent-stroke");
     } else {
+      // "Приготовьтесь": Используем обычный акцентный цвет
       updateText(statusEl, t("get_ready"));
-      statusEl.classList.add("app-text-sec");
+      statusEl.classList.add("primary-text");
       this.els.ring.classList.add("primary-stroke");
     }
   },

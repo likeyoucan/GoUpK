@@ -1305,25 +1305,28 @@ input[type="range"]:focus + .thumb-label-container > .thumb-label {
    21. АДАПТИВНЫЕ ЦВЕТА UI
 ========================================= */
 
+/* =========================================
+   21. АДАПТИВНЫЕ ЦВЕТА UI (ФИНАЛЬНАЯ ВЕРСИЯ)
+========================================= */
+
 :root {
-  /* 
-    Вторичный цвет для отдыха в Табата. 
-    Мы поворачиваем тон основного цвета на 140 градусов.
-    (зеленый -> синий, оранжевый -> голубой, и т.д.)
-  */
+  /* ... (переменная --secondary-accent-color остается без изменений) ... */
   --secondary-accent-color: hsl(calc(var(--accent-h, 142) + 140) 80% 60%);
 
   /* 
-    Яркий, однозначный красный цвет для "опасных" действий.
-    Он не зависит от темы, чтобы всегда быть узнаваемым.
+    !! ИЗМЕНЕНО: Адаптивный, но всегда яркий "опасный" цвет.
+    Мы смешиваем 85% яркого красного с 15% акцентного цвета.
+    Красный всегда доминирует, но получает легкий оттенок темы.
   */
-  --destructive-color: hsl(0 90% 60%);
-  --destructive-color-fg: #ffffff; /* Цвет текста для "опасной" кнопки */
+  --destructive-color: color-mix(in srgb, var(--primary-color) 15%, hsl(0 90% 60%) 85%);
+  --destructive-color-fg: #ffffff;
 
   /* 
-    Супер-яркий акцентный цвет для фазы "Работы" в Табата.
-    Берем тон основного цвета и делаем его максимально насыщенным и ярким.
+    ++ НОВОЕ: Запасной "опасный" цвет для случаев, когда основной цвет - красный.
   */
+  --destructive-fallback-color: hsl(35, 100%, 58%); /* Яркий оранжевый */
+
+  /* ... (переменная --primary-color-vivid остается без изменений) ... */
   --primary-color-vivid: hsl(var(--accent-h, 142) 95% 55%);
 }
 
@@ -1332,7 +1335,16 @@ input[type="range"]:focus + .thumb-label-container > .thumb-label {
   --primary-color-vivid: hsl(var(--accent-h, 142) 90% 60%);
 }
 
-/* --- Новые утилитарные классы --- */
+/* 
+  ++ НОВОЕ: Правило, которое активирует запасной цвет, 
+  когда JS добавит этот класс к <html>.
+*/
+:root.destructive-fallback-active {
+  --destructive-color: var(--destructive-fallback-color);
+}
+
+
+/* --- Утилитарные классы (остаются без изменений, но привожу для полноты) --- */
 
 .secondary-accent-text {
   color: var(--secondary-accent-color);
@@ -1358,19 +1370,18 @@ input[type="range"]:focus + .thumb-label-container > .thumb-label {
   transition: background-color 0.3s;
 }
 .bg-destructive:hover {
-  background-color: hsl(0 90% 55%); /* Чуть темнее при наведении */
+  filter: brightness(95%);
 }
 .text-destructive {
   color: var(--destructive-color);
   transition: color 0.3s;
 }
 
-/* 
-  Обновляем стиль кнопки сброса секундомера,
-  чтобы она тоже использовала яркий красный.
-*/
 .is-reset {
   background-color: var(--destructive-color) !important;
   color: var(--destructive-color-fg) !important;
   box-shadow: none !important;
+}
+.is-reset:hover {
+  filter: brightness(95%);
 }
