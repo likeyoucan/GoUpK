@@ -148,27 +148,42 @@ export const themeManager = {
     if (hex === "default") {
       rootEl.style.removeProperty("--primary-color");
       rootEl.style.removeProperty("--accent-h");
-      rootEl.style.setProperty('--secondary-accent-color', '#3b82f6');
+      rootEl.style.setProperty("--secondary-accent-color", "#3b82f6");
     } else {
       rootEl.style.setProperty("--primary-color", hex);
       const { h } = hexToHSL(hex);
       rootEl.style.setProperty("--accent-h", h);
-      rootEl.style.removeProperty('--secondary-accent-color');
+      rootEl.style.removeProperty("--secondary-accent-color");
     }
 
-    // --- УМНОЕ УПРАВЛЕНИЕ "ОПАСНЫМ" ЦВЕТОМ ---
+    // --- УМНОЕ УПРАВЛЕНИЕ "ОПАСНЫМ" ЦВЕТОМ (РАСШИРЕННАЯ ЛОГИКА) ---
+
+    // 1. Сначала сбрасываем все возможные состояния, чтобы начать с чистого листа.
+    rootEl.classList.remove(
+      "use-orange-destructive",
+      "use-pure-red-destructive",
+    );
+
     if (hex === "default") {
-      // Стандартная тема (зеленая) не конфликтует с красным, используем стандартное тонирование.
-      rootEl.classList.remove('destructive-fallback-active');
+      // Для стандартной темы (зеленой) ничего не делаем, стандартный color-mix работает отлично.
     } else {
       const { h: accentHue } = hexToHSL(hex);
 
-      // Определяем "красную зону" оттенков (от розового до оранжево-красного).
-      const isReddish = (accentHue >= 335 || accentHue <= 20);
+      // Определяем "красную зону".
+      const isReddish = accentHue >= 335 || accentHue <= 20;
 
-      // Переключаем класс на <html> в зависимости от того, является ли цвет "красноватым".
-      // CSS сам подхватит этот класс и применит нужный цвет.
-      rootEl.classList.toggle('destructive-fallback-active', isReddish);
+      // Определяем "синюю/голубую зону".
+      const isBluish = accentHue >= 185 && accentHue <= 250;
+
+      if (isReddish) {
+        // Если основной цвет красный -> переключаемся на оранжевый.
+        rootEl.classList.add("use-orange-destructive");
+      } else if (isBluish) {
+        // Если основной цвет синий/голубой -> переключаемся на чистый красный.
+        rootEl.classList.add("use-pure-red-destructive");
+      }
+      // В противном случае (зеленый, желтый, фиолетовый и т.д.) - ничего не добавляем,
+      // и работает стандартный color-mix из CSS.
     }
 
     // Синхронизируем UI после всех изменений.
