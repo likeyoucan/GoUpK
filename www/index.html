@@ -940,34 +940,16 @@
                       data-i18n="language"
                       >Language</label
                     >
-                    <div
-                      class="select-wrapper relative flex items-center app-surface rounded-lg border app-border shadow-sm focus-within:ring-2 focus-within:ring-[var(--primary-color)] transition-colors"
+                    <select
+                      id="langSelect"
+                      data-custom-select
+                      aria-label="Select Language"
+                      class="w-full bg-transparent app-text text-sm font-bold appearance-none outline-none py-1.5 pl-3 pr-8 cursor-pointer z-10"
                     >
-                      <select
-                        id="langSelect"
-                        aria-label="Select Language"
-                        class="w-full bg-transparent app-text text-sm font-bold appearance-none outline-none py-1.5 pl-3 pr-8 cursor-pointer z-10"
-                      >
-                        <option value="auto" data-i18n="lang_auto">Auto</option>
-                        <option value="en">English</option>
-                        <option value="ru">Русский</option>
-                      </select>
-                      <svg
-                        focusable="false"
-                        aria-hidden="true"
-                        class="w-4 h-4 app-text-sec absolute right-2 pointer-events-none z-0"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M19 9l-7 7-7-7"
-                        ></path>
-                      </svg>
-                    </div>
+                      <option value="auto" data-i18n="lang_auto">Auto</option>
+                      <option value="en">English</option>
+                      <option value="ru">Русский</option>
+                    </select>
                   </div>
 
                   <div
@@ -1021,46 +1003,22 @@
                       data-i18n="sound_theme"
                       >Sound Theme</label
                     >
-                    <div
-                      class="select-wrapper relative flex items-center app-surface rounded-lg border app-border shadow-sm focus-within:ring-2 focus-within:ring-[var(--primary-color)] transition-colors"
+                    <select
+                      id="soundThemeSelect"
+                      data-custom-select
+                      aria-label="Select Theme"
+                      class="w-full bg-transparent app-text text-sm font-bold appearance-none outline-none py-1.5 pl-3 pr-8 cursor-pointer z-10"
                     >
-                      <select
-                        id="soundThemeSelect"
-                        aria-label="Select Theme"
-                        class="w-full bg-transparent app-text text-sm font-bold appearance-none outline-none py-1.5 pl-3 pr-8 cursor-pointer z-10"
-                      >
-                        <option value="classic" data-i18n="theme_classic">
-                          Classic
-                        </option>
-                        <option value="sport" data-i18n="theme_sport">
-                          Sport
-                        </option>
-                        <option value="vibe" data-i18n="theme_vibe">
-                          Vibe
-                        </option>
-                        <option value="work" data-i18n="theme_work">
-                          Work
-                        </option>
-                        <option value="life" data-i18n="theme_life">
-                          Life
-                        </option>
-                      </select>
-                      <svg
-                        focusable="false"
-                        aria-hidden="true"
-                        class="w-4 h-4 app-text-sec absolute right-2 pointer-events-none z-0"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M19 9l-7 7-7-7"
-                        ></path>
-                      </svg>
-                    </div>
+                      <option value="classic" data-i18n="theme_classic">
+                        Classic
+                      </option>
+                      <option value="sport" data-i18n="theme_sport">
+                        Sport
+                      </option>
+                      <option value="vibe" data-i18n="theme_vibe">Vibe</option>
+                      <option value="work" data-i18n="theme_work">Work</option>
+                      <option value="life" data-i18n="theme_life">Life</option>
+                    </select>
                   </div>
 
                   <div class="p-4 border-t app-border flex flex-col gap-3">
@@ -1449,13 +1407,8 @@
             >
               Clear All
             </button>
-            <div
-              class="select-wrapper relative flex items-center app-surface rounded-lg border app-border shadow-sm focus-within:ring-2 focus-within:ring-[var(--primary-color)] transition-colors w-40"
-            >
-              <select
-                id="sw-sortSelect"
-                class="w-full bg-transparent app-text text-xs font-bold appearance-none outline-none py-1.5 pl-3 pr-8 cursor-pointer z-10"
-              >
+            <div class="w-40">
+              <select id="sw-sortSelect" data-custom-select>
                 <option value="date_asc" data-i18n="date_old">
                   Oldest first
                 </option>
@@ -1468,21 +1421,6 @@
                 <option value="name_az" data-i18n="name_az">Name (A-Z)</option>
                 <option value="name_za" data-i18n="name_za">Name (Z-A)</option>
               </select>
-              <svg
-                focusable="false"
-                aria-hidden="true"
-                class="w-4 h-4 app-text-sec absolute right-2 pointer-events-none z-0"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M19 9l-7 7-7-7"
-                ></path>
-              </svg>
             </div>
           </div>
           <div
