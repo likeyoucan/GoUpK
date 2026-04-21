@@ -502,8 +502,8 @@ export const tb = {
       this.els.ring.classList.add("primary-stroke");
     } else if (this.status === "REST") {
       updateText(statusEl, t("rest"));
-      statusEl.classList.add("text-blue-500");
-      this.els.ring.style.stroke = "#3b82f6";
+      statusEl.classList.add("secondary-accent-text");
+      this.els.ring.classList.add("secondary-accent-stroke");
     } else {
       updateText(statusEl, t("get_ready"));
       statusEl.classList.add("app-text-sec");
