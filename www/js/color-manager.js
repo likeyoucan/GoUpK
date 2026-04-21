@@ -237,7 +237,6 @@ export const colorManager = {
     const picker = $(isAccent ? "customColorInput" : "customBgInput");
     const newColor = picker.value.toLowerCase();
 
-    // -- ПРОВЕРКА ЦВЕТА С УЧЕТОМ ТЕКУЩЕЙ ТЕМЫ (ВАШ ПРАВИЛЬНЫЙ ПОДХОД) --
     // 1. Проверяем на совпадение со стандартной палитрой и кастомными цветами.
     const baseBlocklist = (
       isAccent
@@ -251,14 +250,22 @@ export const colorManager = {
       return;
     }
 
-    // 2. Проверяем на совпадение с дефолтным цветом ТЕКУЩЕЙ темы, читая его из CSS.
+    // 2. ИСПРАВЛЕННАЯ ПРОВЕРКА: Используем жестко заданные значения, но с учетом темы.
+    // Это единственный надежный способ сравнения.
     const currentTheme = themeManager.getCurrentTheme();
-    const activeDefaultVar = isAccent
-      ? `--default-accent-${currentTheme}`
-      : `--default-bg-${currentTheme}`;
-    const activeDefaultColor = getCssVariable(activeDefaultVar).toLowerCase();
+    let activeDefaultColor;
 
-    if (newColor === activeDefaultColor) {
+    if (isAccent) {
+      // Значения взяты напрямую из вашего input.css
+      activeDefaultColor = currentTheme === "dark" ? "#4ade80" : "#22c55e";
+    } else {
+      // Это тип 'bg'
+      // Значения взяты напрямую из вашего input.css
+      activeDefaultColor = currentTheme === "dark" ? "#000000" : "#f3f4f6";
+    }
+
+    // Теперь сравнение абсолютно точное
+    if (newColor === activeDefaultColor.toLowerCase()) {
       this._hideActionButton();
       showToast(t("color_already_exists"));
       return;
