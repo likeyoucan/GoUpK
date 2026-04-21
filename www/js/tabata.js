@@ -507,7 +507,6 @@ export const tb = {
       "secondary-accent-stroke",
       "primary-stroke", // <-- Добавлен недостающий класс
     );
-    // ++ КОНЕЦ ИСПРАВЛЕНИЯ ++
 
     if (this.status === "WORK") {
       updateText(statusEl, t("work"));
