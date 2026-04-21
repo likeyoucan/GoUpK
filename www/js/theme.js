@@ -138,45 +138,58 @@ export const themeManager = {
     }
   },
 
+  getPairedRestColor(hue) {
+    // Зеленая зона (от салатового до бирюзового)
+    if (hue >= 75 && hue < 185) return "#3b82f6"; // -> Синий
+    // Синяя зона
+    if (hue >= 185 && hue < 250) return "#22c55e"; // -> Зеленый
+    // Красная/Розовая зона
+    if (hue >= 335 || hue < 20) return "#2dd4bf"; // -> Бирюзовый
+    // Желтая/Оранжевая зона
+    if (hue >= 20 && hue < 75) return "#6366f1"; // -> Индиго
+    // Фиолетовая зона
+    if (hue >= 250 && hue < 335) return "#facc15"; // -> Желтый/Золотой
+
+    return "#3b82f6"; // Безопасный fallback
+  },
+
+  getPairedAlertColor(hue, luminance) {
+    // Если фон черный (или очень темный)
+    if (luminance < 10) return "hsl(0, 90%, 60%)"; // -> Ярко-красный
+    // Красная/Розовая зона
+    if (hue >= 335 || hue < 20) return "hsl(35, 100%, 58%)"; // -> Ярко-оранжевый
+
+    // Во всех остальных случаях - насыщенный красный
+    return "hsl(0, 90%, 60%)";
+  },
+
   setColor(hex, doScroll = true) {
     this.currentAccent = hex;
     safeSetLS("theme_color", hex);
 
     const rootEl = document.documentElement;
 
-    // --- УПРАВЛЕНИЕ ОСНОВНЫМ И ВТОРИЧНЫМ ЦВЕТАМИ ---
-    rootEl.classList.remove('use-green-secondary');
-
     if (hex === "default") {
+      // --- СТАНДАРТНАЯ ТЕМА ---
       rootEl.style.removeProperty("--primary-color");
       rootEl.style.removeProperty("--accent-h");
-      rootEl.style.setProperty('--secondary-accent-color', '#3b82f6');
+      // Отдых для зеленого -> синий
+      rootEl.style.setProperty("--secondary-accent-color", "#3b82f6");
+      // Alert для зеленого -> насыщенный красный
+      rootEl.style.setProperty("--alert-color", "hsl(0, 90%, 60%)");
     } else {
+      // --- КАСТОМНАЯ ТЕМА ---
       rootEl.style.setProperty("--primary-color", hex);
-      const { h } = hexToHSL(hex);
+      const { h, l } = hexToHSL(hex);
       rootEl.style.setProperty("--accent-h", h);
-      rootEl.style.removeProperty('--secondary-accent-color');
-      
-      const isBluish = (h >= 185 && h <= 250);
-      if (isBluish) {
-        rootEl.classList.add('use-green-secondary');
-      }
-    }
 
-    // --- УМНОЕ УПРАВЛЕНИЕ ЦВЕТОМ "ALERT" ---
-    // !! ИЗМЕНЕНО: Переименованы классы
-    rootEl.classList.remove('use-orange-alert', 'use-pure-red-alert');
-    
-    if (hex !== "default") {
-      const { h: accentHue } = hexToHSL(hex);
-      const isReddish = (accentHue >= 335 || accentHue <= 20);
-      const isBluish = (accentHue >= 185 && accentHue <= 250);
+      // 1. Устанавливаем "умный" цвет для Отдыха
+      const restColor = this.getPairedRestColor(h);
+      rootEl.style.setProperty("--secondary-accent-color", restColor);
 
-      if (isReddish) {
-        rootEl.classList.add('use-orange-alert');
-      } else if (isBluish) {
-        rootEl.classList.add('use-pure-red-alert');
-      }
+      // 2. Устанавливаем "умный" цвет для Alert
+      const alertColor = this.getPairedAlertColor(h, l);
+      rootEl.style.setProperty("--alert-color", alertColor);
     }
 
     // Синхронизируем UI после всех изменений.

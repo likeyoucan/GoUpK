@@ -1302,55 +1302,27 @@ input[type="range"]:focus + .thumb-label-container > .thumb-label {
 }
 
 /* =========================================
-   21. АДАПТИВНЫЕ ЦВЕТА UI (ИМЕНОВАНИЕ "ALERT")
+   21. АДАПТИВНЫЕ ЦВЕТА UI (УПРОЩЕННАЯ ВЕРСИЯ)
 ========================================= */
 
 :root {
-  /* ... (secondary-accent-color и primary-color-vivid остаются без изменений) ... */
-  --secondary-accent-color: hsl(calc(var(--accent-h, 142) + 140) 80% 60%);
-  --primary-color-vivid: hsl(var(--accent-h, 142) 95% 55%);
-
-  /* 
-    !! ИЗМЕНЕНО: Переименовано в --alert-color
-  */
-  --alert-color: color-mix(in srgb, var(--primary-color) 15%, hsl(0 90% 60%) 85%);
+  /* JS будет напрямую устанавливать значения этих переменных */
+  --secondary-accent-color: #3b82f6; /* Синий как безопасный fallback */
+  --alert-color: hsl(0 90% 60%);    /* Красный как безопасный fallback */
   --alert-color-fg: #ffffff;
-
-  /* 
-    !! ИЗМЕНЕНО: Переименованы запасные цвета
-  */
-  --alert-fallback-orange: hsl(35, 100%, 58%);
-  --alert-fallback-pure-red: hsl(0, 90%, 60%);
-}
-
-:root.dark {
-  --secondary-accent-color: hsl(calc(var(--accent-h, 142) + 140) 70% 65%);
-  --primary-color-vivid: hsl(var(--accent-h, 142) 90% 60%);
-}
-
-/* 
-  !! ИЗМЕНЕНО: Переименованы классы-переключатели
-*/
-:root.use-orange-alert {
-  --alert-color: var(--alert-fallback-orange);
-}
-:root.use-pure-red-alert {
-  --alert-color: var(--alert-fallback-pure-red);
-}
-:root.use-green-secondary { /* Этот класс остается без изменений */
-  --secondary-accent-color: var(--secondary-fallback-green);
 }
 
 /* --- Утилитарные классы --- */
-/* (secondary-accent-* и primary-vivid-* без изменений) */
-.secondary-accent-text { color: var(--secondary-accent-color); transition: color 0.3s; }
-.secondary-accent-stroke { stroke: var(--secondary-accent-color); transition: stroke 0.3s; }
-.primary-vivid-text { color: var(--primary-color-vivid); transition: color 0.3s; }
-.primary-vivid-stroke { stroke: var(--primary-color-vivid); transition: stroke 0.3s; }
 
-/* 
-  !! ИЗМЕНЕНО: Переименованы утилитарные классы
-*/
+.secondary-accent-text {
+  color: var(--secondary-accent-color);
+  transition: color 0.3s;
+}
+.secondary-accent-stroke {
+  stroke: var(--secondary-accent-color);
+  transition: stroke 0.3s;
+}
+
 .bg-alert {
   background-color: var(--alert-color);
   color: var(--alert-color-fg);

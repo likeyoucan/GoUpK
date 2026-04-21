@@ -298,8 +298,9 @@ export const tb = {
 
       // ИСПРАВЛЕНИЕ: Замена `innerHTML` на безопасный `textContent`
       const detailsText = `${w.work}${t("sec").toLowerCase()} / ${w.rest}${t("sec").toLowerCase()} • ${w.rounds} ${t("rds")}`;
-      workoutElement.querySelector('[data-template="details"]').textContent = detailsText;
-      
+      workoutElement.querySelector('[data-template="details"]').textContent =
+        detailsText;
+
       workoutElement
         .querySelector('[data-template-id="editBtn"]')
         .setAttribute("aria-label", t("edit"));
@@ -489,7 +490,7 @@ export const tb = {
     this.tick();
   },
 
- updatePhaseStyles() {
+  updatePhaseStyles() {
     if (!this.els.ring) return;
     updateText(this.els.roundDisplay, this.currentRound);
     const statusEl = this.els.status;
@@ -499,20 +500,20 @@ export const tb = {
       "primary-vivid-text",
       "secondary-accent-text",
       "app-text-sec",
-      "primary-text" // <-- Добавлен недостающий класс
+      "primary-text", // <-- Добавлен недостающий класс
     );
     this.els.ring.classList.remove(
       "primary-vivid-stroke",
       "secondary-accent-stroke",
-      "primary-stroke" // <-- Добавлен недостающий класс
+      "primary-stroke", // <-- Добавлен недостающий класс
     );
     // ++ КОНЕЦ ИСПРАВЛЕНИЯ ++
 
     if (this.status === "WORK") {
-      // "Работа": Используем супер-яркий акцентный цвет
       updateText(statusEl, t("work"));
-      statusEl.classList.add("primary-vivid-text");
-      this.els.ring.classList.add("primary-vivid-stroke");
+      // !! ИЗМЕНЕНО: Возвращаем обычные классы основного акцентного цвета
+      statusEl.classList.add("primary-text");
+      this.els.ring.classList.add("primary-stroke");
     } else if (this.status === "REST") {
       // "Отдых": Используем вторичный адаптивный цвет
       updateText(statusEl, t("rest"));
