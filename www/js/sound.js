@@ -54,9 +54,11 @@ export const sm = {
     $("volumeSlider")?.addEventListener("change", () => this.play("click"));
 
     $("soundThemeSelect")?.addEventListener("change", (e) => {
-      this.theme = e.target.value;
+      const newTheme = e.target.value;
+      this.theme = newTheme;
       safeSetLS("app_sound_theme", this.theme);
-      this.play("click");
+      // Теперь мы передаем новую тему прямо в функцию `play`
+      this.play("click", { theme: newTheme });
     });
 
     const unlockHandler = () => this.unlock();
@@ -215,10 +217,14 @@ export const sm = {
     osc.start(startTime);
     osc.stop(startTime + duration);
   },
-  play(type) {
+  play(type, options = {}) {
     if (!this.soundEnabled || !this.audioCtx || this.volume === 0) return;
     this.unlock();
-    if (this.theme === "classic") {
+
+    // Определяем, какую тему использовать: переданную в опциях или текущую
+    const activeTheme = options.theme || this.theme;
+
+    if (activeTheme === "classic") {
       if (type === "click") this.playNote(2000, "square", 0, 0.05, 0.2);
       else if (type === "tick") this.playNote(2500, "square", 0, 0.05, 0.3);
       else if (type === "work_start") {
@@ -238,7 +244,7 @@ export const sm = {
         }
       } else if (type === "minute_beep")
         this.playNote(1500, "sine", 0, 0.1, 0.3);
-    } else if (this.theme === "sport") {
+    } else if (activeTheme === "sport") {
       if (type === "click") this.playNote(1200, "triangle", 0, 0.05, 0.2, 200);
       else if (type === "tick")
         this.playNote(1500, "triangle", 0, 0.1, 0.3, 300);
@@ -266,7 +272,7 @@ export const sm = {
         playSwoosh(0.7, 0.8, true);
       } else if (type === "minute_beep")
         this.playNote(2000, "triangle", 0, 0.08, 0.4);
-    } else if (this.theme === "vibe") {
+    } else if (activeTheme === "vibe") {
       if (type === "click") this.playNote(300, "sine", 0, 0.1, 0.4);
       else if (type === "tick") this.playNote(400, "sine", 0, 0.15, 0.5);
       else if (type === "work_start") {
@@ -284,7 +290,7 @@ export const sm = {
         this.playNote(493.88, "sine", 0.3, 3.0, 0.4);
       } else if (type === "minute_beep")
         this.playNote(1046.5, "sine", 0, 0.2, 0.5);
-    } else if (this.theme === "work") {
+    } else if (activeTheme === "work") {
       if (type === "click") this.playNote(500, "sine", 0, 0.03, 0.2);
       else if (type === "tick") this.playNote(700, "sine", 0, 0.05, 0.2);
       else if (type === "work_start") {
@@ -299,7 +305,7 @@ export const sm = {
         this.playNote(659.25, "sine", 0.8, 2.0, 0.4);
       } else if (type === "minute_beep")
         this.playNote(880, "sine", 0, 0.07, 0.3);
-    } else if (this.theme === "life") {
+    } else if (activeTheme === "life") {
       if (type === "click") this.playNote(440, "triangle", 0, 0.08, 0.3);
       else if (type === "tick") this.playNote(523.25, "triangle", 0, 0.1, 0.4);
       else if (type === "work_start") {
