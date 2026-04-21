@@ -17,6 +17,7 @@ import { tb } from "./tabata.js?v=VERSION";
 import { sm } from "./sound.js?v=VERSION";
 import { modalManager } from "./modal.js?v=VERSION";
 import { store } from "./store.js?v=VERSION";
+import { initTouchRanges } from "./js/touch-range.js?v=VERSION";
 
 /**
  * Динамически вставляет SVG-кольца прогресса в контейнеры с атрибутом [data-ring].
@@ -97,6 +98,8 @@ document.addEventListener("DOMContentLoaded", () => {
   tm.init();
   tb.init();
   navigation.init();
+
+  initTouchRanges();
 
   // 2. Затем инициализируем менеджер модальных окон, передавая ему конфигурацию.
   modalManager.init(modalConfig);

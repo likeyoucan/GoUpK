@@ -672,82 +672,6 @@ select::-ms-expand {
   display: none;
 }
 
-input[type="range"]::-moz-focus-outer {
-  border: 0;
-}
-
-input[type="range"] {
-  -webkit-appearance: none;
-  background: transparent;
-  align-items: center;
-  touch-action: pan-y;
-  height: 32px;
-  margin: -14px 0;
-}
-
-input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  height: 24px;
-  width: 24px;
-  border-radius: 50%;
-  background: var(--surface-color);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-  border: 2px solid var(--primary-color);
-  margin-top: calc((4px / 2) - (24px / 2));
-  transition:
-    outline 0.2s,
-    transform 0.1s;
-}
-
-input[type="range"]::-webkit-slider-thumb:active {
-  transform: scale(1.1);
-}
-
-input[type="range"]::-webkit-slider-runnable-track {
-  width: 100%;
-  height: 4px;
-  cursor: pointer;
-  background: var(--border-color);
-  border-radius: 2px;
-  margin-top: 14px;
-}
-
-input[type="range"]::-moz-range-thumb {
-  height: 24px;
-  width: 24px;
-  border-radius: 50%;
-  background: var(--surface-color);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-  border: 2px solid var(--primary-color);
-  box-sizing: border-box;
-  cursor: pointer;
-  transition:
-    outline 0.2s,
-    transform 0.1s;
-}
-
-input[type="range"]::-moz-range-thumb:active {
-  transform: scale(1.1);
-}
-
-input[type="range"]::-moz-range-track {
-  width: 100%;
-  height: 4px;
-  cursor: pointer;
-  background: var(--border-color);
-  border-radius: 2px;
-}
-
-input[type="range"]:focus-visible::-webkit-slider-thumb {
-  outline: 2px solid var(--primary-color);
-  outline-offset: 2px;
-}
-
-input[type="range"]:focus-visible::-moz-range-thumb {
-  outline: 2px solid var(--primary-color);
-  outline-offset: 2px;
-}
-
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
   -webkit-appearance: none;
@@ -1185,9 +1109,10 @@ body.hide-nav-labels .nav-btn {
   transition: opacity 0.2s;
 }
 
-input[type="range"]:active + .thumb-label-container > .thumb-label,
-input[type="range"]:focus + .thumb-label-container > .thumb-label {
-  opacity: 1;
+.tr-wrap.tr-dragging + .thumb-label-container > .thumb-label,
+.tr-wrap.tr-focused + .thumb-label-container > .thumb-label,
+.tr-wrap:focus-within + .thumb-label-container > .thumb-label {
+    opacity: 1;
 }
 
 /* =========================================
@@ -1342,4 +1267,28 @@ input[type="range"]:focus + .thumb-label-container > .thumb-label {
 }
 .is-reset:hover {
   filter: brightness(95%);
+}
+
+/* =========================================
+   22. TOUCH-RANGE СТИЛИЗАЦИЯ
+========================================= */
+:root {
+  /* Переопределяем переменные из touch-range.js */
+  --tr-track-height: 4px;
+  --tr-thumb-size: 24px;
+  --tr-track-bg: var(--border-color);
+  --tr-fill-color: var(--primary-color);
+  --tr-thumb-color: var(--surface-color); /* Фон бегунка, как был */
+}
+
+/* Добавляем бегунку рамку, чтобы он выглядел как раньше */
+.tr-thumb {
+  border: 2px solid var(--primary-color);
+  box-sizing: border-box;
+}
+
+/* Адаптируем стиль фокуса под общую стилистику приложения */
+.tr-wrap:focus-within .tr-thumb,
+.tr-wrap.tr-focused .tr-thumb {
+  box-shadow: 0 0 0 4px var(--primary-color);
 }
