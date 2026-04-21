@@ -9,6 +9,7 @@ import {
   getLuminance,
   hexToRGB,
   getCssVariable,
+  getRawCssVariable,
 } from "./utils.js?v=VERSION";
 import { t } from "./i18n.js?v=VERSION";
 import { sm } from "./sound.js?v=VERSION";
@@ -250,22 +251,15 @@ export const colorManager = {
       return;
     }
 
-    // 2. ИСПРАВЛЕННАЯ ПРОВЕРКА: Используем жестко заданные значения, но с учетом темы.
-    // Это единственный надежный способ сравнения.
+    // 2. ФИНАЛЬНАЯ ПРОВЕРКА: Получаем "сырое" значение из CSS и сравниваем.
     const currentTheme = themeManager.getCurrentTheme();
-    let activeDefaultColor;
+    const varSuffix = currentTheme === "dark" ? "dark" : "light";
+    const varPrefix = isAccent ? "--default-accent-" : "--default-bg-";
+    const activeDefaultVarName = `${varPrefix}${varSuffix}`;
 
-    if (isAccent) {
-      // Значения взяты напрямую из вашего input.css
-      activeDefaultColor = currentTheme === "dark" ? "#4ade80" : "#22c55e";
-    } else {
-      // Это тип 'bg'
-      // Значения взяты напрямую из вашего input.css
-      activeDefaultColor = currentTheme === "dark" ? "#000000" : "#f3f4f6";
-    }
+    const activeDefaultColor = getRawCssVariable(activeDefaultVarName);
 
-    // Теперь сравнение абсолютно точное
-    if (newColor === activeDefaultColor.toLowerCase()) {
+    if (activeDefaultColor && newColor === activeDefaultColor.toLowerCase()) {
       this._hideActionButton();
       showToast(t("color_already_exists"));
       return;
