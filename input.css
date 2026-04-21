@@ -1305,46 +1305,42 @@ input[type="range"]:focus + .thumb-label-container > .thumb-label {
    21. АДАПТИВНЫЕ ЦВЕТА UI
 ========================================= */
 
-/* =========================================
-   21. АДАПТИВНЫЕ ЦВЕТА UI (ФИНАЛЬНАЯ ВЕРСИЯ)
-========================================= */
-
 :root {
-  /* ... (переменные --secondary-accent-color и --primary-color-vivid остаются без изменений) ... */
+  /* ... (существующие переменные --secondary-accent-color, --destructive-color и т.д.) ... */
   --secondary-accent-color: hsl(calc(var(--accent-h, 142) + 140) 80% 60%);
-  --primary-color-vivid: hsl(var(--accent-h, 142) 95% 55%);
-
-  /* 
-    Базовый адаптивный "опасный" цвет.
-    Слегка тонируется темой, если нет конфликтов.
-  */
   --destructive-color: color-mix(in srgb, var(--primary-color) 15%, hsl(0 90% 60%) 85%);
   --destructive-color-fg: #ffffff;
-
-  /* 
-    ++ НОВЫЕ ЗАПАСНЫЕ ЦВЕТА ++
-  */
-  /* Запасной ОРАНЖЕВЫЙ (когда тема красная) */
   --destructive-fallback-orange: hsl(35, 100%, 58%);
-  
-  /* Запасной ЧИСТЫЙ КРАСНЫЙ (когда тема синяя) */
   --destructive-fallback-pure-red: hsl(0, 90%, 60%);
+  --primary-color-vivid: hsl(var(--accent-h, 142) 95% 55%);
+  
+  /* 
+    ++ НОВОЕ: Запасной ЗЕЛЕНЫЙ цвет для отдыха (когда тема синяя).
+    Используем цвет, похожий на стандартный акцентный.
+  */
+  --secondary-fallback-green: #22c55e;
 }
 
 :root.dark {
-  --secondary-accent-color: hsl(calc(var(--accent-h, 142) + 140) 70% 65%);
-  --primary-color-vivid: hsl(var(--accent-h, 142) 90% 60%);
+  /* ... (существующие переменные) ... */
+  --secondary-fallback-green: #4ade80; /* Более яркий зеленый для темной темы */
 }
 
 /* 
   ++ НОВЫЕ КЛАССЫ-ПЕРЕКЛЮЧАТЕЛИ ++
-  JS будет добавлять эти классы к <html> для активации нужного цвета.
 */
 :root.use-orange-destructive {
   --destructive-color: var(--destructive-fallback-orange);
 }
 :root.use-pure-red-destructive {
   --destructive-color: var(--destructive-fallback-pure-red);
+}
+
+/* 
+  ++ НОВЫЙ КЛАСС-ПЕРЕКЛЮЧАТЕЛЬ ДЛЯ ЦВЕТА ОТДЫХА ++
+*/
+:root.use-green-secondary {
+  --secondary-accent-color: var(--secondary-fallback-green);
 }
 
 

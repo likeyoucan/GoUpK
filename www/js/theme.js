@@ -145,45 +145,45 @@ export const themeManager = {
     const rootEl = document.documentElement;
 
     // --- УПРАВЛЕНИЕ ОСНОВНЫМ И ВТОРИЧНЫМ ЦВЕТАМИ ---
+    rootEl.classList.remove("use-green-secondary"); // Сначала сбрасываем состояние
+
     if (hex === "default") {
       rootEl.style.removeProperty("--primary-color");
       rootEl.style.removeProperty("--accent-h");
+      // Для стандартной темы (зеленой) цвет отдыха принудительно синий
       rootEl.style.setProperty("--secondary-accent-color", "#3b82f6");
     } else {
       rootEl.style.setProperty("--primary-color", hex);
       const { h } = hexToHSL(hex);
       rootEl.style.setProperty("--accent-h", h);
+      // Убираем жесткую привязку, чтобы работали адаптивные правила
       rootEl.style.removeProperty("--secondary-accent-color");
+
+      // ++ НОВАЯ ЛОГИКА ДЛЯ ЦВЕТА ОТДЫХА ++
+      // Если основной цвет синий/голубой...
+      const isBluish = h >= 185 && h <= 250;
+      if (isBluish) {
+        // ...то активируем запасной зеленый цвет для отдыха.
+        rootEl.classList.add("use-green-secondary");
+      }
     }
 
-    // --- УМНОЕ УПРАВЛЕНИЕ "ОПАСНЫМ" ЦВЕТОМ (РАСШИРЕННАЯ ЛОГИКА) ---
-
-    // 1. Сначала сбрасываем все возможные состояния, чтобы начать с чистого листа.
+    // --- УМНОЕ УПРАВЛЕНИЕ "ОПАСНЫМ" ЦВЕТОМ ---
     rootEl.classList.remove(
       "use-orange-destructive",
       "use-pure-red-destructive",
     );
 
-    if (hex === "default") {
-      // Для стандартной темы (зеленой) ничего не делаем, стандартный color-mix работает отлично.
-    } else {
+    if (hex !== "default") {
       const { h: accentHue } = hexToHSL(hex);
-
-      // Определяем "красную зону".
       const isReddish = accentHue >= 335 || accentHue <= 20;
-
-      // Определяем "синюю/голубую зону".
       const isBluish = accentHue >= 185 && accentHue <= 250;
 
       if (isReddish) {
-        // Если основной цвет красный -> переключаемся на оранжевый.
         rootEl.classList.add("use-orange-destructive");
       } else if (isBluish) {
-        // Если основной цвет синий/голубой -> переключаемся на чистый красный.
         rootEl.classList.add("use-pure-red-destructive");
       }
-      // В противном случае (зеленый, желтый, фиолетовый и т.д.) - ничего не добавляем,
-      // и работает стандартный color-mix из CSS.
     }
 
     // Синхронизируем UI после всех изменений.
