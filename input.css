@@ -1300,9 +1300,11 @@ input[type="range"]:focus + .thumb-label-container > .thumb-label {
     color: var(--primary-color);
   }
 }
+
 /* =========================================
    21. АДАПТИВНЫЕ ЦВЕТА UI
 ========================================= */
+
 :root {
   /* 
     Вторичный цвет для отдыха в Табата. 
@@ -1312,16 +1314,22 @@ input[type="range"]:focus + .thumb-label-container > .thumb-label {
   --secondary-accent-color: hsl(calc(var(--accent-h, 142) + 140) 80% 60%);
 
   /* 
-    Адаптивный "опасный" цвет.
-    Мы смешиваем 80% стандартного красного с 20% основного акцентного цвета.
-    Это "тонирует" красный, вписывая его в общую гамму.
+    Яркий, однозначный красный цвет для "опасных" действий.
+    Он не зависит от темы, чтобы всегда быть узнаваемым.
   */
-  --destructive-color: color-mix(in srgb, var(--primary-color) 20%, #ef4444 80%);
+  --destructive-color: hsl(0 90% 60%);
   --destructive-color-fg: #ffffff; /* Цвет текста для "опасной" кнопки */
+
+  /* 
+    Супер-яркий акцентный цвет для фазы "Работы" в Табата.
+    Берем тон основного цвета и делаем его максимально насыщенным и ярким.
+  */
+  --primary-color-vivid: hsl(var(--accent-h, 142) 95% 55%);
 }
 
 :root.dark {
   --secondary-accent-color: hsl(calc(var(--accent-h, 142) + 140) 70% 65%);
+  --primary-color-vivid: hsl(var(--accent-h, 142) 90% 60%);
 }
 
 /* --- Новые утилитарные классы --- */
@@ -1334,10 +1342,23 @@ input[type="range"]:focus + .thumb-label-container > .thumb-label {
   stroke: var(--secondary-accent-color);
   transition: stroke 0.3s;
 }
+
+.primary-vivid-text {
+  color: var(--primary-color-vivid);
+  transition: color 0.3s;
+}
+.primary-vivid-stroke {
+  stroke: var(--primary-color-vivid);
+  transition: stroke 0.3s;
+}
+
 .bg-destructive {
   background-color: var(--destructive-color);
   color: var(--destructive-color-fg);
   transition: background-color 0.3s;
+}
+.bg-destructive:hover {
+  background-color: hsl(0 90% 55%); /* Чуть темнее при наведении */
 }
 .text-destructive {
   color: var(--destructive-color);
@@ -1346,9 +1367,10 @@ input[type="range"]:focus + .thumb-label-container > .thumb-label {
 
 /* 
   Обновляем стиль кнопки сброса секундомера,
-  чтобы она тоже использовала адаптивный цвет.
+  чтобы она тоже использовала яркий красный.
 */
 .is-reset {
   background-color: var(--destructive-color) !important;
   color: var(--destructive-color-fg) !important;
+  box-shadow: none !important;
 }
