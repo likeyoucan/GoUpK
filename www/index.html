@@ -593,23 +593,23 @@
                   padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
                 "
               >
-                <div class="w-full flex items-center justify-between mb-8">
-                  <!-- Название тренировки (слева) -->
+                <div
+                  class="w-full flex flex-col items-center justify-center mb-8 gap-2"
+                >
+                  <!-- Название тренировки (сверху) -->
                   <span
                     id="tb-runningWorkoutName"
-                    class="text-lg font-bold app-text truncate pr-4"
+                    class="text-xl font-bold app-text text-center truncate w-full"
                   ></span>
 
-                  <!-- Счетчик раундов (справа) -->
-                  <div
-                    class="flex-shrink-0 flex items-center gap-2 app-surface px-4 sm:px-6 py-2 rounded-full shadow-sm border app-border"
-                  >
+                  <!-- Счетчик раундов (снизу) -->
+                  <div class="flex items-baseline gap-2">
                     <span
-                      class="text-sm font-bold opacity-60 app-text"
+                      class="text-sm font-bold app-text-sec uppercase"
                       data-i18n="round"
-                      >ROUND</span
+                      >РАУНД</span
                     >
-                    <span class="text-xl font-bold app-text">
+                    <span class="text-2xl font-bold primary-text">
                       <span id="tb-currentRound">1</span>/<span
                         id="tb-totalRounds"
                         >8</span
