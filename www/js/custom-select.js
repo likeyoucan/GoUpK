@@ -17,8 +17,10 @@ function enhanceSelect(selectElement) {
   selectElement.dataset.customSelectEnhanced = "true";
 
   // --- Создание структуры ---
-  const container = document.createElement("div");
-  container.className = "custom-select-container";
+const container = document.createElement("div");
+// Копируем все классы с оригинального <select> на наш новый контейнер
+container.className = "custom-select-container " + selectElement.className; 
+selectElement.className = ""; // Очищаем классы у оригинала, чтобы не было конфликтов
   container.setAttribute("role", "listbox");
   container.setAttribute("tabindex", "0");
 

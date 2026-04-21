@@ -940,16 +940,11 @@
                       data-i18n="language"
                       >Language</label
                     >
-                    <select
-                      id="langSelect"
-                      data-custom-select
-                      aria-label="Select Language"
-                      class="w-full bg-transparent app-text text-sm font-bold appearance-none outline-none py-1.5 pl-3 pr-8 cursor-pointer z-10"
-                    >
-                      <option value="auto" data-i18n="lang_auto">Auto</option>
-                      <option value="en">English</option>
-                      <option value="ru">Русский</option>
-                    </select>
+                  <select id="langSelect" data-custom-select class="app-surface rounded-lg border app-border shadow-sm w-32">
+    <option value="auto" data-i18n="lang_auto">Auto</option>
+    <option value="en">English</option>
+    <option value="ru">Русский</option>
+</select>
                   </div>
 
                   <div
@@ -1003,22 +998,13 @@
                       data-i18n="sound_theme"
                       >Sound Theme</label
                     >
-                    <select
-                      id="soundThemeSelect"
-                      data-custom-select
-                      aria-label="Select Theme"
-                      class="w-full bg-transparent app-text text-sm font-bold appearance-none outline-none py-1.5 pl-3 pr-8 cursor-pointer z-10"
-                    >
-                      <option value="classic" data-i18n="theme_classic">
-                        Classic
-                      </option>
-                      <option value="sport" data-i18n="theme_sport">
-                        Sport
-                      </option>
-                      <option value="vibe" data-i18n="theme_vibe">Vibe</option>
-                      <option value="work" data-i18n="theme_work">Work</option>
-                      <option value="life" data-i18n="theme_life">Life</option>
-                    </select>
+<select id="soundThemeSelect" data-custom-select class="app-surface rounded-lg border app-border shadow-sm w-32">
+    <option value="classic" data-i18n="theme_classic">Classic</option>
+    <option value="sport" data-i18n="theme_sport">Sport</option>
+    <option value="life" data-i18n="theme_life">Life</option>
+    <option value="vibe" data-i18n="theme_vibe">Vibe</option>
+    <option value="work" data-i18n="theme_work">Work</option>
+</select>
                   </div>
 
                   <div class="p-4 border-t app-border flex flex-col gap-3">
@@ -1407,21 +1393,13 @@
             >
               Clear All
             </button>
-            <div class="w-40">
-              <select id="sw-sortSelect" data-custom-select>
-                <option value="date_asc" data-i18n="date_old">
-                  Oldest first
-                </option>
-                <option value="date_desc" data-i18n="date_new">
-                  Newest first
-                </option>
-                <option value="result_fast" data-i18n="result_fast">
-                  Result (Fastest)
-                </option>
-                <option value="name_az" data-i18n="name_az">Name (A-Z)</option>
-                <option value="name_za" data-i18n="name_za">Name (Z-A)</option>
-              </select>
-            </div>
+<select id="sw-sortSelect" data-custom-select class="app-surface rounded-lg border app-border shadow-sm w-40">
+    <option value="date_asc" data-i18n="date_old">Oldest first</option>
+    <option value="date_desc" data-i18n="date_new">Newest first</option>
+    <option value="result_fast" data-i18n="result_fast">Result (Fastest)</option>
+    <option value="name_az" data-i18n="name_az">Name (A-Z)</option>
+    <option value="name_za" data-i18n="name_za">Name (Z-A)</option>
+</select>
           </div>
           <div
             class="flex-1 overflow-y-auto scroll-lock no-scrollbar pb-10 space-y-3 selectable-data px-1"
