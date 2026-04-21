@@ -1292,3 +1292,39 @@ body.hide-nav-labels .nav-btn {
 .tr-wrap.tr-focused .tr-thumb {
   box-shadow: 0 0 0 4px var(--primary-color);
 }
+
+/* =========================================
+   22. АНИМАЦИЯ СМЕНЫ ТЕМЫ
+========================================= */
+
+/* 
+  Этот селектор активируется, когда JS запускает View Transition
+  с именем 'theme-transition'.
+*/
+::view-transition-group(theme-transition) {
+  animation-duration: 500ms; /* Длительность перехода */
+}
+
+/* 
+  Описываем анимацию для старого и нового вида.
+  Здесь мы используем простой cross-fade (плавное затухание/появление).
+*/
+::view-transition-old(theme-transition),
+::view-transition-new(theme-transition) {
+  animation-name: cross-fade;
+  animation-timing-function: ease-in-out;
+}
+
+@keyframes cross-fade {
+  from { opacity: 1; }
+  to { opacity: 1; }
+}
+
+/* 
+  Убираем наш старый класс, который отключал анимации.
+  View Transitions API теперь управляет этим процессом лучше.
+*/
+body.is-updating-theme,
+body.is-updating-theme * {
+  transition-duration: 0s !important;
+}
