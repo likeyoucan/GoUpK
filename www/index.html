@@ -594,22 +594,24 @@
                 "
               >
                 <div
-                  class="w-full flex flex-col items-center justify-center mb-8 gap-2"
+                  class="w-full flex justify-between items-center mb-8 app-surface border app-border rounded-full shadow-sm p-2 sm:p-3"
                 >
-                  <!-- Название тренировки (сверху) -->
+                  <!-- Название тренировки (слева) -->
                   <span
                     id="tb-runningWorkoutName"
-                    class="text-xl font-bold app-text text-center truncate w-full"
+                    class="text-base font-bold app-text truncate pl-4"
                   ></span>
 
-                  <!-- Счетчик раундов (снизу) -->
-                  <div class="flex items-baseline gap-2">
+                  <!-- Счетчик раундов (справа) -->
+                  <div
+                    class="flex-shrink-0 flex items-baseline gap-2 primary-bg text-white rounded-full px-4 py-2 shadow-lg"
+                  >
                     <span
-                      class="text-sm font-bold app-text-sec uppercase"
+                      class="text-xs font-bold uppercase tracking-wider"
                       data-i18n="round"
                       >РАУНД</span
                     >
-                    <span class="text-2xl font-bold primary-text">
+                    <span class="text-lg font-bold leading-none">
                       <span id="tb-currentRound">1</span>/<span
                         id="tb-totalRounds"
                         >8</span
