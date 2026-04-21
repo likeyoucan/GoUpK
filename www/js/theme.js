@@ -101,55 +101,41 @@ export const themeManager = {
   },
 
   setMode(mode, useTransition = true) {
-    // Вся логика по изменению темы вынесена в отдельную функцию,
-    // чтобы ее можно было передать в startViewTransition.
-    const updateTheme = () => {
-      this.currentMode = mode;
-      safeSetLS("theme_mode", mode);
+    if (useTransition) document.body.classList.add("is-updating-theme");
 
-      // Обновляем UI кнопок переключения темы
-      document.querySelectorAll("[data-theme-mode]").forEach((b) => {
-        b.classList.remove("app-surface", "shadow-sm", "app-text");
-        b.classList.add("app-text-sec");
-      });
-      const activeBtn = $(`theme-${mode}`);
-      if (activeBtn) {
-        activeBtn.classList.remove("app-text-sec");
-        activeBtn.classList.add("app-surface", "shadow-sm", "app-text");
-      }
+    this.currentMode = mode;
+    safeSetLS("theme_mode", mode);
 
-      // Определяем, должна ли тема быть темной, и переключаем класс на <html>
-      const isDark =
-        mode === "dark" ||
-        (mode === "system" &&
-          window.matchMedia("(prefers-color-scheme: dark)").matches);
-      document.documentElement.classList.toggle("dark", isDark);
-
-      // При смене темы нужно заново применить все цветовые настройки,
-      // чтобы CSS подхватил правильные переменные по умолчанию.
-      this.setColor(this.currentAccent, false);
-      this.applyBgTheme(this.currentBg);
-
-      // Синхронизируем UI в color-manager (пикеры и выделение)
-      colorManager.syncPickers(this.currentAccent, this.currentBg);
-      colorManager.updateSelectionUI("accent", this.currentAccent, false);
-      colorManager.updateSelectionUI("bg", this.currentBg, false);
-    };
-
-    // Проверяем, поддерживает ли браузер View Transitions и нужен ли переход.
-    if (!document.startViewTransition || !useTransition) {
-      // Если нет, или переход не нужен - просто меняем тему без анимации.
-      updateTheme();
-      return;
+    document.querySelectorAll("[data-theme-mode]").forEach((b) => {
+      b.classList.remove("app-surface", "shadow-sm", "app-text");
+      b.classList.add("app-text-sec");
+    });
+    const activeBtn = $(`theme-${mode}`);
+    if (activeBtn) {
+      activeBtn.classList.remove("app-text-sec");
+      activeBtn.classList.add("app-surface", "shadow-sm", "app-text");
     }
 
-    // Если да - запускаем плавный анимированный переход.
-    document.startViewTransition(() => {
-      // Присваиваем переходу уникальное имя.
-      // Это имя используется в CSS для применения кастомной анимации (cross-fade).
-      document.documentElement.dataset.viewTransition = "theme-transition";
-      updateTheme();
-    });
+    const isDark =
+      mode === "dark" ||
+      (mode === "system" &&
+        window.matchMedia("(prefers-color-scheme: dark)").matches);
+    document.documentElement.classList.toggle("dark", isDark);
+    document.documentElement.style.colorScheme = isDark ? "dark" : "light";
+
+    // При смене темы нужно заново применить цвета, чтобы CSS подхватил правильные дефолты
+    this.setColor(this.currentAccent, false);
+    this.applyBgTheme(this.currentBg);
+
+    colorManager.syncPickers(this.currentAccent, this.currentBg);
+    colorManager.updateSelectionUI("accent", this.currentAccent, false);
+    colorManager.updateSelectionUI("bg", this.currentBg, false);
+
+    if (useTransition) {
+      requestAnimationFrame(() =>
+        document.body.classList.remove("is-updating-theme"),
+      );
+    }
   },
 
   getPairedRestColor(hue) {
