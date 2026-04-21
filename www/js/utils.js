@@ -7,7 +7,7 @@ export const $ = (id) => document.getElementById(id);
  * @param {string} variable - Имя переменной (например, '--primary-color').
  * @returns {string} - Значение переменной.
  */
-export const getCssVariable = (variable) =>
+export const getCssVariable = (variable) => 
   getComputedStyle(document.documentElement).getPropertyValue(variable).trim();
 
 export const escapeHTML = (str) =>
@@ -243,39 +243,5 @@ const createWorker = () => {
     };
   }
 };
-
-/**
- * Получает (raw) значение CSS-переменной из правил CSS,
- * а не вычисленное. Это позволяет получить точную строку (напр. #000000).
- * @param {string} variableName - Имя переменной (напр. '--default-bg-dark').
- * @returns {string | null} - Исходное значение переменной или null.
- */
-export function getRawCssVariable(variableName) {
-  // Проходим по всем таблицам стилей, загруженным на страницу
-  for (const sheet of document.styleSheets) {
-    try {
-      // Проходим по всем правилам внутри таблицы стилей
-      for (const rule of sheet.cssRules) {
-        // Нас интересуют только правила стилей (не @media, @keyframes и т.д.)
-        // и только те, что относятся к :root или :root.dark
-        if (
-          rule instanceof CSSStyleRule &&
-          (rule.selectorText === ":root" || rule.selectorText === ":root.dark")
-        ) {
-          const value = rule.style.getPropertyValue(variableName).trim();
-          // Если значение найдено в этом правиле, возвращаем его
-          if (value) {
-            return value;
-          }
-        }
-      }
-    } catch (e) {
-      // Игнорируем ошибки доступа к кросс-доменным стилям (например, от CDN)
-      // и просто переходим к следующей таблице.
-      continue;
-    }
-  }
-  return null; // Возвращаем null, если переменная не найдена ни в одном правиле
-}
 
 export const bgWorker = createWorker();
