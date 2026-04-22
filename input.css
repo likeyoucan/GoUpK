@@ -205,6 +205,12 @@ button {
       0 10px 30px rgba(17, 17, 17, 0.3);
     padding: 0;
   }
+
+  .timer-circle-wrap {
+    max-width: 280px; /* Ограничиваем ширину фиксированным значением */
+    margin-top: 3vh; /* Слегка увеличим вертикальный отступ */
+    margin-bottom: 2vh;
+  }
 }
 
 /* --- Большой планшет (iPad Pro) в портретной ориентации --- */
@@ -1297,7 +1303,7 @@ body.hide-nav-labels .nav-btn {
 }
 
 .touch-pan-x {
-    touch-action: pan-x;
+  touch-action: pan-x;
 }
 
 /* =========================================
@@ -1406,7 +1412,7 @@ body.hide-nav-labels .nav-btn {
 
 /* Дополнительно зададим стиль для выбранного, но не наведенного элемента */
 .custom-select-option.is-selected {
-    font-weight: 700;
+  font-weight: 700;
 }
 /* Стили для темы Liquid Glass */
 :root.glass-effect .custom-select-trigger {

@@ -105,8 +105,33 @@ export const announceToScreenReader = (text) => {
 };
 
 export const adjustVal = (id, delta) => {
-  const el = $(id);
-  if (el) el.value = Math.max(1, (parseInt(el.value) || 0) + delta);
+    const el = $(id);
+    if (!el) return;
+
+    let currentValue = parseInt(el.value, 10) || 0;
+    let finalDelta = delta;
+
+    // --- НАША НОВАЯ "УМНАЯ" ЛОГИКА ---
+    // Если мы хотим прибавить (+5), а текущее значение меньше 5,
+    // то просто установим значение равным 5.
+    // Это предотвратит скачок с 1 до 6.
+    if (delta > 1 && currentValue < delta) {
+        el.value = delta;
+        return;
+    }
+
+    // Если мы хотим отнять (-5), а текущее значение между 1 и 5,
+    // то просто установим значение равным 1.
+    // Это предотвратит уход в отрицательные числа.
+    if (delta < -1 && currentValue > 1 && currentValue <= Math.abs(delta)) {
+        el.value = 1;
+        return;
+    }
+    // --- КОНЕЦ НОВОЙ ЛОГИКИ ---
+
+    // Стандартное поведение для всех остальных случаев
+    const newValue = currentValue + finalDelta;
+    el.value = Math.max(1, newValue);
 };
 
 export const pad = (num) => String(num).padStart(2, "0");
