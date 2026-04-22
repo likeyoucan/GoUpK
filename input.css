@@ -497,6 +497,7 @@ html.dark .app-bg::before {
 
   #view-settings {
     flex-direction: column;
+    touch-action: pan-y;
   }
 }
 
@@ -1289,9 +1290,14 @@ body.hide-nav-labels .nav-btn {
   box-shadow: 0 0 0 4px var(--primary-color);
 }
 
-.tr-wrap:has(input[type="range"]:disabled) {
-  pointer-events: none; /* Полностью отключаем взаимодействие */
-  opacity: 0.5; /* Делаем его полупрозрачным */
+/* Блокируем контейнер ползунка громкости, если он неактивен */
+.p-4.is-disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.touch-pan-x {
+    touch-action: pan-x;
 }
 
 /* =========================================
@@ -1386,29 +1392,22 @@ body.hide-nav-labels .nav-btn {
   user-select: none; /* Стандартное свойство */
 }
 
-.custom-select-option:hover,
-.custom-select-option.is-focused {
-  /* При наведении используем ПОЛНЫЙ акцентный цвет */
+.custom-select-option.is-selected,
+.custom-select-option:hover {
   background-color: var(--primary-color);
-  /* По умолчанию текст будет таким же, как у выбранного элемента */
   color: var(--cs-selected-text-color, #ffffff);
 }
 
-.custom-select-option.is-selected {
-  font-weight: 700;
-  background-color: var(
-    --primary-color
-  ); /* Используем акцентный цвет для фона */
-  color: var(
-    --cs-selected-text-color,
-    #ffffff
-  ); /* Цвет текста по умолчанию - белый */
-}
+/* Уточнение для текста на светлом фоне */
 .custom-select-option.is-selected.needs-dark-text,
 .custom-select-option:hover.needs-dark-text {
   color: var(--text-color);
 }
 
+/* Дополнительно зададим стиль для выбранного, но не наведенного элемента */
+.custom-select-option.is-selected {
+    font-weight: 700;
+}
 /* Стили для темы Liquid Glass */
 :root.glass-effect .custom-select-trigger {
   background-color: color-mix(in srgb, var(--surface-color) 30%, transparent);

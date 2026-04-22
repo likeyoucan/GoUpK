@@ -129,7 +129,11 @@ export const sm = {
     const volSlider = $("volumeSlider");
     if (volSlider) {
       volSlider.disabled = !this.soundEnabled;
-      volSlider.parentElement.style.opacity = this.soundEnabled ? "1" : "0.5";
+      // Находим родительский div, в котором лежит ползунок и его метки
+      const parentContainer = volSlider.closest(".p-4");
+      if (parentContainer) {
+        parentContainer.classList.toggle("is-disabled", !this.soundEnabled);
+      }
     }
   },
 
