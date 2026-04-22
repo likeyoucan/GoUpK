@@ -147,7 +147,11 @@ function enhanceSelect(selectElement) {
   }
 
   // --- Обработчики событий ---
-  trigger.addEventListener("click", () => toggleSelect(container));
+  trigger.addEventListener("click", (e) => {
+    e.preventDefault(); // <-- ЭТО САМОЕ ВАЖНОЕ ИЗМЕНЕНИЕ
+    e.stopPropagation(); // Добавляем на всякий случай
+    toggleSelect(container);
+  });
   container.addEventListener("keydown", (e) => {
     switch (e.key) {
       case "Enter":

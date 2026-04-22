@@ -1305,6 +1305,13 @@ body.hide-nav-labels .nav-btn {
   position: relative;
 }
 
+.custom-select-container > select {
+  display: none !important; /* Убеждаемся, что он точно скрыт */
+  pointer-events: none; /* Полностью игнорирует клики, тапы, и т.д. */
+  position: absolute;
+  opacity: 0;
+}
+
 .custom-select-trigger {
   display: flex;
   align-items: center;
