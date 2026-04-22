@@ -87,7 +87,6 @@ class ModalManager {
       this._toggleInert(true);
     }
 
-    // --- ИСПРАВЛЕННАЯ ЛОГИКА ОВЕРЛЕЯ ---
     // Показываем общий оверлей только для шторок (bottom-sheet)
     if (modal.type === "bottom-sheet") {
       const overlay = $("bottom-sheet-overlay");
@@ -100,7 +99,6 @@ class ModalManager {
         };
       }
     }
-    // Для алертов оверлеем будет их собственный фон, который задан в CSS.
 
     modal.el.classList.remove("hidden");
     modal.el.classList.add("flex");
@@ -157,7 +155,6 @@ class ModalManager {
     this.activeStack = this.activeStack.filter((activeId) => activeId !== id);
     const isLastModal = this.activeStack.length === 0;
 
-    // --- ИСПРАВЛЕННАЯ ЛОГИКА ОВЕРЛЕЯ ---
     // Скрываем общий оверлей только когда закрывается последнее окно любого типа
     if (isLastModal) {
       const overlay = $("bottom-sheet-overlay");

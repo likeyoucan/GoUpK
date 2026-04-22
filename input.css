@@ -207,8 +207,8 @@ button {
   }
 
   .timer-circle-wrap {
-    max-width: 280px; /* Ограничиваем ширину фиксированным значением */
-    margin-top: 3vh; /* Слегка увеличим вертикальный отступ */
+    max-width: 280px;
+    margin-top: 3vh;
     margin-bottom: 2vh;
   }
 }
@@ -447,8 +447,8 @@ html.dark .app-bg::before {
 #modal-container {
   position: absolute;
   inset: 0;
-  z-index: 50; /* Должен быть выше z-index свайп-зон */
-  pointer-events: none; /* По умолчанию прозрачен для кликов */
+  z-index: 50;
+  pointer-events: none;
 }
 
 #modal-container > * {
@@ -1155,13 +1155,12 @@ body.hide-nav-labels .nav-btn {
   animation: fadeInScale 0.3s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 
-/* Добавляем отступ сверху, чтобы было место для кнопок */
 #accent-colors-container,
 #bg-colors-container {
   padding-top: 1rem;
-  height: calc(3rem + 1rem); /* h-12 (48px) + pt-4 (16px) */
-  overflow-y: visible; /* <-- ДОБАВЬТЕ ЭТУ СТРОКУ */
-   overscroll-behavior-x: contain;
+  height: calc(3rem + 1rem);
+  overflow-y: visible;
+  overscroll-behavior-x: contain;
 }
 
 .color-swatch-wrapper.is-collapsing {
@@ -1172,10 +1171,9 @@ body.hide-nav-labels .nav-btn {
   pointer-events: none;
 }
 
-/* Кнопка "Удалить" над кружком */
 .color-action-btn {
   position: absolute;
-  top: -0.75rem; /* Сдвигаем выше кружка */
+  top: -0.75rem;
   left: 50%;
   transform: translateX(-50%);
   z-index: 30;
@@ -1204,7 +1202,9 @@ body.hide-nav-labels .nav-btn {
 
 /* Задаем плавный переход для трансформации иконки */
 .nav-btn > div {
-    transition: transform 0.25s cubic-bezier(0.32, 0.72, 0, 1), color 0.3s;
+  transition:
+    transform 0.25s cubic-bezier(0.32, 0.72, 0, 1),
+    color 0.3s;
 }
 
 /* 
@@ -1212,18 +1212,10 @@ body.hide-nav-labels .nav-btn {
   и ТОЛЬКО для НЕАКТИВНЫХ элементов.
 */
 @media (hover: hover) {
-  /* 
-    !! ИСПРАВЛЕНИЕ: Используем :not(.primary-text), чтобы исключить уже активные элементы.
-    Теперь hover-эффект будет применяться только к тем кнопкам,
-    у которых дочерние элементы НЕ имеют класса .primary-text.
-  */
 
-  /* Увеличиваем только неактивную иконку при наведении */
   .nav-btn:hover > div:not(.primary-text) {
     transform: scale(1.08);
   }
-
-  /* Меняем цвет только у неактивной иконки и текста при наведении */
   .nav-btn:hover > div:not(.primary-text),
   .nav-btn:hover > span:not(.primary-text) {
     color: var(--primary-color);
@@ -1285,19 +1277,16 @@ body.hide-nav-labels .nav-btn {
   --tr-thumb-color: var(--surface-color); /* Фон бегунка, как был */
 }
 
-/* Добавляем бегунку рамку, чтобы он выглядел как раньше */
 .tr-thumb {
   border: 2px solid var(--primary-color);
   box-sizing: border-box;
 }
 
-/* Адаптируем стиль фокуса под общую стилистику приложения */
 .tr-wrap:focus-within .tr-thumb,
 .tr-wrap.tr-focused .tr-thumb {
   box-shadow: 0 0 0 4px var(--primary-color);
 }
 
-/* Блокируем контейнер ползунка громкости, если он неактивен */
 .p-4.is-disabled {
   opacity: 0.5;
   pointer-events: none;
@@ -1311,8 +1300,8 @@ body.hide-nav-labels .nav-btn {
 }
 
 .custom-select-container > select {
-  display: none !important; /* Убеждаемся, что он точно скрыт */
-  pointer-events: none; /* Полностью игнорирует клики, тапы, и т.д. */
+  display: none !important;
+  pointer-events: none;
   position: absolute;
   opacity: 0;
 }
@@ -1338,13 +1327,13 @@ body.hide-nav-labels .nav-btn {
 
 .custom-select-value {
   color: var(--text-color);
-  font-size: 0.875rem; /* text-sm */
-  font-weight: 700; /* font-bold */
+  font-size: 0.875rem;
+  font-weight: 700;
 }
 
 .custom-select-trigger svg {
-  width: 1rem; /* w-4 */
-  height: 1rem; /* h-4 */
+  width: 1rem;
+  height: 1rem;
   color: var(--text-secondary);
   transition: transform 0.3s;
 }
@@ -1362,7 +1351,7 @@ body.hide-nav-labels .nav-btn {
 
   background-color: var(--surface-color);
   border: 1px solid var(--border-color);
-  border-radius: 0.75rem; /* rounded-xl */
+  border-radius: 0.75rem;
   box-shadow:
     0 10px 25px -5px rgb(0 0 0 / 0.1),
     0 8px 10px -6px rgb(0 0 0 / 0.1);
@@ -1372,7 +1361,7 @@ body.hide-nav-labels .nav-btn {
   opacity: 0;
   /* Анимация: меняем масштаб и положение */
   transform: scale(0.95) translateY(-10px);
-  transform-origin: top center; /* Центр трансформации - верхний край */
+  transform-origin: top center;
   pointer-events: none;
   /* Плавный переход в стиле iOS */
   transition:
@@ -1392,7 +1381,7 @@ body.hide-nav-labels .nav-btn {
   font-size: 0.875rem;
   color: var(--text-color);
   transition: background-color 0.15s;
-  user-select: none; /* Стандартное свойство */
+  user-select: none;
 }
 
 .custom-select-option.is-selected,

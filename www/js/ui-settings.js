@@ -151,7 +151,7 @@ export const uiSettingsManager = {
         const currentValue = e.target.value;
         // Проверяем, изменилось ли значение с прошлого раза
         if (this.lastSliderValues[id] !== currentValue) {
-          this.lastSliderValues[id] = currentValue; // Обновляем последнее значение
+          this.lastSliderValues[id] = currentValue;
 
           // Вызываем вибрацию с троттлингом
           const now = performance.now();
@@ -245,7 +245,7 @@ export const uiSettingsManager = {
       "app_sw_minute_beep",
     ];
     keys.forEach(safeRemoveLS);
-    this.applySettings(); // Применит дефолты и обновит UI
+    this.applySettings();
   },
 
   syncSliderUIs() {

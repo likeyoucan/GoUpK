@@ -75,7 +75,6 @@ function confirmReset() {
   modalManager.closeCurrent();
 
   // Вызываем сброс в каждом ответственном модуле.
-  // themeManager теперь сам вызовет reset у своих дочерних модулей.
   themeManager.resetSettings();
   sm.resetSettings();
   langManager.resetSettings();
@@ -104,7 +103,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // 2. Затем инициализируем менеджер модальных окон, передавая ему конфигурацию.
   modalManager.init(modalConfig);
 
-  // Убираем класс 'preload' для включения анимаций после загрузки.
   setTimeout(() => document.body.classList.remove("preload"), 50);
 
   // --- Назначение обработчиков событий для элементов UI ---
@@ -306,8 +304,6 @@ document.addEventListener("DOMContentLoaded", () => {
             body = `${t("round")} ${tb.currentRound}/${tb.rounds} • ${phaseStr}: ${sTotal}s`;
             break;
           default:
-            // Этот блок выполнится, если таймер остановился, пока мы были в фоне,
-            // или если не было активного таймера.
             if (fgInterval) {
               clearInterval(fgInterval);
               fgInterval = null;
@@ -331,7 +327,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!isActive && isTimerRunning) {
           sm.unlock();
           requestWakeLock();
-          // Передаем имя активного таймера в функцию уведомлений
           await updateForegroundNotification(activeTimer);
           if (!fgInterval) {
             fgInterval = setInterval(

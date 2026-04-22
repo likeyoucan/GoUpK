@@ -255,7 +255,6 @@ export const tb = {
     this.rest = w.rest * 1000;
     this.rounds = w.rounds;
     updateText(this.els.activeName, w.name);
-    // ИСПРАВЛЕНИЕ: Замена `innerHTML` на безопасный `textContent`
     const detailsText = `${w.work}${t("sec").toLowerCase()} / ${w.rest}${t("sec").toLowerCase()} • ${w.rounds} ${t("rds")}`;
     updateText(this.els.activeDetail, detailsText);
     this.renderList();
@@ -495,31 +494,27 @@ export const tb = {
     updateText(this.els.roundDisplay, this.currentRound);
     const statusEl = this.els.status;
 
-    // ++ ИСПРАВЛЕНО: Полная очистка ВСЕХ возможных классов цвета перед применением новых.
     statusEl.classList.remove(
       "primary-vivid-text",
       "secondary-accent-text",
       "app-text-sec",
-      "primary-text", // <-- Добавлен недостающий класс
+      "primary-text",
     );
     this.els.ring.classList.remove(
       "primary-vivid-stroke",
       "secondary-accent-stroke",
-      "primary-stroke", // <-- Добавлен недостающий класс
+      "primary-stroke",
     );
 
     if (this.status === "WORK") {
       updateText(statusEl, t("work"));
-      // !! ИЗМЕНЕНО: Возвращаем обычные классы основного акцентного цвета
       statusEl.classList.add("primary-text");
       this.els.ring.classList.add("primary-stroke");
     } else if (this.status === "REST") {
-      // "Отдых": Используем вторичный адаптивный цвет
       updateText(statusEl, t("rest"));
       statusEl.classList.add("secondary-accent-text");
       this.els.ring.classList.add("secondary-accent-stroke");
     } else {
-      // "Приготовьтесь": Используем обычный акцентный цвет
       updateText(statusEl, t("get_ready"));
       statusEl.classList.add("primary-text");
       this.els.ring.classList.add("primary-stroke");

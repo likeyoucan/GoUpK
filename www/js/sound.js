@@ -10,11 +10,11 @@ export const sm = {
   volume: 1,
   theme: "classic",
   THEME_VOL_MULTIPLIERS: {
-    classic: 1.0, // Эталон
-    sport: 1.6, // Увеличиваем громкость на 60%
-    vibe: 2.2, // Самая тихая тема, увеличиваем в 2.2 раза
-    work: 1.9, // Увеличиваем на 90%
-    life: 1.7, // Увеличиваем на 70%
+    classic: 1.0,
+    sport: 1.6,
+    vibe: 2.2,
+    work: 1.9,
+    life: 1.7,
   },
   vibroIntensities: {
     light: 0.5,
@@ -131,7 +131,6 @@ export const sm = {
     ];
     soundKeys.forEach(safeRemoveLS);
 
-    // Просто вызываем applySettings(), чтобы обновить UI, но НЕ init()
     this.applySettings();
   },
 

@@ -99,10 +99,6 @@ export const colorManager = {
     const container = $(containerId);
     if (!container) return;
 
-    // --- Клик по элементам ---
-    container.addEventListener("click", (e) => this._handleClick(e, type));
-
-    // --- Правый клик для удаления (десктоп) ---
     container.addEventListener("contextmenu", (e) => {
       const swatch = e.target.closest(
         '.color-swatch-wrapper[data-custom="true"]',
@@ -113,7 +109,6 @@ export const colorManager = {
       }
     });
 
-    // --- Логика для долгого тапа (мобильные устройства) ---
     let touchMoved = false;
 
     container.addEventListener(
@@ -124,19 +119,17 @@ export const colorManager = {
         );
         if (swatch) {
           touchMoved = false;
-          // Запускаем таймер, который сработает, если палец не сдвинется
           this.longPressTimer = setTimeout(() => {
             if (!touchMoved) {
-              e.preventDefault(); // Предотвращаем другие события, если это долгий тап
+              e.preventDefault();
               this._showActionButton(swatch, "delete");
             }
           }, LONG_PRESS_DURATION);
         }
       },
       { passive: true },
-    ); // passive: true, т.к. мы не блокируем скролл в этом обработчике
+    );
 
-    // Если началось движение пальца, отменяем таймер долгого тапа
     container.addEventListener("touchmove", () => {
       touchMoved = true;
       if (this.longPressTimer) {
@@ -144,7 +137,6 @@ export const colorManager = {
       }
     });
 
-    // При завершении касания в любом случае сбрасываем таймер
     const endTouch = () => {
       if (this.longPressTimer) {
         clearTimeout(this.longPressTimer);
@@ -180,16 +172,21 @@ export const colorManager = {
     ) {
       this._hideActionButton();
     }
-
     if (swatchWrapper) {
+      if (this.activeActionTarget === swatchWrapper) {
+        this._hideActionButton();
+        return;
+      }
+
       const color = swatchWrapper.dataset.color;
       document.dispatchEvent(
         new CustomEvent("colorSelected", {
           detail: { type, color, fromPicker: false },
         }),
       );
-      if (swatchWrapper.dataset.custom === "true")
+      if (swatchWrapper.dataset.custom === "true") {
         this._showActionButton(swatchWrapper, "delete");
+      }
     }
   },
 
@@ -255,7 +252,6 @@ export const colorManager = {
     const picker = $(isAccent ? "customColorInput" : "customBgInput");
     const newColor = picker.value.toLowerCase();
 
-    // 1. Проверяем на совпадение со стандартной палитрой и кастомными цветами.
     const baseBlocklist = (
       isAccent
         ? [...this.standardAccentColors, ...this.customAccentColors]
@@ -268,21 +264,15 @@ export const colorManager = {
       return;
     }
 
-    // 2. ИСПРАВЛЕННАЯ ПРОВЕРКА: Используем жестко заданные значения, но с учетом темы.
-    // Это единственный надежный способ сравнения.
     const currentTheme = themeManager.getCurrentTheme();
     let activeDefaultColor;
 
     if (isAccent) {
-      // Значения взяты напрямую из вашего input.css
       activeDefaultColor = currentTheme === "dark" ? "#4ade80" : "#22c55e";
     } else {
-      // Это тип 'bg'
-      // Значения взяты напрямую из вашего input.css
       activeDefaultColor = currentTheme === "dark" ? "#000000" : "#f3f4f6";
     }
 
-    // Теперь сравнение абсолютно точное
     if (newColor === activeDefaultColor.toLowerCase()) {
       this._hideActionButton();
       showToast(t("color_already_exists"));
@@ -489,7 +479,7 @@ export const colorManager = {
           ? getCssVariable(`--default-accent-${currentTheme}`)
           : accentColor;
       // Применяем нормализацию
-      accentPicker.value = normalizeHexColor(resolvedAccent); // <-- ИЗМЕНЕНО
+      accentPicker.value = normalizeHexColor(resolvedAccent);
     }
 
     if (bgPicker) {
@@ -498,7 +488,7 @@ export const colorManager = {
           ? getCssVariable(`--default-bg-${currentTheme}`)
           : bgColor;
       // Применяем нормализацию
-      bgPicker.value = normalizeHexColor(resolvedBg); // <-- ИЗМЕНЕНО
+      bgPicker.value = normalizeHexColor(resolvedBg);
     }
 
     this.syncActiveAddButton();
