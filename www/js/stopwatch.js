@@ -48,7 +48,7 @@ const stopwatchModule = {
       ring: $("sw-progressRing"),
       saveBtn: $("sw-saveBtn"),
       sessionsList: $("sw-sessionsList"),
-      swSortSelectContainer: $("swSortSelectContainer"), // <-- 3. ИСПОЛЬЗУЕМ КОНТЕЙНЕР
+      swSortWrapper: $("sw-sort-wrapper"),
       nameTitle: $("sw-name-title"),
       nameInput: $("sw-name-input"),
       nameError: $("sw-name-error"),
@@ -545,7 +545,9 @@ const stopwatchModule = {
 
     // <-- 6. ЛОГИКА СКРЫТИЯ/ОТОБРАЖЕНИЯ СЕЛЕКТОРА -->
     const hasSessions = this.savedSessions.length > 0;
-    this.els.swSortSelectContainer.classList.toggle("hidden", !hasSessions);
+    if (this.els.swSortWrapper) {
+      this.els.swSortWrapper.classList.toggle("hidden", !hasSessions);
+    }
 
     const clearAllBtn = $("sw-clearAllBtn");
     if (clearAllBtn) clearAllBtn.disabled = !hasSessions;

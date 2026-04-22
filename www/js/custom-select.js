@@ -3,6 +3,7 @@
 import { getCssVariable, hexToRGB, getLuminance } from "./utils.js?v=VERSION";
 
 const activeSelects = new Set();
+const TRANSITION_DURATION = 200;
 
 export class CustomSelect {
   constructor(elementId, options, onSelect, initialValue) {
@@ -31,12 +32,30 @@ export class CustomSelect {
     this.selectedValueEl = document.createElement("span");
     this.selectedValueEl.className = "custom-select-value text-sm font-bold";
 
-    const arrowSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    // --- Безопасное создание SVG-иконки ---
+    const arrowSvg = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "svg",
+    );
     arrowSvg.setAttribute("focusable", "false");
     arrowSvg.setAttribute("aria-hidden", "true");
-    arrowSvg.classList.add("w-4", "h-4", "app-text-sec", "transition-transform", "duration-300");
-    arrowSvg.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>`;
+    arrowSvg.setAttribute("viewBox", "0 0 24 24");
+    arrowSvg.classList.add(
+      "w-4",
+      "h-4",
+      "app-text-sec",
+      "transition-transform",
+      "duration-300",
+    );
+
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("stroke-linecap", "round");
+    path.setAttribute("stroke-linejoin", "round");
+    path.setAttribute("stroke-width", "2");
+    path.setAttribute("d", "M19 9l-7 7-7-7");
+    arrowSvg.appendChild(path);
     this.arrow = arrowSvg;
+    // --- Конец безопасного создания SVG ---
 
     this.trigger.append(this.selectedValueEl, this.arrow);
 
@@ -48,36 +67,36 @@ export class CustomSelect {
     this.container.append(this.trigger, this.optionsPanel);
 
     this.populateOptions();
-    this.setValue(this.currentValue, false); // Устанавливаем начальное значение без вызова onSelect
+    this.setValue(this.currentValue, false);
   }
 
   populateOptions() {
+    this.optionsPanel.innerHTML = ""; // Очищаем перед заполнением
     const fragment = document.createDocumentFragment();
-    this.options.forEach(option => {
+    this.options.forEach((option) => {
       const optionEl = document.createElement("div");
       optionEl.className = "custom-select-option";
       optionEl.setAttribute("role", "option");
       optionEl.dataset.value = option.value;
-      optionEl.textContent = option.text; // Безопасная вставка текста
+      optionEl.textContent = option.text;
 
       if (option.value === this.currentValue) {
         optionEl.classList.add("is-selected");
         optionEl.setAttribute("aria-selected", "true");
         this.updateSelectedTextColor(optionEl);
       }
-
       fragment.appendChild(optionEl);
     });
     this.optionsPanel.appendChild(fragment);
   }
 
   attachEventListeners() {
-    this.trigger.addEventListener("click", e => {
+    this.trigger.addEventListener("click", (e) => {
       e.stopPropagation();
       this.toggle();
     });
 
-    this.optionsPanel.addEventListener("click", e => {
+    this.optionsPanel.addEventListener("click", (e) => {
       const target = e.target.closest(".custom-select-option");
       if (target) {
         this.setValue(target.dataset.value);
@@ -85,70 +104,68 @@ export class CustomSelect {
       }
     });
 
-    // Обновление цвета при наведении
-    this.optionsPanel.addEventListener("mouseover", e => {
-        const target = e.target.closest(".custom-select-option");
-        if (target) this.updateSelectedTextColor(target);
+    this.optionsPanel.addEventListener("mouseover", (e) => {
+      const target = e.target.closest(".custom-select-option");
+      if (target) this.updateSelectedTextColor(target);
     });
-    this.optionsPanel.addEventListener("mouseout", e => {
-        const target = e.target.closest(".custom-select-option");
-        if (target) target.classList.remove("needs-dark-text");
+    this.optionsPanel.addEventListener("mouseout", (e) => {
+      const target = e.target.closest(".custom-select-option");
+      if (target) target.classList.remove("needs-dark-text");
     });
   }
 
   toggle() {
-    if (this.isOpen()) {
-      this.close();
-    } else {
-      // Закрыть все остальные открытые селекты
-      activeSelects.forEach(s => {
-        if (s !== this && s.isOpen()) s.close();
-      });
-      this.open();
-    }
-  }
-
-  isOpen() {
-    return !this.optionsPanel.classList.contains("hidden");
+    this.isOpening ? this.close() : this.open();
   }
 
   open() {
+    this.isOpening = true;
+    // Закрыть все остальные открытые селекты
+    activeSelects.forEach((s) => {
+      if (s !== this && s.isOpening) s.close();
+    });
+
     this.optionsPanel.classList.remove("hidden");
-    // Используем setTimeout для применения анимации после добавления в DOM
     requestAnimationFrame(() => {
-        this.optionsPanel.classList.add("is-open");
-        this.arrow.style.transform = "rotate(180deg)";
-        this.trigger.setAttribute("aria-expanded", "true");
-        this.container.classList.add("is-open");
+      this.optionsPanel.classList.add("is-open");
+      this.arrow.style.transform = "rotate(180deg)";
+      this.trigger.setAttribute("aria-expanded", "true");
+      this.container.classList.add("is-open");
     });
   }
 
   close() {
+    this.isOpening = false;
     this.optionsPanel.classList.remove("is-open");
     this.arrow.style.transform = "";
     this.trigger.setAttribute("aria-expanded", "false");
     this.container.classList.remove("is-open");
-    // Прячем элемент после завершения анимации
-    this.optionsPanel.addEventListener("transitionend", () => {
-        if (!this.isOpen()) this.optionsPanel.classList.add("hidden");
-    }, { once: true });
+
+    // Прячем элемент после завершения анимации через setTimeout
+    setTimeout(() => {
+      if (!this.isOpening) {
+        this.optionsPanel.classList.add("hidden");
+      }
+    }, TRANSITION_DURATION);
   }
 
   setValue(value, triggerOnSelect = true) {
-    const selectedOption = this.options.find(opt => opt.value === value);
+    const selectedOption = this.options.find((opt) => opt.value === value);
     if (!selectedOption) return;
 
     this.currentValue = value;
     this.selectedValueEl.textContent = selectedOption.text;
 
-    this.optionsPanel.querySelectorAll(".custom-select-option").forEach(el => {
-      const isSelected = el.dataset.value === value;
-      el.classList.toggle("is-selected", isSelected);
-      el.setAttribute("aria-selected", isSelected.toString());
-      if (isSelected) this.updateSelectedTextColor(el);
-    });
+    this.optionsPanel
+      .querySelectorAll(".custom-select-option")
+      .forEach((el) => {
+        const isSelected = el.dataset.value === value;
+        el.classList.toggle("is-selected", isSelected);
+        el.setAttribute("aria-selected", isSelected.toString());
+        if (isSelected) this.updateSelectedTextColor(el);
+      });
 
-    if (triggerOnSelect && typeof this.onSelect === 'function') {
+    if (triggerOnSelect && typeof this.onSelect === "function") {
       this.onSelect(value);
     }
   }
@@ -162,17 +179,15 @@ export class CustomSelect {
   }
 }
 
-// Глобальный слушатель для закрытия селекта при клике вне его
 document.addEventListener("click", () => {
-    activeSelects.forEach(s => {
-        if (s.isOpen()) s.close();
-    });
+  activeSelects.forEach((s) => {
+    if (s.isOpening) s.close();
+  });
 });
 
-// Глобальный слушатель для обновления цвета при смене темы
 document.addEventListener("accentColorChanged", () => {
-    activeSelects.forEach(s => {
-        const selectedEl = s.optionsPanel.querySelector(".is-selected");
-        if(selectedEl) s.updateSelectedTextColor(selectedEl);
-    });
+  activeSelects.forEach((s) => {
+    const selectedEl = s.optionsPanel.querySelector(".is-selected");
+    if (selectedEl) s.updateSelectedTextColor(selectedEl);
+  });
 });
