@@ -128,14 +128,12 @@ body {
   justify-content: center;
   overflow: hidden;
   overscroll-behavior: none;
-  -webkit-user-select: none;
   user-select: none;
   -webkit-touch-callout: none;
   touch-action: manipulation;
 }
 
 button {
-  -webkit-appearance: none;
   appearance: none;
   transition:
     background-color 0.3s,
@@ -146,7 +144,6 @@ button {
 }
 
 :where(input[type="text"], input[type="number"]) {
-  -webkit-user-select: text;
   user-select: text;
   font-size: max(16px, 1em);
 }
@@ -165,7 +162,6 @@ button {
 
 .selectable-data,
 .selectable-data * {
-  -webkit-user-select: text;
   user-select: text;
 }
 
@@ -664,8 +660,6 @@ html.dark .app-bg::before {
 }
 
 select {
-  -webkit-appearance: none;
-  -moz-appearance: none;
   appearance: none;
   background: transparent;
   color: inherit;
@@ -764,14 +758,12 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
   font-size: calc(2rem * var(--font-scale, 1));
   touch-action: none;
   cursor: ns-resize;
-  -webkit-user-select: none;
   user-select: none;
   border-bottom-color: rgba(128, 128, 128, 0.3);
   transition: border-color 0.3s;
 }
 
 .timer-input:focus {
-  -webkit-user-select: text;
   user-select: text;
   border-bottom-color: var(--primary-color);
 }
@@ -1324,7 +1316,6 @@ body.hide-nav-labels .nav-btn {
   min-height: 38px;
   padding: 0.375rem 0.75rem;
   cursor: pointer;
-  -webkit-user-select: none;
   user-select: none;
 }
 
@@ -1392,7 +1383,6 @@ body.hide-nav-labels .nav-btn {
   font-size: 0.875rem;
   color: var(--text-color);
   transition: background-color 0.15s;
-  -webkit-user-select: none; /* Для Safari и старых версий Chrome */
   user-select: none; /* Стандартное свойство */
 }
 
