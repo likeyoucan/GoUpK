@@ -247,7 +247,6 @@ export const sm = {
     if (!this.soundEnabled || !this.audioCtx || this.volume === 0) return;
     this.unlock();
 
-    // Определяем, какую тему использовать: переданную в опциях или текущую
     const activeTheme = options.theme || this.theme;
 
     if (activeTheme === "classic") {
@@ -271,15 +270,17 @@ export const sm = {
       } else if (type === "minute_beep")
         this.playNote(1500, "sine", 0, 0.1, 0.3);
     } else if (activeTheme === "sport") {
-      if (type === "click") this.playNote(1200, "triangle", 0, 0.05, 0.2, 200);
+      const vol = 1.4; // Множитель для этой темы
+      if (type === "click")
+        this.playNote(1200, "triangle", 0, 0.05, 0.2 * vol, 200);
       else if (type === "tick")
-        this.playNote(1500, "triangle", 0, 0.1, 0.3, 300);
+        this.playNote(1500, "triangle", 0, 0.1, 0.3 * vol, 300);
       else if (type === "work_start") {
-        this.playNote(2500, "triangle", 0.0, 0.3, 0.7, 100);
-        this.playNote(1000, "sine", 0.0, 0.3, 0.6, 50);
+        this.playNote(2500, "triangle", 0.0, 0.3, 0.7 * vol, 100);
+        this.playNote(1000, "sine", 0.0, 0.3, 0.6 * vol, 50);
       } else if (type === "rest_start") {
-        this.playNote(1200, "triangle", 0.0, 0.3, 0.4, 100);
-        this.playNote(600, "sine", 0.0, 0.3, 0.5, 50);
+        this.playNote(1200, "triangle", 0.0, 0.3, 0.4 * vol, 100);
+        this.playNote(600, "sine", 0.0, 0.3, 0.5 * vol, 50);
       } else if (type === "complete") {
         const playSwoosh = (time, duration, isFinal = false) => {
           this.playNote(
@@ -287,70 +288,82 @@ export const sm = {
             "triangle",
             time,
             duration,
-            0.7,
+            0.7 * vol,
             100,
           );
-          this.playNote(isFinal ? 1500 : 1000, "sine", time, duration, 0.8, 50);
-          if (isFinal) this.playNote(300, "square", time, duration, 0.3, 20);
+          this.playNote(
+            isFinal ? 1500 : 1000,
+            "sine",
+            time,
+            duration,
+            0.8 * vol,
+            50,
+          );
+          if (isFinal)
+            this.playNote(300, "square", time, duration, 0.3 * vol, 20);
         };
         playSwoosh(0.0, 0.25);
         playSwoosh(0.35, 0.25);
         playSwoosh(0.7, 0.8, true);
       } else if (type === "minute_beep")
-        this.playNote(2000, "triangle", 0, 0.08, 0.4);
+        this.playNote(2000, "triangle", 0, 0.08, 0.4 * vol);
     } else if (activeTheme === "vibe") {
-      if (type === "click") this.playNote(300, "sine", 0, 0.1, 0.4);
-      else if (type === "tick") this.playNote(400, "sine", 0, 0.15, 0.5);
+      const vol = 1.8; // Множитель для этой темы
+      if (type === "click") this.playNote(300, "sine", 0, 0.1, 0.4 * vol);
+      else if (type === "tick") this.playNote(400, "sine", 0, 0.15, 0.5 * vol);
       else if (type === "work_start") {
-        this.playNote(261.63, "sine", 0, 1.5, 0.6);
-        this.playNote(329.63, "sine", 0, 1.5, 0.5);
-        this.playNote(392.0, "sine", 0, 1.5, 0.5);
+        this.playNote(261.63, "sine", 0, 1.5, 0.6 * vol);
+        this.playNote(329.63, "sine", 0, 1.5, 0.5 * vol);
+        this.playNote(392.0, "sine", 0, 1.5, 0.5 * vol);
       } else if (type === "rest_start") {
-        this.playNote(392.0, "sine", 0.0, 1.0, 0.4);
-        this.playNote(329.63, "sine", 0.1, 1.0, 0.4);
-        this.playNote(261.63, "sine", 0.2, 1.5, 0.5);
+        this.playNote(392.0, "sine", 0.0, 1.0, 0.4 * vol);
+        this.playNote(329.63, "sine", 0.1, 1.0, 0.4 * vol);
+        this.playNote(261.63, "sine", 0.2, 1.5, 0.5 * vol);
       } else if (type === "complete") {
-        this.playNote(261.63, "sine", 0.0, 3.0, 0.6);
-        this.playNote(329.63, "sine", 0.1, 3.0, 0.5);
-        this.playNote(392.0, "sine", 0.2, 3.0, 0.5);
-        this.playNote(493.88, "sine", 0.3, 3.0, 0.4);
+        this.playNote(261.63, "sine", 0.0, 3.0, 0.6 * vol);
+        this.playNote(329.63, "sine", 0.1, 3.0, 0.5 * vol);
+        this.playNote(392.0, "sine", 0.2, 3.0, 0.5 * vol);
+        this.playNote(493.88, "sine", 0.3, 3.0, 0.4 * vol);
       } else if (type === "minute_beep")
-        this.playNote(1046.5, "sine", 0, 0.2, 0.5);
+        this.playNote(1046.5, "sine", 0, 0.2, 0.5 * vol);
     } else if (activeTheme === "work") {
-      if (type === "click") this.playNote(500, "sine", 0, 0.03, 0.2);
-      else if (type === "tick") this.playNote(700, "sine", 0, 0.05, 0.2);
+      const vol = 1.7; // Множитель для этой темы
+      if (type === "click") this.playNote(500, "sine", 0, 0.03, 0.2 * vol);
+      else if (type === "tick") this.playNote(700, "sine", 0, 0.05, 0.2 * vol);
       else if (type === "work_start") {
-        this.playNote(880, "sine", 0.0, 1.5, 0.4);
-        this.playNote(1760, "sine", 0.0, 0.5, 0.1);
+        this.playNote(880, "sine", 0.0, 1.5, 0.4 * vol);
+        this.playNote(1760, "sine", 0.0, 0.5, 0.1 * vol);
       } else if (type === "rest_start") {
-        this.playNote(523.25, "sine", 0.0, 1.5, 0.4);
-        this.playNote(261.63, "sine", 0.0, 2.5, 0.5);
+        this.playNote(523.25, "sine", 0.0, 1.5, 0.4 * vol);
+        this.playNote(261.63, "sine", 0.0, 2.5, 0.5 * vol);
       } else if (type === "complete") {
-        this.playNote(880, "sine", 0.0, 1.0, 0.4);
-        this.playNote(783.99, "sine", 0.4, 1.0, 0.4);
-        this.playNote(659.25, "sine", 0.8, 2.0, 0.4);
+        this.playNote(880, "sine", 0.0, 1.0, 0.4 * vol);
+        this.playNote(783.99, "sine", 0.4, 1.0, 0.4 * vol);
+        this.playNote(659.25, "sine", 0.8, 2.0, 0.4 * vol);
       } else if (type === "minute_beep")
-        this.playNote(880, "sine", 0, 0.07, 0.3);
+        this.playNote(880, "sine", 0, 0.07, 0.3 * vol);
     } else if (activeTheme === "life") {
-      if (type === "click") this.playNote(440, "triangle", 0, 0.08, 0.3);
-      else if (type === "tick") this.playNote(523.25, "triangle", 0, 0.1, 0.4);
+      const vol = 1.4; // Множитель для этой темы
+      if (type === "click") this.playNote(440, "triangle", 0, 0.08, 0.3 * vol);
+      else if (type === "tick")
+        this.playNote(523.25, "triangle", 0, 0.1, 0.4 * vol);
       else if (type === "work_start") {
-        this.playNote(523.25, "triangle", 0.0, 0.2, 0.4);
-        this.playNote(659.25, "triangle", 0.12, 0.2, 0.4);
-        this.playNote(783.99, "triangle", 0.24, 0.2, 0.4);
-        this.playNote(1046.5, "triangle", 0.36, 0.6, 0.5);
+        this.playNote(523.25, "triangle", 0.0, 0.2, 0.4 * vol);
+        this.playNote(659.25, "triangle", 0.12, 0.2, 0.4 * vol);
+        this.playNote(783.99, "triangle", 0.24, 0.2, 0.4 * vol);
+        this.playNote(1046.5, "triangle", 0.36, 0.6, 0.5 * vol);
       } else if (type === "rest_start") {
-        this.playNote(392.0, "triangle", 0.0, 0.15, 0.4);
-        this.playNote(523.25, "triangle", 0.15, 0.6, 0.6);
+        this.playNote(392.0, "triangle", 0.0, 0.15, 0.4 * vol);
+        this.playNote(523.25, "triangle", 0.15, 0.6, 0.6 * vol);
       } else if (type === "complete") {
-        this.playNote(523.25, "triangle", 0.0, 0.15, 0.4);
-        this.playNote(523.25, "triangle", 0.15, 0.15, 0.4);
-        this.playNote(523.25, "triangle", 0.3, 0.15, 0.4);
-        this.playNote(659.25, "triangle", 0.45, 0.4, 0.5);
-        this.playNote(587.33, "triangle", 0.85, 0.15, 0.4);
-        this.playNote(659.25, "triangle", 1.0, 1.0, 0.5);
+        this.playNote(523.25, "triangle", 0.0, 0.15, 0.4 * vol);
+        this.playNote(523.25, "triangle", 0.15, 0.15, 0.4 * vol);
+        this.playNote(523.25, "triangle", 0.3, 0.15, 0.4 * vol);
+        this.playNote(659.25, "triangle", 0.45, 0.4, 0.5 * vol);
+        this.playNote(587.33, "triangle", 0.85, 0.15, 0.4 * vol);
+        this.playNote(659.25, "triangle", 1.0, 1.0, 0.5 * vol);
       } else if (type === "minute_beep")
-        this.playNote(783.99, "triangle", 0, 0.15, 0.4);
+        this.playNote(783.99, "triangle", 0, 0.15, 0.4 * vol);
     }
   },
 };
