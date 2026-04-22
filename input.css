@@ -623,7 +623,6 @@ html.dark .app-bg::before {
   -ms-overflow-style: none;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
-  touch-action: pan-x;
 }
 
 .scroll-lock {
@@ -1296,6 +1295,11 @@ body.hide-nav-labels .nav-btn {
 .tr-wrap:focus-within .tr-thumb,
 .tr-wrap.tr-focused .tr-thumb {
   box-shadow: 0 0 0 4px var(--primary-color);
+}
+
+.tr-wrap:has(input[type="range"]:disabled) {
+  pointer-events: none; /* Полностью отключаем взаимодействие */
+  opacity: 0.5; /* Делаем его полупрозрачным */
 }
 
 /* =========================================
