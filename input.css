@@ -1161,6 +1161,7 @@ body.hide-nav-labels .nav-btn {
   padding-top: 1rem;
   height: calc(3rem + 1rem); /* h-12 (48px) + pt-4 (16px) */
   overflow-y: visible; /* <-- ДОБАВЬТЕ ЭТУ СТРОКУ */
+   overscroll-behavior-x: contain;
 }
 
 .color-swatch-wrapper.is-collapsing {

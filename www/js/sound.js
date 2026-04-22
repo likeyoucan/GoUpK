@@ -149,16 +149,33 @@ export const sm = {
 
   vibrate(basePattern, intensityKey = "medium") {
     if (!this.vibroEnabled || !navigator.vibrate) return;
+
     try {
+      // Базовый множитель для типа вибрации (light, medium, strong)
       const intensityMultiplier = this.vibroIntensities[intensityKey] || 1;
+
+      // Итоговый множитель, который учитывает и тип, и глобальную настройку
+      // sm.vibroLevel - это значение от 0.5 до 2
       const finalMultiplier = intensityMultiplier * this.vibroLevel;
-      const applyLevel = (val) =>
-        Math.max(1, Math.min(1000, Math.round(val * finalMultiplier)));
+
+      // Функция, применяющая множитель к длительности вибрации
+      const applyLevel = (duration) => {
+        // Ограничиваем значения, чтобы вибрация не была слишком короткой или длинной
+        return Math.max(
+          1,
+          Math.min(200, Math.round(duration * finalMultiplier)),
+        );
+      };
+
+      // Применяем множитель к паттерну
       const pattern = Array.isArray(basePattern)
         ? basePattern.map(applyLevel)
         : applyLevel(basePattern);
+
       navigator.vibrate(pattern);
-    } catch (e) {}
+    } catch (e) {
+      // Ошибки вибрации можно игнорировать
+    }
   },
 
   playNote(

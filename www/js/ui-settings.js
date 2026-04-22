@@ -16,6 +16,7 @@ export const uiSettingsManager = {
   swMinuteBeep: true,
   lastVibroTime: 0, // <-- ДОБАВИТЬ
   VIBRO_THROTTLE_MS: 75, // <-- ДОБАВИТЬ
+  lastSliderValues: {},
 
   // Константы
   vignetteLevels: [0.1, 0.15, 0.2, 0.25, 0.3],
@@ -82,9 +83,9 @@ export const uiSettingsManager = {
     }
 
     const sliderListeners = {
-      fontSlider: (val) => this.setFontSize(val),
-      ringWidthSlider: (val) => this.setRingWidth(val),
-      vignetteSlider: (val) => {
+      fontSlider: (val, id) => this.setFontSize(val, id),
+      ringWidthSlider: (val, id) => this.setRingWidth(val, id),
+      vignetteSlider: (val, id) => {
         this.vignetteAlpha = this.vignetteLevels[val];
         this.updateVignette();
         this.updateSliderLabel(
@@ -94,14 +95,51 @@ export const uiSettingsManager = {
         );
         safeSetLS("app_vignette_alpha", this.vignetteAlpha);
       },
-      vibroSlider: (val) => {
+      vibroSlider: (val, id) => {
         this.updateSliderLabel("vibroSlider", "vibro-label", this.vibroLabels);
         const levels = [0.5, 0.75, 1, 1.5, 2];
         sm.vibroLevel = levels[val] || 1;
         safeSetLS("app_vibro_level", sm.vibroLevel);
-        sm.vibrate(50, "strong");
+        sm.vibrate(50, "strong"); // Вибрация при смене, а не при вводе
       },
     };
+
+    for (const [id, callback] of Object.entries(sliderListeners)) {
+      const slider = $(id);
+      if (!slider) continue;
+
+      // Обработчик для 'input' (перетаскивание)
+      slider.addEventListener("input", (e) => {
+        const currentValue = e.target.value;
+        // Проверяем, изменилось ли значение с прошлого раза
+        if (this.lastSliderValues[id] !== currentValue) {
+          this.lastSliderValues[id] = currentValue; // Обновляем последнее значение
+
+          // Вызываем вибрацию с троттлингом
+          const now = performance.now();
+          if (now - this.lastVibroTime > this.VIBRO_THROTTLE_MS) {
+            sm.vibrate(10, "tactile");
+            this.lastVibroTime = now;
+          }
+
+          // Обновляем UI в реальном времени (кроме слайдера вибрации)
+          if (
+            id === "fontSlider" ||
+            id === "ringWidthSlider" ||
+            id === "vignetteSlider"
+          ) {
+            callback(currentValue, id);
+          }
+        }
+      });
+
+      // Обработчик для 'change' (когда отпустили ползунок)
+      slider.addEventListener("change", (e) => {
+        const finalValue = e.target.value;
+        this.lastSliderValues[id] = finalValue;
+        callback(finalValue, id); // Финальный вызов с сохранением
+      });
+    }
 
     for (const [id, callback] of Object.entries(sliderListeners)) {
       const slider = $(id);
