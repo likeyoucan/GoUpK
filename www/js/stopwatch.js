@@ -568,7 +568,6 @@ const stopwatchModule = {
         '[data-template="lapsContainer"]',
       );
       
-      // ИСПРАВЛЕНИЕ: Замена innerHTML на безопасное создание элементов
       const headerDiv = document.createElement("div");
       headerDiv.className = "flex justify-between items-center py-1.5 border-b border-gray-500/30 mb-1 px-2";
       
@@ -590,7 +589,6 @@ const stopwatchModule = {
       timesDiv.append(totalSpan, splitSpan);
       headerDiv.append(lapSpan, timesDiv);
       lapsContainer.appendChild(headerDiv);
-      // Конец исправления
 
       session.laps.forEach((lap) => {
         const lapClone = lapTemplate.content.cloneNode(true);

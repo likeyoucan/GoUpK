@@ -182,16 +182,12 @@ export const colorManager = {
     }
 
 if (swatchWrapper) {
-    // --- НАЧАЛО НОВОГО КОДА ---
-    // Если кликнули на кружок, у которого уже есть активная кнопка "Удалить",
-    // то просто скрываем эту кнопку и выходим.
+
     if (this.activeActionTarget === swatchWrapper) {
         this._hideActionButton();
-        return; // Завершаем выполнение, чтобы не выбирать цвет заново.
+        return;
     }
-    // --- КОНЕЦ НОВОГО КОДА ---
 
-    // Старая логика, которая сработает, если кликнули на НЕактивный кружок
     const color = swatchWrapper.dataset.color;
     document.dispatchEvent(
         new CustomEvent("colorSelected", {
@@ -279,7 +275,7 @@ if (swatchWrapper) {
       return;
     }
 
-    // 2. ИСПРАВЛЕННАЯ ПРОВЕРКА: Используем жестко заданные значения, но с учетом темы.
+  
     // Это единственный надежный способ сравнения.
     const currentTheme = themeManager.getCurrentTheme();
     let activeDefaultColor;

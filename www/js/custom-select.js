@@ -163,8 +163,8 @@ function enhanceSelect(selectElement) {
 
   // --- Обработчики событий ---
   trigger.addEventListener("click", (e) => {
-    e.preventDefault(); // <-- ЭТО САМОЕ ВАЖНОЕ ИЗМЕНЕНИЕ
-    e.stopPropagation(); // Добавляем на всякий случай
+    e.preventDefault();
+    e.stopPropagation();
     toggleSelect(container);
   });
   container.addEventListener("keydown", (e) => {

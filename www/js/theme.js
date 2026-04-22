@@ -56,7 +56,6 @@ export const themeManager = {
 
     document.addEventListener("colorDeleted", (e) => {
       const { type, color } = e.detail;
-      // ++ ИСПРАВЛЕНО: Теперь просто сбрасываем на 'default' ++
       if (
         type === "accent" &&
         this.currentAccent.toLowerCase() === color.toLowerCase()
@@ -72,7 +71,6 @@ export const themeManager = {
   },
 
   applySettings() {
-    // ++ ИСПРАВЛЕНО: Теперь по умолчанию всегда 'default' ++
     this.currentAccent = safeGetLS("theme_color") || "default";
     this.currentBg = safeGetLS("theme_bg_color") || "default";
     this.currentMode = safeGetLS("theme_mode") || "system";
