@@ -83,26 +83,64 @@ export const uiSettingsManager = {
     }
 
     const sliderListeners = {
-      fontSlider: (val, id) => this.setFontSize(val, id),
-      ringWidthSlider: (val, id) => this.setRingWidth(val, id),
-      vignetteSlider: (val, id) => {
+      fontSlider: (val) => this.setFontSize(val),
+      ringWidthSlider: (val) => this.setRingWidth(val),
+      vignetteSlider: (val) => {
         this.vignetteAlpha = this.vignetteLevels[val];
+        safeSetLS("app_vignette_alpha", this.vignetteAlpha);
         this.updateVignette();
         this.updateSliderLabel(
           "vignetteSlider",
           "vignette-label",
           this.vignetteLabels,
         );
-        safeSetLS("app_vignette_alpha", this.vignetteAlpha);
       },
-      vibroSlider: (val, id) => {
-        this.updateSliderLabel("vibroSlider", "vibro-label", this.vibroLabels);
+      vibroSlider: (val) => {
         const levels = [0.5, 0.75, 1, 1.5, 2];
         sm.vibroLevel = levels[val] || 1;
         safeSetLS("app_vibro_level", sm.vibroLevel);
-        sm.vibrate(50, "strong"); // Вибрация при смене, а не при вводе
+        this.updateSliderLabel("vibroSlider", "vibro-label", this.vibroLabels);
+        // Вибрация только при финальном изменении, чтобы пользователь почувствовал новый уровень
+        sm.vibrate(50, "strong");
       },
     };
+
+    for (const [id, callback] of Object.entries(sliderListeners)) {
+      const slider = $(id);
+      if (!slider) continue;
+
+      // Обработчик для 'input' (когда пользователь тащит ползунок)
+      slider.addEventListener("input", (e) => {
+        const now = performance.now();
+        // Троттлинг вибрации: не чаще, чем раз в 100 мс
+        if (now - this.lastVibroTime > 100) {
+          sm.vibrate(20, "tactile");
+          this.lastVibroTime = now;
+        }
+
+        // Обновляем только визуальные метки в реальном времени
+        if (id === "fontSlider") {
+          if ($("fontSizeDisplay"))
+            $("fontSizeDisplay").textContent = `${e.target.value} px`;
+        } else if (id === "ringWidthSlider") {
+          if ($("ringWidthDisplay"))
+            $("ringWidthDisplay").textContent =
+              `${parseFloat(e.target.value).toFixed(1)} px`;
+        }
+        this.updateSliderLabel(
+          "vignetteSlider",
+          "vignette-label",
+          this.vignetteLabels,
+        );
+        this.updateSliderLabel("vibroSlider", "vibro-label", this.vibroLabels);
+      });
+
+      // Обработчик для 'change' (когда пользователь отпустил ползунок)
+      slider.addEventListener("change", (e) => {
+        // Финальный вызов колбэка для сохранения значения
+        callback(e.target.value);
+      });
+    }
 
     for (const [id, callback] of Object.entries(sliderListeners)) {
       const slider = $(id);
