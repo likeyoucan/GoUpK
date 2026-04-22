@@ -95,22 +95,65 @@ export const colorManager = {
     setupPickerEvents("bg");
   },
 
-_bindContainerEvents(containerId, type) {
-  const container = $(containerId);
-  if (!container) return;
-  container.addEventListener("click", (e) => this._handleClick(e, type));
-  container.addEventListener("contextmenu", (e) => {
-    // ... логика правого клика
-  });
-  let touchMoved = false;
-  container.addEventListener("touchstart", (e) => {
-    // ... логика долгого тапа
-  }, { passive: true });
-  container.addEventListener("touchmove", () => { /* ... */ });
-  const endTouch = () => { /* ... */ };
-  container.addEventListener("touchend", endTouch);
-  container.addEventListener("touchcancel", endTouch);
-}
+  _bindContainerEvents(containerId, type) {
+    const container = $(containerId);
+    if (!container) return;
+
+    // --- Клик по элементам ---
+    container.addEventListener("click", (e) => this._handleClick(e, type));
+
+    // --- Правый клик для удаления (десктоп) ---
+    container.addEventListener("contextmenu", (e) => {
+      const swatch = e.target.closest(
+        '.color-swatch-wrapper[data-custom="true"]',
+      );
+      if (swatch) {
+        e.preventDefault();
+        this._showActionButton(swatch, "delete");
+      }
+    });
+
+    // --- Логика для долгого тапа (мобильные устройства) ---
+    let touchMoved = false;
+
+    container.addEventListener(
+      "touchstart",
+      (e) => {
+        const swatch = e.target.closest(
+          '.color-swatch-wrapper[data-custom="true"]',
+        );
+        if (swatch) {
+          touchMoved = false;
+          // Запускаем таймер, который сработает, если палец не сдвинется
+          this.longPressTimer = setTimeout(() => {
+            if (!touchMoved) {
+              e.preventDefault(); // Предотвращаем другие события, если это долгий тап
+              this._showActionButton(swatch, "delete");
+            }
+          }, LONG_PRESS_DURATION);
+        }
+      },
+      { passive: true },
+    ); // passive: true, т.к. мы не блокируем скролл в этом обработчике
+
+    // Если началось движение пальца, отменяем таймер долгого тапа
+    container.addEventListener("touchmove", () => {
+      touchMoved = true;
+      if (this.longPressTimer) {
+        clearTimeout(this.longPressTimer);
+      }
+    });
+
+    // При завершении касания в любом случае сбрасываем таймер
+    const endTouch = () => {
+      if (this.longPressTimer) {
+        clearTimeout(this.longPressTimer);
+      }
+    };
+
+    container.addEventListener("touchend", endTouch);
+    container.addEventListener("touchcancel", endTouch);
+  },
 
   _handleClick(event, type) {
     const swatchWrapper = event.target.closest(".color-swatch-wrapper");
