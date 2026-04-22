@@ -245,3 +245,18 @@ const createWorker = () => {
 };
 
 export const bgWorker = createWorker();
+
+/**
+ * Преобразует 3-значный HEX-цвет в 6-значный.
+ * @param {string} hex - HEX-цвет (например, '#000' или '#f0c').
+ * @returns {string} - 6-значный HEX-цвет (например, '#000000' или '#ff00cc').
+ */
+export const normalizeHexColor = (hex) => {
+    if (!hex || hex.length !== 4 || hex[0] !== '#') {
+        return hex; // Возвращаем как есть, если это не 3-значный hex
+    }
+    const r = hex[1];
+    const g = hex[2];
+    const b = hex[3];
+    return `#${r}${r}${g}${g}${b}${b}`;
+};

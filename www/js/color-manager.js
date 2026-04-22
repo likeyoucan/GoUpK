@@ -9,6 +9,7 @@ import {
   getLuminance,
   hexToRGB,
   getCssVariable,
+  normalizeHexColor,
 } from "./utils.js?v=VERSION";
 import { t } from "./i18n.js?v=VERSION";
 import { sm } from "./sound.js?v=VERSION";
@@ -460,29 +461,31 @@ export const colorManager = {
     }
   },
 
-  syncPickers(accentColor, bgColor) {
+ syncPickers(accentColor, bgColor) {
     const accentPicker = $("customColorInput");
     const bgPicker = $("customBgInput");
     const currentTheme = themeManager.getCurrentTheme();
 
     if (accentPicker) {
-      const resolvedAccent =
-        accentColor === "default"
-          ? getCssVariable(`--default-accent-${currentTheme}`)
-          : accentColor;
-      accentPicker.value = resolvedAccent;
+        const resolvedAccent =
+            accentColor === "default"
+                ? getCssVariable(`--default-accent-${currentTheme}`)
+                : accentColor;
+        // Применяем нормализацию
+        accentPicker.value = normalizeHexColor(resolvedAccent); // <-- ИЗМЕНЕНО
     }
 
     if (bgPicker) {
-      const resolvedBg =
-        bgColor === "default"
-          ? getCssVariable(`--default-bg-${currentTheme}`)
-          : bgColor;
-      bgPicker.value = resolvedBg;
+        const resolvedBg =
+            bgColor === "default"
+                ? getCssVariable(`--default-bg-${currentTheme}`)
+                : bgColor;
+        // Применяем нормализацию
+        bgPicker.value = normalizeHexColor(resolvedBg); // <-- ИЗМЕНЕНО
     }
 
     this.syncActiveAddButton();
-  },
+},
 
   syncActiveAddButton() {
     if (!this.activeActionTarget) return;
