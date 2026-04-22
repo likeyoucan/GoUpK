@@ -18,7 +18,7 @@ import { t } from "./i18n.js?v=VERSION";
 import { uiSettingsManager } from "./ui-settings.js?v=VERSION";
 import { modalManager } from "./modal.js?v=VERSION";
 import { store } from "./store.js?v=VERSION";
-import { CustomSelect } from "./custom-select.js?v=VERSION"; // <-- 1. ДОБАВЛЕН ИМПОРТ
+import { CustomSelect } from "./custom-select.js?v=VERSION";
 
 const stopwatchModule = {
   startTime: 0,
@@ -34,7 +34,7 @@ const stopwatchModule = {
   nameModalState: { action: null, targetId: null, pendingSession: null },
   ringLength: 282.74,
   lastMinuteBeep: 0,
-  sortSelect: null, // <-- 2. ДОБАВЛЕНО СВОЙСТВО ДЛЯ ХРАНЕНИЯ ЭКЗЕМПЛЯРА
+  sortSelect: null,
 
   // --- Основной метод инициализации ---
   init() {
@@ -48,7 +48,7 @@ const stopwatchModule = {
       ring: $("sw-progressRing"),
       saveBtn: $("sw-saveBtn"),
       sessionsList: $("sw-sessionsList"),
-      swSortWrapper: $("sw-sort-wrapper"),
+      swSortWrapper: $("sw-sort-wrapper"), // Целимся в новую обертку
       nameTitle: $("sw-name-title"),
       nameInput: $("sw-name-input"),
       nameError: $("sw-name-error"),
@@ -67,7 +67,7 @@ const stopwatchModule = {
       this.prepareSaveSession(),
     );
 
-    // <-- 4. ИНИЦИАЛИЗАЦИЯ НОВОГО CUSTOM SELECT ДЛЯ СОРТИРОВКИ -->
+    // Инициализация CustomSelect для сортировки
     const sortOptions = [
       { value: "date_desc", text: t("date_new") },
       { value: "date_asc", text: t("date_old") },
@@ -85,7 +85,6 @@ const stopwatchModule = {
       },
       this.currentSort, // Начальное значение
     );
-    // <-- КОНЕЦ НОВОЙ ЛОГИКИ -->
 
     this.els.nameInput?.addEventListener("input", () =>
       this.els.nameError?.classList.add("hidden"),
@@ -130,7 +129,6 @@ const stopwatchModule = {
       this.renderSavedSessions();
       if (this.laps.length > 0) this.reRenderCurrentLaps();
 
-      // <-- 5. ОБНОВЛЕНИЕ ТЕКСТА ОПЦИЙ ПРИ СМЕНЕ ЯЗЫКА -->
       if (this.sortSelect) {
         this.sortSelect.options = [
           { value: "date_desc", text: t("date_new") },
@@ -543,8 +541,8 @@ const stopwatchModule = {
   renderSavedSessions() {
     if (!this.els || !this.els.sessionsList) return;
 
-    // <-- 6. ЛОГИКА СКРЫТИЯ/ОТОБРАЖЕНИЯ СЕЛЕКТОРА -->
     const hasSessions = this.savedSessions.length > 0;
+
     if (this.els.swSortWrapper) {
       this.els.swSortWrapper.classList.toggle("hidden", !hasSessions);
     }
@@ -553,6 +551,7 @@ const stopwatchModule = {
     if (clearAllBtn) clearAllBtn.disabled = !hasSessions;
 
     this.els.sessionsList.replaceChildren();
+
     if (!hasSessions) {
       const emptyDiv = document.createElement("div");
       emptyDiv.className =
