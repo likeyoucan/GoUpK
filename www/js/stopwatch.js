@@ -119,7 +119,7 @@ const stopwatchModule = {
   },
 
   toggle() {
-    sm.vibrate(50, "strong");
+    sm.vibrate(40, "light");
     sm.play("click");
     sm.unlock();
 

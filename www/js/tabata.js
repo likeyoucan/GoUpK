@@ -315,7 +315,7 @@ export const tb = {
   },
 
   toggle() {
-    sm.vibrate(50, "strong");
+    sm.vibrate(40, "light");
     sm.play("click");
     sm.unlock();
     if (this.status === "STOPPED") this.start();
