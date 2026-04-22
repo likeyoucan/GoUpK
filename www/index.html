@@ -940,15 +940,7 @@
                     <div
                       class="select-wrapper relative flex items-center app-surface rounded-lg border app-border shadow-sm focus-within:ring-2 focus-within:ring-[var(--primary-color)] transition-colors ml-auto"
                     >
-                      <select
-                        id="langSelect"
-                        aria-label="Select Language"
-                        class="bg-transparent app-text text-sm font-bold appearance-none outline-none py-1.5 pl-3 pr-8 cursor-pointer z-10"
-                      >
-                        <option value="auto" data-i18n="lang_auto">Auto</option>
-                        <option value="en">English</option>
-                        <option value="ru">Русский</option>
-                      </select>
+                     <div id="langSelectContainer" class="w-40"></div>
                       <svg
                         focusable="false"
                         aria-hidden="true"
@@ -1000,27 +992,7 @@
                     <div
                       class="select-wrapper relative flex items-center app-surface rounded-lg border app-border shadow-sm focus-within:ring-2 focus-within:ring-[var(--primary-color)] transition-colors ml-auto"
                     >
-                      <select
-                        id="soundThemeSelect"
-                        aria-label="Select Theme"
-                        class="bg-transparent app-text text-sm font-bold appearance-none outline-none py-1.5 pl-3 pr-8 cursor-pointer z-10"
-                      >
-                        <option value="classic" data-i18n="theme_classic">
-                          Classic
-                        </option>
-                        <option value="sport" data-i18n="theme_sport">
-                          Sport
-                        </option>
-                        <option value="vibe" data-i18n="theme_vibe">
-                          Vibe
-                        </option>
-                        <option value="work" data-i18n="theme_work">
-                          Work
-                        </option>
-                        <option value="life" data-i18n="theme_life">
-                          Life
-                        </option>
-                      </select>
+                     <div id="soundThemeSelectContainer" class="w-40"></div>
                       <svg
                         focusable="false"
                         aria-hidden="true"
@@ -1429,22 +1401,7 @@
             <div
               class="select-wrapper relative flex items-center app-surface rounded-lg border app-border shadow-sm focus-within:ring-2 focus-within:ring-[var(--primary-color)] transition-colors ml-auto w-40"
             >
-              <select
-                id="sw-sortSelect"
-                class="bg-transparent app-text text-xs font-bold appearance-none outline-none py-1.5 pl-3 pr-8 cursor-pointer z-10 w-full"
-              >
-                <option value="date_asc" data-i18n="date_old">
-                  Oldest first
-                </option>
-                <option value="date_desc" data-i18n="date_new">
-                  Newest first
-                </option>
-                <option value="result_fast" data-i18n="result_fast">
-                  Result (Fastest)
-                </option>
-                <option value="name_az" data-i18n="name_az">Name (A-Z)</option>
-                <option value="name_za" data-i18n="name_za">Name (Z-A)</option>
-              </select>
+            <div id="swSortSelectContainer" class="w-40"></div>
               <svg
                 focusable="false"
                 aria-hidden="true"

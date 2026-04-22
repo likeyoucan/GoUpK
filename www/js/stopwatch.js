@@ -1,5 +1,3 @@
-// Файл: www/js/stopwatch.js
-
 import {
   $,
   formatTime,
@@ -20,6 +18,7 @@ import { t } from "./i18n.js?v=VERSION";
 import { uiSettingsManager } from "./ui-settings.js?v=VERSION";
 import { modalManager } from "./modal.js?v=VERSION";
 import { store } from "./store.js?v=VERSION";
+import { CustomSelect } from "./custom-select.js?v=VERSION"; // <-- 1. ДОБАВЛЕН ИМПОРТ
 
 const stopwatchModule = {
   startTime: 0,
@@ -35,6 +34,7 @@ const stopwatchModule = {
   nameModalState: { action: null, targetId: null, pendingSession: null },
   ringLength: 282.74,
   lastMinuteBeep: 0,
+  sortSelect: null, // <-- 2. ДОБАВЛЕНО СВОЙСТВО ДЛЯ ХРАНЕНИЯ ЭКЗЕМПЛЯРА
 
   // --- Основной метод инициализации ---
   init() {
@@ -48,7 +48,7 @@ const stopwatchModule = {
       ring: $("sw-progressRing"),
       saveBtn: $("sw-saveBtn"),
       sessionsList: $("sw-sessionsList"),
-      sortSelect: $("sw-sortSelect"),
+      swSortSelectContainer: $("swSortSelectContainer"), // <-- 3. ИСПОЛЬЗУЕМ КОНТЕЙНЕР
       nameTitle: $("sw-name-title"),
       nameInput: $("sw-name-input"),
       nameError: $("sw-name-error"),
@@ -66,9 +66,27 @@ const stopwatchModule = {
     this.els.saveBtn?.addEventListener("click", () =>
       this.prepareSaveSession(),
     );
-    this.els.sortSelect?.addEventListener("change", (e) =>
-      this.sortSessions(e.target.value),
+
+    // <-- 4. ИНИЦИАЛИЗАЦИЯ НОВОГО CUSTOM SELECT ДЛЯ СОРТИРОВКИ -->
+    const sortOptions = [
+      { value: "date_desc", text: t("date_new") },
+      { value: "date_asc", text: t("date_old") },
+      { value: "result_fast", text: t("result_fast") },
+      { value: "name_az", text: t("name_az") },
+      { value: "name_za", text: t("name_za") },
+    ];
+
+    this.sortSelect = new CustomSelect(
+      "swSortSelectContainer",
+      sortOptions,
+      (value) => {
+        // onSelect callback
+        this.sortSessions(value);
+      },
+      this.currentSort, // Начальное значение
     );
+    // <-- КОНЕЦ НОВОЙ ЛОГИКИ -->
+
     this.els.nameInput?.addEventListener("input", () =>
       this.els.nameError?.classList.add("hidden"),
     );
@@ -111,7 +129,21 @@ const stopwatchModule = {
     document.addEventListener("languageChanged", () => {
       this.renderSavedSessions();
       if (this.laps.length > 0) this.reRenderCurrentLaps();
+
+      // <-- 5. ОБНОВЛЕНИЕ ТЕКСТА ОПЦИЙ ПРИ СМЕНЕ ЯЗЫКА -->
+      if (this.sortSelect) {
+        this.sortSelect.options = [
+          { value: "date_desc", text: t("date_new") },
+          { value: "date_asc", text: t("date_old") },
+          { value: "result_fast", text: t("result_fast") },
+          { value: "name_az", text: t("name_az") },
+          { value: "name_za", text: t("name_za") },
+        ];
+        this.sortSelect.populateOptions();
+        this.sortSelect.setValue(this.currentSort, false);
+      }
     });
+
     document.addEventListener("msChanged", () => {
       if (!this.isRunning && this.elapsedTime > 0) this.updateDisplay();
       if (this.laps.length > 0) this.reRenderCurrentLaps();
@@ -275,10 +307,10 @@ const stopwatchModule = {
       this.els.lapBtn.classList.add("hidden");
       this.els.currentLapsHeader.classList.add("hidden");
       this.els.currentLapsHeader.classList.remove("flex");
-      const noLapsDiv = document.createElement('div');
+      const noLapsDiv = document.createElement("div");
       noLapsDiv.className = "text-center app-text-sec opacity-50 mt-4 text-sm";
-      noLapsDiv.setAttribute('data-i18n', 'no_laps');
-      noLapsDiv.textContent = t('no_laps');
+      noLapsDiv.setAttribute("data-i18n", "no_laps");
+      noLapsDiv.textContent = t("no_laps");
       this.els.lapsContainer.replaceChildren(noLapsDiv);
       this.updateSaveButtonVisibility();
     }
@@ -332,12 +364,12 @@ const stopwatchModule = {
   reRenderCurrentLaps() {
     this.els.lapsContainer.replaceChildren();
     if (this.laps.length === 0) {
-        const noLapsDiv = document.createElement('div');
-        noLapsDiv.className = "text-center app-text-sec opacity-50 mt-4 text-sm";
-        noLapsDiv.setAttribute('data-i18n', 'no_laps');
-        noLapsDiv.textContent = t('no_laps');
-        this.els.lapsContainer.appendChild(noLapsDiv);
-        return;
+      const noLapsDiv = document.createElement("div");
+      noLapsDiv.className = "text-center app-text-sec opacity-50 mt-4 text-sm";
+      noLapsDiv.setAttribute("data-i18n", "no_laps");
+      noLapsDiv.textContent = t("no_laps");
+      this.els.lapsContainer.appendChild(noLapsDiv);
+      return;
     }
     [...this.laps].reverse().forEach((lap, i, arr) => {
       this.els.lapsContainer.prepend(
@@ -475,7 +507,9 @@ const stopwatchModule = {
 
   sortSessions(type) {
     this.currentSort = type;
-    if (this.els.sortSelect) this.els.sortSelect.value = type;
+    if (this.sortSelect) {
+      this.sortSelect.setValue(type, false);
+    }
     this.savedSessions.sort((a, b) => {
       if (type === "date_desc") return b.date - a.date;
       if (type === "date_asc") return a.date - b.date;
@@ -508,17 +542,25 @@ const stopwatchModule = {
 
   renderSavedSessions() {
     if (!this.els || !this.els.sessionsList) return;
-    this.els.sessionsList.replaceChildren();
+
+    // <-- 6. ЛОГИКА СКРЫТИЯ/ОТОБРАЖЕНИЯ СЕЛЕКТОРА -->
+    const hasSessions = this.savedSessions.length > 0;
+    this.els.swSortSelectContainer.classList.toggle("hidden", !hasSessions);
+
     const clearAllBtn = $("sw-clearAllBtn");
-    if (clearAllBtn) clearAllBtn.disabled = this.savedSessions.length === 0;
-    if (this.savedSessions.length === 0) {
-      const emptyDiv = document.createElement('div');
-      emptyDiv.className = "text-center app-text-sec opacity-50 mt-10 text-sm pointer-events-none";
-      emptyDiv.setAttribute('data-i18n', 'empty_sessions');
-      emptyDiv.textContent = t('empty_sessions');
+    if (clearAllBtn) clearAllBtn.disabled = !hasSessions;
+
+    this.els.sessionsList.replaceChildren();
+    if (!hasSessions) {
+      const emptyDiv = document.createElement("div");
+      emptyDiv.className =
+        "text-center app-text-sec opacity-50 mt-10 text-sm pointer-events-none";
+      emptyDiv.setAttribute("data-i18n", "empty_sessions");
+      emptyDiv.textContent = t("empty_sessions");
       this.els.sessionsList.appendChild(emptyDiv);
       return;
     }
+
     const fragment = document.createDocumentFragment();
     const sessionTemplate = $("sw-session-template");
     const lapTemplate = $("sw-lap-row-template");
@@ -567,25 +609,29 @@ const stopwatchModule = {
       const lapsContainer = sessionElement.querySelector(
         '[data-template="lapsContainer"]',
       );
-      
+
       const headerDiv = document.createElement("div");
-      headerDiv.className = "flex justify-between items-center py-1.5 border-b border-gray-500/30 mb-1 px-2";
-      
-      const lapSpan = document.createElement('span');
-      lapSpan.className = "text-[10px] font-bold app-text-sec uppercase tracking-wider";
-      lapSpan.textContent = t('lap_text');
-      
-      const timesDiv = document.createElement('div');
+      headerDiv.className =
+        "flex justify-between items-center py-1.5 border-b border-gray-500/30 mb-1 px-2";
+
+      const lapSpan = document.createElement("span");
+      lapSpan.className =
+        "text-[10px] font-bold app-text-sec uppercase tracking-wider";
+      lapSpan.textContent = t("lap_text");
+
+      const timesDiv = document.createElement("div");
       timesDiv.className = "flex items-center gap-4";
-      
-      const totalSpan = document.createElement('span');
-      totalSpan.className = "text-[10px] font-bold app-text-sec uppercase tracking-wider w-16 text-right";
-      totalSpan.textContent = t('total_time');
-      
-      const splitSpan = document.createElement('span');
-      splitSpan.className = "text-[10px] font-bold app-text-sec uppercase tracking-wider w-16 text-right";
-      splitSpan.textContent = t('split_time');
-      
+
+      const totalSpan = document.createElement("span");
+      totalSpan.className =
+        "text-[10px] font-bold app-text-sec uppercase tracking-wider w-16 text-right";
+      totalSpan.textContent = t("total_time");
+
+      const splitSpan = document.createElement("span");
+      splitSpan.className =
+        "text-[10px] font-bold app-text-sec uppercase tracking-wider w-16 text-right";
+      splitSpan.textContent = t("split_time");
+
       timesDiv.append(totalSpan, splitSpan);
       headerDiv.append(lapSpan, timesDiv);
       lapsContainer.appendChild(headerDiv);

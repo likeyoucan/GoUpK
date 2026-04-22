@@ -40,6 +40,12 @@
  *   --tr-thumb-color:  var(--primary-color, #22c55e)
  */
 
+/**
+ * touch-range.js
+ * ... (описание модуля без изменений) ...
+ */
+import { sm } from './sound.js?v=VERSION'; // <-- 1. ДОБАВЛЕН ИМПОРТ
+
 // ─── Вставляем базовые стили один раз ────────────────────────────────────────
 const STYLE_ID = "__touch_range_styles__";
 if (!document.getElementById(STYLE_ID)) {
@@ -147,6 +153,10 @@ export function enhanceNativeRange(input) {
   const step  = parseFloat(input.step)  || 1;
   let   value = parseFloat(input.value) || min;
 
+  // <-- 2. ДОБАВЛЕНЫ ПЕРЕМЕННЫЕ ДЛЯ ТРОТТЛИНГА ВИБРАЦИИ -->
+  let lastVibroTime = 0;
+  const VIBRO_THROTTLE_MS = 75;
+
   // Создаём обёртку
   const wrap = document.createElement("div");
   wrap.className = "tr-wrap";
@@ -165,27 +175,19 @@ export function enhanceNativeRange(input) {
   // Трек + заливка + бегунок
   const track = document.createElement("div");
   track.className = "tr-track";
-
   const fill  = document.createElement("div");
   fill.className = "tr-fill";
-
   const thumb = document.createElement("div");
   thumb.className = "tr-thumb";
-
   track.appendChild(fill);
   track.appendChild(thumb);
 
   // Добавляем input внутрь обёртки (скрытый)
   input.classList.add("tr-native");
-
   wrap.appendChild(track);
-  wrap.appendChild(input.cloneNode(false)); // клон для правильной позиции в DOM
-
-  // Вставляем обёртку ПЕРЕД нативным input, затем перемещаем input внутрь
+  wrap.appendChild(input.cloneNode(false));
   input.parentNode.insertBefore(wrap, input);
   wrap.appendChild(input);
-
-  // Удаляем клон (он нам не нужен)
   const clonedInput = wrap.querySelector(".tr-native:not([data-tr-enhanced])");
   if (clonedInput && clonedInput !== input) clonedInput.remove();
 
@@ -214,30 +216,27 @@ export function enhanceNativeRange(input) {
     const snapped = Math.round((clamped - min) / step) * step + min;
     const final   = parseFloat(Math.max(min, Math.min(max, snapped)).toFixed(10));
 
+    if (final === value) return; // Не диспатчить событие, если значение не изменилось
+
     value        = final;
     input.value  = final;
     updateVisual(final);
-
-    // Диспатчим события на нативный input (чтобы работали внешние листенеры)
     input.dispatchEvent(new Event(eventType, { bubbles: true }));
   };
 
   // ─── TOUCH-логика ────────────────────────────────────────────────────────
   let touchState = {
     active:   false,
-    decided:  false,   // определились ли с направлением
-    isHoriz:  false,   // горизонтальное движение (наше)?
+    decided:  false,
+    isHoriz:  false,
     startX:   0,
     startY:   0,
-    id:       null,    // identifier касания
+    id:       null,
   };
-
-  const DECISION_THRESHOLD = 6; // px до принятия решения
+  const DECISION_THRESHOLD = 6;
 
   const onTouchStart = (e) => {
-    // Разрешаем только одно касание
     if (touchState.active) return;
-
     const touch = e.changedTouches[0];
     touchState = {
       active:  true,
@@ -247,13 +246,10 @@ export function enhanceNativeRange(input) {
       startY:  touch.clientY,
       id:      touch.identifier,
     };
-    // НЕ вызываем e.preventDefault() — браузер свободно может скроллить
   };
 
   const onTouchMove = (e) => {
     if (!touchState.active) return;
-
-    // Ищем нужный тач по id
     let touch = null;
     for (let i = 0; i < e.changedTouches.length; i++) {
       if (e.changedTouches[i].identifier === touchState.id) {
@@ -268,32 +264,33 @@ export function enhanceNativeRange(input) {
     const dist = Math.sqrt(dx * dx + dy * dy);
 
     if (!touchState.decided) {
-      if (dist < DECISION_THRESHOLD) return; // ждём
-
-      // Определяем направление
+      if (dist < DECISION_THRESHOLD) return;
       touchState.decided = true;
       touchState.isHoriz = Math.abs(dx) >= Math.abs(dy);
-
       if (touchState.isHoriz) {
-        // Горизонталь — наше, блокируем скролл
         wrap.classList.add("tr-dragging");
       } else {
-        // Вертикаль — отдаём браузеру
         touchState.active = false;
         return;
       }
     }
 
     if (!touchState.isHoriz) return;
-
-    // Блокируем скролл страницы пока тянем ползунок
     e.preventDefault();
+
+    // <-- 3. ДОБАВЛЕНА ЛОГИКА ВИБРАЦИИ -->
+    const now = performance.now();
+    if (now - lastVibroTime > VIBRO_THROTTLE_MS) {
+        sm.vibrate(10, 'tactile');
+        lastVibroTime = now;
+    }
+    // <-- КОНЕЦ ИЗМЕНЕНИЯ -->
+
     applyValue(valueFromX(touch.clientX), "input");
   };
 
   const onTouchEnd = (e) => {
     if (!touchState.active) return;
-
     let touch = null;
     for (let i = 0; i < e.changedTouches.length; i++) {
       if (e.changedTouches[i].identifier === touchState.id) {
@@ -301,18 +298,15 @@ export function enhanceNativeRange(input) {
         break;
       }
     }
-
     if (touchState.isHoriz) {
       if (touch) applyValue(valueFromX(touch.clientX), "change");
       wrap.classList.remove("tr-dragging");
     }
-
     touchState.active  = false;
     touchState.decided = false;
     touchState.isHoriz = false;
   };
 
-  // Обязательно { passive: false } для touchmove — иначе нельзя вызвать preventDefault()
   wrap.addEventListener("touchstart", onTouchStart, { passive: true });
   wrap.addEventListener("touchmove",  onTouchMove,  { passive: false });
   wrap.addEventListener("touchend",   onTouchEnd,   { passive: true });
@@ -331,6 +325,15 @@ export function enhanceNativeRange(input) {
 
   document.addEventListener("mousemove", (e) => {
     if (!mouseDown) return;
+
+    // <-- 4. ДОБАВЛЕНА АНАЛОГИЧНАЯ ЛОГИКА ВИБРАЦИИ -->
+    const now = performance.now();
+    if (now - lastVibroTime > VIBRO_THROTTLE_MS) {
+        sm.vibrate(10, 'tactile');
+        lastVibroTime = now;
+    }
+    // <-- КОНЕЦ ИЗМЕНЕНИЯ -->
+
     applyValue(valueFromX(e.clientX), "input");
   });
 
@@ -349,7 +352,7 @@ export function enhanceNativeRange(input) {
   // ─── KEYBOARD ────────────────────────────────────────────────────────────
   wrap.addEventListener("keydown", (e) => {
     let newVal = value;
-    const bigStep = step * 10;
+    const bigStep = (max - min) / 10; // Стандартное поведение для PageUp/Down
 
     switch (e.key) {
       case "ArrowRight":
@@ -378,13 +381,16 @@ export function enhanceNativeRange(input) {
 
     e.preventDefault();
     applyValue(newVal, "input");
+    // Финальное событие для клавиатуры
+    if (["Home", "End"].includes(e.key) || !e.repeat) {
+      applyValue(newVal, "change");
+    }
   });
 
   wrap.addEventListener("focus", () => wrap.classList.add("tr-focused"));
   wrap.addEventListener("blur",  () => wrap.classList.remove("tr-focused"));
 
   // ─── Следим за внешними изменениями input.value ──────────────────────────
-  // (например, applySettings() пишет input.value = ...)
   const observer = new MutationObserver(() => {
     const newVal = parseFloat(input.value);
     if (!isNaN(newVal) && newVal !== value) {
@@ -394,7 +400,6 @@ export function enhanceNativeRange(input) {
   });
   observer.observe(input, { attributes: true, attributeFilter: ["value"] });
 
-  // Также перехватываем прямую запись в input.value через property descriptor
   const originalDescriptor = Object.getOwnPropertyDescriptor(
     HTMLInputElement.prototype,
     "value"

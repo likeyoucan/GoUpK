@@ -1,248 +1,178 @@
-// Файл: www/js/custom-select.js
-
-/**
- * Модуль для создания полностью кастомизируемых выпадающих списков.
- * Заменяет нативный <select> на стилизуемые div-элементы, сохраняя
- * доступность и синхронизацию с оригинальным элементом.
- */
+// www/js/custom-select.js
 
 import { getCssVariable, hexToRGB, getLuminance } from "./utils.js?v=VERSION";
 
 const activeSelects = new Set();
 
-/**
- * Проверяет яркость акцентного цвета и применяет класс для темного текста, если нужно.
- * @param {HTMLElement} selectedLi - Элемент <li>, который выбран.
- */
-function updateSelectedTextColor(selectedLi) {
-  if (!selectedLi) return;
+export class CustomSelect {
+  constructor(elementId, options, onSelect, initialValue) {
+    this.container = document.getElementById(elementId);
+    if (!this.container) return;
 
-  // Получаем текущее значение --primary-color
-  const primaryColor = getCssVariable("--primary-color");
-  // Конвертируем в RGB и вычисляем яркость
-  const { r, g, b } = hexToRGB(primaryColor);
-  const luminance = getLuminance(r, g, b);
+    this.options = options;
+    this.onSelect = onSelect;
+    this.currentValue = initialValue;
 
-  // Если яркость > 0.5 (цвет светлый), добавляем класс. Иначе - убираем.
-  selectedLi.classList.toggle("needs-dark-text", luminance > 0.55); // 0.55 - более надежный порог
-}
+    this.render();
+    this.attachEventListeners();
+    activeSelects.add(this);
+  }
 
-/**
- * "Улучшает" один элемент <select>, заменяя его кастомной версией.
- * @param {HTMLSelectElement} selectElement - Оригинальный <select> для улучшения.
- */
-function enhanceSelect(selectElement) {
-  if (selectElement.dataset.customSelectEnhanced) return;
-  selectElement.dataset.customSelectEnhanced = "true";
+  render() {
+    this.container.innerHTML = ""; // Безопасная очистка
 
-  // --- Создание структуры ---
-  const container = document.createElement("div");
-  // Копируем все классы с оригинального <select> на наш новый контейнер
-  container.className = "custom-select-container " + selectElement.className;
-  selectElement.className = ""; // Очищаем классы у оригинала, чтобы не было конфликтов
-  container.setAttribute("role", "listbox");
-  container.setAttribute("tabindex", "0");
+    this.trigger = document.createElement("div");
+    this.trigger.className =
+      "custom-select-trigger app-surface rounded-lg border app-border shadow-sm flex items-center justify-between w-full py-1.5 pl-3 pr-2 cursor-pointer transition-colors";
+    this.trigger.setAttribute("role", "button");
+    this.trigger.setAttribute("aria-haspopup", "listbox");
+    this.trigger.setAttribute("aria-expanded", "false");
 
-  const trigger = document.createElement("div");
-  trigger.className = "custom-select-trigger";
+    this.selectedValueEl = document.createElement("span");
+    this.selectedValueEl.className = "custom-select-value text-sm font-bold";
 
-  const selectedValue = document.createElement("span");
-  selectedValue.className = "custom-select-value";
+    const arrowSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    arrowSvg.setAttribute("focusable", "false");
+    arrowSvg.setAttribute("aria-hidden", "true");
+    arrowSvg.classList.add("w-4", "h-4", "app-text-sec", "transition-transform", "duration-300");
+    arrowSvg.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>`;
+    this.arrow = arrowSvg;
 
-  const arrow = document.createElement("svg");
-  arrow.setAttribute("focusable", "false");
-  arrow.setAttribute("aria-hidden", "true");
-  arrow.setAttribute("viewBox", "0 0 24 24");
-  arrow.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>`;
+    this.trigger.append(this.selectedValueEl, this.arrow);
 
-  trigger.append(selectedValue, arrow);
+    this.optionsPanel = document.createElement("div");
+    this.optionsPanel.className = "custom-select-options hidden";
+    this.optionsPanel.setAttribute("role", "listbox");
 
-  const optionsPanel = document.createElement("div");
-  optionsPanel.className = "custom-select-options";
+    this.container.classList.add("custom-select-container", "relative");
+    this.container.append(this.trigger, this.optionsPanel);
 
-  const optionsList = document.createElement("ul");
-  optionsPanel.append(optionsList);
+    this.populateOptions();
+    this.setValue(this.currentValue, false); // Устанавливаем начальное значение без вызова onSelect
+  }
 
-  container.append(trigger, optionsPanel);
+  populateOptions() {
+    const fragment = document.createDocumentFragment();
+    this.options.forEach(option => {
+      const optionEl = document.createElement("div");
+      optionEl.className = "custom-select-option";
+      optionEl.setAttribute("role", "option");
+      optionEl.dataset.value = option.value;
+      optionEl.textContent = option.text; // Безопасная вставка текста
 
-  // --- Заполнение опций и обновление триггера ---
-  function populateOptions() {
-    optionsList.innerHTML = "";
-    const selectedOpt = selectElement.options[selectElement.selectedIndex];
-    if (selectedOpt) {
-      selectedValue.textContent = selectedOpt.textContent;
-    }
-
-    Array.from(selectElement.options).forEach((option, index) => {
-      const li = document.createElement("li");
-      li.className = "custom-select-option";
-      li.setAttribute("role", "option");
-      li.dataset.value = option.value;
-      li.textContent = option.textContent;
-
-      if (option.selected) {
-        li.classList.add("is-selected");
-        li.setAttribute("aria-selected", "true");
-        updateSelectedTextColor(li);
-      } else {
-        li.setAttribute("aria-selected", "false");
+      if (option.value === this.currentValue) {
+        optionEl.classList.add("is-selected");
+        optionEl.setAttribute("aria-selected", "true");
+        this.updateSelectedTextColor(optionEl);
       }
 
-      li.addEventListener("click", () => {
-        selectOption(li, option);
-        closeSelect(container);
-      });
+      fragment.appendChild(optionEl);
+    });
+    this.optionsPanel.appendChild(fragment);
+  }
 
-      // Когда мышь входит в область опции
-      li.addEventListener("mouseenter", () => {
-        // Мы просто вызываем уже существующую у нас функцию,
-        // которая проверяет яркость и добавляет класс, если нужно.
-        updateSelectedTextColor(li);
-      });
+  attachEventListeners() {
+    this.trigger.addEventListener("click", e => {
+      e.stopPropagation();
+      this.toggle();
+    });
 
-      // Когда мышь покидает область опции
-      li.addEventListener("mouseleave", () => {
-        // Обязательно убираем класс, чтобы цвет текста вернулся
-        // к обычному состоянию для не-наведенных элементов.
-        li.classList.remove("needs-dark-text");
-      });
+    this.optionsPanel.addEventListener("click", e => {
+      const target = e.target.closest(".custom-select-option");
+      if (target) {
+        this.setValue(target.dataset.value);
+        this.close();
+      }
+    });
 
-      optionsList.appendChild(li);
+    // Обновление цвета при наведении
+    this.optionsPanel.addEventListener("mouseover", e => {
+        const target = e.target.closest(".custom-select-option");
+        if (target) this.updateSelectedTextColor(target);
+    });
+    this.optionsPanel.addEventListener("mouseout", e => {
+        const target = e.target.closest(".custom-select-option");
+        if (target) target.classList.remove("needs-dark-text");
     });
   }
 
-  function selectOption(li, optionElement) {
-    if (selectElement.value === optionElement.value) return;
-
-    // Снимаем выделение со старой опции
-    const oldSelected = optionsList.querySelector(".is-selected");
-    if (oldSelected) {
-      oldSelected.classList.remove("is-selected");
-      oldSelected.setAttribute("aria-selected", "false");
-    }
-
-    // Выделяем новую
-    li.classList.add("is-selected");
-    li.setAttribute("aria-selected", "true");
-    selectedValue.textContent = optionElement.textContent;
-
-    updateSelectedTextColor(li);
-
-    // Синхронизируем с нативным <select> и вызываем событие
-    selectElement.value = optionElement.value;
-    selectElement.dispatchEvent(new Event("change", { bubbles: true }));
-  }
-
-  // --- Функции открытия/закрытия ---
-  function openSelect(container) {
-    // Закрыть все остальные открытые списки
-    activeSelects.forEach((sel) => {
-      if (sel !== container) closeSelect(sel);
-    });
-
-    container.classList.add("is-open");
-    container.querySelector(".custom-select-options").classList.add("is-open");
-    activeSelects.add(container);
-  }
-
-  function closeSelect(container) {
-    container.classList.remove("is-open");
-    container
-      .querySelector(".custom-select-options")
-      .classList.remove("is-open");
-    activeSelects.delete(container);
-  }
-
-  function toggleSelect(container) {
-    if (container.classList.contains("is-open")) {
-      closeSelect(container);
+  toggle() {
+    if (this.isOpen()) {
+      this.close();
     } else {
-      openSelect(container);
+      // Закрыть все остальные открытые селекты
+      activeSelects.forEach(s => {
+        if (s !== this && s.isOpen()) s.close();
+      });
+      this.open();
     }
   }
 
-  // --- Обработчики событий ---
-  trigger.addEventListener("click", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    toggleSelect(container);
-  });
-  container.addEventListener("keydown", (e) => {
-    switch (e.key) {
-      case "Enter":
-      case " ":
-        e.preventDefault();
-        toggleSelect(container);
-        break;
-      case "Escape":
-        if (container.classList.contains("is-open")) {
-          e.preventDefault();
-          closeSelect(container);
-        }
-        break;
-      // TODO: Добавить навигацию стрелками при необходимости
+  isOpen() {
+    return !this.optionsPanel.classList.contains("hidden");
+  }
+
+  open() {
+    this.optionsPanel.classList.remove("hidden");
+    // Используем setTimeout для применения анимации после добавления в DOM
+    requestAnimationFrame(() => {
+        this.optionsPanel.classList.add("is-open");
+        this.arrow.style.transform = "rotate(180deg)";
+        this.trigger.setAttribute("aria-expanded", "true");
+        this.container.classList.add("is-open");
+    });
+  }
+
+  close() {
+    this.optionsPanel.classList.remove("is-open");
+    this.arrow.style.transform = "";
+    this.trigger.setAttribute("aria-expanded", "false");
+    this.container.classList.remove("is-open");
+    // Прячем элемент после завершения анимации
+    this.optionsPanel.addEventListener("transitionend", () => {
+        if (!this.isOpen()) this.optionsPanel.classList.add("hidden");
+    }, { once: true });
+  }
+
+  setValue(value, triggerOnSelect = true) {
+    const selectedOption = this.options.find(opt => opt.value === value);
+    if (!selectedOption) return;
+
+    this.currentValue = value;
+    this.selectedValueEl.textContent = selectedOption.text;
+
+    this.optionsPanel.querySelectorAll(".custom-select-option").forEach(el => {
+      const isSelected = el.dataset.value === value;
+      el.classList.toggle("is-selected", isSelected);
+      el.setAttribute("aria-selected", isSelected.toString());
+      if (isSelected) this.updateSelectedTextColor(el);
+    });
+
+    if (triggerOnSelect && typeof this.onSelect === 'function') {
+      this.onSelect(value);
     }
-  });
+  }
 
-  // --- Интеграция в DOM ---
-  selectElement.style.display = "none"; // Прячем оригинальный select
-  selectElement.parentNode.insertBefore(container, selectElement);
-  container.appendChild(selectElement); // Перемещаем select внутрь для связи
-
-  populateOptions();
-
-  // Следим за внешними изменениями (например, смена языка)
-  const observer = new MutationObserver(populateOptions);
-  observer.observe(selectElement, {
-    childList: true,
-    subtree: true,
-    characterData: true,
-  });
-
-  // Следим, если value меняется программно
-  Object.defineProperty(selectElement, "value", {
-    get() {
-      return Object.getOwnPropertyDescriptor(
-        HTMLSelectElement.prototype,
-        "value",
-      ).get.call(this);
-    },
-    set(v) {
-      Object.getOwnPropertyDescriptor(
-        HTMLSelectElement.prototype,
-        "value",
-      ).set.call(this, v);
-      populateOptions(); // Перерисовываем кастомный select
-    },
-    configurable: true,
-  });
+  updateSelectedTextColor(selectedEl) {
+    if (!selectedEl) return;
+    const primaryColor = getCssVariable("--primary-color");
+    const { r, g, b } = hexToRGB(primaryColor);
+    const luminance = getLuminance(r, g, b);
+    selectedEl.classList.toggle("needs-dark-text", luminance > 0.55);
+  }
 }
 
-// Глобальный обработчик для закрытия при клике вне элемента
-document.addEventListener("click", (e) => {
-  if (activeSelects.size === 0) return;
-  const openSelect = Array.from(activeSelects)[0];
-  if (openSelect && !openSelect.contains(e.target)) {
-    closeSelect(openSelect);
-  }
+// Глобальный слушатель для закрытия селекта при клике вне его
+document.addEventListener("click", () => {
+    activeSelects.forEach(s => {
+        if (s.isOpen()) s.close();
+    });
 });
 
-/**
- * Инициализирует все <select> на странице, помеченные селектором.
- * @param {string} [selector='select[data-custom-select]'] - CSS-селектор для поиска.
- */
-export function initCustomSelects(selector = "select[data-custom-select]") {
-  document.querySelectorAll(selector).forEach(enhanceSelect);
-}
-
+// Глобальный слушатель для обновления цвета при смене темы
 document.addEventListener("accentColorChanged", () => {
-  // Проходим по всем активным кастомным селектам
-  document.querySelectorAll(".custom-select-container").forEach((container) => {
-    // Находим в каждом из них выбранный элемент
-    const selectedLi = container.querySelector(
-      ".custom-select-option.is-selected",
-    );
-    // И обновляем цвет его текста
-    updateSelectedTextColor(selectedLi);
-  });
+    activeSelects.forEach(s => {
+        const selectedEl = s.optionsPanel.querySelector(".is-selected");
+        if(selectedEl) s.updateSelectedTextColor(selectedEl);
+    });
 });

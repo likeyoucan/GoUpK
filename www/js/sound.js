@@ -1,6 +1,6 @@
-// Файл: www/js/sound.js
-
 import { $, safeGetLS, safeSetLS, safeRemoveLS } from "./utils.js?v=VERSION";
+import { CustomSelect } from "./custom-select.js?v=VERSION"; // <-- 1. ДОБАВЛЕН ИМПОРТ
+import { t } from "./i18n.js?v=VERSION"; // <-- 2. ДОБАВЛЕН ИМПОРТ ДЛЯ ПЕРЕВОДОВ
 
 export const sm = {
   audioCtx: null,
@@ -9,12 +9,13 @@ export const sm = {
   vibroLevel: 1,
   volume: 1,
   theme: "classic",
+  soundThemeSelect: null, // <-- 3. СВОЙСТВО ДЛЯ ХРАНЕНИЯ ЭКЗЕМПЛЯРА СЕЛЕКТА
   THEME_VOL_MULTIPLIERS: {
-    classic: 1.0, // Эталон
-    sport: 1.6, // Увеличиваем громкость на 60%
-    vibe: 2.2, // Самая тихая тема, увеличиваем в 2.2 раза
-    work: 1.9, // Увеличиваем на 90%
-    life: 1.7, // Увеличиваем на 70%
+    classic: 1.0,
+    sport: 1.6,
+    vibe: 2.2,
+    work: 1.9,
+    life: 1.7,
   },
   vibroIntensities: {
     light: 0.5,
@@ -59,17 +60,30 @@ export const sm = {
       safeSetLS("app_volume", this.volume);
     });
     $("volumeSlider")?.addEventListener("change", () => {
-      const currentSelectedTheme = $("soundThemeSelect")?.value || "classic";
-      this.play("click", { theme: currentSelectedTheme });
+      this.play("click", { theme: this.theme });
     });
 
-    $("soundThemeSelect")?.addEventListener("change", (e) => {
-      const newTheme = e.target.value;
-      this.theme = newTheme;
-      safeSetLS("app_sound_theme", this.theme);
-      // Теперь мы передаем новую тему прямо в функцию `play`
-      this.play("click", { theme: newTheme });
-    });
+    // <-- 4. ИНИЦИАЛИЗАЦИЯ НОВОГО CUSTOM SELECT -->
+    const soundThemeOptions = [
+      { value: "classic", text: t("theme_classic") },
+      { value: "sport", text: t("theme_sport") },
+      { value: "vibe", text: t("theme_vibe") },
+      { value: "work", text: t("theme_work") },
+      { value: "life", text: t("theme_life") },
+    ];
+
+    this.soundThemeSelect = new CustomSelect(
+      "soundThemeSelectContainer",
+      soundThemeOptions,
+      (newTheme) => {
+        // onSelect callback
+        this.theme = newTheme;
+        safeSetLS("app_sound_theme", this.theme);
+        this.play("click", { theme: newTheme });
+      },
+      this.theme, // Начальное значение берется из applySettings
+    );
+    // <-- КОНЕЦ НОВОЙ ЛОГИКИ -->
 
     const unlockHandler = () => this.unlock();
     document.addEventListener("click", unlockHandler, {
@@ -111,7 +125,11 @@ export const sm = {
       const display = $("volumeDisplay");
       if (display) display.textContent = Math.round(this.volume * 100) + "%";
     }
-    if ($("soundThemeSelect")) $("soundThemeSelect").value = this.theme;
+
+    // <-- 5. ОБНОВЛЕНИЕ UI CUSTOM SELECT -->
+    if (this.soundThemeSelect) {
+      this.soundThemeSelect.setValue(this.theme, false);
+    }
 
     this.updateVolumeUI();
     document.dispatchEvent(
@@ -130,8 +148,6 @@ export const sm = {
       "app_volume",
     ];
     soundKeys.forEach(safeRemoveLS);
-
-    // Просто вызываем applySettings(), чтобы обновить UI, но НЕ init()
     this.applySettings();
   },
 
@@ -139,7 +155,6 @@ export const sm = {
     const volSlider = $("volumeSlider");
     if (volSlider) {
       volSlider.disabled = !this.soundEnabled;
-      // Находим родительский div, в котором лежит ползунок и его метки
       const parentContainer = volSlider.closest(".p-4");
       if (parentContainer) {
         parentContainer.classList.toggle("is-disabled", !this.soundEnabled);
@@ -159,9 +174,7 @@ export const sm = {
 
   vibrate(basePattern, intensityKey = "medium") {
     if (!this.vibroEnabled || !navigator.vibrate) return;
-
     try {
-      // Базовые множители для ТИПА вибрации
       const intensityMap = {
         light: 0.7,
         medium: 1.0,
@@ -169,24 +182,16 @@ export const sm = {
         tactile: 0.5,
       };
       const typeMultiplier = intensityMap[intensityKey] || 1;
-
-      // Глобальный УРОВЕНЬ вибрации из настроек (от 0.5 до 2)
       const levelMultiplier = this.vibroLevel;
-
-      // Итоговый множитель
       const finalMultiplier = typeMultiplier * levelMultiplier;
-
       const applyLevel = (duration) => {
-        // Увеличиваем базовую длительность, чтобы сделать разницу заметнее
         const baseDuration = duration * 1.5;
         const newDuration = Math.round(baseDuration * finalMultiplier);
         return Math.max(1, Math.min(200, newDuration));
       };
-
       const pattern = Array.isArray(basePattern)
         ? basePattern.map(applyLevel)
         : applyLevel(basePattern);
-
       navigator.vibrate(pattern);
     } catch (e) {
       // Игнорируем ошибки
@@ -253,6 +258,7 @@ export const sm = {
     osc.start(startTime);
     osc.stop(startTime + duration);
   },
+
   play(type, options = {}) {
     if (!this.soundEnabled || !this.audioCtx || this.volume === 0) return;
     this.unlock();

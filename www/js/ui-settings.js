@@ -1,5 +1,3 @@
-// Файл: www/js/ui-settings.js
-
 import { $, safeGetLS, safeSetLS, safeRemoveLS } from "./utils.js?v=VERSION";
 import { t } from "./i18n.js?v=VERSION";
 import { sm } from "./sound.js?v=VERSION";
@@ -14,8 +12,6 @@ export const uiSettingsManager = {
   vignetteAlpha: 0.2,
   ringWidth: 4,
   swMinuteBeep: true,
-  lastVibroTime: 0, // <-- ДОБАВИТЬ
-  VIBRO_THROTTLE_MS: 75, // <-- ДОБАВИТЬ
   lastSliderValues: {},
 
   // Константы
@@ -47,10 +43,6 @@ export const uiSettingsManager = {
     );
 
     const toggleListeners = {
-      "toggle-sw-minute-beep": (val) => {
-        this.swMinuteBeep = val;
-        safeSetLS("app_sw_minute_beep", val);
-      },
       "toggle-ms": (val) => {
         this.showMs = val;
         safeSetLS("app_show_ms", val);
@@ -83,64 +75,37 @@ export const uiSettingsManager = {
     }
 
     const sliderListeners = {
+      // Убрали 'swMinuteBeep' отсюда, так как его обработчик уже есть в toggleListeners
+
       fontSlider: (val) => this.setFontSize(val),
       ringWidthSlider: (val) => this.setRingWidth(val),
-      vignetteSlider: (val) => {
-        this.vignetteAlpha = this.vignetteLevels[val];
-        safeSetLS("app_vignette_alpha", this.vignetteAlpha);
+
+      vignetteSlider: (val, isFinal = true) => {
+        const newAlpha = this.vignetteLevels[val];
+        this.vignetteAlpha = newAlpha;
         this.updateVignette();
         this.updateSliderLabel(
           "vignetteSlider",
           "vignette-label",
           this.vignetteLabels,
         );
+        if (isFinal) {
+          safeSetLS("app_vignette_alpha", newAlpha);
+        }
       },
-      vibroSlider: (val) => {
+
+      vibroSlider: (val, isFinal = true) => {
         const levels = [0.5, 0.75, 1, 1.5, 2];
-        sm.vibroLevel = levels[val] || 1;
-        safeSetLS("app_vibro_level", sm.vibroLevel);
+        const newLevel = levels[val] || 1;
+        sm.vibroLevel = newLevel;
         this.updateSliderLabel("vibroSlider", "vibro-label", this.vibroLabels);
-        // Вибрация только при финальном изменении, чтобы пользователь почувствовал новый уровень
-        sm.vibrate(50, "strong");
+        if (isFinal) {
+          safeSetLS("app_vibro_level", newLevel);
+          // Вибрация только при финальном изменении, чтобы пользователь почувствовал новый уровень
+          sm.vibrate(50, "strong");
+        }
       },
     };
-
-    for (const [id, callback] of Object.entries(sliderListeners)) {
-      const slider = $(id);
-      if (!slider) continue;
-
-      // Обработчик для 'input' (когда пользователь тащит ползунок)
-      slider.addEventListener("input", (e) => {
-        const now = performance.now();
-        // Троттлинг вибрации: не чаще, чем раз в 100 мс
-        if (now - this.lastVibroTime > 100) {
-          sm.vibrate(20, "tactile");
-          this.lastVibroTime = now;
-        }
-
-        // Обновляем только визуальные метки в реальном времени
-        if (id === "fontSlider") {
-          if ($("fontSizeDisplay"))
-            $("fontSizeDisplay").textContent = `${e.target.value} px`;
-        } else if (id === "ringWidthSlider") {
-          if ($("ringWidthDisplay"))
-            $("ringWidthDisplay").textContent =
-              `${parseFloat(e.target.value).toFixed(1)} px`;
-        }
-        this.updateSliderLabel(
-          "vignetteSlider",
-          "vignette-label",
-          this.vignetteLabels,
-        );
-        this.updateSliderLabel("vibroSlider", "vibro-label", this.vibroLabels);
-      });
-
-      // Обработчик для 'change' (когда пользователь отпустил ползунок)
-      slider.addEventListener("change", (e) => {
-        // Финальный вызов колбэка для сохранения значения
-        callback(e.target.value);
-      });
-    }
 
     for (const [id, callback] of Object.entries(sliderListeners)) {
       const slider = $(id);
@@ -149,25 +114,12 @@ export const uiSettingsManager = {
       // Обработчик для 'input' (перетаскивание)
       slider.addEventListener("input", (e) => {
         const currentValue = e.target.value;
-        // Проверяем, изменилось ли значение с прошлого раза
+
         if (this.lastSliderValues[id] !== currentValue) {
           this.lastSliderValues[id] = currentValue;
 
-          // Вызываем вибрацию с троттлингом
-          const now = performance.now();
-          if (now - this.lastVibroTime > this.VIBRO_THROTTLE_MS) {
-            sm.vibrate(10, "tactile");
-            this.lastVibroTime = now;
-          }
-
-          // Обновляем UI в реальном времени (кроме слайдера вибрации)
-          if (
-            id === "fontSlider" ||
-            id === "ringWidthSlider" ||
-            id === "vignetteSlider"
-          ) {
-            callback(currentValue, id);
-          }
+          // Обновляем UI в реальном времени, передавая isFinal = false
+          callback(currentValue, false);
         }
       });
 
@@ -175,7 +127,7 @@ export const uiSettingsManager = {
       slider.addEventListener("change", (e) => {
         const finalValue = e.target.value;
         this.lastSliderValues[id] = finalValue;
-        callback(finalValue, id); // Финальный вызов с сохранением
+        callback(finalValue, true); // Финальный вызов с сохранением
       });
     }
   },
@@ -199,6 +151,7 @@ export const uiSettingsManager = {
     this.showMs = safeGetLS("app_show_ms") !== "false";
     if ($("toggle-ms")) $("toggle-ms").checked = this.showMs;
 
+    // Перенес swMinuteBeep сюда, так как это тоже toggle
     this.swMinuteBeep = safeGetLS("app_sw_minute_beep") !== "false";
     if ($("toggle-sw-minute-beep"))
       $("toggle-sw-minute-beep").checked = this.swMinuteBeep;
