@@ -1117,7 +1117,7 @@ body.hide-nav-labels .nav-btn {
 .tr-wrap.tr-dragging + .thumb-label-container > .thumb-label,
 .tr-wrap.tr-focused + .thumb-label-container > .thumb-label,
 .tr-wrap:focus-within + .thumb-label-container > .thumb-label {
-    opacity: 1;
+  opacity: 1;
 }
 
 /* =========================================
@@ -1238,7 +1238,7 @@ body.hide-nav-labels .nav-btn {
 :root {
   /* JS будет напрямую устанавливать значения этих переменных */
   --secondary-accent-color: #3b82f6; /* Синий как безопасный fallback */
-  --alert-color: hsl(0 90% 60%);    /* Красный как безопасный fallback */
+  --alert-color: hsl(0 90% 60%); /* Красный как безопасный fallback */
   --alert-color-fg: #ffffff;
 }
 
@@ -1328,7 +1328,8 @@ body.hide-nav-labels .nav-btn {
 .custom-select-container.is-open .custom-select-trigger {
   outline: none;
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary-color) 40%, transparent);
+  box-shadow: 0 0 0 2px
+    color-mix(in srgb, var(--primary-color) 40%, transparent);
 }
 
 .custom-select-value {
@@ -1354,21 +1355,25 @@ body.hide-nav-labels .nav-btn {
   left: 0;
   right: 0;
   z-index: 100;
-  
+
   background-color: var(--surface-color);
   border: 1px solid var(--border-color);
   border-radius: 0.75rem; /* rounded-xl */
-  box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  box-shadow:
+    0 10px 25px -5px rgb(0 0 0 / 0.1),
+    0 8px 10px -6px rgb(0 0 0 / 0.1);
   max-height: 250px;
   overflow-y: auto;
-  
+
   opacity: 0;
   /* Анимация: меняем масштаб и положение */
   transform: scale(0.95) translateY(-10px);
   transform-origin: top center; /* Центр трансформации - верхний край */
   pointer-events: none;
   /* Плавный переход в стиле iOS */
-  transition: opacity 0.2s cubic-bezier(0.32, 0.72, 0, 1), transform 0.2s cubic-bezier(0.32, 0.72, 0, 1);
+  transition:
+    opacity 0.2s cubic-bezier(0.32, 0.72, 0, 1),
+    transform 0.2s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 .custom-select-options.is-open {
@@ -1383,6 +1388,8 @@ body.hide-nav-labels .nav-btn {
   font-size: 0.875rem;
   color: var(--text-color);
   transition: background-color 0.15s;
+  -webkit-user-select: none; /* Для Safari и старых версий Chrome */
+  user-select: none; /* Стандартное свойство */
 }
 
 .custom-select-option:hover,
@@ -1395,8 +1402,13 @@ body.hide-nav-labels .nav-btn {
 
 .custom-select-option.is-selected {
   font-weight: 700;
-  background-color: var(--primary-color); /* Используем акцентный цвет для фона */
-  color: var(--cs-selected-text-color, #ffffff); /* Цвет текста по умолчанию - белый */
+  background-color: var(
+    --primary-color
+  ); /* Используем акцентный цвет для фона */
+  color: var(
+    --cs-selected-text-color,
+    #ffffff
+  ); /* Цвет текста по умолчанию - белый */
 }
 .custom-select-option.is-selected.needs-dark-text,
 .custom-select-option:hover.needs-dark-text {
@@ -1414,4 +1426,3 @@ body.hide-nav-labels .nav-btn {
   backdrop-filter: blur(16px) saturate(180%);
   border: 1px solid color-mix(in srgb, var(--border-color) 50%, transparent);
 }
-
