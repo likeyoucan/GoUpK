@@ -181,16 +181,27 @@ export const colorManager = {
       this._hideActionButton();
     }
 
-    if (swatchWrapper) {
-      const color = swatchWrapper.dataset.color;
-      document.dispatchEvent(
+if (swatchWrapper) {
+    // --- НАЧАЛО НОВОГО КОДА ---
+    // Если кликнули на кружок, у которого уже есть активная кнопка "Удалить",
+    // то просто скрываем эту кнопку и выходим.
+    if (this.activeActionTarget === swatchWrapper) {
+        this._hideActionButton();
+        return; // Завершаем выполнение, чтобы не выбирать цвет заново.
+    }
+    // --- КОНЕЦ НОВОГО КОДА ---
+
+    // Старая логика, которая сработает, если кликнули на НЕактивный кружок
+    const color = swatchWrapper.dataset.color;
+    document.dispatchEvent(
         new CustomEvent("colorSelected", {
-          detail: { type, color, fromPicker: false },
+            detail: { type, color, fromPicker: false },
         }),
-      );
-      if (swatchWrapper.dataset.custom === "true")
+    );
+    if (swatchWrapper.dataset.custom === "true") {
         this._showActionButton(swatchWrapper, "delete");
     }
+}
   },
 
   _updateAddButtonColor(button, newColor) {
