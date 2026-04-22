@@ -1387,7 +1387,10 @@ body.hide-nav-labels .nav-btn {
 
 .custom-select-option:hover,
 .custom-select-option.is-focused {
-  background-color: color-mix(in srgb, var(--primary-color) 10%, transparent);
+  /* При наведении используем ПОЛНЫЙ акцентный цвет */
+  background-color: var(--primary-color);
+  /* По умолчанию текст будет таким же, как у выбранного элемента */
+  color: var(--cs-selected-text-color, #ffffff);
 }
 
 .custom-select-option.is-selected {
@@ -1395,8 +1398,9 @@ body.hide-nav-labels .nav-btn {
   background-color: var(--primary-color); /* Используем акцентный цвет для фона */
   color: var(--cs-selected-text-color, #ffffff); /* Цвет текста по умолчанию - белый */
 }
-.custom-select-option.is-selected.needs-dark-text {
-  color: var(--text-color); /* Используем основной цвет текста темы */
+.custom-select-option.is-selected.needs-dark-text,
+.custom-select-option:hover.needs-dark-text {
+  color: var(--text-color);
 }
 
 /* Стили для темы Liquid Glass */

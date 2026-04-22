@@ -92,6 +92,21 @@ function enhanceSelect(selectElement) {
         selectOption(li, option);
         closeSelect(container);
       });
+
+      // Когда мышь входит в область опции
+      li.addEventListener("mouseenter", () => {
+        // Мы просто вызываем уже существующую у нас функцию,
+        // которая проверяет яркость и добавляет класс, если нужно.
+        updateSelectedTextColor(li);
+      });
+
+      // Когда мышь покидает область опции
+      li.addEventListener("mouseleave", () => {
+        // Обязательно убираем класс, чтобы цвет текста вернулся
+        // к обычному состоянию для не-наведенных элементов.
+        li.classList.remove("needs-dark-text");
+      });
+
       optionsList.appendChild(li);
     });
   }
