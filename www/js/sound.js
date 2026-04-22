@@ -151,23 +151,28 @@ export const sm = {
     if (!this.vibroEnabled || !navigator.vibrate) return;
 
     try {
-      // Базовый множитель для типа вибрации (light, medium, strong)
-      const intensityMultiplier = this.vibroIntensities[intensityKey] || 1;
+      // Базовый множитель для типа вибрации (light, medium, strong).
+      // Мы УВЕЛИЧИЛИ базовые значения для более заметного эффекта.
+      const intensityMultiplier =
+        {
+          light: 0.6,
+          medium: 1.0,
+          strong: 1.5,
+          tactile: 0.4,
+        }[intensityKey] || 1;
 
-      // Итоговый множитель, который учитывает и тип, и глобальную настройку
-      // sm.vibroLevel - это значение от 0.5 до 2
+      // Итоговый множитель, где ГЛАВНУЮ роль играет глобальная настройка.
+      // sm.vibroLevel (от 0.5 до 2) теперь напрямую влияет на результат.
       const finalMultiplier = intensityMultiplier * this.vibroLevel;
 
-      // Функция, применяющая множитель к длительности вибрации
       const applyLevel = (duration) => {
-        // Ограничиваем значения, чтобы вибрация не была слишком короткой или длинной
-        return Math.max(
-          1,
-          Math.min(200, Math.round(duration * finalMultiplier)),
-        );
+        // Увеличиваем базовую длительность, чтобы эффект был заметнее.
+        // Например, для иконок меню (30) диапазон будет от 30*0.6*0.5=9мс до 30*0.6*2=36мс.
+        // Разница в 4 раза уже хорошо ощущается.
+        const newDuration = Math.round(duration * finalMultiplier);
+        return Math.max(1, Math.min(200, newDuration));
       };
 
-      // Применяем множитель к паттерну
       const pattern = Array.isArray(basePattern)
         ? basePattern.map(applyLevel)
         : applyLevel(basePattern);

@@ -140,27 +140,6 @@ export const uiSettingsManager = {
         callback(finalValue, id); // Финальный вызов с сохранением
       });
     }
-
-    for (const [id, callback] of Object.entries(sliderListeners)) {
-      const slider = $(id);
-      slider?.addEventListener("input", (e) => {
-        const now = performance.now();
-        if (now - this.lastVibroTime > this.VIBRO_THROTTLE_MS) {
-          sm.vibrate(10, "tactile");
-          this.lastVibroTime = now;
-        }
-        if (
-          id === "fontSlider" ||
-          id === "ringWidthSlider" ||
-          id === "vignetteSlider"
-        ) {
-          callback(e.target.value);
-        }
-      });
-      slider?.addEventListener("change", (e) => {
-        callback(e.target.value);
-      });
-    }
   },
 
   applySettings() {
