@@ -14,6 +14,8 @@ export const uiSettingsManager = {
   vignetteAlpha: 0.2,
   ringWidth: 4,
   swMinuteBeep: true,
+  lastVibroTime: 0, // <-- ДОБАВИТЬ
+  VIBRO_THROTTLE_MS: 75, // <-- ДОБАВИТЬ
 
   // Константы
   vignetteLevels: [0.1, 0.15, 0.2, 0.25, 0.3],
@@ -104,7 +106,11 @@ export const uiSettingsManager = {
     for (const [id, callback] of Object.entries(sliderListeners)) {
       const slider = $(id);
       slider?.addEventListener("input", (e) => {
-        sm.vibrate(10, "tactile");
+        const now = performance.now();
+        if (now - this.lastVibroTime > this.VIBRO_THROTTLE_MS) {
+          sm.vibrate(10, "tactile");
+          this.lastVibroTime = now;
+        }
         if (
           id === "fontSlider" ||
           id === "ringWidthSlider" ||

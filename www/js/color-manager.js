@@ -98,6 +98,8 @@ export const colorManager = {
   _bindContainerEvents(containerId, type) {
     const container = $(containerId);
     if (!container) return;
+
+    // --- Обработчики кликов и контекстного меню (остаются без изменений) ---
     container.addEventListener("click", (e) => this._handleClick(e, type));
     container.addEventListener("contextmenu", (e) => {
       const swatch = e.target.closest(
@@ -108,17 +110,33 @@ export const colorManager = {
         this._showActionButton(swatch, "delete");
       }
     });
-    let touchMoved = false;
+
+    // --- Новая, улучшенная логика для сенсорных событий ---
+
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchMoved = false; // Для отличения тапа от свайпа
+    let isScrollingHorizontally = false; // Флаг, что мы уже определили направление как горизонтальное
+
+    // Долгий тап для удаления (таймер)
     container.addEventListener(
       "touchstart",
       (e) => {
         const swatch = e.target.closest(
           '.color-swatch-wrapper[data-custom="true"]',
         );
+        const touch = e.touches[0];
+
+        touchStartX = touch.clientX;
+        touchStartY = touch.clientY;
+        touchMoved = false;
+        isScrollingHorizontally = false;
+        // НЕ устанавливаем touch-action здесь, чтобы не блокировать скролл страницы
+
         if (swatch) {
-          touchMoved = false;
           this.longPressTimer = setTimeout(() => {
             if (!touchMoved) {
+              // Если палец не двигался, это долгий тап
               e.preventDefault();
               this._showActionButton(swatch, "delete");
             }
@@ -127,13 +145,51 @@ export const colorManager = {
       },
       { passive: true },
     );
-    container.addEventListener("touchmove", () => {
-      touchMoved = true;
-      if (this.longPressTimer) clearTimeout(this.longPressTimer);
-    });
+
+    container.addEventListener(
+      "touchmove",
+      (e) => {
+        touchMoved = true; // Регистрируем, что было движение
+        if (this.longPressTimer) {
+          clearTimeout(this.longPressTimer); // Отменяем долгий тап, если начался свайп
+        }
+
+        if (e.touches.length > 1 || isScrollingHorizontally) {
+          // Если мы уже скроллим горизонтально или это мультитач, ничего не делаем
+          return;
+        }
+
+        const touch = e.touches[0];
+        const deltaX = Math.abs(touch.clientX - touchStartX);
+        const deltaY = Math.abs(touch.clientY - touchStartY);
+        const decisionThreshold = 5; // Порог в пикселях для принятия решения
+
+        // Если движение превысило порог, и мы еще не решили, куда скроллить
+        if (deltaX > decisionThreshold || deltaY > decisionThreshold) {
+          // Если горизонтальное движение преобладает...
+          if (deltaX > deltaY) {
+            isScrollingHorizontally = true;
+            // ...только теперь мы временно блокируем вертикальный скролл для этого элемента,
+            // чтобы обеспечить плавный горизонтальный скролл цветов.
+            container.style.touchAction = "pan-x";
+          }
+          // Если вертикальное движение преобладает, мы ничего не делаем,
+          // и браузер сам обработает скролл всей страницы.
+        }
+      },
+      { passive: true },
+    );
+
     const endTouch = () => {
-      if (this.longPressTimer) clearTimeout(this.longPressTimer);
+      if (this.longPressTimer) {
+        clearTimeout(this.longPressTimer);
+      }
+      // ВАЖНО: При любом завершении касания сбрасываем ограничение,
+      // чтобы следующий свайп мог быть снова распознан как вертикальный.
+      container.style.touchAction = "";
+      isScrollingHorizontally = false;
     };
+
     container.addEventListener("touchend", endTouch);
     container.addEventListener("touchcancel", endTouch);
   },
@@ -461,31 +517,31 @@ export const colorManager = {
     }
   },
 
- syncPickers(accentColor, bgColor) {
+  syncPickers(accentColor, bgColor) {
     const accentPicker = $("customColorInput");
     const bgPicker = $("customBgInput");
     const currentTheme = themeManager.getCurrentTheme();
 
     if (accentPicker) {
-        const resolvedAccent =
-            accentColor === "default"
-                ? getCssVariable(`--default-accent-${currentTheme}`)
-                : accentColor;
-        // Применяем нормализацию
-        accentPicker.value = normalizeHexColor(resolvedAccent); // <-- ИЗМЕНЕНО
+      const resolvedAccent =
+        accentColor === "default"
+          ? getCssVariable(`--default-accent-${currentTheme}`)
+          : accentColor;
+      // Применяем нормализацию
+      accentPicker.value = normalizeHexColor(resolvedAccent); // <-- ИЗМЕНЕНО
     }
 
     if (bgPicker) {
-        const resolvedBg =
-            bgColor === "default"
-                ? getCssVariable(`--default-bg-${currentTheme}`)
-                : bgColor;
-        // Применяем нормализацию
-        bgPicker.value = normalizeHexColor(resolvedBg); // <-- ИЗМЕНЕНО
+      const resolvedBg =
+        bgColor === "default"
+          ? getCssVariable(`--default-bg-${currentTheme}`)
+          : bgColor;
+      // Применяем нормализацию
+      bgPicker.value = normalizeHexColor(resolvedBg); // <-- ИЗМЕНЕНО
     }
 
     this.syncActiveAddButton();
-},
+  },
 
   syncActiveAddButton() {
     if (!this.activeActionTarget) return;

@@ -206,11 +206,7 @@ button {
     padding: 0;
   }
 
-  .timer-circle-wrap {
-    max-width: 280px; /* Ограничиваем ширину фиксированным значением */
-    margin-top: 3vh; /* Слегка увеличим вертикальный отступ */
-    margin-bottom: 2vh;
-  }
+ 
 }
 
 /* --- Большой планшет (iPad Pro) в портретной ориентации --- */
@@ -1203,7 +1199,7 @@ body.hide-nav-labels .nav-btn {
 
 /* Задаем плавный переход для трансформации иконки */
 .nav-btn > div {
-  transition: transform 0.25s cubic-bezier(0.32, 0.72, 0, 1);
+    transition: transform 0.25s cubic-bezier(0.32, 0.72, 0, 1), color 0.3s;
 }
 
 /* 
@@ -1300,10 +1296,6 @@ body.hide-nav-labels .nav-btn {
 .p-4.is-disabled {
   opacity: 0.5;
   pointer-events: none;
-}
-
-.touch-pan-x {
-  touch-action: pan-x;
 }
 
 /* =========================================
