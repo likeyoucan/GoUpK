@@ -6,7 +6,26 @@
  * доступность и синхронизацию с оригинальным элементом.
  */
 
+import { getCssVariable, hexToRGB, getLuminance } from "./utils.js?v=VERSION";
+
 const activeSelects = new Set();
+
+/**
+ * Проверяет яркость акцентного цвета и применяет класс для темного текста, если нужно.
+ * @param {HTMLElement} selectedLi - Элемент <li>, который выбран.
+ */
+function updateSelectedTextColor(selectedLi) {
+  if (!selectedLi) return;
+
+  // Получаем текущее значение --primary-color
+  const primaryColor = getCssVariable("--primary-color");
+  // Конвертируем в RGB и вычисляем яркость
+  const { r, g, b } = hexToRGB(primaryColor);
+  const luminance = getLuminance(r, g, b);
+
+  // Если яркость > 0.5 (цвет светлый), добавляем класс. Иначе - убираем.
+  selectedLi.classList.toggle("needs-dark-text", luminance > 0.55); // 0.55 - более надежный порог
+}
 
 /**
  * "Улучшает" один элемент <select>, заменяя его кастомной версией.
@@ -17,16 +36,16 @@ function enhanceSelect(selectElement) {
   selectElement.dataset.customSelectEnhanced = "true";
 
   // --- Создание структуры ---
-const container = document.createElement("div");
-// Копируем все классы с оригинального <select> на наш новый контейнер
-container.className = "custom-select-container " + selectElement.className; 
-selectElement.className = ""; // Очищаем классы у оригинала, чтобы не было конфликтов
+  const container = document.createElement("div");
+  // Копируем все классы с оригинального <select> на наш новый контейнер
+  container.className = "custom-select-container " + selectElement.className;
+  selectElement.className = ""; // Очищаем классы у оригинала, чтобы не было конфликтов
   container.setAttribute("role", "listbox");
   container.setAttribute("tabindex", "0");
 
   const trigger = document.createElement("div");
   trigger.className = "custom-select-trigger";
-  
+
   const selectedValue = document.createElement("span");
   selectedValue.className = "custom-select-value";
 
@@ -40,20 +59,20 @@ selectElement.className = ""; // Очищаем классы у оригинал
 
   const optionsPanel = document.createElement("div");
   optionsPanel.className = "custom-select-options";
-  
+
   const optionsList = document.createElement("ul");
   optionsPanel.append(optionsList);
 
   container.append(trigger, optionsPanel);
-  
+
   // --- Заполнение опций и обновление триггера ---
   function populateOptions() {
     optionsList.innerHTML = "";
     const selectedOpt = selectElement.options[selectElement.selectedIndex];
-    if(selectedOpt) {
+    if (selectedOpt) {
       selectedValue.textContent = selectedOpt.textContent;
     }
-    
+
     Array.from(selectElement.options).forEach((option, index) => {
       const li = document.createElement("li");
       li.className = "custom-select-option";
@@ -64,10 +83,11 @@ selectElement.className = ""; // Очищаем классы у оригинал
       if (option.selected) {
         li.classList.add("is-selected");
         li.setAttribute("aria-selected", "true");
+        updateSelectedTextColor(li);
       } else {
         li.setAttribute("aria-selected", "false");
       }
-      
+
       li.addEventListener("click", () => {
         selectOption(li, option);
         closeSelect(container);
@@ -91,6 +111,8 @@ selectElement.className = ""; // Очищаем классы у оригинал
     li.setAttribute("aria-selected", "true");
     selectedValue.textContent = optionElement.textContent;
 
+    updateSelectedTextColor(li);
+
     // Синхронизируем с нативным <select> и вызываем событие
     selectElement.value = optionElement.value;
     selectElement.dispatchEvent(new Event("change", { bubbles: true }));
@@ -99,18 +121,20 @@ selectElement.className = ""; // Очищаем классы у оригинал
   // --- Функции открытия/закрытия ---
   function openSelect(container) {
     // Закрыть все остальные открытые списки
-    activeSelects.forEach(sel => {
+    activeSelects.forEach((sel) => {
       if (sel !== container) closeSelect(sel);
     });
-    
+
     container.classList.add("is-open");
-    container.querySelector('.custom-select-options').classList.add('is-open');
+    container.querySelector(".custom-select-options").classList.add("is-open");
     activeSelects.add(container);
   }
 
   function closeSelect(container) {
     container.classList.remove("is-open");
-    container.querySelector('.custom-select-options').classList.remove('is-open');
+    container
+      .querySelector(".custom-select-options")
+      .classList.remove("is-open");
     activeSelects.delete(container);
   }
 
@@ -140,7 +164,7 @@ selectElement.className = ""; // Очищаем классы у оригинал
       // TODO: Добавить навигацию стрелками при необходимости
     }
   });
-  
+
   // --- Интеграция в DOM ---
   selectElement.style.display = "none"; // Прячем оригинальный select
   selectElement.parentNode.insertBefore(container, selectElement);
@@ -150,18 +174,28 @@ selectElement.className = ""; // Очищаем классы у оригинал
 
   // Следим за внешними изменениями (например, смена языка)
   const observer = new MutationObserver(populateOptions);
-  observer.observe(selectElement, { childList: true, subtree: true, characterData: true });
+  observer.observe(selectElement, {
+    childList: true,
+    subtree: true,
+    characterData: true,
+  });
 
   // Следим, если value меняется программно
-  Object.defineProperty(selectElement, 'value', {
+  Object.defineProperty(selectElement, "value", {
     get() {
-      return Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value').get.call(this);
+      return Object.getOwnPropertyDescriptor(
+        HTMLSelectElement.prototype,
+        "value",
+      ).get.call(this);
     },
     set(v) {
-      Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value').set.call(this, v);
+      Object.getOwnPropertyDescriptor(
+        HTMLSelectElement.prototype,
+        "value",
+      ).set.call(this, v);
       populateOptions(); // Перерисовываем кастомный select
     },
-    configurable: true
+    configurable: true,
   });
 }
 
@@ -174,11 +208,22 @@ document.addEventListener("click", (e) => {
   }
 });
 
-
 /**
  * Инициализирует все <select> на странице, помеченные селектором.
  * @param {string} [selector='select[data-custom-select]'] - CSS-селектор для поиска.
  */
-export function initCustomSelects(selector = 'select[data-custom-select]') {
+export function initCustomSelects(selector = "select[data-custom-select]") {
   document.querySelectorAll(selector).forEach(enhanceSelect);
 }
+
+document.addEventListener("accentColorChanged", () => {
+  // Проходим по всем активным кастомным селектам
+  document.querySelectorAll(".custom-select-container").forEach((container) => {
+    // Находим в каждом из них выбранный элемент
+    const selectedLi = container.querySelector(
+      ".custom-select-option.is-selected",
+    );
+    // И обновляем цвет его текста
+    updateSelectedTextColor(selectedLi);
+  });
+});

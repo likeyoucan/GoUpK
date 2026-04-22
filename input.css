@@ -1356,10 +1356,12 @@ body.hide-nav-labels .nav-btn {
   overflow-y: auto;
   
   opacity: 0;
+  /* Анимация: меняем масштаб и положение */
   transform: scale(0.95) translateY(-10px);
-  transform-origin: top;
+  transform-origin: top center; /* Центр трансформации - верхний край */
   pointer-events: none;
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  /* Плавный переход в стиле iOS */
+  transition: opacity 0.2s cubic-bezier(0.32, 0.72, 0, 1), transform 0.2s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 .custom-select-options.is-open {
@@ -1383,8 +1385,11 @@ body.hide-nav-labels .nav-btn {
 
 .custom-select-option.is-selected {
   font-weight: 700;
-  color: var(--primary-color);
-  background-color: color-mix(in srgb, var(--primary-color) 15%, transparent);
+  background-color: var(--primary-color); /* Используем акцентный цвет для фона */
+  color: var(--cs-selected-text-color, #ffffff); /* Цвет текста по умолчанию - белый */
+}
+.custom-select-option.is-selected.needs-dark-text {
+  color: var(--text-color); /* Используем основной цвет текста темы */
 }
 
 /* Стили для темы Liquid Glass */

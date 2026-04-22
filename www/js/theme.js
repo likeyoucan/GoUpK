@@ -192,6 +192,9 @@ export const themeManager = {
       rootEl.style.setProperty("--alert-color", alertColor);
     }
 
+    // Сообщаем всему приложению, что акцентный цвет изменился
+    document.dispatchEvent(new CustomEvent("accentColorChanged"));
+
     // Синхронизируем UI после всех изменений.
     colorManager.updateSelectionUI("accent", hex, doScroll);
     colorManager.syncPickers(this.currentAccent, this.currentBg);
