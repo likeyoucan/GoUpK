@@ -172,21 +172,16 @@ export const colorManager = {
     ) {
       this._hideActionButton();
     }
-    if (swatchWrapper) {
-      if (this.activeActionTarget === swatchWrapper) {
-        this._hideActionButton();
-        return;
-      }
 
+    if (swatchWrapper) {
       const color = swatchWrapper.dataset.color;
       document.dispatchEvent(
         new CustomEvent("colorSelected", {
           detail: { type, color, fromPicker: false },
         }),
       );
-      if (swatchWrapper.dataset.custom === "true") {
+      if (swatchWrapper.dataset.custom === "true")
         this._showActionButton(swatchWrapper, "delete");
-      }
     }
   },
 
