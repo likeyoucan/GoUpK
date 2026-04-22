@@ -146,44 +146,61 @@ export const colorManager = {
     container.addEventListener("touchend", endTouch);
     container.addEventListener("touchcancel", endTouch);
   },
-
-  _handleClick(event, type) {
+_handleClick(event, type) {
     const swatchWrapper = event.target.closest(".color-swatch-wrapper");
     const pickerWrapper = event.target.closest(".color-picker-wrapper");
     const actionBtn = event.target.closest(".color-action-btn");
 
+    // Сценарий 1: Клик был прямо на кнопке "Удалить" или "Добавить".
     if (actionBtn) {
-      event.stopPropagation();
-      if (actionBtn.dataset.action === "add") this.addCustomColor(type);
-      else if (actionBtn.dataset.action === "delete")
-        this._deleteColor(actionBtn.dataset.color, type);
-      return;
+        event.stopPropagation();
+        if (actionBtn.dataset.action === "add") this.addCustomColor(type);
+        else if (actionBtn.dataset.action === "delete") this._deleteColor(actionBtn.dataset.color, type);
+        return; // Завершаем, действие выполнено.
     }
 
+    // Сценарий 2: Клик был на кнопке "+" (color picker).
     if (pickerWrapper) {
-      if (this.activeActionTarget === pickerWrapper) this._hideActionButton();
-      else this._showActionButton(pickerWrapper, "add");
-      return;
+        // Если кнопка "+" уже активна, скрываем ее.
+        if (this.activeActionTarget === pickerWrapper) {
+            this._hideActionButton();
+        } else {
+        // Иначе, показываем для нее кнопку "Добавить".
+            this._showActionButton(pickerWrapper, "add");
+        }
+        return; // Завершаем, так как мы обработали клик по пикеру.
     }
 
-    if (
-      this.activeActionTarget &&
-      !this.activeActionTarget.contains(event.target)
-    ) {
-      this._hideActionButton();
-    }
-
+    // Сценарий 3: Клик был на кружке с цветом.
     if (swatchWrapper) {
-      const color = swatchWrapper.dataset.color;
-      document.dispatchEvent(
-        new CustomEvent("colorSelected", {
-          detail: { type, color, fromPicker: false },
-        }),
-      );
-      if (swatchWrapper.dataset.custom === "true")
-        this._showActionButton(swatchWrapper, "delete");
+        // Если этот кружок уже активен (у него есть кнопка), скрываем ее.
+        if (this.activeActionTarget === swatchWrapper) {
+            this._hideActionButton();
+            return; // Завершаем, действие "скрыть кнопку" выполнено.
+        }
+
+        // Если кружок не был активен, то выбираем этот цвет.
+        const color = swatchWrapper.dataset.color;
+        document.dispatchEvent(
+            new CustomEvent("colorSelected", {
+                detail: { type, color, fromPicker: false },
+            })
+        );
+        
+        // И если это кастомный цвет, показываем для него кнопку "Удалить".
+        if (swatchWrapper.dataset.custom === "true") {
+            this._showActionButton(swatchWrapper, "delete");
+        } else {
+            // Если это стандартный цвет, просто скрываем любую другую активную кнопку.
+            this._hideActionButton();
+        }
+        return; // Завершаем, так как мы обработали клик по кружку.
     }
-  },
+    
+    // Сценарий 4: Клик был на пустом месте внутри контейнера.
+    // Скрываем любую активную кнопку.
+    this._hideActionButton();
+},
 
   _updateAddButtonColor(button, newColor) {
     button.style.backgroundColor = newColor;
