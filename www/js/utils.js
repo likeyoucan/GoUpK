@@ -111,16 +111,25 @@ export const adjustVal = (id, delta) => {
     let currentValue = parseInt(el.value, 10) || 0;
     let finalDelta = delta;
 
+    // --- НАША НОВАЯ "УМНАЯ" ЛОГИКА ---
+    // Если мы хотим прибавить (+5), а текущее значение меньше 5,
+    // то просто установим значение равным 5.
+    // Это предотвратит скачок с 1 до 6.
     if (delta > 1 && currentValue < delta) {
         el.value = delta;
         return;
     }
 
+    // Если мы хотим отнять (-5), а текущее значение между 1 и 5,
+    // то просто установим значение равным 1.
+    // Это предотвратит уход в отрицательные числа.
     if (delta < -1 && currentValue > 1 && currentValue <= Math.abs(delta)) {
         el.value = 1;
         return;
     }
+    // --- КОНЕЦ НОВОЙ ЛОГИКИ ---
 
+    // Стандартное поведение для всех остальных случаев
     const newValue = currentValue + finalDelta;
     el.value = Math.max(1, newValue);
 };
@@ -269,7 +278,7 @@ export const bgWorker = createWorker();
  */
 export const normalizeHexColor = (hex) => {
     if (!hex || hex.length !== 4 || hex[0] !== '#') {
-        return hex;
+        return hex; // Возвращаем как есть, если это не 3-значный hex
     }
     const r = hex[1];
     const g = hex[2];

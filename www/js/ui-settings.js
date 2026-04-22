@@ -245,7 +245,7 @@ export const uiSettingsManager = {
       "app_sw_minute_beep",
     ];
     keys.forEach(safeRemoveLS);
-    this.applySettings();
+    this.applySettings(); // Применит дефолты и обновит UI
   },
 
   syncSliderUIs() {

@@ -99,6 +99,10 @@ export const colorManager = {
     const container = $(containerId);
     if (!container) return;
 
+    // --- Клик по элементам ---
+    container.addEventListener("click", (e) => this._handleClick(e, type));
+
+    // --- Правый клик для удаления (десктоп) ---
     container.addEventListener("contextmenu", (e) => {
       const swatch = e.target.closest(
         '.color-swatch-wrapper[data-custom="true"]',
@@ -109,6 +113,7 @@ export const colorManager = {
       }
     });
 
+    // --- Логика для долгого тапа (мобильные устройства) ---
     let touchMoved = false;
 
     container.addEventListener(
@@ -119,17 +124,19 @@ export const colorManager = {
         );
         if (swatch) {
           touchMoved = false;
+          // Запускаем таймер, который сработает, если палец не сдвинется
           this.longPressTimer = setTimeout(() => {
             if (!touchMoved) {
-              e.preventDefault();
+              e.preventDefault(); // Предотвращаем другие события, если это долгий тап
               this._showActionButton(swatch, "delete");
             }
           }, LONG_PRESS_DURATION);
         }
       },
       { passive: true },
-    );
+    ); // passive: true, т.к. мы не блокируем скролл в этом обработчике
 
+    // Если началось движение пальца, отменяем таймер долгого тапа
     container.addEventListener("touchmove", () => {
       touchMoved = true;
       if (this.longPressTimer) {
@@ -137,6 +144,7 @@ export const colorManager = {
       }
     });
 
+    // При завершении касания в любом случае сбрасываем таймер
     const endTouch = () => {
       if (this.longPressTimer) {
         clearTimeout(this.longPressTimer);
@@ -146,61 +154,44 @@ export const colorManager = {
     container.addEventListener("touchend", endTouch);
     container.addEventListener("touchcancel", endTouch);
   },
-_handleClick(event, type) {
+
+  _handleClick(event, type) {
     const swatchWrapper = event.target.closest(".color-swatch-wrapper");
     const pickerWrapper = event.target.closest(".color-picker-wrapper");
     const actionBtn = event.target.closest(".color-action-btn");
 
-    // Сценарий 1: Клик был прямо на кнопке "Удалить" или "Добавить".
     if (actionBtn) {
-        event.stopPropagation();
-        if (actionBtn.dataset.action === "add") this.addCustomColor(type);
-        else if (actionBtn.dataset.action === "delete") this._deleteColor(actionBtn.dataset.color, type);
-        return; // Завершаем, действие выполнено.
+      event.stopPropagation();
+      if (actionBtn.dataset.action === "add") this.addCustomColor(type);
+      else if (actionBtn.dataset.action === "delete")
+        this._deleteColor(actionBtn.dataset.color, type);
+      return;
     }
 
-    // Сценарий 2: Клик был на кнопке "+" (color picker).
     if (pickerWrapper) {
-        // Если кнопка "+" уже активна, скрываем ее.
-        if (this.activeActionTarget === pickerWrapper) {
-            this._hideActionButton();
-        } else {
-        // Иначе, показываем для нее кнопку "Добавить".
-            this._showActionButton(pickerWrapper, "add");
-        }
-        return; // Завершаем, так как мы обработали клик по пикеру.
+      if (this.activeActionTarget === pickerWrapper) this._hideActionButton();
+      else this._showActionButton(pickerWrapper, "add");
+      return;
     }
 
-    // Сценарий 3: Клик был на кружке с цветом.
+    if (
+      this.activeActionTarget &&
+      !this.activeActionTarget.contains(event.target)
+    ) {
+      this._hideActionButton();
+    }
+
     if (swatchWrapper) {
-        // Если этот кружок уже активен (у него есть кнопка), скрываем ее.
-        if (this.activeActionTarget === swatchWrapper) {
-            this._hideActionButton();
-            return; // Завершаем, действие "скрыть кнопку" выполнено.
-        }
-
-        // Если кружок не был активен, то выбираем этот цвет.
-        const color = swatchWrapper.dataset.color;
-        document.dispatchEvent(
-            new CustomEvent("colorSelected", {
-                detail: { type, color, fromPicker: false },
-            })
-        );
-        
-        // И если это кастомный цвет, показываем для него кнопку "Удалить".
-        if (swatchWrapper.dataset.custom === "true") {
-            this._showActionButton(swatchWrapper, "delete");
-        } else {
-            // Если это стандартный цвет, просто скрываем любую другую активную кнопку.
-            this._hideActionButton();
-        }
-        return; // Завершаем, так как мы обработали клик по кружку.
+      const color = swatchWrapper.dataset.color;
+      document.dispatchEvent(
+        new CustomEvent("colorSelected", {
+          detail: { type, color, fromPicker: false },
+        }),
+      );
+      if (swatchWrapper.dataset.custom === "true")
+        this._showActionButton(swatchWrapper, "delete");
     }
-    
-    // Сценарий 4: Клик был на пустом месте внутри контейнера.
-    // Скрываем любую активную кнопку.
-    this._hideActionButton();
-},
+  },
 
   _updateAddButtonColor(button, newColor) {
     button.style.backgroundColor = newColor;
@@ -264,6 +255,7 @@ _handleClick(event, type) {
     const picker = $(isAccent ? "customColorInput" : "customBgInput");
     const newColor = picker.value.toLowerCase();
 
+    // 1. Проверяем на совпадение со стандартной палитрой и кастомными цветами.
     const baseBlocklist = (
       isAccent
         ? [...this.standardAccentColors, ...this.customAccentColors]
@@ -276,15 +268,21 @@ _handleClick(event, type) {
       return;
     }
 
+    // 2. ИСПРАВЛЕННАЯ ПРОВЕРКА: Используем жестко заданные значения, но с учетом темы.
+    // Это единственный надежный способ сравнения.
     const currentTheme = themeManager.getCurrentTheme();
     let activeDefaultColor;
 
     if (isAccent) {
+      // Значения взяты напрямую из вашего input.css
       activeDefaultColor = currentTheme === "dark" ? "#4ade80" : "#22c55e";
     } else {
+      // Это тип 'bg'
+      // Значения взяты напрямую из вашего input.css
       activeDefaultColor = currentTheme === "dark" ? "#000000" : "#f3f4f6";
     }
 
+    // Теперь сравнение абсолютно точное
     if (newColor === activeDefaultColor.toLowerCase()) {
       this._hideActionButton();
       showToast(t("color_already_exists"));
