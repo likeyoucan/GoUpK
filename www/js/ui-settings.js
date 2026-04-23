@@ -1,3 +1,5 @@
+// Файл: www/js/ui-settings.js
+
 import { $, safeGetLS, safeSetLS, safeRemoveLS } from "./utils.js?v=VERSION";
 import { t } from "./i18n.js?v=VERSION";
 import { sm } from "./sound.js?v=VERSION";

@@ -1,20 +1,13 @@
-/**
- * store.js
- * Простое хранилище состояния в памяти для отслеживания активного таймера.
- * Это легковесная альтернатива более сложным менеджерам состояний.
- * Она позволяет разным модулям знать, какой таймер сейчас запущен,
- * чтобы избежать одновременной работы нескольких таймеров.
- */
+// Файл: www/js/store.js
 
 const storeData = {
-  /** @type {('stopwatch'|'timer'|'tabata')|null} */
-  activeTimer: null,
+  activeTimer: null, // Хранит имя активного таймера ('stopwatch', 'timer', 'tabata') или null
 };
 
 export const store = {
   /**
    * Устанавливает, какой таймер сейчас является активным.
-   * @param {('stopwatch'|'timer'|'tabata')|null} timerName - Имя таймера или null для сброса.
+   * @param {string | null} timerName - Имя таймера или null для сброса.
    */
   setActiveTimer(timerName) {
     storeData.activeTimer = timerName;
@@ -22,7 +15,7 @@ export const store = {
 
   /**
    * Возвращает имя активного в данный момент таймера.
-   * @returns {('stopwatch'|'timer'|'tabata')|null}
+   * @returns {string | null}
    */
   getActiveTimer() {
     return storeData.activeTimer;

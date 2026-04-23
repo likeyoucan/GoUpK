@@ -1,3 +1,6 @@
+// Файл: www/js/stopwatch.js
+
+
 import {
   $,
   formatTime,
@@ -12,7 +15,6 @@ import {
   announceToScreenReader,
   showToast,
   getUniqueName,
-  fillTemplate,
 } from "./utils.js?v=VERSION";
 import { sm } from "./sound.js?v=VERSION";
 import { t } from "./i18n.js?v=VERSION";
@@ -37,8 +39,8 @@ const stopwatchModule = {
   lastMinuteBeep: 0,
   sortSelect: null,
 
+  // --- Основной метод инициализации ---
   init() {
-    // 1. Кэшируем все элементы DOM для быстрого доступа
     this.els = {
       display: $("sw-mainDisplay"),
       extendedDisplay: $("sw-extendedDisplay"),
@@ -49,7 +51,7 @@ const stopwatchModule = {
       ring: $("sw-progressRing"),
       saveBtn: $("sw-saveBtn"),
       sessionsList: $("sw-sessionsList"),
-      swSortWrapper: $("sw-sort-wrapper"),
+      swSortWrapper: $("sw-sort-wrapper"), // Целимся в новую обертку
       nameTitle: $("sw-name-title"),
       nameInput: $("sw-name-input"),
       nameError: $("sw-name-error"),
@@ -62,36 +64,38 @@ const stopwatchModule = {
       this.els.ring.style.strokeDashoffset = this.ringLength;
     }
 
-    // 2. Назначаем обработчики событий
-    this._bindEvents();
-
-    // 3. Инициализация CustomSelect для сортировки
-    this._initSortSelect();
-
-    // 4. Загружаем сохраненные данные
-    try {
-      const stored = safeGetLS("sw_saved_sessions");
-      this.savedSessions = stored ? JSON.parse(stored) : [];
-    } catch (e) {
-      this.savedSessions = [];
-    }
-  },
-
-  _bindEvents() {
     this.els.btn?.addEventListener("click", () => this.toggle());
     this.els.lapBtn?.addEventListener("click", () => this.recordLapOrReset());
     this.els.saveBtn?.addEventListener("click", () =>
       this.prepareSaveSession(),
     );
+
+    // Инициализация CustomSelect для сортировки
+    const sortOptions = [
+      { value: "date_asc", text: t("date_old") },
+      { value: "date_desc", text: t("date_new") },
+      { value: "result_fast", text: t("result_fast") },
+      { value: "name_az", text: t("name_az") },
+      { value: "name_za", text: t("name_za") },
+    ];
+
+    this.sortSelect = new CustomSelect(
+      "swSortSelectContainer",
+      sortOptions,
+      (value) => {
+        // onSelect callback
+        this.sortSessions(value);
+      },
+      this.currentSort, // Начальное значение
+    );
+
     this.els.nameInput?.addEventListener("input", () =>
       this.els.nameError?.classList.add("hidden"),
     );
-
     this.els.sessionsList?.addEventListener("click", (e) => {
       const header = e.target.closest(".sw-session-header");
       const renameBtn = e.target.closest(".sw-rename-btn");
       const deleteBtn = e.target.closest(".sw-delete-btn");
-
       if (renameBtn) {
         e.stopPropagation();
         this.prepareRenameSession(Number(renameBtn.dataset.id));
@@ -106,42 +110,45 @@ const stopwatchModule = {
     document.addEventListener("timerStarted", (e) => {
       if (e.detail !== "stopwatch" && this.isRunning) this.toggle();
     });
+    bgWorker.addEventListener("message", (e) => {
+      if (e.data === "tick" && this.isRunning && document.hidden)
+        this.tick(true);
+    });
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "visible" && this.isRunning) {
         this.lastRender = 0;
         this.tick();
       }
     });
+
+    try {
+      const stored = safeGetLS("sw_saved_sessions");
+      this.savedSessions = stored ? JSON.parse(stored) : [];
+    } catch (e) {
+      this.savedSessions = [];
+    }
+
     document.addEventListener("languageChanged", () => {
       this.renderSavedSessions();
       if (this.laps.length > 0) this.reRenderCurrentLaps();
-      this._initSortSelect(); // Переинициализируем селект для обновления текстов
+
+      if (this.sortSelect) {
+        this.sortSelect.options = [
+          { value: "date_desc", text: t("date_new") },
+          { value: "date_asc", text: t("date_old") },
+          { value: "result_fast", text: t("result_fast") },
+          { value: "name_az", text: t("name_az") },
+          { value: "name_za", text: t("name_za") },
+        ];
+        this.sortSelect.populateOptions();
+        this.sortSelect.setValue(this.currentSort, false);
+      }
     });
+
     document.addEventListener("msChanged", () => {
       if (!this.isRunning && this.elapsedTime > 0) this.updateDisplay();
       if (this.laps.length > 0) this.reRenderCurrentLaps();
-      this.renderSavedSessions();
     });
-    bgWorker.addEventListener("message", (e) => {
-      if (e.data === "tick" && this.isRunning && document.hidden)
-        this.tick(true);
-    });
-  },
-
-  _initSortSelect() {
-    const sortOptions = [
-      { value: "date_desc", text: t("date_new") },
-      { value: "date_asc", text: t("date_old") },
-      { value: "result_fast", text: t("result_fast") },
-      { value: "name_az", text: t("name_az") },
-      { value: "name_za", text: t("name_za") },
-    ];
-    this.sortSelect = new CustomSelect(
-      "swSortSelectContainer",
-      sortOptions,
-      (value) => this.sortSessions(value),
-      this.currentSort,
-    );
   },
 
   toggle() {
@@ -200,6 +207,7 @@ const stopwatchModule = {
       sm.play("minute_beep");
       sm.vibrate(40, "light");
     }
+
     if (now - this.lastRender >= 16 || isBackground) {
       if (!isBackground) this.updateDisplay();
       else
@@ -220,9 +228,10 @@ const stopwatchModule = {
   updateDisplay() {
     const showMs = uiSettingsManager.showMs;
     const shouldForceHours = this.elapsedTime >= 3600000;
+
     const mainDisplayParts = formatTime(this.elapsedTime, {
       showMs,
-      forceHours,
+      forceHours: shouldForceHours,
     }).split(":");
     const mainDisplayStr = shouldForceHours
       ? mainDisplayParts.join(":")
@@ -242,7 +251,12 @@ const stopwatchModule = {
         this.els.extendedDisplay.classList.add("hidden");
       }
     }
-    updateTitle(formatTime(this.elapsedTime, { showMs: false, forceHours }));
+    updateTitle(
+      formatTime(this.elapsedTime, {
+        showMs: false,
+        forceHours: shouldForceHours,
+      }),
+    );
     if (this.els.ring)
       this.els.ring.style.strokeDashoffset =
         this.ringLength -
@@ -261,15 +275,16 @@ const stopwatchModule = {
         index: this.laps.length + 1,
       });
       if (this.laps.length === 1) {
-        this.els.lapsContainer.innerHTML = "";
+        this.els.lapsContainer.replaceChildren();
         this.els.currentLapsHeader.classList.remove("hidden");
+        this.els.currentLapsHeader.classList.add("flex");
       } else {
         const prevLatest = this.els.lapsContainer.firstElementChild;
         if (prevLatest) {
           prevLatest.classList.remove("bg-black/5", "dark:bg-white/5");
-          prevLatest
-            .querySelector('[data-template="lap-split"]')
-            ?.classList.remove("primary-text");
+          const splitTimeEl = prevLatest.querySelector(".split-time");
+          splitTimeEl?.classList.remove("primary-text");
+          splitTimeEl?.classList.add("app-text");
         }
       }
       this.els.lapsContainer.prepend(this.createLapElement(this.laps[0], true));
@@ -292,43 +307,69 @@ const stopwatchModule = {
       if (this.els.ring) this.els.ring.style.strokeDashoffset = this.ringLength;
       this.els.lapBtn.classList.add("hidden");
       this.els.currentLapsHeader.classList.add("hidden");
-      this._renderEmptyState(this.els.lapsContainer, "no_laps");
+      this.els.currentLapsHeader.classList.remove("flex");
+      const noLapsDiv = document.createElement("div");
+      noLapsDiv.className = "text-center app-text-sec opacity-50 mt-4 text-sm";
+      noLapsDiv.setAttribute("data-i18n", "no_laps");
+      noLapsDiv.textContent = t("no_laps");
+      this.els.lapsContainer.replaceChildren(noLapsDiv);
       this.updateSaveButtonVisibility();
     }
   },
 
   createLapElement(lap, isLatest = false) {
-    const shouldForceHours = this.elapsedTime >= 3600000;
-    const lapData = {
-      "lap-index": `${t("lap_text")} ${lap.index}`,
-      "lap-total": formatTime(lap.total, {
-        showMs: uiSettingsManager.showMs,
-        forceHours,
-      }),
-      "lap-split": formatTime(lap.diff, {
-        showMs: uiSettingsManager.showMs,
-        forceHours,
-      }),
-    };
+    const lapTemplate = $("sw-lap-row-template");
+    if (!lapTemplate) return document.createElement("div");
 
-    const div = fillTemplate("sw-lap-row-template", lapData);
-    if (!div) return document.createElement("div");
+    const clone = lapTemplate.content.cloneNode(true);
+    const div = clone.firstElementChild;
+
+    div.classList.add(
+      "lap-row",
+      "mt-2.5",
+      "py-3",
+      "border-b",
+      "app-border",
+      "px-3",
+      "rounded-lg",
+      "transition-all",
+      "duration-300",
+    );
+    div.classList.remove("py-2", "border-gray-500/10", "px-2");
+    if (isLatest) div.classList.add("bg-black/5", "dark:bg-white/5");
+
+    const shouldForceHours = this.elapsedTime >= 3600000;
+
+    div.querySelector('[data-template="lap-index"]').textContent =
+      `${t("lap_text")} ${lap.index}`;
+    div.querySelector('[data-template="lap-total"]').textContent = formatTime(
+      lap.total,
+      { showMs: uiSettingsManager.showMs, forceHours: shouldForceHours },
+    );
+
+    const splitTimeEl = div.querySelector('[data-template="lap-split"]');
+    splitTimeEl.textContent = formatTime(lap.diff, {
+      showMs: uiSettingsManager.showMs,
+      forceHours: shouldForceHours,
+    });
+    splitTimeEl.classList.add("split-time");
 
     if (isLatest) {
-      div.classList.add("bg-black/5", "dark:bg-white/5");
-      div
-        .querySelector('[data-template="lap-split"]')
-        ?.classList.add("primary-text");
+      splitTimeEl.classList.remove("app-text");
+      splitTimeEl.classList.add("primary-text");
     }
 
     return div;
   },
 
   reRenderCurrentLaps() {
-    if (!this.els.lapsContainer) return;
-    this.els.lapsContainer.innerHTML = "";
+    this.els.lapsContainer.replaceChildren();
     if (this.laps.length === 0) {
-      this._renderEmptyState(this.els.lapsContainer, "no_laps");
+      const noLapsDiv = document.createElement("div");
+      noLapsDiv.className = "text-center app-text-sec opacity-50 mt-4 text-sm";
+      noLapsDiv.setAttribute("data-i18n", "no_laps");
+      noLapsDiv.textContent = t("no_laps");
+      this.els.lapsContainer.appendChild(noLapsDiv);
       return;
     }
     [...this.laps].reverse().forEach((lap, i, arr) => {
@@ -339,7 +380,14 @@ const stopwatchModule = {
   },
 
   updateSaveButtonVisibility() {
-    this.els.saveBtn?.classList.toggle("hidden", this.laps.length === 0);
+    if (!this.els.saveBtn) return;
+    if (this.laps.length > 0) {
+      this.els.saveBtn.classList.remove("hidden");
+      this.els.saveBtn.classList.add("flex");
+    } else {
+      this.els.saveBtn.classList.add("hidden");
+      this.els.saveBtn.classList.remove("flex");
+    }
   },
 
   prepareSaveSession() {
@@ -414,6 +462,7 @@ const stopwatchModule = {
       );
       return;
     }
+
     const isDuplicate = this.savedSessions.some(
       (s) =>
         s.name.toLowerCase() === finalName.toLowerCase() &&
@@ -459,7 +508,9 @@ const stopwatchModule = {
 
   sortSessions(type) {
     this.currentSort = type;
-    if (this.sortSelect) this.sortSelect.setValue(type, false);
+    if (this.sortSelect) {
+      this.sortSelect.setValue(type, false);
+    }
     this.savedSessions.sort((a, b) => {
       if (type === "date_desc") return b.date - a.date;
       if (type === "date_asc") return a.date - b.date;
@@ -491,33 +542,50 @@ const stopwatchModule = {
   },
 
   renderSavedSessions() {
-    if (!this.els.sessionsList) return;
+    if (!this.els || !this.els.sessionsList) return;
 
     const hasSessions = this.savedSessions.length > 0;
 
-    this.els.swSortWrapper?.classList.toggle("hidden", !hasSessions);
-    $("sw-clearAllBtn")?.toggleAttribute("disabled", !hasSessions);
-    this.els.sessionsList.innerHTML = "";
+    if (this.els.swSortWrapper) {
+      this.els.swSortWrapper.classList.toggle("hidden", !hasSessions);
+    }
+
+    const clearAllBtn = $("sw-clearAllBtn");
+    if (clearAllBtn) clearAllBtn.disabled = !hasSessions;
+
+    this.els.sessionsList.replaceChildren();
 
     if (!hasSessions) {
-      this._renderEmptyState(this.els.sessionsList, "empty_sessions");
+      const emptyDiv = document.createElement("div");
+      emptyDiv.className =
+        "text-center app-text-sec opacity-50 mt-10 text-sm pointer-events-none";
+      emptyDiv.setAttribute("data-i18n", "empty_sessions");
+      emptyDiv.textContent = t("empty_sessions");
+      this.els.sessionsList.appendChild(emptyDiv);
       return;
     }
 
     const fragment = document.createDocumentFragment();
-    this.savedSessions.forEach((session) => {
-      const dateObj = new Date(session.date || session.id);
-      const sessionData = {
-        name: session.name,
-        date: `${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`,
-        totalTime: formatTime(session.totalTime, {
-          showMs: uiSettingsManager.showMs,
-          forceHours: session.totalTime >= 3600000,
-        }),
-      };
+    const sessionTemplate = $("sw-session-template");
+    const lapTemplate = $("sw-lap-row-template");
+    if (!sessionTemplate || !lapTemplate) return;
 
-      const sessionElement = fillTemplate("sw-session-template", sessionData);
-      if (!sessionElement) return;
+    this.savedSessions.forEach((session) => {
+      const clone = sessionTemplate.content.cloneNode(true);
+      const sessionElement = clone.firstElementChild;
+      const shouldForceHours = session.totalTime >= 3600000;
+      const dateObj = new Date(session.date || session.id);
+      const dateStr = `${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+
+      sessionElement.querySelector('[data-template="name"]').textContent =
+        session.name;
+      sessionElement.querySelector('[data-template="date"]').textContent =
+        dateStr;
+      sessionElement.querySelector('[data-template="totalTime"]').textContent =
+        formatTime(session.totalTime, {
+          showMs: uiSettingsManager.showMs,
+          forceHours: shouldForceHours,
+        });
 
       sessionElement.querySelector('[data-template-id="header"]').dataset.id =
         session.id;
@@ -527,10 +595,14 @@ const stopwatchModule = {
       sessionElement.querySelector(
         '[data-template-id="deleteBtn"]',
       ).dataset.id = session.id;
-      sessionElement.querySelector('[data-template-id="details"]').id =
-        `sw-details-${session.id}`;
-      sessionElement.querySelector('[data-template-id="icon"]').id =
-        `sw-icon-${session.id}`;
+
+      const detailsEl = sessionElement.querySelector(
+        '[data-template-id="details"]',
+      );
+      const iconEl = sessionElement.querySelector('[data-template-id="icon"]');
+      detailsEl.id = `sw-details-${session.id}`;
+      iconEl.id = `sw-icon-${session.id}`;
+
       sessionElement.querySelector(
         '[data-template-id="renameBtn"]',
       ).textContent = t("rename");
@@ -541,29 +613,56 @@ const stopwatchModule = {
       const lapsContainer = sessionElement.querySelector(
         '[data-template="lapsContainer"]',
       );
-      if (lapsContainer) {
-        lapsContainer.innerHTML = `
-          <div class="flex justify-between items-center py-1.5 border-b border-gray-500/30 mb-1 px-2">
-            <span class="text-[10px] font-bold app-text-sec uppercase tracking-wider">${t("lap_text")}</span>
-            <div class="flex items-center gap-4">
-              <span class="text-[10px] font-bold app-text-sec uppercase tracking-wider w-16 text-right">${t("total_time")}</span>
-              <span class="text-[10px] font-bold app-text-sec uppercase tracking-wider w-16 text-right">${t("split_time")}</span>
-            </div>
-          </div>`;
-        session.laps.forEach((lap) =>
-          lapsContainer.appendChild(this.createLapElement(lap)),
-        );
-      }
+
+      const headerDiv = document.createElement("div");
+      headerDiv.className =
+        "flex justify-between items-center py-1.5 border-b border-gray-500/30 mb-1 px-2";
+
+      const lapSpan = document.createElement("span");
+      lapSpan.className =
+        "text-[10px] font-bold app-text-sec uppercase tracking-wider";
+      lapSpan.textContent = t("lap_text");
+
+      const timesDiv = document.createElement("div");
+      timesDiv.className = "flex items-center gap-4";
+
+      const totalSpan = document.createElement("span");
+      totalSpan.className =
+        "text-[10px] font-bold app-text-sec uppercase tracking-wider w-16 text-right";
+      totalSpan.textContent = t("total_time");
+
+      const splitSpan = document.createElement("span");
+      splitSpan.className =
+        "text-[10px] font-bold app-text-sec uppercase tracking-wider w-16 text-right";
+      splitSpan.textContent = t("split_time");
+
+      timesDiv.append(totalSpan, splitSpan);
+      headerDiv.append(lapSpan, timesDiv);
+      lapsContainer.appendChild(headerDiv);
+
+      session.laps.forEach((lap) => {
+        const lapClone = lapTemplate.content.cloneNode(true);
+        const lapElement = lapClone.firstElementChild;
+
+        lapElement.querySelector('[data-template="lap-index"]').textContent =
+          `${t("lap_text")} ${lap.index}`;
+        lapElement.querySelector('[data-template="lap-total"]').textContent =
+          formatTime(lap.total, {
+            showMs: uiSettingsManager.showMs,
+            forceHours: shouldForceHours,
+          });
+        lapElement.querySelector('[data-template="lap-split"]').textContent =
+          formatTime(lap.diff, {
+            showMs: uiSettingsManager.showMs,
+            forceHours: shouldForceHours,
+          });
+
+        lapsContainer.appendChild(lapElement);
+      });
 
       fragment.appendChild(sessionElement);
     });
-
     this.els.sessionsList.appendChild(fragment);
-  },
-
-  _renderEmptyState(container, i18nKey) {
-    if (!container) return;
-    container.innerHTML = `<div class="text-center app-text-sec opacity-50 mt-10 text-sm pointer-events-none" data-i18n="${i18nKey}">${t(i18nKey)}</div>`;
   },
 };
 

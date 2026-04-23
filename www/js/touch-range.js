@@ -1,3 +1,5 @@
+// Файл: www/js/touch-range.js
+
 /**
  * touch-range.js
  *
