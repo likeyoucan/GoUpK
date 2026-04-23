@@ -2,7 +2,7 @@
 
 import { $, safeGetLS, safeSetLS, safeRemoveLS } from "./utils.js?v=VERSION";
 import { t } from "./i18n.js?v=VERSION";
-import { sm } from "./sound.js?v=VERSION";
+import { sm } from "./sound.js?v=VERSION"; // NEW: Импортируем sound manager
 
 export const uiSettingsManager = {
   // Состояние
@@ -77,10 +77,13 @@ export const uiSettingsManager = {
     }
 
     const sliderListeners = {
-      // Убрали 'swMinuteBeep' отсюда, так как его обработчик уже есть в toggleListeners
-
       fontSlider: (val) => this.setFontSize(val),
       ringWidthSlider: (val) => this.setRingWidth(val),
+
+      // NEW: Добавлен обработчик для слайдера громкости
+      volumeSlider: (val, isFinal = true) => {
+        sm.setVolume(val, isFinal);
+      },
 
       vignetteSlider: (val, isFinal = true) => {
         const newAlpha = this.vignetteLevels[val];
@@ -103,7 +106,7 @@ export const uiSettingsManager = {
         this.updateSliderLabel("vibroSlider", "vibro-label", this.vibroLabels);
         if (isFinal) {
           safeSetLS("app_vibro_level", newLevel);
-          // Вибрация только при финальном изменении, чтобы пользователь почувствовал новый уровень
+          // Вибрация только при финальном изменении
           sm.vibrate(50, "strong");
         }
       },
@@ -113,23 +116,20 @@ export const uiSettingsManager = {
       const slider = $(id);
       if (!slider) continue;
 
-      // Обработчик для 'input' (перетаскивание)
+      // 'input' (перетаскивание)
       slider.addEventListener("input", (e) => {
         const currentValue = e.target.value;
-
         if (this.lastSliderValues[id] !== currentValue) {
           this.lastSliderValues[id] = currentValue;
-
-          // Обновляем UI в реальном времени, передавая isFinal = false
           callback(currentValue, false);
         }
       });
 
-      // Обработчик для 'change' (когда отпустили ползунок)
+      // 'change' (отпустили ползунок)
       slider.addEventListener("change", (e) => {
         const finalValue = e.target.value;
         this.lastSliderValues[id] = finalValue;
-        callback(finalValue, true); // Финальный вызов с сохранением
+        callback(finalValue, true);
       });
     }
   },
@@ -153,7 +153,6 @@ export const uiSettingsManager = {
     this.showMs = safeGetLS("app_show_ms") !== "false";
     if ($("toggle-ms")) $("toggle-ms").checked = this.showMs;
 
-    // Перенес swMinuteBeep сюда, так как это тоже toggle
     this.swMinuteBeep = safeGetLS("app_sw_minute_beep") !== "false";
     if ($("toggle-sw-minute-beep"))
       $("toggle-sw-minute-beep").checked = this.swMinuteBeep;
@@ -163,16 +162,23 @@ export const uiSettingsManager = {
     if ($("fontSlider")) {
       const slider = $("fontSlider");
       slider.value = fontSize;
-      slider.dispatchEvent(new Event('input', { bubbles: true }));
+      // FIX: Принудительно вызываем событие для обновления UI в touch-range
+      slider.dispatchEvent(new Event("input", { bubbles: true }));
     }
     this.setFontSize(fontSize);
 
     const ringWidth = safeGetLS("app_ring_width") || 4;
-    if ($("ringWidthSlider")) $("ringWidthSlider").value = ringWidth;
+    if ($("ringWidthSlider")) {
+      const slider = $("ringWidthSlider");
+      slider.value = ringWidth;
+      // FIX: Принудительно вызываем событие для обновления UI в touch-range
+      slider.dispatchEvent(new Event("input", { bubbles: true }));
+    }
     this.setRingWidth(ringWidth);
 
     this.vignetteAlpha = parseFloat(safeGetLS("app_vignette_alpha")) || 0.2;
     if ($("vignetteSlider")) {
+      const slider = $("vignetteSlider");
       const closestVignetteIndex = this.vignetteLevels.reduce(
         (p, c, i) =>
           Math.abs(c - this.vignetteAlpha) <
@@ -181,8 +187,37 @@ export const uiSettingsManager = {
             : p,
         0,
       );
-      $("vignetteSlider").value = closestVignetteIndex;
-      slider.dispatchEvent(new Event('input', { bubbles: true }));
+      slider.value = closestVignetteIndex;
+      // FIX: Принудительно вызываем событие для обновления UI в touch-range
+      slider.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+
+    // NEW: Инициализация слайдера громкости
+    const volume =
+      safeGetLS("app_volume") !== null
+        ? parseFloat(safeGetLS("app_volume"))
+        : 1;
+    if ($("volumeSlider")) {
+      const slider = $("volumeSlider");
+      slider.value = volume;
+      // FIX: Принудительно вызываем событие для обновления UI в touch-range
+      slider.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+    sm.setVolume(volume, true); // Инициализируем значение в sound.js
+
+    // FIX: Инициализация слайдера вибрации
+    const vibroLevel = parseFloat(safeGetLS("app_vibro_level")) || 1;
+    if ($("vibroSlider")) {
+      const slider = $("vibroSlider");
+      const levels = [0.5, 0.75, 1, 1.5, 2];
+      const closestVibroIndex = levels.reduce(
+        (p, c, i) =>
+          Math.abs(c - vibroLevel) < Math.abs(levels[p] - vibroLevel) ? i : p,
+        0,
+      );
+      slider.value = closestVibroIndex;
+      // FIX: Принудительно вызываем событие для обновления UI в touch-range
+      slider.dispatchEvent(new Event("input", { bubbles: true }));
     }
 
     // --- Применение эффектов и синхронизация UI ---
@@ -203,6 +238,7 @@ export const uiSettingsManager = {
       "app_ring_width",
       "app_show_ms",
       "app_sw_minute_beep",
+      "app_volume", // NEW: Добавлен ключ громкости для сброса
     ];
     keys.forEach(safeRemoveLS);
     this.applySettings(); // Применит дефолты и обновит UI

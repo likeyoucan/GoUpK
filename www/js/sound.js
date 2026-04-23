@@ -11,7 +11,7 @@ export const sm = {
   vibroLevel: 1,
   volume: 1,
   theme: "classic",
-  soundThemeSelect: null, // <-- 3. СВОЙСТВО ДЛЯ ХРАНЕНИЯ ЭКЗЕМПЛЯРА СЕЛЕКТА
+  soundThemeSelect: null,
   THEME_VOL_MULTIPLIERS: {
     classic: 1.0,
     sport: 1.6,
@@ -54,6 +54,8 @@ export const sm = {
       if (this.vibroEnabled) this.vibrate(50, "medium");
     });
 
+    // --- REMOVED: Обработчики слайдера громкости перенесены в ui-settings.js ---
+    /*
     $("volumeSlider")?.addEventListener("input", (e) => {
       this.vibrate(10, "tactile");
       this.volume = parseFloat(e.target.value);
@@ -64,8 +66,9 @@ export const sm = {
     $("volumeSlider")?.addEventListener("change", () => {
       this.play("click", { theme: this.theme });
     });
+    */
+    // -------------------------------------------------------------------------
 
-    // <-- 4. ИНИЦИАЛИЗАЦИЯ НОВОГО CUSTOM SELECT -->
     const soundThemeOptions = [
       { value: "classic", text: t("theme_classic") },
       { value: "sport", text: t("theme_sport") },
@@ -78,14 +81,13 @@ export const sm = {
       "soundThemeSelectContainer",
       soundThemeOptions,
       (newTheme) => {
-        // onSelect callback
         this.theme = newTheme;
         safeSetLS("app_sound_theme", this.theme);
+        // FIX: Воспроизводим звук при смене темы, а не только при смене громкости
         this.play("click", { theme: newTheme });
       },
-      this.theme, // Начальное значение берется из applySettings
+      this.theme,
     );
-    // <-- КОНЕЦ НОВОЙ ЛОГИКИ -->
 
     const unlockHandler = () => this.unlock();
     document.addEventListener("click", unlockHandler, {
@@ -110,25 +112,15 @@ export const sm = {
 
     if ($("toggle-sound")) $("toggle-sound").checked = this.soundEnabled;
     if ($("toggle-vibro")) $("toggle-vibro").checked = this.vibroEnabled;
-    if ($("vibroSlider")) {
-      const levels = [0.5, 0.75, 1, 1.5, 2];
-      const closestIndex = levels.reduce(
-        (prev, curr, index) =>
-          Math.abs(curr - this.vibroLevel) <
-          Math.abs(levels[prev] - this.vibroLevel)
-            ? index
-            : prev,
-        0,
-      );
-      $("vibroSlider").value = closestIndex;
-    }
+
+    // Этот код теперь дублируется в ui-settings.js, но это нормально,
+    // так как он устанавливает начальное состояние, а не слушает события.
     if ($("volumeSlider")) {
       $("volumeSlider").value = this.volume;
       const display = $("volumeDisplay");
       if (display) display.textContent = Math.round(this.volume * 100) + "%";
     }
 
-    // <-- 5. ОБНОВЛЕНИЕ UI CUSTOM SELECT -->
     if (this.soundThemeSelect) {
       this.soundThemeSelect.setValue(this.theme, false);
     }
@@ -151,6 +143,24 @@ export const sm = {
     ];
     soundKeys.forEach(safeRemoveLS);
     this.applySettings();
+  },
+
+  // NEW: Новый метод для управления громкостью извне (из ui-settings.js)
+  setVolume(newVolume, isFinal = false) {
+    this.volume = parseFloat(newVolume);
+    const display = $("volumeDisplay");
+    if (display) {
+      display.textContent = Math.round(this.volume * 100) + "%";
+    }
+
+    if (isFinal) {
+      // Пользователь закончил изменение громкости
+      safeSetLS("app_volume", this.volume);
+      this.play("click", { theme: this.theme });
+    } else {
+      // Пользователь все еще перетаскивает ползунок
+      this.vibrate(10, "tactile");
+    }
   },
 
   updateVolumeUI() {
