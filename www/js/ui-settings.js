@@ -160,7 +160,11 @@ export const uiSettingsManager = {
 
     // --- Слайдеры ---
     const fontSize = safeGetLS("font_size") || 16;
-    if ($("fontSlider")) $("fontSlider").value = fontSize;
+    if ($("fontSlider")) {
+      const slider = $("fontSlider");
+      slider.value = fontSize;
+      slider.dispatchEvent(new Event('input', { bubbles: true }));
+    }
     this.setFontSize(fontSize);
 
     const ringWidth = safeGetLS("app_ring_width") || 4;
@@ -178,6 +182,7 @@ export const uiSettingsManager = {
         0,
       );
       $("vignetteSlider").value = closestVignetteIndex;
+      slider.dispatchEvent(new Event('input', { bubbles: true }));
     }
 
     // --- Применение эффектов и синхронизация UI ---
