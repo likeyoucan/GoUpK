@@ -1,8 +1,6 @@
-// Файл: www/js/ui-settings.js
-
 import { $, safeGetLS, safeSetLS, safeRemoveLS } from "./utils.js?v=VERSION";
 import { t } from "./i18n.js?v=VERSION";
-import { sm } from "./sound.js?v=VERSION"; // NEW: Импортируем sound manager
+import { sm } from "./sound.js?v=VERSION";
 
 export const uiSettingsManager = {
   // Состояние
@@ -14,7 +12,6 @@ export const uiSettingsManager = {
   vignetteAlpha: 0.2,
   ringWidth: 4,
   swMinuteBeep: true,
-  lastSliderValues: {},
 
   // Константы
   vignetteLevels: [0.1, 0.15, 0.2, 0.25, 0.3],
@@ -25,6 +22,7 @@ export const uiSettingsManager = {
     "vignette_high",
     "vignette_max",
   ],
+  vibroLevels: [0.5, 0.75, 1, 1.5, 2],
   vibroLabels: [
     "vibro_min",
     "vibro_low",
@@ -34,8 +32,8 @@ export const uiSettingsManager = {
   ],
 
   init() {
-    this._bindEvents();
     this.applySettings(); // Применяем настройки при инициализации
+    this._bindEvents(); // Привязываем события ПОСЛЕ первой загрузки настроек
   },
 
   _bindEvents() {
@@ -44,6 +42,7 @@ export const uiSettingsManager = {
       this.updateVibroSliderUI(e.detail.enabled),
     );
 
+    // --- ОБРАБОТЧИКИ ПЕРЕКЛЮЧАТЕЛЕЙ (TOGGLES) ---
     const toggleListeners = {
       "toggle-ms": (val) => {
         this.showMs = val;
@@ -76,149 +75,88 @@ export const uiSettingsManager = {
       $(id)?.addEventListener("change", (e) => callback(e.target.checked));
     }
 
-    const sliderListeners = {
-      fontSlider: (val) => this.setFontSize(val),
-      ringWidthSlider: (val) => this.setRingWidth(val),
-
-      // NEW: Добавлен обработчик для слайдера громкости
-      volumeSlider: (val, isFinal = true) => {
-        sm.setVolume(val, isFinal);
-      },
-
-      vignetteSlider: (val, isFinal = true) => {
-        const newAlpha = this.vignetteLevels[val];
-        this.vignetteAlpha = newAlpha;
-        this.updateVignette();
-        this.updateSliderLabel(
-          "vignetteSlider",
-          "vignette-label",
-          this.vignetteLabels,
-        );
-        if (isFinal) {
-          safeSetLS("app_vignette_alpha", newAlpha);
-        }
-      },
-
-      vibroSlider: (val, isFinal = true) => {
-        const levels = [0.5, 0.75, 1, 1.5, 2];
-        const newLevel = levels[val] || 1;
-        sm.vibroLevel = newLevel;
-        this.updateSliderLabel("vibroSlider", "vibro-label", this.vibroLabels);
-        if (isFinal) {
-          safeSetLS("app_vibro_level", newLevel);
-          // Вибрация только при финальном изменении
-          sm.vibrate(50, "strong");
-        }
-      },
+    // --- ОБРАБОТЧИКИ СЛАЙДЕРОВ ---
+    const sliderCallbacks = {
+      fontSlider: (val, isFinal) => this.setFontSize(val, isFinal),
+      ringWidthSlider: (val, isFinal) => this.setRingWidth(val, isFinal),
+      volumeSlider: (val, isFinal) => sm.setVolume(val, isFinal),
+      vignetteSlider: (val, isFinal) => this._setVignetteLevel(val, isFinal),
+      vibroSlider: (val, isFinal) => this._setVibroLevel(val, isFinal),
     };
 
-    for (const [id, callback] of Object.entries(sliderListeners)) {
+    for (const [id, callback] of Object.entries(sliderCallbacks)) {
       const slider = $(id);
       if (!slider) continue;
 
-      // 'input' (перетаскивание)
-      slider.addEventListener("input", (e) => {
-        const currentValue = e.target.value;
-        if (this.lastSliderValues[id] !== currentValue) {
-          this.lastSliderValues[id] = currentValue;
-          callback(currentValue, false);
-        }
-      });
-
-      // 'change' (отпустили ползунок)
-      slider.addEventListener("change", (e) => {
-        const finalValue = e.target.value;
-        this.lastSliderValues[id] = finalValue;
-        callback(finalValue, true);
-      });
+      // При перетаскивании (isFinal = false)
+      slider.addEventListener("input", (e) => callback(e.target.value, false));
+      // Когда отпустили (isFinal = true)
+      slider.addEventListener("change", (e) => callback(e.target.value, true));
     }
   },
 
   applySettings() {
-    // --- Переключатели ---
+    // --- ПЕРЕКЛЮЧАТЕЛИ ---
     this.isAdaptiveBg = safeGetLS("app_adaptive_bg") !== "false";
     if ($("toggle-adaptive-bg"))
       $("toggle-adaptive-bg").checked = this.isAdaptiveBg;
-
     this.hasVignette = safeGetLS("app_vignette") === "true";
     if ($("toggle-vignette")) $("toggle-vignette").checked = this.hasVignette;
-
     this.isLiquidGlass = safeGetLS("app_liquid_glass") === "true";
     if ($("toggle-glass")) $("toggle-glass").checked = this.isLiquidGlass;
-
     this.hideNavLabels = safeGetLS("app_hide_nav_labels") === "true";
     if ($("toggle-nav-labels"))
       $("toggle-nav-labels").checked = this.hideNavLabels;
-
     this.showMs = safeGetLS("app_show_ms") !== "false";
     if ($("toggle-ms")) $("toggle-ms").checked = this.showMs;
-
     this.swMinuteBeep = safeGetLS("app_sw_minute_beep") !== "false";
     if ($("toggle-sw-minute-beep"))
       $("toggle-sw-minute-beep").checked = this.swMinuteBeep;
 
-    // --- Слайдеры ---
+    // --- СЛАЙДЕРЫ (Чтение и применение) ---
     const fontSize = safeGetLS("font_size") || 16;
-    if ($("fontSlider")) {
-      const slider = $("fontSlider");
-      slider.value = fontSize;
-      // FIX: Принудительно вызываем событие для обновления UI в touch-range
-      slider.dispatchEvent(new Event("input", { bubbles: true }));
-    }
-    this.setFontSize(fontSize);
+    this.setFontSize(fontSize, true); // Применяем и сохраняем начальное значение
+    if ($("fontSlider")) $("fontSlider").value = fontSize;
 
     const ringWidth = safeGetLS("app_ring_width") || 4;
-    if ($("ringWidthSlider")) {
-      const slider = $("ringWidthSlider");
-      slider.value = ringWidth;
-      // FIX: Принудительно вызываем событие для обновления UI в touch-range
-      slider.dispatchEvent(new Event("input", { bubbles: true }));
-    }
-    this.setRingWidth(ringWidth);
+    this.setRingWidth(ringWidth, true);
+    if ($("ringWidthSlider")) $("ringWidthSlider").value = ringWidth;
 
     this.vignetteAlpha = parseFloat(safeGetLS("app_vignette_alpha")) || 0.2;
-    if ($("vignetteSlider")) {
-      const slider = $("vignetteSlider");
-      const closestVignetteIndex = this.vignetteLevels.reduce(
-        (p, c, i) =>
-          Math.abs(c - this.vignetteAlpha) <
-          Math.abs(this.vignetteLevels[p] - this.vignetteAlpha)
-            ? i
-            : p,
-        0,
-      );
-      slider.value = closestVignetteIndex;
-      // FIX: Принудительно вызываем событие для обновления UI в touch-range
-      slider.dispatchEvent(new Event("input", { bubbles: true }));
-    }
+    const closestVignetteIndex = this.vignetteLevels.reduce(
+      (p, c, i) =>
+        Math.abs(c - this.vignetteAlpha) <
+        Math.abs(this.vignetteLevels[p] - this.vignetteAlpha)
+          ? i
+          : p,
+      0,
+    );
+    this._setVignetteLevel(closestVignetteIndex, true);
+    if ($("vignetteSlider")) $("vignetteSlider").value = closestVignetteIndex;
 
-    // NEW: Инициализация слайдера громкости
+    const vibroLevel = parseFloat(safeGetLS("app_vibro_level")) || 1;
+    const closestVibroIndex = this.vibroLevels.reduce(
+      (p, c, i) =>
+        Math.abs(c - vibroLevel) < Math.abs(this.vibroLevels[p] - vibroLevel)
+          ? i
+          : p,
+      0,
+    );
+    this._setVibroLevel(closestVibroIndex, true);
+    if ($("vibroSlider")) $("vibroSlider").value = closestVibroIndex;
+
     const volume =
       safeGetLS("app_volume") !== null
         ? parseFloat(safeGetLS("app_volume"))
         : 1;
-    if ($("volumeSlider")) {
-      const slider = $("volumeSlider");
-      slider.value = volume;
-      // FIX: Принудительно вызываем событие для обновления UI в touch-range
-      slider.dispatchEvent(new Event("input", { bubbles: true }));
-    }
-    sm.setVolume(volume, true); // Инициализируем значение в sound.js
+    sm.setVolume(volume, true); // Используем метод из sound.js для инициализации
+    if ($("volumeSlider")) $("volumeSlider").value = volume;
 
-    // FIX: Инициализация слайдера вибрации
-    const vibroLevel = parseFloat(safeGetLS("app_vibro_level")) || 1;
-    if ($("vibroSlider")) {
-      const slider = $("vibroSlider");
-      const levels = [0.5, 0.75, 1, 1.5, 2];
-      const closestVibroIndex = levels.reduce(
-        (p, c, i) =>
-          Math.abs(c - vibroLevel) < Math.abs(levels[p] - vibroLevel) ? i : p,
-        0,
-      );
-      slider.value = closestVibroIndex;
-      // FIX: Принудительно вызываем событие для обновления UI в touch-range
+    // --- ПРИНУДИТЕЛЬНОЕ ОБНОВЛЕНИЕ ВИЗУАЛЬНОЙ ЧАСТИ ВСЕХ СЛАЙДЕРОВ ---
+    // FIX: Это заставляет touch-range обновить положение бегунков
+    document.querySelectorAll('input[type="range"]').forEach((slider) => {
       slider.dispatchEvent(new Event("input", { bubbles: true }));
-    }
+    });
 
     // --- Применение эффектов и синхронизация UI ---
     this.applyNavLabelsVisibility();
@@ -238,7 +176,8 @@ export const uiSettingsManager = {
       "app_ring_width",
       "app_show_ms",
       "app_sw_minute_beep",
-      "app_volume", // NEW: Добавлен ключ громкости для сброса
+      "app_volume",
+      "app_vibro_level",
     ];
     keys.forEach(safeRemoveLS);
     this.applySettings(); // Применит дефолты и обновит UI
@@ -263,7 +202,7 @@ export const uiSettingsManager = {
       min = parseFloat(slider.min),
       max = parseFloat(slider.max);
     label.textContent = t(labelsArray[val] || labelsArray[0]);
-    const percent = max - min > 0 ? (val - min) / (max - min) : 0;
+    const percent = max > min ? (val - min) / (max - min) : 0;
     const thumbWidth = 24,
       trackWidth = slider.offsetWidth;
     if (trackWidth === 0) return;
@@ -271,21 +210,55 @@ export const uiSettingsManager = {
     label.style.left = `calc(${percent * 100}% + ${offset}px)`;
   },
 
-  setFontSize(s) {
+  // --- Методы-сеттеры для слайдеров ---
+
+  setFontSize(s, isFinal) {
     const n = Number(s);
     document.documentElement.style.setProperty("--font-scale", n / 16);
     if ($("fontSizeDisplay")) $("fontSizeDisplay").textContent = `${n} px`;
-    safeSetLS("font_size", n);
+    if (isFinal) safeSetLS("font_size", n);
+    else sm.vibrate(10, "tactile");
   },
 
-  setRingWidth(w) {
+  setRingWidth(w, isFinal) {
     const n = Number(w);
     this.ringWidth = n;
     document.documentElement.style.setProperty("--ring-stroke-width", n);
     if ($("ringWidthDisplay"))
       $("ringWidthDisplay").textContent = `${n.toFixed(1)} px`;
-    safeSetLS("app_ring_width", n);
+    if (isFinal) safeSetLS("app_ring_width", n);
+    else sm.vibrate(10, "tactile");
   },
+
+  _setVignetteLevel(val, isFinal) {
+    const newAlpha = this.vignetteLevels[val];
+    this.vignetteAlpha = newAlpha;
+    this.updateVignette();
+    this.updateSliderLabel(
+      "vignetteSlider",
+      "vignette-label",
+      this.vignetteLabels,
+    );
+    if (isFinal) {
+      safeSetLS("app_vignette_alpha", newAlpha);
+    } else {
+      sm.vibrate(10, "tactile");
+    }
+  },
+
+  _setVibroLevel(val, isFinal) {
+    const newLevel = this.vibroLevels[val] || 1;
+    sm.vibroLevel = newLevel;
+    this.updateSliderLabel("vibroSlider", "vibro-label", this.vibroLabels);
+    if (isFinal) {
+      safeSetLS("app_vibro_level", newLevel);
+      sm.vibrate(50, "strong"); // Почувствовать новый уровень
+    } else {
+      sm.vibrate(10, "tactile");
+    }
+  },
+
+  // --- Методы для применения эффектов ---
 
   updateVignette() {
     const bg = document.querySelector(".app-bg");
