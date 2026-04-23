@@ -1,10 +1,45 @@
-// Файл: www/js/worker.js
+/**
+ * worker.js
+ * Фоновый Web Worker для обеспечения непрерывной работы таймеров,
+ * даже когда основная вкладка неактивна.
+ *
+ * Принимает два формата сообщений:
+ * 1. Объекты для таймера обратного отсчета (требует точного расчета времени):
+ *    { command: 'start', time: <ms> }
+ *    { command: 'stop' }
+ *    { command: 'reset' }
+ *    { command: 'adjust', time: <ms_delta> }
+ *
+ * 2. Строки для секундомера и табаты (требуется простое "сердцебиение"):
+ *    'start'
+ *    'stop'
+ */
 
-let intervalId = null;
-let remainingTime = 0;
-let lastTickTime = 0;
+// --- Константы ---
+const COUNTDOWN_INTERVAL = 100; // мс, для плавного таймера обратного отсчета
+const HEARTBEAT_INTERVAL = 1000; // мс, для тиков раз в секунду
 
-// Функция "тика" для таймера (countdown)
+// --- Состояние воркера ---
+let intervalId = null;       // ID текущего интервала, null если воркер остановлен
+let remainingTime = 0;       // Оставшееся время для таймера обратного отсчета
+let lastTickTime = 0;        // Временная метка последнего тика для точного расчета
+
+// --- Основные функции ---
+
+/**
+ * Останавливает любой активный интервал и сбрасывает его ID.
+ */
+function stopInterval() {
+  if (intervalId) {
+    clearInterval(intervalId);
+    intervalId = null;
+  }
+}
+
+/**
+ * Функция "тика" для таймера обратного отсчета.
+ * Вычисляет прошедшее время с последнего вызова для точности.
+ */
 function countdownTick() {
   const now = performance.now();
   const elapsed = now - lastTickTime;
@@ -14,62 +49,73 @@ function countdownTick() {
   if (remainingTime <= 0) {
     remainingTime = 0;
     self.postMessage({ type: "tick", time: 0 });
-    clearInterval(intervalId);
-    intervalId = null;
+    stopInterval();
   } else {
     self.postMessage({ type: "tick", time: remainingTime });
   }
 }
 
-// Функция "тика" для секундомера и табаты (просто "сердцебиение")
+/**
+ * Функция "тика" для секундомера и табаты.
+ * Просто отправляет сигнал "tick" каждую секунду.
+ */
 function heartbeatTick() {
   self.postMessage("tick");
 }
 
+// --- Обработчик входящих сообщений ---
+
 self.onmessage = function (e) {
-  // Логика для ТАЙМЕРА (команды в виде объекта)
-  if (typeof e.data === "object" && e.data.command) {
-    const { command, time } = e.data;
+  const messageData = e.data;
+
+  // --- Логика для ТАЙМЕРА (сообщения в виде объекта) ---
+  if (typeof messageData === "object" && messageData.command) {
+    const { command, time } = messageData;
+
     switch (command) {
       case "start":
+        // Запускаем только если еще не запущен
         if (!intervalId) {
           remainingTime = time;
           lastTickTime = performance.now();
-          // Для таймера интервал чаще для плавности кольца
-          intervalId = setInterval(countdownTick, 100);
+          intervalId = setInterval(countdownTick, COUNTDOWN_INTERVAL);
         }
         break;
+
       case "stop":
-      case "reset":
-        if (intervalId) {
-          clearInterval(intervalId);
-          intervalId = null;
-        }
-        if (command === "reset") remainingTime = 0;
+        stopInterval();
         break;
+        
+      case "reset":
+        stopInterval();
+        remainingTime = 0;
+        break;
+
       case "adjust":
+        // Корректируем время, только если таймер активен
         if (intervalId) {
           remainingTime += time;
-          if (remainingTime < 0) remainingTime = 0;
-          // Немедленно отправляем обновленное время
+          if (remainingTime < 0) {
+            remainingTime = 0;
+          }
+          // Немедленно отправляем обновленное время в основной поток
           self.postMessage({ type: "tick", time: remainingTime });
         }
         break;
     }
   }
-  // Логика для СЕКУНДОМЕРА и ТАБАТЫ (команды в виде строки)
-  else if (typeof e.data === "string") {
-    const command = e.data;
+  
+  // --- Логика для СЕКУНДОМЕРА и ТАБАТЫ (сообщения в виде строки) ---
+  else if (typeof messageData === "string") {
+    const command = messageData;
+
     if (command === "start") {
+      // Запускаем только если еще не запущен
       if (!intervalId) {
-        // Для этих модулей 1 секунда достаточна
-        intervalId = setInterval(heartbeatTick, 1000);
+        intervalId = setInterval(heartbeatTick, HEARTBEAT_INTERVAL);
       }
     } else if (command === "stop") {
-      if (intervalId) {
-        clearInterval(intervalId);
-        intervalId = null;
-      }
+      stopInterval();
     }
   }
 };

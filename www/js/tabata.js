@@ -1,4 +1,4 @@
-// Файл: www/js/tabata.js
+// www/js/tabata.js
 
 import {
   $,
@@ -14,6 +14,7 @@ import {
   safeGetLS,
   announceToScreenReader,
   getUniqueName,
+  fillTemplate, // <-- ИЗМЕНЕНИЕ: Импортируем новую функцию
 } from "./utils.js?v=VERSION";
 import { sm } from "./sound.js?v=VERSION";
 import { t } from "./i18n.js?v=VERSION";
@@ -266,14 +267,20 @@ export const tb = {
     this.els.list.replaceChildren();
 
     const fragment = document.createDocumentFragment();
-    const template = $("tb-workout-template");
-    if (!template) return;
 
     this.workouts.forEach((w) => {
-      const clone = template.content.cloneNode(true);
-      const workoutElement = clone.firstElementChild;
       const isAct = w.id === this.selectedId;
+      const detailsText = `${w.work}${t("sec").toLowerCase()} / ${w.rest}${t("sec").toLowerCase()} • ${w.rounds} ${t("rds")}`;
 
+      // <-- ИЗМЕНЕНИЕ: Используем fillTemplate для создания элемента тренировки -->
+      const workoutElement = fillTemplate("tb-workout-template", {
+        name: w.name,
+        details: detailsText,
+      });
+
+      if (!workoutElement) return;
+
+      // Дополнительная логика, которая осталась без изменений
       workoutElement.classList.toggle("app-surface", !isAct);
       workoutElement.classList.toggle("border", !isAct);
       workoutElement.classList.toggle("app-border", !isAct);
@@ -292,13 +299,8 @@ export const tb = {
       ).dataset.id = w.id;
 
       const nameEl = workoutElement.querySelector('[data-template="name"]');
-      nameEl.textContent = w.name;
       nameEl.classList.toggle("primary-text", isAct);
       nameEl.classList.toggle("app-text", !isAct);
-
-      const detailsText = `${w.work}${t("sec").toLowerCase()} / ${w.rest}${t("sec").toLowerCase()} • ${w.rounds} ${t("rds")}`;
-      workoutElement.querySelector('[data-template="details"]').textContent =
-        detailsText;
 
       workoutElement
         .querySelector('[data-template-id="editBtn"]')
