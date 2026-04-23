@@ -109,10 +109,9 @@ export const uiSettingsManager = {
       $("toggle-sw-minute-beep").checked = this.swMinuteBeep;
 
     // --- СЛАЙДЕРЫ: ЧТЕНИЕ И УСТАНОВКА ЗНАЧЕНИЙ В DOM ---
-    // Это ключевой фикс: мы явно устанавливаем .value для каждого слайдера.
     const fontSize = safeGetLS("font_size") || 16;
     if ($("fontSlider")) $("fontSlider").value = fontSize;
-    this._setFontSize(fontSize, false); // Обновляем UI без сохранения
+    this._setFontSize(fontSize, false);
 
     const ringWidth = safeGetLS("app_ring_width") || 4;
     if ($("ringWidthSlider")) $("ringWidthSlider").value = ringWidth;
@@ -168,8 +167,8 @@ export const uiSettingsManager = {
       "app_sw_minute_beep",
     ];
     keys.forEach(safeRemoveLS);
-    sm.resetSettings(); // Сброс настроек звука
-    this.applySettings(); // Применит дефолты и обновит UI
+    sm.resetSettings();
+    this.applySettings();
   },
 
   syncSliderUIs() {
@@ -199,7 +198,6 @@ export const uiSettingsManager = {
     label.style.left = `calc(${percent * 100}% + ${offset}px)`;
   },
 
-  // --- Внутренние методы-сеттеры ---
   _setFontSize(s, isFinal) {
     const n = Number(s);
     document.documentElement.style.setProperty("--font-scale", n / 16);
@@ -239,7 +237,6 @@ export const uiSettingsManager = {
     }
   },
 
-  // --- Методы для применения эффектов ---
   updateVignette() {
     const bg = document.querySelector(".app-bg"),
       c = $("vignette-depth-container");
