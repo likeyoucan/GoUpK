@@ -1212,7 +1212,6 @@ body.hide-nav-labels .nav-btn {
   и ТОЛЬКО для НЕАКТИВНЫХ элементов.
 */
 @media (hover: hover) {
-
   .nav-btn:hover > div:not(.primary-text) {
     transform: scale(1.08);
   }
@@ -1335,7 +1334,9 @@ body.hide-nav-labels .nav-btn {
   cursor: pointer;
   font-size: 0.875rem;
   color: var(--text-color);
-  transition: background-color 0.15s, color 0.15s;
+  transition:
+    background-color 0.15s,
+    color 0.15s;
   user-select: none;
 }
 
@@ -1366,6 +1367,52 @@ body.hide-nav-labels .nav-btn {
 }
 :root.glass-effect .custom-select-options {
   background-color: color-mix(in srgb, var(--surface-color) 60%, transparent);
-  backdrop-filter: blur(18px) saturate(180%);
+  backdrop-filter: blur(30px) saturate(180%);
   border: 1px solid color-mix(in srgb, var(--border-color) 50%, transparent);
+}
+/* =========================================
+   24. ОПТИМИЗАЦИЯ ПРОИЗВОДИТЕЛЬНОСТИ АНИМАЦИЙ
+========================================= */
+/*
+  Используем will-change, чтобы подсказать браузеру, какие свойства
+  будут анимироваться. Это позволяет ему вынести элементы на отдельный
+  слой композиции (GPU), что делает анимации более плавными.
+*/
+
+/* Модальные окна-шторки, которые выезжают снизу */
+#tb-modal,
+#sw-sessions-modal {
+  will-change: transform;
+}
+
+/* Модальные окна-алерты, которые появляются с изменением opacity и scale */
+#reset-modal-content,
+#sw-clear-modal-content,
+#sw-name-modal-content {
+  will-change: transform, opacity;
+}
+
+/* Всплывающее уведомление (тост) */
+#toast {
+  will-change: transform, opacity;
+}
+
+/* Иконки в нижней навигации, которые масштабируются при наведении/нажатии */
+.nav-btn > div {
+  will-change: transform;
+}
+
+/* Вспышка при добавлении круга в секундомере */
+#sw-lapFlash {
+  will-change: transform, opacity;
+}
+
+/* Переключатели (Toggles) */
+.custom-toggle::after {
+  will-change: transform;
+}
+
+/* Выпадающие списки */
+.custom-select-options {
+  will-change: transform, opacity;
 }
