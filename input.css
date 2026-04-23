@@ -1212,6 +1212,7 @@ body.hide-nav-labels .nav-btn {
   и ТОЛЬКО для НЕАКТИВНЫХ элементов.
 */
 @media (hover: hover) {
+
   .nav-btn:hover > div:not(.primary-text) {
     transform: scale(1.08);
   }
@@ -1334,9 +1335,7 @@ body.hide-nav-labels .nav-btn {
   cursor: pointer;
   font-size: 0.875rem;
   color: var(--text-color);
-  transition:
-    background-color 0.15s,
-    color 0.15s;
+  transition: background-color 0.15s, color 0.15s;
   user-select: none;
 }
 
@@ -1369,49 +1368,4 @@ body.hide-nav-labels .nav-btn {
   background-color: color-mix(in srgb, var(--surface-color) 60%, transparent);
   backdrop-filter: blur(18px) saturate(180%);
   border: 1px solid color-mix(in srgb, var(--border-color) 50%, transparent);
-}
-/* =========================================
-   24. ОПТИМИЗАЦИЯ ПРОИЗВОДИТЕЛЬНОСТИ АНИМАЦИЙ
-========================================= */
-
-/*
-  Используем will-change, чтобы подсказать браузеру, какие свойства
-  будут анимироваться. Это позволяет ему вынести элементы на отдельный
-  слой композиции (GPU), что делает анимации более плавными.
-*/
-@layer utilities {
-  .optimize-transform {
-    will-change: transform;
-  }
-  .optimize-all {
-    will-change: transform, opacity;
-  }
-}
-
-/* Модальные окна-шторки, которые выезжают снизу */
-#tb-modal,
-#sw-sessions-modal {
-  @apply optimize-transform;
-}
-
-/* Модальные окна-алерты, которые появляются с изменением opacity и scale */
-#reset-modal-content,
-#sw-clear-modal-content,
-#sw-name-modal-content {
-  @apply optimize-all;
-}
-
-/* Всплывающее уведомление (тост) */
-#toast {
-  @apply optimize-all;
-}
-
-/* Иконки в нижней навигации, которые масштабируются при наведении/нажатии */
-.nav-btn > div {
-  @apply optimize-transform;
-}
-
-/* Вспышка при добавлении круга в секундомере */
-#sw-lapFlash {
-  will-change: transform, opacity;
 }
