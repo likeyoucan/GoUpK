@@ -1,6 +1,5 @@
 // Файл: www/js/stopwatch.js
 
-
 import {
   $,
   formatTime,
