@@ -38,34 +38,24 @@ export const uiSettingsManager = {
 
   _bindEvents() {
     document.addEventListener("languageChanged", () => this.syncSliderUIs());
+
     document.addEventListener("vibroToggled", (e) =>
       this.updateVibroSliderUI(e.detail.enabled),
     );
 
-    // ИСПРАВЛЕНИЕ #1 и #2: слушаем событие от sm.applySettings(),
-    // чтобы после сброса/восстановления настроек обновить лейблы ползунков
+    // Слушаем событие от sm.applySettings() — синхронизируем ползунки
+    // vibroSlider и volumeSlider с актуальными значениями sm после любого
+    // вызова sm.applySettings() или sm.resetSettings()
     document.addEventListener("soundSettingsApplied", () => {
-      // Синхронизируем позицию vibroSlider с актуальным sm.vibroLevel
-      if ($("vibroSlider")) {
-        const levels = [0.5, 0.75, 1, 1.5, 2];
-        const closestIndex = levels.reduce(
-          (prev, curr, index) =>
-            Math.abs(curr - sm.vibroLevel) <
-            Math.abs(levels[prev] - sm.vibroLevel)
-              ? index
-              : prev,
-          0,
-        );
-        $("vibroSlider").value = closestIndex;
-      }
-      // Синхронизируем позицию volumeSlider с актуальным sm.volume
-      if ($("volumeSlider")) {
-        $("volumeSlider").value = sm.volume;
-        const display = $("volumeDisplay");
-        if (display)
-          display.textContent = Math.round(sm.volume * 100) + "%";
-      }
-      this.syncSliderUIs();
+      this._restoreVibroSlider(sm.vibroLevel);
+      this._restoreVolumeSlider(sm.volume);
+      // Принудительно обновляем лейблы через два rAF — первый ждёт layout,
+      // второй гарантирует что offsetWidth уже ненулевой
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          this.syncSliderUIs();
+        });
+      });
     });
 
     const toggleListeners = {
@@ -150,6 +140,40 @@ export const uiSettingsManager = {
     }
   },
 
+  // Вспомогательный метод: восстанавливает позицию vibroSlider по числовому уровню
+  _restoreVibroSlider(level) {
+    const slider = $("vibroSlider");
+    if (!slider) return;
+    const levels = [0.5, 0.75, 1, 1.5, 2];
+    const closestIndex = levels.reduce(
+      (prev, curr, index) =>
+        Math.abs(curr - level) < Math.abs(levels[prev] - level) ? index : prev,
+      0,
+    );
+    slider.value = closestIndex;
+  },
+
+  // Вспомогательный метод: восстанавливает позицию volumeSlider и текст дисплея
+  _restoreVolumeSlider(volume) {
+    const slider = $("volumeSlider");
+    if (!slider) return;
+    slider.value = volume;
+    const display = $("volumeDisplay");
+    if (display) display.textContent = Math.round(volume * 100) + "%";
+  },
+
+  // Вспомогательный метод: восстанавливает позицию vignetteSlider по значению alpha
+  _restoreVignetteSlider(alpha) {
+    const slider = $("vignetteSlider");
+    if (!slider) return;
+    const closestIndex = this.vignetteLevels.reduce(
+      (p, c, i) =>
+        Math.abs(c - alpha) < Math.abs(this.vignetteLevels[p] - alpha) ? i : p,
+      0,
+    );
+    slider.value = closestIndex;
+  },
+
   applySettings() {
     // --- Переключатели ---
     this.isAdaptiveBg = safeGetLS("app_adaptive_bg") !== "false";
@@ -173,7 +197,7 @@ export const uiSettingsManager = {
     if ($("toggle-sw-minute-beep"))
       $("toggle-sw-minute-beep").checked = this.swMinuteBeep;
 
-    // --- Слайдеры ---
+    // --- Слайдеры шрифта и ширины кольца ---
     const fontSize = safeGetLS("font_size") || 16;
     if ($("fontSlider")) $("fontSlider").value = fontSize;
     this.setFontSize(fontSize);
@@ -182,50 +206,33 @@ export const uiSettingsManager = {
     if ($("ringWidthSlider")) $("ringWidthSlider").value = ringWidth;
     this.setRingWidth(ringWidth);
 
+    // --- Виньетка ---
     this.vignetteAlpha = parseFloat(safeGetLS("app_vignette_alpha")) || 0.2;
-    if ($("vignetteSlider")) {
-      const closestVignetteIndex = this.vignetteLevels.reduce(
-        (p, c, i) =>
-          Math.abs(c - this.vignetteAlpha) <
-          Math.abs(this.vignetteLevels[p] - this.vignetteAlpha)
-            ? i
-            : p,
-        0,
-      );
-      $("vignetteSlider").value = closestVignetteIndex;
-    }
+    this._restoreVignetteSlider(this.vignetteAlpha);
 
-    // ИСПРАВЛЕНИЕ #1 и #2: восстанавливаем vibroSlider напрямую из LS
-    // (независимо от sm, чтобы работало при любом порядке инициализации)
+    // --- Вибрация: берём значение из LS напрямую (sm может ещё не быть init) ---
     const vibroLevel = parseFloat(safeGetLS("app_vibro_level")) || 1;
-    if ($("vibroSlider")) {
-      const levels = [0.5, 0.75, 1, 1.5, 2];
-      const closestVibroIndex = levels.reduce(
-        (prev, curr, index) =>
-          Math.abs(curr - vibroLevel) < Math.abs(levels[prev] - vibroLevel)
-            ? index
-            : prev,
-        0,
-      );
-      $("vibroSlider").value = closestVibroIndex;
-    }
+    this._restoreVibroSlider(vibroLevel);
 
-    // ИСПРАВЛЕНИЕ #1 и #2: восстанавливаем volumeSlider напрямую из LS
+    // --- Громкость: берём значение из LS напрямую ---
     const volume =
       safeGetLS("app_volume") !== null
         ? parseFloat(safeGetLS("app_volume"))
         : 1;
-    if ($("volumeSlider")) {
-      $("volumeSlider").value = volume;
-      const display = $("volumeDisplay");
-      if (display) display.textContent = Math.round(volume * 100) + "%";
-    }
+    this._restoreVolumeSlider(volume);
 
-    // --- Применение эффектов и синхронизация UI ---
+    // --- Применение визуальных эффектов ---
     this.applyNavLabelsVisibility();
     this.updateGlass();
     this.updateVignette();
-    this.syncSliderUIs();
+
+    // Синхронизация лейблов через двойной rAF — гарантирует ненулевой offsetWidth
+    // даже если панель настроек скрыта при загрузке (display:none → offsetWidth = 0)
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        this.syncSliderUIs();
+      });
+    });
   },
 
   resetSettings() {
@@ -241,33 +248,42 @@ export const uiSettingsManager = {
       "app_sw_minute_beep",
     ];
     keys.forEach(safeRemoveLS);
-    // ИСПРАВЛЕНИЕ #2: applySettings читает LS и применяет дефолты ко всем элементам UI
+    // applySettings() читает LS (ключи удалены → берутся дефолты)
+    // и обновляет все элементы UI включая ползунки
     this.applySettings();
   },
 
   syncSliderUIs() {
-    requestAnimationFrame(() => {
-      this.updateSliderLabel(
-        "vignetteSlider",
-        "vignette-label",
-        this.vignetteLabels,
-      );
-      this.updateSliderLabel("vibroSlider", "vibro-label", this.vibroLabels);
-    });
+    // Обновляем лейбл виньетки — всегда, независимо от hasVignette,
+    // чтобы позиция была корректной когда панель станет видимой
+    this.updateSliderLabel(
+      "vignetteSlider",
+      "vignette-label",
+      this.vignetteLabels,
+    );
+    // Обновляем лейбл вибрации — всегда, независимо от vibroEnabled
+    this.updateSliderLabel("vibroSlider", "vibro-label", this.vibroLabels);
   },
 
   updateSliderLabel(sliderId, labelId, labelsArray) {
-    const slider = $(sliderId),
-      label = $(labelId);
+    const slider = $(sliderId);
+    const label = $(labelId);
     if (!slider || !label) return;
-    const val = parseInt(slider.value, 10),
-      min = parseFloat(slider.min),
-      max = parseFloat(slider.max);
+
+    const val = parseInt(slider.value, 10);
+    const min = parseFloat(slider.min);
+    const max = parseFloat(slider.max);
+
     label.textContent = t(labelsArray[val] || labelsArray[0]);
+
     const percent = max - min > 0 ? (val - min) / (max - min) : 0;
-    const thumbWidth = 24,
-      trackWidth = slider.offsetWidth;
+    const thumbWidth = 24;
+    const trackWidth = slider.offsetWidth;
+
+    // Если ширина нулевая (скрытая панель) — пропускаем позиционирование,
+    // оно будет пересчитано при следующем syncSliderUIs()
     if (trackWidth === 0) return;
+
     const offset = thumbWidth / 2 - percent * thumbWidth;
     label.style.left = `calc(${percent * 100}% + ${offset}px)`;
   },
@@ -300,17 +316,27 @@ export const uiSettingsManager = {
         "--vignette-alpha",
         this.vignetteAlpha * 0.4,
       );
-      this.syncSliderUIs();
     }
+    // Обновляем лейбл всегда — не только когда hasVignette,
+    // чтобы при включении виньетки лейбл уже был на правильной позиции
+    requestAnimationFrame(() => {
+      this.updateSliderLabel(
+        "vignetteSlider",
+        "vignette-label",
+        this.vignetteLabels,
+      );
+    });
   },
 
   updateVibroSliderUI(isEnabled) {
     const c = $("vibro-level-container");
     c?.classList.toggle("hidden", !isEnabled);
     c?.classList.toggle("flex", isEnabled);
-    if (isEnabled) {
-      this.syncSliderUIs();
-    }
+    // Обновляем лейбл всегда — не только когда включено,
+    // чтобы при включении вибрации лейбл уже был на правильной позиции
+    requestAnimationFrame(() => {
+      this.updateSliderLabel("vibroSlider", "vibro-label", this.vibroLabels);
+    });
   },
 
   updateGlass() {

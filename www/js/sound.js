@@ -52,8 +52,7 @@ export const sm = {
       if (this.vibroEnabled) this.vibrate(50, "medium");
     });
 
-    // ИСПРАВЛЕНИЕ #3: при перемещении ползунка сразу обновляем this.volume,
-    // чтобы play() использовал актуальное значение громкости
+    // При перемещении ползунка — сразу обновляем this.volume и отображение
     $("volumeSlider")?.addEventListener("input", (e) => {
       this.volume = parseFloat(e.target.value);
       const display = $("volumeDisplay");
@@ -62,13 +61,14 @@ export const sm = {
       this.vibrate(10, "tactile");
     });
 
-    // ИСПРАВЛЕНИЕ #3: принудительно создаём audioCtx если его нет,
-    // затем воспроизводим звук — теперь громкость берётся из обновлённого this.volume
+    // При отпускании ползунка — воспроизводим звук с актуальной громкостью.
+    // Используем Promise-цепочку: сначала разблокируем/создаём контекст,
+    // потом играем. Это решает проблему браузерной политики autoplay.
     $("volumeSlider")?.addEventListener("change", () => {
-      if (this.soundEnabled && !this.audioCtx) {
-        this.initAudio();
-      }
-      this.play("click");
+      if (!this.soundEnabled) return;
+      this._ensureAudioCtx().then(() => {
+        this.play("click");
+      });
     });
 
     const soundThemeOptions = [
@@ -101,6 +101,23 @@ export const sm = {
     });
   },
 
+  // Создаёт AudioContext если его нет, и resume() если suspended.
+  // Возвращает Promise, чтобы play() вызывался только после готовности.
+  _ensureAudioCtx() {
+    try {
+      if (!this.audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) this.audioCtx = new AudioContext();
+      }
+      if (this.audioCtx && this.audioCtx.state === "suspended") {
+        return this.audioCtx.resume();
+      }
+    } catch (e) {
+      this.soundEnabled = false;
+    }
+    return Promise.resolve();
+  },
+
   applySettings() {
     this.soundEnabled = safeGetLS("app_sound") !== "false";
     this.vibroEnabled = safeGetLS("app_vibro") !== "false";
@@ -114,7 +131,7 @@ export const sm = {
     if ($("toggle-sound")) $("toggle-sound").checked = this.soundEnabled;
     if ($("toggle-vibro")) $("toggle-vibro").checked = this.vibroEnabled;
 
-    // ИСПРАВЛЕНИЕ #1 и #2: восстанавливаем позицию vibroSlider из сохранённого значения
+    // Восстанавливаем позицию vibroSlider
     if ($("vibroSlider")) {
       const levels = [0.5, 0.75, 1, 1.5, 2];
       const closestIndex = levels.reduce(
@@ -128,14 +145,14 @@ export const sm = {
       $("vibroSlider").value = closestIndex;
     }
 
-    // ИСПРАВЛЕНИЕ #1 и #2: восстанавливаем позицию volumeSlider и текст дисплея
+    // Восстанавливаем позицию volumeSlider и текст дисплея
     if ($("volumeSlider")) {
       $("volumeSlider").value = this.volume;
       const display = $("volumeDisplay");
       if (display) display.textContent = Math.round(this.volume * 100) + "%";
     }
 
-    // ИСПРАВЛЕНИЕ #1 и #2: обновляем CustomSelect если он уже инициализирован
+    // Обновляем CustomSelect темы звука если он уже инициализирован
     if (this.soundThemeSelect) {
       this.soundThemeSelect.setValue(this.theme, false);
     }
@@ -148,8 +165,8 @@ export const sm = {
       }),
     );
 
-    // ИСПРАВЛЕНИЕ #1 и #2: уведомляем uiSettingsManager что настройки звука применены,
-    // чтобы он обновил лейблы ползунков (vibroSlider, volumeSlider)
+    // Уведомляем uiSettingsManager что настройки звука применены —
+    // он обновит позиции и лейблы ползунков vibroSlider и vignetteSlider
     document.dispatchEvent(new CustomEvent("soundSettingsApplied"));
   },
 
@@ -176,11 +193,8 @@ export const sm = {
     }
   },
 
-  // ИСПРАВЛЕНИЕ #3: убрали проверку !this.soundEnabled, чтобы контекст
-  // мог быть создан при необходимости (вызов из обработчика volumeSlider change)
   initAudio() {
-    if (this.audioCtx) return;
-    if (!this.soundEnabled) return;
+    if (this.audioCtx || !this.soundEnabled) return;
     try {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       if (AudioContext) this.audioCtx = new AudioContext();
