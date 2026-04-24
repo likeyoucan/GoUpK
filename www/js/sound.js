@@ -1,4 +1,4 @@
-// Файл: www/js/sound.js (полная корректная версия)
+// Файл: www/js/sound.js
 
 import { $, safeGetLS, safeSetLS, safeRemoveLS } from "./utils.js?v=VERSION";
 import { CustomSelect } from "./custom-select.js?v=VERSION";
@@ -12,6 +12,10 @@ export const sm = {
   volume: 1,
   theme: "classic",
   soundThemeSelect: null,
+
+  volumeChangeTimeout: null, // Для троттлинга
+  THROTTLE_DELAY: 150, // мс
+
   THEME_VOL_MULTIPLIERS: {
     classic: 1.0,
     sport: 1.6,
@@ -19,17 +23,11 @@ export const sm = {
     work: 1.9,
     life: 1.7,
   },
-  vibroIntensities: {
-    light: 0.5,
-    medium: 1,
-    strong: 1.5,
-    tactile: 0.8,
-  },
+  vibroIntensities: { light: 0.5, medium: 1, strong: 1.5, tactile: 0.8 },
 
   unlock() {
-    if (this.audioCtx && this.audioCtx.state === "suspended") {
+    if (this.audioCtx && this.audioCtx.state === "suspended")
       this.audioCtx.resume().catch(() => {});
-    }
   },
 
   init() {
@@ -39,7 +37,9 @@ export const sm = {
     $("toggle-sound")?.addEventListener("change", (e) => {
       this.soundEnabled = e.target.checked;
       safeSetLS("app_sound", this.soundEnabled);
-      if (this.soundEnabled) this.initAudio();
+      if (this.soundEnabled) {
+        this.initAudio(); // Инициализируем контекст, если его не было
+      }
       this.updateVolumeUI();
     });
 
@@ -56,20 +56,29 @@ export const sm = {
 
     const volumeSlider = $("volumeSlider");
     if (volumeSlider) {
-      // При перетаскивании: только вибрация и обновление UI
       volumeSlider.addEventListener("input", (e) => {
         this.vibrate(10, "tactile");
         this.volume = parseFloat(e.target.value);
         const display = $("volumeDisplay");
         if (display) display.textContent = Math.round(this.volume * 100) + "%";
+
+        if (!this.volumeChangeTimeout) {
+          this.play("click");
+          this.volumeChangeTimeout = setTimeout(() => {
+            this.volumeChangeTimeout = null;
+          }, this.THROTTLE_DELAY);
+        }
       });
 
-      // Когда отпустили: сохраняем и проигрываем звук
       volumeSlider.addEventListener("change", (e) => {
         const finalVolume = parseFloat(e.target.value);
         this.volume = finalVolume;
         safeSetLS("app_volume", finalVolume);
-        this.play("click"); // Звук с новым уровнем громкости
+        if (this.volumeChangeTimeout) {
+          clearTimeout(this.volumeChangeTimeout);
+          this.volumeChangeTimeout = null;
+        }
+        this.play("click");
       });
     }
 
@@ -80,7 +89,6 @@ export const sm = {
       { value: "work", text: t("theme_work") },
       { value: "life", text: t("theme_life") },
     ];
-
     this.soundThemeSelect = new CustomSelect(
       "soundThemeSelectContainer",
       soundThemeOptions,
@@ -91,7 +99,6 @@ export const sm = {
       },
       this.theme,
     );
-
     const unlockHandler = () => this.unlock();
     document.addEventListener("click", unlockHandler, {
       once: true,
@@ -104,7 +111,6 @@ export const sm = {
   },
 
   applySettings() {
-    // ... (без изменений, как в предыдущем ответе)
     this.soundEnabled = safeGetLS("app_sound") !== "false";
     this.vibroEnabled = safeGetLS("app_vibro") !== "false";
     this.vibroLevel = parseFloat(safeGetLS("app_vibro_level")) || 1;
@@ -151,12 +157,20 @@ export const sm = {
       "app_volume",
     ];
     soundKeys.forEach(safeRemoveLS);
+
+    // Сбрасываем внутреннее состояние
     this.soundEnabled = true;
     this.vibroEnabled = true;
     this.vibroLevel = 1;
     this.volume = 1;
     this.theme = "classic";
+
+    // Применяем сброшенные настройки к UI
     this.applySettings();
+
+    // ИЗМЕНЕНИЕ: Принудительно вызываем инициализацию аудио.
+    // Это создаст AudioContext, если он был null.
+    this.initAudio();
   },
 
   updateVolumeUI() {
@@ -171,6 +185,7 @@ export const sm = {
   },
 
   initAudio() {
+    // Эта функция теперь может быть вызвана несколько раз, но создаст контекст только один раз.
     if (this.audioCtx || !this.soundEnabled) return;
     try {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -201,9 +216,7 @@ export const sm = {
         ? basePattern.map(applyLevel)
         : applyLevel(basePattern);
       navigator.vibrate(pattern);
-    } catch (e) {
-      // Игнорируем ошибки
-    }
+    } catch (e) {}
   },
 
   playNote(
