@@ -73,13 +73,9 @@ const modalConfig = [
 
 function confirmReset() {
   modalManager.closeCurrent();
-
-  // Вызываем сброс в каждом ответственном модуле.
-  // themeManager теперь сам вызовет reset у своих дочерних модулей.
   themeManager.resetSettings();
   sm.resetSettings();
   langManager.resetSettings();
-
   setTimeout(() => showToast(t("settings_reset_success")), 450);
 }
 
@@ -88,39 +84,32 @@ function confirmReset() {
  * Запускается после полной загрузки DOM.
  */
 document.addEventListener("DOMContentLoaded", () => {
+  // --- Защита от отсутствия ключевых элементов ---
+  const appContainer = $("app");
+  const swipeAreaLeft = $("swipe-area-left");
+  const swipeAreaRight = $("swipe-area-right");
+  if (!appContainer || !swipeAreaLeft || !swipeAreaRight) {
+    console.error(
+      "Critical layout elements (#app, #swipe-area-left, #swipe-area-right) not found. App cannot start.",
+    );
+    return;
+  }
+
+  // --- Инициализация модулей в правильном порядке ---
   injectSVG();
-
-  // ИЗМЕНЕНИЕ: Меняем порядок инициализации
-
-  // 1. Сначала языковой менеджер, чтобы все тексты были на месте
   langManager.init();
-
-  // 2. Улучшаем все ползунки ДО того, как другие модули попытаются задать им значения.
-  // Это ключевой фикс для визуального сброса и обновления.
   initTouchRanges();
-
-  // 3. Теперь инициализируем модули, которые управляют настройками и внешним видом.
-  // themeManager вызовет uiSettingsManager, который вызовет applySettings.
-  // applySettings теперь будет устанавливать значения на уже "улучшенные" ползунки.
   themeManager.init();
   sm.init();
-
-  // 4. Инициализируем основные модули приложения
   sw.init();
   tm.init();
   tb.init();
   navigation.init();
-
-  // 5. Менеджер модальных окон
   modalManager.init(modalConfig);
 
-  // Убираем класс 'preload' для включения анимаций после загрузки.
   setTimeout(() => document.body.classList.remove("preload"), 50);
 
-
   // --- Назначение обработчиков событий для элементов UI ---
-
-  // Обработчики открытия модальных окон
   $("sw-openResultsBtn")?.addEventListener("click", () =>
     modalManager.open("sw-sessions-modal"),
   );
@@ -133,8 +122,6 @@ document.addEventListener("DOMContentLoaded", () => {
   $("sw-clearAllBtn")?.addEventListener("click", () => {
     if (sw.savedSessions.length > 0) modalManager.open("sw-clear-modal");
   });
-
-  // Обработчики подтверждения действий в модальных окнах
   $("reset-confirm")?.addEventListener("click", confirmReset);
   $("sw-clear-confirm")?.addEventListener("click", () => sw.confirmClearAll());
   $("sw-name-modal-content")?.addEventListener("submit", (e) => {
@@ -145,8 +132,6 @@ document.addEventListener("DOMContentLoaded", () => {
     e.preventDefault();
     tb.saveWorkout();
   });
-
-  // Глобальный обработчик для кнопок навигации
   document.querySelectorAll("[data-nav]").forEach((btn) => {
     btn.addEventListener("click", (e) => {
       sm.vibrate(20, "light");
@@ -154,11 +139,12 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // Глобальный обработчик для горячих клавиш (Space, L, R)
+  // --- Обработчики жестов и клавиатуры ---
   document.addEventListener("keydown", (e) => {
+    const target = e.target instanceof HTMLElement ? e.target : null;
     if (
       modalManager.hasActiveModal() ||
-      e.target.closest(
+      target?.closest(
         'input, textarea, select, button, [contenteditable="true"]',
       )
     ) {
@@ -178,7 +164,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Обработчик двойного касания на экране секундомера для записи круга
   let lastBgTap = 0;
   $("view-stopwatch")?.addEventListener(
     "touchstart",
@@ -194,15 +179,10 @@ document.addEventListener("DOMContentLoaded", () => {
     { passive: false },
   );
 
-  // --- Логика свайп-навигации между вкладками ---
-  const appContainer = $("app");
-  const swipeAreaLeft = $("swipe-area-left");
-  const swipeAreaRight = $("swipe-area-right");
   const tabs = ["stopwatch", "timer", "tabata", "settings"];
   let touchStartX = 0,
     touchStartY = 0,
     isSwipeActive = false;
-
   appContainer.addEventListener(
     "touchstart",
     (e) => {
@@ -258,7 +238,7 @@ document.addEventListener("DOMContentLoaded", () => {
     { passive: true },
   );
 
-  // --- Системная интеграция с Capacitor для нативных платформ (Android/iOS) ---
+  // --- Системная интеграция с Capacitor ---
   if (window.Capacitor && window.Capacitor.isNativePlatform()) {
     const {
       StatusBar,
@@ -266,13 +246,11 @@ document.addEventListener("DOMContentLoaded", () => {
       CapacitorAndroidForegroundService: FgService,
     } = window.Capacitor.Plugins;
 
-    // Управление статус-баром
     if (StatusBar) {
       StatusBar.setOverlaysWebView({ overlay: true }).catch(() => {});
       StatusBar.setStyle({ style: "DARK" }).catch(() => {});
     }
 
-    // Обработка системной кнопки "назад" на Android
     if (App) {
       App.addListener("backButton", () => {
         if (modalManager.hasActiveModal()) {
@@ -285,9 +263,9 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
 
-    // Управление фоновым сервисом и уведомлениями на Android
     if (App && FgService) {
       let fgInterval = null;
+      let lastNotificationBody = "";
 
       async function updateForegroundNotification(activeTimer) {
         let title = "Stopwatch Pro";
@@ -296,7 +274,7 @@ document.addEventListener("DOMContentLoaded", () => {
         switch (activeTimer) {
           case "stopwatch":
             title = "⏱ Stopwatch";
-            body = sw.formatTime(sw.elapsedTime, false);
+            body = formatTime(sw.elapsedTime, { showMs: false });
             break;
           case "timer":
             title = "⏳ Timer";
@@ -317,22 +295,24 @@ document.addEventListener("DOMContentLoaded", () => {
             body = `${t("round")} ${tb.currentRound}/${tb.rounds} • ${phaseStr}: ${sTotal}s`;
             break;
           default:
-            // Этот блок выполнится, если таймер остановился, пока мы были в фоне,
-            // или если не было активного таймера.
             if (fgInterval) {
               clearInterval(fgInterval);
               fgInterval = null;
             }
             await FgService.stop().catch(() => {});
+            lastNotificationBody = "";
             return;
         }
 
-        await FgService.start({
-          id: 101,
-          title,
-          body,
-          smallIcon: "ic_stat_name",
-        }).catch(() => {});
+        if (body !== lastNotificationBody) {
+          await FgService.start({
+            id: 101,
+            title,
+            body,
+            smallIcon: "ic_stat_name",
+          }).catch(() => {});
+          lastNotificationBody = body;
+        }
       }
 
       App.addListener("appStateChange", async ({ isActive }) => {
@@ -342,7 +322,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!isActive && isTimerRunning) {
           sm.unlock();
           requestWakeLock();
-          // Передаем имя активного таймера в функцию уведомлений
           await updateForegroundNotification(activeTimer);
           if (!fgInterval) {
             fgInterval = setInterval(
@@ -357,6 +336,7 @@ document.addEventListener("DOMContentLoaded", () => {
           }
           await FgService.stop().catch(() => {});
           releaseWakeLock();
+          lastNotificationBody = "";
         }
       });
     }
