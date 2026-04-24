@@ -18,21 +18,8 @@
  * Использование:
  *   import { initTouchRanges } from './touch-range.js?v=VERSION';
  *
- *   // Инициализировать все [data-touch-range] на странице:
+ *   // Инициализировать все на странице:
  *   initTouchRanges();
- *
- *   // Или конкретный элемент:
- *   initTouchRange(document.getElementById('fontSlider'));
- *
- * HTML (замените нативный input):
- *   <div class="touch-range-wrap" data-touch-range
- *        data-min="12" data-max="24" data-step="1" data-value="16"
- *        data-input-id="fontSlider"
- *        aria-label="Font Size">
- *   </div>
- *
- * ИЛИ оставьте нативный input и просто вызовите enhanceNativeRange(el):
- *   enhanceNativeRange(document.getElementById('fontSlider'));
  *
  * CSS-переменные для кастомизации (опционально):
  *   --tr-track-height: 4px
@@ -41,12 +28,7 @@
  *   --tr-fill-color:   var(--primary-color, #22c55e)
  *   --tr-thumb-color:  var(--primary-color, #22c55e)
  */
-
-/**
- * touch-range.js
- * ... (описание модуля без изменений) ...
- */
-import { sm } from './sound.js?v=VERSION'; // <-- 1. ДОБАВЛЕН ИМПОРТ
+import { sm } from "./sound.js?v=VERSION";
 
 // ─── Вставляем базовые стили один раз ────────────────────────────────────────
 const STYLE_ID = "__touch_range_styles__";
@@ -137,8 +119,6 @@ if (!document.getElementById(STYLE_ID)) {
   document.head.appendChild(style);
 }
 
-// ─── Вспомогательные функции ──────────────────────────────────────────────────
-
 /**
  * Создаёт кастомный ползунок поверх нативного input[type=range].
  * Нативный input скрывается визуально, но остаётся в DOM.
@@ -150,12 +130,11 @@ export function enhanceNativeRange(input) {
   if (input.dataset.trEnhanced) return; // уже улучшен
   input.dataset.trEnhanced = "1";
 
-  const min   = parseFloat(input.min)   || 0;
-  const max   = parseFloat(input.max)   || 100;
-  const step  = parseFloat(input.step)  || 1;
-  let   value = parseFloat(input.value) || min;
+  const min = parseFloat(input.min) || 0;
+  const max = parseFloat(input.max) || 100;
+  const step = parseFloat(input.step) || 1;
+  let value = parseFloat(input.value) || min;
 
-  // <-- 2. ДОБАВЛЕНЫ ПЕРЕМЕННЫЕ ДЛЯ ТРОТТЛИНГА ВИБРАЦИИ -->
   let lastVibroTime = 0;
   const VIBRO_THROTTLE_MS = 75;
 
@@ -177,7 +156,7 @@ export function enhanceNativeRange(input) {
   // Трек + заливка + бегунок
   const track = document.createElement("div");
   track.className = "tr-track";
-  const fill  = document.createElement("div");
+  const fill = document.createElement("div");
   fill.className = "tr-fill";
   const thumb = document.createElement("div");
   thumb.className = "tr-thumb";
@@ -187,17 +166,14 @@ export function enhanceNativeRange(input) {
   // Добавляем input внутрь обёртки (скрытый)
   input.classList.add("tr-native");
   wrap.appendChild(track);
-  wrap.appendChild(input.cloneNode(false));
   input.parentNode.insertBefore(wrap, input);
   wrap.appendChild(input);
-  const clonedInput = wrap.querySelector(".tr-native:not([data-tr-enhanced])");
-  if (clonedInput && clonedInput !== input) clonedInput.remove();
 
   // ── Функция обновления визуала ───────────────────────────────────────────
   const updateVisual = (val) => {
     const pct = (val - min) / (max - min);
-    fill.style.width  = `${pct * 100}%`;
-    thumb.style.left  = `${pct * 100}%`;
+    fill.style.width = `${pct * 100}%`;
+    thumb.style.left = `${pct * 100}%`;
     wrap.setAttribute("aria-valuenow", val);
   };
 
@@ -205,9 +181,9 @@ export function enhanceNativeRange(input) {
 
   // ── Функция вычисления значения по X-позиции касания/клика ──────────────
   const valueFromX = (clientX) => {
-    const rect   = track.getBoundingClientRect();
-    const pct    = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-    const raw    = min + pct * (max - min);
+    const rect = track.getBoundingClientRect();
+    const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    const raw = min + pct * (max - min);
     const stepped = Math.round(raw / step) * step;
     return Math.max(min, Math.min(max, parseFloat(stepped.toFixed(10))));
   };
@@ -216,24 +192,23 @@ export function enhanceNativeRange(input) {
   const applyValue = (val, eventType = "input") => {
     const clamped = Math.max(min, Math.min(max, val));
     const snapped = Math.round((clamped - min) / step) * step + min;
-    const final   = parseFloat(Math.max(min, Math.min(max, snapped)).toFixed(10));
+    const final = parseFloat(Math.max(min, Math.min(max, snapped)).toFixed(10));
 
-    if (final === value) return; // Не диспатчить событие, если значение не изменилось
+    if (final === parseFloat(input.value) && eventType === "input") return;
 
-    value        = final;
-    input.value  = final;
-    updateVisual(final);
+    value = final;
+    input.value = final; // Этот сеттер вызовет наш кастомный обработчик ниже
     input.dispatchEvent(new Event(eventType, { bubbles: true }));
   };
 
   // ─── TOUCH-логика ────────────────────────────────────────────────────────
   let touchState = {
-    active:   false,
-    decided:  false,
-    isHoriz:  false,
-    startX:   0,
-    startY:   0,
-    id:       null,
+    active: false,
+    decided: false,
+    isHoriz: false,
+    startX: 0,
+    startY: 0,
+    id: null,
   };
   const DECISION_THRESHOLD = 6;
 
@@ -241,12 +216,12 @@ export function enhanceNativeRange(input) {
     if (touchState.active) return;
     const touch = e.changedTouches[0];
     touchState = {
-      active:  true,
+      active: true,
       decided: false,
       isHoriz: false,
-      startX:  touch.clientX,
-      startY:  touch.clientY,
-      id:      touch.identifier,
+      startX: touch.clientX,
+      startY: touch.clientY,
+      id: touch.identifier,
     };
   };
 
@@ -280,13 +255,11 @@ export function enhanceNativeRange(input) {
     if (!touchState.isHoriz) return;
     e.preventDefault();
 
-    // <-- 3. ДОБАВЛЕНА ЛОГИКА ВИБРАЦИИ -->
     const now = performance.now();
     if (now - lastVibroTime > VIBRO_THROTTLE_MS) {
-        sm.vibrate(10, 'tactile');
-        lastVibroTime = now;
+      sm.vibrate(10, "tactile");
+      lastVibroTime = now;
     }
-    // <-- КОНЕЦ ИЗМЕНЕНИЯ -->
 
     applyValue(valueFromX(touch.clientX), "input");
   };
@@ -304,15 +277,15 @@ export function enhanceNativeRange(input) {
       if (touch) applyValue(valueFromX(touch.clientX), "change");
       wrap.classList.remove("tr-dragging");
     }
-    touchState.active  = false;
+    touchState.active = false;
     touchState.decided = false;
     touchState.isHoriz = false;
   };
 
   wrap.addEventListener("touchstart", onTouchStart, { passive: true });
-  wrap.addEventListener("touchmove",  onTouchMove,  { passive: false });
-  wrap.addEventListener("touchend",   onTouchEnd,   { passive: true });
-  wrap.addEventListener("touchcancel",onTouchEnd,   { passive: true });
+  wrap.addEventListener("touchmove", onTouchMove, { passive: false });
+  wrap.addEventListener("touchend", onTouchEnd, { passive: true });
+  wrap.addEventListener("touchcancel", onTouchEnd, { passive: true });
 
   // ─── MOUSE-логика ────────────────────────────────────────────────────────
   let mouseDown = false;
@@ -328,13 +301,11 @@ export function enhanceNativeRange(input) {
   document.addEventListener("mousemove", (e) => {
     if (!mouseDown) return;
 
-    // <-- 4. ДОБАВЛЕНА АНАЛОГИЧНАЯ ЛОГИКА ВИБРАЦИИ -->
     const now = performance.now();
     if (now - lastVibroTime > VIBRO_THROTTLE_MS) {
-        sm.vibrate(10, 'tactile');
-        lastVibroTime = now;
+      sm.vibrate(10, "tactile");
+      lastVibroTime = now;
     }
-    // <-- КОНЕЦ ИЗМЕНЕНИЯ -->
 
     applyValue(valueFromX(e.clientX), "input");
   });
@@ -390,21 +361,12 @@ export function enhanceNativeRange(input) {
   });
 
   wrap.addEventListener("focus", () => wrap.classList.add("tr-focused"));
-  wrap.addEventListener("blur",  () => wrap.classList.remove("tr-focused"));
+  wrap.addEventListener("blur", () => wrap.classList.remove("tr-focused"));
 
   // ─── Следим за внешними изменениями input.value ──────────────────────────
-  const observer = new MutationObserver(() => {
-    const newVal = parseFloat(input.value);
-    if (!isNaN(newVal) && newVal !== value) {
-      value = newVal;
-      updateVisual(newVal);
-    }
-  });
-  observer.observe(input, { attributes: true, attributeFilter: ["value"] });
-
   const originalDescriptor = Object.getOwnPropertyDescriptor(
     HTMLInputElement.prototype,
-    "value"
+    "value",
   );
   if (originalDescriptor) {
     Object.defineProperty(input, "value", {
@@ -412,9 +374,12 @@ export function enhanceNativeRange(input) {
         return originalDescriptor.get.call(this);
       },
       set(v) {
+        // Устанавливаем нативное значение
         originalDescriptor.set.call(this, v);
+
         const newVal = parseFloat(v);
-        if (!isNaN(newVal) && newVal !== value) {
+        if (!isNaN(newVal)) {
+          // Синхронизируем внутреннюю переменную и визуальное представление.
           value = newVal;
           updateVisual(newVal);
         }
@@ -423,19 +388,23 @@ export function enhanceNativeRange(input) {
     });
   }
 
+  // После того, как мы определили новый сеттер,
+  // принудительно "переустанавливаем" текущее значение,
+  // чтобы `updateVisual` точно сработал.
+  input.value = value;
+
   return wrap;
 }
 
 /**
  * Инициализирует все нативные input[type=range] на странице.
- * Можно вызвать с опциональным selector.
  *
  * @param {string} [selector='input[type="range"]'] - CSS-селектор
  * @param {Element} [root=document] - корневой элемент для поиска
  */
 export function initTouchRanges(
   selector = 'input[type="range"]',
-  root = document
+  root = document,
 ) {
   root.querySelectorAll(selector).forEach((input) => {
     enhanceNativeRange(input);
