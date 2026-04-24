@@ -92,16 +92,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 1. Сначала инициализируем все модули, от которых могут зависеть другие.
   langManager.init();
-
-  // ИСПРАВЛЕНИЕ #1: themeManager.init() инициализирует uiSettingsManager внутри себя.
-  // uiSettingsManager.init() → applySettings() → читает LS и восстанавливает ползунки.
-  // Это происходит до sm.init(), поэтому событие soundSettingsApplied нужно для синхронизации.
-  themeManager.init();
-
-  // sm.init() → applySettings() → в конце диспатчит soundSettingsApplied,
-  // uiSettingsManager слушает его и дополнительно синхронизирует vibroSlider и volumeSlider.
+  themeManager.init(); // themeManager.init() теперь является координатором и сам инициализирует дочерние модули
   sm.init();
-
   sw.init();
   tm.init();
   tb.init();
@@ -314,6 +306,8 @@ document.addEventListener("DOMContentLoaded", () => {
             body = `${t("round")} ${tb.currentRound}/${tb.rounds} • ${phaseStr}: ${sTotal}s`;
             break;
           default:
+            // Этот блок выполнится, если таймер остановился, пока мы были в фоне,
+            // или если не было активного таймера.
             if (fgInterval) {
               clearInterval(fgInterval);
               fgInterval = null;
@@ -337,6 +331,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!isActive && isTimerRunning) {
           sm.unlock();
           requestWakeLock();
+          // Передаем имя активного таймера в функцию уведомлений
           await updateForegroundNotification(activeTimer);
           if (!fgInterval) {
             fgInterval = setInterval(
