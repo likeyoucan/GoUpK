@@ -90,18 +90,16 @@ function confirmReset() {
 document.addEventListener("DOMContentLoaded", () => {
   injectSVG();
 
-  initTouchRanges();
-
   // 1. Сначала инициализируем все модули, от которых могут зависеть другие.
   langManager.init();
-  themeManager.init();
+  themeManager.init(); // themeManager.init() теперь является координатором и сам инициализирует дочерние модули
   sm.init();
   sw.init();
   tm.init();
   tb.init();
   navigation.init();
 
-
+  initTouchRanges();
 
   // 2. Затем инициализируем менеджер модальных окон, передавая ему конфигурацию.
   modalManager.init(modalConfig);
