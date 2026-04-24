@@ -15,6 +15,7 @@ import {
   announceToScreenReader,
   showToast,
   getUniqueName,
+  LS_KEYS,
 } from "./utils.js?v=VERSION";
 import { sm } from "./sound.js?v=VERSION";
 import { t } from "./i18n.js?v=VERSION";
@@ -111,7 +112,7 @@ const stopwatchModule = {
       if (e.detail !== "stopwatch" && this.isRunning) this.toggle();
     });
     bgWorker.addEventListener("message", (e) => {
-      if (e.data === "tick" && this.isRunning && document.hidden)
+     if (e.data.type === "tick" && this.isRunning && document.hidden)
         this.tick(true);
     });
     document.addEventListener("visibilitychange", () => {
@@ -122,7 +123,7 @@ const stopwatchModule = {
     });
 
     try {
-      const stored = safeGetLS("sw_saved_sessions");
+      const stored = safeGetLS(LS_KEYS.SW_SAVED_SESSIONS);
       this.savedSessions = stored ? JSON.parse(stored) : [];
     } catch (e) {
       this.savedSessions = [];
@@ -160,7 +161,7 @@ const stopwatchModule = {
       store.clearActiveTimer();
       this.isRunning = false;
       this.pauseTime = Date.now();
-      bgWorker.postMessage("stop");
+      bgWorker.postMessage({ command: "stop" });
       cancelAnimationFrame(this.rAF);
       releaseWakeLock();
       updateTitle("");
@@ -181,7 +182,7 @@ const stopwatchModule = {
       this.isRunning = true;
       this.pauseTime = 0;
       requestWakeLock();
-      bgWorker.postMessage("start");
+      bgWorker.postMessage({ command: "start" });
       this.tick();
       this.els.status.classList.add("hidden");
       this.els.display.classList.remove("is-go");
@@ -483,7 +484,7 @@ const stopwatchModule = {
       const session = this.nameModalState.pendingSession;
       session.name = finalName;
       this.savedSessions.push(session);
-      safeSetLS("sw_saved_sessions", JSON.stringify(this.savedSessions));
+      safeSetLS(LS_KEYS.SW_SAVED_SESSIONS, JSON.stringify(this.savedSessions));
       showToast(t("session_saved"));
     } else if (this.nameModalState.action === "rename") {
       const session = this.savedSessions.find(
@@ -491,7 +492,7 @@ const stopwatchModule = {
       );
       if (session) {
         session.name = finalName;
-        safeSetLS("sw_saved_sessions", JSON.stringify(this.savedSessions));
+        safeSetLS(LS_KEYS.SW_SAVED_SESSIONS, JSON.stringify(this.savedSessions));
         this.sortSessions(this.currentSort);
       }
     }
@@ -500,7 +501,7 @@ const stopwatchModule = {
 
   confirmClearAll() {
     this.savedSessions = [];
-    safeRemoveLS("sw_saved_sessions");
+    safeRemoveLS(LS_KEYS.SW_SAVED_SESSIONS);
     this.renderSavedSessions();
     modalManager.closeCurrent();
     showToast(t("history_cleared"));
@@ -524,7 +525,7 @@ const stopwatchModule = {
 
   deleteSession(id) {
     this.savedSessions = this.savedSessions.filter((s) => s.id !== id);
-    safeSetLS("sw_saved_sessions", JSON.stringify(this.savedSessions));
+    safeSetLS(LS_KEYS.SW_SAVED_SESSIONS, JSON.stringify(this.savedSessions));
     this.renderSavedSessions();
   },
 

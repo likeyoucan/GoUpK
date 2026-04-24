@@ -1,6 +1,12 @@
 // Файл: www/js/ui-settings.js
 
-import { $, safeGetLS, safeSetLS, safeRemoveLS, LS_KEYS } from "./utils.js?v=VERSION";
+import {
+  $,
+  safeGetLS,
+  safeSetLS,
+  safeRemoveLS,
+  LS_KEYS,
+} from "./utils.js?v=VERSION";
 import { t } from "./i18n.js?v=VERSION";
 import { sm } from "./sound.js?v=VERSION";
 
@@ -16,14 +22,26 @@ export const uiSettingsManager = {
   fontSize: 16,
   ringWidth: 4,
   swMinuteBeep: true,
-  
+
   // Кэш для размеров, чтобы избежать layout thrashing
-  _sliderTrackWidth: 0, 
+  _sliderTrackWidth: 0,
 
   // Константы
   vignetteLevels: [0.1, 0.15, 0.2, 0.25, 0.3],
-  vignetteLabels: ["vignette_min", "vignette_low", "vignette_medium", "vignette_high", "vignette_max"],
-  vibroLabels: ["vibro_min", "vibro_low", "vibro_medium", "vibro_high", "vibro_max"],
+  vignetteLabels: [
+    "vignette_min",
+    "vignette_low",
+    "vignette_medium",
+    "vignette_high",
+    "vignette_max",
+  ],
+  vibroLabels: [
+    "vibro_min",
+    "vibro_low",
+    "vibro_medium",
+    "vibro_high",
+    "vibro_max",
+  ],
 
   init() {
     if (this._initialized) return;
@@ -33,7 +51,7 @@ export const uiSettingsManager = {
     this._bindEvents();
     this._cacheSliderWidths();
   },
-  
+
   _cacheSliderWidths() {
     // Кэшируем ширину одного из слайдеров, предполагая, что они одинаковы
     const slider = $("vignetteSlider");
@@ -43,21 +61,52 @@ export const uiSettingsManager = {
   },
 
   _bindEvents() {
-    window.addEventListener('resize', () => this._cacheSliderWidths());
+    window.addEventListener("resize", () => this._cacheSliderWidths());
     document.addEventListener("languageChanged", () => this.syncSliderUIs());
-    document.addEventListener("vibroToggled", (e) => this.updateVibroSliderUI(e.detail.enabled));
+    document.addEventListener("vibroToggled", (e) =>
+      this.updateVibroSliderUI(e.detail.enabled),
+    );
 
     // Декларативная конфигурация для всех переключателей
     const toggleConfig = [
-      { id: "toggle-ms",          key: LS_KEYS.APP_SHOW_MS,          state: "showMs",         event: "msChanged" },
-      { id: "toggle-nav-labels",  key: LS_KEYS.APP_HIDE_NAV_LABELS,  state: "hideNavLabels",  callback: this.applyNavLabelsVisibility },
-      { id: "toggle-glass",       key: LS_KEYS.APP_LIQUID_GLASS,     state: "isLiquidGlass",  callback: this.updateGlass },
-      { id: "toggle-vignette",    key: LS_KEYS.APP_VIGNETTE,         state: "hasVignette",    callback: this.updateVignette },
-      { id: "toggle-adaptive-bg", key: LS_KEYS.APP_ADAPTIVE_BG,      state: "isAdaptiveBg",   event: "adaptiveBgChanged" },
-      { id: "toggle-sw-minute-beep", key: LS_KEYS.APP_SW_MINUTE_BEEP,state: "swMinuteBeep" },
+      {
+        id: "toggle-ms",
+        key: LS_KEYS.APP_SHOW_MS,
+        state: "showMs",
+        event: "msChanged",
+      },
+      {
+        id: "toggle-nav-labels",
+        key: LS_KEYS.APP_HIDE_NAV_LABELS,
+        state: "hideNavLabels",
+        callback: this.applyNavLabelsVisibility,
+      },
+      {
+        id: "toggle-glass",
+        key: LS_KEYS.APP_LIQUID_GLASS,
+        state: "isLiquidGlass",
+        callback: this.updateGlass,
+      },
+      {
+        id: "toggle-vignette",
+        key: LS_KEYS.APP_VIGNETTE,
+        state: "hasVignette",
+        callback: this.updateVignette,
+      },
+      {
+        id: "toggle-adaptive-bg",
+        key: LS_KEYS.APP_ADAPTIVE_BG,
+        state: "isAdaptiveBg",
+        event: "adaptiveBgChanged",
+      },
+      {
+        id: "toggle-sw-minute-beep",
+        key: LS_KEYS.APP_SW_MINUTE_BEEP,
+        state: "swMinuteBeep",
+      },
     ];
 
-    toggleConfig.forEach(config => {
+    toggleConfig.forEach((config) => {
       const element = $(config.id);
       element?.addEventListener("change", (e) => {
         const value = e.target.checked;
@@ -71,14 +120,22 @@ export const uiSettingsManager = {
     // Обработчики для слайдеров
     const fontSlider = $("fontSlider");
     if (fontSlider) {
-      fontSlider.addEventListener("input", (e) => this.setFontSize(Number(e.target.value)));
-      fontSlider.addEventListener("change", (e) => safeSetLS(LS_KEYS.FONT_SIZE, e.target.value));
+      fontSlider.addEventListener("input", (e) =>
+        this.setFontSize(Number(e.target.value)),
+      );
+      fontSlider.addEventListener("change", (e) =>
+        safeSetLS(LS_KEYS.FONT_SIZE, e.target.value),
+      );
     }
 
     const ringWidthSlider = $("ringWidthSlider");
     if (ringWidthSlider) {
-      ringWidthSlider.addEventListener("input", (e) => this.setRingWidth(Number(e.target.value)));
-      ringWidthSlider.addEventListener("change", (e) => safeSetLS(LS_KEYS.APP_RING_WIDTH, e.target.value));
+      ringWidthSlider.addEventListener("input", (e) =>
+        this.setRingWidth(Number(e.target.value)),
+      );
+      ringWidthSlider.addEventListener("change", (e) =>
+        safeSetLS(LS_KEYS.APP_RING_WIDTH, e.target.value),
+      );
     }
 
     const vignetteSlider = $("vignetteSlider");
@@ -86,24 +143,30 @@ export const uiSettingsManager = {
       const handler = () => {
         this.vignetteAlpha = this.vignetteLevels[vignetteSlider.value];
         this.updateVignette();
-        this.updateSliderLabel("vignetteSlider", "vignette-label", this.vignetteLabels);
+        this.updateSliderLabel(
+          "vignetteSlider",
+          "vignette-label",
+          this.vignetteLabels,
+        );
       };
       vignetteSlider.addEventListener("input", handler);
-      vignetteSlider.addEventListener("change", () => safeSetLS(LS_KEYS.APP_VIGNETTE_ALPHA, this.vignetteAlpha));
+      vignetteSlider.addEventListener("change", () =>
+        safeSetLS(LS_KEYS.APP_VIGNETTE_ALPHA, this.vignetteAlpha),
+      );
     }
 
     const vibroSlider = $("vibroSlider");
     if (vibroSlider) {
-        const handler = () => {
-            const levels = [0.5, 0.75, 1, 1.5, 2];
-            sm.vibroLevel = levels[vibroSlider.value] || 1;
-            this.updateSliderLabel("vibroSlider", "vibro-label", this.vibroLabels);
-        };
-        vibroSlider.addEventListener("input", handler);
-        vibroSlider.addEventListener("change", (e) => {
-            safeSetLS(LS_KEYS.APP_VIBRO_LEVEL, sm.vibroLevel);
-            sm.vibrate(50, "strong");
-        });
+      const handler = () => {
+        const levels = [0.5, 0.75, 1, 1.5, 2];
+        sm.vibroLevel = levels[vibroSlider.value] || 1;
+        this.updateSliderLabel("vibroSlider", "vibro-label", this.vibroLabels);
+      };
+      vibroSlider.addEventListener("input", handler);
+      vibroSlider.addEventListener("change", (e) => {
+        safeSetLS(LS_KEYS.APP_VIBRO_LEVEL, sm.vibroLevel);
+        sm.vibrate(50, "strong");
+      });
     }
   },
 
@@ -117,20 +180,31 @@ export const uiSettingsManager = {
     this.swMinuteBeep = safeGetLS(LS_KEYS.APP_SW_MINUTE_BEEP) !== "false";
     this.fontSize = Number(safeGetLS(LS_KEYS.FONT_SIZE)) || 16;
     this.ringWidth = Number(safeGetLS(LS_KEYS.APP_RING_WIDTH)) || 4;
-    this.vignetteAlpha = parseFloat(safeGetLS(LS_KEYS.APP_VIGNETTE_ALPHA)) || 0.2;
+    this.vignetteAlpha =
+      parseFloat(safeGetLS(LS_KEYS.APP_VIGNETTE_ALPHA)) || 0.2;
 
     // Применение настроек к UI элементам
-    if ($("toggle-adaptive-bg")) $("toggle-adaptive-bg").checked = this.isAdaptiveBg;
+    if ($("toggle-adaptive-bg"))
+      $("toggle-adaptive-bg").checked = this.isAdaptiveBg;
     if ($("toggle-vignette")) $("toggle-vignette").checked = this.hasVignette;
     if ($("toggle-glass")) $("toggle-glass").checked = this.isLiquidGlass;
-    if ($("toggle-nav-labels")) $("toggle-nav-labels").checked = this.hideNavLabels;
+    if ($("toggle-nav-labels"))
+      $("toggle-nav-labels").checked = this.hideNavLabels;
     if ($("toggle-ms")) $("toggle-ms").checked = this.showMs;
-    if ($("toggle-sw-minute-beep")) $("toggle-sw-minute-beep").checked = this.swMinuteBeep;
+    if ($("toggle-sw-minute-beep"))
+      $("toggle-sw-minute-beep").checked = this.swMinuteBeep;
 
     if ($("fontSlider")) $("fontSlider").value = this.fontSize;
     if ($("ringWidthSlider")) $("ringWidthSlider").value = this.ringWidth;
     if ($("vignetteSlider")) {
-      const closestVignetteIndex = this.vignetteLevels.reduce((p, c, i) => Math.abs(c - this.vignetteAlpha) < Math.abs(this.vignetteLevels[p] - this.vignetteAlpha) ? i : p, 0);
+      const closestVignetteIndex = this.vignetteLevels.reduce(
+        (p, c, i) =>
+          Math.abs(c - this.vignetteAlpha) <
+          Math.abs(this.vignetteLevels[p] - this.vignetteAlpha)
+            ? i
+            : p,
+        0,
+      );
       $("vignetteSlider").value = closestVignetteIndex;
     }
 
@@ -144,24 +218,41 @@ export const uiSettingsManager = {
   },
 
   resetSettings() {
-    const keys = [LS_KEYS.FONT_SIZE, LS_KEYS.APP_ADAPTIVE_BG, LS_KEYS.APP_VIGNETTE, LS_KEYS.APP_VIGNETTE_ALPHA, LS_KEYS.APP_LIQUID_GLASS, LS_KEYS.APP_HIDE_NAV_LABELS, LS_KEYS.APP_RING_WIDTH, LS_KEYS.APP_SHOW_MS, LS_KEYS.APP_SW_MINUTE_BEEP];
+    const keys = [
+      LS_KEYS.FONT_SIZE,
+      LS_KEYS.APP_ADAPTIVE_BG,
+      LS_KEYS.APP_VIGNETTE,
+      LS_KEYS.APP_VIGNETTE_ALPHA,
+      LS_KEYS.APP_LIQUID_GLASS,
+      LS_KEYS.APP_HIDE_NAV_LABELS,
+      LS_KEYS.APP_RING_WIDTH,
+      LS_KEYS.APP_SHOW_MS,
+      LS_KEYS.APP_SW_MINUTE_BEEP,
+    ];
     keys.forEach(safeRemoveLS);
-    
+
     // После очистки localStorage, вызываем applySettings, который применит дефолты
     this.applySettings();
   },
 
   syncSliderUIs() {
     requestAnimationFrame(() => {
-      this.updateSliderLabel("vignetteSlider", "vignette-label", this.vignetteLabels);
+      this.updateSliderLabel(
+        "vignetteSlider",
+        "vignette-label",
+        this.vignetteLabels,
+      );
       this.updateSliderLabel("vibroSlider", "vibro-label", this.vibroLabels);
     });
   },
 
   updateSliderLabel(sliderId, labelId, labelsArray) {
-    const slider = $(sliderId), label = $(labelId);
+    const slider = $(sliderId),
+      label = $(labelId);
     if (!slider || !label) return;
-    const val = parseInt(slider.value, 10), min = parseFloat(slider.min), max = parseFloat(slider.max);
+    const val = parseInt(slider.value, 10),
+      min = parseFloat(slider.min),
+      max = parseFloat(slider.max);
     label.textContent = t(labelsArray[val] || labelsArray[0]);
     const percent = max - min > 0 ? (val - min) / (max - min) : 0;
     const thumbWidth = 24;
@@ -182,7 +273,8 @@ export const uiSettingsManager = {
   setRingWidth(w) {
     this.ringWidth = w;
     document.documentElement.style.setProperty("--ring-stroke-width", w);
-    if ($("ringWidthDisplay")) $("ringWidthDisplay").textContent = `${w.toFixed(1)} px`;
+    if ($("ringWidthDisplay"))
+      $("ringWidthDisplay").textContent = `${w.toFixed(1)} px`;
   },
 
   updateVignette() {
@@ -193,7 +285,10 @@ export const uiSettingsManager = {
     c?.classList.toggle("flex", this.hasVignette);
     bg.classList.toggle("has-vignette", this.hasVignette);
     if (this.hasVignette) {
-      document.documentElement.style.setProperty("--vignette-alpha", this.vignetteAlpha * 0.4);
+      document.documentElement.style.setProperty(
+        "--vignette-alpha",
+        this.vignetteAlpha * 0.4,
+      );
       this.syncSliderUIs();
     }
   },
@@ -208,7 +303,10 @@ export const uiSettingsManager = {
   },
 
   updateGlass() {
-    document.documentElement.classList.toggle("glass-effect", this.isLiquidGlass);
+    document.documentElement.classList.toggle(
+      "glass-effect",
+      this.isLiquidGlass,
+    );
   },
 
   applyNavLabelsVisibility() {

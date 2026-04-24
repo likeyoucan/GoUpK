@@ -10,6 +10,7 @@ import {
   hexToRGB,
   getCssVariable,
   normalizeHexColor,
+  LS_KEYS,
 } from "./utils.js?v=VERSION";
 import { t } from "./i18n.js?v=VERSION";
 import { sm } from "./sound.js?v=VERSION";
@@ -55,8 +56,9 @@ export const colorManager = {
   loadColors() {
     try {
       this.customAccentColors =
-        JSON.parse(safeGetLS("custom_accent_colors")) || [];
-      this.customBgColors = JSON.parse(safeGetLS("custom_bg_colors")) || [];
+        JSON.parse(safeGetLS(LS_KEYS.CUSTOM_ACCENT_COLORS)) || [];
+      this.customBgColors =
+        JSON.parse(safeGetLS(LS_KEYS.CUSTOM_BG_COLORS)) || [];
     } catch (e) {
       this.customAccentColors = [];
       this.customBgColors = [];
@@ -181,23 +183,22 @@ export const colorManager = {
       this._hideActionButton();
     }
 
-if (swatchWrapper) {
-
-    if (this.activeActionTarget === swatchWrapper) {
+    if (swatchWrapper) {
+      if (this.activeActionTarget === swatchWrapper) {
         this._hideActionButton();
         return;
-    }
+      }
 
-    const color = swatchWrapper.dataset.color;
-    document.dispatchEvent(
+      const color = swatchWrapper.dataset.color;
+      document.dispatchEvent(
         new CustomEvent("colorSelected", {
-            detail: { type, color, fromPicker: false },
+          detail: { type, color, fromPicker: false },
         }),
-    );
-    if (swatchWrapper.dataset.custom === "true") {
+      );
+      if (swatchWrapper.dataset.custom === "true") {
         this._showActionButton(swatchWrapper, "delete");
+      }
     }
-}
   },
 
   _updateAddButtonColor(button, newColor) {
@@ -275,7 +276,6 @@ if (swatchWrapper) {
       return;
     }
 
-  
     // Это единственный надежный способ сравнения.
     const currentTheme = themeManager.getCurrentTheme();
     let activeDefaultColor;
@@ -300,10 +300,7 @@ if (swatchWrapper) {
     this._hideActionButton();
     sm.vibrate(40, "medium");
     customColors.push(newColor);
-    safeSetLS(
-      isAccent ? "custom_accent_colors" : "custom_bg_colors",
-      JSON.stringify(customColors),
-    );
+    safeSetLS("custom_accent_colors", JSON.stringify(customColors));
     this._addColorToDOM(newColor, type);
     document.dispatchEvent(
       new CustomEvent("colorSelected", {
@@ -339,10 +336,7 @@ if (swatchWrapper) {
             .indexOf(color.toLowerCase());
           if (index > -1) {
             customColors.splice(index, 1);
-            safeSetLS(
-              isAccent ? "custom_accent_colors" : "custom_bg_colors",
-              JSON.stringify(customColors),
-            );
+            safeSetLS("custom_accent_colors", JSON.stringify(customColors));
           }
         },
         { once: true },

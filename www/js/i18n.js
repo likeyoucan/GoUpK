@@ -1,6 +1,11 @@
 // Файл: www/js/i18n.js
 
-import { safeGetLS, safeSetLS, safeRemoveLS } from "./utils.js?v=VERSION";
+import {
+  safeGetLS,
+  safeSetLS,
+  safeRemoveLS,
+  LS_KEYS,
+} from "./utils.js?v=VERSION";
 import { CustomSelect } from "./custom-select.js?v=VERSION"; // <-- 1. ДОБАВЛЕН ИМПОРТ
 
 export const translations = {
@@ -234,7 +239,7 @@ export const langManager = {
   langSelect: null, // <-- 2. СВОЙСТВО ДЛЯ ХРАНЕНИЯ ЭКЗЕМПЛЯРА СЕЛЕКТОРА
 
   init() {
-    const stored = safeGetLS("app_lang");
+    const stored = safeGetLS(LS_KEYS.APP_LANG);
     const initialLang = stored || "auto";
 
     // <-- 3. ИНИЦИАЛИЗАЦИЯ НОВОГО CUSTOM SELECT -->
@@ -252,7 +257,7 @@ export const langManager = {
         if (value === "auto") {
           const sys = navigator.language.startsWith("ru") ? "ru" : "en";
           this.setLang(sys, true);
-          safeSetLS("app_lang", "auto");
+          safeSetLS(LS_KEYS.APP_LANG, "auto");
         } else {
           this.setLang(value);
         }
@@ -270,7 +275,7 @@ export const langManager = {
   },
 
   resetSettings() {
-    safeRemoveLS("app_lang");
+    safeRemoveLS(LS_KEYS.APP_LANG);
     this.init(); // Переинициализируем для сброса на 'auto'
   },
 
@@ -278,7 +283,7 @@ export const langManager = {
     this.current = lang;
     document.documentElement.lang = lang;
     if (!isAuto) {
-      safeSetLS("app_lang", lang);
+      safeSetLS(LS_KEYS.APP_LANG, lang);
     }
 
     // <-- 4. ОБНОВЛЕНИЕ UI CUSTOM SELECT -->

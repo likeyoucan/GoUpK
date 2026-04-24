@@ -153,7 +153,7 @@ export const tm = {
       sm.vibrate(50, "medium");
       const adjustmentMs = this.currentAdjustmentSec * 1000;
       this.totalDuration += adjustmentMs;
-      bgWorker.postMessage({ command: "adjust", time: adjustmentMs });
+      bgWorker.postMessage({ command: "adjust", payload: { time: adjustmentMs } });
     });
 
     this.els.adjustMinusBtn?.addEventListener("click", () => {
@@ -161,7 +161,7 @@ export const tm = {
       sm.vibrate(50, "medium");
       const adjustmentMs = -this.currentAdjustmentSec * 1000;
       this.totalDuration += adjustmentMs;
-      bgWorker.postMessage({ command: "adjust", time: adjustmentMs });
+      bgWorker.postMessage({ command: "adjust", payload: { time: adjustmentMs } });
     });
   },
 
@@ -286,7 +286,7 @@ export const tm = {
       this.targetTime = performance.now() + duration;
       requestWakeLock();
       this.updateUIState();
-      bgWorker.postMessage({ command: "start", time: duration });
+      bgWorker.postMessage({ command: "start", payload: { time: duration } });
       this.updateAdjustButtons();
       this.tick();
     }

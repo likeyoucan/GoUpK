@@ -14,6 +14,7 @@ import {
   safeGetLS,
   announceToScreenReader,
   getUniqueName,
+  LS_KEYS,
 } from "./utils.js?v=VERSION";
 import { sm } from "./sound.js?v=VERSION";
 import { t } from "./i18n.js?v=VERSION";
@@ -104,7 +105,7 @@ export const tb = {
       if (this.selectedId) this.selectWorkout(this.selectedId);
     });
     try {
-      const stored = safeGetLS("tb_workouts");
+      const stored = safeGetLS(LS_KEYS.TB_WORKOUTS);
       if (stored && JSON.parse(stored).length > 0)
         this.workouts = JSON.parse(stored);
       else throw new Error();
@@ -112,15 +113,15 @@ export const tb = {
       this.workouts = [
         { id: 1, name: "Standard Tabata", work: 20, rest: 10, rounds: 8 },
       ];
-      safeSetLS("tb_workouts", JSON.stringify(this.workouts));
+      safeSetLS(LS_KEYS.TB_WORKOUTS, JSON.stringify(this.workouts));
     }
-    const lastSelectedId = safeGetLS("tb_selected_id"),
-      exists = this.workouts.find((w) => w.id === Number(lastSelectedId));
+    const lastSelectedId = safeGetLS(LS_KEYS.TB_SELECTED_ID);
+    exists = this.workouts.find((w) => w.id === Number(lastSelectedId));
     this.selectWorkout(exists ? Number(lastSelectedId) : this.workouts[0]?.id);
     this.renderList();
     bgWorker.addEventListener("message", (e) => {
       if (
-        e.data === "tick" &&
+        e.data.type === "tick" &&
         this.status !== "STOPPED" &&
         !this.paused &&
         document.hidden
@@ -224,7 +225,7 @@ export const tb = {
       this.workouts.push(newW);
       workoutIdToSelect = newW.id;
     }
-    safeSetLS("tb_workouts", JSON.stringify(this.workouts));
+    safeSetLS(LS_KEYS.TB_WORKOUTS, JSON.stringify(this.workouts));
     this.renderList();
     this.selectWorkout(workoutIdToSelect);
     modalManager.closeCurrent();
@@ -240,7 +241,7 @@ export const tb = {
       return;
     }
     this.workouts = this.workouts.filter((w) => w.id !== id);
-    safeSetLS("tb_workouts", JSON.stringify(this.workouts));
+    safeSetLS(LS_KEYS.TB_WORKOUTS, JSON.stringify(this.workouts));
     if (this.selectedId === id) this.selectWorkout(this.workouts[0].id);
     this.renderList();
   },
@@ -250,7 +251,7 @@ export const tb = {
     const w = this.workouts.find((k) => k.id === id);
     if (!w) return;
     this.selectedId = id;
-    safeSetLS("tb_selected_id", id);
+    safeSetLS(LS_KEYS.TB_SELECTED_ID, id);
     this.work = w.work * 1000;
     this.rest = w.rest * 1000;
     this.rounds = w.rounds;
@@ -347,7 +348,7 @@ export const tb = {
     this.els.timer.classList.remove("is-go");
     requestWakeLock();
     this.updatePhaseStyles();
-    bgWorker.postMessage("start");
+    bgWorker.postMessage({ command: "start" });
     this.tick();
   },
 
@@ -355,7 +356,7 @@ export const tb = {
     store.clearActiveTimer();
 
     this.paused = true;
-    bgWorker.postMessage("stop");
+    bgWorker.postMessage({ command: "stop" });
     cancelAnimationFrame(this.rAF);
     this.remainingAtPause = this.phaseEndTime - performance.now();
     updateText(this.els.status, t("pause"));
@@ -373,7 +374,7 @@ export const tb = {
     this.phaseEndTime = performance.now() + this.remainingAtPause;
     this.lastBeepSec = 0;
     requestWakeLock();
-    bgWorker.postMessage("start");
+    bgWorker.postMessage({ command: "start" });
     this.tick();
     this.updatePhaseStyles();
   },
@@ -387,7 +388,7 @@ export const tb = {
       updateText(this.els.runningWorkoutName, "");
     }
 
-    bgWorker.postMessage("stop");
+    bgWorker.postMessage({ command: "stop" });
     cancelAnimationFrame(this.rAF);
     this.status = "STOPPED";
     this.paused = false;

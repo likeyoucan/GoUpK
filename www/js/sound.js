@@ -1,6 +1,6 @@
 // Файл: www/js/sound.js
 
-import { $, safeGetLS, safeSetLS, safeRemoveLS } from "./utils.js?v=VERSION";
+import { $, safeGetLS, safeSetLS, safeRemoveLS, LS_KEYS, } from "./utils.js?v=VERSION";
 import { CustomSelect } from "./custom-select.js?v=VERSION";
 import { t } from "./i18n.js?v=VERSION";
 
@@ -36,7 +36,7 @@ export const sm = {
 
     $("toggle-sound")?.addEventListener("change", (e) => {
       this.soundEnabled = e.target.checked;
-      safeSetLS("app_sound", this.soundEnabled);
+      safeSetLS(LS_KEYS.APP_SOUND, String(this.soundEnabled));
       if (this.soundEnabled) {
         this.initAudio(); // Инициализируем контекст, если его не было
       }
@@ -45,7 +45,7 @@ export const sm = {
 
     $("toggle-vibro")?.addEventListener("change", (e) => {
       this.vibroEnabled = e.target.checked;
-      safeSetLS("app_vibro", this.vibroEnabled);
+      safeSetLS(LS_KEYS.APP_VIBRO, String(this.vibroEnabled));
       document.dispatchEvent(
         new CustomEvent("vibroToggled", {
           detail: { enabled: this.vibroEnabled },
@@ -73,7 +73,7 @@ export const sm = {
       volumeSlider.addEventListener("change", (e) => {
         const finalVolume = parseFloat(e.target.value);
         this.volume = finalVolume;
-        safeSetLS("app_volume", finalVolume);
+        safeSetLS(LS_KEYS.APP_VOLUME, finalVolume);
         if (this.volumeChangeTimeout) {
           clearTimeout(this.volumeChangeTimeout);
           this.volumeChangeTimeout = null;
@@ -94,7 +94,7 @@ export const sm = {
       soundThemeOptions,
       (newTheme) => {
         this.theme = newTheme;
-        safeSetLS("app_sound_theme", this.theme);
+        safeSetLS(LS_KEYS.APP_VOLUME, finalVolume);
         this.play("click", { theme: newTheme });
       },
       this.theme,
@@ -111,14 +111,14 @@ export const sm = {
   },
 
   applySettings() {
-    this.soundEnabled = safeGetLS("app_sound") !== "false";
-    this.vibroEnabled = safeGetLS("app_vibro") !== "false";
-    this.vibroLevel = parseFloat(safeGetLS("app_vibro_level")) || 1;
+    this.soundEnabled = safeGetLS(LS_KEYS.APP_SOUND) !== "false";
+    this.vibroEnabled = safeGetLS(LS_KEYS.APP_VIBRO) !== "false";
+    this.vibroLevel = parseFloat(safeGetLS(LS_KEYS.APP_VIBRO_LEVEL)) || 1;
     this.volume =
-      safeGetLS("app_volume") !== null
-        ? parseFloat(safeGetLS("app_volume"))
+      safeGetLS(LS_KEYS.APP_VOLUME) !== null
+        ? parseFloat(safeGetLS(LS_KEYS.APP_VOLUME))
         : 1;
-    this.theme = safeGetLS("app_sound_theme") || "classic";
+    this.theme = safeGetLS(LS_KEYS.APP_SOUND_THEME) || "classic";
     if ($("toggle-sound")) $("toggle-sound").checked = this.soundEnabled;
     if ($("toggle-vibro")) $("toggle-vibro").checked = this.vibroEnabled;
     if ($("vibroSlider")) {
@@ -150,11 +150,11 @@ export const sm = {
 
   resetSettings() {
     const soundKeys = [
-      "app_sound",
-      "app_vibro",
-      "app_vibro_level",
-      "app_sound_theme",
-      "app_volume",
+      LS_KEYS.APP_SOUND,
+      LS_KEYS.APP_VIBRO,
+      LS_KEYS.APP_VIBRO_LEVEL,
+      LS_KEYS.APP_SOUND_THEME,
+      LS_KEYS.APP_VOLUME,
     ];
     soundKeys.forEach(safeRemoveLS);
 
