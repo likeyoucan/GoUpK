@@ -7,11 +7,12 @@ export const $ = (id) => document.getElementById(id);
  * @param {string} variable - Имя переменной (например, '--primary-color').
  * @returns {string} - Значение переменной.
  */
-export const getCssVariable = (variable) => 
+export const getCssVariable = (variable) =>
   getComputedStyle(document.documentElement).getPropertyValue(variable).trim();
 
-export const escapeHTML = (str) =>
-  str.replace(
+// FIX #4: защита от null/undefined — str приводится к строке
+export const escapeHTML = (str = "") =>
+  String(str).replace(
     /[&<>'"]/g,
     (tag) =>
       ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[
@@ -105,33 +106,27 @@ export const announceToScreenReader = (text) => {
 };
 
 export const adjustVal = (id, delta) => {
-    const el = $(id);
-    if (!el) return;
+  const el = $(id);
+  if (!el) return;
 
-    let currentValue = parseInt(el.value, 10) || 0;
-    let finalDelta = delta;
+  let currentValue = parseInt(el.value, 10) || 0;
 
-    // --- НАША НОВАЯ "УМНАЯ" ЛОГИКА ---
-    // Если мы хотим прибавить (+5), а текущее значение меньше 5,
-    // то просто установим значение равным 5.
-    // Это предотвратит скачок с 1 до 6.
-    if (delta > 1 && currentValue < delta) {
-        el.value = delta;
-        return;
-    }
+  // Если мы хотим прибавить (+5), а текущее значение меньше 5,
+  // то просто установим значение равным 5.
+  if (delta > 1 && currentValue < delta) {
+    el.value = delta;
+    return;
+  }
 
-    // Если мы хотим отнять (-5), а текущее значение между 1 и 5,
-    // то просто установим значение равным 1.
-    // Это предотвратит уход в отрицательные числа.
-    if (delta < -1 && currentValue > 1 && currentValue <= Math.abs(delta)) {
-        el.value = 1;
-        return;
-    }
-    // --- КОНЕЦ НОВОЙ ЛОГИКИ ---
+  // Если мы хотим отнять (-5), а текущее значение между 1 и 5,
+  // то просто установим значение равным 1.
+  if (delta < -1 && currentValue > 1 && currentValue <= Math.abs(delta)) {
+    el.value = 1;
+    return;
+  }
 
-    // Стандартное поведение для всех остальных случаев
-    const newValue = currentValue + finalDelta;
-    el.value = Math.max(1, newValue);
+  const newValue = currentValue + delta;
+  el.value = Math.max(1, newValue);
 };
 
 export const pad = (num) => String(num).padStart(2, "0");
@@ -277,11 +272,11 @@ export const bgWorker = createWorker();
  * @returns {string} - 6-значный HEX-цвет (например, '#000000' или '#ff00cc').
  */
 export const normalizeHexColor = (hex) => {
-    if (!hex || hex.length !== 4 || hex[0] !== '#') {
-        return hex; // Возвращаем как есть, если это не 3-значный hex
-    }
-    const r = hex[1];
-    const g = hex[2];
-    const b = hex[3];
-    return `#${r}${r}${g}${g}${b}${b}`;
+  if (!hex || hex.length !== 4 || hex[0] !== "#") {
+    return hex; // Возвращаем как есть, если это не 3-значный hex
+  }
+  const r = hex[1];
+  const g = hex[2];
+  const b = hex[3];
+  return `#${r}${r}${g}${g}${b}${b}`;
 };
