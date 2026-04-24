@@ -1,6 +1,6 @@
 import { $, safeGetLS, safeSetLS, safeRemoveLS } from "./utils.js?v=VERSION";
-import { CustomSelect } from "./custom-select.js?v=VERSION";
-import { t } from "./i18n.js?v=VERSION";
+import { CustomSelect } from "./custom-select.js?v=VERSION"; // <-- 1. ДОБАВЛЕН ИМПОРТ
+import { t } from "./i18n.js?v=VERSION"; // <-- 2. ДОБАВЛЕН ИМПОРТ ДЛЯ ПЕРЕВОДОВ
 
 export const sm = {
   audioCtx: null,
@@ -9,7 +9,7 @@ export const sm = {
   vibroLevel: 1,
   volume: 1,
   theme: "classic",
-  soundThemeSelect: null,
+  soundThemeSelect: null, // <-- 3. СВОЙСТВО ДЛЯ ХРАНЕНИЯ ЭКЗЕМПЛЯРА СЕЛЕКТА
   THEME_VOL_MULTIPLIERS: {
     classic: 1.0,
     sport: 1.6,
@@ -52,25 +52,18 @@ export const sm = {
       if (this.vibroEnabled) this.vibrate(50, "medium");
     });
 
-    // При перемещении ползунка — сразу обновляем this.volume и отображение
     $("volumeSlider")?.addEventListener("input", (e) => {
+      this.vibrate(10, "tactile");
       this.volume = parseFloat(e.target.value);
       const display = $("volumeDisplay");
       if (display) display.textContent = Math.round(this.volume * 100) + "%";
       safeSetLS("app_volume", this.volume);
-      this.vibrate(10, "tactile");
     });
-
-    // При отпускании ползунка — воспроизводим звук с актуальной громкостью.
-    // Используем Promise-цепочку: сначала разблокируем/создаём контекст,
-    // потом играем. Это решает проблему браузерной политики autoplay.
     $("volumeSlider")?.addEventListener("change", () => {
-      if (!this.soundEnabled) return;
-      this._ensureAudioCtx().then(() => {
-        this.play("click");
-      });
+      this.play("click", { theme: this.theme });
     });
 
+    // <-- 4. ИНИЦИАЛИЗАЦИЯ НОВОГО CUSTOM SELECT -->
     const soundThemeOptions = [
       { value: "classic", text: t("theme_classic") },
       { value: "sport", text: t("theme_sport") },
@@ -83,12 +76,14 @@ export const sm = {
       "soundThemeSelectContainer",
       soundThemeOptions,
       (newTheme) => {
+        // onSelect callback
         this.theme = newTheme;
         safeSetLS("app_sound_theme", this.theme);
         this.play("click", { theme: newTheme });
       },
-      this.theme,
+      this.theme, // Начальное значение берется из applySettings
     );
+    // <-- КОНЕЦ НОВОЙ ЛОГИКИ -->
 
     const unlockHandler = () => this.unlock();
     document.addEventListener("click", unlockHandler, {
@@ -99,23 +94,6 @@ export const sm = {
       once: true,
       passive: true,
     });
-  },
-
-  // Создаёт AudioContext если его нет, и resume() если suspended.
-  // Возвращает Promise, чтобы play() вызывался только после готовности.
-  _ensureAudioCtx() {
-    try {
-      if (!this.audioCtx) {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (AudioContext) this.audioCtx = new AudioContext();
-      }
-      if (this.audioCtx && this.audioCtx.state === "suspended") {
-        return this.audioCtx.resume();
-      }
-    } catch (e) {
-      this.soundEnabled = false;
-    }
-    return Promise.resolve();
   },
 
   applySettings() {
@@ -130,8 +108,6 @@ export const sm = {
 
     if ($("toggle-sound")) $("toggle-sound").checked = this.soundEnabled;
     if ($("toggle-vibro")) $("toggle-vibro").checked = this.vibroEnabled;
-
-    // Восстанавливаем позицию vibroSlider
     if ($("vibroSlider")) {
       const levels = [0.5, 0.75, 1, 1.5, 2];
       const closestIndex = levels.reduce(
@@ -144,30 +120,23 @@ export const sm = {
       );
       $("vibroSlider").value = closestIndex;
     }
-
-    // Восстанавливаем позицию volumeSlider и текст дисплея
     if ($("volumeSlider")) {
       $("volumeSlider").value = this.volume;
       const display = $("volumeDisplay");
       if (display) display.textContent = Math.round(this.volume * 100) + "%";
     }
 
-    // Обновляем CustomSelect темы звука если он уже инициализирован
+    // <-- 5. ОБНОВЛЕНИЕ UI CUSTOM SELECT -->
     if (this.soundThemeSelect) {
       this.soundThemeSelect.setValue(this.theme, false);
     }
 
     this.updateVolumeUI();
-
     document.dispatchEvent(
       new CustomEvent("vibroToggled", {
         detail: { enabled: this.vibroEnabled },
       }),
     );
-
-    // Уведомляем uiSettingsManager что настройки звука применены —
-    // он обновит позиции и лейблы ползунков vibroSlider и vignetteSlider
-    document.dispatchEvent(new CustomEvent("soundSettingsApplied"));
   },
 
   resetSettings() {

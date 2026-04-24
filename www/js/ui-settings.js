@@ -33,30 +33,14 @@ export const uiSettingsManager = {
 
   init() {
     this._bindEvents();
-    this.applySettings();
+    this.applySettings(); // Применяем настройки при инициализации
   },
 
   _bindEvents() {
     document.addEventListener("languageChanged", () => this.syncSliderUIs());
-
     document.addEventListener("vibroToggled", (e) =>
       this.updateVibroSliderUI(e.detail.enabled),
     );
-
-    // Слушаем событие от sm.applySettings() — синхронизируем ползунки
-    // vibroSlider и volumeSlider с актуальными значениями sm после любого
-    // вызова sm.applySettings() или sm.resetSettings()
-    document.addEventListener("soundSettingsApplied", () => {
-      this._restoreVibroSlider(sm.vibroLevel);
-      this._restoreVolumeSlider(sm.volume);
-      // Принудительно обновляем лейблы через два rAF — первый ждёт layout,
-      // второй гарантирует что offsetWidth уже ненулевой
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          this.syncSliderUIs();
-        });
-      });
-    });
 
     const toggleListeners = {
       "toggle-ms": (val) => {
@@ -91,6 +75,8 @@ export const uiSettingsManager = {
     }
 
     const sliderListeners = {
+      // Убрали 'swMinuteBeep' отсюда, так как его обработчик уже есть в toggleListeners
+
       fontSlider: (val) => this.setFontSize(val),
       ringWidthSlider: (val) => this.setRingWidth(val),
 
@@ -115,6 +101,7 @@ export const uiSettingsManager = {
         this.updateSliderLabel("vibroSlider", "vibro-label", this.vibroLabels);
         if (isFinal) {
           safeSetLS("app_vibro_level", newLevel);
+          // Вибрация только при финальном изменении, чтобы пользователь почувствовал новый уровень
           sm.vibrate(50, "strong");
         }
       },
@@ -124,58 +111,25 @@ export const uiSettingsManager = {
       const slider = $(id);
       if (!slider) continue;
 
+      // Обработчик для 'input' (перетаскивание)
       slider.addEventListener("input", (e) => {
         const currentValue = e.target.value;
+
         if (this.lastSliderValues[id] !== currentValue) {
           this.lastSliderValues[id] = currentValue;
+
+          // Обновляем UI в реальном времени, передавая isFinal = false
           callback(currentValue, false);
         }
       });
 
+      // Обработчик для 'change' (когда отпустили ползунок)
       slider.addEventListener("change", (e) => {
         const finalValue = e.target.value;
         this.lastSliderValues[id] = finalValue;
-        callback(finalValue, true);
+        callback(finalValue, true); // Финальный вызов с сохранением
       });
     }
-  },
-
-  // Вспомогательный метод: восстанавливает позицию vibroSlider по числовому уровню
-  _restoreVibroSlider(level) {
-    const slider = $("vibroSlider");
-    if (!slider) return;
-    const levels = [0.5, 0.75, 1, 1.5, 2];
-    const closestIndex = levels.reduce(
-      (prev, curr, index) =>
-        Math.abs(curr - level) < Math.abs(levels[prev] - level)
-          ? index
-          : prev,
-      0,
-    );
-    slider.value = closestIndex;
-  },
-
-  // Вспомогательный метод: восстанавливает позицию volumeSlider и текст дисплея
-  _restoreVolumeSlider(volume) {
-    const slider = $("volumeSlider");
-    if (!slider) return;
-    slider.value = volume;
-    const display = $("volumeDisplay");
-    if (display) display.textContent = Math.round(volume * 100) + "%";
-  },
-
-  // Вспомогательный метод: восстанавливает позицию vignetteSlider по значению alpha
-  _restoreVignetteSlider(alpha) {
-    const slider = $("vignetteSlider");
-    if (!slider) return;
-    const closestIndex = this.vignetteLevels.reduce(
-      (p, c, i) =>
-        Math.abs(c - alpha) < Math.abs(this.vignetteLevels[p] - alpha)
-          ? i
-          : p,
-      0,
-    );
-    slider.value = closestIndex;
   },
 
   applySettings() {
@@ -197,11 +151,12 @@ export const uiSettingsManager = {
     this.showMs = safeGetLS("app_show_ms") !== "false";
     if ($("toggle-ms")) $("toggle-ms").checked = this.showMs;
 
+    // Перенес swMinuteBeep сюда, так как это тоже toggle
     this.swMinuteBeep = safeGetLS("app_sw_minute_beep") !== "false";
     if ($("toggle-sw-minute-beep"))
       $("toggle-sw-minute-beep").checked = this.swMinuteBeep;
 
-    // --- Слайдеры шрифта и ширины кольца ---
+    // --- Слайдеры ---
     const fontSize = safeGetLS("font_size") || 16;
     if ($("fontSlider")) $("fontSlider").value = fontSize;
     this.setFontSize(fontSize);
@@ -210,33 +165,24 @@ export const uiSettingsManager = {
     if ($("ringWidthSlider")) $("ringWidthSlider").value = ringWidth;
     this.setRingWidth(ringWidth);
 
-    // --- Виньетка ---
     this.vignetteAlpha = parseFloat(safeGetLS("app_vignette_alpha")) || 0.2;
-    this._restoreVignetteSlider(this.vignetteAlpha);
+    if ($("vignetteSlider")) {
+      const closestVignetteIndex = this.vignetteLevels.reduce(
+        (p, c, i) =>
+          Math.abs(c - this.vignetteAlpha) <
+          Math.abs(this.vignetteLevels[p] - this.vignetteAlpha)
+            ? i
+            : p,
+        0,
+      );
+      $("vignetteSlider").value = closestVignetteIndex;
+    }
 
-    // --- Вибрация: берём значение из LS напрямую (sm может ещё не быть init) ---
-    const vibroLevel = parseFloat(safeGetLS("app_vibro_level")) || 1;
-    this._restoreVibroSlider(vibroLevel);
-
-    // --- Громкость: берём значение из LS напрямую ---
-    const volume =
-      safeGetLS("app_volume") !== null
-        ? parseFloat(safeGetLS("app_volume"))
-        : 1;
-    this._restoreVolumeSlider(volume);
-
-    // --- Применение визуальных эффектов ---
+    // --- Применение эффектов и синхронизация UI ---
     this.applyNavLabelsVisibility();
     this.updateGlass();
     this.updateVignette();
-
-    // Синхронизация лейблов через двойной rAF — гарантирует ненулевой offsetWidth
-    // даже если панель настроек скрыта при загрузке (display:none → offsetWidth = 0)
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        this.syncSliderUIs();
-      });
-    });
+    this.syncSliderUIs();
   },
 
   resetSettings() {
@@ -252,42 +198,32 @@ export const uiSettingsManager = {
       "app_sw_minute_beep",
     ];
     keys.forEach(safeRemoveLS);
-    // applySettings() читает LS (ключи удалены → берутся дефолты)
-    // и обновляет все элементы UI включая ползунки
-    this.applySettings();
+    this.applySettings(); // Применит дефолты и обновит UI
   },
 
   syncSliderUIs() {
-    // Обновляем лейбл виньетки — всегда, независимо от hasVignette,
-    // чтобы позиция была корректной когда панель станет видимой
-    this.updateSliderLabel(
-      "vignetteSlider",
-      "vignette-label",
-      this.vignetteLabels,
-    );
-    // Обновляем лейбл вибрации — всегда, независимо от vibroEnabled
-    this.updateSliderLabel("vibroSlider", "vibro-label", this.vibroLabels);
+    requestAnimationFrame(() => {
+      this.updateSliderLabel(
+        "vignetteSlider",
+        "vignette-label",
+        this.vignetteLabels,
+      );
+      this.updateSliderLabel("vibroSlider", "vibro-label", this.vibroLabels);
+    });
   },
 
   updateSliderLabel(sliderId, labelId, labelsArray) {
-    const slider = $(sliderId);
-    const label = $(labelId);
+    const slider = $(sliderId),
+      label = $(labelId);
     if (!slider || !label) return;
-
-    const val = parseInt(slider.value, 10);
-    const min = parseFloat(slider.min);
-    const max = parseFloat(slider.max);
-
+    const val = parseInt(slider.value, 10),
+      min = parseFloat(slider.min),
+      max = parseFloat(slider.max);
     label.textContent = t(labelsArray[val] || labelsArray[0]);
-
     const percent = max - min > 0 ? (val - min) / (max - min) : 0;
-    const thumbWidth = 24;
-    const trackWidth = slider.offsetWidth;
-
-    // Если ширина нулевая (скрытая панель) — пропускаем позиционирование,
-    // оно будет пересчитано при следующем syncSliderUIs()
+    const thumbWidth = 24,
+      trackWidth = slider.offsetWidth;
     if (trackWidth === 0) return;
-
     const offset = thumbWidth / 2 - percent * thumbWidth;
     label.style.left = `calc(${percent * 100}% + ${offset}px)`;
   },
@@ -320,27 +256,17 @@ export const uiSettingsManager = {
         "--vignette-alpha",
         this.vignetteAlpha * 0.4,
       );
+      this.syncSliderUIs();
     }
-    // Обновляем лейбл всегда — не только когда hasVignette,
-    // чтобы при включении виньетки лейбл уже был на правильной позиции
-    requestAnimationFrame(() => {
-      this.updateSliderLabel(
-        "vignetteSlider",
-        "vignette-label",
-        this.vignetteLabels,
-      );
-    });
   },
 
   updateVibroSliderUI(isEnabled) {
     const c = $("vibro-level-container");
     c?.classList.toggle("hidden", !isEnabled);
     c?.classList.toggle("flex", isEnabled);
-    // Обновляем лейбл всегда — не только когда включено,
-    // чтобы при включении вибрации лейбл уже был на правильной позиции
-    requestAnimationFrame(() => {
-      this.updateSliderLabel("vibroSlider", "vibro-label", this.vibroLabels);
-    });
+    if (isEnabled) {
+      this.syncSliderUIs();
+    }
   },
 
   updateGlass() {
