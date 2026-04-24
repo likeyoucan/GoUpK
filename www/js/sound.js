@@ -1,3 +1,5 @@
+// Файл: www/js/sound.js
+
 import { $, safeGetLS, safeSetLS, safeRemoveLS } from "./utils.js?v=VERSION";
 import { CustomSelect } from "./custom-select.js?v=VERSION"; // <-- 1. ДОБАВЛЕН ИМПОРТ
 import { t } from "./i18n.js?v=VERSION"; // <-- 2. ДОБАВЛЕН ИМПОРТ ДЛЯ ПЕРЕВОДОВ
