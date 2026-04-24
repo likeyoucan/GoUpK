@@ -90,19 +90,17 @@ function confirmReset() {
 document.addEventListener("DOMContentLoaded", () => {
   injectSVG();
 
-  // 1. Сначала инициализируем все модули, от которых могут зависеть другие.
+  // 1. Сначала улучшаем все слайдеры, чтобы они были готовы к приему значений.
+  initTouchRanges();
+
+  // 2. Теперь инициализируем модули, которые будут устанавливать значения в эти слайдеры.
   langManager.init();
-  themeManager.init(); // themeManager.init() теперь является координатором и сам инициализирует дочерние модули
+  themeManager.init();
   sm.init();
   sw.init();
   tm.init();
   tb.init();
   navigation.init();
-
-  initTouchRanges();
-
-  // 2. Затем инициализируем менеджер модальных окон, передавая ему конфигурацию.
-  modalManager.init(modalConfig);
 
   // Убираем класс 'preload' для включения анимаций после загрузки.
   setTimeout(() => document.body.classList.remove("preload"), 50);
