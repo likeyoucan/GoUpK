@@ -1,6 +1,5 @@
 // Файл: www/js/stopwatch.js
 
-
 import {
   $,
   formatTime,
@@ -112,7 +111,7 @@ const stopwatchModule = {
       if (e.detail !== "stopwatch" && this.isRunning) this.toggle();
     });
     bgWorker.addEventListener("message", (e) => {
-     if (e.data.type === "tick" && this.isRunning && document.hidden)
+      if (e.data.type === "tick" && this.isRunning && document.hidden)
         this.tick(true);
     });
     document.addEventListener("visibilitychange", () => {
@@ -230,10 +229,10 @@ const stopwatchModule = {
     const showMs = uiSettingsManager.showMs;
     const shouldForceHours = this.elapsedTime >= 3600000;
 
-    const mainDisplayParts = formatTime(this.elapsedTime, {
-      showMs,
-      forceHours: shouldForceHours,
-    }).split(":");
+    const timeString =
+      formatTime(this.elapsedTime, { showMs, forceHours: shouldForceHours }) ||
+      "00:00";
+    const mainDisplayParts = timeString.split(":");
     const mainDisplayStr = shouldForceHours
       ? mainDisplayParts.join(":")
       : mainDisplayParts.slice(-2).join(":");
@@ -492,7 +491,10 @@ const stopwatchModule = {
       );
       if (session) {
         session.name = finalName;
-        safeSetLS(LS_KEYS.SW_SAVED_SESSIONS, JSON.stringify(this.savedSessions));
+        safeSetLS(
+          LS_KEYS.SW_SAVED_SESSIONS,
+          JSON.stringify(this.savedSessions),
+        );
         this.sortSessions(this.currentSort);
       }
     }

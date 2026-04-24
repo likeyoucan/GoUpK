@@ -116,8 +116,8 @@ export const tb = {
       safeSetLS(LS_KEYS.TB_WORKOUTS, JSON.stringify(this.workouts));
     }
     const lastSelectedId = safeGetLS(LS_KEYS.TB_SELECTED_ID);
-    exists = this.workouts.find((w) => w.id === Number(lastSelectedId));
-    this.selectWorkout(exists ? Number(lastSelectedId) : this.workouts[0]?.id);
+     const exists = this.workouts.find((w) => w.id === Number(lastSelectedId));
+    this.selectWorkout(exists ? Number(lastSelectedId) : this.workouts[0]?.id, false);
     this.renderList();
     bgWorker.addEventListener("message", (e) => {
       if (
