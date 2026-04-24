@@ -8,14 +8,18 @@ import {
   hexToHSL,
   hexToRGB,
   getLuminance,
+  LS_KEYS, // ИСПРАВЛЕНИЕ (Пункт #10): Импортируем константы
 } from "./utils.js?v=VERSION";
 import { uiSettingsManager } from "./ui-settings.js?v=VERSION";
 import { colorManager } from "./color-manager.js?v=VERSION";
 
 export const themeManager = {
   currentMode: "system",
-  currentAccent: "default", // Изначальное состояние - default
+  currentAccent: "default",
   currentBg: "default",
+  themeButtons: [], // ИСПРАВЛЕНИЕ (Пункт #7): Кэш для кнопок темы
+  mediaQuery: null, // ИСПРАВЛЕНИЕ (Пункт #8): Храним ссылку на mediaQuery
+  _boundHandleSystemThemeChange: null, // ИСПРАВЛЕНИЕ (Пункт #8): Для удаления listener
 
   init() {
     uiSettingsManager.init();
@@ -26,19 +30,22 @@ export const themeManager = {
   },
 
   _bindEvents() {
-    document
-      .querySelectorAll('[id^="theme-"]')
-      .forEach((btn) =>
-        btn.addEventListener("click", (e) =>
-          this.setMode(e.currentTarget.dataset.themeMode),
-        ),
-      );
+    // ИСПРАВЛЕНИЕ (Пункт #7): Кэшируем кнопки один раз
+    this.themeButtons = document.querySelectorAll('[id^="theme-"]');
+    this.themeButtons.forEach((btn) =>
+      btn.addEventListener("click", (e) =>
+        this.setMode(e.currentTarget.dataset.themeMode),
+      ),
+    );
 
-    window
-      .matchMedia("(prefers-color-scheme: dark)")
-      .addEventListener("change", () => {
-        if (this.currentMode === "system") this.setMode("system");
-      });
+    // ИСПРАВЛЕНИЕ (Пункт #8): Сохраняем mediaQuery и используем именованный обработчик
+    this._boundHandleSystemThemeChange =
+      this._handleSystemThemeChange.bind(this);
+    this.mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    this.mediaQuery.addEventListener(
+      "change",
+      this._boundHandleSystemThemeChange,
+    );
 
     document.addEventListener("adaptiveBgChanged", () => {
       document.body.classList.add("is-updating-theme");
@@ -70,10 +77,28 @@ export const themeManager = {
     });
   },
 
+  // ИСПРАВЛЕНИЕ (Пункт #8): Именованный обработчик для listener'а
+  _handleSystemThemeChange() {
+    if (this.currentMode === "system") {
+      this.setMode("system");
+    }
+  },
+
+  // ИСПРАВЛЕНИЕ (Пункт #8): Метод для очистки ресурсов
+  destroy() {
+    if (this.mediaQuery && this._boundHandleSystemThemeChange) {
+      this.mediaQuery.removeEventListener(
+        "change",
+        this._boundHandleSystemThemeChange,
+      );
+    }
+  },
+
   applySettings() {
-    this.currentAccent = safeGetLS("theme_color") || "default";
-    this.currentBg = safeGetLS("theme_bg_color") || "default";
-    this.currentMode = safeGetLS("theme_mode") || "system";
+    // ИСПРАВЛЕНИЕ (Пункт #10): Используем константы LS_KEYS
+    this.currentAccent = safeGetLS(LS_KEYS.THEME_COLOR) || "default";
+    this.currentBg = safeGetLS(LS_KEYS.THEME_BG_COLOR) || "default";
+    this.currentMode = safeGetLS(LS_KEYS.THEME_MODE) || "system";
 
     colorManager.syncPickers(this.currentAccent, this.currentBg);
 
@@ -83,9 +108,10 @@ export const themeManager = {
   },
 
   resetSettings() {
-    safeRemoveLS("theme_mode");
-    safeRemoveLS("theme_color");
-    safeRemoveLS("theme_bg_color");
+    // ИСПРАВЛЕНИЕ (Пункт #10): Используем константы LS_KEYS
+    safeRemoveLS(LS_KEYS.THEME_MODE);
+    safeRemoveLS(LS_KEYS.THEME_COLOR);
+    safeRemoveLS(LS_KEYS.THEME_BG_COLOR);
 
     uiSettingsManager.resetSettings();
 
@@ -102,9 +128,10 @@ export const themeManager = {
     if (useTransition) document.body.classList.add("is-updating-theme");
 
     this.currentMode = mode;
-    safeSetLS("theme_mode", mode);
+    safeSetLS(LS_KEYS.THEME_MODE, mode);
 
-    document.querySelectorAll("[data-theme-mode]").forEach((b) => {
+    // ИСПРАВЛЕНИЕ (Пункт #7): Используем кэшированные кнопки
+    this.themeButtons.forEach((b) => {
       b.classList.remove("app-surface", "shadow-sm", "app-text");
       b.classList.add("app-text-sec");
     });
@@ -121,10 +148,8 @@ export const themeManager = {
     document.documentElement.classList.toggle("dark", isDark);
     document.documentElement.style.colorScheme = isDark ? "dark" : "light";
 
-    // При смене темы нужно заново применить цвета, чтобы CSS подхватил правильные дефолты
     this.setColor(this.currentAccent, false);
     this.applyBgTheme(this.currentBg);
-
     colorManager.syncPickers(this.currentAccent, this.currentBg);
     colorManager.updateSelectionUI("accent", this.currentAccent, false);
     colorManager.updateSelectionUI("bg", this.currentBg, false);
@@ -137,73 +162,50 @@ export const themeManager = {
   },
 
   getPairedRestColor(hue) {
-    // Зеленая зона (от салатового до бирюзового)
-    if (hue >= 75 && hue < 185) return "#3b82f6"; // -> Синий
-    // Синяя зона
-    if (hue >= 185 && hue < 250) return "#22c55e"; // -> Зеленый
-    // Красная/Розовая зона
-    if (hue >= 335 || hue < 20) return "#2dd4bf"; // -> Бирюзовый
-    // Желтая/Оранжевая зона
-    if (hue >= 20 && hue < 75) return "#6366f1"; // -> Индиго
-    // Фиолетовая зона
-    if (hue >= 250 && hue < 335) return "#facc15"; // -> Желтый/Золотой
-
-    return "#3b82f6"; // Безопасный fallback
+    if (hue >= 75 && hue < 185) return "#3b82f6";
+    if (hue >= 185 && hue < 250) return "#22c55e";
+    if (hue >= 335 || hue < 20) return "#2dd4bf";
+    if (hue >= 20 && hue < 75) return "#6366f1";
+    if (hue >= 250 && hue < 335) return "#facc15";
+    return "#3b82f6";
   },
 
   getPairedAlertColor(hue, luminance) {
-    // Если фон черный (или очень темный)
-    if (luminance < 10) return "hsl(0, 90%, 60%)"; // -> Ярко-красный
-    // Красная/Розовая зона
-    if (hue >= 335 || hue < 20) return "hsl(35, 100%, 58%)"; // -> Ярко-оранжевый
-
-    // Во всех остальных случаях - насыщенный красный
+    if (luminance < 10) return "hsl(0, 90%, 60%)";
+    if (hue >= 335 || hue < 20) return "hsl(35, 100%, 58%)";
     return "hsl(0, 90%, 60%)";
   },
 
   setColor(hex, doScroll = true) {
     this.currentAccent = hex;
-    safeSetLS("theme_color", hex);
+    safeSetLS(LS_KEYS.THEME_COLOR, hex);
 
     const rootEl = document.documentElement;
 
     if (hex === "default") {
-      // --- СТАНДАРТНАЯ ТЕМА ---
       rootEl.style.removeProperty("--primary-color");
       rootEl.style.removeProperty("--accent-h");
-      // Отдых для зеленого -> синий
       rootEl.style.setProperty("--secondary-accent-color", "#3b82f6");
-      // Alert для зеленого -> насыщенный красный
       rootEl.style.setProperty("--alert-color", "hsl(0, 90%, 60%)");
     } else {
-      // --- КАСТОМНАЯ ТЕМА ---
       rootEl.style.setProperty("--primary-color", hex);
       const { h, l } = hexToHSL(hex);
       rootEl.style.setProperty("--accent-h", h);
-
-      // 1. Устанавливаем "умный" цвет для Отдыха
       const restColor = this.getPairedRestColor(h);
       rootEl.style.setProperty("--secondary-accent-color", restColor);
-
-      // 2. Устанавливаем "умный" цвет для Alert
       const alertColor = this.getPairedAlertColor(h, l);
       rootEl.style.setProperty("--alert-color", alertColor);
     }
 
-    // Сообщаем всему приложению, что акцентный цвет изменился
     document.dispatchEvent(new CustomEvent("accentColorChanged"));
-
-    // Синхронизируем UI после всех изменений.
     colorManager.updateSelectionUI("accent", hex, doScroll);
     colorManager.syncPickers(this.currentAccent, this.currentBg);
   },
 
   setBgColor(hex, doScroll = true) {
     this.currentBg = hex;
-    safeSetLS("theme_bg_color", hex);
-
+    safeSetLS(LS_KEYS.THEME_BG_COLOR, hex);
     this.applyBgTheme(hex);
-
     colorManager.updateSelectionUI("bg", hex, doScroll);
     colorManager.syncPickers(this.currentAccent, this.currentBg);
   },
