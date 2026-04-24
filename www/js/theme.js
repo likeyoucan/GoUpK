@@ -14,8 +14,14 @@ import { colorManager } from "./color-manager.js?v=VERSION";
 
 export const themeManager = {
   currentMode: "system",
-  currentAccent: "default", // Изначальное состояние - default
+  currentAccent: "default",
   currentBg: "default",
+
+  // FIX (memory leak): сохраняем ref на mediaQuery-listener, чтобы иметь
+  // возможность снять его при необходимости (реинициализация, тесты, SPA-роутинг).
+  // Без сохранения ref слушатель нельзя корректно удалить — типичный memory leak
+  // в long-lived SPA и Capacitor-приложениях.
+  _darkModeListener: null,
 
   init() {
     uiSettingsManager.init();
@@ -34,11 +40,13 @@ export const themeManager = {
         ),
       );
 
+    // FIX: сохраняем ref на listener → можно снять через destroy() при реинициализации
+    this._darkModeListener = () => {
+      if (this.currentMode === "system") this.setMode("system");
+    };
     window
       .matchMedia("(prefers-color-scheme: dark)")
-      .addEventListener("change", () => {
-        if (this.currentMode === "system") this.setMode("system");
-      });
+      .addEventListener("change", this._darkModeListener);
 
     document.addEventListener("adaptiveBgChanged", () => {
       document.body.classList.add("is-updating-theme");
@@ -68,6 +76,19 @@ export const themeManager = {
         this.setBgColor("default");
       }
     });
+  },
+
+  /**
+   * Снимает mediaQuery-listener. Вызывать при реинициализации модуля или
+   * уничтожении компонента, чтобы избежать утечки памяти.
+   */
+  destroy() {
+    if (this._darkModeListener) {
+      window
+        .matchMedia("(prefers-color-scheme: dark)")
+        .removeEventListener("change", this._darkModeListener);
+      this._darkModeListener = null;
+    }
   },
 
   applySettings() {
@@ -121,7 +142,6 @@ export const themeManager = {
     document.documentElement.classList.toggle("dark", isDark);
     document.documentElement.style.colorScheme = isDark ? "dark" : "light";
 
-    // При смене темы нужно заново применить цвета, чтобы CSS подхватил правильные дефолты
     this.setColor(this.currentAccent, false);
     this.applyBgTheme(this.currentBg);
 
@@ -137,27 +157,17 @@ export const themeManager = {
   },
 
   getPairedRestColor(hue) {
-    // Зеленая зона (от салатового до бирюзового)
-    if (hue >= 75 && hue < 185) return "#3b82f6"; // -> Синий
-    // Синяя зона
-    if (hue >= 185 && hue < 250) return "#22c55e"; // -> Зеленый
-    // Красная/Розовая зона
-    if (hue >= 335 || hue < 20) return "#2dd4bf"; // -> Бирюзовый
-    // Желтая/Оранжевая зона
-    if (hue >= 20 && hue < 75) return "#6366f1"; // -> Индиго
-    // Фиолетовая зона
-    if (hue >= 250 && hue < 335) return "#facc15"; // -> Желтый/Золотой
-
-    return "#3b82f6"; // Безопасный fallback
+    if (hue >= 75 && hue < 185) return "#3b82f6";
+    if (hue >= 185 && hue < 250) return "#22c55e";
+    if (hue >= 335 || hue < 20) return "#2dd4bf";
+    if (hue >= 20 && hue < 75) return "#6366f1";
+    if (hue >= 250 && hue < 335) return "#facc15";
+    return "#3b82f6";
   },
 
   getPairedAlertColor(hue, luminance) {
-    // Если фон черный (или очень темный)
-    if (luminance < 10) return "hsl(0, 90%, 60%)"; // -> Ярко-красный
-    // Красная/Розовая зона
-    if (hue >= 335 || hue < 20) return "hsl(35, 100%, 58%)"; // -> Ярко-оранжевый
-
-    // Во всех остальных случаях - насыщенный красный
+    if (luminance < 10) return "hsl(0, 90%, 60%)";
+    if (hue >= 335 || hue < 20) return "hsl(35, 100%, 58%)";
     return "hsl(0, 90%, 60%)";
   },
 
@@ -168,32 +178,24 @@ export const themeManager = {
     const rootEl = document.documentElement;
 
     if (hex === "default") {
-      // --- СТАНДАРТНАЯ ТЕМА ---
       rootEl.style.removeProperty("--primary-color");
       rootEl.style.removeProperty("--accent-h");
-      // Отдых для зеленого -> синий
       rootEl.style.setProperty("--secondary-accent-color", "#3b82f6");
-      // Alert для зеленого -> насыщенный красный
       rootEl.style.setProperty("--alert-color", "hsl(0, 90%, 60%)");
     } else {
-      // --- КАСТОМНАЯ ТЕМА ---
       rootEl.style.setProperty("--primary-color", hex);
       const { h, l } = hexToHSL(hex);
       rootEl.style.setProperty("--accent-h", h);
 
-      // 1. Устанавливаем "умный" цвет для Отдыха
       const restColor = this.getPairedRestColor(h);
       rootEl.style.setProperty("--secondary-accent-color", restColor);
 
-      // 2. Устанавливаем "умный" цвет для Alert
       const alertColor = this.getPairedAlertColor(h, l);
       rootEl.style.setProperty("--alert-color", alertColor);
     }
 
-    // Сообщаем всему приложению, что акцентный цвет изменился
     document.dispatchEvent(new CustomEvent("accentColorChanged"));
 
-    // Синхронизируем UI после всех изменений.
     colorManager.updateSelectionUI("accent", hex, doScroll);
     colorManager.syncPickers(this.currentAccent, this.currentBg);
   },

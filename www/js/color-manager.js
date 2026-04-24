@@ -18,6 +18,11 @@ import { themeManager } from "./theme.js?v=VERSION";
 const MAX_CUSTOM_COLORS = 50;
 const LONG_PRESS_DURATION = 500;
 
+// FIX: единый нормализатор для сравнения цветов.
+// Решает проблему: #fff ≠ #ffffff, регистр, короткие формы.
+// Используется везде, где раньше было простое .toLowerCase().
+const normalizeColor = (c) => (c ? normalizeHexColor(c).toLowerCase() : "");
+
 export const colorManager = {
   customAccentColors: [],
   customBgColors: [],
@@ -99,10 +104,8 @@ export const colorManager = {
     const container = $(containerId);
     if (!container) return;
 
-    // --- Клик по элементам ---
     container.addEventListener("click", (e) => this._handleClick(e, type));
 
-    // --- Правый клик для удаления (десктоп) ---
     container.addEventListener("contextmenu", (e) => {
       const swatch = e.target.closest(
         '.color-swatch-wrapper[data-custom="true"]',
@@ -113,7 +116,6 @@ export const colorManager = {
       }
     });
 
-    // --- Логика для долгого тапа (мобильные устройства) ---
     let touchMoved = false;
 
     container.addEventListener(
@@ -124,19 +126,17 @@ export const colorManager = {
         );
         if (swatch) {
           touchMoved = false;
-          // Запускаем таймер, который сработает, если палец не сдвинется
           this.longPressTimer = setTimeout(() => {
             if (!touchMoved) {
-              e.preventDefault(); // Предотвращаем другие события, если это долгий тап
+              e.preventDefault();
               this._showActionButton(swatch, "delete");
             }
           }, LONG_PRESS_DURATION);
         }
       },
       { passive: true },
-    ); // passive: true, т.к. мы не блокируем скролл в этом обработчике
+    );
 
-    // Если началось движение пальца, отменяем таймер долгого тапа
     container.addEventListener("touchmove", () => {
       touchMoved = true;
       if (this.longPressTimer) {
@@ -144,7 +144,6 @@ export const colorManager = {
       }
     });
 
-    // При завершении касания в любом случае сбрасываем таймер
     const endTouch = () => {
       if (this.longPressTimer) {
         clearTimeout(this.longPressTimer);
@@ -181,23 +180,22 @@ export const colorManager = {
       this._hideActionButton();
     }
 
-if (swatchWrapper) {
-
-    if (this.activeActionTarget === swatchWrapper) {
+    if (swatchWrapper) {
+      if (this.activeActionTarget === swatchWrapper) {
         this._hideActionButton();
         return;
-    }
+      }
 
-    const color = swatchWrapper.dataset.color;
-    document.dispatchEvent(
+      const color = swatchWrapper.dataset.color;
+      document.dispatchEvent(
         new CustomEvent("colorSelected", {
-            detail: { type, color, fromPicker: false },
+          detail: { type, color, fromPicker: false },
         }),
-    );
-    if (swatchWrapper.dataset.custom === "true") {
+      );
+      if (swatchWrapper.dataset.custom === "true") {
         this._showActionButton(swatchWrapper, "delete");
+      }
     }
-}
   },
 
   _updateAddButtonColor(button, newColor) {
@@ -260,14 +258,16 @@ if (swatchWrapper) {
     }
 
     const picker = $(isAccent ? "customColorInput" : "customBgInput");
-    const newColor = picker.value.toLowerCase();
+    // FIX: нормализуем новый цвет через normalizeColor перед всеми сравнениями
+    const newColor = normalizeColor(picker.value);
 
-    // 1. Проверяем на совпадение со стандартной палитрой и кастомными цветами.
+    // FIX: normalizeColor применяется и к списку для сравнения —
+    // теперь #fff и #ffffff, '#FFF' и '#ffffff' считаются одинаковыми.
     const baseBlocklist = (
       isAccent
         ? [...this.standardAccentColors, ...this.customAccentColors]
         : [...this.standardBgColors, ...this.customBgColors]
-    ).map((c) => c.toLowerCase());
+    ).map(normalizeColor);
 
     if (baseBlocklist.includes(newColor)) {
       this._hideActionButton();
@@ -275,28 +275,21 @@ if (swatchWrapper) {
       return;
     }
 
-  
-    // Это единственный надежный способ сравнения.
+    // FIX: читаем дефолтный цвет через CSS-переменную, а не хардкодим значения.
+    // Если дизайн-токены изменятся — этот код не сломается.
     const currentTheme = themeManager.getCurrentTheme();
-    let activeDefaultColor;
+    const cssVarName = isAccent
+      ? `--default-accent-${currentTheme}`
+      : `--default-bg-${currentTheme}`;
+    const activeDefaultColor = normalizeColor(getCssVariable(cssVarName));
 
-    if (isAccent) {
-      // Значения взяты напрямую из вашего input.css
-      activeDefaultColor = currentTheme === "dark" ? "#4ade80" : "#22c55e";
-    } else {
-      // Это тип 'bg'
-      // Значения взяты напрямую из вашего input.css
-      activeDefaultColor = currentTheme === "dark" ? "#000000" : "#f3f4f6";
-    }
-
-    // Теперь сравнение абсолютно точное
-    if (newColor === activeDefaultColor.toLowerCase()) {
+    if (newColor === activeDefaultColor) {
       this._hideActionButton();
       showToast(t("color_already_exists"));
       return;
     }
 
-    // Если все проверки пройдены:
+    // Все проверки пройдены:
     this._hideActionButton();
     sm.vibrate(40, "medium");
     customColors.push(newColor);
@@ -322,32 +315,42 @@ if (swatchWrapper) {
     const wrapper = container.querySelector(
       `.color-swatch-wrapper[data-color="${color}"]`,
     );
-    if (wrapper) {
-      document.dispatchEvent(
-        new CustomEvent("colorDeleted", { detail: { type, color } }),
-      );
-      wrapper.classList.add("is-collapsing");
-      wrapper.addEventListener(
-        "transitionend",
-        () => {
-          wrapper.remove();
-          let customColors = isAccent
-            ? this.customAccentColors
-            : this.customBgColors;
-          const index = customColors
-            .map((c) => c.toLowerCase())
-            .indexOf(color.toLowerCase());
-          if (index > -1) {
-            customColors.splice(index, 1);
-            safeSetLS(
-              isAccent ? "custom_accent_colors" : "custom_bg_colors",
-              JSON.stringify(customColors),
-            );
-          }
-        },
-        { once: true },
-      );
-    }
+    if (!wrapper) return;
+
+    document.dispatchEvent(
+      new CustomEvent("colorDeleted", { detail: { type, color } }),
+    );
+
+    // FIX: потенциальная утечка слушателя — если CSS transition не сработает
+    // (элемент скрыт, display:none, reduced-motion и т.д.), transitionend
+    // никогда не наступит и DOM-узел останется в памяти навсегда.
+    // Решение: добавляем fallback-таймер, который гарантированно удалит узел.
+    let removed = false;
+    const doRemove = () => {
+      if (removed) return;
+      removed = true;
+      wrapper.remove();
+      let customColors = isAccent
+        ? this.customAccentColors
+        : this.customBgColors;
+      const index = customColors
+        .map(normalizeColor)
+        .indexOf(normalizeColor(color));
+      if (index > -1) {
+        customColors.splice(index, 1);
+        safeSetLS(
+          isAccent ? "custom_accent_colors" : "custom_bg_colors",
+          JSON.stringify(customColors),
+        );
+      }
+    };
+
+    wrapper.classList.add("is-collapsing");
+    wrapper.addEventListener("transitionend", doRemove, { once: true });
+
+    // Fallback: если transition не сработает — удаляем через 600ms
+    // (чуть больше максимально ожидаемой длительности transition)
+    setTimeout(doRemove, 600);
   },
 
   populateColorSection(type) {
@@ -430,7 +433,7 @@ if (swatchWrapper) {
         el.querySelector(".injected-checkmark")?.remove();
       });
 
-    const normalizedColor = color.toLowerCase();
+    const normalizedColor = normalizeColor(color);
     let activeWrapper = container.querySelector(
       `.color-swatch-wrapper[data-color="${normalizedColor}"]`,
     );
@@ -439,7 +442,7 @@ if (swatchWrapper) {
       const picker = $(
         type === "accent" ? "customColorInput" : "customBgInput",
       );
-      if (picker && picker.value.toLowerCase() === normalizedColor) {
+      if (picker && normalizeColor(picker.value) === normalizedColor) {
         activeWrapper = picker.closest(".color-picker-wrapper");
       }
     }
@@ -495,7 +498,6 @@ if (swatchWrapper) {
         accentColor === "default"
           ? getCssVariable(`--default-accent-${currentTheme}`)
           : accentColor;
-      // Применяем нормализацию
       accentPicker.value = normalizeHexColor(resolvedAccent);
     }
 
@@ -504,7 +506,6 @@ if (swatchWrapper) {
         bgColor === "default"
           ? getCssVariable(`--default-bg-${currentTheme}`)
           : bgColor;
-      // Применяем нормализацию
       bgPicker.value = normalizeHexColor(resolvedBg);
     }
 
