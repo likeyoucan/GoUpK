@@ -2,6 +2,13 @@
 
 export const $ = (id) => document.getElementById(id);
 
+const DEBUG_STORAGE = false;
+
+function logStorageError(action, key, error) {
+  if (!DEBUG_STORAGE) return;
+  console.error(`[storage:${action}] key="${key}"`, error);
+}
+
 export const getCssVariable = (variable) =>
   getComputedStyle(document.documentElement).getPropertyValue(variable).trim();
 
@@ -9,9 +16,13 @@ export const escapeHTML = (str = "") =>
   String(str).replace(
     /[&<>'"]/g,
     (tag) =>
-      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[
-        tag
-      ] || tag,
+      ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        "'": "&#39;",
+        '"': "&quot;",
+      })[tag] || tag,
   );
 
 export const updateText = (el, text) => {
@@ -29,7 +40,7 @@ export const safeSetLS = (key, value) => {
   try {
     localStorage.setItem(key, value);
   } catch (e) {
-    console.error("Failed to write to localStorage:", e);
+    logStorageError("set", key, e);
   }
 };
 
@@ -37,7 +48,7 @@ export const safeGetLS = (key) => {
   try {
     return localStorage.getItem(key);
   } catch (e) {
-    console.error("Failed to read from localStorage:", e);
+    logStorageError("get", key, e);
     return null;
   }
 };
@@ -46,7 +57,7 @@ export const safeRemoveLS = (key) => {
   try {
     localStorage.removeItem(key);
   } catch (e) {
-    console.error("Failed to remove from localStorage:", e);
+    logStorageError("remove", key, e);
   }
 };
 
@@ -101,7 +112,7 @@ export const adjustVal = (id, delta) => {
   const el = $(id);
   if (!el) return;
 
-  let currentValue = parseInt(el.value, 10) || 0;
+  const currentValue = parseInt(el.value, 10) || 0;
 
   if (delta > 1 && currentValue < delta) {
     el.value = delta;
@@ -153,10 +164,8 @@ export function formatTime(ms, options = {}) {
   const m = Math.floor((totalS % 3600) / 60);
   const s = totalS % 60;
 
-  let timeParts = [];
-  if (h > 0 || forceHours) {
-    timeParts.push(h);
-  }
+  const timeParts = [];
+  if (h > 0 || forceHours) timeParts.push(h);
   timeParts.push(pad(m));
   timeParts.push(pad(s));
 
@@ -180,9 +189,11 @@ export const getLuminance = (r, g, b) => {
 
 export const hexToRGB = (H) => {
   if (!H || !H.startsWith("#")) return { r: 0, g: 0, b: 0 };
-  let r = 0,
-    g = 0,
-    b = 0;
+
+  let r = 0;
+  let g = 0;
+  let b = 0;
+
   if (H.length === 4) {
     r = parseInt(H[1] + H[1], 16);
     g = parseInt(H[2] + H[2], 16);
@@ -192,29 +203,36 @@ export const hexToRGB = (H) => {
     g = parseInt(H[3] + H[4], 16);
     b = parseInt(H[5] + H[6], 16);
   }
+
   return { r, g, b };
 };
 
 export const hexToHSL = (H) => {
   if (!H || !H.startsWith("#")) return { h: 142, s: 50, l: 50 };
+
   const { r: r255, g: g255, b: b255 } = hexToRGB(H);
-  let r = r255 / 255,
-    g = g255 / 255,
-    b = b255 / 255;
-  let cmin = Math.min(r, g, b),
-    cmax = Math.max(r, g, b),
-    delta = cmax - cmin;
-  let h = 0,
-    s = 0,
-    l = (cmax + cmin) / 2;
+  const r = r255 / 255;
+  const g = g255 / 255;
+  const b = b255 / 255;
+
+  const cmin = Math.min(r, g, b);
+  const cmax = Math.max(r, g, b);
+  const delta = cmax - cmin;
+
+  let h = 0;
+  let s = 0;
+  const l = (cmax + cmin) / 2;
+
   if (delta !== 0) {
     s = delta / (1 - Math.abs(2 * l - 1));
     if (cmax === r) h = ((g - b) / delta) % 6;
     else if (cmax === g) h = (b - r) / delta + 2;
     else h = (r - g) / delta + 4;
   }
+
   h = Math.round(h * 60);
   if (h < 0) h += 360;
+
   return { h, s: +(s * 100).toFixed(1), l: +(l * 100).toFixed(1) };
 };
 

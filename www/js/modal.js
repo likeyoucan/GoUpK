@@ -13,24 +13,41 @@ class ModalManager {
     this.currentY = 0;
     this.activeSheet = null;
     this.modalContainer = null;
+
+    this._listenersBound = false;
+    this._onKeydown = null;
+    this._onTouchStart = null;
+    this._onMouseDown = null;
+    this._onTouchMove = null;
+    this._onMouseMove = null;
+    this._onTouchEnd = null;
+    this._onMouseUp = null;
+    this._onMouseLeave = null;
   }
 
   init(config) {
+    if (this._listenersBound) {
+      this.destroy();
+    }
+
     this.modalContainer = $("modal-container");
     if (!this.modalContainer) {
       console.error("Modal container with id 'modal-container' not found!");
       return;
     }
 
+    this.modals = {};
+    this.activeStack = [];
+    this.closeTimeouts = {};
+
     config.forEach((modalConfig) => {
       const modalEl = $(modalConfig.id);
-      if (!modalEl) {
-        return;
-      }
+      if (!modalEl) return;
 
       const contentEl = modalConfig.contentId
         ? $(modalConfig.contentId)
         : modalEl.firstElementChild;
+
       this.modals[modalConfig.id] = {
         ...modalConfig,
         el: modalEl,
@@ -53,6 +70,7 @@ class ModalManager {
             this.closeCurrent();
           }
         });
+
         if (contentEl) {
           contentEl.addEventListener("click", (e) => e.stopPropagation());
         }
@@ -82,7 +100,6 @@ class ModalManager {
     }
 
     this.modalContainer.classList.add("active");
-
     this.lastFocusedElement = document.activeElement;
 
     if (this.activeStack.length === 0) {
@@ -173,6 +190,11 @@ class ModalManager {
     const delay = modal.type === "bottom-sheet" ? 400 : 300;
 
     this.closeTimeouts[id] = setTimeout(() => {
+      if (this.activeStack.includes(id)) {
+        this.closeTimeouts[id] = null;
+        return;
+      }
+
       modal.el.classList.add("hidden");
       modal.el.classList.remove("flex");
 
@@ -180,6 +202,7 @@ class ModalManager {
         modal.el.style.transition = "";
         modal.el.style.transform = "";
       }
+
       this.closeTimeouts[id] = null;
 
       if (isLastModal) {
@@ -189,6 +212,7 @@ class ModalManager {
           this.lastFocusedElement = null;
         }
       }
+
       if (modal.onClose) {
         modal.onClose();
       }
@@ -207,24 +231,67 @@ class ModalManager {
   }
 
   _bindGlobalListeners() {
-    document.addEventListener("keydown", (e) => {
+    if (this._listenersBound) return;
+
+    this._onKeydown = (e) => {
       if (e.key === "Escape" && this.hasActiveModal()) {
         e.preventDefault();
         this.closeCurrent();
       }
+    };
+
+    this._onTouchStart = (e) => this._handleDragStart(e);
+    this._onMouseDown = (e) => this._handleDragStart(e);
+    this._onTouchMove = (e) => this._handleDragMove(e);
+    this._onMouseMove = (e) => this._handleDragMove(e);
+    this._onTouchEnd = () => this._handleDragEnd();
+    this._onMouseUp = () => this._handleDragEnd();
+    this._onMouseLeave = () => this._handleDragEnd();
+
+    document.addEventListener("keydown", this._onKeydown);
+    document.addEventListener("touchstart", this._onTouchStart, {
+      passive: true,
+    });
+    document.addEventListener("mousedown", this._onMouseDown);
+    document.addEventListener("touchmove", this._onTouchMove, {
+      passive: true,
+    });
+    document.addEventListener("mousemove", this._onMouseMove);
+    document.addEventListener("touchend", this._onTouchEnd);
+    document.addEventListener("mouseup", this._onMouseUp);
+    document.addEventListener("mouseleave", this._onMouseLeave);
+
+    this._listenersBound = true;
+  }
+
+  destroy() {
+    Object.keys(this.closeTimeouts).forEach((id) => {
+      if (this.closeTimeouts[id]) {
+        clearTimeout(this.closeTimeouts[id]);
+        this.closeTimeouts[id] = null;
+      }
     });
 
-    document.addEventListener("touchstart", (e) => this._handleDragStart(e), {
-      passive: true,
-    });
-    document.addEventListener("mousedown", (e) => this._handleDragStart(e));
-    document.addEventListener("touchmove", (e) => this._handleDragMove(e), {
-      passive: true,
-    });
-    document.addEventListener("mousemove", (e) => this._handleDragMove(e));
-    document.addEventListener("touchend", () => this._handleDragEnd());
-    document.addEventListener("mouseup", () => this._handleDragEnd());
-    document.addEventListener("mouseleave", () => this._handleDragEnd());
+    if (!this._listenersBound) return;
+
+    document.removeEventListener("keydown", this._onKeydown);
+    document.removeEventListener("touchstart", this._onTouchStart);
+    document.removeEventListener("mousedown", this._onMouseDown);
+    document.removeEventListener("touchmove", this._onTouchMove);
+    document.removeEventListener("mousemove", this._onMouseMove);
+    document.removeEventListener("touchend", this._onTouchEnd);
+    document.removeEventListener("mouseup", this._onMouseUp);
+    document.removeEventListener("mouseleave", this._onMouseLeave);
+
+    this._listenersBound = false;
+    this._onKeydown = null;
+    this._onTouchStart = null;
+    this._onMouseDown = null;
+    this._onTouchMove = null;
+    this._onMouseMove = null;
+    this._onTouchEnd = null;
+    this._onMouseUp = null;
+    this._onMouseLeave = null;
   }
 
   _handleDragStart(e) {
@@ -242,13 +309,16 @@ class ModalManager {
     this.currentY = this.startY;
     this.isDragging = true;
     this.activeSheet.style.transition = "none";
+
     if (e.type === "mousedown") e.preventDefault();
   }
 
   _handleDragMove(e) {
     if (!this.isDragging || !this.activeSheet) return;
+
     this.currentY = e.touches ? e.touches[0].clientY : e.clientY;
     const deltaY = this.currentY - this.startY;
+
     if (deltaY > 0) {
       this.activeSheet.style.transform = `translateY(${deltaY}px)`;
     }
@@ -256,6 +326,7 @@ class ModalManager {
 
   _handleDragEnd() {
     if (!this.isDragging || !this.activeSheet) return;
+
     const deltaY = this.currentY - this.startY;
     if (deltaY > 100) {
       this.closeCurrent();
@@ -270,6 +341,7 @@ class ModalManager {
         }
       }, 400);
     }
+
     this.isDragging = false;
     this.activeSheet = null;
   }

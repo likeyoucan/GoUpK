@@ -1,4 +1,4 @@
-// www/js/custom-select.js
+// Файл: www/js/custom-select.js
 
 import { getCssVariable, hexToRGB, getLuminance } from "./utils.js?v=VERSION";
 
@@ -14,6 +14,7 @@ export class CustomSelect {
     this.onSelect = onSelect;
     this.currentValue = initialValue;
     this.isOpening = false;
+    this.focusedIndex = -1;
 
     this.render();
     this.attachEventListeners();
@@ -37,6 +38,7 @@ export class CustomSelect {
     this.trigger.className =
       "custom-select-trigger app-surface rounded-lg border app-border shadow-sm flex items-center justify-between w-full py-1.5 pl-3 pr-2 cursor-pointer transition-colors";
     this.trigger.setAttribute("role", "button");
+    this.trigger.setAttribute("tabindex", "0");
     this.trigger.setAttribute("aria-haspopup", "listbox");
     this.trigger.setAttribute("aria-expanded", "false");
 
@@ -71,6 +73,7 @@ export class CustomSelect {
     this.optionsPanel = document.createElement("div");
     this.optionsPanel.className = "custom-select-options hidden";
     this.optionsPanel.setAttribute("role", "listbox");
+    this.optionsPanel.setAttribute("tabindex", "-1");
 
     this.container.classList.add("custom-select-container", "relative");
     this.container.append(this.trigger, this.optionsPanel);
@@ -83,23 +86,28 @@ export class CustomSelect {
     this.optionsPanel.replaceChildren();
 
     const fragment = document.createDocumentFragment();
-    this.options.forEach((option) => {
+    this.options.forEach((option, index) => {
       const optionEl = document.createElement("div");
       optionEl.className = "custom-select-option";
       optionEl.setAttribute("role", "option");
+      optionEl.setAttribute("tabindex", "-1");
+      optionEl.id = `${this.container.id}-option-${index}`;
       optionEl.dataset.value = option.value;
+      optionEl.dataset.index = String(index);
       optionEl.appendChild(document.createTextNode(option.text));
 
       if (option.value === this.currentValue) {
         optionEl.classList.add("is-selected");
         optionEl.setAttribute("aria-selected", "true");
         this.updateSelectedTextColor(optionEl);
+        this.focusedIndex = index;
       } else {
         optionEl.setAttribute("aria-selected", "false");
       }
 
       fragment.appendChild(optionEl);
     });
+
     this.optionsPanel.appendChild(fragment);
   }
 
@@ -109,18 +117,75 @@ export class CustomSelect {
       this.toggle();
     });
 
+    this.trigger.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        this.toggle();
+        return;
+      }
+
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        if (!this.isOpening) this.open();
+        this.moveFocus(1);
+        return;
+      }
+
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        if (!this.isOpening) this.open();
+        this.moveFocus(-1);
+      }
+    });
+
+    this.optionsPanel.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        this.moveFocus(1);
+        return;
+      }
+
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        this.moveFocus(-1);
+        return;
+      }
+
+      if (e.key === "Enter") {
+        e.preventDefault();
+        const focused = this.getFocusedOptionEl();
+        if (focused) {
+          this.setValue(focused.dataset.value);
+          this.close();
+          this.trigger.focus();
+        }
+        return;
+      }
+
+      if (e.key === "Escape") {
+        e.preventDefault();
+        this.close();
+        this.trigger.focus();
+      }
+    });
+
     this.optionsPanel.addEventListener("click", (e) => {
       const target = e.target.closest(".custom-select-option");
       if (target) {
         this.setValue(target.dataset.value);
         this.close();
+        this.trigger.focus();
       }
     });
 
     this.optionsPanel.addEventListener("mouseover", (e) => {
       const target = e.target.closest(".custom-select-option");
-      if (target) this.updateSelectedTextColor(target);
+      if (!target) return;
+      this.focusedIndex = Number(target.dataset.index);
+      this.syncAriaActive();
+      this.updateSelectedTextColor(target);
     });
+
     this.optionsPanel.addEventListener("mouseout", (e) => {
       const target = e.target.closest(".custom-select-option");
       if (target) target.classList.remove("needs-dark-text");
@@ -133,6 +198,7 @@ export class CustomSelect {
 
   open() {
     this.isOpening = true;
+
     activeSelects.forEach((s) => {
       if (s !== this && s.isOpening) s.close();
     });
@@ -143,6 +209,14 @@ export class CustomSelect {
       this.arrow.style.transform = "rotate(180deg)";
       this.trigger.setAttribute("aria-expanded", "true");
       this.container.classList.add("is-open");
+
+      const selectedIdx = this.options.findIndex(
+        (opt) => opt.value === this.currentValue,
+      );
+      this.focusedIndex = selectedIdx >= 0 ? selectedIdx : 0;
+      this.syncAriaActive();
+      this.focusCurrentOption();
+      this.optionsPanel.focus();
     });
   }
 
@@ -152,12 +226,47 @@ export class CustomSelect {
     this.arrow.style.transform = "";
     this.trigger.setAttribute("aria-expanded", "false");
     this.container.classList.remove("is-open");
+    this.trigger.removeAttribute("aria-activedescendant");
 
     setTimeout(() => {
       if (!this.isOpening) {
         this.optionsPanel.classList.add("hidden");
       }
     }, TRANSITION_DURATION);
+  }
+
+  moveFocus(direction) {
+    const optionEls = this.optionsPanel.querySelectorAll(
+      ".custom-select-option",
+    );
+    if (!optionEls.length) return;
+
+    if (this.focusedIndex < 0) this.focusedIndex = 0;
+    else {
+      this.focusedIndex =
+        (this.focusedIndex + direction + optionEls.length) % optionEls.length;
+    }
+
+    this.syncAriaActive();
+    this.focusCurrentOption();
+  }
+
+  focusCurrentOption() {
+    const focused = this.getFocusedOptionEl();
+    if (!focused) return;
+    focused.scrollIntoView({ block: "nearest" });
+  }
+
+  getFocusedOptionEl() {
+    return this.optionsPanel.querySelector(
+      `.custom-select-option[data-index="${this.focusedIndex}"]`,
+    );
+  }
+
+  syncAriaActive() {
+    const focused = this.getFocusedOptionEl();
+    if (!focused) return;
+    this.trigger.setAttribute("aria-activedescendant", focused.id);
   }
 
   setValue(value, triggerOnSelect = true) {
@@ -178,6 +287,10 @@ export class CustomSelect {
         el.setAttribute("aria-selected", isSelected.toString());
         if (isSelected) this.updateSelectedTextColor(el);
       });
+
+    const selectedIdx = this.options.findIndex((opt) => opt.value === value);
+    this.focusedIndex = selectedIdx;
+    this.syncAriaActive();
 
     if (triggerOnSelect && typeof this.onSelect === "function") {
       this.onSelect(value);
