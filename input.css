@@ -143,7 +143,7 @@ body {
   height: 100dvh;
   min-height: 100vh; /* fallback */
   z-index: 200;
-  background-color: var(--bg-color, #000);
+  background-color: #fcfcfc;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -166,6 +166,7 @@ body {
   width: clamp(56px, 16vmin, 112px);
   height: clamp(56px, 16vmin, 112px);
   object-fit: contain;
+  animation: preloader-pulse 1.4s ease-in-out infinite;
 }
 
 /* Планшеты */
