@@ -1,42 +1,12 @@
 // Файл: www/js/touch-range.js
 
-/**
- * touch-range.js
- *
- * Модуль безопасного сенсорного взаимодействия с input[type=range].
- *
- * Проблема: нативный input[type=range] перехватывает touchstart сразу,
- * не давая странице понять — это скролл или перетаскивание ползунка.
- * Даже touch-action: pan-y не помогает, потому что браузер решает
- * за вас ещё до первого touchmove.
- *
- * Решение: скрываем нативный input, рисуем кастомный трек поверх.
- * Перетаскивание начинается ТОЛЬКО после того, как пользователь
- * явно двигается горизонтально (|dx| > |dy| и порог 6px).
- * Вертикальный свайп — всегда пропускается для скролла страницы.
- *
- * Использование:
- *   import { initTouchRanges } from './touch-range.js?v=VERSION';
- *
- *   // Инициализировать все на странице:
- *   initTouchRanges();
- *
- * CSS-переменные для кастомизации (опционально):
- *   --tr-track-height: 4px
- *   --tr-thumb-size:   22px
- *   --tr-track-bg:     rgba(0,0,0,0.12)
- *   --tr-fill-color:   var(--primary-color, #22c55e)
- *   --tr-thumb-color:  var(--primary-color, #22c55e)
- */
 import { sm } from "./sound.js?v=VERSION";
 
-// ─── Вставляем базовые стили один раз ────────────────────────────────────────
 const STYLE_ID = "__touch_range_styles__";
 if (!document.getElementById(STYLE_ID)) {
   const style = document.createElement("style");
   style.id = STYLE_ID;
   style.textContent = `
-    /* Обёртка */
     .tr-wrap {
       position: relative;
       display: flex;
@@ -46,10 +16,8 @@ if (!document.getElementById(STYLE_ID)) {
       cursor: pointer;
       -webkit-user-select: none;
       user-select: none;
-      touch-action: pan-y;   /* разрешаем браузеру скроллить вертикально */
+      touch-action: pan-y;
     }
-
-    /* Скрытый нативный input (остаётся в DOM для доступности и событий) */
     .tr-native {
       position: absolute;
       width: 100%;
@@ -60,12 +28,10 @@ if (!document.getElementById(STYLE_ID)) {
       padding: 0;
       -webkit-appearance: none;
       appearance: none;
-      touch-action: none;    /* полностью отдаём управление нашему коду */
+      touch-action: none;
       z-index: 2;
-      pointer-events: none;  /* клики идут на обёртку, не на input */
+      pointer-events: none;
     }
-
-    /* Трек */
     .tr-track {
       position: relative;
       width: 100%;
@@ -74,8 +40,6 @@ if (!document.getElementById(STYLE_ID)) {
       background: var(--tr-track-bg, rgba(128,128,128,0.25));
       overflow: visible;
     }
-
-    /* Заливка слева от бегунка */
     .tr-fill {
       position: absolute;
       top: 0;
@@ -86,8 +50,6 @@ if (!document.getElementById(STYLE_ID)) {
       pointer-events: none;
       transition: width 0.05s linear;
     }
-
-    /* Бегунок */
     .tr-thumb {
       position: absolute;
       top: 50%;
@@ -101,15 +63,11 @@ if (!document.getElementById(STYLE_ID)) {
       pointer-events: none;
       z-index: 1;
     }
-
-    /* Состояние активного перетаскивания */
     .tr-wrap.tr-dragging .tr-thumb {
       transform: translate(-50%, -50%) scale(1.25);
       box-shadow: 0 2px 10px rgba(0,0,0,0.3);
       transition: transform 0.1s ease, box-shadow 0.1s ease;
     }
-
-    /* Фокус-стиль для клавиатуры */
     .tr-wrap:focus-within .tr-thumb,
     .tr-wrap.tr-focused .tr-thumb {
       box-shadow: 0 0 0 3px rgba(var(--primary-color-rgb, 34,197,94), 0.3),
@@ -119,15 +77,9 @@ if (!document.getElementById(STYLE_ID)) {
   document.head.appendChild(style);
 }
 
-/**
- * Создаёт кастомный ползунок поверх нативного input[type=range].
- * Нативный input скрывается визуально, но остаётся в DOM.
- *
- * @param {HTMLInputElement} input - нативный input[type=range]
- */
 export function enhanceNativeRange(input) {
   if (!input || input.type !== "range") return;
-  if (input.dataset.trEnhanced) return; // уже улучшен
+  if (input.dataset.trEnhanced) return;
   input.dataset.trEnhanced = "1";
 
   const min = parseFloat(input.min) || 0;
@@ -138,7 +90,6 @@ export function enhanceNativeRange(input) {
   let lastVibroTime = 0;
   const VIBRO_THROTTLE_MS = 75;
 
-  // Создаём обёртку
   const wrap = document.createElement("div");
   wrap.className = "tr-wrap";
   wrap.setAttribute("role", "slider");
@@ -153,7 +104,6 @@ export function enhanceNativeRange(input) {
     wrap.setAttribute("aria-controls", input.id);
   }
 
-  // Трек + заливка + бегунок
   const track = document.createElement("div");
   track.className = "tr-track";
   const fill = document.createElement("div");
@@ -163,13 +113,11 @@ export function enhanceNativeRange(input) {
   track.appendChild(fill);
   track.appendChild(thumb);
 
-  // Добавляем input внутрь обёртки (скрытый)
   input.classList.add("tr-native");
   wrap.appendChild(track);
   input.parentNode.insertBefore(wrap, input);
   wrap.appendChild(input);
 
-  // ── Функция обновления визуала ───────────────────────────────────────────
   const updateVisual = (val) => {
     const pct = (val - min) / (max - min);
     fill.style.width = `${pct * 100}%`;
@@ -179,7 +127,6 @@ export function enhanceNativeRange(input) {
 
   updateVisual(value);
 
-  // ── Функция вычисления значения по X-позиции касания/клика ──────────────
   const valueFromX = (clientX) => {
     const rect = track.getBoundingClientRect();
     const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
@@ -188,7 +135,6 @@ export function enhanceNativeRange(input) {
     return Math.max(min, Math.min(max, parseFloat(stepped.toFixed(10))));
   };
 
-  // ── Синхронизация с нативным input и dispatch события ───────────────────
   const applyValue = (val, eventType = "input") => {
     const clamped = Math.max(min, Math.min(max, val));
     const snapped = Math.round((clamped - min) / step) * step + min;
@@ -197,11 +143,21 @@ export function enhanceNativeRange(input) {
     if (final === parseFloat(input.value) && eventType === "input") return;
 
     value = final;
-    input.value = final; // Этот сеттер вызовет наш кастомный обработчик ниже
+
+    const originalDescriptor = Object.getOwnPropertyDescriptor(
+      HTMLInputElement.prototype,
+      "value",
+    );
+    if (originalDescriptor) {
+      originalDescriptor.set.call(input, final);
+    } else {
+      input.value = final;
+    }
+
+    updateVisual(final);
     input.dispatchEvent(new Event(eventType, { bubbles: true }));
   };
 
-  // ─── TOUCH-логика ────────────────────────────────────────────────────────
   let touchState = {
     active: false,
     decided: false,
@@ -287,18 +243,9 @@ export function enhanceNativeRange(input) {
   wrap.addEventListener("touchend", onTouchEnd, { passive: true });
   wrap.addEventListener("touchcancel", onTouchEnd, { passive: true });
 
-  // ─── MOUSE-логика ────────────────────────────────────────────────────────
   let mouseDown = false;
 
-  wrap.addEventListener("mousedown", (e) => {
-    if (e.button !== 0) return;
-    mouseDown = true;
-    wrap.classList.add("tr-dragging");
-    applyValue(valueFromX(e.clientX), "input");
-    e.preventDefault();
-  });
-
-  document.addEventListener("mousemove", (e) => {
+  const onMouseMove = (e) => {
     if (!mouseDown) return;
 
     const now = performance.now();
@@ -308,24 +255,34 @@ export function enhanceNativeRange(input) {
     }
 
     applyValue(valueFromX(e.clientX), "input");
-  });
+  };
 
-  document.addEventListener("mouseup", (e) => {
+  const onMouseUp = (e) => {
     if (!mouseDown) return;
     mouseDown = false;
     wrap.classList.remove("tr-dragging");
     applyValue(valueFromX(e.clientX), "change");
+    document.removeEventListener("mousemove", onMouseMove);
+    document.removeEventListener("mouseup", onMouseUp);
+  };
+
+  wrap.addEventListener("mousedown", (e) => {
+    if (e.button !== 0) return;
+    mouseDown = true;
+    wrap.classList.add("tr-dragging");
+    applyValue(valueFromX(e.clientX), "input");
+    e.preventDefault();
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
   });
 
-  // ─── CLICK по треку ──────────────────────────────────────────────────────
   track.addEventListener("click", (e) => {
     applyValue(valueFromX(e.clientX), "change");
   });
 
-  // ─── KEYBOARD ────────────────────────────────────────────────────────────
   wrap.addEventListener("keydown", (e) => {
     let newVal = value;
-    const bigStep = (max - min) / 10; // Стандартное поведение для PageUp/Down
+    const bigStep = (max - min) / 10;
 
     switch (e.key) {
       case "ArrowRight":
@@ -354,7 +311,6 @@ export function enhanceNativeRange(input) {
 
     e.preventDefault();
     applyValue(newVal, "input");
-    // Финальное событие для клавиатуры
     if (["Home", "End"].includes(e.key) || !e.repeat) {
       applyValue(newVal, "change");
     }
@@ -363,23 +319,20 @@ export function enhanceNativeRange(input) {
   wrap.addEventListener("focus", () => wrap.classList.add("tr-focused"));
   wrap.addEventListener("blur", () => wrap.classList.remove("tr-focused"));
 
-  // ─── Следим за внешними изменениями input.value ──────────────────────────
   const originalDescriptor = Object.getOwnPropertyDescriptor(
     HTMLInputElement.prototype,
     "value",
   );
+
   if (originalDescriptor) {
     Object.defineProperty(input, "value", {
       get() {
         return originalDescriptor.get.call(this);
       },
       set(v) {
-        // Устанавливаем нативное значение
         originalDescriptor.set.call(this, v);
-
         const newVal = parseFloat(v);
         if (!isNaN(newVal)) {
-          // Синхронизируем внутреннюю переменную и визуальное представление.
           value = newVal;
           updateVisual(newVal);
         }
@@ -388,20 +341,31 @@ export function enhanceNativeRange(input) {
     });
   }
 
-  // После того, как мы определили новый сеттер,
-  // принудительно "переустанавливаем" текущее значение,
-  // чтобы `updateVisual` точно сработал.
-  input.value = value;
+  const destroy = () => {
+    document.removeEventListener("mousemove", onMouseMove);
+    document.removeEventListener("mouseup", onMouseUp);
+
+    if (originalDescriptor) {
+      Object.defineProperty(input, "value", originalDescriptor);
+    }
+
+    if (wrap.parentNode) {
+      wrap.parentNode.insertBefore(input, wrap);
+      wrap.remove();
+    }
+
+    input.classList.remove("tr-native");
+    delete input.dataset.trEnhanced;
+  };
+
+  wrap._trDestroy = destroy;
+
+  originalDescriptor.set.call(input, value);
+  updateVisual(value);
 
   return wrap;
 }
 
-/**
- * Инициализирует все нативные input[type=range] на странице.
- *
- * @param {string} [selector='input[type="range"]'] - CSS-селектор
- * @param {Element} [root=document] - корневой элемент для поиска
- */
 export function initTouchRanges(
   selector = 'input[type="range"]',
   root = document,

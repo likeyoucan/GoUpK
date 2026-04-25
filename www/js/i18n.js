@@ -1,7 +1,7 @@
 // Файл: www/js/i18n.js
 
 import { safeGetLS, safeSetLS, safeRemoveLS } from "./utils.js?v=VERSION";
-import { CustomSelect } from "./custom-select.js?v=VERSION"; // <-- 1. ДОБАВЛЕН ИМПОРТ
+import { CustomSelect } from "./custom-select.js?v=VERSION";
 
 export const translations = {
   en: {
@@ -192,8 +192,7 @@ export const translations = {
     total_time: "Общее",
     split_time: "Интервал",
     clear_all: "Очистить все",
-    clear_history_confirm:
-      "Вы уверены, что хотите удалить все сохраненные результаты?",
+    clear_history_confirm: "Вы уверены, что хотите удалить все сохраненные результаты?",
     history_cleared: "История очищена!",
     adaptive_bg: "Адаптивные цвета фона",
     vignette: "Эффект темной виньетки",
@@ -231,13 +230,17 @@ export const translations = {
 
 export const langManager = {
   current: "en",
-  langSelect: null, // <-- 2. СВОЙСТВО ДЛЯ ХРАНЕНИЯ ЭКЗЕМПЛЯРА СЕЛЕКТОРА
+  langSelect: null,
 
   init() {
     const stored = safeGetLS("app_lang");
     const initialLang = stored || "auto";
 
-    // <-- 3. ИНИЦИАЛИЗАЦИЯ НОВОГО CUSTOM SELECT -->
+    if (this.langSelect) {
+      this.langSelect.destroy();
+      this.langSelect = null;
+    }
+
     const langOptions = [
       { value: "auto", text: t("lang_auto") },
       { value: "en", text: "English" },
@@ -248,7 +251,6 @@ export const langManager = {
       "langSelectContainer",
       langOptions,
       (value) => {
-        // onSelect callback
         if (value === "auto") {
           const sys = navigator.language.startsWith("ru") ? "ru" : "en";
           this.setLang(sys, true);
@@ -257,7 +259,7 @@ export const langManager = {
           this.setLang(value);
         }
       },
-      initialLang, // Начальное значение
+      initialLang,
     );
 
     if (initialLang === "auto") {
@@ -270,7 +272,7 @@ export const langManager = {
 
   resetSettings() {
     safeRemoveLS("app_lang");
-    this.init(); // Переинициализируем для сброса на 'auto'
+    this.init();
   },
 
   setLang(lang, isAuto = false) {
@@ -280,23 +282,18 @@ export const langManager = {
       safeSetLS("app_lang", lang);
     }
 
-    // <-- 4. ОБНОВЛЕНИЕ UI CUSTOM SELECT -->
     if (this.langSelect) {
-      // Обновляем тексты опций на текущем языке
       this.langSelect.options = [
         { value: "auto", text: t("lang_auto") },
         { value: "en", text: "English" },
         { value: "ru", text: "Русский" },
       ];
       this.langSelect.populateOptions();
-      // Устанавливаем правильное значение, не вызывая колбэк
       this.langSelect.setValue(isAuto ? "auto" : lang, false);
     }
 
-    // Обновляем все элементы с data-i18n на странице
     document.querySelectorAll("[data-i18n]").forEach((el) => {
       const newText = t(el.getAttribute("data-i18n"));
-      // Этот блок нужен, чтобы не затирать вложенные элементы, например, иконки в кнопках
       if (el.children.length === 0) {
         el.textContent = newText;
         return;

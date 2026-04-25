@@ -13,15 +13,20 @@ export class CustomSelect {
     this.options = options;
     this.onSelect = onSelect;
     this.currentValue = initialValue;
+    this.isOpening = false;
 
     this.render();
     this.attachEventListeners();
     activeSelects.add(this);
   }
 
+  destroy() {
+    activeSelects.delete(this);
+    this.container.replaceChildren();
+    this.container.classList.remove("custom-select-container", "relative", "is-open");
+  }
+
   render() {
-    // ИСПРАВЛЕНИЕ: вместо innerHTML = "" используем replaceChildren()
-    // — безопасно удаляет все дочерние узлы без парсинга HTML
     this.container.replaceChildren();
 
     this.trigger = document.createElement("div");
@@ -34,7 +39,6 @@ export class CustomSelect {
     this.selectedValueEl = document.createElement("span");
     this.selectedValueEl.className = "custom-select-value text-sm font-bold";
 
-    // Безопасное создание SVG-иконки через DOM API (innerHTML не используется)
     const arrowSvg = document.createElementNS(
       "http://www.w3.org/2000/svg",
       "svg",
@@ -72,8 +76,6 @@ export class CustomSelect {
   }
 
   populateOptions() {
-    // ИСПРАВЛЕНИЕ: вместо innerHTML = "" используем replaceChildren()
-    // — безопасно удаляет все дочерние узлы без парсинга HTML
     this.optionsPanel.replaceChildren();
 
     const fragment = document.createDocumentFragment();
@@ -82,9 +84,6 @@ export class CustomSelect {
       optionEl.className = "custom-select-option";
       optionEl.setAttribute("role", "option");
       optionEl.dataset.value = option.value;
-
-      // ИСПРАВЛЕНИЕ: вместо textContent присваиваем через createTextNode
-      // — гарантирует что текст никогда не будет интерпретирован как HTML
       optionEl.appendChild(document.createTextNode(option.text));
 
       if (option.value === this.currentValue) {
@@ -130,7 +129,6 @@ export class CustomSelect {
 
   open() {
     this.isOpening = true;
-    // Закрыть все остальные открытые селекты
     activeSelects.forEach((s) => {
       if (s !== this && s.isOpening) s.close();
     });
@@ -151,7 +149,6 @@ export class CustomSelect {
     this.trigger.setAttribute("aria-expanded", "false");
     this.container.classList.remove("is-open");
 
-    // Прячем элемент после завершения анимации
     setTimeout(() => {
       if (!this.isOpening) {
         this.optionsPanel.classList.add("hidden");
@@ -165,8 +162,6 @@ export class CustomSelect {
 
     this.currentValue = value;
 
-    // ИСПРАВЛЕНИЕ: вместо textContent используем replaceChildren + createTextNode
-    // — исключает любую возможность интерпретации текста как разметки
     this.selectedValueEl.replaceChildren(
       document.createTextNode(selectedOption.text),
     );
