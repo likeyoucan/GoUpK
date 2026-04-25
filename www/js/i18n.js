@@ -192,7 +192,8 @@ export const translations = {
     total_time: "Общее",
     split_time: "Интервал",
     clear_all: "Очистить все",
-    clear_history_confirm: "Вы уверены, что хотите удалить все сохраненные результаты?",
+    clear_history_confirm:
+      "Вы уверены, что хотите удалить все сохраненные результаты?",
     history_cleared: "История очищена!",
     adaptive_bg: "Адаптивные цвета фона",
     vignette: "Эффект темной виньетки",

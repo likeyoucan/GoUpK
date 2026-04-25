@@ -23,7 +23,11 @@ export class CustomSelect {
   destroy() {
     activeSelects.delete(this);
     this.container.replaceChildren();
-    this.container.classList.remove("custom-select-container", "relative", "is-open");
+    this.container.classList.remove(
+      "custom-select-container",
+      "relative",
+      "is-open",
+    );
   }
 
   render() {
