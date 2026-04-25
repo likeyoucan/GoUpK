@@ -14,7 +14,7 @@
   - img-src / font-src: разрешает локальные ресурсы и data-uri (иконки).
   - capacitor:// и http://localhost: необходимы для работы нативных движков iOS/Android.
 -->
-    <!-- <meta
+    <meta
       http-equiv="Content-Security-Policy"
       content="
   default-src 'self'; 
@@ -28,7 +28,7 @@
   form-action 'self';
   upgrade-insecure-requests;
 "
-    /> -->
+    />
 
     <meta
       http-equiv="Permissions-Policy"
@@ -78,12 +78,12 @@
 
     <script src="./js/js-check.js?v=VERSION"></script>
 
-    <script src="//cdn.jsdelivr.net/npm/eruda"></script>
+    <!-- <script src="//cdn.jsdelivr.net/npm/eruda"></script>
     <script src="//cdn.jsdelivr.net/npm/eruda-fps"></script>
     <script>
       eruda.init();
       eruda.add(erudaFps);
-    </script>
+    </script> -->
 
     <link rel="stylesheet" href="js-check.css?v=VERSION" />
     <link rel="stylesheet" href="styles.css?v=VERSION" />
