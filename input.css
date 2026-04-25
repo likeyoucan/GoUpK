@@ -138,7 +138,10 @@ body {
 ========================================= */
 #app-preloader {
   position: fixed;
-  inset: 0;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100dvh; /* именно экран, корректно для mobile */
   z-index: 200;
   background-color: var(--bg-color, #000000);
   opacity: 1;
@@ -149,17 +152,17 @@ body {
     visibility 0.28s ease;
 }
 
-/* #app-preloader.is-hidden {
+#app-preloader.is-hidden {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-} */
+}
 
 #app-preloader-icon {
-  width: 80px;
-  height: 80px;
+  /* размер иконки зависит от размера экрана */
+  width: clamp(56px, 18vmin, 120px);
+  height: clamp(56px, 18vmin, 120px);
   object-fit: contain;
-  animation: preloader-pulse 1.4s ease-in-out infinite;
 }
 
 @keyframes preloader-pulse {
