@@ -13,6 +13,14 @@ export const sm = {
   theme: "classic",
   soundThemeSelect: null,
 
+  // Guards against double init / duplicate handlers
+  isInitialized: false,
+
+  // De-dup for slider click sound
+  lastVolumeSoundAt: 0,
+  lastVolumeSoundValue: null,
+  MIN_SOUND_INTERVAL: 120, // ms
+
   volumeChangeTimeout: null,
   THROTTLE_DELAY: 150,
 
@@ -33,26 +41,34 @@ export const sm = {
   },
 
   init() {
+    // Prevent duplicate listeners if init is called twice
+    if (this.isInitialized) return;
+    this.isInitialized = true;
+
     this.applySettings();
     this.initAudio();
 
     $("toggle-sound")?.addEventListener("change", (e) => {
       this.soundEnabled = e.target.checked;
       safeSetLS("app_sound", this.soundEnabled);
+
       if (this.soundEnabled) {
         this.initAudio();
       }
+
       this.updateVolumeUI();
     });
 
     $("toggle-vibro")?.addEventListener("change", (e) => {
       this.vibroEnabled = e.target.checked;
       safeSetLS("app_vibro", this.vibroEnabled);
+
       document.dispatchEvent(
         new CustomEvent("vibroToggled", {
           detail: { enabled: this.vibroEnabled },
         }),
       );
+
       if (this.vibroEnabled) this.vibrate(50, "medium");
     });
 
@@ -67,17 +83,29 @@ export const sm = {
         const display = $("volumeDisplay");
         if (display) display.textContent = Math.round(this.volume * 100) + "%";
 
-        // Тактильный отклик и клик только при реальном изменении значения.
-        if (changed) {
-          this.vibrate(10, "tactile");
+        // Sound/vibration only when value really changed
+        if (!changed) return;
 
-          if (!this.volumeChangeTimeout) {
-            this.play("click");
-            this.volumeChangeTimeout = setTimeout(() => {
-              this.volumeChangeTimeout = null;
-            }, this.THROTTLE_DELAY);
-          }
+        this.vibrate(10, "tactile");
+
+        // Hard de-dup in case multiple events come almost at once
+        const now = performance.now();
+        const isTooSoon = now - this.lastVolumeSoundAt < this.MIN_SOUND_INTERVAL;
+        const isSameValue = this.lastVolumeSoundValue === newVolume;
+
+        if (!isTooSoon || !isSameValue) {
+          this.play("click");
+          this.lastVolumeSoundAt = now;
+          this.lastVolumeSoundValue = newVolume;
         }
+
+        // Keep existing throttle window for overall click density
+        if (this.volumeChangeTimeout) {
+          clearTimeout(this.volumeChangeTimeout);
+        }
+        this.volumeChangeTimeout = setTimeout(() => {
+          this.volumeChangeTimeout = null;
+        }, this.THROTTLE_DELAY);
       });
 
       volumeSlider.addEventListener("change", (e) => {
@@ -90,7 +118,7 @@ export const sm = {
           this.volumeChangeTimeout = null;
         }
 
-        // Здесь звук не воспроизводим, чтобы не было дубля.
+        // No click here to avoid duplicate sound
       });
     }
 
@@ -114,10 +142,12 @@ export const sm = {
     );
 
     const unlockHandler = () => this.unlock();
+
     document.addEventListener("click", unlockHandler, {
       once: true,
       capture: true,
     });
+
     document.addEventListener("touchstart", unlockHandler, {
       once: true,
       passive: true,
@@ -128,10 +158,12 @@ export const sm = {
     this.soundEnabled = safeGetLS("app_sound") !== "false";
     this.vibroEnabled = safeGetLS("app_vibro") !== "false";
     this.vibroLevel = parseFloat(safeGetLS("app_vibro_level")) || 1;
+
     this.volume =
       safeGetLS("app_volume") !== null
         ? parseFloat(safeGetLS("app_volume"))
         : 1;
+
     this.theme = safeGetLS("app_sound_theme") || "classic";
 
     if ($("toggle-sound")) $("toggle-sound").checked = this.soundEnabled;
@@ -185,6 +217,9 @@ export const sm = {
     this.volume = 1;
     this.theme = "classic";
 
+    this.lastVolumeSoundAt = 0;
+    this.lastVolumeSoundValue = null;
+
     this.applySettings();
     this.initAudio();
   },
@@ -221,6 +256,7 @@ export const sm = {
         strong: 1.4,
         tactile: 0.5,
       };
+
       const typeMultiplier = intensityMap[intensityKey] || 1;
       const levelMultiplier = this.vibroLevel;
       const finalMultiplier = typeMultiplier * levelMultiplier;
