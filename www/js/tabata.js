@@ -170,7 +170,11 @@ export const tb = {
         this.els.editRounds.value = w.rounds;
       }
     } else {
-      this.els.editName.value = getUniqueName(t("tabata"), this.workouts, "name");
+      this.els.editName.value = getUniqueName(
+        t("tabata"),
+        this.workouts,
+        "name",
+      );
       this.els.editWork.value = 20;
       this.els.editRest.value = 10;
       this.els.editRounds.value = 8;
@@ -456,8 +460,8 @@ export const tb = {
         this.status === "READY"
           ? this.phaseDuration
           : this.status === "WORK"
-          ? this.work
-          : this.rest;
+            ? this.work
+            : this.rest;
       const step = Math.min(remainingMissed, currentPhaseDuration);
       remainingMissed -= step;
       const leftInPhase = currentPhaseDuration - step;

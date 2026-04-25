@@ -73,12 +73,18 @@ function confirmReset() {
 
 function isInteractiveElement(target) {
   if (!(target instanceof HTMLElement)) return false;
-  if (target.closest('input, textarea, select, button, [contenteditable="true"]')) {
+  if (
+    target.closest('input, textarea, select, button, [contenteditable="true"]')
+  ) {
     return true;
   }
   if (
-    target.closest('[role="button"], [role="option"], [role="listbox"], [role="combobox"], [role="slider"], [role="spinbutton"], [role="switch"]') ||
-    target.closest('[tabindex="0"][data-interactive], .custom-select-trigger, .custom-select-option')
+    target.closest(
+      '[role="button"], [role="option"], [role="listbox"], [role="combobox"], [role="slider"], [role="spinbutton"], [role="switch"]',
+    ) ||
+    target.closest(
+      '[tabindex="0"][data-interactive], .custom-select-trigger, .custom-select-option',
+    )
   ) {
     return true;
   }
@@ -272,7 +278,10 @@ document.addEventListener("DOMContentLoaded", () => {
         switch (activeTimer) {
           case "stopwatch":
             title = "⏱ Stopwatch";
-            body = formatTime(sw.elapsedTime, { showMs: false, forceHours: sw.elapsedTime >= 3600000 });
+            body = formatTime(sw.elapsedTime, {
+              showMs: false,
+              forceHours: sw.elapsedTime >= 3600000,
+            });
             break;
           case "timer":
             title = "⏳ Timer";
@@ -288,8 +297,8 @@ document.addEventListener("DOMContentLoaded", () => {
               tb.status === "WORK"
                 ? t("work")
                 : tb.status === "REST"
-                ? t("rest")
-                : t("get_ready");
+                  ? t("rest")
+                  : t("get_ready");
             body = `${t("round")} ${tb.currentRound}/${tb.rounds} • ${phaseStr}: ${sTotal}s`;
             break;
           default:

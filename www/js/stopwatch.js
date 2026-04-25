@@ -69,7 +69,9 @@ const stopwatchModule = {
 
     this.els.btn?.addEventListener("click", () => this.toggle());
     this.els.lapBtn?.addEventListener("click", () => this.recordLapOrReset());
-    this.els.saveBtn?.addEventListener("click", () => this.prepareSaveSession());
+    this.els.saveBtn?.addEventListener("click", () =>
+      this.prepareSaveSession(),
+    );
 
     const sortOptions = [
       { value: "date_asc", text: t("date_old") },

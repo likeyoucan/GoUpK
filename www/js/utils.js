@@ -9,7 +9,9 @@ export const escapeHTML = (str = "") =>
   String(str).replace(
     /[&<>'"]/g,
     (tag) =>
-      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[tag] || tag,
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[
+        tag
+      ] || tag,
   );
 
 export const updateText = (el, text) => {
@@ -57,8 +59,7 @@ export const requestWakeLock = async () => {
       wakeLock.addEventListener("release", () => {
         wakeLock = null;
       });
-    } catch (err) {
-    }
+    } catch (err) {}
   }
 };
 
