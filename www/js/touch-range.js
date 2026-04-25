@@ -85,21 +85,23 @@ export function enhanceNativeRange(input) {
   const min = parseFloat(input.min) || 0;
   const max = parseFloat(input.max) || 100;
   const step = parseFloat(input.step) || 1;
-  let value = parseFloat(input.value) || min;
+  let value = parseFloat(input.value);
+  if (!Number.isFinite(value)) value = min;
 
-  let lastVibroTime = 0;
   const VIBRO_THROTTLE_MS = 75;
+  let lastVibroTime = 0;
 
-  // FIX: подавление дублирующего click после mouseup / touch drag
+  // Подавляем click, который браузер часто шлет после drag-end
   let suppressTrackClickUntil = 0;
 
   const wrap = document.createElement("div");
   wrap.className = "tr-wrap";
   wrap.setAttribute("role", "slider");
-  wrap.setAttribute("aria-valuemin", min);
-  wrap.setAttribute("aria-valuemax", max);
-  wrap.setAttribute("aria-valuenow", value);
+  wrap.setAttribute("aria-valuemin", String(min));
+  wrap.setAttribute("aria-valuemax", String(max));
+  wrap.setAttribute("aria-valuenow", String(value));
   wrap.setAttribute("tabindex", "0");
+
   if (input.getAttribute("aria-label")) {
     wrap.setAttribute("aria-label", input.getAttribute("aria-label"));
   }
@@ -113,51 +115,50 @@ export function enhanceNativeRange(input) {
   fill.className = "tr-fill";
   const thumb = document.createElement("div");
   thumb.className = "tr-thumb";
-  track.appendChild(fill);
-  track.appendChild(thumb);
+  track.append(fill, thumb);
 
   input.classList.add("tr-native");
   wrap.appendChild(track);
   input.parentNode.insertBefore(wrap, input);
   wrap.appendChild(input);
 
+  const originalDescriptor = Object.getOwnPropertyDescriptor(
+    HTMLInputElement.prototype,
+    "value",
+  );
+
   const updateVisual = (val) => {
-    const pct = (val - min) / (max - min);
+    const range = max - min || 1;
+    const pct = (val - min) / range;
     fill.style.width = `${pct * 100}%`;
     thumb.style.left = `${pct * 100}%`;
-    wrap.setAttribute("aria-valuenow", val);
+    wrap.setAttribute("aria-valuenow", String(val));
   };
-
-  updateVisual(value);
 
   const valueFromX = (clientX) => {
     const rect = track.getBoundingClientRect();
-    const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    const width = rect.width || 1;
+    const pct = Math.max(0, Math.min(1, (clientX - rect.left) / width));
     const raw = min + pct * (max - min);
-    const stepped = Math.round(raw / step) * step;
+    const stepped = Math.round((raw - min) / step) * step + min;
     return Math.max(min, Math.min(max, parseFloat(stepped.toFixed(10))));
   };
 
-  // FIX 1: applyValue возвращает true только если значение реально изменилось
+  // Возвращает true, только если значение реально изменилось.
   const applyValue = (val, eventType = "input") => {
     const clamped = Math.max(min, Math.min(max, val));
     const snapped = Math.round((clamped - min) / step) * step + min;
-    const final = parseFloat(Math.max(min, Math.min(max, snapped)).toFixed(10));
+    const final = parseFloat(snapped.toFixed(10));
     const current = parseFloat(input.value);
 
-    // Ничего не меняем и не шлём события, если значение то же самое
     if (Number.isFinite(current) && final === current) return false;
 
     value = final;
 
-    const originalDescriptor = Object.getOwnPropertyDescriptor(
-      HTMLInputElement.prototype,
-      "value",
-    );
-    if (originalDescriptor) {
-      originalDescriptor.set.call(input, final);
+    if (originalDescriptor?.set) {
+      originalDescriptor.set.call(input, String(final));
     } else {
-      input.value = final;
+      input.value = String(final);
     }
 
     updateVisual(final);
@@ -165,13 +166,19 @@ export function enhanceNativeRange(input) {
     return true;
   };
 
+  const emitChange = () => {
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+  };
+
+  // ---------- TOUCH ----------
   let touchState = {
     active: false,
     decided: false,
     isHoriz: false,
+    moved: false,
+    id: null,
     startX: 0,
     startY: 0,
-    id: null,
   };
   const DECISION_THRESHOLD = 6;
 
@@ -182,14 +189,16 @@ export function enhanceNativeRange(input) {
       active: true,
       decided: false,
       isHoriz: false,
+      moved: false,
+      id: touch.identifier,
       startX: touch.clientX,
       startY: touch.clientY,
-      id: touch.identifier,
     };
   };
 
   const onTouchMove = (e) => {
     if (!touchState.active) return;
+
     let touch = null;
     for (let i = 0; i < e.changedTouches.length; i++) {
       if (e.changedTouches[i].identifier === touchState.id) {
@@ -201,12 +210,13 @@ export function enhanceNativeRange(input) {
 
     const dx = touch.clientX - touchState.startX;
     const dy = touch.clientY - touchState.startY;
-    const dist = Math.sqrt(dx * dx + dy * dy);
+    const dist = Math.hypot(dx, dy);
 
     if (!touchState.decided) {
       if (dist < DECISION_THRESHOLD) return;
       touchState.decided = true;
       touchState.isHoriz = Math.abs(dx) >= Math.abs(dy);
+
       if (touchState.isHoriz) {
         wrap.classList.add("tr-dragging");
       } else {
@@ -218,9 +228,9 @@ export function enhanceNativeRange(input) {
     if (!touchState.isHoriz) return;
     e.preventDefault();
 
-    // FIX 1: вибрация только при фактическом изменении значения
     const changed = applyValue(valueFromX(touch.clientX), "input");
     if (changed) {
+      touchState.moved = true;
       const now = performance.now();
       if (now - lastVibroTime > VIBRO_THROTTLE_MS) {
         sm.vibrate(10, "tactile");
@@ -231,6 +241,7 @@ export function enhanceNativeRange(input) {
 
   const onTouchEnd = (e) => {
     if (!touchState.active) return;
+
     let touch = null;
     for (let i = 0; i < e.changedTouches.length; i++) {
       if (e.changedTouches[i].identifier === touchState.id) {
@@ -238,15 +249,30 @@ export function enhanceNativeRange(input) {
         break;
       }
     }
+
     if (touchState.isHoriz) {
-      if (touch) applyValue(valueFromX(touch.clientX), "change");
+      // Финальное позиционирование на отпускании.
+      if (touch) {
+        const changed = applyValue(valueFromX(touch.clientX), "input");
+        if (changed) {
+          const now = performance.now();
+          if (now - lastVibroTime > VIBRO_THROTTLE_MS) {
+            sm.vibrate(10, "tactile");
+            lastVibroTime = now;
+          }
+        }
+      }
+
+      // Всегда шлем change после drag, чтобы сохранить значение.
+      emitChange();
       wrap.classList.remove("tr-dragging");
-      // FIX 2: после touch-drag глушим браузерный click
       suppressTrackClickUntil = performance.now() + 250;
     }
+
     touchState.active = false;
     touchState.decided = false;
     touchState.isHoriz = false;
+    touchState.moved = false;
   };
 
   wrap.addEventListener("touchstart", onTouchStart, { passive: true });
@@ -254,13 +280,25 @@ export function enhanceNativeRange(input) {
   wrap.addEventListener("touchend", onTouchEnd, { passive: true });
   wrap.addEventListener("touchcancel", onTouchEnd, { passive: true });
 
-  // FIX 2: флаг активного перетаскивания мышью
+  // ---------- MOUSE ----------
   let mouseDown = false;
+  let mouseMoved = false;
+  let mouseStartX = 0;
+  let mouseStartY = 0;
+  const MOUSE_MOVE_THRESHOLD = 2;
 
   const onMouseMove = (e) => {
     if (!mouseDown) return;
 
-    // FIX 1: вибрация только при фактическом изменении значения
+    const dx = e.clientX - mouseStartX;
+    const dy = e.clientY - mouseStartY;
+    if (!mouseMoved && Math.hypot(dx, dy) < MOUSE_MOVE_THRESHOLD) return;
+
+    if (!mouseMoved) {
+      mouseMoved = true;
+      wrap.classList.add("tr-dragging");
+    }
+
     const changed = applyValue(valueFromX(e.clientX), "input");
     if (changed) {
       const now = performance.now();
@@ -273,11 +311,25 @@ export function enhanceNativeRange(input) {
 
   const onMouseUp = (e) => {
     if (!mouseDown) return;
+
     mouseDown = false;
+
+    if (mouseMoved) {
+      // Финальная синхронизация и гарантированный change после drag.
+      const changed = applyValue(valueFromX(e.clientX), "input");
+      if (changed) {
+        const now = performance.now();
+        if (now - lastVibroTime > VIBRO_THROTTLE_MS) {
+          sm.vibrate(10, "tactile");
+          lastVibroTime = now;
+        }
+      }
+      emitChange();
+      suppressTrackClickUntil = performance.now() + 250;
+    }
+
+    mouseMoved = false;
     wrap.classList.remove("tr-dragging");
-    applyValue(valueFromX(e.clientX), "change");
-    // FIX 2: после mouseup браузер сгенерит click — глушим его, чтобы не было второго change
-    suppressTrackClickUntil = performance.now() + 250;
     document.removeEventListener("mousemove", onMouseMove);
     document.removeEventListener("mouseup", onMouseUp);
   };
@@ -285,19 +337,33 @@ export function enhanceNativeRange(input) {
   wrap.addEventListener("mousedown", (e) => {
     if (e.button !== 0) return;
     mouseDown = true;
-    wrap.classList.add("tr-dragging");
-    applyValue(valueFromX(e.clientX), "input");
+    mouseMoved = false;
+    mouseStartX = e.clientX;
+    mouseStartY = e.clientY;
+
+    // Важно: здесь НЕ вызываем applyValue, чтобы не было "первого лишнего" звука.
     e.preventDefault();
+
     document.addEventListener("mousemove", onMouseMove);
     document.addEventListener("mouseup", onMouseUp);
   });
 
-  // FIX 2: track.click пропускаем, если он пришёл сразу после mouseup
+  // Клик по треку: один раз input + change.
   track.addEventListener("click", (e) => {
     if (performance.now() < suppressTrackClickUntil) return;
-    applyValue(valueFromX(e.clientX), "change");
+
+    const changed = applyValue(valueFromX(e.clientX), "input");
+    if (changed) {
+      const now = performance.now();
+      if (now - lastVibroTime > VIBRO_THROTTLE_MS) {
+        sm.vibrate(10, "tactile");
+        lastVibroTime = now;
+      }
+      emitChange();
+    }
   });
 
+  // ---------- KEYBOARD ----------
   wrap.addEventListener("keydown", (e) => {
     let newVal = value;
     const bigStep = (max - min) / 10;
@@ -328,19 +394,12 @@ export function enhanceNativeRange(input) {
     }
 
     e.preventDefault();
-    applyValue(newVal, "input");
-    if (["Home", "End"].includes(e.key) || !e.repeat) {
-      applyValue(newVal, "change");
-    }
+    const changed = applyValue(newVal, "input");
+    if (changed) emitChange();
   });
 
   wrap.addEventListener("focus", () => wrap.classList.add("tr-focused"));
   wrap.addEventListener("blur", () => wrap.classList.remove("tr-focused"));
-
-  const originalDescriptor = Object.getOwnPropertyDescriptor(
-    HTMLInputElement.prototype,
-    "value",
-  );
 
   if (originalDescriptor) {
     Object.defineProperty(input, "value", {
@@ -350,7 +409,7 @@ export function enhanceNativeRange(input) {
       set(v) {
         originalDescriptor.set.call(this, v);
         const newVal = parseFloat(v);
-        if (!isNaN(newVal)) {
+        if (!Number.isNaN(newVal)) {
           value = newVal;
           updateVisual(newVal);
         }
@@ -378,7 +437,11 @@ export function enhanceNativeRange(input) {
 
   wrap._trDestroy = destroy;
 
-  originalDescriptor.set.call(input, value);
+  if (originalDescriptor?.set) {
+    originalDescriptor.set.call(input, String(value));
+  } else {
+    input.value = String(value);
+  }
   updateVisual(value);
 
   return wrap;
