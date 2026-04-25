@@ -92,6 +92,28 @@ function isInteractiveElement(target) {
   return false;
 }
 
+function setupPreloadHide() {
+  let hidden = false;
+
+  const hideOnce = () => {
+    if (hidden) return;
+    hidden = true;
+    preload.hide();
+  };
+
+  window.addEventListener(
+    "load",
+    () => {
+      requestAnimationFrame(() => hideOnce());
+    },
+    { once: true },
+  );
+
+  setTimeout(() => {
+    requestAnimationFrame(() => hideOnce());
+  }, 2500);
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   preload.show();
 
@@ -106,11 +128,7 @@ document.addEventListener("DOMContentLoaded", () => {
   navigation.init();
   modalManager.init(modalConfig);
 
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      preload.hide();
-    });
-  });
+  setupPreloadHide();
 
   $("sw-openResultsBtn")?.addEventListener("click", () =>
     modalManager.open("sw-sessions-modal"),
@@ -290,17 +308,18 @@ document.addEventListener("DOMContentLoaded", () => {
               forceHours: sw.elapsedTime >= 3600000,
             });
             break;
-          case "timer":
+          case "timer": {
             title = "⏳ Timer";
             const remTm = tm.getRemainingTime();
             body = formatTime(remTm);
             break;
-          case "tabata":
+          }
+          case "tabata": {
             const activeName = $("tb-activeName")?.textContent || "Tabata";
             title = `🏋️ ${activeName}`;
             const remTb = Math.max(0, tb.phaseEndTime - performance.now());
             const sTotal = Math.ceil(remTb / 1000);
-            let phaseStr =
+            const phaseStr =
               tb.status === "WORK"
                 ? t("work")
                 : tb.status === "REST"
@@ -308,6 +327,7 @@ document.addEventListener("DOMContentLoaded", () => {
                   : t("get_ready");
             body = `${t("round")} ${tb.currentRound}/${tb.rounds} • ${phaseStr}: ${sTotal}s`;
             break;
+          }
           default:
             if (fgInterval) {
               clearInterval(fgInterval);
