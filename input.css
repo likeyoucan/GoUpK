@@ -149,11 +149,11 @@ body {
     visibility 0.28s ease;
 }
 
-#app-preloader.is-hidden {
+/* #app-preloader.is-hidden {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-}
+} */
 
 #app-preloader-icon {
   width: 80px;
