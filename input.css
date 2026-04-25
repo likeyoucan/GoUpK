@@ -367,7 +367,7 @@ html.dark .app-bg::before {
   margin-bottom: 8px;
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
   height: 50%;
   width: 100%;
@@ -403,7 +403,6 @@ html.dark .app-bg::before {
     padding-top: 2rem;
     border-right: 1px solid var(--border-color);
     padding-bottom: var(--nav-height);
-      align-items: center;
   }
 
   .view-top-half h2 {
@@ -444,7 +443,7 @@ html.dark .app-bg::before {
 ========================================= */
 .timer-circle-wrap {
   width: 100%;
-  max-width: 85%;
+  max-width: 80%;
   aspect-ratio: 1 / 1;
   margin: 1vh auto;
   max-height: 45vh;
