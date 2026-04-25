@@ -75,17 +75,12 @@ export const sm = {
         this.volume = finalVolume;
         safeSetLS("app_volume", finalVolume);
 
-        // FIX: не дублируем клик, если input уже сыграл его совсем недавно
-        const hadRecentInputClick = !!this.volumeChangeTimeout;
         if (this.volumeChangeTimeout) {
           clearTimeout(this.volumeChangeTimeout);
           this.volumeChangeTimeout = null;
         }
 
-        // Если клик уже сыгрался в input совсем недавно, не дублируем его на change
-        if (!hadRecentInputClick) {
-          this.play("click");
-        }
+        // ВАЖНО: здесь не играем click, чтобы не было дубля
       });
     }
 
@@ -141,18 +136,27 @@ export const sm = {
     }
     const volumeSlider = $("volumeSlider");
     if (volumeSlider) {
-      volumeSlider.value = this.volume;
-      const display = $("volumeDisplay");
-      if (display) display.textContent = Math.round(this.volume * 100) + "%";
+      volumeSlider.addEventListener("input", (e) => {
+        const newVolume = parseFloat(e.target.value);
+        const changed = newVolume !== this.volume;
+
+        this.volume = newVolume;
+        const display = $("volumeDisplay");
+        if (display) display.textContent = Math.round(this.volume * 100) + "%";
+
+        // Тактильный отклик и звук только если значение реально сдвинулось
+        if (changed) {
+          this.vibrate(10, "tactile");
+
+          if (!this.volumeChangeTimeout) {
+            this.play("click");
+            this.volumeChangeTimeout = setTimeout(() => {
+              this.volumeChangeTimeout = null;
+            }, this.THROTTLE_DELAY);
+          }
+        }
+      });
     }
-    if (this.soundThemeSelect)
-      this.soundThemeSelect.setValue(this.theme, false);
-    this.updateVolumeUI();
-    document.dispatchEvent(
-      new CustomEvent("vibroToggled", {
-        detail: { enabled: this.vibroEnabled },
-      }),
-    );
   },
 
   resetSettings() {
