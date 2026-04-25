@@ -367,7 +367,7 @@ html.dark .app-bg::before {
   margin-bottom: 8px;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
   height: 50%;
   width: 100%;
@@ -443,7 +443,7 @@ html.dark .app-bg::before {
 ========================================= */
 .timer-circle-wrap {
   width: 100%;
-  max-width: 80%;
+  max-width: 85%;
   aspect-ratio: 1 / 1;
   margin: 1vh auto;
   max-height: 45vh;
