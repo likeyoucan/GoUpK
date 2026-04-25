@@ -224,7 +224,7 @@ export const translations = {
     bg_limit_msg: "Максимум 50 своих цветов фона",
     name_too_long: "Название не может превышать 50 символов",
     vignette_depth: "Интенсивность",
-    default_color: "По умполчанию",
+    default_color: "По умолчанию",
     color_already_exists: "Цвет уже добавлен",
   },
 };
