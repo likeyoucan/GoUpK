@@ -13,8 +13,8 @@ export const sm = {
   theme: "classic",
   soundThemeSelect: null,
 
-  volumeChangeTimeout: null, // Для троттлинга
-  THROTTLE_DELAY: 150, // мс
+  volumeChangeTimeout: null,
+  THROTTLE_DELAY: 150,
 
   THEME_VOL_MULTIPLIERS: {
     classic: 1.0,
@@ -23,11 +23,13 @@ export const sm = {
     work: 1.9,
     life: 1.7,
   },
+
   vibroIntensities: { light: 0.5, medium: 1, strong: 1.5, tactile: 0.8 },
 
   unlock() {
-    if (this.audioCtx && this.audioCtx.state === "suspended")
+    if (this.audioCtx && this.audioCtx.state === "suspended") {
       this.audioCtx.resume().catch(() => {});
+    }
   },
 
   init() {
@@ -38,7 +40,7 @@ export const sm = {
       this.soundEnabled = e.target.checked;
       safeSetLS("app_sound", this.soundEnabled);
       if (this.soundEnabled) {
-        this.initAudio(); // Инициализируем контекст, если его не было
+        this.initAudio();
       }
       this.updateVolumeUI();
     });
@@ -57,16 +59,24 @@ export const sm = {
     const volumeSlider = $("volumeSlider");
     if (volumeSlider) {
       volumeSlider.addEventListener("input", (e) => {
-        this.vibrate(10, "tactile");
-        this.volume = parseFloat(e.target.value);
+        const newVolume = parseFloat(e.target.value);
+        const changed = newVolume !== this.volume;
+
+        this.volume = newVolume;
+
         const display = $("volumeDisplay");
         if (display) display.textContent = Math.round(this.volume * 100) + "%";
 
-        if (!this.volumeChangeTimeout) {
-          this.play("click");
-          this.volumeChangeTimeout = setTimeout(() => {
-            this.volumeChangeTimeout = null;
-          }, this.THROTTLE_DELAY);
+        // Тактильный отклик и клик только при реальном изменении значения.
+        if (changed) {
+          this.vibrate(10, "tactile");
+
+          if (!this.volumeChangeTimeout) {
+            this.play("click");
+            this.volumeChangeTimeout = setTimeout(() => {
+              this.volumeChangeTimeout = null;
+            }, this.THROTTLE_DELAY);
+          }
         }
       });
 
@@ -80,7 +90,7 @@ export const sm = {
           this.volumeChangeTimeout = null;
         }
 
-        // ВАЖНО: здесь не играем click, чтобы не было дубля
+        // Здесь звук не воспроизводим, чтобы не было дубля.
       });
     }
 
@@ -91,6 +101,7 @@ export const sm = {
       { value: "work", text: t("theme_work") },
       { value: "life", text: t("theme_life") },
     ];
+
     this.soundThemeSelect = new CustomSelect(
       "soundThemeSelectContainer",
       soundThemeOptions,
@@ -101,6 +112,7 @@ export const sm = {
       },
       this.theme,
     );
+
     const unlockHandler = () => this.unlock();
     document.addEventListener("click", unlockHandler, {
       once: true,
@@ -121,8 +133,10 @@ export const sm = {
         ? parseFloat(safeGetLS("app_volume"))
         : 1;
     this.theme = safeGetLS("app_sound_theme") || "classic";
+
     if ($("toggle-sound")) $("toggle-sound").checked = this.soundEnabled;
     if ($("toggle-vibro")) $("toggle-vibro").checked = this.vibroEnabled;
+
     if ($("vibroSlider")) {
       const levels = [0.5, 0.75, 1, 1.5, 2];
       const closestIndex = levels.reduce(
@@ -134,29 +148,25 @@ export const sm = {
       );
       $("vibroSlider").value = closestIndex;
     }
+
     const volumeSlider = $("volumeSlider");
     if (volumeSlider) {
-      volumeSlider.addEventListener("input", (e) => {
-        const newVolume = parseFloat(e.target.value);
-        const changed = newVolume !== this.volume;
-
-        this.volume = newVolume;
-        const display = $("volumeDisplay");
-        if (display) display.textContent = Math.round(this.volume * 100) + "%";
-
-        // Тактильный отклик и звук только если значение реально сдвинулось
-        if (changed) {
-          this.vibrate(10, "tactile");
-
-          if (!this.volumeChangeTimeout) {
-            this.play("click");
-            this.volumeChangeTimeout = setTimeout(() => {
-              this.volumeChangeTimeout = null;
-            }, this.THROTTLE_DELAY);
-          }
-        }
-      });
+      volumeSlider.value = this.volume;
+      const display = $("volumeDisplay");
+      if (display) display.textContent = Math.round(this.volume * 100) + "%";
     }
+
+    if (this.soundThemeSelect) {
+      this.soundThemeSelect.setValue(this.theme, false);
+    }
+
+    this.updateVolumeUI();
+
+    document.dispatchEvent(
+      new CustomEvent("vibroToggled", {
+        detail: { enabled: this.vibroEnabled },
+      }),
+    );
   },
 
   resetSettings() {
@@ -169,18 +179,13 @@ export const sm = {
     ];
     soundKeys.forEach(safeRemoveLS);
 
-    // Сбрасываем внутреннее состояние
     this.soundEnabled = true;
     this.vibroEnabled = true;
     this.vibroLevel = 1;
     this.volume = 1;
     this.theme = "classic";
 
-    // Применяем сброшенные настройки к UI
     this.applySettings();
-
-    // Принудительно вызываем инициализацию аудио.
-    // Это создаст AudioContext, если он был null.
     this.initAudio();
   },
 
@@ -196,8 +201,8 @@ export const sm = {
   },
 
   initAudio() {
-    // Эта функция теперь может быть вызвана несколько раз, но создаст контекст только один раз.
     if (this.audioCtx || !this.soundEnabled) return;
+
     try {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       if (AudioContext) this.audioCtx = new AudioContext();
@@ -208,6 +213,7 @@ export const sm = {
 
   vibrate(basePattern, intensityKey = "medium") {
     if (!this.vibroEnabled || !navigator.vibrate) return;
+
     try {
       const intensityMap = {
         light: 0.7,
@@ -218,14 +224,17 @@ export const sm = {
       const typeMultiplier = intensityMap[intensityKey] || 1;
       const levelMultiplier = this.vibroLevel;
       const finalMultiplier = typeMultiplier * levelMultiplier;
+
       const applyLevel = (duration) => {
         const baseDuration = duration * 1.5;
         const newDuration = Math.round(baseDuration * finalMultiplier);
         return Math.max(1, Math.min(200, newDuration));
       };
+
       const pattern = Array.isArray(basePattern)
         ? basePattern.map(applyLevel)
         : applyLevel(basePattern);
+
       navigator.vibrate(pattern);
     } catch (e) {}
   },
@@ -240,15 +249,20 @@ export const sm = {
     sustain = false,
   ) {
     if (!this.audioCtx) return;
+
     const osc = this.audioCtx.createOscillator();
     const gainNode = this.audioCtx.createGain();
+
     osc.type = type;
     osc.connect(gainNode);
     gainNode.connect(this.audioCtx.destination);
+
     const now = this.audioCtx.currentTime;
     const startTime = now + startTimeOffset;
     const peakVol = 0.95 * this.volume * volMultiplier;
+
     gainNode.gain.setValueAtTime(0, startTime);
+
     if (sustain) {
       const attackTime = Math.min(0.05, duration * 0.1);
       const releaseTime = Math.min(0.05, duration * 0.1);
@@ -265,7 +279,9 @@ export const sm = {
       );
       gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
     }
+
     osc.frequency.setValueAtTime(freq, startTime);
+
     if (slideToFreq) {
       if (sustain) {
         osc.frequency.linearRampToValueAtTime(
@@ -283,22 +299,25 @@ export const sm = {
         );
       }
     }
+
     osc.onended = () => {
       osc.disconnect();
       gainNode.disconnect();
     };
+
     osc.start(startTime);
     osc.stop(startTime + duration);
   },
 
   play(type, options = {}) {
     if (!this.soundEnabled || !this.audioCtx || this.volume === 0) return;
+
     this.unlock();
 
     const activeTheme = options.theme || this.theme;
     const vol = this.THEME_VOL_MULTIPLIERS[activeTheme] || 1.0;
 
-    // --- Classic (Эталон) ---
+    // Classic
     if (activeTheme === "classic") {
       if (type === "click") this.playNote(2000, "square", 0, 0.05, 0.2);
       else if (type === "tick") this.playNote(2500, "square", 0, 0.05, 0.3);
@@ -320,7 +339,8 @@ export const sm = {
       } else if (type === "minute_beep")
         this.playNote(1500, "sine", 0, 0.1, 0.3);
     }
-    // --- Sport ---
+
+    // Sport
     else if (activeTheme === "sport") {
       if (type === "click")
         this.playNote(1200, "triangle", 0, 0.05, 0.25 * vol, 200);
@@ -359,7 +379,8 @@ export const sm = {
       } else if (type === "minute_beep")
         this.playNote(2000, "triangle", 0, 0.08, 0.5 * vol);
     }
-    // --- Vibe ---
+
+    // Vibe
     else if (activeTheme === "vibe") {
       if (type === "click") this.playNote(300, "sine", 0, 0.1, 0.5 * vol);
       else if (type === "tick") this.playNote(400, "sine", 0, 0.15, 0.6 * vol);
@@ -379,7 +400,8 @@ export const sm = {
       } else if (type === "minute_beep")
         this.playNote(1046.5, "sine", 0, 0.2, 0.6 * vol);
     }
-    // --- Work ---
+
+    // Work
     else if (activeTheme === "work") {
       if (type === "click") this.playNote(500, "sine", 0, 0.03, 0.3 * vol);
       else if (type === "tick") this.playNote(700, "sine", 0, 0.05, 0.3 * vol);
@@ -396,7 +418,8 @@ export const sm = {
       } else if (type === "minute_beep")
         this.playNote(880, "sine", 0, 0.07, 0.4 * vol);
     }
-    // --- Life ---
+
+    // Life
     else if (activeTheme === "life") {
       if (type === "click") this.playNote(440, "triangle", 0, 0.08, 0.35 * vol);
       else if (type === "tick")
