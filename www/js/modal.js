@@ -7,7 +7,7 @@ class ModalManager {
     this.modals = {};
     this.activeStack = [];
     this.lastFocusedElement = null;
-    this.closeTimeoutId = null;
+    this.closeTimeouts = {};
     this.isDragging = false;
     this.startY = 0;
     this.currentY = 0;
@@ -74,12 +74,14 @@ class ModalManager {
     const modal = this.modals[id];
     if (!modal || this.activeStack.includes(id)) return;
 
-    this.modalContainer.classList.add("active");
-
-    if (this.closeTimeoutId) {
-      clearTimeout(this.closeTimeoutId);
-      this.closeTimeoutId = null;
+    if (this.closeTimeouts[id]) {
+      clearTimeout(this.closeTimeouts[id]);
+      this.closeTimeouts[id] = null;
+      modal.el.classList.remove("hidden");
+      modal.el.classList.add("flex");
     }
+
+    this.modalContainer.classList.add("active");
 
     this.lastFocusedElement = document.activeElement;
 
@@ -87,7 +89,6 @@ class ModalManager {
       this._toggleInert(true);
     }
 
-    // Показываем общий оверлей только для шторок (bottom-sheet)
     if (modal.type === "bottom-sheet") {
       const overlay = $("bottom-sheet-overlay");
       if (overlay) {
@@ -99,7 +100,6 @@ class ModalManager {
         };
       }
     }
-    // Для алертов оверлеем будет их собственный фон, который задан в CSS.
 
     modal.el.classList.remove("hidden");
     modal.el.classList.add("flex");
@@ -135,6 +135,11 @@ class ModalManager {
     const modal = this.modals[id];
     if (!modal || !this.activeStack.includes(id)) return;
 
+    if (this.closeTimeouts[id]) {
+      clearTimeout(this.closeTimeouts[id]);
+      this.closeTimeouts[id] = null;
+    }
+
     if (modal.el.contains(document.activeElement)) {
       document.activeElement.blur();
     }
@@ -156,7 +161,6 @@ class ModalManager {
     this.activeStack = this.activeStack.filter((activeId) => activeId !== id);
     const isLastModal = this.activeStack.length === 0;
 
-    // Скрываем общий оверлей только когда закрывается последнее окно любого типа
     if (isLastModal) {
       const overlay = $("bottom-sheet-overlay");
       if (overlay) {
@@ -166,30 +170,29 @@ class ModalManager {
       this.modalContainer.classList.remove("active");
     }
 
-    this.closeTimeoutId = setTimeout(
-      () => {
-        modal.el.classList.add("hidden");
-        modal.el.classList.remove("flex");
+    const delay = modal.type === "bottom-sheet" ? 400 : 300;
 
-        if (modal.type === "bottom-sheet") {
-          modal.el.style.transition = "";
-          modal.el.style.transform = "";
-        }
-        this.closeTimeoutId = null;
+    this.closeTimeouts[id] = setTimeout(() => {
+      modal.el.classList.add("hidden");
+      modal.el.classList.remove("flex");
 
-        if (isLastModal) {
-          this._toggleInert(false);
-          if (this.lastFocusedElement) {
-            this.lastFocusedElement.focus();
-            this.lastFocusedElement = null;
-          }
+      if (modal.type === "bottom-sheet") {
+        modal.el.style.transition = "";
+        modal.el.style.transform = "";
+      }
+      this.closeTimeouts[id] = null;
+
+      if (isLastModal) {
+        this._toggleInert(false);
+        if (this.lastFocusedElement) {
+          this.lastFocusedElement.focus();
+          this.lastFocusedElement = null;
         }
-        if (modal.onClose) {
-          modal.onClose();
-        }
-      },
-      modal.type === "bottom-sheet" ? 400 : 300,
-    );
+      }
+      if (modal.onClose) {
+        modal.onClose();
+      }
+    }, delay);
   }
 
   closeCurrent() {

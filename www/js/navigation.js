@@ -3,6 +3,8 @@
 import { $ } from "./utils.js?v=VERSION";
 import { themeManager } from "./theme.js?v=VERSION";
 
+const VIEWS = ["stopwatch", "timer", "tabata", "settings"];
+
 export const navigation = {
   activeView: "stopwatch",
   clockInterval: null,
@@ -14,18 +16,37 @@ export const navigation = {
   switchView(viewId) {
     if (this.activeView === viewId) return;
 
+    const currentIdx = VIEWS.indexOf(this.activeView);
+    const nextIdx = VIEWS.indexOf(viewId);
+    const isForward = nextIdx > currentIdx;
+
+    const htmlEl = document.documentElement;
+    htmlEl.classList.remove("js-nav-forward", "js-nav-backward");
+    htmlEl.classList.add(isForward ? "js-nav-forward" : "js-nav-backward");
+
     if (!document.startViewTransition) {
       this.updateDOM(viewId);
+      this._scheduleDirectionCleanup(htmlEl);
     } else {
       document.startViewTransition(() => {
         this.updateDOM(viewId);
+      }).finished.then(() => {
+        htmlEl.classList.remove("js-nav-forward", "js-nav-backward");
+      }).catch(() => {
+        htmlEl.classList.remove("js-nav-forward", "js-nav-backward");
       });
     }
   },
 
+  _scheduleDirectionCleanup(htmlEl) {
+    setTimeout(() => {
+      htmlEl.classList.remove("js-nav-forward", "js-nav-backward");
+    }, 400);
+  },
+
   updateDOM(viewId) {
     this.activeView = viewId;
-    ["stopwatch", "timer", "tabata", "settings"].forEach((id) => {
+    VIEWS.forEach((id) => {
       const el = $(`view-${id}`);
       if (!el) return;
       if (id === viewId) {
@@ -50,7 +71,7 @@ export const navigation = {
   },
 
   updateIcons(activeId) {
-    ["stopwatch", "timer", "tabata", "settings"].forEach((id) => {
+    VIEWS.forEach((id) => {
       const iconDiv = $(`nav-icon-${id}`);
       if (!iconDiv) return;
       const textSpan = iconDiv.nextElementSibling;
