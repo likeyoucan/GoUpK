@@ -13,16 +13,13 @@ export const sm = {
   theme: "classic",
   soundThemeSelect: null,
 
-  // Guards against double init / duplicate handlers
   isInitialized: false,
+  _onVolumeInput: null,
+  _onVolumeChange: null,
 
-  // De-dup for slider click sound
   lastVolumeSoundAt: 0,
   lastVolumeSoundValue: null,
-  MIN_SOUND_INTERVAL: 120, // ms
-
-  volumeChangeTimeout: null,
-  THROTTLE_DELAY: 150,
+  MIN_SOUND_INTERVAL: 120,
 
   THEME_VOL_MULTIPLIERS: {
     classic: 1.0,
@@ -41,7 +38,11 @@ export const sm = {
   },
 
   init() {
-    // Prevent duplicate listeners if init is called twice
+    console.count("sm.init");
+    // Global guard against double init from multiple entrypoints
+    if (window.__STOPWATCH_SM_INITED__) return;
+    window.__STOPWATCH_SM_INITED__ = true;
+
     if (this.isInitialized) return;
     this.isInitialized = true;
 
@@ -51,44 +52,43 @@ export const sm = {
     $("toggle-sound")?.addEventListener("change", (e) => {
       this.soundEnabled = e.target.checked;
       safeSetLS("app_sound", this.soundEnabled);
-
-      if (this.soundEnabled) {
-        this.initAudio();
-      }
-
+      if (this.soundEnabled) this.initAudio();
       this.updateVolumeUI();
     });
 
     $("toggle-vibro")?.addEventListener("change", (e) => {
       this.vibroEnabled = e.target.checked;
       safeSetLS("app_vibro", this.vibroEnabled);
-
       document.dispatchEvent(
         new CustomEvent("vibroToggled", {
           detail: { enabled: this.vibroEnabled },
         }),
       );
-
       if (this.vibroEnabled) this.vibrate(50, "medium");
     });
 
     const volumeSlider = $("volumeSlider");
     if (volumeSlider) {
-      volumeSlider.addEventListener("input", (e) => {
+      // Defensive re-bind (safe if init gets called again accidentally)
+      if (this._onVolumeInput) {
+        volumeSlider.removeEventListener("input", this._onVolumeInput);
+      }
+      if (this._onVolumeChange) {
+        volumeSlider.removeEventListener("change", this._onVolumeChange);
+      }
+
+      this._onVolumeInput = (e) => {
         const newVolume = parseFloat(e.target.value);
         const changed = newVolume !== this.volume;
 
         this.volume = newVolume;
-
         const display = $("volumeDisplay");
         if (display) display.textContent = Math.round(this.volume * 100) + "%";
 
-        // Sound/vibration only when value really changed
         if (!changed) return;
 
         this.vibrate(10, "tactile");
 
-        // Hard de-dup in case multiple events come almost at once
         const now = performance.now();
         const isTooSoon = now - this.lastVolumeSoundAt < this.MIN_SOUND_INTERVAL;
         const isSameValue = this.lastVolumeSoundValue === newVolume;
@@ -98,28 +98,17 @@ export const sm = {
           this.lastVolumeSoundAt = now;
           this.lastVolumeSoundValue = newVolume;
         }
+      };
 
-        // Keep existing throttle window for overall click density
-        if (this.volumeChangeTimeout) {
-          clearTimeout(this.volumeChangeTimeout);
-        }
-        this.volumeChangeTimeout = setTimeout(() => {
-          this.volumeChangeTimeout = null;
-        }, this.THROTTLE_DELAY);
-      });
-
-      volumeSlider.addEventListener("change", (e) => {
+      this._onVolumeChange = (e) => {
         const finalVolume = parseFloat(e.target.value);
         this.volume = finalVolume;
         safeSetLS("app_volume", finalVolume);
+        // No click here to avoid duplicates.
+      };
 
-        if (this.volumeChangeTimeout) {
-          clearTimeout(this.volumeChangeTimeout);
-          this.volumeChangeTimeout = null;
-        }
-
-        // No click here to avoid duplicate sound
-      });
+      volumeSlider.addEventListener("input", this._onVolumeInput);
+      volumeSlider.addEventListener("change", this._onVolumeChange);
     }
 
     const soundThemeOptions = [
@@ -142,12 +131,10 @@ export const sm = {
     );
 
     const unlockHandler = () => this.unlock();
-
     document.addEventListener("click", unlockHandler, {
       once: true,
       capture: true,
     });
-
     document.addEventListener("touchstart", unlockHandler, {
       once: true,
       passive: true,
@@ -158,12 +145,10 @@ export const sm = {
     this.soundEnabled = safeGetLS("app_sound") !== "false";
     this.vibroEnabled = safeGetLS("app_vibro") !== "false";
     this.vibroLevel = parseFloat(safeGetLS("app_vibro_level")) || 1;
-
     this.volume =
       safeGetLS("app_volume") !== null
         ? parseFloat(safeGetLS("app_volume"))
         : 1;
-
     this.theme = safeGetLS("app_sound_theme") || "classic";
 
     if ($("toggle-sound")) $("toggle-sound").checked = this.soundEnabled;
@@ -216,7 +201,6 @@ export const sm = {
     this.vibroLevel = 1;
     this.volume = 1;
     this.theme = "classic";
-
     this.lastVolumeSoundAt = 0;
     this.lastVolumeSoundValue = null;
 
@@ -237,7 +221,6 @@ export const sm = {
 
   initAudio() {
     if (this.audioCtx || !this.soundEnabled) return;
-
     try {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       if (AudioContext) this.audioCtx = new AudioContext();
@@ -248,7 +231,6 @@ export const sm = {
 
   vibrate(basePattern, intensityKey = "medium") {
     if (!this.vibroEnabled || !navigator.vibrate) return;
-
     try {
       const intensityMap = {
         light: 0.7,
@@ -256,7 +238,6 @@ export const sm = {
         strong: 1.4,
         tactile: 0.5,
       };
-
       const typeMultiplier = intensityMap[intensityKey] || 1;
       const levelMultiplier = this.vibroLevel;
       const finalMultiplier = typeMultiplier * levelMultiplier;
@@ -347,7 +328,6 @@ export const sm = {
 
   play(type, options = {}) {
     if (!this.soundEnabled || !this.audioCtx || this.volume === 0) return;
-
     this.unlock();
 
     const activeTheme = options.theme || this.theme;
@@ -372,8 +352,7 @@ export const sm = {
           this.playNote(2500, "square", offset + 0.1, 0.06, 0.5);
           this.playNote(2500, "square", offset + 0.2, 0.06, 0.5);
         }
-      } else if (type === "minute_beep")
-        this.playNote(1500, "sine", 0, 0.1, 0.3);
+      } else if (type === "minute_beep") this.playNote(1500, "sine", 0, 0.1, 0.3);
     }
 
     // Sport
@@ -406,8 +385,7 @@ export const sm = {
             0.8 * vol,
             50,
           );
-          if (isFinal)
-            this.playNote(300, "square", time, duration, 0.4 * vol, 20);
+          if (isFinal) this.playNote(300, "square", time, duration, 0.4 * vol, 20);
         };
         playSwoosh(0.0, 0.25);
         playSwoosh(0.35, 0.25);

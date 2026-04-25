@@ -90,8 +90,6 @@ export function enhanceNativeRange(input) {
 
   const VIBRO_THROTTLE_MS = 75;
   let lastVibroTime = 0;
-
-  // Подавляем click, который браузер часто шлет после drag-end
   let suppressTrackClickUntil = 0;
 
   const wrap = document.createElement("div");
@@ -144,7 +142,6 @@ export function enhanceNativeRange(input) {
     return Math.max(min, Math.min(max, parseFloat(stepped.toFixed(10))));
   };
 
-  // Возвращает true, только если значение реально изменилось.
   const applyValue = (val, eventType = "input") => {
     const clamped = Math.max(min, Math.min(max, val));
     const snapped = Math.round((clamped - min) / step) * step + min;
@@ -226,7 +223,7 @@ export function enhanceNativeRange(input) {
     }
 
     if (!touchState.isHoriz) return;
-    e.preventDefault();
+    if (e.cancelable) e.preventDefault();
 
     const changed = applyValue(valueFromX(touch.clientX), "input");
     if (changed) {
@@ -251,10 +248,10 @@ export function enhanceNativeRange(input) {
     }
 
     if (touchState.isHoriz) {
-      // Финальное позиционирование на отпускании.
+      let changedOnEnd = false;
       if (touch) {
-        const changed = applyValue(valueFromX(touch.clientX), "input");
-        if (changed) {
+        changedOnEnd = applyValue(valueFromX(touch.clientX), "input");
+        if (changedOnEnd) {
           const now = performance.now();
           if (now - lastVibroTime > VIBRO_THROTTLE_MS) {
             sm.vibrate(10, "tactile");
@@ -263,8 +260,10 @@ export function enhanceNativeRange(input) {
         }
       }
 
-      // Всегда шлем change после drag, чтобы сохранить значение.
-      emitChange();
+      if (touchState.moved || changedOnEnd) {
+        emitChange();
+      }
+
       wrap.classList.remove("tr-dragging");
       suppressTrackClickUntil = performance.now() + 250;
     }
@@ -315,9 +314,8 @@ export function enhanceNativeRange(input) {
     mouseDown = false;
 
     if (mouseMoved) {
-      // Финальная синхронизация и гарантированный change после drag.
-      const changed = applyValue(valueFromX(e.clientX), "input");
-      if (changed) {
+      const changedOnEnd = applyValue(valueFromX(e.clientX), "input");
+      if (changedOnEnd) {
         const now = performance.now();
         if (now - lastVibroTime > VIBRO_THROTTLE_MS) {
           sm.vibrate(10, "tactile");
@@ -341,14 +339,14 @@ export function enhanceNativeRange(input) {
     mouseStartX = e.clientX;
     mouseStartY = e.clientY;
 
-    // Важно: здесь НЕ вызываем applyValue, чтобы не было "первого лишнего" звука.
+    // No applyValue here: prevents first phantom sound on press
     e.preventDefault();
 
     document.addEventListener("mousemove", onMouseMove);
     document.addEventListener("mouseup", onMouseUp);
   });
 
-  // Клик по треку: один раз input + change.
+  // Track click: exactly one input + one change if value changed
   track.addEventListener("click", (e) => {
     if (performance.now() < suppressTrackClickUntil) return;
 
