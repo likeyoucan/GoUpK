@@ -138,12 +138,15 @@ body {
 ========================================= */
 #app-preloader {
   position: fixed;
-  left: 0;
-  top: 0;
+  inset: 0;
   width: 100vw;
-  height: 100dvh; /* именно экран, корректно для mobile */
+  height: 100dvh;
+  min-height: 100vh; /* fallback */
   z-index: 200;
-  background-color: var(--bg-color, #000000);
+  background-color: var(--bg-color, #000);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
@@ -159,10 +162,34 @@ body {
 }
 
 #app-preloader-icon {
-  /* размер иконки зависит от размера экрана */
-  width: clamp(56px, 18vmin, 120px);
-  height: clamp(56px, 18vmin, 120px);
+  /* Базовый адаптив для телефонов */
+  width: clamp(56px, 16vmin, 112px);
+  height: clamp(56px, 16vmin, 112px);
   object-fit: contain;
+}
+
+/* Планшеты */
+@media (min-width: 768px) {
+  #app-preloader-icon {
+    width: clamp(88px, 12vmin, 144px);
+    height: clamp(88px, 12vmin, 144px);
+  }
+}
+
+/* Десктопы */
+@media (min-width: 1280px) {
+  #app-preloader-icon {
+    width: clamp(96px, 8vmin, 168px);
+    height: clamp(96px, 8vmin, 168px);
+  }
+}
+
+/* Очень большие экраны */
+@media (min-width: 1920px) {
+  #app-preloader-icon {
+    width: 180px;
+    height: 180px;
+  }
 }
 
 @keyframes preloader-pulse {
