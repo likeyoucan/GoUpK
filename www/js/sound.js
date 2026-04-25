@@ -10,6 +10,7 @@ export const sm = {
   vibroEnabled: true,
   vibroLevel: 1,
   volume: 1,
+  lastNonZeroVolume: 1,
   theme: "classic",
   soundThemeSelect: null,
 
@@ -17,10 +18,9 @@ export const sm = {
   _onVolumeInput: null,
   _onVolumeChange: null,
 
-  // Anti-duplicate guard for slider sound
   lastVolumeSoundAt: 0,
   lastVolumeSoundValue: null,
-  MIN_SOUND_INTERVAL: 120, // ms
+  MIN_SOUND_INTERVAL: 120,
 
   THEME_VOL_MULTIPLIERS: {
     classic: 1.0,
@@ -38,8 +38,48 @@ export const sm = {
     }
   },
 
+  setSoundEnabled(enabled, { persist = true, restoreVolume = true } = {}) {
+    this.soundEnabled = enabled;
+
+    const toggle = $("toggle-sound");
+    if (toggle) toggle.checked = enabled;
+
+    if (!enabled) {
+      if (this.volume > 0) {
+        this.lastNonZeroVolume = this.volume;
+        safeSetLS("app_volume_last_non_zero", this.lastNonZeroVolume);
+      }
+
+      this.volume = 0;
+
+      const volumeSlider = $("volumeSlider");
+      if (volumeSlider) volumeSlider.value = "0";
+
+      const display = $("volumeDisplay");
+      if (display) display.textContent = "0%";
+    } else {
+      if (restoreVolume) {
+        const restored =
+          this.lastNonZeroVolume > 0 ? this.lastNonZeroVolume : 1;
+        this.volume = restored;
+
+        const volumeSlider = $("volumeSlider");
+        if (volumeSlider) volumeSlider.value = String(restored);
+
+        const display = $("volumeDisplay");
+        if (display) display.textContent = Math.round(restored * 100) + "%";
+      }
+
+      this.initAudio();
+    }
+
+    if (persist) {
+      safeSetLS("app_sound", this.soundEnabled);
+      safeSetLS("app_volume", this.volume);
+    }
+  },
+
   init() {
-    // Global guard against accidental double init from multiple entrypoints
     if (window.__STOPWATCH_SM_INITED__) return;
     window.__STOPWATCH_SM_INITED__ = true;
 
@@ -50,10 +90,10 @@ export const sm = {
     this.initAudio();
 
     $("toggle-sound")?.addEventListener("change", (e) => {
-      this.soundEnabled = e.target.checked;
-      safeSetLS("app_sound", this.soundEnabled);
-
-      if (this.soundEnabled) this.initAudio();
+      this.setSoundEnabled(e.target.checked, {
+        persist: true,
+        restoreVolume: true,
+      });
       this.updateVolumeUI();
     });
 
@@ -72,7 +112,6 @@ export const sm = {
 
     const volumeSlider = $("volumeSlider");
     if (volumeSlider) {
-      // Per-element guard: never bind twice even if code re-runs
       if (volumeSlider.dataset.boundSound !== "1") {
         volumeSlider.dataset.boundSound = "1";
 
@@ -83,13 +122,29 @@ export const sm = {
           this.volume = newVolume;
 
           const display = $("volumeDisplay");
-          if (display) display.textContent = Math.round(this.volume * 100) + "%";
+          if (display) {
+            display.textContent = Math.round(this.volume * 100) + "%";
+          }
 
-          if (!changed) return;
+          if (newVolume > 0) {
+            this.lastNonZeroVolume = newVolume;
+            safeSetLS("app_volume_last_non_zero", this.lastNonZeroVolume);
 
-          // Hard de-dup for back-to-back identical events
+            if (!this.soundEnabled) {
+              this.setSoundEnabled(true, {
+                persist: true,
+                restoreVolume: false,
+              });
+            } else {
+              safeSetLS("app_volume", newVolume);
+            }
+          }
+
+          if (!changed || !this.soundEnabled || this.volume <= 0) return;
+
           const now = performance.now();
-          const isTooSoon = now - this.lastVolumeSoundAt < this.MIN_SOUND_INTERVAL;
+          const isTooSoon =
+            now - this.lastVolumeSoundAt < this.MIN_SOUND_INTERVAL;
           const isSameValue = this.lastVolumeSoundValue === newVolume;
 
           if (!isTooSoon || !isSameValue) {
@@ -102,8 +157,22 @@ export const sm = {
         this._onVolumeChange = (e) => {
           const finalVolume = parseFloat(e.target.value);
           this.volume = finalVolume;
-          safeSetLS("app_volume", finalVolume);
-          // No click on change (prevents duplicate sound)
+
+          if (finalVolume > 0) {
+            this.lastNonZeroVolume = finalVolume;
+            safeSetLS("app_volume_last_non_zero", this.lastNonZeroVolume);
+
+            if (!this.soundEnabled) {
+              this.setSoundEnabled(true, {
+                persist: true,
+                restoreVolume: false,
+              });
+            } else {
+              safeSetLS("app_volume", finalVolume);
+            }
+          } else {
+            safeSetLS("app_volume", 0);
+          }
         };
 
         volumeSlider.addEventListener("input", this._onVolumeInput);
@@ -147,10 +216,36 @@ export const sm = {
     this.soundEnabled = safeGetLS("app_sound") !== "false";
     this.vibroEnabled = safeGetLS("app_vibro") !== "false";
     this.vibroLevel = parseFloat(safeGetLS("app_vibro_level")) || 1;
+
     this.volume =
       safeGetLS("app_volume") !== null
         ? parseFloat(safeGetLS("app_volume"))
         : 1;
+
+    this.lastNonZeroVolume =
+      safeGetLS("app_volume_last_non_zero") !== null
+        ? parseFloat(safeGetLS("app_volume_last_non_zero"))
+        : 1;
+
+    if (
+      !Number.isFinite(this.lastNonZeroVolume) ||
+      this.lastNonZeroVolume <= 0
+    ) {
+      this.lastNonZeroVolume = 1;
+    }
+
+    if (this.soundEnabled) {
+      if (!Number.isFinite(this.volume) || this.volume <= 0) {
+        this.volume = this.lastNonZeroVolume;
+      }
+    } else {
+      if (Number.isFinite(this.volume) && this.volume > 0) {
+        this.lastNonZeroVolume = this.volume;
+        safeSetLS("app_volume_last_non_zero", this.lastNonZeroVolume);
+      }
+      this.volume = 0;
+    }
+
     this.theme = safeGetLS("app_sound_theme") || "classic";
 
     if ($("toggle-sound")) $("toggle-sound").checked = this.soundEnabled;
@@ -195,6 +290,7 @@ export const sm = {
       "app_vibro_level",
       "app_sound_theme",
       "app_volume",
+      "app_volume_last_non_zero",
     ];
     soundKeys.forEach(safeRemoveLS);
 
@@ -202,6 +298,7 @@ export const sm = {
     this.vibroEnabled = true;
     this.vibroLevel = 1;
     this.volume = 1;
+    this.lastNonZeroVolume = 1;
     this.theme = "classic";
     this.lastVolumeSoundAt = 0;
     this.lastVolumeSoundValue = null;
@@ -212,12 +309,13 @@ export const sm = {
 
   updateVolumeUI() {
     const volSlider = $("volumeSlider");
-    if (volSlider) {
-      volSlider.disabled = !this.soundEnabled;
-      const parentContainer = volSlider.closest(".p-4");
-      if (parentContainer) {
-        parentContainer.classList.toggle("is-disabled", !this.soundEnabled);
-      }
+    if (!volSlider) return;
+
+    volSlider.disabled = false;
+
+    const parentContainer = volSlider.closest(".p-4");
+    if (parentContainer) {
+      parentContainer.classList.remove("is-disabled");
     }
   },
 
@@ -338,7 +436,6 @@ export const sm = {
     const activeTheme = options.theme || this.theme;
     const vol = this.THEME_VOL_MULTIPLIERS[activeTheme] || 1.0;
 
-    // Classic
     if (activeTheme === "classic") {
       if (type === "click") this.playNote(2000, "square", 0, 0.05, 0.2);
       else if (type === "tick") this.playNote(2500, "square", 0, 0.05, 0.3);
@@ -357,16 +454,15 @@ export const sm = {
           this.playNote(2500, "square", offset + 0.1, 0.06, 0.5);
           this.playNote(2500, "square", offset + 0.2, 0.06, 0.5);
         }
-      } else if (type === "minute_beep")
+      } else if (type === "minute_beep") {
         this.playNote(1500, "sine", 0, 0.1, 0.3);
-    }
-    // Sport
-    else if (activeTheme === "sport") {
-      if (type === "click")
+      }
+    } else if (activeTheme === "sport") {
+      if (type === "click") {
         this.playNote(1200, "triangle", 0, 0.05, 0.25 * vol, 200);
-      else if (type === "tick")
+      } else if (type === "tick") {
         this.playNote(1500, "triangle", 0, 0.1, 0.35 * vol, 300);
-      else if (type === "work_start") {
+      } else if (type === "work_start") {
         this.playNote(2500, "triangle", 0.0, 0.3, 0.7 * vol, 100);
         this.playNote(1000, "sine", 0.0, 0.3, 0.6 * vol, 50);
       } else if (type === "rest_start") {
@@ -390,17 +486,17 @@ export const sm = {
             0.8 * vol,
             50,
           );
-          if (isFinal)
+          if (isFinal) {
             this.playNote(300, "square", time, duration, 0.4 * vol, 20);
+          }
         };
         playSwoosh(0.0, 0.25);
         playSwoosh(0.35, 0.25);
         playSwoosh(0.7, 0.8, true);
-      } else if (type === "minute_beep")
+      } else if (type === "minute_beep") {
         this.playNote(2000, "triangle", 0, 0.08, 0.5 * vol);
-    }
-    // Vibe
-    else if (activeTheme === "vibe") {
+      }
+    } else if (activeTheme === "vibe") {
       if (type === "click") this.playNote(300, "sine", 0, 0.1, 0.5 * vol);
       else if (type === "tick") this.playNote(400, "sine", 0, 0.15, 0.6 * vol);
       else if (type === "work_start") {
@@ -416,11 +512,10 @@ export const sm = {
         this.playNote(329.63, "sine", 0.1, 3.0, 0.6 * vol);
         this.playNote(392.0, "sine", 0.2, 3.0, 0.6 * vol);
         this.playNote(493.88, "sine", 0.3, 3.0, 0.5 * vol);
-      } else if (type === "minute_beep")
+      } else if (type === "minute_beep") {
         this.playNote(1046.5, "sine", 0, 0.2, 0.6 * vol);
-    }
-    // Work
-    else if (activeTheme === "work") {
+      }
+    } else if (activeTheme === "work") {
       if (type === "click") this.playNote(500, "sine", 0, 0.03, 0.3 * vol);
       else if (type === "tick") this.playNote(700, "sine", 0, 0.05, 0.3 * vol);
       else if (type === "work_start") {
@@ -433,15 +528,15 @@ export const sm = {
         this.playNote(880, "sine", 0.0, 1.0, 0.5 * vol);
         this.playNote(783.99, "sine", 0.4, 1.0, 0.5 * vol);
         this.playNote(659.25, "sine", 0.8, 2.0, 0.5 * vol);
-      } else if (type === "minute_beep")
+      } else if (type === "minute_beep") {
         this.playNote(880, "sine", 0, 0.07, 0.4 * vol);
-    }
-    // Life
-    else if (activeTheme === "life") {
-      if (type === "click") this.playNote(440, "triangle", 0, 0.08, 0.35 * vol);
-      else if (type === "tick")
+      }
+    } else if (activeTheme === "life") {
+      if (type === "click") {
+        this.playNote(440, "triangle", 0, 0.08, 0.35 * vol);
+      } else if (type === "tick") {
         this.playNote(523.25, "triangle", 0, 0.1, 0.45 * vol);
-      else if (type === "work_start") {
+      } else if (type === "work_start") {
         this.playNote(523.25, "triangle", 0.0, 0.2, 0.5 * vol);
         this.playNote(659.25, "triangle", 0.12, 0.2, 0.5 * vol);
         this.playNote(783.99, "triangle", 0.24, 0.2, 0.5 * vol);
@@ -456,8 +551,9 @@ export const sm = {
         this.playNote(659.25, "triangle", 0.45, 0.4, 0.6 * vol);
         this.playNote(587.33, "triangle", 0.85, 0.15, 0.5 * vol);
         this.playNote(659.25, "triangle", 1.0, 1.0, 0.6 * vol);
-      } else if (type === "minute_beep")
+      } else if (type === "minute_beep") {
         this.playNote(783.99, "triangle", 0, 0.15, 0.5 * vol);
+      }
     }
   },
 };
