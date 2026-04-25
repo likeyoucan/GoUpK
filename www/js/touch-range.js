@@ -1,8 +1,6 @@
 // Файл: www/js/touch-range.js
 
-// Intentionally no sm import here:
-// touch-range should only handle value updates and events,
-// while sound/vibration stays in feature modules (e.g. sound.js).
+import { sm } from "./sound.js?v=VERSION";
 
 const STYLE_ID = "__touch_range_styles__";
 if (!document.getElementById(STYLE_ID)) {
@@ -90,7 +88,19 @@ export function enhanceNativeRange(input) {
   let value = parseFloat(input.value);
   if (!Number.isFinite(value)) value = min;
 
+  // Prevent duplicate click right after drag end
   let suppressTrackClickUntil = 0;
+
+  // Haptic throttle (uses sm.vibroLevel internally)
+  const VIBRO_THROTTLE_MS = 75;
+  let lastVibroTime = 0;
+  const vibrateIfNeeded = () => {
+    const now = performance.now();
+    if (now - lastVibroTime > VIBRO_THROTTLE_MS) {
+      sm.vibrate(10, "tactile");
+      lastVibroTime = now;
+    }
+  };
 
   const wrap = document.createElement("div");
   wrap.className = "tr-wrap";
@@ -226,10 +236,11 @@ export function enhanceNativeRange(input) {
 
     if (!touchState.isHoriz) return;
 
-    // No preventDefault here (avoids intervention warning)
+    // No preventDefault: avoids Intervention warning
     const changed = applyValue(valueFromX(touch.clientX), "input");
     if (changed) {
       touchState.moved = true;
+      vibrateIfNeeded();
     }
   };
 
@@ -273,7 +284,10 @@ export function enhanceNativeRange(input) {
     }
 
     const changed = applyValue(valueFromX(e.clientX), "input");
-    if (changed) mouseMoved = true;
+    if (changed) {
+      mouseMoved = true;
+      vibrateIfNeeded();
+    }
   };
 
   const onMouseUp = () => {
@@ -299,7 +313,7 @@ export function enhanceNativeRange(input) {
     mouseStartX = e.clientX;
     mouseStartY = e.clientY;
 
-    // No value update on down (prevents phantom first input/sound)
+    // Do not update value on down (prevents phantom first input)
     e.preventDefault();
 
     document.addEventListener("mousemove", onMouseMove);
@@ -311,7 +325,10 @@ export function enhanceNativeRange(input) {
     if (performance.now() < suppressTrackClickUntil) return;
 
     const changed = applyValue(valueFromX(e.clientX), "input");
-    if (changed) emitChange();
+    if (changed) {
+      vibrateIfNeeded();
+      emitChange();
+    }
   });
 
   // ---------- KEYBOARD ----------
@@ -346,7 +363,10 @@ export function enhanceNativeRange(input) {
 
     e.preventDefault();
     const changed = applyValue(newVal, "input");
-    if (changed) emitChange();
+    if (changed) {
+      vibrateIfNeeded();
+      emitChange();
+    }
   });
 
   wrap.addEventListener("focus", () => wrap.classList.add("tr-focused"));

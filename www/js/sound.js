@@ -87,9 +87,6 @@ export const sm = {
 
           if (!changed) return;
 
-          // Optional haptic feedback
-          this.vibrate(10, "tactile");
-
           // Hard de-dup for back-to-back identical events
           const now = performance.now();
           const isTooSoon = now - this.lastVolumeSoundAt < this.MIN_SOUND_INTERVAL;
