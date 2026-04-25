@@ -93,6 +93,23 @@
     class="preload flex items-center justify-center h-[100dvh] w-full overflow-hidden bg-surface text-base select-none"
   >
     <div id="sr-only-announce" aria-live="polite" class="sr-only"></div>
+    <div
+      id="app-preloader"
+      class="fixed inset-0 flex items-center justify-center"
+      role="status"
+      aria-live="polite"
+      aria-label="Loading application"
+    >
+      <img
+        src="icon.svg"
+        alt="Stopwatch Pro"
+        id="app-preloader-icon"
+        width="80"
+        height="80"
+        decoding="async"
+        fetchpriority="high"
+      />
+    </div>
 
     <div
       id="toast"

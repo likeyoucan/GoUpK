@@ -133,6 +133,53 @@ body {
   touch-action: manipulation;
 }
 
+/* =========================================
+   PRELOADER OVERLAY
+========================================= */
+#app-preloader {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background-color: var(--bg-color, #000000);
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition:
+    opacity 0.28s ease,
+    visibility 0.28s ease;
+}
+
+#app-preloader.is-hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+#app-preloader-icon {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  animation: preloader-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes preloader-pulse {
+  0%,
+  100% {
+    transform: scale(0.96);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #app-preloader-icon {
+    animation: none;
+  }
+}
+
 button {
   appearance: none;
   transition:

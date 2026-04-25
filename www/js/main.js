@@ -18,6 +18,7 @@ import { sm } from "./sound.js?v=VERSION";
 import { modalManager } from "./modal.js?v=VERSION";
 import { store } from "./store.js?v=VERSION";
 import { initTouchRanges } from "./touch-range.js?v=VERSION";
+import { preload } from "./preload.js?v=VERSION";
 
 function injectSVG() {
   const svgs = {
@@ -92,6 +93,8 @@ function isInteractiveElement(target) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  preload.show();
+
   injectSVG();
   langManager.init();
   initTouchRanges();
@@ -103,7 +106,11 @@ document.addEventListener("DOMContentLoaded", () => {
   navigation.init();
   modalManager.init(modalConfig);
 
-  setTimeout(() => document.body.classList.remove("preload"), 50);
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      preload.hide();
+    });
+  });
 
   $("sw-openResultsBtn")?.addEventListener("click", () =>
     modalManager.open("sw-sessions-modal"),
