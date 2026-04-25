@@ -2,14 +2,22 @@
 
 export const $ = (id) => document.getElementById(id);
 
+/**
+ * Получает значение CSS переменной из :root.
+ * @param {string} variable - Имя переменной (например, '--primary-color').
+ * @returns {string} - Значение переменной.
+ */
 export const getCssVariable = (variable) =>
   getComputedStyle(document.documentElement).getPropertyValue(variable).trim();
 
+// FIX #4: защита от null/undefined — str приводится к строке
 export const escapeHTML = (str = "") =>
   String(str).replace(
     /[&<>'"]/g,
     (tag) =>
-      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[tag] || tag,
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[
+        tag
+      ] || tag,
   );
 
 export const updateText = (el, text) => {
@@ -58,6 +66,7 @@ export const requestWakeLock = async () => {
         wakeLock = null;
       });
     } catch (err) {
+      // Ошибка может возникнуть, если документ неактивен, и это нормально.
     }
   }
 };
@@ -102,11 +111,15 @@ export const adjustVal = (id, delta) => {
 
   let currentValue = parseInt(el.value, 10) || 0;
 
+  // Если мы хотим прибавить (+5), а текущее значение меньше 5,
+  // то просто установим значение равным 5.
   if (delta > 1 && currentValue < delta) {
     el.value = delta;
     return;
   }
 
+  // Если мы хотим отнять (-5), а текущее значение между 1 и 5,
+  // то просто установим значение равным 1.
   if (delta < -1 && currentValue > 1 && currentValue <= Math.abs(delta)) {
     el.value = 1;
     return;
@@ -253,9 +266,14 @@ const createWorker = () => {
 
 export const bgWorker = createWorker();
 
+/**
+ * Преобразует 3-значный HEX-цвет в 6-значный.
+ * @param {string} hex - HEX-цвет (например, '#000' или '#f0c').
+ * @returns {string} - 6-значный HEX-цвет (например, '#000000' или '#ff00cc').
+ */
 export const normalizeHexColor = (hex) => {
   if (!hex || hex.length !== 4 || hex[0] !== "#") {
-    return hex;
+    return hex; // Возвращаем как есть, если это не 3-значный hex
   }
   const r = hex[1];
   const g = hex[2];

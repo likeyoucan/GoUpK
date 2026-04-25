@@ -22,11 +22,6 @@ import { modalManager } from "./modal.js?v=VERSION";
 import { store } from "./store.js?v=VERSION";
 import { CustomSelect } from "./custom-select.js?v=VERSION";
 
-function activateTimer(name) {
-  document.dispatchEvent(new CustomEvent("timerStarted", { detail: name }));
-  store.setActiveTimer(name);
-}
-
 const stopwatchModule = {
   startTime: 0,
   elapsedTime: 0,
@@ -43,6 +38,7 @@ const stopwatchModule = {
   lastMinuteBeep: 0,
   sortSelect: null,
 
+  // --- Основной метод инициализации ---
   init() {
     this.els = {
       display: $("sw-mainDisplay"),
@@ -54,7 +50,7 @@ const stopwatchModule = {
       ring: $("sw-progressRing"),
       saveBtn: $("sw-saveBtn"),
       sessionsList: $("sw-sessionsList"),
-      swSortWrapper: $("sw-sort-wrapper"),
+      swSortWrapper: $("sw-sort-wrapper"), // Целимся в новую обертку
       nameTitle: $("sw-name-title"),
       nameInput: $("sw-name-input"),
       nameError: $("sw-name-error"),
@@ -69,8 +65,11 @@ const stopwatchModule = {
 
     this.els.btn?.addEventListener("click", () => this.toggle());
     this.els.lapBtn?.addEventListener("click", () => this.recordLapOrReset());
-    this.els.saveBtn?.addEventListener("click", () => this.prepareSaveSession());
+    this.els.saveBtn?.addEventListener("click", () =>
+      this.prepareSaveSession(),
+    );
 
+    // Инициализация CustomSelect для сортировки
     const sortOptions = [
       { value: "date_asc", text: t("date_old") },
       { value: "date_desc", text: t("date_new") },
@@ -83,9 +82,10 @@ const stopwatchModule = {
       "swSortSelectContainer",
       sortOptions,
       (value) => {
+        // onSelect callback
         this.sortSessions(value);
       },
-      this.currentSort,
+      this.currentSort, // Начальное значение
     );
 
     this.els.nameInput?.addEventListener("input", () =>
@@ -109,12 +109,10 @@ const stopwatchModule = {
     document.addEventListener("timerStarted", (e) => {
       if (e.detail !== "stopwatch" && this.isRunning) this.toggle();
     });
-
     bgWorker.addEventListener("message", (e) => {
-      if (e.data?.type === "heartbeat" && this.isRunning && document.hidden)
+      if (e.data === "tick" && this.isRunning && document.hidden)
         this.tick(true);
     });
-
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "visible" && this.isRunning) {
         this.lastRender = 0;
@@ -161,9 +159,8 @@ const stopwatchModule = {
       store.clearActiveTimer();
       this.isRunning = false;
       this.pauseTime = Date.now();
-      bgWorker.postMessage({ command: "stop" });
-      if (this.rAF) cancelAnimationFrame(this.rAF);
-      this.rAF = null;
+      bgWorker.postMessage("stop");
+      cancelAnimationFrame(this.rAF);
       releaseWakeLock();
       updateTitle("");
       this.els.status.classList.remove("hidden");
@@ -174,13 +171,16 @@ const stopwatchModule = {
         `${t("stopwatch")} ${t("pause")}. ${formatTime(this.elapsedTime, { showMs: false, forceHours: this.elapsedTime >= 3600000 })}`,
       );
     } else {
-      activateTimer("stopwatch");
+      document.dispatchEvent(
+        new CustomEvent("timerStarted", { detail: "stopwatch" }),
+      );
+      store.setActiveTimer("stopwatch");
       this.startTime = performance.now() - this.elapsedTime;
       this.lastMinuteBeep = Math.floor(this.elapsedTime / 60000);
       this.isRunning = true;
       this.pauseTime = 0;
       requestWakeLock();
-      bgWorker.postMessage({ command: "start" });
+      bgWorker.postMessage("start");
       this.tick();
       this.els.status.classList.add("hidden");
       this.els.display.classList.remove("is-go");
@@ -219,7 +219,7 @@ const stopwatchModule = {
       this.lastRender = now;
     }
     if (!isBackground) {
-      if (this.rAF) cancelAnimationFrame(this.rAF);
+      cancelAnimationFrame(this.rAF);
       this.rAF = requestAnimationFrame(() => this.tick());
     }
   },
@@ -266,8 +266,8 @@ const stopwatchModule = {
     sm.vibrate(30, "medium");
     sm.play("click");
     if (this.isRunning) {
-      const lastLapTotal = this.laps.length > 0 ? this.laps[0].total : 0;
-      const diff = this.elapsedTime - lastLapTotal;
+      const diff =
+        this.elapsedTime - (this.laps.length > 0 ? this.laps[0].total : 0);
       this.laps.unshift({
         total: this.elapsedTime,
         diff,
@@ -392,9 +392,9 @@ const stopwatchModule = {
   prepareSaveSession() {
     if (this.laps.length === 0 && this.elapsedTime === 0) return;
     let sessionLaps = [...this.laps];
-    const lastLapTotal = this.laps.length > 0 ? this.laps[0].total : 0;
-    if (this.elapsedTime > lastLapTotal) {
-      const diff = this.elapsedTime - lastLapTotal;
+    let total = this.laps.length > 0 ? this.laps[0].total : 0;
+    if (this.elapsedTime > total) {
+      const diff = this.elapsedTime - total;
       if (diff > 10)
         sessionLaps.unshift({
           total: this.elapsedTime,

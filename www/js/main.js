@@ -19,6 +19,10 @@ import { modalManager } from "./modal.js?v=VERSION";
 import { store } from "./store.js?v=VERSION";
 import { initTouchRanges } from "./touch-range.js?v=VERSION";
 
+/**
+ * Динамически вставляет SVG-кольца прогресса в контейнеры с атрибутом [data-ring].
+ * Это позволяет избежать дублирования SVG-кода в HTML.
+ */
 function injectSVG() {
   const svgs = {
     sw: "sw-progressRing",
@@ -31,14 +35,18 @@ function injectSVG() {
     if (!ringId || container.querySelector("svg")) return;
     const pointerEventsClass = type === "tm" ? "pointer-events-none" : "";
     const svgHTML = `
-      <svg focusable="false" class="w-full h-full transform ${pointerEventsClass}" viewBox="0 0 100 100" aria-hidden="true">
-        <circle class="app-text opacity-10 transition-all duration-300 group-focus-visible:primary-text group-focus-visible:opacity-30" stroke-width="var(--ring-stroke-width, 4)" stroke="currentColor" fill="transparent" r="45" cx="50" cy="50" />
-        <circle id="${ringId}" class="progress-ring__circle primary-stroke" stroke-width="var(--ring-stroke-width, 4)" stroke-linecap="round" fill="transparent" r="45" cx="50" cy="50" />
-      </svg>`;
+  <svg focusable="false" class="w-full h-full transform ${pointerEventsClass}" viewBox="0 0 100 100" aria-hidden="true">
+    <circle class="app-text opacity-10 transition-all duration-300 group-focus-visible:primary-text group-focus-visible:opacity-30" stroke-width="var(--ring-stroke-width, 4)" stroke="currentColor" fill="transparent" r="45" cx="50" cy="50" />
+    <circle id="${ringId}" class="progress-ring__circle primary-stroke" stroke-width="var(--ring-stroke-width, 4)" stroke-linecap="round" fill="transparent" r="45" cx="50" cy="50" />
+  </svg>`;
     container.insertAdjacentHTML("afterbegin", svgHTML);
   });
 }
 
+/**
+ * Конфигурация для всех модальных окон в приложении.
+ * Используется модулем ModalManager для их инициализации.
+ */
 const modalConfig = [
   {
     id: "sw-sessions-modal",
@@ -65,25 +73,46 @@ const modalConfig = [
 
 function confirmReset() {
   modalManager.closeCurrent();
+
+  // Вызываем сброс в каждом ответственном модуле.
+  // themeManager теперь сам вызовет reset у своих дочерних модулей.
   themeManager.resetSettings();
   sm.resetSettings();
   langManager.resetSettings();
+
   setTimeout(() => showToast(t("settings_reset_success")), 450);
 }
 
+/**
+ * Основная точка входа в приложение.
+ * Запускается после полной загрузки DOM.
+ */
 document.addEventListener("DOMContentLoaded", () => {
   injectSVG();
+
+  // 1. Сначала языковой менеджер, чтобы все тексты были на месте
   langManager.init();
+
+  // 2. Улучшаем все ползунки ДО того, как другие модули попытаются задать им значения.
   initTouchRanges();
+
+  // 3. Теперь инициализируем модули, которые управляют настройками и внешним видом.
   themeManager.init();
   sm.init();
+
+  // 4. Инициализируем основные модули приложения
   sw.init();
   tm.init();
   tb.init();
   navigation.init();
+
+  // 5. Менеджер модальных окон
   modalManager.init(modalConfig);
 
+  // Убираем класс 'preload' для включения анимаций после загрузки.
   setTimeout(() => document.body.classList.remove("preload"), 50);
+
+  // --- Назначение обработчиков событий для элементов UI ---
 
   $("sw-openResultsBtn")?.addEventListener("click", () =>
     modalManager.open("sw-sessions-modal"),
@@ -116,6 +145,8 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
+  // FIX #3: e.target не всегда HTMLElement — защищаемся явной проверкой типа.
+  // document, window, Text node не имеют метода .closest() → был бы crash.
   document.addEventListener("keydown", (e) => {
     const target = e.target instanceof HTMLElement ? e.target : null;
 
@@ -142,6 +173,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  // Двойное касание на экране секундомера для записи круга
   let lastBgTap = 0;
   $("view-stopwatch")?.addEventListener(
     "touchstart",
@@ -157,10 +189,13 @@ document.addEventListener("DOMContentLoaded", () => {
     { passive: false },
   );
 
+  // --- Логика свайп-навигации между вкладками ---
   const appContainer = $("app");
   const swipeAreaLeft = $("swipe-area-left");
   const swipeAreaRight = $("swipe-area-right");
 
+  // FIX #1 + FIX #2: критичный early return — если любой из трёх элементов
+  // отсутствует в DOM, вся блок свайп-логики упала бы с Cannot read properties of null.
   if (!appContainer || !swipeAreaLeft || !swipeAreaRight) {
     console.warn(
       "[main] Swipe elements not found in DOM (#app, #swipe-area-left, #swipe-area-right). Swipe navigation disabled.",
@@ -179,6 +214,8 @@ document.addEventListener("DOMContentLoaded", () => {
       if (modalManager.hasActiveModal()) return;
       const touch = e.touches[0];
       const x = touch.clientX;
+      // FIX #2: getBoundingClientRect() безопасен — оба элемента гарантированно
+      // существуют (проверены выше через early return).
       const leftRect = swipeAreaLeft.getBoundingClientRect();
       const rightRect = swipeAreaRight.getBoundingClientRect();
       if (
@@ -228,6 +265,7 @@ document.addEventListener("DOMContentLoaded", () => {
     { passive: true },
   );
 
+  // --- Системная интеграция с Capacitor для нативных платформ (Android/iOS) ---
   if (window.Capacitor && window.Capacitor.isNativePlatform()) {
     const {
       StatusBar,
@@ -254,6 +292,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (App && FgService) {
       let fgInterval = null;
+
+      // FIX: дедупликация вызовов FgService.start() — сохраняем последний body
+      // и пропускаем вызов, если текст уведомления не изменился.
+      // Каждый тик FgService.start() — нативный IPC-вызов, это дорого.
       let lastNotificationBody = "";
 
       async function updateForegroundNotification(activeTimer) {
@@ -263,7 +305,7 @@ document.addEventListener("DOMContentLoaded", () => {
         switch (activeTimer) {
           case "stopwatch":
             title = "⏱ Stopwatch";
-            body = formatTime(sw.elapsedTime, { showMs: false, forceHours: sw.elapsedTime >= 3600000 });
+            body = sw.formatTime(sw.elapsedTime, false);
             break;
           case "timer":
             title = "⏳ Timer";
@@ -279,8 +321,8 @@ document.addEventListener("DOMContentLoaded", () => {
               tb.status === "WORK"
                 ? t("work")
                 : tb.status === "REST"
-                ? t("rest")
-                : t("get_ready");
+                  ? t("rest")
+                  : t("get_ready");
             body = `${t("round")} ${tb.currentRound}/${tb.rounds} • ${phaseStr}: ${sTotal}s`;
             break;
           default:
@@ -293,6 +335,7 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
+        // Пропускаем нативный вызов, если контент не изменился
         if (body === lastNotificationBody) return;
         lastNotificationBody = body;
 
