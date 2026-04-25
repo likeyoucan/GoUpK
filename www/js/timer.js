@@ -36,6 +36,11 @@ function formatAdjustmentText(seconds) {
   }
 }
 
+function activateTimer(name) {
+  document.dispatchEvent(new CustomEvent("timerStarted", { detail: name }));
+  store.setActiveTimer(name);
+}
+
 export const tm = {
   totalDuration: 0,
   targetTime: 0,
@@ -123,7 +128,7 @@ export const tm = {
     this.setupScrollInteraction(this.els.s, 59, true);
 
     bgWorker.addEventListener("message", (e) => {
-      if (e.data.type === "tick") {
+      if (e.data?.type === "tick") {
         const remaining = e.data.time;
         timeRemainingMs = remaining;
 
@@ -245,19 +250,17 @@ export const tm = {
     sm.unlock();
     if (this.isRunning) {
       store.clearActiveTimer();
-
       this.isRunning = false;
       this.isPaused = true;
       this.remainingAtPause = timeRemainingMs;
       bgWorker.postMessage({ command: "stop" });
-      cancelAnimationFrame(this.rAF);
+      if (this.rAF) cancelAnimationFrame(this.rAF);
+      this.rAF = null;
       releaseWakeLock();
       updateTitle("");
       this.updateUIState();
     } else {
-      document.dispatchEvent(
-        new CustomEvent("timerStarted", { detail: "timer" }),
-      );
+      activateTimer("timer");
       let duration;
       if (!this.isPaused) {
         const h = parseInt(this.els.h?.value, 10) || 0;
@@ -279,8 +282,6 @@ export const tm = {
         return;
       }
 
-      store.setActiveTimer("timer");
-
       this.isRunning = true;
       this.isPaused = false;
       this.targetTime = performance.now() + duration;
@@ -300,7 +301,8 @@ export const tm = {
     this.isRunning = false;
     this.isPaused = false;
     bgWorker.postMessage({ command: "reset" });
-    cancelAnimationFrame(this.rAF);
+    if (this.rAF) cancelAnimationFrame(this.rAF);
+    this.rAF = null;
     releaseWakeLock();
     updateTitle("");
     if (clearInputs) {
@@ -361,10 +363,12 @@ export const tm = {
 
   tick() {
     if (!this.isRunning) {
-      cancelAnimationFrame(this.rAF);
+      if (this.rAF) cancelAnimationFrame(this.rAF);
+      this.rAF = null;
       return;
     }
     this.updateDisplay(timeRemainingMs);
+    if (this.rAF) cancelAnimationFrame(this.rAF);
     this.rAF = requestAnimationFrame(() => this.tick());
   },
 
@@ -379,7 +383,6 @@ export const tm = {
     if (this.els.ring && this.totalDuration > 0) {
       const elapsed = this.totalDuration - rem;
       const progress = Math.max(0, Math.min(1, elapsed / this.totalDuration));
-
       this.els.ring.style.strokeDashoffset = this.ringLength * (1 - progress);
     }
   },

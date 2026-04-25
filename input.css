@@ -1367,7 +1367,7 @@ body.hide-nav-labels .nav-btn {
 }
 :root.glass-effect .custom-select-options {
   background-color: color-mix(in srgb, var(--surface-color) 60%, transparent);
-  backdrop-filter: blur(30px) saturate(180%);
+  backdrop-filter: blur(7px) saturate(180%);
   border: 1px solid color-mix(in srgb, var(--border-color) 50%, transparent);
 }
 /* =========================================

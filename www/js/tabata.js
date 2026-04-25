@@ -20,6 +20,20 @@ import { t } from "./i18n.js?v=VERSION";
 import { modalManager } from "./modal.js?v=VERSION";
 import { store } from "./store.js?v=VERSION";
 
+function activateTimer(name) {
+  document.dispatchEvent(new CustomEvent("timerStarted", { detail: name }));
+  store.setActiveTimer(name);
+}
+
+function startTimerContext() {
+  requestWakeLock();
+}
+
+function stopTimerContext() {
+  releaseWakeLock();
+  updateTitle("");
+}
+
 export const tb = {
   workouts: [],
   selectedId: null,
@@ -118,15 +132,17 @@ export const tb = {
       exists = this.workouts.find((w) => w.id === Number(lastSelectedId));
     this.selectWorkout(exists ? Number(lastSelectedId) : this.workouts[0]?.id);
     this.renderList();
+
     bgWorker.addEventListener("message", (e) => {
       if (
-        e.data === "tick" &&
+        e.data?.type === "heartbeat" &&
         this.status !== "STOPPED" &&
         !this.paused &&
         document.hidden
       )
         this.tick(true);
     });
+
     document.addEventListener("visibilitychange", () => {
       if (
         document.visibilityState === "visible" &&
@@ -154,11 +170,7 @@ export const tb = {
         this.els.editRounds.value = w.rounds;
       }
     } else {
-      this.els.editName.value = getUniqueName(
-        t("tabata"),
-        this.workouts,
-        "name",
-      );
+      this.els.editName.value = getUniqueName(t("tabata"), this.workouts, "name");
       this.els.editWork.value = 20;
       this.els.editRest.value = 10;
       this.els.editRounds.value = 8;
@@ -323,10 +335,7 @@ export const tb = {
   },
 
   start() {
-    document.dispatchEvent(
-      new CustomEvent("timerStarted", { detail: "tabata" }),
-    );
-    store.setActiveTimer("tabata");
+    activateTimer("tabata");
 
     const workout = this.workouts.find((w) => w.id === this.selectedId);
     if (workout && this.els.runningWorkoutName) {
@@ -345,35 +354,30 @@ export const tb = {
     updateText(this.els.totalRoundsDisplay, this.rounds);
     this.els.status.classList.remove("hidden");
     this.els.timer.classList.remove("is-go");
-    requestWakeLock();
+    startTimerContext();
     this.updatePhaseStyles();
-    bgWorker.postMessage("start");
+    bgWorker.postMessage({ command: "start" });
     this.tick();
   },
 
   pause() {
     store.clearActiveTimer();
-
     this.paused = true;
-    bgWorker.postMessage("stop");
-    cancelAnimationFrame(this.rAF);
+    bgWorker.postMessage({ command: "stop" });
+    if (this.rAF) cancelAnimationFrame(this.rAF);
+    this.rAF = null;
     this.remainingAtPause = this.phaseEndTime - performance.now();
     updateText(this.els.status, t("pause"));
-    releaseWakeLock();
-    updateTitle("");
+    stopTimerContext();
   },
 
   resume() {
-    document.dispatchEvent(
-      new CustomEvent("timerStarted", { detail: "tabata" }),
-    );
-    store.setActiveTimer("tabata");
-
+    activateTimer("tabata");
     this.paused = false;
     this.phaseEndTime = performance.now() + this.remainingAtPause;
     this.lastBeepSec = 0;
-    requestWakeLock();
-    bgWorker.postMessage("start");
+    startTimerContext();
+    bgWorker.postMessage({ command: "start" });
     this.tick();
     this.updatePhaseStyles();
   },
@@ -387,12 +391,12 @@ export const tb = {
       updateText(this.els.runningWorkoutName, "");
     }
 
-    bgWorker.postMessage("stop");
-    cancelAnimationFrame(this.rAF);
+    bgWorker.postMessage({ command: "stop" });
+    if (this.rAF) cancelAnimationFrame(this.rAF);
+    this.rAF = null;
     this.status = "STOPPED";
     this.paused = false;
-    releaseWakeLock();
-    updateTitle("");
+    stopTimerContext();
     this.els.listSection.classList.remove("hidden");
     this.els.runningControls.classList.remove("flex");
     this.els.runningControls.classList.add("hidden");
@@ -419,72 +423,83 @@ export const tb = {
       this.lastRender = now;
     }
     if (!isBackground) {
-      cancelAnimationFrame(this.rAF);
+      if (this.rAF) cancelAnimationFrame(this.rAF);
       this.rAF = requestAnimationFrame(() => this.tick());
     }
+  },
+
+  advancePhase() {
+    if (this.status === "READY") {
+      this.status = "WORK";
+      this.phaseDuration = this.work;
+      sm.play("work_start");
+    } else if (this.status === "WORK") {
+      if (this.currentRound >= this.rounds) {
+        return "complete";
+      }
+      this.status = "REST";
+      this.phaseDuration = this.rest;
+      sm.play("rest_start");
+    } else if (this.status === "REST") {
+      this.currentRound++;
+      this.status = "WORK";
+      this.phaseDuration = this.work;
+      sm.play("work_start");
+    }
+    return "ok";
+  },
+
+  applyMissedTime(missedTime) {
+    let remainingMissed = missedTime;
+    while (remainingMissed > 0 && this.status !== "STOPPED") {
+      const currentPhaseDuration =
+        this.status === "READY"
+          ? this.phaseDuration
+          : this.status === "WORK"
+          ? this.work
+          : this.rest;
+      const step = Math.min(remainingMissed, currentPhaseDuration);
+      remainingMissed -= step;
+      const leftInPhase = currentPhaseDuration - step;
+      if (leftInPhase <= 0) {
+        const result = this.advancePhase();
+        if (result === "complete") {
+          this.stop();
+          return false;
+        }
+        if (remainingMissed === 0) {
+          this.phaseDuration = this.phaseDuration + leftInPhase;
+        }
+      } else {
+        this.phaseDuration = leftInPhase;
+      }
+    }
+    return true;
   },
 
   nextPhase(missedTime = 0) {
     if (missedTime === 0) sm.vibrate([100, 50, 100], "strong");
     this.lastBeepSec = 0;
+
     if (missedTime > 0) {
-      let remainingMissed = missedTime;
-      while (remainingMissed > 0 && this.status !== "STOPPED") {
-        let currentPhaseDuration =
-          this.status === "READY"
-            ? this.phaseDuration
-            : this.status === "WORK"
-              ? this.work
-              : this.rest;
-        let step = Math.min(remainingMissed, currentPhaseDuration);
-        remainingMissed -= step;
-        currentPhaseDuration -= step;
-        if (currentPhaseDuration <= 0) {
-          if (this.status === "READY") {
-            this.status = "WORK";
-            this.phaseDuration = this.work + currentPhaseDuration;
-          } else if (this.status === "WORK") {
-            if (this.currentRound >= this.rounds) {
-              this.stop();
-              return;
-            }
-            this.status = "REST";
-            this.phaseDuration = this.rest + currentPhaseDuration;
-          } else if (this.status === "REST") {
-            this.currentRound++;
-            this.status = "WORK";
-            this.phaseDuration = this.work + currentPhaseDuration;
-          }
-        } else this.phaseDuration = currentPhaseDuration;
-      }
+      const shouldContinue = this.applyMissedTime(missedTime);
+      if (!shouldContinue) return;
       this.phaseEndTime = performance.now() + this.phaseDuration;
     } else {
-      if (this.status === "READY") {
-        this.status = "WORK";
-        this.phaseDuration = this.work;
-        sm.play("work_start");
-      } else if (this.status === "WORK") {
-        if (this.currentRound >= this.rounds) {
-          sm.vibrate([200, 100, 200, 100, 400]);
-          sm.play("complete");
-          announceToScreenReader(t("tabata_complete"));
-          requestAnimationFrame(() => {
-            showToast(t("tabata_complete"));
-            this.stop();
-          });
-          return;
-        }
-        this.status = "REST";
-        this.phaseDuration = this.rest;
-        sm.play("rest_start");
-      } else if (this.status === "REST") {
-        this.currentRound++;
-        this.status = "WORK";
-        this.phaseDuration = this.work;
-        sm.play("work_start");
+      const result = this.advancePhase();
+      if (result === "complete") {
+        sm.vibrate([200, 100, 200, 100, 400]);
+        sm.play("complete");
+        announceToScreenReader(t("tabata_complete"));
+        requestAnimationFrame(() => {
+          showToast(t("tabata_complete"));
+          this.stop();
+        });
+        return;
       }
       this.phaseEndTime = performance.now() + this.phaseDuration;
     }
+
     this.updatePhaseStyles();
     this.tick();
   },
@@ -498,12 +513,12 @@ export const tb = {
       "primary-vivid-text",
       "secondary-accent-text",
       "app-text-sec",
-      "primary-text", // <-- Добавлен недостающий класс
+      "primary-text",
     );
     this.els.ring.classList.remove(
       "primary-vivid-stroke",
       "secondary-accent-stroke",
-      "primary-stroke", // <-- Добавлен недостающий класс
+      "primary-stroke",
     );
 
     if (this.status === "WORK") {
