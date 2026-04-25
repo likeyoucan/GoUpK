@@ -71,6 +71,20 @@ function confirmReset() {
   setTimeout(() => showToast(t("settings_reset_success")), 450);
 }
 
+function isInteractiveElement(target) {
+  if (!(target instanceof HTMLElement)) return false;
+  if (target.closest('input, textarea, select, button, [contenteditable="true"]')) {
+    return true;
+  }
+  if (
+    target.closest('[role="button"], [role="option"], [role="listbox"], [role="combobox"], [role="slider"], [role="spinbutton"], [role="switch"]') ||
+    target.closest('[tabindex="0"][data-interactive], .custom-select-trigger, .custom-select-option')
+  ) {
+    return true;
+  }
+  return false;
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   injectSVG();
   langManager.init();
@@ -119,12 +133,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.addEventListener("keydown", (e) => {
     const target = e.target instanceof HTMLElement ? e.target : null;
 
-    if (
-      modalManager.hasActiveModal() ||
-      target?.closest(
-        'input, textarea, select, button, [contenteditable="true"]',
-      )
-    ) {
+    if (modalManager.hasActiveModal() || isInteractiveElement(target)) {
       return;
     }
 
@@ -331,3 +340,4 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 });
+
