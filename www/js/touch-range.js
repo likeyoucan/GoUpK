@@ -90,6 +90,9 @@ export function enhanceNativeRange(input) {
   let lastVibroTime = 0;
   const VIBRO_THROTTLE_MS = 75;
 
+  // FIX: подавление дублирующего click после mouseup / touch drag
+  let suppressTrackClickUntil = 0;
+
   const wrap = document.createElement("div");
   wrap.className = "tr-wrap";
   wrap.setAttribute("role", "slider");
@@ -135,12 +138,15 @@ export function enhanceNativeRange(input) {
     return Math.max(min, Math.min(max, parseFloat(stepped.toFixed(10))));
   };
 
+  // FIX 1: applyValue возвращает true только если значение реально изменилось
   const applyValue = (val, eventType = "input") => {
     const clamped = Math.max(min, Math.min(max, val));
     const snapped = Math.round((clamped - min) / step) * step + min;
     const final = parseFloat(Math.max(min, Math.min(max, snapped)).toFixed(10));
+    const current = parseFloat(input.value);
 
-    if (final === parseFloat(input.value) && eventType === "input") return;
+    // Ничего не меняем и не шлём события, если значение то же самое
+    if (Number.isFinite(current) && final === current) return false;
 
     value = final;
 
@@ -156,6 +162,7 @@ export function enhanceNativeRange(input) {
 
     updateVisual(final);
     input.dispatchEvent(new Event(eventType, { bubbles: true }));
+    return true;
   };
 
   let touchState = {
@@ -211,13 +218,15 @@ export function enhanceNativeRange(input) {
     if (!touchState.isHoriz) return;
     e.preventDefault();
 
-    const now = performance.now();
-    if (now - lastVibroTime > VIBRO_THROTTLE_MS) {
-      sm.vibrate(10, "tactile");
-      lastVibroTime = now;
+    // FIX 1: вибрация только при фактическом изменении значения
+    const changed = applyValue(valueFromX(touch.clientX), "input");
+    if (changed) {
+      const now = performance.now();
+      if (now - lastVibroTime > VIBRO_THROTTLE_MS) {
+        sm.vibrate(10, "tactile");
+        lastVibroTime = now;
+      }
     }
-
-    applyValue(valueFromX(touch.clientX), "input");
   };
 
   const onTouchEnd = (e) => {
@@ -232,6 +241,8 @@ export function enhanceNativeRange(input) {
     if (touchState.isHoriz) {
       if (touch) applyValue(valueFromX(touch.clientX), "change");
       wrap.classList.remove("tr-dragging");
+      // FIX 2: после touch-drag глушим браузерный click
+      suppressTrackClickUntil = performance.now() + 250;
     }
     touchState.active = false;
     touchState.decided = false;
@@ -243,18 +254,21 @@ export function enhanceNativeRange(input) {
   wrap.addEventListener("touchend", onTouchEnd, { passive: true });
   wrap.addEventListener("touchcancel", onTouchEnd, { passive: true });
 
+  // FIX 2: флаг активного перетаскивания мышью
   let mouseDown = false;
 
   const onMouseMove = (e) => {
     if (!mouseDown) return;
 
-    const now = performance.now();
-    if (now - lastVibroTime > VIBRO_THROTTLE_MS) {
-      sm.vibrate(10, "tactile");
-      lastVibroTime = now;
+    // FIX 1: вибрация только при фактическом изменении значения
+    const changed = applyValue(valueFromX(e.clientX), "input");
+    if (changed) {
+      const now = performance.now();
+      if (now - lastVibroTime > VIBRO_THROTTLE_MS) {
+        sm.vibrate(10, "tactile");
+        lastVibroTime = now;
+      }
     }
-
-    applyValue(valueFromX(e.clientX), "input");
   };
 
   const onMouseUp = (e) => {
@@ -262,6 +276,8 @@ export function enhanceNativeRange(input) {
     mouseDown = false;
     wrap.classList.remove("tr-dragging");
     applyValue(valueFromX(e.clientX), "change");
+    // FIX 2: после mouseup браузер сгенерит click — глушим его, чтобы не было второго change
+    suppressTrackClickUntil = performance.now() + 250;
     document.removeEventListener("mousemove", onMouseMove);
     document.removeEventListener("mouseup", onMouseUp);
   };
@@ -276,7 +292,9 @@ export function enhanceNativeRange(input) {
     document.addEventListener("mouseup", onMouseUp);
   });
 
+  // FIX 2: track.click пропускаем, если он пришёл сразу после mouseup
   track.addEventListener("click", (e) => {
+    if (performance.now() < suppressTrackClickUntil) return;
     applyValue(valueFromX(e.clientX), "change");
   });
 
