@@ -1,6 +1,8 @@
 // Файл: www/js/touch-range.js
 
-import { sm } from "./sound.js?v=VERSION";
+// Intentionally no sm import here:
+// touch-range should only handle value updates and events,
+// while sound/vibration stays in feature modules (e.g. sound.js).
 
 const STYLE_ID = "__touch_range_styles__";
 if (!document.getElementById(STYLE_ID)) {
@@ -88,8 +90,6 @@ export function enhanceNativeRange(input) {
   let value = parseFloat(input.value);
   if (!Number.isFinite(value)) value = min;
 
-  const VIBRO_THROTTLE_MS = 75;
-  let lastVibroTime = 0;
   let suppressTrackClickUntil = 0;
 
   const wrap = document.createElement("div");
@@ -142,6 +142,7 @@ export function enhanceNativeRange(input) {
     return Math.max(min, Math.min(max, parseFloat(stepped.toFixed(10))));
   };
 
+  // Returns true only if value actually changed
   const applyValue = (val, eventType = "input") => {
     const clamped = Math.max(min, Math.min(max, val));
     const snapped = Math.round((clamped - min) / step) * step + min;
@@ -177,6 +178,7 @@ export function enhanceNativeRange(input) {
     startX: 0,
     startY: 0,
   };
+
   const DECISION_THRESHOLD = 6;
 
   const onTouchStart = (e) => {
@@ -223,51 +225,23 @@ export function enhanceNativeRange(input) {
     }
 
     if (!touchState.isHoriz) return;
-    if (e.cancelable) e.preventDefault();
 
+    // No preventDefault here (avoids intervention warning)
     const changed = applyValue(valueFromX(touch.clientX), "input");
     if (changed) {
       touchState.moved = true;
-      const now = performance.now();
-      if (now - lastVibroTime > VIBRO_THROTTLE_MS) {
-        sm.vibrate(10, "tactile");
-        lastVibroTime = now;
-      }
     }
   };
 
-  const onTouchEnd = (e) => {
+  const onTouchEnd = () => {
     if (!touchState.active) return;
 
-    let touch = null;
-    for (let i = 0; i < e.changedTouches.length; i++) {
-      if (e.changedTouches[i].identifier === touchState.id) {
-        touch = e.changedTouches[i];
-        break;
-      }
-    }
-
-    if (touchState.isHoriz) {
-      let changedOnEnd = false;
-      if (touch) {
-        changedOnEnd = applyValue(valueFromX(touch.clientX), "input");
-        if (changedOnEnd) {
-          const now = performance.now();
-          if (now - lastVibroTime > VIBRO_THROTTLE_MS) {
-            sm.vibrate(10, "tactile");
-            lastVibroTime = now;
-          }
-        }
-      }
-
-      if (touchState.moved || changedOnEnd) {
-        emitChange();
-      }
-
-      wrap.classList.remove("tr-dragging");
+    if (touchState.isHoriz && touchState.moved) {
+      emitChange();
       suppressTrackClickUntil = performance.now() + 250;
     }
 
+    wrap.classList.remove("tr-dragging");
     touchState.active = false;
     touchState.decided = false;
     touchState.isHoriz = false;
@@ -275,7 +249,7 @@ export function enhanceNativeRange(input) {
   };
 
   wrap.addEventListener("touchstart", onTouchStart, { passive: true });
-  wrap.addEventListener("touchmove", onTouchMove, { passive: false });
+  wrap.addEventListener("touchmove", onTouchMove, { passive: true });
   wrap.addEventListener("touchend", onTouchEnd, { passive: true });
   wrap.addEventListener("touchcancel", onTouchEnd, { passive: true });
 
@@ -299,29 +273,15 @@ export function enhanceNativeRange(input) {
     }
 
     const changed = applyValue(valueFromX(e.clientX), "input");
-    if (changed) {
-      const now = performance.now();
-      if (now - lastVibroTime > VIBRO_THROTTLE_MS) {
-        sm.vibrate(10, "tactile");
-        lastVibroTime = now;
-      }
-    }
+    if (changed) mouseMoved = true;
   };
 
-  const onMouseUp = (e) => {
+  const onMouseUp = () => {
     if (!mouseDown) return;
 
     mouseDown = false;
 
     if (mouseMoved) {
-      const changedOnEnd = applyValue(valueFromX(e.clientX), "input");
-      if (changedOnEnd) {
-        const now = performance.now();
-        if (now - lastVibroTime > VIBRO_THROTTLE_MS) {
-          sm.vibrate(10, "tactile");
-          lastVibroTime = now;
-        }
-      }
       emitChange();
       suppressTrackClickUntil = performance.now() + 250;
     }
@@ -339,26 +299,19 @@ export function enhanceNativeRange(input) {
     mouseStartX = e.clientX;
     mouseStartY = e.clientY;
 
-    // No applyValue here: prevents first phantom sound on press
+    // No value update on down (prevents phantom first input/sound)
     e.preventDefault();
 
     document.addEventListener("mousemove", onMouseMove);
     document.addEventListener("mouseup", onMouseUp);
   });
 
-  // Track click: exactly one input + one change if value changed
+  // Track click: exactly one input + one change if changed
   track.addEventListener("click", (e) => {
     if (performance.now() < suppressTrackClickUntil) return;
 
     const changed = applyValue(valueFromX(e.clientX), "input");
-    if (changed) {
-      const now = performance.now();
-      if (now - lastVibroTime > VIBRO_THROTTLE_MS) {
-        sm.vibrate(10, "tactile");
-        lastVibroTime = now;
-      }
-      emitChange();
-    }
+    if (changed) emitChange();
   });
 
   // ---------- KEYBOARD ----------

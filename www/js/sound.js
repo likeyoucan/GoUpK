@@ -17,9 +17,10 @@ export const sm = {
   _onVolumeInput: null,
   _onVolumeChange: null,
 
+  // Anti-duplicate guard for slider sound
   lastVolumeSoundAt: 0,
   lastVolumeSoundValue: null,
-  MIN_SOUND_INTERVAL: 120,
+  MIN_SOUND_INTERVAL: 120, // ms
 
   THEME_VOL_MULTIPLIERS: {
     classic: 1.0,
@@ -38,8 +39,7 @@ export const sm = {
   },
 
   init() {
-    console.count("sm.init");
-    // Global guard against double init from multiple entrypoints
+    // Global guard against accidental double init from multiple entrypoints
     if (window.__STOPWATCH_SM_INITED__) return;
     window.__STOPWATCH_SM_INITED__ = true;
 
@@ -52,6 +52,7 @@ export const sm = {
     $("toggle-sound")?.addEventListener("change", (e) => {
       this.soundEnabled = e.target.checked;
       safeSetLS("app_sound", this.soundEnabled);
+
       if (this.soundEnabled) this.initAudio();
       this.updateVolumeUI();
     });
@@ -59,56 +60,58 @@ export const sm = {
     $("toggle-vibro")?.addEventListener("change", (e) => {
       this.vibroEnabled = e.target.checked;
       safeSetLS("app_vibro", this.vibroEnabled);
+
       document.dispatchEvent(
         new CustomEvent("vibroToggled", {
           detail: { enabled: this.vibroEnabled },
         }),
       );
+
       if (this.vibroEnabled) this.vibrate(50, "medium");
     });
 
     const volumeSlider = $("volumeSlider");
     if (volumeSlider) {
-      // Defensive re-bind (safe if init gets called again accidentally)
-      if (this._onVolumeInput) {
-        volumeSlider.removeEventListener("input", this._onVolumeInput);
+      // Per-element guard: never bind twice even if code re-runs
+      if (volumeSlider.dataset.boundSound !== "1") {
+        volumeSlider.dataset.boundSound = "1";
+
+        this._onVolumeInput = (e) => {
+          const newVolume = parseFloat(e.target.value);
+          const changed = newVolume !== this.volume;
+
+          this.volume = newVolume;
+
+          const display = $("volumeDisplay");
+          if (display) display.textContent = Math.round(this.volume * 100) + "%";
+
+          if (!changed) return;
+
+          // Optional haptic feedback
+          this.vibrate(10, "tactile");
+
+          // Hard de-dup for back-to-back identical events
+          const now = performance.now();
+          const isTooSoon = now - this.lastVolumeSoundAt < this.MIN_SOUND_INTERVAL;
+          const isSameValue = this.lastVolumeSoundValue === newVolume;
+
+          if (!isTooSoon || !isSameValue) {
+            this.play("click");
+            this.lastVolumeSoundAt = now;
+            this.lastVolumeSoundValue = newVolume;
+          }
+        };
+
+        this._onVolumeChange = (e) => {
+          const finalVolume = parseFloat(e.target.value);
+          this.volume = finalVolume;
+          safeSetLS("app_volume", finalVolume);
+          // No click on change (prevents duplicate sound)
+        };
+
+        volumeSlider.addEventListener("input", this._onVolumeInput);
+        volumeSlider.addEventListener("change", this._onVolumeChange);
       }
-      if (this._onVolumeChange) {
-        volumeSlider.removeEventListener("change", this._onVolumeChange);
-      }
-
-      this._onVolumeInput = (e) => {
-        const newVolume = parseFloat(e.target.value);
-        const changed = newVolume !== this.volume;
-
-        this.volume = newVolume;
-        const display = $("volumeDisplay");
-        if (display) display.textContent = Math.round(this.volume * 100) + "%";
-
-        if (!changed) return;
-
-        this.vibrate(10, "tactile");
-
-        const now = performance.now();
-        const isTooSoon = now - this.lastVolumeSoundAt < this.MIN_SOUND_INTERVAL;
-        const isSameValue = this.lastVolumeSoundValue === newVolume;
-
-        if (!isTooSoon || !isSameValue) {
-          this.play("click");
-          this.lastVolumeSoundAt = now;
-          this.lastVolumeSoundValue = newVolume;
-        }
-      };
-
-      this._onVolumeChange = (e) => {
-        const finalVolume = parseFloat(e.target.value);
-        this.volume = finalVolume;
-        safeSetLS("app_volume", finalVolume);
-        // No click here to avoid duplicates.
-      };
-
-      volumeSlider.addEventListener("input", this._onVolumeInput);
-      volumeSlider.addEventListener("change", this._onVolumeChange);
     }
 
     const soundThemeOptions = [
@@ -131,10 +134,12 @@ export const sm = {
     );
 
     const unlockHandler = () => this.unlock();
+
     document.addEventListener("click", unlockHandler, {
       once: true,
       capture: true,
     });
+
     document.addEventListener("touchstart", unlockHandler, {
       once: true,
       passive: true,
@@ -221,6 +226,7 @@ export const sm = {
 
   initAudio() {
     if (this.audioCtx || !this.soundEnabled) return;
+
     try {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       if (AudioContext) this.audioCtx = new AudioContext();
@@ -231,6 +237,7 @@ export const sm = {
 
   vibrate(basePattern, intensityKey = "medium") {
     if (!this.vibroEnabled || !navigator.vibrate) return;
+
     try {
       const intensityMap = {
         light: 0.7,
@@ -328,6 +335,7 @@ export const sm = {
 
   play(type, options = {}) {
     if (!this.soundEnabled || !this.audioCtx || this.volume === 0) return;
+
     this.unlock();
 
     const activeTheme = options.theme || this.theme;
@@ -352,9 +360,9 @@ export const sm = {
           this.playNote(2500, "square", offset + 0.1, 0.06, 0.5);
           this.playNote(2500, "square", offset + 0.2, 0.06, 0.5);
         }
-      } else if (type === "minute_beep") this.playNote(1500, "sine", 0, 0.1, 0.3);
+      } else if (type === "minute_beep")
+        this.playNote(1500, "sine", 0, 0.1, 0.3);
     }
-
     // Sport
     else if (activeTheme === "sport") {
       if (type === "click")
@@ -385,7 +393,8 @@ export const sm = {
             0.8 * vol,
             50,
           );
-          if (isFinal) this.playNote(300, "square", time, duration, 0.4 * vol, 20);
+          if (isFinal)
+            this.playNote(300, "square", time, duration, 0.4 * vol, 20);
         };
         playSwoosh(0.0, 0.25);
         playSwoosh(0.35, 0.25);
@@ -393,7 +402,6 @@ export const sm = {
       } else if (type === "minute_beep")
         this.playNote(2000, "triangle", 0, 0.08, 0.5 * vol);
     }
-
     // Vibe
     else if (activeTheme === "vibe") {
       if (type === "click") this.playNote(300, "sine", 0, 0.1, 0.5 * vol);
@@ -414,7 +422,6 @@ export const sm = {
       } else if (type === "minute_beep")
         this.playNote(1046.5, "sine", 0, 0.2, 0.6 * vol);
     }
-
     // Work
     else if (activeTheme === "work") {
       if (type === "click") this.playNote(500, "sine", 0, 0.03, 0.3 * vol);
@@ -432,7 +439,6 @@ export const sm = {
       } else if (type === "minute_beep")
         this.playNote(880, "sine", 0, 0.07, 0.4 * vol);
     }
-
     // Life
     else if (activeTheme === "life") {
       if (type === "click") this.playNote(440, "triangle", 0, 0.08, 0.35 * vol);
