@@ -1341,5 +1341,5 @@ input[type="range"]:focus + .thumb-label-container > .thumb-label {
   box-shadow: none !important;
 }
 .is-reset:hover {
-  filter: brightness(94%);
+  filter: brightness(95%);
 }
