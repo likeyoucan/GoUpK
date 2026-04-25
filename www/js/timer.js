@@ -15,7 +15,6 @@ import {
 import { sm } from "./sound.js?v=VERSION";
 import { t } from "./i18n.js?v=VERSION";
 import { store } from "./store.js?v=VERSION";
-import { uiSettingsManager } from "./ui-settings.js?v=VERSION";
 
 let timeRemainingMs = 0;
 
@@ -29,11 +28,8 @@ function getAdjustmentAmount(remainingSeconds) {
 }
 
 function formatAdjustmentText(seconds) {
-  if (seconds < 60) {
-    return `${seconds}s`;
-  } else {
-    return `${seconds / 60}m`;
-  }
+  if (seconds < 60) return `${seconds}s`;
+  return `${seconds / 60}m`;
 }
 
 function activateTimer(name) {
@@ -47,8 +43,6 @@ export const tm = {
   remainingAtPause: 0,
   isRunning: false,
   isPaused: false,
-  rAF: null,
-  lastRender: 0,
   els: {},
   ringLength: 282.74,
   currentAdjustmentSec: 0,
@@ -111,8 +105,9 @@ export const tm = {
 
     if (this.els.h) {
       this.els.h.addEventListener("focus", () => {
-        if (this.els.h.value === "00" || this.els.h.value === "0")
+        if (this.els.h.value === "00" || this.els.h.value === "0") {
           this.els.h.value = "";
+        }
       });
       this.els.h.addEventListener("input", () => {
         this.els.h.value = this.els.h.value.replace(/\D/g, "").slice(0, 2);
@@ -174,6 +169,7 @@ export const tm = {
     if (!input) return;
     let startY = 0;
     const threshold = 15;
+
     const updateVal = (delta) => {
       let val = parseInt(input.value || 0, 10);
       val += delta;
@@ -187,6 +183,7 @@ export const tm = {
       sm.play("click");
       sm.vibrate(10, "tactile");
     };
+
     input.addEventListener(
       "wheel",
       (e) => {
@@ -195,6 +192,7 @@ export const tm = {
       },
       { passive: false },
     );
+
     input.addEventListener(
       "touchstart",
       (e) => {
@@ -202,6 +200,7 @@ export const tm = {
       },
       { passive: true },
     );
+
     input.addEventListener(
       "touchmove",
       (e) => {
@@ -216,7 +215,9 @@ export const tm = {
       },
       { passive: false },
     );
+
     let isDragging = false;
+
     const onMouseMove = (e) => {
       if (!isDragging) return;
       const currentY = e.clientY;
@@ -226,6 +227,7 @@ export const tm = {
         startY = currentY;
       }
     };
+
     const onMouseUp = () => {
       if (!isDragging) return;
       isDragging = false;
@@ -234,6 +236,7 @@ export const tm = {
       document.removeEventListener("mouseleave", onMouseUp);
       window.removeEventListener("blur", onMouseUp);
     };
+
     input.addEventListener("mousedown", (e) => {
       isDragging = true;
       startY = e.clientY;
@@ -248,49 +251,51 @@ export const tm = {
     sm.vibrate(40, "light");
     sm.play("click");
     sm.unlock();
+
     if (this.isRunning) {
       store.clearActiveTimer();
       this.isRunning = false;
       this.isPaused = true;
       this.remainingAtPause = timeRemainingMs;
       bgWorker.postMessage({ command: "stop" });
-      if (this.rAF) cancelAnimationFrame(this.rAF);
-      this.rAF = null;
       releaseWakeLock();
       updateTitle("");
       this.updateUIState();
-    } else {
-      let duration;
-      if (!this.isPaused) {
-        const h = parseInt(this.els.h?.value, 10) || 0;
-        const m = parseInt(this.els.m?.value, 10) || 0;
-        const s = parseInt(this.els.s?.value, 10) || 0;
-        this.totalDuration = (h * 3600 + m * 60 + s) * 1000;
-        duration = this.totalDuration;
-        timeRemainingMs = this.totalDuration;
-        this.currentAdjustmentSec = 0;
-      } else {
-        duration = this.remainingAtPause;
-      }
-
-      if (duration <= 0) {
-        showToast(t("timer_zero"));
-        const elToShake = this.els.form || this.els.inputs;
-        elToShake.classList.add("animate-shake");
-        setTimeout(() => elToShake.classList.remove("animate-shake"), 300);
-        return;
-      }
-
-      activateTimer("timer");
-      this.isRunning = true;
-      this.isPaused = false;
-      this.targetTime = performance.now() + duration;
-      requestWakeLock();
-      this.updateUIState();
-      bgWorker.postMessage({ command: "start", time: duration });
-      this.updateAdjustButtons();
-      this.tick();
+      return;
     }
+
+    let duration;
+    if (!this.isPaused) {
+      const h = parseInt(this.els.h?.value, 10) || 0;
+      const m = parseInt(this.els.m?.value, 10) || 0;
+      const s = parseInt(this.els.s?.value, 10) || 0;
+      this.totalDuration = (h * 3600 + m * 60 + s) * 1000;
+      duration = this.totalDuration;
+      timeRemainingMs = this.totalDuration;
+      this.currentAdjustmentSec = 0;
+    } else {
+      duration = this.remainingAtPause;
+      timeRemainingMs = duration;
+    }
+
+    if (duration <= 0) {
+      showToast(t("timer_zero"));
+      const elToShake = this.els.form || this.els.inputs;
+      elToShake.classList.add("animate-shake");
+      setTimeout(() => elToShake.classList.remove("animate-shake"), 300);
+      return;
+    }
+
+    activateTimer("timer");
+    this.isRunning = true;
+    this.isPaused = false;
+    this.targetTime = performance.now() + duration;
+    requestWakeLock();
+    this.updateUIState();
+    this.updateDisplay(duration);
+    this.updateAdjustButtons();
+
+    bgWorker.postMessage({ command: "start", time: duration });
   },
 
   reset(clearInputs = true) {
@@ -300,21 +305,26 @@ export const tm = {
 
     this.isRunning = false;
     this.isPaused = false;
+    this.remainingAtPause = 0;
+    this.totalDuration = 0;
+    timeRemainingMs = 0;
+
     bgWorker.postMessage({ command: "reset" });
-    if (this.rAF) cancelAnimationFrame(this.rAF);
-    this.rAF = null;
     releaseWakeLock();
     updateTitle("");
+
     if (clearInputs) {
       if (this.els.h) this.els.h.value = "00";
       if (this.els.m) this.els.m.value = "00";
       if (this.els.s) this.els.s.value = "00";
     }
-    this.totalDuration = 0;
+
     this.updateUIState();
+
     if (this.els.ring) {
       this.els.ring.style.strokeDashoffset = this.ringLength;
     }
+
     updateText(this.els.display, "GO");
     this.els.display.classList.add("is-go");
   },
@@ -351,9 +361,7 @@ export const tm = {
     const remainingSeconds = Math.ceil(timeRemainingMs / 1000);
     const newAdjustmentSec = getAdjustmentAmount(remainingSeconds);
 
-    if (newAdjustmentSec === this.currentAdjustmentSec) {
-      return;
-    }
+    if (newAdjustmentSec === this.currentAdjustmentSec) return;
 
     this.currentAdjustmentSec = newAdjustmentSec;
     const text = formatAdjustmentText(this.currentAdjustmentSec);
@@ -361,25 +369,14 @@ export const tm = {
     updateText(this.els.minusValueSpan, `- ${text}`);
   },
 
-  tick() {
-    if (!this.isRunning) {
-      if (this.rAF) cancelAnimationFrame(this.rAF);
-      this.rAF = null;
-      return;
-    }
-    this.updateDisplay(timeRemainingMs);
-    if (this.rAF) cancelAnimationFrame(this.rAF);
-    this.rAF = requestAnimationFrame(() => this.tick());
-  },
-
   updateDisplay(rem) {
     const hInput = parseInt(this.els.h?.value, 10) || 0;
     const forceHours = hInput > 0 || this.totalDuration >= 3600000;
 
     const timeStr = formatTime(rem, { forceHours });
-
     updateText(this.els.display, timeStr);
     updateTitle(timeStr);
+
     if (this.els.ring && this.totalDuration > 0) {
       const elapsed = this.totalDuration - rem;
       const progress = Math.max(0, Math.min(1, elapsed / this.totalDuration));

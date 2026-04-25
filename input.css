@@ -141,9 +141,9 @@ body {
   inset: 0;
   width: 100vw;
   height: 100dvh;
-  min-height: 100vh; /* fallback */
+  min-height: 100vh;
   z-index: 200;
-  background-color: #fcfcfc;
+  background-color: #fcfcfc;  /* фон preload */
   display: flex;
   align-items: center;
   justify-content: center;
