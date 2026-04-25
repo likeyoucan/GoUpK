@@ -260,7 +260,6 @@ export const tm = {
       updateTitle("");
       this.updateUIState();
     } else {
-      activateTimer("timer");
       let duration;
       if (!this.isPaused) {
         const h = parseInt(this.els.h?.value, 10) || 0;
@@ -282,6 +281,7 @@ export const tm = {
         return;
       }
 
+      activateTimer("timer");
       this.isRunning = true;
       this.isPaused = false;
       this.targetTime = performance.now() + duration;
@@ -387,4 +387,3 @@ export const tm = {
     }
   },
 };
-
