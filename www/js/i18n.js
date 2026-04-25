@@ -259,7 +259,6 @@ export const langManager = {
       },
       initialLang, // Начальное значение
     );
-    // <-- КОНЕЦ НОВОЙ ЛОГИКИ -->
 
     if (initialLang === "auto") {
       const sys = navigator.language.startsWith("ru") ? "ru" : "en";
