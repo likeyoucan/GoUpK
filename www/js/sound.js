@@ -74,11 +74,18 @@ export const sm = {
         const finalVolume = parseFloat(e.target.value);
         this.volume = finalVolume;
         safeSetLS("app_volume", finalVolume);
+
+        // FIX: не дублируем клик, если input уже сыграл его совсем недавно
+        const hadRecentInputClick = !!this.volumeChangeTimeout;
         if (this.volumeChangeTimeout) {
           clearTimeout(this.volumeChangeTimeout);
           this.volumeChangeTimeout = null;
         }
-        this.play("click");
+
+        // Если клик уже сыгрался в input совсем недавно, не дублируем его на change
+        if (!hadRecentInputClick) {
+          this.play("click");
+        }
       });
     }
 
@@ -168,7 +175,7 @@ export const sm = {
     // Применяем сброшенные настройки к UI
     this.applySettings();
 
-    // ИЗМЕНЕНИЕ: Принудительно вызываем инициализацию аудио.
+    // Принудительно вызываем инициализацию аудио.
     // Это создаст AudioContext, если он был null.
     this.initAudio();
   },
