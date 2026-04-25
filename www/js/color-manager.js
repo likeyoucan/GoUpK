@@ -17,10 +17,8 @@ import { themeManager } from "./theme.js?v=VERSION";
 
 const MAX_CUSTOM_COLORS = 50;
 const LONG_PRESS_DURATION = 500;
+const MOVE_CANCEL_THRESHOLD = 8;
 
-// FIX: единый нормализатор для сравнения цветов.
-// Решает проблему: #fff ≠ #ffffff, регистр, короткие формы.
-// Используется везде, где раньше было простое .toLowerCase().
 const normalizeColor = (c) => (c ? normalizeHexColor(c).toLowerCase() : "");
 
 export const colorManager = {
@@ -117,6 +115,8 @@ export const colorManager = {
     });
 
     let touchMoved = false;
+    let touchStartX = 0;
+    let touchStartY = 0;
 
     container.addEventListener(
       "touchstart",
@@ -124,34 +124,57 @@ export const colorManager = {
         const swatch = e.target.closest(
           '.color-swatch-wrapper[data-custom="true"]',
         );
-        if (swatch) {
-          touchMoved = false;
-          this.longPressTimer = setTimeout(() => {
-            if (!touchMoved) {
-              e.preventDefault();
-              this._showActionButton(swatch, "delete");
-            }
-          }, LONG_PRESS_DURATION);
+        if (!swatch) return;
+
+        touchMoved = false;
+        const touch = e.touches?.[0];
+        touchStartX = touch?.clientX ?? 0;
+        touchStartY = touch?.clientY ?? 0;
+
+        if (this.longPressTimer) {
+          clearTimeout(this.longPressTimer);
+          this.longPressTimer = null;
+        }
+
+        this.longPressTimer = setTimeout(() => {
+          if (!touchMoved) {
+            this._showActionButton(swatch, "delete");
+          }
+          this.longPressTimer = null;
+        }, LONG_PRESS_DURATION);
+      },
+      { passive: true },
+    );
+
+    container.addEventListener(
+      "touchmove",
+      (e) => {
+        const touch = e.touches?.[0];
+        if (!touch) return;
+
+        const dx = Math.abs(touch.clientX - touchStartX);
+        const dy = Math.abs(touch.clientY - touchStartY);
+
+        if (dx > MOVE_CANCEL_THRESHOLD || dy > MOVE_CANCEL_THRESHOLD) {
+          touchMoved = true;
+          if (this.longPressTimer) {
+            clearTimeout(this.longPressTimer);
+            this.longPressTimer = null;
+          }
         }
       },
       { passive: true },
     );
 
-    container.addEventListener("touchmove", () => {
-      touchMoved = true;
-      if (this.longPressTimer) {
-        clearTimeout(this.longPressTimer);
-      }
-    });
-
     const endTouch = () => {
       if (this.longPressTimer) {
         clearTimeout(this.longPressTimer);
+        this.longPressTimer = null;
       }
     };
 
-    container.addEventListener("touchend", endTouch);
-    container.addEventListener("touchcancel", endTouch);
+    container.addEventListener("touchend", endTouch, { passive: true });
+    container.addEventListener("touchcancel", endTouch, { passive: true });
   },
 
   _handleClick(event, type) {
@@ -221,7 +244,8 @@ export const colorManager = {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.dataset.action = action;
-    btn.className = `color-action-btn w-9 h-9 flex items-center justify-center rounded-full shadow-lg focus:outline-none custom-focus active:scale-90 transition-all`;
+    btn.className =
+      "color-action-btn w-9 h-9 flex items-center justify-center rounded-full shadow-lg focus:outline-none custom-focus active:scale-90 transition-all";
 
     if (isAdd) {
       btn.setAttribute("aria-label", t("add_color"));
@@ -258,11 +282,8 @@ export const colorManager = {
     }
 
     const picker = $(isAccent ? "customColorInput" : "customBgInput");
-    // FIX: нормализуем новый цвет через normalizeColor перед всеми сравнениями
     const newColor = normalizeColor(picker.value);
 
-    // FIX: normalizeColor применяется и к списку для сравнения —
-    // теперь #fff и #ffffff, '#FFF' и '#ffffff' считаются одинаковыми.
     const baseBlocklist = (
       isAccent
         ? [...this.standardAccentColors, ...this.customAccentColors]
@@ -275,8 +296,6 @@ export const colorManager = {
       return;
     }
 
-    // FIX: читаем дефолтный цвет через CSS-переменную, а не хардкодим значения.
-    // Если дизайн-токены изменятся — этот код не сломается.
     const currentTheme = themeManager.getCurrentTheme();
     const cssVarName = isAccent
       ? `--default-accent-${currentTheme}`
@@ -289,7 +308,6 @@ export const colorManager = {
       return;
     }
 
-    // Все проверки пройдены:
     this._hideActionButton();
     sm.vibrate(40, "medium");
     customColors.push(newColor);
@@ -321,10 +339,6 @@ export const colorManager = {
       new CustomEvent("colorDeleted", { detail: { type, color } }),
     );
 
-    // FIX: потенциальная утечка слушателя — если CSS transition не сработает
-    // (элемент скрыт, display:none, reduced-motion и т.д.), transitionend
-    // никогда не наступит и DOM-узел останется в памяти навсегда.
-    // Решение: добавляем fallback-таймер, который гарантированно удалит узел.
     let removed = false;
     const doRemove = () => {
       if (removed) return;
@@ -347,9 +361,6 @@ export const colorManager = {
 
     wrapper.classList.add("is-collapsing");
     wrapper.addEventListener("transitionend", doRemove, { once: true });
-
-    // Fallback: если transition не сработает — удаляем через 600ms
-    // (чуть больше максимально ожидаемой длительности transition)
     setTimeout(doRemove, 600);
   },
 

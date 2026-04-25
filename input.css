@@ -1161,6 +1161,8 @@ body.hide-nav-labels .nav-btn {
   height: calc(3rem + 1rem);
   overflow-y: visible;
   overscroll-behavior-x: contain;
+  overscroll-behavior-y: auto;
+  touch-action: auto;
 }
 
 .color-swatch-wrapper.is-collapsing {
