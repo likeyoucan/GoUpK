@@ -62,6 +62,11 @@ const modalConfig = [
     contentId: "sw-name-modal-content",
     onOpen: (data) => sw.prepareNameForm(data),
   },
+  {
+    id: "sw-share-mode-modal",
+    type: "alert",
+    contentId: "sw-share-mode-content",
+  },
 ];
 
 function confirmReset() {

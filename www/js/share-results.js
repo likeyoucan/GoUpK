@@ -3,9 +3,13 @@
 import { formatTime, showToast } from "./utils.js?v=VERSION";
 import { t } from "./i18n.js?v=VERSION";
 
+const CSV_SEPARATOR = ";";
+
 function escapeCsv(value) {
   const str = String(value ?? "");
-  if (/[",\n]/.test(str)) return `"${str.replace(/"/g, '""')}"`;
+  if (str.includes('"') || str.includes(CSV_SEPARATOR) || str.includes("\n")) {
+    return `"${str.replace(/"/g, '""')}"`;
+  }
   return str;
 }
 
@@ -69,14 +73,18 @@ function buildStopwatchText(payload) {
 
 function buildStopwatchCsv(payload) {
   const rows = [];
+
+  // Excel hint for separator (especially RU locales)
+  rows.push(`sep=${CSV_SEPARATOR}`);
+
   rows.push(
     [t("lap_text"), t("total_time"), t("split_time")]
       .map(escapeCsv)
-      .join(","),
+      .join(CSV_SEPARATOR),
   );
 
   payload.rows.forEach((r) => {
-    rows.push([r.index, r.total, r.split].map(escapeCsv).join(","));
+    rows.push([r.index, r.total, r.split].map(escapeCsv).join(CSV_SEPARATOR));
   });
 
   const header = [
@@ -85,9 +93,10 @@ function buildStopwatchCsv(payload) {
     `${t("date_new")}: ${payload.dateText}`,
     `${t("total_time")}: ${payload.totalTimeText}`,
     "",
-  ].join("\n");
+  ];
 
-  return `${header}\n${rows.join("\n")}\n`;
+  // CRLF for better Excel compatibility
+  return [...header, ...rows].join("\r\n") + "\r\n";
 }
 
 function makeFilename(payload, ext) {
@@ -110,7 +119,10 @@ export const shareResults = {
     return {
       name: session?.name || t("stopwatch"),
       dateText: toLocalDateTime(session?.date || session?.id),
-      totalTimeText: formatTime(session?.totalTime || 0, { showMs, forceHours }),
+      totalTimeText: formatTime(session?.totalTime || 0, {
+        showMs,
+        forceHours,
+      }),
       rows: laps.map((lap) => ({
         index: `${t("lap_text")} ${lap.index}`,
         total: formatTime(lap.total, { showMs, forceHours }),
@@ -129,9 +141,7 @@ export const shareResults = {
           text,
         });
         return true;
-      } catch {
-        // user cancelled or API failed; fallback below
-      }
+      } catch {}
     }
 
     const copied = await copyToClipboard(text);
@@ -152,9 +162,13 @@ export const shareResults = {
 
     const csv = buildStopwatchCsv(payload);
     const fileName = makeFilename(payload, "csv");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
 
-    const file = new File([blob], fileName, { type: "text/csv" });
+    // UTF-8 BOM + text/csv => Excel opens Cyrillic correctly
+    const bom = "\uFEFF";
+    const blob = new Blob([bom, csv], { type: "text/csv;charset=utf-8;" });
+    const file = new File([blob], fileName, {
+      type: "text/csv;charset=utf-8;",
+    });
 
     if (navigator.share && navigator.canShare?.({ files: [file] })) {
       try {
@@ -164,9 +178,7 @@ export const shareResults = {
           files: [file],
         });
         return true;
-      } catch {
-        // user cancelled or failed; fallback below
-      }
+      } catch {}
     }
 
     downloadFile(blob, fileName);

@@ -38,6 +38,7 @@ const stopwatchModule = {
   ringLength: 282.74,
   lastMinuteBeep: 0,
   sortSelect: null,
+  pendingShareSession: null,
 
   init() {
     this.els = {
@@ -57,6 +58,8 @@ const stopwatchModule = {
       nameError: $("sw-name-error"),
       lapFlash: $("sw-lapFlash"),
       currentLapsHeader: $("sw-currentLapsHeader"),
+      shareModeTextBtn: $("sw-share-text-btn"),
+      shareModeCsvBtn: $("sw-share-csv-btn"),
     };
 
     if (this.els.ring) {
@@ -72,6 +75,32 @@ const stopwatchModule = {
     this.els.shareBtn?.addEventListener("click", () =>
       this.shareCurrentResult(),
     );
+
+    this.els.shareModeTextBtn?.addEventListener("click", async () => {
+      const session = this.pendingShareSession;
+      if (!session) return;
+
+      const payload = shareResults.buildStopwatchPayload(session, {
+        showMs: uiSettingsManager.showMs,
+      });
+
+      await shareResults.shareAsText(payload);
+      this.pendingShareSession = null;
+      modalManager.closeCurrent();
+    });
+
+    this.els.shareModeCsvBtn?.addEventListener("click", async () => {
+      const session = this.pendingShareSession;
+      if (!session) return;
+
+      const payload = shareResults.buildStopwatchPayload(session, {
+        showMs: uiSettingsManager.showMs,
+      });
+
+      await shareResults.shareAsFile(payload, { format: "csv" });
+      this.pendingShareSession = null;
+      modalManager.closeCurrent();
+    });
 
     const sortOptions = [
       { value: "date_asc", text: t("date_old") },
@@ -140,7 +169,6 @@ const stopwatchModule = {
 
     document.addEventListener("languageChanged", () => {
       this.renderSavedSessions();
-
       if (this.laps.length > 0) this.reRenderCurrentLaps();
 
       if (this.sortSelect) {
@@ -196,7 +224,6 @@ const stopwatchModule = {
       );
     } else {
       store.activate("stopwatch");
-
       this.startTime = performance.now() - this.elapsedTime;
       this.lastMinuteBeep = Math.floor(this.elapsedTime / 60000);
       this.isRunning = true;
@@ -479,19 +506,8 @@ const stopwatchModule = {
   },
 
   async shareSessionWithChoice(session) {
-    const payload = shareResults.buildStopwatchPayload(session, {
-      showMs: uiSettingsManager.showMs,
-    });
-
-    const choice = window.prompt(t("share_choose_mode"), "1");
-    if (choice === null) return;
-
-    if (choice.trim() === "2") {
-      await shareResults.shareAsFile(payload, { format: "csv" });
-      return;
-    }
-
-    await shareResults.shareAsText(payload);
+    this.pendingShareSession = session;
+    modalManager.open("sw-share-mode-modal");
   },
 
   async shareCurrentResult() {
@@ -622,9 +638,7 @@ const stopwatchModule = {
 
   sortSessions(type) {
     this.currentSort = type;
-    if (this.sortSelect) {
-      this.sortSelect.setValue(type, false);
-    }
+    if (this.sortSelect) this.sortSelect.setValue(type, false);
 
     this.savedSessions.sort((a, b) => {
       if (type === "date_desc") return b.date - a.date;
