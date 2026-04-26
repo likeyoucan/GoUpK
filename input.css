@@ -750,10 +750,6 @@ html.dark .app-bg::before {
 ========================================= */
 
 #reset-modal,
-#sw-clear-modal,
-#sw-name-modal {
-  background-color: rgba(0, 0, 0, 0.6);
-}
 
 #reset-modal-content,
 #sw-clear-modal-content,
@@ -1039,14 +1035,17 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
 
 :root.glass-effect body #reset-modal,
 :root.glass-effect body #sw-clear-modal,
-:root.glass-effect body #sw-name-modal {
+:root.glass-effect body #sw-name-modal,
+:root.glass-effect body #sw-share-mode-modal {
   background-color: rgba(255, 255, 255, 0.3);
   backdrop-filter: blur(10px);
 }
 
+
 :root.dark.glass-effect body #reset-modal,
 :root.dark.glass-effect body #sw-clear-modal,
-:root.dark.glass-effect body #sw-name-modal {
+:root.dark.glass-effect body #sw-name-modal,
+:root.dark.glass-effect body #sw-share-mode-modal {
   background-color: rgba(0, 0, 0, 0.6);
 }
 
