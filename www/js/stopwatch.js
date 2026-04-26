@@ -74,8 +74,8 @@ const stopwatchModule = {
     );
 
     const sortOptions = [
-      { value: "date_desc", text: t("date_new") },
       { value: "date_asc", text: t("date_old") },
+      { value: "date_desc", text: t("date_new") },
       { value: "result_fast", text: t("result_fast") },
       { value: "name_az", text: t("name_az") },
       { value: "name_za", text: t("name_za") },
@@ -137,8 +137,8 @@ const stopwatchModule = {
 
       if (this.sortSelect) {
         this.sortSelect.options = [
-          { value: "date_desc", text: t("date_new") },
           { value: "date_asc", text: t("date_old") },
+          { value: "date_desc", text: t("date_new") },
           { value: "result_fast", text: t("result_fast") },
           { value: "name_az", text: t("name_az") },
           { value: "name_za", text: t("name_za") },
