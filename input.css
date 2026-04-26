@@ -443,7 +443,7 @@ html.dark .app-bg::before {
 ========================================= */
 .timer-circle-wrap {
   width: 100%;
-  max-width: 85%;
+  max-width: 80%;
   aspect-ratio: 1 / 1;
   margin: 1vh auto;
   max-height: 45vh;
