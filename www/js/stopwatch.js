@@ -22,11 +22,6 @@ import { modalManager } from "./modal.js?v=VERSION";
 import { store } from "./store.js?v=VERSION";
 import { CustomSelect } from "./custom-select.js?v=VERSION";
 
-function activateTimer(name) {
-  document.dispatchEvent(new CustomEvent("timerStarted", { detail: name }));
-  store.setActiveTimer(name);
-}
-
 const stopwatchModule = {
   startTime: 0,
   elapsedTime: 0,
@@ -176,7 +171,7 @@ const stopwatchModule = {
         `${t("stopwatch")} ${t("pause")}. ${formatTime(this.elapsedTime, { showMs: false, forceHours: this.elapsedTime >= 3600000 })}`,
       );
     } else {
-      activateTimer("stopwatch");
+      store.activate("stopwatch");
       this.startTime = performance.now() - this.elapsedTime;
       this.lastMinuteBeep = Math.floor(this.elapsedTime / 60000);
       this.isRunning = true;

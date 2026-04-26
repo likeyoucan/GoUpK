@@ -20,11 +20,6 @@ import { t } from "./i18n.js?v=VERSION";
 import { modalManager } from "./modal.js?v=VERSION";
 import { store } from "./store.js?v=VERSION";
 
-function activateTimer(name) {
-  document.dispatchEvent(new CustomEvent("timerStarted", { detail: name }));
-  store.setActiveTimer(name);
-}
-
 function startTimerContext() {
   requestWakeLock();
 }
@@ -339,7 +334,7 @@ export const tb = {
   },
 
   start() {
-    activateTimer("tabata");
+    store.activate("tabata");
 
     const workout = this.workouts.find((w) => w.id === this.selectedId);
     if (workout && this.els.runningWorkoutName) {
@@ -376,7 +371,7 @@ export const tb = {
   },
 
   resume() {
-    activateTimer("tabata");
+    store.activate("tabata");
     this.paused = false;
     this.phaseEndTime = performance.now() + this.remainingAtPause;
     this.lastBeepSec = 0;

@@ -8,13 +8,17 @@ class ModalManager {
     this.activeStack = [];
     this.lastFocusedElement = null;
     this.closeTimeouts = {};
+
     this.isDragging = false;
     this.startY = 0;
     this.currentY = 0;
     this.activeSheet = null;
+
     this.modalContainer = null;
 
-    this._listenersBound = false;
+    this._escBound = false;
+    this._dragBound = false;
+
     this._onKeydown = null;
     this._onTouchStart = null;
     this._onMouseDown = null;
@@ -26,19 +30,18 @@ class ModalManager {
   }
 
   init(config) {
-    if (this._listenersBound) {
-      this.destroy();
-    }
+    this.destroy();
 
     this.modalContainer = $("modal-container");
     if (!this.modalContainer) {
-      console.error("Modal container with id 'modal-container' not found!");
+      console.error("Modal container with id 'modal-container' not found.");
       return;
     }
 
     this.modals = {};
     this.activeStack = [];
     this.closeTimeouts = {};
+    this.lastFocusedElement = null;
 
     config.forEach((modalConfig) => {
       const modalEl = $(modalConfig.id);
@@ -76,16 +79,106 @@ class ModalManager {
         }
       }
     });
-
-    this._bindGlobalListeners();
   }
 
   _toggleInert(shouldBeInert) {
     const appEl = $("app");
-    if (appEl) {
-      const mainContent = appEl.querySelector(".app-bg");
-      if (mainContent) mainContent.inert = shouldBeInert;
-    }
+    if (!appEl) return;
+    const mainContent = appEl.querySelector(".app-bg");
+    if (mainContent) mainContent.inert = shouldBeInert;
+  }
+
+  _getTopModalId() {
+    return this.activeStack[this.activeStack.length - 1] || null;
+  }
+
+  _getTopModal() {
+    const id = this._getTopModalId();
+    return id ? this.modals[id] : null;
+  }
+
+  _needsDragListeners() {
+    const top = this._getTopModal();
+    return !!top && top.type === "bottom-sheet";
+  }
+
+  _ensureEscListener() {
+    if (this._escBound) return;
+
+    this._onKeydown = (e) => {
+      if (e.key === "Escape" && this.hasActiveModal()) {
+        e.preventDefault();
+        this.closeCurrent();
+      }
+    };
+
+    document.addEventListener("keydown", this._onKeydown);
+    this._escBound = true;
+  }
+
+  _removeEscListener() {
+    if (!this._escBound) return;
+    document.removeEventListener("keydown", this._onKeydown);
+    this._onKeydown = null;
+    this._escBound = false;
+  }
+
+  _ensureDragListeners() {
+    if (this._dragBound) return;
+
+    this._onTouchStart = (e) => this._handleDragStart(e);
+    this._onMouseDown = (e) => this._handleDragStart(e);
+    this._onTouchMove = (e) => this._handleDragMove(e);
+    this._onMouseMove = (e) => this._handleDragMove(e);
+    this._onTouchEnd = () => this._handleDragEnd();
+    this._onMouseUp = () => this._handleDragEnd();
+    this._onMouseLeave = () => this._handleDragEnd();
+
+    document.addEventListener("touchstart", this._onTouchStart, {
+      passive: true,
+    });
+    document.addEventListener("mousedown", this._onMouseDown);
+    document.addEventListener("touchmove", this._onTouchMove, {
+      passive: true,
+    });
+    document.addEventListener("mousemove", this._onMouseMove);
+    document.addEventListener("touchend", this._onTouchEnd);
+    document.addEventListener("mouseup", this._onMouseUp);
+    document.addEventListener("mouseleave", this._onMouseLeave);
+
+    this._dragBound = true;
+  }
+
+  _removeDragListeners() {
+    if (!this._dragBound) return;
+
+    document.removeEventListener("touchstart", this._onTouchStart);
+    document.removeEventListener("mousedown", this._onMouseDown);
+    document.removeEventListener("touchmove", this._onTouchMove);
+    document.removeEventListener("mousemove", this._onMouseMove);
+    document.removeEventListener("touchend", this._onTouchEnd);
+    document.removeEventListener("mouseup", this._onMouseUp);
+    document.removeEventListener("mouseleave", this._onMouseLeave);
+
+    this._onTouchStart = null;
+    this._onMouseDown = null;
+    this._onTouchMove = null;
+    this._onMouseMove = null;
+    this._onTouchEnd = null;
+    this._onMouseUp = null;
+    this._onMouseLeave = null;
+
+    this._dragBound = false;
+    this.isDragging = false;
+    this.activeSheet = null;
+  }
+
+  _syncGlobalListeners() {
+    if (this.hasActiveModal()) this._ensureEscListener();
+    else this._removeEscListener();
+
+    if (this._needsDragListeners()) this._ensureDragListeners();
+    else this._removeDragListeners();
   }
 
   open(id, data = {}) {
@@ -111,9 +204,7 @@ class ModalManager {
       if (overlay) {
         overlay.classList.remove("opacity-0");
         overlay.onclick = () => {
-          if (this.activeStack[this.activeStack.length - 1] === id) {
-            this.closeCurrent();
-          }
+          if (this._getTopModalId() === id) this.closeCurrent();
         };
       }
     }
@@ -146,6 +237,7 @@ class ModalManager {
     });
 
     this.activeStack.push(id);
+    this._syncGlobalListeners();
   }
 
   close(id) {
@@ -176,6 +268,8 @@ class ModalManager {
     }
 
     this.activeStack = this.activeStack.filter((activeId) => activeId !== id);
+    this._syncGlobalListeners();
+
     const isLastModal = this.activeStack.length === 0;
 
     if (isLastModal) {
@@ -220,91 +314,22 @@ class ModalManager {
   }
 
   closeCurrent() {
-    if (this.activeStack.length > 0) {
-      const currentId = this.activeStack[this.activeStack.length - 1];
-      this.close(currentId);
-    }
+    const currentId = this._getTopModalId();
+    if (currentId) this.close(currentId);
   }
 
   hasActiveModal() {
     return this.activeStack.length > 0;
   }
 
-  _bindGlobalListeners() {
-    if (this._listenersBound) return;
-
-    this._onKeydown = (e) => {
-      if (e.key === "Escape" && this.hasActiveModal()) {
-        e.preventDefault();
-        this.closeCurrent();
-      }
-    };
-
-    this._onTouchStart = (e) => this._handleDragStart(e);
-    this._onMouseDown = (e) => this._handleDragStart(e);
-    this._onTouchMove = (e) => this._handleDragMove(e);
-    this._onMouseMove = (e) => this._handleDragMove(e);
-    this._onTouchEnd = () => this._handleDragEnd();
-    this._onMouseUp = () => this._handleDragEnd();
-    this._onMouseLeave = () => this._handleDragEnd();
-
-    document.addEventListener("keydown", this._onKeydown);
-    document.addEventListener("touchstart", this._onTouchStart, {
-      passive: true,
-    });
-    document.addEventListener("mousedown", this._onMouseDown);
-    document.addEventListener("touchmove", this._onTouchMove, {
-      passive: true,
-    });
-    document.addEventListener("mousemove", this._onMouseMove);
-    document.addEventListener("touchend", this._onTouchEnd);
-    document.addEventListener("mouseup", this._onMouseUp);
-    document.addEventListener("mouseleave", this._onMouseLeave);
-
-    this._listenersBound = true;
-  }
-
-  destroy() {
-    Object.keys(this.closeTimeouts).forEach((id) => {
-      if (this.closeTimeouts[id]) {
-        clearTimeout(this.closeTimeouts[id]);
-        this.closeTimeouts[id] = null;
-      }
-    });
-
-    if (!this._listenersBound) return;
-
-    document.removeEventListener("keydown", this._onKeydown);
-    document.removeEventListener("touchstart", this._onTouchStart);
-    document.removeEventListener("mousedown", this._onMouseDown);
-    document.removeEventListener("touchmove", this._onTouchMove);
-    document.removeEventListener("mousemove", this._onMouseMove);
-    document.removeEventListener("touchend", this._onTouchEnd);
-    document.removeEventListener("mouseup", this._onMouseUp);
-    document.removeEventListener("mouseleave", this._onMouseLeave);
-
-    this._listenersBound = false;
-    this._onKeydown = null;
-    this._onTouchStart = null;
-    this._onMouseDown = null;
-    this._onTouchMove = null;
-    this._onMouseMove = null;
-    this._onTouchEnd = null;
-    this._onMouseUp = null;
-    this._onMouseLeave = null;
-  }
-
   _handleDragStart(e) {
-    if (!this.hasActiveModal()) return;
+    const topModal = this._getTopModal();
+    if (!topModal || topModal.type !== "bottom-sheet") return;
 
-    const currentId = this.activeStack[this.activeStack.length - 1];
-    const modal = this.modals[currentId];
-    if (!modal || modal.type !== "bottom-sheet") return;
-
-    const handler = $(modal.handlerId);
+    const handler = $(topModal.handlerId);
     if (!handler || !e.target || !handler.contains(e.target)) return;
 
-    this.activeSheet = modal.el;
+    this.activeSheet = topModal.el;
     this.startY = e.touches ? e.touches[0].clientY : e.clientY;
     this.currentY = this.startY;
     this.isDragging = true;
@@ -344,6 +369,23 @@ class ModalManager {
 
     this.isDragging = false;
     this.activeSheet = null;
+  }
+
+  destroy() {
+    Object.keys(this.closeTimeouts).forEach((id) => {
+      if (this.closeTimeouts[id]) {
+        clearTimeout(this.closeTimeouts[id]);
+        this.closeTimeouts[id] = null;
+      }
+    });
+
+    this._removeEscListener();
+    this._removeDragListeners();
+
+    this.activeStack = [];
+    this.lastFocusedElement = null;
+    this.modals = {};
+    this.closeTimeouts = {};
   }
 }
 

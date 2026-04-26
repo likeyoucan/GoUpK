@@ -32,11 +32,6 @@ function formatAdjustmentText(seconds) {
   return `${seconds / 60}m`;
 }
 
-function activateTimer(name) {
-  document.dispatchEvent(new CustomEvent("timerStarted", { detail: name }));
-  store.setActiveTimer(name);
-}
-
 export const tm = {
   totalDuration: 0,
   targetTime: 0,
@@ -286,7 +281,7 @@ export const tm = {
       return;
     }
 
-    activateTimer("timer");
+    store.activate("timer");
     this.isRunning = true;
     this.isPaused = false;
     this.targetTime = performance.now() + duration;

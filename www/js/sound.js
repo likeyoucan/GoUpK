@@ -18,7 +18,6 @@ export const sm = {
   _onVolumeInput: null,
   _onVolumeChange: null,
 
-  // Debounce for volume preview sound (one sound after fast drag)
   volumePreviewTimer: null,
   VOLUME_PREVIEW_DELAY: 160,
 
@@ -51,25 +50,14 @@ export const sm = {
       }
 
       this.volume = 0;
-
-      const volumeSlider = $("volumeSlider");
-      if (volumeSlider) volumeSlider.value = "0";
-
-      const display = $("volumeDisplay");
-      if (display) display.textContent = "0%";
+      this._syncVolumeUI(this.volume);
     } else {
       if (restoreVolume) {
         const restored =
           this.lastNonZeroVolume > 0 ? this.lastNonZeroVolume : 1;
         this.volume = restored;
-
-        const volumeSlider = $("volumeSlider");
-        if (volumeSlider) volumeSlider.value = String(restored);
-
-        const display = $("volumeDisplay");
-        if (display) display.textContent = Math.round(restored * 100) + "%";
       }
-
+      this._syncVolumeUI(this.volume);
       this.initAudio();
     }
 
@@ -77,6 +65,67 @@ export const sm = {
       safeSetLS("app_sound", this.soundEnabled);
       safeSetLS("app_volume", this.volume);
     }
+  },
+
+  _syncVolumeUI(value) {
+    const volumeSlider = $("volumeSlider");
+    if (volumeSlider) volumeSlider.value = String(value);
+
+    const display = $("volumeDisplay");
+    if (display) display.textContent = `${Math.round(value * 100)}%`;
+  },
+
+  _clearPreviewTimer() {
+    if (this.volumePreviewTimer) {
+      clearTimeout(this.volumePreviewTimer);
+      this.volumePreviewTimer = null;
+    }
+  },
+
+  _schedulePreview() {
+    this._clearPreviewTimer();
+    if (!this.soundEnabled || this.volume <= 0) return;
+
+    this.volumePreviewTimer = setTimeout(() => {
+      this.play("click");
+      this.volumePreviewTimer = null;
+    }, this.VOLUME_PREVIEW_DELAY);
+  },
+
+  _applySliderVolume(rawValue, { withPreview = false } = {}) {
+    const newVolume = Number.parseFloat(rawValue);
+    if (!Number.isFinite(newVolume)) return;
+
+    const prevVolume = this.volume;
+    this.volume = newVolume;
+    this._syncVolumeUI(this.volume);
+
+    if (newVolume <= 0) {
+      this._clearPreviewTimer();
+
+      if (prevVolume > 0) {
+        this.lastNonZeroVolume = prevVolume;
+        safeSetLS("app_volume_last_non_zero", this.lastNonZeroVolume);
+      }
+
+      if (this.soundEnabled) {
+        this.setSoundEnabled(false, { persist: true, restoreVolume: false });
+      } else {
+        safeSetLS("app_volume", 0);
+      }
+      return;
+    }
+
+    this.lastNonZeroVolume = newVolume;
+    safeSetLS("app_volume_last_non_zero", this.lastNonZeroVolume);
+
+    if (!this.soundEnabled) {
+      this.setSoundEnabled(true, { persist: true, restoreVolume: false });
+    } else {
+      safeSetLS("app_volume", newVolume);
+    }
+
+    if (withPreview) this._schedulePreview();
   },
 
   init() {
@@ -90,11 +139,19 @@ export const sm = {
     this.initAudio();
 
     $("toggle-sound")?.addEventListener("change", (e) => {
-      this.setSoundEnabled(e.target.checked, {
+      const enabled = e.target.checked;
+
+      this.setSoundEnabled(enabled, {
         persist: true,
         restoreVolume: true,
       });
+
       this.updateVolumeUI();
+
+      // Требование: при включении звука воспроизводить звук на текущем уровне громкости
+      if (enabled) {
+        this.play("click");
+      }
     });
 
     $("toggle-vibro")?.addEventListener("change", (e) => {
@@ -115,97 +172,11 @@ export const sm = {
       volumeSlider.dataset.boundSound = "1";
 
       this._onVolumeInput = (e) => {
-        const prevVolume = this.volume;
-        const newVolume = parseFloat(e.target.value);
-
-        this.volume = newVolume;
-
-        const display = $("volumeDisplay");
-        if (display) display.textContent = Math.round(this.volume * 100) + "%";
-
-        if (this.volumePreviewTimer) {
-          clearTimeout(this.volumePreviewTimer);
-          this.volumePreviewTimer = null;
-        }
-
-        // Move to 0 => toggle OFF
-        if (newVolume <= 0) {
-          if (prevVolume > 0) {
-            this.lastNonZeroVolume = prevVolume;
-            safeSetLS("app_volume_last_non_zero", this.lastNonZeroVolume);
-          }
-
-          if (this.soundEnabled) {
-            this.setSoundEnabled(false, {
-              persist: true,
-              restoreVolume: false,
-            });
-          } else {
-            safeSetLS("app_volume", 0);
-          }
-          return;
-        }
-
-        // Move above 0 => toggle ON
-        this.lastNonZeroVolume = newVolume;
-        safeSetLS("app_volume_last_non_zero", this.lastNonZeroVolume);
-
-        if (!this.soundEnabled) {
-          this.setSoundEnabled(true, {
-            persist: true,
-            restoreVolume: false,
-          });
-        } else {
-          safeSetLS("app_volume", newVolume);
-        }
-
-        // One preview sound after drag settles
-        if (this.soundEnabled && this.volume > 0) {
-          this.volumePreviewTimer = setTimeout(() => {
-            this.play("click");
-            this.volumePreviewTimer = null;
-          }, this.VOLUME_PREVIEW_DELAY);
-        }
+        this._applySliderVolume(e.target.value, { withPreview: true });
       };
 
       this._onVolumeChange = (e) => {
-        const prevVolume = this.volume;
-        const finalVolume = parseFloat(e.target.value);
-        this.volume = finalVolume;
-
-        if (finalVolume <= 0) {
-          if (this.volumePreviewTimer) {
-            clearTimeout(this.volumePreviewTimer);
-            this.volumePreviewTimer = null;
-          }
-
-          if (prevVolume > 0) {
-            this.lastNonZeroVolume = prevVolume;
-            safeSetLS("app_volume_last_non_zero", this.lastNonZeroVolume);
-          }
-
-          if (this.soundEnabled) {
-            this.setSoundEnabled(false, {
-              persist: true,
-              restoreVolume: false,
-            });
-          } else {
-            safeSetLS("app_volume", 0);
-          }
-          return;
-        }
-
-        this.lastNonZeroVolume = finalVolume;
-        safeSetLS("app_volume_last_non_zero", this.lastNonZeroVolume);
-
-        if (!this.soundEnabled) {
-          this.setSoundEnabled(true, {
-            persist: true,
-            restoreVolume: false,
-          });
-        } else {
-          safeSetLS("app_volume", finalVolume);
-        }
+        this._applySliderVolume(e.target.value, { withPreview: false });
       };
 
       volumeSlider.addEventListener("input", this._onVolumeInput);
@@ -295,12 +266,7 @@ export const sm = {
       $("vibroSlider").value = closestIndex;
     }
 
-    const volumeSlider = $("volumeSlider");
-    if (volumeSlider) {
-      volumeSlider.value = String(this.volume);
-      const display = $("volumeDisplay");
-      if (display) display.textContent = Math.round(this.volume * 100) + "%";
-    }
+    this._syncVolumeUI(this.volume);
 
     if (this.soundThemeSelect) {
       this.soundThemeSelect.setValue(this.theme, false);
@@ -333,10 +299,7 @@ export const sm = {
     this.lastNonZeroVolume = 1;
     this.theme = "classic";
 
-    if (this.volumePreviewTimer) {
-      clearTimeout(this.volumePreviewTimer);
-      this.volumePreviewTimer = null;
-    }
+    this._clearPreviewTimer();
 
     this.applySettings();
     this.initAudio();

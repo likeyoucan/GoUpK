@@ -7,6 +7,13 @@ const storeData = {
 };
 
 export const store = {
+  activate(timerName) {
+    document.dispatchEvent(
+      new CustomEvent("timerStarted", { detail: timerName }),
+    );
+    this.setActiveTimer(timerName);
+  },
+
   setActiveTimer(timerName) {
     storeData.activeTimer = timerName;
     safeSetLS("active_timer", timerName);
