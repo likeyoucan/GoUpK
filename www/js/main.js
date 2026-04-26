@@ -11,6 +11,9 @@ import { sm } from "./sound.js?v=VERSION";
 import { modalManager } from "./modal.js?v=VERSION";
 import { initTouchRanges } from "./touch-range.js?v=VERSION";
 import { preload } from "./preload.js?v=VERSION";
+import { historyStore } from "./history.js?v=VERSION";
+import { CustomSelect } from "./custom-select.js?v=VERSION";
+import { historyUI } from "./history-ui.js?v=VERSION";
 import {
   initForegroundService,
   destroyForegroundService,
@@ -69,6 +72,16 @@ const modalConfig = [
     onClose: () => {
       sw.pendingShareSession = null;
     },
+  },
+  {
+    id: "tm-preset-modal",
+    type: "alert",
+    contentId: "tm-preset-modal-content",
+  },
+  {
+    id: "history-modal",
+    type: "bottom-sheet",
+    handlerId: "history-modal-handler",
   },
 ];
 
@@ -138,6 +151,12 @@ document.addEventListener("DOMContentLoaded", () => {
   tb.init();
   navigation.init();
   modalManager.init(modalConfig);
+  historyUI.init();
+
+  document.addEventListener("openHistory", (e) => {
+    const mode = e.detail?.mode === "tabata" ? "tabata" : "timer";
+    historyUI.open(mode);
+  });
 
   initForegroundService();
   window.addEventListener("beforeunload", () => {

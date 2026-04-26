@@ -19,6 +19,7 @@ import { sm } from "./sound.js?v=VERSION";
 import { t } from "./i18n.js?v=VERSION";
 import { modalManager } from "./modal.js?v=VERSION";
 import { store } from "./store.js?v=VERSION";
+import { historyStore } from "./history.js?v=VERSION";
 
 function startTimerContext() {
   requestWakeLock();
@@ -47,6 +48,8 @@ export const tb = {
   lastBeepSec: 0,
   editingWorkoutId: null,
   ringLength: 282.74,
+  startedAt: 0,
+  lastPayload: null,
 
   init() {
     this.els = {
@@ -336,6 +339,14 @@ export const tb = {
   start() {
     store.activate("tabata");
 
+    this.startedAt = Date.now();
+    this.lastPayload = {
+      workoutId: this.selectedId,
+      work: this.work,
+      rest: this.rest,
+      rounds: this.rounds,
+    };
+
     const workout = this.workouts.find((w) => w.id === this.selectedId);
     if (workout && this.els.runningWorkoutName) {
       updateText(this.els.runningWorkoutName, workout.name);
@@ -382,6 +393,18 @@ export const tb = {
   },
 
   stop() {
+    const wasActive = this.status !== "STOPPED" || this.paused;
+    if (wasActive && this.startedAt) {
+      historyStore.append({
+        mode: "tabata",
+        startAt: this.startedAt,
+        endAt: Date.now(),
+        duration: Date.now() - this.startedAt,
+        resultStatus: "stopped",
+        payload: this.lastPayload || {},
+      });
+    }
+
     sm.vibrate(30, "medium");
     sm.play("click");
     store.clearActiveTimer();
@@ -403,6 +426,8 @@ export const tb = {
     updateText(this.els.timer, "GO");
     this.els.timer.classList.add("is-go");
     if (this.els.ring) this.els.ring.style.strokeDashoffset = this.ringLength;
+    this.startedAt = 0;
+    this.lastPayload = null;
   },
 
   tick(isBackground = false) {
@@ -492,6 +517,14 @@ export const tb = {
         announceToScreenReader(t("tabata_complete"));
         requestAnimationFrame(() => {
           showToast(t("tabata_complete"));
+          historyStore.append({
+            mode: "tabata",
+            startAt: this.startedAt || Date.now(),
+            endAt: Date.now(),
+            duration: Date.now() - (this.startedAt || Date.now()),
+            resultStatus: "completed",
+            payload: this.lastPayload || {},
+          });
           this.stop();
         });
         return;

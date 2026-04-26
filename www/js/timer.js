@@ -15,6 +15,10 @@ import {
 import { sm } from "./sound.js?v=VERSION";
 import { t } from "./i18n.js?v=VERSION";
 import { store } from "./store.js?v=VERSION";
+import { modalManager } from "./modal.js?v=VERSION";
+import { presets } from "./presets.js?v=VERSION";
+import { historyStore } from "./history.js?v=VERSION";
+import { uiSettingsManager } from "./ui-settings.js?v=VERSION";
 
 let timeRemainingMs = 0;
 
@@ -32,6 +36,15 @@ function formatAdjustmentText(seconds) {
   return `${seconds / 60}m`;
 }
 
+function toHms(ms) {
+  const totalSec = Math.floor(ms / 1000);
+  return {
+    h: Math.floor(totalSec / 3600),
+    m: Math.floor((totalSec % 3600) / 60),
+    s: totalSec % 60,
+  };
+}
+
 export const tm = {
   totalDuration: 0,
   targetTime: 0,
@@ -41,6 +54,13 @@ export const tm = {
   els: {},
   ringLength: 282.74,
   currentAdjustmentSec: 0,
+
+  startedAt: 0,
+  lastPayload: null,
+
+  presetLongPressTimer: null,
+  presetLongPressFired: false,
+  presetEditId: null,
 
   getRemainingTime() {
     if (!this.isRunning && !this.isPaused) return 0;
@@ -65,6 +85,17 @@ export const tm = {
       adjustMinusBtn: $("tm-adjust-minus"),
       plusValueSpan: $("tm-plus-value"),
       minusValueSpan: $("tm-minus-value"),
+
+      // presets UI
+      presetsWrap: $("tm-presets-wrap"),
+      presetsList: $("tm-presetsList"),
+      addPresetBtn: $("tm-addPresetBtn"),
+
+      // preset modal
+      presetModalForm: $("tm-preset-modal-content"),
+      presetTitle: $("tm-preset-title"),
+      presetName: $("tm-preset-name"),
+      presetSeconds: $("tm-preset-seconds"),
     };
 
     if (this.els.ring) {
@@ -132,12 +163,15 @@ export const tm = {
           this.isRunning = false;
           store.clearActiveTimer();
 
+          this._appendHistory("completed");
+
           sm.vibrate([200, 100, 200, 100, 400], "strong");
           sm.play("complete");
           announceToScreenReader(t("timer_finished"));
+
           requestAnimationFrame(() => {
             showToast(t("timer_finished"));
-            this.reset(false);
+            this._handleFinishAction();
           });
         }
       }
@@ -157,6 +191,146 @@ export const tm = {
       const adjustmentMs = -this.currentAdjustmentSec * 1000;
       this.totalDuration += adjustmentMs;
       bgWorker.postMessage({ command: "adjust", time: adjustmentMs });
+    });
+
+    this._bindPresetsUI();
+    this.renderPresets();
+  },
+
+  _appendHistory(resultStatus = "stopped") {
+    if (!this.startedAt) return;
+
+    const duration =
+      resultStatus === "completed"
+        ? this.totalDuration
+        : Math.max(0, this.totalDuration - timeRemainingMs);
+
+    historyStore.append({
+      mode: "timer",
+      startAt: this.startedAt,
+      endAt: Date.now(),
+      duration,
+      resultStatus,
+      payload: this.lastPayload || {
+        totalDuration: this.totalDuration,
+        finishAction: uiSettingsManager.timerFinishAction || "stop",
+        restDurationMs: uiSettingsManager.timerRestDurationMs || 30000,
+      },
+    });
+  },
+
+  _bindPresetsUI() {
+    presets.ensureDefaultPresets();
+
+    this.els.addPresetBtn?.addEventListener("click", () => {
+      this.presetEditId = null;
+      if (this.els.presetTitle) this.els.presetTitle.textContent = t("create_new");
+      if (this.els.presetName) this.els.presetName.value = "";
+      if (this.els.presetSeconds) this.els.presetSeconds.value = "30";
+      modalManager.open("tm-preset-modal");
+    });
+
+    this.els.presetModalForm?.addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      const name = (this.els.presetName?.value || "").trim() || "Preset";
+      const sec = parseInt(this.els.presetSeconds?.value || "0", 10);
+      const durationMs = Math.max(1, sec) * 1000;
+
+      if (this.presetEditId) {
+        presets.updatePreset(this.presetEditId, { name, durationMs });
+      } else {
+        presets.createPreset({
+          name,
+          durationMs,
+          type: "countdown",
+          meta: {},
+        });
+      }
+
+      this.presetEditId = null;
+      this.renderPresets();
+      modalManager.closeCurrent();
+    });
+
+    const listEl = this.els.presetsList;
+    if (!listEl) return;
+
+    listEl.addEventListener("click", (e) => {
+      const chip = e.target.closest("[data-preset-id]");
+      if (!chip || this.presetLongPressFired || this.isRunning) return;
+
+      const list = presets.getTimerPresets();
+      const found = list.find((p) => p.id === chip.dataset.presetId);
+      if (!found) return;
+      presets.applyPresetToTimer(found, this);
+    });
+
+    listEl.addEventListener("pointerdown", (e) => {
+      const chip = e.target.closest("[data-preset-id]");
+      if (!chip) return;
+
+      this.presetLongPressFired = false;
+      this.presetLongPressTimer = setTimeout(() => {
+        this.presetLongPressFired = true;
+        const id = chip.dataset.presetId;
+        const list = presets.getTimerPresets();
+        const found = list.find((p) => p.id === id);
+        if (!found) return;
+
+        this.presetEditId = found.id;
+        if (this.els.presetTitle) this.els.presetTitle.textContent = t("edit");
+        if (this.els.presetName) this.els.presetName.value = found.name;
+        if (this.els.presetSeconds)
+          this.els.presetSeconds.value = String(Math.floor(found.durationMs / 1000));
+
+        modalManager.open("tm-preset-modal");
+      }, 500);
+    });
+
+    const clearLongPress = () => {
+      if (this.presetLongPressTimer) {
+        clearTimeout(this.presetLongPressTimer);
+        this.presetLongPressTimer = null;
+      }
+      setTimeout(() => {
+        this.presetLongPressFired = false;
+      }, 0);
+    };
+
+    ["pointerup", "pointercancel", "pointerleave"].forEach((evt) => {
+      listEl.addEventListener(evt, clearLongPress);
+    });
+
+    listEl.addEventListener("contextmenu", (e) => {
+      const chip = e.target.closest("[data-preset-id]");
+      if (!chip) return;
+      e.preventDefault();
+      presets.deletePreset(chip.dataset.presetId);
+      this.renderPresets();
+    });
+  },
+
+  renderPresets() {
+    const wrap = this.els.presetsWrap;
+    const listEl = this.els.presetsList;
+    if (!wrap || !listEl) return;
+
+    const canShow = !this.isRunning && !this.isPaused;
+    wrap.classList.toggle("hidden", !canShow);
+    if (!canShow) return;
+
+    const list = presets.getTimerPresets();
+    listEl.replaceChildren();
+
+    list.forEach((p) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.dataset.presetId = p.id;
+      btn.className =
+        "shrink-0 min-h-[36px] px-3 rounded-full text-xs font-bold app-surface app-text border app-border active:scale-95 transition-transform";
+      btn.textContent = p.name;
+      listEl.appendChild(btn);
     });
   },
 
@@ -281,101 +455,8 @@ export const tm = {
       return;
     }
 
-    store.activate("timer");
-    this.isRunning = true;
-    this.isPaused = false;
-    this.targetTime = performance.now() + duration;
-    requestWakeLock();
-    this.updateUIState();
-    this.updateDisplay(duration);
-    this.updateAdjustButtons();
-
-    bgWorker.postMessage({ command: "start", time: duration });
-  },
-
-  reset(clearInputs = true) {
-    sm.vibrate(30, "medium");
-    sm.play("click");
-    store.clearActiveTimer();
-
-    this.isRunning = false;
-    this.isPaused = false;
-    this.remainingAtPause = 0;
-    this.totalDuration = 0;
-    timeRemainingMs = 0;
-
-    bgWorker.postMessage({ command: "reset" });
-    releaseWakeLock();
-    updateTitle("");
-
-    if (clearInputs) {
-      if (this.els.h) this.els.h.value = "00";
-      if (this.els.m) this.els.m.value = "00";
-      if (this.els.s) this.els.s.value = "00";
-    }
-
-    this.updateUIState();
-
-    if (this.els.ring) {
-      this.els.ring.style.strokeDashoffset = this.ringLength;
-    }
-
-    updateText(this.els.display, "GO");
-    this.els.display.classList.add("is-go");
-  },
-
-  updateUIState() {
-    if (!this.els.form) return;
-    if (this.isRunning) {
-      this.els.form.classList.add("hidden");
-      this.els.resetBtnWrap?.classList.add("hidden");
-      this.els.status?.classList.add("hidden");
-      this.els.display?.classList.remove("is-go");
-      this.els.adjustControls?.classList.remove("hidden");
-      this.els.adjustControls?.classList.add("flex");
-    } else if (this.isPaused) {
-      this.els.form.classList.add("hidden");
-      this.els.resetBtnWrap?.classList.remove("hidden");
-      this.els.status?.classList.remove("hidden");
-      updateText(this.els.status, t("pause"));
-      this.els.adjustControls?.classList.add("hidden");
-      this.els.adjustControls?.classList.remove("flex");
-    } else {
-      this.els.form.classList.remove("hidden");
-      this.els.resetBtnWrap?.classList.add("hidden");
-      this.els.status?.classList.add("hidden");
-      this.els.display?.classList.add("is-go");
-      updateText(this.els.display, "GO");
-      this.els.adjustControls?.classList.add("hidden");
-      this.els.adjustControls?.classList.remove("flex");
-    }
-  },
-
-  updateAdjustButtons() {
-    if (!this.isRunning) return;
-    const remainingSeconds = Math.ceil(timeRemainingMs / 1000);
-    const newAdjustmentSec = getAdjustmentAmount(remainingSeconds);
-
-    if (newAdjustmentSec === this.currentAdjustmentSec) return;
-
-    this.currentAdjustmentSec = newAdjustmentSec;
-    const text = formatAdjustmentText(this.currentAdjustmentSec);
-    updateText(this.els.plusValueSpan, `+ ${text}`);
-    updateText(this.els.minusValueSpan, `- ${text}`);
-  },
-
-  updateDisplay(rem) {
-    const hInput = parseInt(this.els.h?.value, 10) || 0;
-    const forceHours = hInput > 0 || this.totalDuration >= 3600000;
-
-    const timeStr = formatTime(rem, { forceHours });
-    updateText(this.els.display, timeStr);
-    updateTitle(timeStr);
-
-    if (this.els.ring && this.totalDuration > 0) {
-      const elapsed = this.totalDuration - rem;
-      const progress = Math.max(0, Math.min(1, elapsed / this.totalDuration));
-      this.els.ring.style.strokeDashoffset = this.ringLength * (1 - progress);
-    }
-  },
-};
+    this.startedAt = Date.now();
+    this.lastPayload = {
+      totalDuration: duration,
+      finishAction: uiSettingsManager.timerFinishAction || "stop",
+      restDurationMs: uiSettingsManager.timerRest

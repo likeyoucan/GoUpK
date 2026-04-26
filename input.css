@@ -752,7 +752,8 @@ html.dark .app-bg::before {
 #reset-modal,
 #sw-clear-modal,
 #sw-name-modal,
-#sw-share-mode-modal {
+#sw-share-mode-modal,
+#backup-modal {
   backdrop-filter: blur(8px);
   background-color: rgba(0, 0, 0, 0.6);
 }
@@ -760,7 +761,8 @@ html.dark .app-bg::before {
 #reset-modal-content,
 #sw-clear-modal-content,
 #sw-name-modal-content,
-#sw-share-mode-content {
+#sw-share-mode-content,
+#backup-modal-content {
   background-color: var(--surface-color);
   border: 1px solid var(--border-color);
 }
