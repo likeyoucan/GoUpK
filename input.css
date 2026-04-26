@@ -1287,11 +1287,14 @@ body.hide-nav-labels .nav-btn {
 
 .color-action-btn {
   position: absolute;
+  z-index: 30;
+  animation: fadeInScale 0.2s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.color-action-btn[data-action="delete"] {
   top: -0.75rem;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 30;
-  animation: fadeInScale 0.2s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 
 .color-action-btn.is-hiding {
