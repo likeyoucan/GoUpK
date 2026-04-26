@@ -1193,6 +1193,7 @@ body.hide-nav-labels .nav-btn {
 
 #swipe-area-left,
 #swipe-area-right {
+  height: var(--nav-height);
   pointer-events: none;
 }
 
