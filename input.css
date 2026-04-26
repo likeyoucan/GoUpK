@@ -270,6 +270,13 @@ button {
   z-index: 0;
 }
 
+/* Mobile portrait only: верхнюю часть прижимаем вниз */
+@media (max-width: 767px) and (orientation: portrait) {
+  .view-top-half {
+    justify-content: flex-end;
+  }
+}
+
 /* --- Планшет (портретная ориентация) --- */
 @media (min-width: 768px) and (orientation: portrait) {
   #app {
