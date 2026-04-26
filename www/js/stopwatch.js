@@ -21,6 +21,7 @@ import { uiSettingsManager } from "./ui-settings.js?v=VERSION";
 import { modalManager } from "./modal.js?v=VERSION";
 import { store } from "./store.js?v=VERSION";
 import { CustomSelect } from "./custom-select.js?v=VERSION";
+import { shareResults } from "./share-results.js?v=VERSION";
 
 const stopwatchModule = {
   startTime: 0,
@@ -48,6 +49,7 @@ const stopwatchModule = {
       lapsContainer: $("sw-lapsContainer"),
       ring: $("sw-progressRing"),
       saveBtn: $("sw-saveBtn"),
+      shareBtn: $("sw-shareBtn"),
       sessionsList: $("sw-sessionsList"),
       swSortWrapper: $("sw-sort-wrapper"),
       nameTitle: $("sw-name-title"),
@@ -66,6 +68,9 @@ const stopwatchModule = {
     this.els.lapBtn?.addEventListener("click", () => this.recordLapOrReset());
     this.els.saveBtn?.addEventListener("click", () =>
       this.prepareSaveSession(),
+    );
+    this.els.shareBtn?.addEventListener("click", () =>
+      this.shareCurrentResult(),
     );
 
     const sortOptions = [
@@ -88,11 +93,17 @@ const stopwatchModule = {
     this.els.nameInput?.addEventListener("input", () =>
       this.els.nameError?.classList.add("hidden"),
     );
+
     this.els.sessionsList?.addEventListener("click", (e) => {
       const header = e.target.closest(".sw-session-header");
+      const shareBtn = e.target.closest(".sw-share-btn");
       const renameBtn = e.target.closest(".sw-rename-btn");
       const deleteBtn = e.target.closest(".sw-delete-btn");
-      if (renameBtn) {
+
+      if (shareBtn) {
+        e.stopPropagation();
+        this.shareSavedSession(Number(shareBtn.dataset.id));
+      } else if (renameBtn) {
         e.stopPropagation();
         this.prepareRenameSession(Number(renameBtn.dataset.id));
       } else if (deleteBtn) {
@@ -108,8 +119,9 @@ const stopwatchModule = {
     });
 
     bgWorker.addEventListener("message", (e) => {
-      if (e.data?.type === "heartbeat" && this.isRunning && document.hidden)
+      if (e.data?.type === "heartbeat" && this.isRunning && document.hidden) {
         this.tick(true);
+      }
     });
 
     document.addEventListener("visibilitychange", () => {
@@ -128,6 +140,7 @@ const stopwatchModule = {
 
     document.addEventListener("languageChanged", () => {
       this.renderSavedSessions();
+
       if (this.laps.length > 0) this.reRenderCurrentLaps();
 
       if (this.sortSelect) {
@@ -141,12 +154,16 @@ const stopwatchModule = {
         this.sortSelect.populateOptions();
         this.sortSelect.setValue(this.currentSort, false);
       }
+
+      this.updateSaveButtonVisibility();
     });
 
     document.addEventListener("msChanged", () => {
       if (!this.isRunning && this.elapsedTime > 0) this.updateDisplay();
       if (this.laps.length > 0) this.reRenderCurrentLaps();
     });
+
+    this.updateSaveButtonVisibility();
   },
 
   toggle() {
@@ -159,40 +176,54 @@ const stopwatchModule = {
       this.isRunning = false;
       this.pauseTime = Date.now();
       bgWorker.postMessage({ command: "stop" });
+
       if (this.rAF) cancelAnimationFrame(this.rAF);
       this.rAF = null;
+
       releaseWakeLock();
       updateTitle("");
+
       this.els.status.classList.remove("hidden");
       updateText(this.els.lapBtn, t("reset"));
       this.els.lapBtn.classList.remove("app-surface", "app-text");
       this.els.lapBtn.classList.add("bg-red-500", "text-white", "is-reset");
+
       announceToScreenReader(
-        `${t("stopwatch")} ${t("pause")}. ${formatTime(this.elapsedTime, { showMs: false, forceHours: this.elapsedTime >= 3600000 })}`,
+        `${t("stopwatch")} ${t("pause")}. ${formatTime(this.elapsedTime, {
+          showMs: false,
+          forceHours: this.elapsedTime >= 3600000,
+        })}`,
       );
     } else {
       store.activate("stopwatch");
+
       this.startTime = performance.now() - this.elapsedTime;
       this.lastMinuteBeep = Math.floor(this.elapsedTime / 60000);
       this.isRunning = true;
       this.pauseTime = 0;
+
       requestWakeLock();
       bgWorker.postMessage({ command: "start" });
       this.tick();
+
       this.els.status.classList.add("hidden");
       this.els.display.classList.remove("is-go");
       this.els.lapBtn.classList.remove("hidden");
+
       updateText(this.els.lapBtn, t("lap"));
       this.els.lapBtn.classList.remove("bg-red-500", "text-white", "is-reset");
       this.els.lapBtn.classList.add("app-surface", "app-text");
     }
+
     this.updateSaveButtonVisibility();
   },
 
   tick(isBackground = false) {
     if (!this.isRunning) return;
+
     const now = performance.now();
     this.elapsedTime = now - this.startTime;
+
     const currentMinute = Math.floor(this.elapsedTime / 60000);
     if (
       uiSettingsManager.swMinuteBeep &&
@@ -205,16 +236,19 @@ const stopwatchModule = {
     }
 
     if (now - this.lastRender >= 16 || isBackground) {
-      if (!isBackground) this.updateDisplay();
-      else
+      if (!isBackground) {
+        this.updateDisplay();
+      } else {
         updateTitle(
           formatTime(this.elapsedTime, {
             showMs: false,
             forceHours: this.elapsedTime >= 3600000,
           }),
         );
+      }
       this.lastRender = now;
     }
+
     if (!isBackground) {
       if (this.rAF) cancelAnimationFrame(this.rAF);
       this.rAF = requestAnimationFrame(() => this.tick());
@@ -229,9 +263,11 @@ const stopwatchModule = {
       showMs,
       forceHours: shouldForceHours,
     }).split(":");
+
     const mainDisplayStr = shouldForceHours
       ? mainDisplayParts.join(":")
       : mainDisplayParts.slice(-2).join(":");
+
     updateText(this.els.display, mainDisplayStr);
 
     if (this.els.extendedDisplay) {
@@ -240,6 +276,7 @@ const stopwatchModule = {
         daySuffix: t("day_short"),
         hourSuffix: t("hour_short"),
       });
+
       if (extStr) {
         updateText(this.els.extendedDisplay, extStr);
         this.els.extendedDisplay.classList.remove("hidden");
@@ -247,29 +284,35 @@ const stopwatchModule = {
         this.els.extendedDisplay.classList.add("hidden");
       }
     }
+
     updateTitle(
       formatTime(this.elapsedTime, {
         showMs: false,
         forceHours: shouldForceHours,
       }),
     );
-    if (this.els.ring)
+
+    if (this.els.ring) {
       this.els.ring.style.strokeDashoffset =
         this.ringLength -
         ((this.elapsedTime % 60000) / 60000) * this.ringLength;
+    }
   },
 
   recordLapOrReset() {
     sm.vibrate(30, "medium");
     sm.play("click");
+
     if (this.isRunning) {
       const lastLapTotal = this.laps.length > 0 ? this.laps[0].total : 0;
       const diff = this.elapsedTime - lastLapTotal;
+
       this.laps.unshift({
         total: this.elapsedTime,
         diff,
         index: this.laps.length + 1,
       });
+
       if (this.laps.length === 1) {
         this.els.lapsContainer.replaceChildren();
         this.els.currentLapsHeader.classList.remove("hidden");
@@ -283,32 +326,44 @@ const stopwatchModule = {
           splitTimeEl?.classList.add("app-text");
         }
       }
+
       this.els.lapsContainer.prepend(this.createLapElement(this.laps[0], true));
+
       if (this.els.lapFlash) {
         this.els.lapFlash.classList.remove("flash-active");
         void this.els.lapFlash.offsetWidth;
         this.els.lapFlash.classList.add("flash-active");
       }
+
       this.updateSaveButtonVisibility();
-    } else if (this.elapsedTime > 0) {
+      return;
+    }
+
+    if (this.elapsedTime > 0) {
       if (store.isActive("stopwatch")) store.clearActiveTimer();
+
       this.elapsedTime = 0;
       this.laps = [];
       this.pauseTime = 0;
       this.lastMinuteBeep = 0;
+
       updateText(this.els.display, "GO");
       this.els.display.classList.add("is-go");
       this.els.status.classList.add("hidden");
       this.els.extendedDisplay?.classList.add("hidden");
+
       if (this.els.ring) this.els.ring.style.strokeDashoffset = this.ringLength;
+
       this.els.lapBtn.classList.add("hidden");
       this.els.currentLapsHeader.classList.add("hidden");
       this.els.currentLapsHeader.classList.remove("flex");
+
       const noLapsDiv = document.createElement("div");
       noLapsDiv.className = "text-center app-text-sec opacity-50 mt-4 text-sm";
       noLapsDiv.setAttribute("data-i18n", "no_laps");
       noLapsDiv.textContent = t("no_laps");
       this.els.lapsContainer.replaceChildren(noLapsDiv);
+
       this.updateSaveButtonVisibility();
     }
   },
@@ -332,12 +387,14 @@ const stopwatchModule = {
       "duration-300",
     );
     div.classList.remove("py-2", "border-gray-500/10", "px-2");
+
     if (isLatest) div.classList.add("bg-black/5", "dark:bg-white/5");
 
     const shouldForceHours = this.elapsedTime >= 3600000;
 
     div.querySelector('[data-template="lap-index"]').textContent =
       `${t("lap_text")} ${lap.index}`;
+
     div.querySelector('[data-template="lap-total"]').textContent = formatTime(
       lap.total,
       { showMs: uiSettingsManager.showMs, forceHours: shouldForceHours },
@@ -360,6 +417,7 @@ const stopwatchModule = {
 
   reRenderCurrentLaps() {
     this.els.lapsContainer.replaceChildren();
+
     if (this.laps.length === 0) {
       const noLapsDiv = document.createElement("div");
       noLapsDiv.className = "text-center app-text-sec opacity-50 mt-4 text-sm";
@@ -368,6 +426,7 @@ const stopwatchModule = {
       this.els.lapsContainer.appendChild(noLapsDiv);
       return;
     }
+
     [...this.laps].reverse().forEach((lap, i, arr) => {
       this.els.lapsContainer.prepend(
         this.createLapElement(lap, i === arr.length - 1),
@@ -376,29 +435,80 @@ const stopwatchModule = {
   },
 
   updateSaveButtonVisibility() {
-    if (!this.els.saveBtn) return;
-    if (this.laps.length > 0) {
-      this.els.saveBtn.classList.remove("hidden");
-      this.els.saveBtn.classList.add("flex");
-    } else {
-      this.els.saveBtn.classList.add("hidden");
-      this.els.saveBtn.classList.remove("flex");
+    const canShare = shareResults.canShowShareButton(this.laps.length);
+
+    if (this.els.saveBtn) {
+      this.els.saveBtn.classList.toggle("hidden", !canShare);
+      this.els.saveBtn.classList.toggle("flex", canShare);
+    }
+
+    if (this.els.shareBtn) {
+      this.els.shareBtn.classList.toggle("hidden", !canShare);
+      this.els.shareBtn.classList.toggle("flex", canShare);
     }
   },
 
-  prepareSaveSession() {
-    if (this.laps.length === 0 && this.elapsedTime === 0) return;
+  _buildSessionLapsForSave() {
     let sessionLaps = [...this.laps];
     const lastLapTotal = this.laps.length > 0 ? this.laps[0].total : 0;
+
     if (this.elapsedTime > lastLapTotal) {
       const diff = this.elapsedTime - lastLapTotal;
-      if (diff > 10)
+      if (diff > 10) {
         sessionLaps.unshift({
           total: this.elapsedTime,
           diff,
           index: sessionLaps.length + 1,
         });
+      }
     }
+
+    return sessionLaps;
+  },
+
+  getCurrentSessionForShare() {
+    if (this.laps.length === 0) return null;
+
+    return {
+      id: Date.now(),
+      name: t("stopwatch"),
+      date: this.isRunning ? Date.now() : this.pauseTime || Date.now(),
+      totalTime: this.elapsedTime,
+      laps: this._buildSessionLapsForSave(),
+    };
+  },
+
+  async shareSessionWithChoice(session) {
+    const payload = shareResults.buildStopwatchPayload(session, {
+      showMs: uiSettingsManager.showMs,
+    });
+
+    const choice = window.prompt(t("share_choose_mode"), "1");
+    if (choice === null) return;
+
+    if (choice.trim() === "2") {
+      await shareResults.shareAsFile(payload, { format: "csv" });
+      return;
+    }
+
+    await shareResults.shareAsText(payload);
+  },
+
+  async shareCurrentResult() {
+    const session = this.getCurrentSessionForShare();
+    if (!session) return;
+    await this.shareSessionWithChoice(session);
+  },
+
+  async shareSavedSession(id) {
+    const session = this.savedSessions.find((s) => s.id === id);
+    if (!session) return;
+    await this.shareSessionWithChoice(session);
+  },
+
+  prepareSaveSession() {
+    if (this.laps.length === 0 && this.elapsedTime === 0) return;
+
     const defaultName = getUniqueName(
       t("stopwatch"),
       this.savedSessions,
@@ -407,13 +517,15 @@ const stopwatchModule = {
     const completionTime = this.isRunning
       ? Date.now()
       : this.pauseTime || Date.now();
+
     const pendingSession = {
       id: Date.now(),
       name: "",
       date: completionTime,
       totalTime: this.elapsedTime,
-      laps: sessionLaps,
+      laps: this._buildSessionLapsForSave(),
     };
+
     modalManager.open("sw-name-modal", {
       action: "save",
       name: defaultName,
@@ -424,6 +536,7 @@ const stopwatchModule = {
   prepareRenameSession(id) {
     const session = this.savedSessions.find((s) => s.id === id);
     if (!session) return;
+
     modalManager.open("sw-name-modal", {
       action: "rename",
       name: session.name,
@@ -434,10 +547,12 @@ const stopwatchModule = {
   prepareNameForm(data) {
     this.nameModalState = { ...data };
     this.els.nameError?.classList.add("hidden");
+
     updateText(
       this.els.nameTitle,
       data.action === "rename" ? t("rename") : t("session_name"),
     );
+
     this.els.nameInput.value = data.name;
     this.els.nameInput.placeholder = data.name;
     setTimeout(() => this.els.nameInput?.focus(), 100);
@@ -465,6 +580,7 @@ const stopwatchModule = {
         (this.nameModalState.action === "save" ||
           s.id !== this.nameModalState.targetId),
     );
+
     if (isDuplicate) {
       this.els.nameError.textContent = t("name_exists");
       this.els.nameError?.classList.remove("hidden");
@@ -475,6 +591,7 @@ const stopwatchModule = {
       );
       return;
     }
+
     if (this.nameModalState.action === "save") {
       const session = this.nameModalState.pendingSession;
       session.name = finalName;
@@ -491,6 +608,7 @@ const stopwatchModule = {
         this.sortSessions(this.currentSort);
       }
     }
+
     modalManager.closeCurrent();
   },
 
@@ -507,6 +625,7 @@ const stopwatchModule = {
     if (this.sortSelect) {
       this.sortSelect.setValue(type, false);
     }
+
     this.savedSessions.sort((a, b) => {
       if (type === "date_desc") return b.date - a.date;
       if (type === "date_asc") return a.date - b.date;
@@ -515,6 +634,7 @@ const stopwatchModule = {
       if (type === "result_fast") return a.totalTime - b.totalTime;
       return 0;
     });
+
     this.renderSavedSessions();
   },
 
@@ -528,6 +648,7 @@ const stopwatchModule = {
     const detailsEl = $(`sw-details-${id}`);
     const iconEl = $(`sw-icon-${id}`);
     if (!detailsEl) return;
+
     if (detailsEl.classList.contains("hidden")) {
       detailsEl.classList.remove("hidden");
       if (iconEl) iconEl.style.transform = "rotate(180deg)";
@@ -570,8 +691,12 @@ const stopwatchModule = {
       const clone = sessionTemplate.content.cloneNode(true);
       const sessionElement = clone.firstElementChild;
       const shouldForceHours = session.totalTime >= 3600000;
+
       const dateObj = new Date(session.date || session.id);
-      const dateStr = `${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+      const dateStr = `${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString(
+        [],
+        { hour: "2-digit", minute: "2-digit" },
+      )}`;
 
       sessionElement.querySelector('[data-template="name"]').textContent =
         session.name;
@@ -583,14 +708,23 @@ const stopwatchModule = {
           forceHours: shouldForceHours,
         });
 
-      sessionElement.querySelector('[data-template-id="header"]').dataset.id =
-        session.id;
-      sessionElement.querySelector(
+      const header = sessionElement.querySelector(
+        '[data-template-id="header"]',
+      );
+      const share = sessionElement.querySelector(
+        '[data-template-id="shareBtn"]',
+      );
+      const rename = sessionElement.querySelector(
         '[data-template-id="renameBtn"]',
-      ).dataset.id = session.id;
-      sessionElement.querySelector(
+      );
+      const del = sessionElement.querySelector(
         '[data-template-id="deleteBtn"]',
-      ).dataset.id = session.id;
+      );
+
+      header.dataset.id = session.id;
+      if (share) share.dataset.id = session.id;
+      if (rename) rename.dataset.id = session.id;
+      if (del) del.dataset.id = session.id;
 
       const detailsEl = sessionElement.querySelector(
         '[data-template-id="details"]',
@@ -599,12 +733,9 @@ const stopwatchModule = {
       detailsEl.id = `sw-details-${session.id}`;
       iconEl.id = `sw-icon-${session.id}`;
 
-      sessionElement.querySelector(
-        '[data-template-id="renameBtn"]',
-      ).textContent = t("rename");
-      sessionElement.querySelector(
-        '[data-template-id="deleteBtn"]',
-      ).textContent = t("delete");
+      if (share) share.textContent = t("share");
+      if (rename) rename.textContent = t("rename");
+      if (del) del.textContent = t("delete");
 
       const lapsContainer = sessionElement.querySelector(
         '[data-template="lapsContainer"]',
@@ -642,11 +773,13 @@ const stopwatchModule = {
 
         lapElement.querySelector('[data-template="lap-index"]').textContent =
           `${t("lap_text")} ${lap.index}`;
+
         lapElement.querySelector('[data-template="lap-total"]').textContent =
           formatTime(lap.total, {
             showMs: uiSettingsManager.showMs,
             forceHours: shouldForceHours,
           });
+
         lapElement.querySelector('[data-template="lap-split"]').textContent =
           formatTime(lap.diff, {
             showMs: uiSettingsManager.showMs,
@@ -658,6 +791,7 @@ const stopwatchModule = {
 
       fragment.appendChild(sessionElement);
     });
+
     this.els.sessionsList.appendChild(fragment);
   },
 };

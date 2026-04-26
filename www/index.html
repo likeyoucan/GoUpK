@@ -246,6 +246,28 @@
                     </button>
                     <button
                       type="button"
+                      id="sw-shareBtn"
+                      class="hidden flex items-center justify-center min-w-[44px] min-h-[44px] app-text-sec hover:primary-text transition-colors focus:outline-none custom-focus rounded-lg"
+                      aria-label="Share Session"
+                    >
+                      <svg
+                        focusable="false"
+                        aria-hidden="true"
+                        class="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        stroke-width="2"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="M8.684 13.342 15.316 9.658M8.684 10.658 15.316 14.342M6 12a2 2 0 1 1 0-.001V12Zm12-4a2 2 0 1 1 0-.001V8Zm0 8a2 2 0 1 1 0-.001V16Z"
+                        ></path>
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
                       id="sw-openResultsBtn"
                       class="flex items-center justify-center min-w-[44px] min-h-[44px] app-text-sec hover:primary-text transition-colors focus:outline-none custom-focus rounded-lg"
                       aria-label="Saved Results"
@@ -1923,6 +1945,12 @@
           data-template-id="details"
         >
           <div class="flex justify-end gap-2 mb-3">
+            <button
+              type="button"
+              class="sw-share-btn px-3 py-1 bg-emerald-500/10 text-emerald-600 rounded-lg text-xs font-bold uppercase tracking-wider active:scale-95 transition-transform"
+              data-i18n="share"
+              data-template-id="shareBtn"
+            ></button>
             <button
               type="button"
               class="sw-rename-btn px-3 py-1 bg-blue-500/10 text-blue-500 rounded-lg text-xs font-bold uppercase tracking-wider active:scale-95 transition-transform"
