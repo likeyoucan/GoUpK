@@ -1306,6 +1306,9 @@ body.hide-nav-labels .nav-btn {
   flex-shrink: 0;
   animation: fadeInScale 0.3s 0.1s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
+.color-picker-wrapper:has('.color-action-btn[data-action="add"]') {
+  border: none;
+}
 
 @layer utilities {
   .transition-ios {
