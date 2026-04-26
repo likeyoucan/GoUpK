@@ -274,6 +274,7 @@ button {
 @media (max-width: 767px) and (orientation: portrait) {
   .view-top-half {
     justify-content: flex-end;
+    row-gap: 8px;
   }
 }
 
