@@ -246,7 +246,7 @@ export const colorManager = {
     btn.dataset.action = action;
     btn.className = isAdd
       ? "color-action-btn w-full h-full inset-0 m-auto flex items-center justify-center rounded-full shadow-lg focus:outline-none custom-focus active:scale-90 transition-all"
-      : "color-action-btn w-7 h-7 flex items-center justify-center rounded-full shadow-lg focus:outline-none custom-focus active:scale-90 transition-all";
+      : "color-action-btn flex items-center justify-center rounded-full shadow-lg focus:outline-none custom-focus active:scale-90 transition-all";
 
     if (isAdd) {
       btn.setAttribute("aria-label", t("add_color"));

@@ -1292,6 +1292,8 @@ body.hide-nav-labels .nav-btn {
 }
 
 .color-action-btn[data-action="delete"] {
+  width: 30px;
+  height: 30px;
   top: -0.75rem;
   left: 50%;
   transform: translateX(-50%);
