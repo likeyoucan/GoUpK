@@ -321,9 +321,8 @@ export function enhanceNativeRange(input) {
   });
 
   // Track click: exactly one input + one change if changed
-  track.addEventListener("click", (e) => {
+  wrap.addEventListener("click", (e) => {
     if (performance.now() < suppressTrackClickUntil) return;
-
     const changed = applyValue(valueFromX(e.clientX), "input");
     if (changed) {
       vibrateIfNeeded();
