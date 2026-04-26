@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- Simple monochrome stopwatch icon for status bar notification -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M9,2h6a1,1 0 1,1 0,2h-6a1,1 0 1,1 0,-2zM12,5a8,8 0 1,1 -8,8a8,8 0 0,1 8,-8zM12,8a1,1 0 0,0 -1,1v3.4a1,1 0 0,0 0.5,0.87l2.5,1.45a1,1 0 1,0 1,-1.73l-2,-1.16V9a1,1 0 0,0 -1,-1zM17.66,4.93a1,1 0 0,1 1.41,0l0.35,0.36a1,1 0 1,1 -1.41,1.41l-0.35,-0.35a1,1 0 0,1 0,-1.42z" />
+</vector>

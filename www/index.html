@@ -1087,6 +1087,27 @@
                     class="flex items-center justify-between p-4 border-t app-border"
                   >
                     <label
+                      for="toggle-foreground-banner"
+                      class="font-medium app-text text-sm cursor-pointer"
+                      data-i18n="show_foreground_banner"
+                      >Show Notification Banner</label
+                    >
+                    <label
+                      class="relative inline-flex items-center cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        id="toggle-foreground-banner"
+                        class="sr-only"
+                      />
+                      <div class="custom-toggle"></div>
+                    </label>
+                  </div>
+
+                  <div
+                    class="flex items-center justify-between p-4 border-t app-border"
+                  >
+                    <label
                       for="toggle-nav-labels"
                       class="font-medium app-text text-sm cursor-pointer"
                       data-i18n="hide_nav_labels"

@@ -5,19 +5,20 @@ import { t } from "./i18n.js?v=VERSION";
 import { sm } from "./sound.js?v=VERSION";
 
 export const uiSettingsManager = {
-  // Состояние
+  // State
   showMs: true,
+  showForegroundBanner: true,
   isAdaptiveBg: true,
   hasVignette: false,
   isLiquidGlass: false,
   hideNavLabels: false,
   vignetteAlpha: 0.2,
-  fontSize: 16, // ДОБАВЛЕНО: Состояние в памяти
+  fontSize: 16,
   ringWidth: 4,
   swMinuteBeep: true,
   lastSliderValues: {},
 
-  // Константы
+  // Constants
   vignetteLevels: [0.1, 0.15, 0.2, 0.25, 0.3],
   vignetteLabels: [
     "vignette_min",
@@ -35,8 +36,8 @@ export const uiSettingsManager = {
   ],
 
   init() {
-    this.applySettings(); // Сначала загружаем состояние
-    this._bindEvents(); // Затем вешаем обработчики
+    this.applySettings();
+    this._bindEvents();
   },
 
   _bindEvents() {
@@ -50,6 +51,13 @@ export const uiSettingsManager = {
         this.showMs = val;
         safeSetLS("app_show_ms", val);
         document.dispatchEvent(new CustomEvent("msChanged"));
+      },
+      "toggle-foreground-banner": (val) => {
+        this.showForegroundBanner = val;
+        safeSetLS("app_show_foreground_banner", val);
+        document.dispatchEvent(
+          new CustomEvent("foregroundNotificationSettingChanged"),
+        );
       },
       "toggle-nav-labels": (val) => {
         this.hideNavLabels = val;
@@ -72,17 +80,15 @@ export const uiSettingsManager = {
         document.dispatchEvent(new CustomEvent("adaptiveBgChanged"));
       },
       "toggle-sw-minute-beep": (val) => {
-        // ДОБАВЛЕНО: обработчик для нового toggle
         this.swMinuteBeep = val;
         safeSetLS("app_sw_minute_beep", val);
       },
     };
 
-    for (const [id, callback] of Object.entries(toggleListeners)) {
+    Object.entries(toggleListeners).forEach(([id, callback]) => {
       $(id)?.addEventListener("change", (e) => callback(e.target.checked));
-    }
+    });
 
-    // Упрощенные обработчики для слайдеров
     $("fontSlider")?.addEventListener("change", (e) => {
       const val = Number(e.target.value);
       this.fontSize = val;
@@ -104,8 +110,8 @@ export const uiSettingsManager = {
     );
 
     $("vignetteSlider")?.addEventListener("change", (e) => {
-      const val = e.target.value;
-      const newAlpha = this.vignetteLevels[val];
+      const idx = Number(e.target.value);
+      const newAlpha = this.vignetteLevels[idx];
       this.vignetteAlpha = newAlpha;
       this.updateVignette();
       this.updateSliderLabel(
@@ -116,7 +122,8 @@ export const uiSettingsManager = {
       safeSetLS("app_vignette_alpha", newAlpha);
     });
     $("vignetteSlider")?.addEventListener("input", (e) => {
-      const newAlpha = this.vignetteLevels[e.target.value];
+      const idx = Number(e.target.value);
+      const newAlpha = this.vignetteLevels[idx];
       this.vignetteAlpha = newAlpha;
       this.updateVignette();
       this.updateSliderLabel(
@@ -128,7 +135,7 @@ export const uiSettingsManager = {
 
     $("vibroSlider")?.addEventListener("change", (e) => {
       const levels = [0.5, 0.75, 1, 1.5, 2];
-      const newLevel = levels[e.target.value] || 1;
+      const newLevel = levels[Number(e.target.value)] || 1;
       sm.vibroLevel = newLevel;
       this.updateSliderLabel("vibroSlider", "vibro-label", this.vibroLabels);
       safeSetLS("app_vibro_level", newLevel);
@@ -136,24 +143,24 @@ export const uiSettingsManager = {
     });
     $("vibroSlider")?.addEventListener("input", (e) => {
       const levels = [0.5, 0.75, 1, 1.5, 2];
-      sm.vibroLevel = levels[e.target.value] || 1;
+      sm.vibroLevel = levels[Number(e.target.value)] || 1;
       this.updateSliderLabel("vibroSlider", "vibro-label", this.vibroLabels);
     });
   },
 
   applySettings() {
-    // --- Читаем из LS и обновляем состояние в памяти ---
     this.isAdaptiveBg = safeGetLS("app_adaptive_bg") !== "false";
     this.hasVignette = safeGetLS("app_vignette") === "true";
     this.isLiquidGlass = safeGetLS("app_liquid_glass") === "true";
     this.hideNavLabels = safeGetLS("app_hide_nav_labels") === "true";
     this.showMs = safeGetLS("app_show_ms") !== "false";
+    this.showForegroundBanner =
+      safeGetLS("app_show_foreground_banner") !== "false";
     this.swMinuteBeep = safeGetLS("app_sw_minute_beep") !== "false";
     this.fontSize = Number(safeGetLS("font_size")) || 16;
     this.ringWidth = Number(safeGetLS("app_ring_width")) || 4;
     this.vignetteAlpha = parseFloat(safeGetLS("app_vignette_alpha")) || 0.2;
 
-    // --- Обновляем UI из состояния в памяти ---
     if ($("toggle-adaptive-bg"))
       $("toggle-adaptive-bg").checked = this.isAdaptiveBg;
     if ($("toggle-vignette")) $("toggle-vignette").checked = this.hasVignette;
@@ -161,24 +168,26 @@ export const uiSettingsManager = {
     if ($("toggle-nav-labels"))
       $("toggle-nav-labels").checked = this.hideNavLabels;
     if ($("toggle-ms")) $("toggle-ms").checked = this.showMs;
+    if ($("toggle-foreground-banner"))
+      $("toggle-foreground-banner").checked = this.showForegroundBanner;
     if ($("toggle-sw-minute-beep"))
       $("toggle-sw-minute-beep").checked = this.swMinuteBeep;
 
     if ($("fontSlider")) $("fontSlider").value = this.fontSize;
     if ($("ringWidthSlider")) $("ringWidthSlider").value = this.ringWidth;
+
     if ($("vignetteSlider")) {
       const closestVignetteIndex = this.vignetteLevels.reduce(
-        (p, c, i) =>
-          Math.abs(c - this.vignetteAlpha) <
-          Math.abs(this.vignetteLevels[p] - this.vignetteAlpha)
-            ? i
-            : p,
+        (prevIdx, curr, idx) =>
+          Math.abs(curr - this.vignetteAlpha) <
+          Math.abs(this.vignetteLevels[prevIdx] - this.vignetteAlpha)
+            ? idx
+            : prevIdx,
         0,
       );
       $("vignetteSlider").value = closestVignetteIndex;
     }
 
-    // --- Применяем все эффекты и стили ---
     this.setFontSize(this.fontSize);
     this.setRingWidth(this.ringWidth);
     this.applyNavLabelsVisibility();
@@ -197,12 +206,13 @@ export const uiSettingsManager = {
       "app_hide_nav_labels",
       "app_ring_width",
       "app_show_ms",
+      "app_show_foreground_banner",
       "app_sw_minute_beep",
     ];
     keys.forEach(safeRemoveLS);
 
-    // СБРОС СОСТОЯНИЯ В ПАМЯТИ
     this.showMs = true;
+    this.showForegroundBanner = true;
     this.isAdaptiveBg = true;
     this.hasVignette = false;
     this.isLiquidGlass = false;
@@ -212,7 +222,7 @@ export const uiSettingsManager = {
     this.ringWidth = 4;
     this.swMinuteBeep = true;
 
-    this.applySettings(); // Применяем дефолты и обновляем UI
+    this.applySettings();
   },
 
   syncSliderUIs() {
@@ -227,40 +237,46 @@ export const uiSettingsManager = {
   },
 
   updateSliderLabel(sliderId, labelId, labelsArray) {
-    const slider = $(sliderId),
-      label = $(labelId);
+    const slider = $(sliderId);
+    const label = $(labelId);
     if (!slider || !label) return;
-    const val = parseInt(slider.value, 10),
-      min = parseFloat(slider.min),
-      max = parseFloat(slider.max);
+
+    const val = parseInt(slider.value, 10);
+    const min = parseFloat(slider.min);
+    const max = parseFloat(slider.max);
+
     label.textContent = t(labelsArray[val] || labelsArray[0]);
+
     const percent = max - min > 0 ? (val - min) / (max - min) : 0;
-    const thumbWidth = 24,
-      trackWidth = slider.offsetWidth;
+    const thumbWidth = 24;
+    const trackWidth = slider.offsetWidth;
     if (trackWidth === 0) return;
+
     const offset = thumbWidth / 2 - percent * thumbWidth;
     label.style.left = `calc(${percent * 100}% + ${offset}px)`;
   },
 
-  // СЕТТЕРЫ ТЕПЕРЬ ТОЛЬКО ПРИМЕНЯЮТ СТИЛИ
-  setFontSize(s) {
-    document.documentElement.style.setProperty("--font-scale", s / 16);
-    if ($("fontSizeDisplay")) $("fontSizeDisplay").textContent = `${s} px`;
+  setFontSize(size) {
+    document.documentElement.style.setProperty("--font-scale", size / 16);
+    if ($("fontSizeDisplay")) $("fontSizeDisplay").textContent = `${size} px`;
   },
 
-  setRingWidth(w) {
-    document.documentElement.style.setProperty("--ring-stroke-width", w);
+  setRingWidth(width) {
+    document.documentElement.style.setProperty("--ring-stroke-width", width);
     if ($("ringWidthDisplay"))
-      $("ringWidthDisplay").textContent = `${w.toFixed(1)} px`;
+      $("ringWidthDisplay").textContent = `${width.toFixed(1)} px`;
   },
 
   updateVignette() {
     const bg = document.querySelector(".app-bg");
     if (!bg) return;
-    const c = $("vignette-depth-container");
-    c?.classList.toggle("hidden", !this.hasVignette);
-    c?.classList.toggle("flex", this.hasVignette);
+
+    const container = $("vignette-depth-container");
+    container?.classList.toggle("hidden", !this.hasVignette);
+    container?.classList.toggle("flex", this.hasVignette);
+
     bg.classList.toggle("has-vignette", this.hasVignette);
+
     if (this.hasVignette) {
       document.documentElement.style.setProperty(
         "--vignette-alpha",
@@ -271,12 +287,11 @@ export const uiSettingsManager = {
   },
 
   updateVibroSliderUI(isEnabled) {
-    const c = $("vibro-level-container");
-    c?.classList.toggle("hidden", !isEnabled);
-    c?.classList.toggle("flex", isEnabled);
-    if (isEnabled) {
-      this.syncSliderUIs();
-    }
+    const container = $("vibro-level-container");
+    container?.classList.toggle("hidden", !isEnabled);
+    container?.classList.toggle("flex", isEnabled);
+
+    if (isEnabled) this.syncSliderUIs();
   },
 
   updateGlass() {

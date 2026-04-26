@@ -1,13 +1,4 @@
-// Файл: www/js/main.js
-
-import {
-  $,
-  showToast,
-  safeRemoveLS,
-  requestWakeLock,
-  releaseWakeLock,
-  formatTime,
-} from "./utils.js?v=VERSION";
+import { $, showToast } from "./utils.js?v=VERSION";
 import { langManager, t } from "./i18n.js?v=VERSION";
 import { themeManager } from "./theme.js?v=VERSION";
 import { navigation } from "./navigation.js?v=VERSION";
@@ -16,9 +7,12 @@ import { tm } from "./timer.js?v=VERSION";
 import { tb } from "./tabata.js?v=VERSION";
 import { sm } from "./sound.js?v=VERSION";
 import { modalManager } from "./modal.js?v=VERSION";
-import { store } from "./store.js?v=VERSION";
 import { initTouchRanges } from "./touch-range.js?v=VERSION";
 import { preload } from "./preload.js?v=VERSION";
+import {
+  initForegroundService,
+  destroyForegroundService,
+} from "./foreground-service.js?v=VERSION";
 
 function injectSVG() {
   const svgs = {
@@ -26,10 +20,12 @@ function injectSVG() {
     tm: "tm-progressRing",
     tb: "tb-progressRing",
   };
+
   document.querySelectorAll("[data-ring]").forEach((container) => {
     const type = container.getAttribute("data-ring");
     const ringId = svgs[type];
     if (!ringId || container.querySelector("svg")) return;
+
     const pointerEventsClass = type === "tm" ? "pointer-events-none" : "";
     const svgHTML = `
       <svg focusable="false" class="w-full h-full transform ${pointerEventsClass}" viewBox="0 0 100 100" aria-hidden="true">
@@ -52,7 +48,9 @@ const modalConfig = [
     type: "bottom-sheet",
     handlerId: "tb-modal-handler",
     onOpen: (data) => tb.prepareEdit(data.idToEdit),
-    onClose: () => (tb.editingWorkoutId = null),
+    onClose: () => {
+      tb.editingWorkoutId = null;
+    },
   },
   { id: "reset-modal", type: "alert", contentId: "reset-modal-content" },
   { id: "sw-clear-modal", type: "alert", contentId: "sw-clear-modal-content" },
@@ -74,11 +72,13 @@ function confirmReset() {
 
 function isInteractiveElement(target) {
   if (!(target instanceof HTMLElement)) return false;
+
   if (
     target.closest('input, textarea, select, button, [contenteditable="true"]')
   ) {
     return true;
   }
+
   if (
     target.closest(
       '[role="button"], [role="option"], [role="listbox"], [role="combobox"], [role="slider"], [role="spinbutton"], [role="switch"]',
@@ -89,6 +89,7 @@ function isInteractiveElement(target) {
   ) {
     return true;
   }
+
   return false;
 }
 
@@ -128,6 +129,11 @@ document.addEventListener("DOMContentLoaded", () => {
   navigation.init();
   modalManager.init(modalConfig);
 
+  initForegroundService();
+  window.addEventListener("beforeunload", () => {
+    destroyForegroundService();
+  });
+
   setupPreloadHide();
 
   $("sw-openResultsBtn")?.addEventListener("click", () =>
@@ -164,9 +170,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.addEventListener("keydown", (e) => {
     const target = e.target instanceof HTMLElement ? e.target : null;
 
-    if (modalManager.hasActiveModal() || isInteractiveElement(target)) {
-      return;
-    }
+    if (modalManager.hasActiveModal() || isInteractiveElement(target)) return;
 
     const view = navigation.activeView;
     if (e.code === "Space") {
@@ -205,75 +209,75 @@ document.addEventListener("DOMContentLoaded", () => {
     console.warn(
       "[main] Swipe elements not found in DOM (#app, #swipe-area-left, #swipe-area-right). Swipe navigation disabled.",
     );
-    return;
-  }
+  } else {
+    const tabs = ["stopwatch", "timer", "tabata", "settings"];
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let isSwipeActive = false;
 
-  const tabs = ["stopwatch", "timer", "tabata", "settings"];
-  let touchStartX = 0,
-    touchStartY = 0,
-    isSwipeActive = false;
+    appContainer.addEventListener(
+      "touchstart",
+      (e) => {
+        if (modalManager.hasActiveModal()) return;
 
-  appContainer.addEventListener(
-    "touchstart",
-    (e) => {
-      if (modalManager.hasActiveModal()) return;
-      const touch = e.touches[0];
-      const x = touch.clientX;
-      const leftRect = swipeAreaLeft.getBoundingClientRect();
-      const rightRect = swipeAreaRight.getBoundingClientRect();
-      if (
-        (x >= leftRect.left && x <= leftRect.right) ||
-        (x >= rightRect.left && x <= rightRect.right)
-      ) {
-        isSwipeActive = true;
-        touchStartX = x;
-        touchStartY = touch.clientY;
-        appContainer.classList.add("is-swiping");
-      }
-    },
-    { passive: true },
-  );
+        const touch = e.touches[0];
+        const x = touch.clientX;
+        const leftRect = swipeAreaLeft.getBoundingClientRect();
+        const rightRect = swipeAreaRight.getBoundingClientRect();
 
-  appContainer.addEventListener(
-    "touchend",
-    (e) => {
-      if (!isSwipeActive) return;
-      const touch = e.changedTouches[0];
-      const deltaX = touch.clientX - touchStartX;
-      const deltaY = touch.clientY - touchStartY;
-      if (Math.abs(deltaX) > 60 && Math.abs(deltaY) < 100) {
-        const currentIdx = tabs.indexOf(navigation.activeView);
-        if (deltaX < 0 && currentIdx < tabs.length - 1) {
-          navigation.switchView(tabs[currentIdx + 1]);
-        } else if (deltaX > 0 && currentIdx > 0) {
-          navigation.switchView(tabs[currentIdx - 1]);
+        if (
+          (x >= leftRect.left && x <= leftRect.right) ||
+          (x >= rightRect.left && x <= rightRect.right)
+        ) {
+          isSwipeActive = true;
+          touchStartX = x;
+          touchStartY = touch.clientY;
+          appContainer.classList.add("is-swiping");
         }
-      }
-      isSwipeActive = false;
-      touchStartX = 0;
-      appContainer.classList.remove("is-swiping");
-    },
-    { passive: true },
-  );
+      },
+      { passive: true },
+    );
 
-  appContainer.addEventListener(
-    "touchcancel",
-    () => {
-      if (isSwipeActive) {
+    appContainer.addEventListener(
+      "touchend",
+      (e) => {
+        if (!isSwipeActive) return;
+
+        const touch = e.changedTouches[0];
+        const deltaX = touch.clientX - touchStartX;
+        const deltaY = touch.clientY - touchStartY;
+
+        if (Math.abs(deltaX) > 60 && Math.abs(deltaY) < 100) {
+          const currentIdx = tabs.indexOf(navigation.activeView);
+          if (deltaX < 0 && currentIdx < tabs.length - 1) {
+            navigation.switchView(tabs[currentIdx + 1]);
+          } else if (deltaX > 0 && currentIdx > 0) {
+            navigation.switchView(tabs[currentIdx - 1]);
+          }
+        }
+
         isSwipeActive = false;
         touchStartX = 0;
         appContainer.classList.remove("is-swiping");
-      }
-    },
-    { passive: true },
-  );
+      },
+      { passive: true },
+    );
+
+    appContainer.addEventListener(
+      "touchcancel",
+      () => {
+        if (isSwipeActive) {
+          isSwipeActive = false;
+          touchStartX = 0;
+          appContainer.classList.remove("is-swiping");
+        }
+      },
+      { passive: true },
+    );
+  }
 
   if (window.Capacitor && window.Capacitor.isNativePlatform()) {
-    const {
-      StatusBar,
-      App,
-      CapacitorAndroidForegroundService: FgService,
-    } = window.Capacitor.Plugins;
+    const { StatusBar, App } = window.Capacitor.Plugins;
 
     if (StatusBar) {
       StatusBar.setOverlaysWebView({ overlay: true }).catch(() => {});
@@ -288,89 +292,6 @@ document.addEventListener("DOMContentLoaded", () => {
           navigation.switchView("stopwatch");
         } else {
           App.minimizeApp();
-        }
-      });
-    }
-
-    if (App && FgService) {
-      let fgInterval = null;
-      let lastNotificationBody = "";
-
-      async function updateForegroundNotification(activeTimer) {
-        let title = "Stopwatch Pro";
-        let body = "Running in background";
-
-        switch (activeTimer) {
-          case "stopwatch":
-            title = "⏱ Stopwatch";
-            body = formatTime(sw.elapsedTime, {
-              showMs: false,
-              forceHours: sw.elapsedTime >= 3600000,
-            });
-            break;
-          case "timer": {
-            title = "⏳ Timer";
-            const remTm = tm.getRemainingTime();
-            body = formatTime(remTm);
-            break;
-          }
-          case "tabata": {
-            const activeName = $("tb-activeName")?.textContent || "Tabata";
-            title = `🏋️ ${activeName}`;
-            const remTb = Math.max(0, tb.phaseEndTime - performance.now());
-            const sTotal = Math.ceil(remTb / 1000);
-            const phaseStr =
-              tb.status === "WORK"
-                ? t("work")
-                : tb.status === "REST"
-                  ? t("rest")
-                  : t("get_ready");
-            body = `${t("round")} ${tb.currentRound}/${tb.rounds} • ${phaseStr}: ${sTotal}s`;
-            break;
-          }
-          default:
-            if (fgInterval) {
-              clearInterval(fgInterval);
-              fgInterval = null;
-            }
-            lastNotificationBody = "";
-            await FgService.stop().catch(() => {});
-            return;
-        }
-
-        if (body === lastNotificationBody) return;
-        lastNotificationBody = body;
-
-        await FgService.start({
-          id: 101,
-          title,
-          body,
-          smallIcon: "ic_stat_name",
-        }).catch(() => {});
-      }
-
-      App.addListener("appStateChange", async ({ isActive }) => {
-        const activeTimer = store.getActiveTimer();
-        const isTimerRunning = !!activeTimer;
-
-        if (!isActive && isTimerRunning) {
-          sm.unlock();
-          requestWakeLock();
-          await updateForegroundNotification(activeTimer);
-          if (!fgInterval) {
-            fgInterval = setInterval(
-              () => updateForegroundNotification(store.getActiveTimer()),
-              1000,
-            );
-          }
-        } else if (isActive) {
-          if (fgInterval) {
-            clearInterval(fgInterval);
-            fgInterval = null;
-          }
-          lastNotificationBody = "";
-          await FgService.stop().catch(() => {});
-          releaseWakeLock();
         }
       });
     }
