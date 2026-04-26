@@ -66,6 +66,9 @@ const modalConfig = [
     id: "sw-share-mode-modal",
     type: "alert",
     contentId: "sw-share-mode-content",
+    onClose: () => {
+      sw.pendingShareSession = null;
+    },
   },
 ];
 

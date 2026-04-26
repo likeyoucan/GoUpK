@@ -1502,7 +1502,8 @@ body.hide-nav-labels .nav-btn {
 /* Модальные окна-алерты, которые появляются с изменением opacity и scale */
 #reset-modal-content,
 #sw-clear-modal-content,
-#sw-name-modal-content {
+#sw-name-modal-content,
+#sw-share-mode-content {
   will-change: transform, opacity;
 }
 
