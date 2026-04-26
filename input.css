@@ -753,6 +753,7 @@ html.dark .app-bg::before {
 #sw-clear-modal,
 #sw-name-modal,
 #sw-share-mode-modal {
+  backdrop-filter: blur(8px);
   background-color: rgba(0, 0, 0, 0.6);
 }
 
