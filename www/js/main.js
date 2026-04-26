@@ -1,3 +1,5 @@
+// // Файл: www/js/main.js
+
 import { $, showToast } from "./utils.js?v=VERSION";
 import { langManager, t } from "./i18n.js?v=VERSION";
 import { themeManager } from "./theme.js?v=VERSION";
