@@ -169,16 +169,16 @@ export const sm = {
       };
 
       this._onVolumeChange = (e) => {
-        if (this.volumePreviewTimer) {
-          clearTimeout(this.volumePreviewTimer);
-          this.volumePreviewTimer = null;
-        }
-
         const prevVolume = this.volume;
         const finalVolume = parseFloat(e.target.value);
         this.volume = finalVolume;
 
         if (finalVolume <= 0) {
+          if (this.volumePreviewTimer) {
+            clearTimeout(this.volumePreviewTimer);
+            this.volumePreviewTimer = null;
+          }
+
           if (prevVolume > 0) {
             this.lastNonZeroVolume = prevVolume;
             safeSetLS("app_volume_last_non_zero", this.lastNonZeroVolume);
@@ -206,8 +206,6 @@ export const sm = {
         } else {
           safeSetLS("app_volume", finalVolume);
         }
-
-        // No immediate extra sound on change to avoid duplicates
       };
 
       volumeSlider.addEventListener("input", this._onVolumeInput);
