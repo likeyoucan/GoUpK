@@ -275,6 +275,7 @@ button {
   #view-stopwatch .view-top-half,
   #view-timer .view-top-half,
   #view-tabata .view-top-half {
+    padding-bottom: 1rem;
     justify-content: flex-end;
     row-gap: 1.5rem;
   }
