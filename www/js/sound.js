@@ -116,6 +116,7 @@ export const sm = {
         volumeSlider.dataset.boundSound = "1";
 
         this._onVolumeInput = (e) => {
+          const prevVolume = this.volume;
           const newVolume = parseFloat(e.target.value);
           const changed = newVolume !== this.volume;
 
@@ -126,18 +127,34 @@ export const sm = {
             display.textContent = Math.round(this.volume * 100) + "%";
           }
 
-          if (newVolume > 0) {
-            this.lastNonZeroVolume = newVolume;
-            safeSetLS("app_volume_last_non_zero", this.lastNonZeroVolume);
-
-            if (!this.soundEnabled) {
-              this.setSoundEnabled(true, {
+          // Если ушли в 0 -> выключаем звук и тумблер
+          if (newVolume <= 0) {
+            if (prevVolume > 0) {
+              this.lastNonZeroVolume = prevVolume;
+              safeSetLS("app_volume_last_non_zero", this.lastNonZeroVolume);
+            }
+            if (this.soundEnabled) {
+              this.setSoundEnabled(false, {
                 persist: true,
                 restoreVolume: false,
               });
             } else {
-              safeSetLS("app_volume", newVolume);
+              safeSetLS("app_volume", 0);
             }
+            return;
+          }
+
+          // Если подняли выше 0 -> включаем звук (если был выключен)
+          this.lastNonZeroVolume = newVolume;
+          safeSetLS("app_volume_last_non_zero", this.lastNonZeroVolume);
+
+          if (!this.soundEnabled) {
+            this.setSoundEnabled(true, {
+              persist: true,
+              restoreVolume: false,
+            });
+          } else {
+            safeSetLS("app_volume", newVolume);
           }
 
           if (!changed || !this.soundEnabled || this.volume <= 0) return;
@@ -155,23 +172,36 @@ export const sm = {
         };
 
         this._onVolumeChange = (e) => {
+          const prevVolume = this.volume;
           const finalVolume = parseFloat(e.target.value);
           this.volume = finalVolume;
 
-          if (finalVolume > 0) {
-            this.lastNonZeroVolume = finalVolume;
-            safeSetLS("app_volume_last_non_zero", this.lastNonZeroVolume);
-
-            if (!this.soundEnabled) {
-              this.setSoundEnabled(true, {
+          if (finalVolume <= 0) {
+            if (prevVolume > 0) {
+              this.lastNonZeroVolume = prevVolume;
+              safeSetLS("app_volume_last_non_zero", this.lastNonZeroVolume);
+            }
+            if (this.soundEnabled) {
+              this.setSoundEnabled(false, {
                 persist: true,
                 restoreVolume: false,
               });
             } else {
-              safeSetLS("app_volume", finalVolume);
+              safeSetLS("app_volume", 0);
             }
+            return;
+          }
+
+          this.lastNonZeroVolume = finalVolume;
+          safeSetLS("app_volume_last_non_zero", this.lastNonZeroVolume);
+
+          if (!this.soundEnabled) {
+            this.setSoundEnabled(true, {
+              persist: true,
+              restoreVolume: false,
+            });
           } else {
-            safeSetLS("app_volume", 0);
+            safeSetLS("app_volume", finalVolume);
           }
         };
 
