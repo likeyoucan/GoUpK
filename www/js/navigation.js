@@ -9,11 +9,16 @@ function prefersReducedMotion() {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
+function stripIds(root) {
+  if (!root) return;
+  if (root.removeAttribute) root.removeAttribute("id");
+  root.querySelectorAll?.("[id]").forEach((el) => el.removeAttribute("id"));
+}
+
 export const navigation = {
   activeView: "stopwatch",
   clockInterval: null,
   isTransitioning: false,
-  transitionToken: 0,
 
   init() {
     this.initClock();
@@ -36,89 +41,84 @@ export const navigation = {
     const fromId = this.activeView;
     const fromEl = $(`view-${fromId}`);
     const toEl = $(`view-${viewId}`);
+    const viewsContainer = $("viewsContainer");
     const appEl = $("app");
 
-    if (!fromEl || !toEl) {
+    if (!fromEl || !toEl || !viewsContainer) {
       this.updateDOM(viewId, { instant: true });
       return true;
     }
 
     this.isTransitioning = true;
-    this.transitionToken += 1;
-    const token = this.transitionToken;
-
     appEl?.classList.add("is-view-transitioning");
 
+    // Удаляем старые snapshot, если вдруг остались
+    viewsContainer
+      .querySelectorAll(".nav-snapshot-layer")
+      .forEach((n) => n.remove());
+
+    // 1) Делаем snapshot прошлого экрана
+    const snapshot = fromEl.cloneNode(true);
+    stripIds(snapshot);
+
+    snapshot.classList.remove(
+      "opacity-0",
+      "pointer-events-none",
+      "z-10",
+      "z-20",
+    );
+    snapshot.classList.add("nav-snapshot-layer");
+    snapshot.setAttribute("aria-hidden", "true");
+    snapshot.setAttribute("inert", "");
+
+    const fromRect = fromEl.getBoundingClientRect();
+    const containerRect = viewsContainer.getBoundingClientRect();
+
+    snapshot.style.left = `${fromRect.left - containerRect.left}px`;
+    snapshot.style.top = `${fromRect.top - containerRect.top}px`;
+    snapshot.style.width = `${fromRect.width}px`;
+    snapshot.style.height = `${fromRect.height}px`;
+    snapshot.style.opacity = "1";
+    snapshot.style.transform = "translateX(0)";
+
+    viewsContainer.appendChild(snapshot);
+
+    // 2) Переключаем реальные экраны сразу в финальное состояние
+    this.updateDOM(viewId, { instant: true });
+
+    // 3) Анимируем только snapshot поверх
     const fromIdx = VIEWS.indexOf(fromId);
     const toIdx = VIEWS.indexOf(viewId);
+    const isSwipe = source === "swipe";
+    const dirForward = toIdx > fromIdx;
 
-    const inClass =
-      source === "swipe"
-        ? toIdx > fromIdx
-          ? "nav-swipe-in-right"
-          : "nav-swipe-in-left"
-        : "nav-tap-in";
+    const duration = isSwipe ? 360 : 260;
+    const easing = "cubic-bezier(0.32, 0.72, 0, 1)";
 
-    this._clearAnimClasses(fromEl);
-    this._clearAnimClasses(toEl);
+    snapshot.style.transition = `transform ${duration}ms ${easing}, opacity ${duration}ms ${easing}`;
 
-    // Текущий экран — база
-    fromEl.classList.remove("opacity-0", "pointer-events-none");
-    fromEl.classList.remove("z-20");
-    fromEl.classList.add("z-10");
-    fromEl.removeAttribute("aria-hidden");
-    fromEl.removeAttribute("inert");
-
-    // Входящий экран — поверх
-    toEl.classList.remove("opacity-0", "pointer-events-none");
-    toEl.classList.remove("z-10");
-    toEl.classList.add("z-20", "nav-anim-layer", inClass);
-    toEl.removeAttribute("aria-hidden");
-    toEl.removeAttribute("inert");
-
-    this.updateIcons(viewId);
-
-    const finish = () => {
-      // Защита от устаревшего callback
-      if (token !== this.transitionToken) return;
-
-      this._clearAnimClasses(fromEl);
-      this._clearAnimClasses(toEl);
-
-      // Старый сразу убираем
-      fromEl.classList.add("opacity-0", "pointer-events-none");
-      fromEl.classList.remove("z-10", "z-20");
-      fromEl.setAttribute("aria-hidden", "true");
-      fromEl.setAttribute("inert", "");
-
-      // Новый становится активным штатным слоем
-      toEl.classList.remove("opacity-0", "pointer-events-none", "z-20");
-      toEl.classList.add("z-10");
-      toEl.removeAttribute("aria-hidden");
-      toEl.removeAttribute("inert");
-
-      this.activeView = viewId;
-
-      if (viewId === "settings") {
-        themeManager.syncSliderUIs();
+    requestAnimationFrame(() => {
+      if (!isSwipe) {
+        // tap: просто затухание старого snapshot
+        snapshot.style.opacity = "0";
+      } else {
+        // swipe: сдвиг старого snapshot, новый уже под ним
+        snapshot.style.transform = `translateX(${dirForward ? "-22%" : "22%"})`;
+        snapshot.style.opacity = "0.985";
       }
+    });
 
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      snapshot.remove();
       this.isTransitioning = false;
       appEl?.classList.remove("is-view-transitioning");
     };
 
-    let done = false;
-    const onDone = () => {
-      if (done) return;
-      done = true;
-      toEl.removeEventListener("animationend", onDone);
-      finish();
-    };
-
-    toEl.addEventListener("animationend", onDone, { once: true });
-
-    // Fallback на случай, если animationend не придет
-    setTimeout(onDone, source === "swipe" ? 420 : 340);
+    snapshot.addEventListener("transitionend", finish, { once: true });
+    setTimeout(finish, duration + 80);
 
     return true;
   },
@@ -131,10 +131,8 @@ export const navigation = {
       const el = $(`view-${id}`);
       if (!el) return;
 
-      this._clearAnimClasses(el);
-
       if (id === viewId) {
-        el.classList.remove("opacity-0", "pointer-events-none", "z-20");
+        el.classList.remove("opacity-0", "pointer-events-none");
         el.classList.add("z-10");
         el.removeAttribute("aria-hidden");
         el.removeAttribute("inert");
@@ -154,15 +152,6 @@ export const navigation = {
     if (instant && viewId === "settings") {
       themeManager.syncSliderUIs();
     }
-  },
-
-  _clearAnimClasses(el) {
-    el.classList.remove(
-      "nav-anim-layer",
-      "nav-tap-in",
-      "nav-swipe-in-right",
-      "nav-swipe-in-left",
-    );
   },
 
   updateIcons(activeId) {
