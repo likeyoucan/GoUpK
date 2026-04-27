@@ -4,9 +4,12 @@ import { $ } from "./utils.js?v=VERSION";
 import { themeManager } from "./theme.js?v=VERSION";
 
 const VIEWS = ["stopwatch", "timer", "tabata", "settings"];
-const CLASS_FORWARD = "js-nav-forward";
-const CLASS_BACKWARD = "js-nav-backward";
-const CLASS_TAP = "js-nav-tap";
+
+const ANIM = {
+  tap: { out: "nav-fade-out", in: "nav-fade-in", dur: 280 },
+  swipeForward: { out: "nav-slide-out-left", in: "nav-slide-in-right", dur: 360 },
+  swipeBackward: { out: "nav-slide-out-right", in: "nav-slide-in-left", dur: 360 },
+};
 
 function prefersReducedMotion() {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -19,8 +22,8 @@ export const navigation = {
 
   init() {
     this.initClock();
+    this.updateDOM(this.activeView, { instant: true });
     this.updateIcons(this.activeView);
-    this.updateDOM(this.activeView);
   },
 
   switchView(viewId, options = {}) {
@@ -30,63 +33,99 @@ export const navigation = {
     if (this.activeView === viewId) return false;
     if (this.isTransitioning) return false;
 
-    const html = document.documentElement;
-    const appEl = $("app");
-
-    const fromIdx = VIEWS.indexOf(this.activeView);
-    const toIdx = VIEWS.indexOf(viewId);
-
-    html.classList.remove(CLASS_FORWARD, CLASS_BACKWARD, CLASS_TAP);
-
-    if (source === "swipe") {
-      if (toIdx > fromIdx) html.classList.add(CLASS_FORWARD);
-      else html.classList.add(CLASS_BACKWARD);
-    } else {
-      html.classList.add(CLASS_TAP);
+    if (prefersReducedMotion()) {
+      this.updateDOM(viewId, { instant: true });
+      return true;
     }
 
-    const commit = () => {
-      this.updateDOM(viewId);
-    };
+    const fromId = this.activeView;
+    const fromEl = $(`view-${fromId}`);
+    const toEl = $(`view-${viewId}`);
+    const appEl = $("app");
 
-    const finish = () => {
-      this.isTransitioning = false;
-      appEl?.classList.remove("is-view-transitioning");
-      html.classList.remove(CLASS_FORWARD, CLASS_BACKWARD, CLASS_TAP);
-    };
+    if (!fromEl || !toEl) {
+      this.updateDOM(viewId, { instant: true });
+      return true;
+    }
 
     this.isTransitioning = true;
     appEl?.classList.add("is-view-transitioning");
 
-    if (document.startViewTransition && !prefersReducedMotion()) {
-      const transition = document.startViewTransition(commit);
-      Promise.resolve(transition.finished)
-        .catch(() => {})
-        .finally(finish);
-    } else {
-      commit();
-      requestAnimationFrame(() => finish());
+    const fromIdx = VIEWS.indexOf(fromId);
+    const toIdx = VIEWS.indexOf(viewId);
+
+    let profile = ANIM.tap;
+    if (source === "swipe") {
+      profile = toIdx > fromIdx ? ANIM.swipeForward : ANIM.swipeBackward;
     }
+
+    this._clearAnimClasses(fromEl);
+    this._clearAnimClasses(toEl);
+
+    // Подготовка следующего экрана
+    toEl.classList.remove("opacity-0", "pointer-events-none");
+    toEl.classList.add("z-10");
+    toEl.removeAttribute("aria-hidden");
+    toEl.removeAttribute("inert");
+
+    // Текущий экран временно оставляем видимым, чтобы проиграть out-анимацию
+    fromEl.classList.remove("opacity-0", "pointer-events-none");
+    fromEl.classList.add("z-10");
+    fromEl.removeAttribute("aria-hidden");
+    fromEl.removeAttribute("inert");
+
+    // Запуск анимаций
+    fromEl.classList.add("nav-anim-current", profile.out);
+    toEl.classList.add("nav-anim-next", profile.in);
+
+    this.updateIcons(viewId);
+
+    const finish = () => {
+      this._clearAnimClasses(fromEl);
+      this._clearAnimClasses(toEl);
+
+      // Финальное состояние: старый скрыт, новый активен
+      fromEl.classList.add("opacity-0", "pointer-events-none");
+      fromEl.classList.remove("z-10");
+      fromEl.setAttribute("aria-hidden", "true");
+      fromEl.setAttribute("inert", "");
+
+      toEl.classList.remove("opacity-0", "pointer-events-none");
+      toEl.classList.add("z-10");
+      toEl.removeAttribute("aria-hidden");
+      toEl.removeAttribute("inert");
+
+      this.activeView = viewId;
+      if (viewId === "settings") {
+        themeManager.syncSliderUIs();
+      }
+
+      this.isTransitioning = false;
+      appEl?.classList.remove("is-view-transitioning");
+    };
+
+    // Надежный финиш без зависимости от animationend
+    setTimeout(finish, profile.dur + 30);
 
     return true;
   },
 
-  updateDOM(viewId) {
+  updateDOM(viewId, options = {}) {
+    const { instant = false } = options;
+
     this.activeView = viewId;
 
     VIEWS.forEach((id) => {
       const el = $(`view-${id}`);
       if (!el) return;
 
+      this._clearAnimClasses(el);
+
       if (id === viewId) {
         el.classList.remove("opacity-0", "pointer-events-none");
         el.classList.add("z-10");
         el.removeAttribute("aria-hidden");
         el.removeAttribute("inert");
-
-        if (id === "settings") {
-          themeManager.syncSliderUIs();
-        }
       } else {
         if (el.contains(document.activeElement)) {
           document.activeElement.blur();
@@ -99,14 +138,29 @@ export const navigation = {
     });
 
     this.updateIcons(viewId);
+
+    if (instant && viewId === "settings") {
+      themeManager.syncSliderUIs();
+    }
+  },
+
+  _clearAnimClasses(el) {
+    el.classList.remove(
+      "nav-anim-current",
+      "nav-anim-next",
+      "nav-fade-out",
+      "nav-fade-in",
+      "nav-slide-out-left",
+      "nav-slide-in-right",
+      "nav-slide-out-right",
+      "nav-slide-in-left",
+    );
   },
 
   updateIcons(activeId) {
     document.querySelectorAll("[data-nav]").forEach((btn) => {
       const id = btn.getAttribute("data-nav");
       const isActive = id === activeId;
-
-      btn.classList.toggle("is-active", isActive);
 
       const iconDiv = btn.querySelector('div[id^="nav-icon-"]');
       const textSpan = btn.querySelector("span[data-i18n]");
