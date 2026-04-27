@@ -72,7 +72,9 @@ export function setupStopwatchSessions(sw) {
     if (sw.laps.length === 0 && sw.elapsedTime === 0) return;
 
     const defaultName = getUniqueName(t("stopwatch"), sw.savedSessions, "name");
-    const completionTime = sw.isRunning ? Date.now() : sw.pauseTime || Date.now();
+    const completionTime = sw.isRunning
+      ? Date.now()
+      : sw.pauseTime || Date.now();
 
     const pendingSession = {
       id: Date.now(),
@@ -127,7 +129,8 @@ export function setupStopwatchSessions(sw) {
     const isDuplicate = sw.savedSessions.some(
       (s) =>
         s.name.toLowerCase() === finalName.toLowerCase() &&
-        (sw.nameModalState.action === "save" || s.id !== sw.nameModalState.targetId),
+        (sw.nameModalState.action === "save" ||
+          s.id !== sw.nameModalState.targetId),
     );
 
     if (isDuplicate) {
@@ -145,7 +148,9 @@ export function setupStopwatchSessions(sw) {
       safeSetLS("sw_saved_sessions", JSON.stringify(sw.savedSessions));
       showToast(t("session_saved"));
     } else if (sw.nameModalState.action === "rename") {
-      const session = sw.savedSessions.find((s) => s.id === sw.nameModalState.targetId);
+      const session = sw.savedSessions.find(
+        (s) => s.id === sw.nameModalState.targetId,
+      );
       if (session) {
         session.name = finalName;
         safeSetLS("sw_saved_sessions", JSON.stringify(sw.savedSessions));

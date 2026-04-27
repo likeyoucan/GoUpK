@@ -184,4 +184,73 @@ export function setupStopwatchRender(sw) {
         lapElement.querySelector('[data-template="lap-index"]').textContent =
           `${t("lap_text")} ${lap.index}`;
 
-        lapElement.querySelector('[data-template="lap-total"]').textContent
+        lapElement.querySelector('[data-template="lap-total"]').textContent = formatTime(lap.total, {
+          showMs: uiSettingsManager.showMs,
+          forceHours: shouldForceHours,
+        });
+
+        lapElement.querySelector('[data-template="lap-split"]').textContent = formatTime(lap.diff, {
+          showMs: uiSettingsManager.showMs,
+          forceHours: shouldForceHours,
+        });
+
+        lapsContainer.appendChild(lapElement);
+      });
+
+      fragment.appendChild(sessionElement);
+    });
+
+    sw.els.sessionsList.appendChild(fragment);
+  };
+
+  sw.toggleSessionDetails = (id) => {
+    const detailsEl = $(`sw-details-${id}`);
+    const iconEl = $(`sw-icon-${id}`);
+    if (!detailsEl) return;
+
+    if (detailsEl.classList.contains("hidden")) {
+      detailsEl.classList.remove("hidden");
+      if (iconEl) iconEl.style.transform = "rotate(180deg)";
+    } else {
+      detailsEl.classList.add("hidden");
+      if (iconEl) iconEl.style.transform = "rotate(0deg)";
+    }
+  };
+
+  sw.updateDisplay = () => {
+    const showMs = uiSettingsManager.showMs;
+    const shouldForceHours = sw.elapsedTime >= 3600000;
+
+    const mainDisplayParts = formatTime(sw.elapsedTime, {
+      showMs,
+      forceHours: shouldForceHours,
+    }).split(":");
+
+    const mainDisplayStr = shouldForceHours
+      ? mainDisplayParts.join(":")
+      : mainDisplayParts.slice(-2).join(":");
+
+    updateText(sw.els.display, mainDisplayStr);
+
+    if (sw.els.extendedDisplay) {
+      const extStr = formatTime(sw.elapsedTime, {
+        showDays: true,
+        daySuffix: t("day_short"),
+        hourSuffix: t("hour_short"),
+      });
+
+      if (extStr) {
+        updateText(sw.els.extendedDisplay, extStr);
+        sw.els.extendedDisplay.classList.remove("hidden");
+      } else {
+        sw.els.extendedDisplay.classList.add("hidden");
+      }
+    }
+
+    const appEl = $("app");
+    if (sw.els.ring && !appEl?.classList.contains("is-view-transitioning")) {
+      sw.els.ring.style.strokeDashoffset =
+        sw.ringLength - ((sw.elapsedTime % 60000) / 60000) * sw.ringLength;
+    }
+  };
+}

@@ -39,9 +39,7 @@ export function bindUiInteractions({
     bindKeyboardShortcuts({ navigation, modalManager, sw, tm, tb }),
   );
 
-  unbinders.push(
-    bindBottomNav({ navigation, modalManager, sm }),
-  );
+  unbinders.push(bindBottomNav({ navigation, modalManager, sm }));
 
   unbinders.push(
     bindNavSwipe({
@@ -52,9 +50,7 @@ export function bindUiInteractions({
     }),
   );
 
-  unbinders.push(
-    bindStopwatchDoubleTapLap({ $, sw }),
-  );
+  unbinders.push(bindStopwatchDoubleTapLap({ $, sw }));
 
   return () => {
     unbinders.forEach((fn) => {
