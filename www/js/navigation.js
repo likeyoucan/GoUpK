@@ -13,6 +13,7 @@ export const navigation = {
   activeView: "stopwatch",
   clockInterval: null,
   isTransitioning: false,
+  transitionToken: 0,
 
   init() {
     this.initClock();
@@ -43,6 +44,9 @@ export const navigation = {
     }
 
     this.isTransitioning = true;
+    this.transitionToken += 1;
+    const token = this.transitionToken;
+
     appEl?.classList.add("is-view-transitioning");
 
     const fromIdx = VIEWS.indexOf(fromId);
@@ -55,18 +59,17 @@ export const navigation = {
           : "nav-swipe-in-left"
         : "nav-tap-in";
 
-    const duration = source === "swipe" ? 360 : 280;
-
     this._clearAnimClasses(fromEl);
     this._clearAnimClasses(toEl);
 
-    // Текущий экран оставляем как "подложку"
+    // Текущий экран — база
     fromEl.classList.remove("opacity-0", "pointer-events-none");
+    fromEl.classList.remove("z-20");
     fromEl.classList.add("z-10");
     fromEl.removeAttribute("aria-hidden");
     fromEl.removeAttribute("inert");
 
-    // Новый экран выводим поверх и анимируем только его
+    // Входящий экран — поверх
     toEl.classList.remove("opacity-0", "pointer-events-none");
     toEl.classList.remove("z-10");
     toEl.classList.add("z-20", "nav-anim-layer", inClass);
@@ -76,15 +79,19 @@ export const navigation = {
     this.updateIcons(viewId);
 
     const finish = () => {
+      // Защита от устаревшего callback
+      if (token !== this.transitionToken) return;
+
       this._clearAnimClasses(fromEl);
       this._clearAnimClasses(toEl);
 
-      // Финал: скрываем старый, новый делаем обычным активным
+      // Старый сразу убираем
       fromEl.classList.add("opacity-0", "pointer-events-none");
       fromEl.classList.remove("z-10", "z-20");
       fromEl.setAttribute("aria-hidden", "true");
       fromEl.setAttribute("inert", "");
 
+      // Новый становится активным штатным слоем
       toEl.classList.remove("opacity-0", "pointer-events-none", "z-20");
       toEl.classList.add("z-10");
       toEl.removeAttribute("aria-hidden");
@@ -100,7 +107,19 @@ export const navigation = {
       appEl?.classList.remove("is-view-transitioning");
     };
 
-    setTimeout(finish, duration + 30);
+    let done = false;
+    const onDone = () => {
+      if (done) return;
+      done = true;
+      toEl.removeEventListener("animationend", onDone);
+      finish();
+    };
+
+    toEl.addEventListener("animationend", onDone, { once: true });
+
+    // Fallback на случай, если animationend не придет
+    setTimeout(onDone, source === "swipe" ? 420 : 340);
+
     return true;
   },
 
@@ -143,7 +162,6 @@ export const navigation = {
       "nav-tap-in",
       "nav-swipe-in-right",
       "nav-swipe-in-left",
-      "z-20",
     );
   },
 

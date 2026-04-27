@@ -1619,7 +1619,6 @@ body.hide-nav-labels .nav-btn {
   pointer-events: none;
 }
 
-/* Во время перехода убираем локальные transition элементов времени */
 #app.is-view-transitioning .timer-display,
 #app.is-view-transitioning .progress-ring__circle {
   transition: none !important;
@@ -1631,7 +1630,6 @@ body.hide-nav-labels .nav-btn {
   isolation: isolate;
 }
 
-/* Анимируем только верхний входящий экран */
 #viewsContainer > div.nav-anim-layer {
   position: absolute;
   inset: 0;
@@ -1642,37 +1640,23 @@ body.hide-nav-labels .nav-btn {
   will-change: transform, opacity;
 }
 
-/* Tap: плавное появление без смещения */
 @keyframes navTapIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .nav-tap-in {
   animation: navTapIn 280ms cubic-bezier(0.32, 0.72, 0, 1) both;
 }
 
-/* Swipe: слайд входящего экрана */
 @keyframes navSwipeInRight {
-  from {
-    transform: translateX(100%);
-  }
-  to {
-    transform: translateX(0);
-  }
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
 }
 
 @keyframes navSwipeInLeft {
-  from {
-    transform: translateX(-100%);
-  }
-  to {
-    transform: translateX(0);
-  }
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
 }
 
 .nav-swipe-in-right {
