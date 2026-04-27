@@ -1319,6 +1319,16 @@ body.hide-nav-labels .nav-btn {
     color 0.3s;
 }
 
+/* Во время view transition временно блокируем повторные нажатия по навигации */
+#app.is-view-transitioning .nav-btn {
+  pointer-events: none;
+}
+
+/* Более стабильный рендер иконок при цветовых/трансформ-анимациях */
+.nav-btn svg {
+  vector-effect: non-scaling-stroke;
+}
+
 /* 
   Применяем hover-эффекты ТОЛЬКО для устройств с мышью 
   и ТОЛЬКО для НЕАКТИВНЫХ элементов.
@@ -1495,6 +1505,7 @@ body.hide-nav-labels .nav-btn {
 #tb-modal,
 #sw-sessions-modal {
   will-change: transform;
+  user-select: none;
 }
 
 /* Модальные окна-алерты, которые появляются с изменением opacity и scale */

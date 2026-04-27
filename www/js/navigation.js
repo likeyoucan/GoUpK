@@ -3,36 +3,79 @@
 import { $ } from "./utils.js?v=VERSION";
 import { themeManager } from "./theme.js?v=VERSION";
 
+const VIEWS = ["stopwatch", "timer", "tabata", "settings"];
+const DIR_FORWARD = "js-nav-forward";
+const DIR_BACKWARD = "js-nav-backward";
+
+function prefersReducedMotion() {
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
 export const navigation = {
   activeView: "stopwatch",
   clockInterval: null,
+  isTransitioning: false,
 
   init() {
     this.initClock();
+    this.updateIcons(this.activeView);
+    this.updateDOM(this.activeView);
   },
 
   switchView(viewId) {
-    if (this.activeView === viewId) return;
+    if (!VIEWS.includes(viewId)) return false;
+    if (this.activeView === viewId) return false;
+    if (this.isTransitioning) return false;
 
-    if (!document.startViewTransition) {
+    const fromIdx = VIEWS.indexOf(this.activeView);
+    const toIdx = VIEWS.indexOf(viewId);
+
+    const html = document.documentElement;
+    const appEl = $("app");
+
+    html.classList.remove(DIR_FORWARD, DIR_BACKWARD);
+    if (toIdx > fromIdx) html.classList.add(DIR_FORWARD);
+    else html.classList.add(DIR_BACKWARD);
+
+    const commit = () => {
       this.updateDOM(viewId);
+    };
+
+    const finish = () => {
+      this.isTransitioning = false;
+      appEl?.classList.remove("is-view-transitioning");
+      html.classList.remove(DIR_FORWARD, DIR_BACKWARD);
+    };
+
+    this.isTransitioning = true;
+    appEl?.classList.add("is-view-transitioning");
+
+    if (document.startViewTransition && !prefersReducedMotion()) {
+      const transition = document.startViewTransition(commit);
+      Promise.resolve(transition.finished)
+        .catch(() => {})
+        .finally(finish);
     } else {
-      document.startViewTransition(() => {
-        this.updateDOM(viewId);
-      });
+      commit();
+      requestAnimationFrame(() => finish());
     }
+
+    return true;
   },
 
   updateDOM(viewId) {
     this.activeView = viewId;
-    ["stopwatch", "timer", "tabata", "settings"].forEach((id) => {
+
+    VIEWS.forEach((id) => {
       const el = $(`view-${id}`);
       if (!el) return;
+
       if (id === viewId) {
         el.classList.remove("opacity-0", "pointer-events-none");
         el.classList.add("z-10");
         el.removeAttribute("aria-hidden");
         el.removeAttribute("inert");
+
         if (id === "settings") {
           themeManager.syncSliderUIs();
         }
@@ -40,38 +83,35 @@ export const navigation = {
         if (el.contains(document.activeElement)) {
           document.activeElement.blur();
         }
+
         el.classList.add("opacity-0", "pointer-events-none");
         el.classList.remove("z-10");
         el.setAttribute("aria-hidden", "true");
         el.setAttribute("inert", "");
       }
     });
+
     this.updateIcons(viewId);
   },
 
   updateIcons(activeId) {
-    ["stopwatch", "timer", "tabata", "settings"].forEach((id) => {
-      const iconDiv = $(`nav-icon-${id}`);
-      if (!iconDiv) return;
-      const textSpan = iconDiv.nextElementSibling;
-      const iconSvg = iconDiv.querySelector("svg");
+    document.querySelectorAll("[data-nav]").forEach((btn) => {
+      const id = btn.getAttribute("data-nav");
+      const isActive = id === activeId;
 
-      if (id === activeId) {
-        iconDiv.classList.remove("app-text-sec");
-        iconDiv.classList.add("primary-text");
-        if (textSpan) {
-          textSpan.classList.remove("app-text-sec");
-          textSpan.classList.add("primary-text");
-        }
-        if (iconSvg) iconSvg.setAttribute("stroke-width", "2");
-      } else {
-        iconDiv.classList.remove("primary-text");
-        iconDiv.classList.add("app-text-sec");
-        if (textSpan) {
-          textSpan.classList.remove("primary-text");
-          textSpan.classList.add("app-text-sec");
-        }
-        if (iconSvg) iconSvg.setAttribute("stroke-width", "1.5");
+      btn.classList.toggle("is-active", isActive);
+
+      const iconDiv = btn.querySelector('div[id^="nav-icon-"]');
+      const textSpan = btn.querySelector("span[data-i18n]");
+
+      if (iconDiv) {
+        iconDiv.classList.toggle("primary-text", isActive);
+        iconDiv.classList.toggle("app-text-sec", !isActive);
+      }
+
+      if (textSpan) {
+        textSpan.classList.toggle("primary-text", isActive);
+        textSpan.classList.toggle("app-text-sec", !isActive);
       }
     });
   },
@@ -92,6 +132,7 @@ export const navigation = {
       clockEl.textContent =
         now.getSeconds() % 2 === 0 ? `${h}:${m}` : `${h} ${m}`;
     };
+
     update();
     this.clockInterval = setInterval(update, 1000);
   },

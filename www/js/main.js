@@ -140,9 +140,13 @@ document.addEventListener("DOMContentLoaded", () => {
   modalManager.init(modalConfig);
 
   initForegroundService();
-  window.addEventListener("beforeunload", () => {
-    destroyForegroundService();
-  });
+  window.addEventListener(
+    "beforeunload",
+    () => {
+      destroyForegroundService();
+    },
+    { once: true },
+  );
 
   setupPreloadHide();
 
@@ -172,8 +176,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.querySelectorAll("[data-nav]").forEach((btn) => {
     btn.addEventListener("click", (e) => {
-      sm.vibrate(20, "light");
-      navigation.switchView(e.currentTarget.getAttribute("data-nav"));
+      if (modalManager.hasActiveModal()) return;
+
+      const targetView = e.currentTarget.getAttribute("data-nav");
+      if (!targetView || targetView === navigation.activeView) return;
+
+      const switched = navigation.switchView(targetView);
+      if (switched) sm.vibrate(20, "light");
     });
   });
 
@@ -234,6 +243,7 @@ document.addEventListener("DOMContentLoaded", () => {
       "touchstart",
       (e) => {
         if (modalManager.hasActiveModal()) return;
+        if (navigation.isTransitioning) return;
 
         const touch = e.touches[0];
         if (!touch || !isInsideNavArea(touch)) return;
@@ -257,14 +267,12 @@ document.addEventListener("DOMContentLoaded", () => {
         const deltaX = touch.clientX - touchStartX;
         const deltaY = touch.clientY - touchStartY;
 
-        // Активируем перехват только при выраженном горизонтальном жесте.
         if (!isSwipeActive && Math.abs(deltaX) > 14 && Math.abs(deltaY) < 26) {
           isSwipeActive = true;
           appContainer.classList.add("is-swiping");
           return;
         }
 
-        // Вертикальный жест в меню не должен превращаться в свайп экранов.
         if (!isSwipeActive && Math.abs(deltaY) > 26) {
           isSwipeCandidate = false;
         }
@@ -288,6 +296,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (Math.abs(deltaX) > 60 && Math.abs(deltaY) < 100) {
           const currentIdx = tabs.indexOf(navigation.activeView);
+
           if (deltaX < 0 && currentIdx < tabs.length - 1) {
             navigation.switchView(tabs[currentIdx + 1]);
           } else if (deltaX > 0 && currentIdx > 0) {

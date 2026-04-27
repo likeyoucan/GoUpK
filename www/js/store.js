@@ -1,10 +1,18 @@
 // Файл: www/js/store.js
 
-import { safeSetLS, safeGetLS } from "./utils.js?v=VERSION";
+import { safeSetLS, safeGetLS, safeRemoveLS } from "./utils.js?v=VERSION";
 
 const storeData = {
   activeTimer: safeGetLS("active_timer") || null,
 };
+
+function emitActiveTimerChanged(value) {
+  document.dispatchEvent(
+    new CustomEvent("activeTimerChanged", {
+      detail: { activeTimer: value },
+    }),
+  );
+}
 
 export const store = {
   activate(timerName) {
@@ -15,13 +23,15 @@ export const store = {
   },
 
   setActiveTimer(timerName) {
-    storeData.activeTimer = timerName;
-    safeSetLS("active_timer", timerName);
-    document.dispatchEvent(
-      new CustomEvent("activeTimerChanged", {
-        detail: { activeTimer: timerName },
-      }),
-    );
+    const next = timerName || null;
+    if (storeData.activeTimer === next) return;
+
+    storeData.activeTimer = next;
+
+    if (next) safeSetLS("active_timer", next);
+    else safeRemoveLS("active_timer");
+
+    emitActiveTimerChanged(next);
   },
 
   getActiveTimer() {
@@ -33,12 +43,6 @@ export const store = {
   },
 
   clearActiveTimer() {
-    storeData.activeTimer = null;
-    safeSetLS("active_timer", "");
-    document.dispatchEvent(
-      new CustomEvent("activeTimerChanged", {
-        detail: { activeTimer: null },
-      }),
-    );
+    this.setActiveTimer(null);
   },
 };
