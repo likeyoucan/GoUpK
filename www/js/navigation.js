@@ -4,8 +4,9 @@ import { $ } from "./utils.js?v=VERSION";
 import { themeManager } from "./theme.js?v=VERSION";
 
 const VIEWS = ["stopwatch", "timer", "tabata", "settings"];
-const DIR_FORWARD = "js-nav-forward";
-const DIR_BACKWARD = "js-nav-backward";
+const CLASS_FORWARD = "js-nav-forward";
+const CLASS_BACKWARD = "js-nav-backward";
+const CLASS_TAP = "js-nav-tap";
 
 function prefersReducedMotion() {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -22,20 +23,29 @@ export const navigation = {
     this.updateDOM(this.activeView);
   },
 
-  switchView(viewId) {
+  switchView(viewId, options = {}) {
+    const { source = "tap" } = options;
+
     if (!VIEWS.includes(viewId)) return false;
     if (this.activeView === viewId) return false;
     if (this.isTransitioning) return false;
 
-    const fromIdx = VIEWS.indexOf(this.activeView);
-    const toIdx = VIEWS.indexOf(viewId);
-
     const html = document.documentElement;
     const appEl = $("app");
 
-    html.classList.remove(DIR_FORWARD, DIR_BACKWARD);
-    if (toIdx > fromIdx) html.classList.add(DIR_FORWARD);
-    else html.classList.add(DIR_BACKWARD);
+    const fromIdx = VIEWS.indexOf(this.activeView);
+    const toIdx = VIEWS.indexOf(viewId);
+
+    html.classList.remove(CLASS_FORWARD, CLASS_BACKWARD, CLASS_TAP);
+
+    // По тапу: без смещения (fade/scale)
+    // По свайпу: со смещением (left/right slide)
+    if (source === "swipe") {
+      if (toIdx > fromIdx) html.classList.add(CLASS_FORWARD);
+      else html.classList.add(CLASS_BACKWARD);
+    } else {
+      html.classList.add(CLASS_TAP);
+    }
 
     const commit = () => {
       this.updateDOM(viewId);
@@ -44,7 +54,7 @@ export const navigation = {
     const finish = () => {
       this.isTransitioning = false;
       appEl?.classList.remove("is-view-transitioning");
-      html.classList.remove(DIR_FORWARD, DIR_BACKWARD);
+      html.classList.remove(CLASS_FORWARD, CLASS_BACKWARD, CLASS_TAP);
     };
 
     this.isTransitioning = true;

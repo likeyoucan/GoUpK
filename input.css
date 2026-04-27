@@ -1071,12 +1071,10 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
 :root.glass-effect body .tb-workout-row,
 :root.glass-effect body .sw-session-header,
 :root.glass-effect body [id^="sw-details-"] > div:last-child {
-  will-change: backdrop-filter, transform;
-  background-color: color-mix(in srgb, var(--surface-color) 30%, transparent);
-  backdrop-filter: blur(16px) saturate(150%);
+  background-color: color-mix(in srgb, var(--surface-color) 58%, transparent);
   box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.2),
-    0 2px 4px rgba(0, 0, 0, 0.05);
+    inset 0 1px 1px rgba(255, 255, 255, 0.12),
+    0 1px 2px rgba(0, 0, 0, 0.06);
 }
 
 :root.dark.glass-effect body .lap-row,
@@ -1101,50 +1099,101 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
 /* =========================================
    18. АНИМАЦИИ ПЕРЕХОДОВ (VIEW TRANSITIONS)
 ========================================= */
+
+/* Swipe transitions (iOS-like slide) */
 @keyframes slide-in-from-right {
   from {
-    transform: translateX(30%);
-    opacity: 0;
+    transform: translateX(18%);
+    opacity: 0.95;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
   }
 }
 
 @keyframes slide-out-to-left {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
   to {
-    transform: translateX(-30%);
-    opacity: 0;
+    transform: translateX(-18%);
+    opacity: 0.95;
   }
 }
 
 @keyframes slide-in-from-left {
   from {
-    transform: translateX(-30%);
-    opacity: 0;
+    transform: translateX(-18%);
+    opacity: 0.95;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
   }
 }
 
 @keyframes slide-out-to-right {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
   to {
-    transform: translateX(30%);
-    opacity: 0;
+    transform: translateX(18%);
+    opacity: 0.95;
   }
 }
 
-/* Навигация ВПЕРЕД */
+/* Tap transitions (no shift, smooth iOS-style fade/scale) */
+@keyframes tap-old-fade {
+  from {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0px);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.992);
+    filter: blur(0.5px);
+  }
+}
+
+@keyframes tap-new-fade {
+  from {
+    opacity: 0;
+    transform: scale(1.008);
+    filter: blur(0.5px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0px);
+  }
+}
+
+/* Forward swipe */
 html.js-nav-forward::view-transition-old(root) {
-  animation: 450ms cubic-bezier(0.32, 0.72, 0, 1) both slide-out-to-left;
+  animation: 420ms cubic-bezier(0.32, 0.72, 0, 1) both slide-out-to-left;
 }
-
 html.js-nav-forward::view-transition-new(root) {
-  animation: 450ms cubic-bezier(0.32, 0.72, 0, 1) both slide-in-from-right;
+  animation: 420ms cubic-bezier(0.32, 0.72, 0, 1) both slide-in-from-right;
 }
 
-/* Навигация НАЗАД */
+/* Backward swipe */
 html.js-nav-backward::view-transition-old(root) {
-  animation: 450ms cubic-bezier(0.32, 0.72, 0, 1) both slide-out-to-right;
+  animation: 420ms cubic-bezier(0.32, 0.72, 0, 1) both slide-out-to-right;
+}
+html.js-nav-backward::view-transition-new(root) {
+  animation: 420ms cubic-bezier(0.32, 0.72, 0, 1) both slide-in-from-left;
 }
 
-html.js-nav-backward::view-transition-new(root) {
-  animation: 450ms cubic-bezier(0.32, 0.72, 0, 1) both slide-in-from-left;
+/* Tap nav */
+html.js-nav-tap::view-transition-old(root) {
+  animation: 280ms cubic-bezier(0.32, 0.72, 0, 1) both tap-old-fade;
+}
+html.js-nav-tap::view-transition-new(root) {
+  animation: 320ms cubic-bezier(0.32, 0.72, 0, 1) both tap-new-fade;
 }
 
 /* =========================================
@@ -1492,51 +1541,72 @@ body.hide-nav-labels .nav-btn {
   backdrop-filter: blur(10px) saturate(180%);
   border: 1px solid color-mix(in srgb, var(--border-color) 50%, transparent);
 }
+
 /* =========================================
    24. ОПТИМИЗАЦИЯ ПРОИЗВОДИТЕЛЬНОСТИ АНИМАЦИЙ
 ========================================= */
-/*
-  Используем will-change, чтобы подсказать браузеру, какие свойства
-  будут анимироваться. Это позволяет ему вынести элементы на отдельный
-  слой композиции (GPU), что делает анимации более плавными.
-*/
 
-/* Модальные окна-шторки, которые выезжают снизу */
+/* Оставляем will-change только там, где реально идут короткие анимации */
 #tb-modal,
 #sw-sessions-modal {
   will-change: transform;
-  user-select: none;
 }
 
-/* Модальные окна-алерты, которые появляются с изменением opacity и scale */
 #reset-modal-content,
 #sw-clear-modal-content,
 #sw-name-modal-content,
-#sw-share-mode-content {
-  will-change: transform, opacity;
-}
-
-/* Всплывающее уведомление (тост) */
+#sw-share-mode-content,
 #toast {
   will-change: transform, opacity;
 }
 
-/* Иконки в нижней навигации, которые масштабируются при наведении/нажатии */
-.nav-btn > div {
-  will-change: transform;
-}
-
-/* Вспышка при добавлении круга в секундомере */
+/* Снимаем лишнюю нагрузку с навигации и списков */
+.nav-btn > div,
+.custom-select-options,
+.custom-toggle::after,
 #sw-lapFlash {
-  will-change: transform, opacity;
+  will-change: auto;
 }
 
-/* Переключатели (Toggles) */
-.custom-toggle::after {
-  will-change: transform;
+/* Экономим перерисовки больших скролл-контейнеров */
+#sw-lapsContainer,
+#tb-workoutsList,
+#sw-sessionsList {
+  contain: layout paint style;
 }
 
-/* Выпадающие списки */
-.custom-select-options {
-  will-change: transform, opacity;
+/* =========================================
+   25. ADAPTIVE GLASS QUALITY
+========================================= */
+
+/* Упрощенный профиль для слабых устройств */
+:root.glass-lite.glass-effect body #tb-modal,
+:root.glass-lite.glass-effect body #sw-sessions-modal {
+  backdrop-filter: blur(8px) saturate(120%);
+}
+
+:root.glass-lite.glass-effect body nav {
+  backdrop-filter: blur(5px) saturate(120%);
+}
+
+:root.glass-lite.glass-effect body #reset-modal-content,
+:root.glass-lite.glass-effect body #sw-clear-modal-content,
+:root.glass-lite.glass-effect body #sw-name-modal-content,
+:root.glass-lite.glass-effect body #sw-share-mode-content {
+  backdrop-filter: blur(8px) saturate(120%);
+}
+
+:root.glass-lite.glass-effect
+  body
+  .app-surface:not(button):not(.select-wrapper),
+:root.glass-lite.glass-effect body #toast {
+  backdrop-filter: blur(4px) saturate(115%);
+}
+
+/* На lite-профиле всегда без фильтров в длинных списках */
+:root.glass-lite.glass-effect body .lap-row,
+:root.glass-lite.glass-effect body .tb-workout-row,
+:root.glass-lite.glass-effect body .sw-session-header,
+:root.glass-lite.glass-effect body [id^="sw-details-"] > div:last-child {
+  backdrop-filter: none !important;
 }

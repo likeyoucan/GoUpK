@@ -38,6 +38,17 @@ function injectSVG() {
   });
 }
 
+function setupGlassQualityProfile() {
+  const root = document.documentElement;
+
+  const mem = Number(navigator.deviceMemory || 4);
+  const cores = Number(navigator.hardwareConcurrency || 4);
+  const saveData = navigator.connection?.saveData === true;
+
+  const isLowEnd = mem <= 4 || cores <= 4 || saveData;
+  root.classList.toggle("glass-lite", isLowEnd);
+}
+
 const modalConfig = [
   {
     id: "sw-sessions-modal",
@@ -127,6 +138,7 @@ function setupPreloadHide() {
 
 document.addEventListener("DOMContentLoaded", () => {
   preload.show();
+  setupGlassQualityProfile();
 
   injectSVG();
   langManager.init();
@@ -181,7 +193,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const targetView = e.currentTarget.getAttribute("data-nav");
       if (!targetView || targetView === navigation.activeView) return;
 
-      const switched = navigation.switchView(targetView);
+      const switched = navigation.switchView(targetView, { source: "tap" });
       if (switched) sm.vibrate(20, "light");
     });
   });
@@ -298,9 +310,9 @@ document.addEventListener("DOMContentLoaded", () => {
           const currentIdx = tabs.indexOf(navigation.activeView);
 
           if (deltaX < 0 && currentIdx < tabs.length - 1) {
-            navigation.switchView(tabs[currentIdx + 1]);
+            navigation.switchView(tabs[currentIdx + 1], { source: "swipe" });
           } else if (deltaX > 0 && currentIdx > 0) {
-            navigation.switchView(tabs[currentIdx - 1]);
+            navigation.switchView(tabs[currentIdx - 1], { source: "swipe" });
           }
         }
 
@@ -339,7 +351,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (modalManager.hasActiveModal()) {
           modalManager.closeCurrent();
         } else if (navigation.activeView !== "stopwatch") {
-          navigation.switchView("stopwatch");
+          navigation.switchView("stopwatch", { source: "tap" });
         } else {
           App.minimizeApp();
         }
