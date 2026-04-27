@@ -1148,25 +1148,21 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
   from {
     opacity: 1;
     transform: scale(1);
-    filter: blur(0px);
   }
   to {
     opacity: 0;
-    transform: scale(0.992);
-    filter: blur(0.5px);
+    transform: scale(0.995);
   }
 }
 
 @keyframes tap-new-fade {
   from {
     opacity: 0;
-    transform: scale(1.008);
-    filter: blur(0.5px);
+    transform: scale(1.005);
   }
   to {
     opacity: 1;
     transform: scale(1);
-    filter: blur(0px);
   }
 }
 
@@ -1609,4 +1605,25 @@ body.hide-nav-labels .nav-btn {
 :root.glass-lite.glass-effect body .sw-session-header,
 :root.glass-lite.glass-effect body [id^="sw-details-"] > div:last-child {
   backdrop-filter: none !important;
+}
+
+/* Стабилизация рендера колец и view-transition */
+#viewsContainer {
+  isolation: isolate;
+}
+
+#viewsContainer > div {
+  contain: layout paint;
+}
+
+.timer-circle-wrap,
+.timer-circle-wrap svg,
+.progress-ring__circle {
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+/* На время перехода отключаем CSS-transition кольца */
+#app.is-view-transitioning .progress-ring__circle {
+  transition: none !important;
 }

@@ -372,7 +372,12 @@ export const tm = {
     updateText(this.els.display, timeStr);
     updateTitle(timeStr);
 
-    if (this.els.ring && this.totalDuration > 0) {
+    const appEl = $("app");
+    if (
+      this.els.ring &&
+      this.totalDuration > 0 &&
+      !appEl?.classList.contains("is-view-transitioning")
+    ) {
       const elapsed = this.totalDuration - rem;
       const progress = Math.max(0, Math.min(1, elapsed / this.totalDuration));
       this.els.ring.style.strokeDashoffset = this.ringLength * (1 - progress);
