@@ -18,13 +18,9 @@ import {
 
 import { initRingSvg } from "./bootstrap/ring-svg-injector.js?v=VERSION";
 import { applyPerformanceProfile } from "./bootstrap/performance-profile.js?v=VERSION";
-import { bindKeyboardShortcuts } from "./bootstrap/keyboard-shortcuts.js?v=VERSION";
-import { bindBottomNav } from "./bootstrap/navigation-bindings.js?v=VERSION";
-import { bindNavSwipe } from "./bootstrap/navigation-gesture-controller.js?v=VERSION";
 import { bindAppLifecycle } from "./bootstrap/app-lifecycle.js?v=VERSION";
-import { bindModalActions } from "./bootstrap/modal-bindings.js?v=VERSION";
-import { bindStopwatchDoubleTapLap } from "./bootstrap/stopwatch-gestures.js?v=VERSION";
 import { initializeApp } from "./bootstrap/app-init.js?v=VERSION";
+import { bindUiInteractions } from "./bootstrap/ui-interactions.js?v=VERSION";
 
 document.addEventListener("DOMContentLoaded", () => {
   initializeApp({
@@ -49,7 +45,7 @@ document.addEventListener("DOMContentLoaded", () => {
     navigation,
   });
 
-  bindModalActions({
+  bindUiInteractions({
     $,
     showToast,
     t,
@@ -58,19 +54,8 @@ document.addEventListener("DOMContentLoaded", () => {
     sm,
     langManager,
     sw,
+    tm,
     tb,
-  });
-
-  bindKeyboardShortcuts({ navigation, modalManager, sw, tm, tb });
-
-  bindBottomNav({ navigation, modalManager, sm });
-
-  bindNavSwipe({
-    appContainer: $("app"),
-    bottomNav: $("app")?.querySelector("nav"),
     navigation,
-    modalManager,
   });
-
-  bindStopwatchDoubleTapLap({ $, sw });
 });
