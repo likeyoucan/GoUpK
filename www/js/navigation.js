@@ -52,12 +52,11 @@ export const navigation = {
     this.isTransitioning = true;
     appEl?.classList.add("is-view-transitioning");
 
-    // Удаляем старые snapshot, если вдруг остались
+    // Чистим старые snapshot
     viewsContainer
       .querySelectorAll(".nav-snapshot-layer")
       .forEach((n) => n.remove());
 
-    // 1) Делаем snapshot прошлого экрана
     const snapshot = fromEl.cloneNode(true);
     stripIds(snapshot);
 
@@ -71,22 +70,22 @@ export const navigation = {
     snapshot.setAttribute("aria-hidden", "true");
     snapshot.setAttribute("inert", "");
 
-    const fromRect = fromEl.getBoundingClientRect();
-    const containerRect = viewsContainer.getBoundingClientRect();
-
-    snapshot.style.left = `${fromRect.left - containerRect.left}px`;
-    snapshot.style.top = `${fromRect.top - containerRect.top}px`;
-    snapshot.style.width = `${fromRect.width}px`;
-    snapshot.style.height = `${fromRect.height}px`;
+    // КЛЮЧЕВОЕ: всегда на весь контейнер, без rect-вычислений
+    snapshot.style.position = "absolute";
+    snapshot.style.inset = "0";
+    snapshot.style.width = "100%";
+    snapshot.style.height = "100%";
+    snapshot.style.left = "0";
+    snapshot.style.top = "0";
     snapshot.style.opacity = "1";
     snapshot.style.transform = "translateX(0)";
 
     viewsContainer.appendChild(snapshot);
 
-    // 2) Переключаем реальные экраны сразу в финальное состояние
+    // Реальные экраны сразу переключаем в итоговое состояние
     this.updateDOM(viewId, { instant: true });
+    this.updateIcons(viewId);
 
-    // 3) Анимируем только snapshot поверх
     const fromIdx = VIEWS.indexOf(fromId);
     const toIdx = VIEWS.indexOf(viewId);
     const isSwipe = source === "swipe";
@@ -99,12 +98,12 @@ export const navigation = {
 
     requestAnimationFrame(() => {
       if (!isSwipe) {
-        // tap: просто затухание старого snapshot
+        // Тап: просто fade-out старого snapshot
         snapshot.style.opacity = "0";
       } else {
-        // swipe: сдвиг старого snapshot, новый уже под ним
-        snapshot.style.transform = `translateX(${dirForward ? "-22%" : "22%"})`;
-        snapshot.style.opacity = "0.985";
+        // Свайп: сдвиг snapshot в сторону жеста
+        snapshot.style.transform = `translateX(${dirForward ? "-100%" : "100%"})`;
+        snapshot.style.opacity = "1";
       }
     });
 
@@ -115,6 +114,10 @@ export const navigation = {
       snapshot.remove();
       this.isTransitioning = false;
       appEl?.classList.remove("is-view-transitioning");
+
+      if (viewId === "settings") {
+        themeManager.syncSliderUIs();
+      }
     };
 
     snapshot.addEventListener("transitionend", finish, { once: true });
@@ -132,7 +135,7 @@ export const navigation = {
       if (!el) return;
 
       if (id === viewId) {
-        el.classList.remove("opacity-0", "pointer-events-none");
+        el.classList.remove("opacity-0", "pointer-events-none", "z-20");
         el.classList.add("z-10");
         el.removeAttribute("aria-hidden");
         el.removeAttribute("inert");
