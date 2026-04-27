@@ -5,12 +5,6 @@ import { themeManager } from "./theme.js?v=VERSION";
 
 const VIEWS = ["stopwatch", "timer", "tabata", "settings"];
 
-const ANIM = {
-  tap: { out: "nav-fade-out", in: "nav-fade-in", dur: 280 },
-  swipeForward: { out: "nav-slide-out-left", in: "nav-slide-in-right", dur: 360 },
-  swipeBackward: { out: "nav-slide-out-right", in: "nav-slide-in-left", dur: 360 },
-};
-
 function prefersReducedMotion() {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
@@ -54,29 +48,30 @@ export const navigation = {
     const fromIdx = VIEWS.indexOf(fromId);
     const toIdx = VIEWS.indexOf(viewId);
 
-    let profile = ANIM.tap;
-    if (source === "swipe") {
-      profile = toIdx > fromIdx ? ANIM.swipeForward : ANIM.swipeBackward;
-    }
+    const inClass =
+      source === "swipe"
+        ? toIdx > fromIdx
+          ? "nav-swipe-in-right"
+          : "nav-swipe-in-left"
+        : "nav-tap-in";
+
+    const duration = source === "swipe" ? 360 : 280;
 
     this._clearAnimClasses(fromEl);
     this._clearAnimClasses(toEl);
 
-    // Подготовка следующего экрана
-    toEl.classList.remove("opacity-0", "pointer-events-none");
-    toEl.classList.add("z-10");
-    toEl.removeAttribute("aria-hidden");
-    toEl.removeAttribute("inert");
-
-    // Текущий экран временно оставляем видимым, чтобы проиграть out-анимацию
+    // Текущий экран оставляем как "подложку"
     fromEl.classList.remove("opacity-0", "pointer-events-none");
     fromEl.classList.add("z-10");
     fromEl.removeAttribute("aria-hidden");
     fromEl.removeAttribute("inert");
 
-    // Запуск анимаций
-    fromEl.classList.add("nav-anim-current", profile.out);
-    toEl.classList.add("nav-anim-next", profile.in);
+    // Новый экран выводим поверх и анимируем только его
+    toEl.classList.remove("opacity-0", "pointer-events-none");
+    toEl.classList.remove("z-10");
+    toEl.classList.add("z-20", "nav-anim-layer", inClass);
+    toEl.removeAttribute("aria-hidden");
+    toEl.removeAttribute("inert");
 
     this.updateIcons(viewId);
 
@@ -84,18 +79,19 @@ export const navigation = {
       this._clearAnimClasses(fromEl);
       this._clearAnimClasses(toEl);
 
-      // Финальное состояние: старый скрыт, новый активен
+      // Финал: скрываем старый, новый делаем обычным активным
       fromEl.classList.add("opacity-0", "pointer-events-none");
-      fromEl.classList.remove("z-10");
+      fromEl.classList.remove("z-10", "z-20");
       fromEl.setAttribute("aria-hidden", "true");
       fromEl.setAttribute("inert", "");
 
-      toEl.classList.remove("opacity-0", "pointer-events-none");
+      toEl.classList.remove("opacity-0", "pointer-events-none", "z-20");
       toEl.classList.add("z-10");
       toEl.removeAttribute("aria-hidden");
       toEl.removeAttribute("inert");
 
       this.activeView = viewId;
+
       if (viewId === "settings") {
         themeManager.syncSliderUIs();
       }
@@ -104,15 +100,12 @@ export const navigation = {
       appEl?.classList.remove("is-view-transitioning");
     };
 
-    // Надежный финиш без зависимости от animationend
-    setTimeout(finish, profile.dur + 30);
-
+    setTimeout(finish, duration + 30);
     return true;
   },
 
   updateDOM(viewId, options = {}) {
     const { instant = false } = options;
-
     this.activeView = viewId;
 
     VIEWS.forEach((id) => {
@@ -122,7 +115,7 @@ export const navigation = {
       this._clearAnimClasses(el);
 
       if (id === viewId) {
-        el.classList.remove("opacity-0", "pointer-events-none");
+        el.classList.remove("opacity-0", "pointer-events-none", "z-20");
         el.classList.add("z-10");
         el.removeAttribute("aria-hidden");
         el.removeAttribute("inert");
@@ -131,7 +124,7 @@ export const navigation = {
           document.activeElement.blur();
         }
         el.classList.add("opacity-0", "pointer-events-none");
-        el.classList.remove("z-10");
+        el.classList.remove("z-10", "z-20");
         el.setAttribute("aria-hidden", "true");
         el.setAttribute("inert", "");
       }
@@ -146,14 +139,11 @@ export const navigation = {
 
   _clearAnimClasses(el) {
     el.classList.remove(
-      "nav-anim-current",
-      "nav-anim-next",
-      "nav-fade-out",
-      "nav-fade-in",
-      "nav-slide-out-left",
-      "nav-slide-in-right",
-      "nav-slide-out-right",
-      "nav-slide-in-left",
+      "nav-anim-layer",
+      "nav-tap-in",
+      "nav-swipe-in-right",
+      "nav-swipe-in-left",
+      "z-20",
     );
   },
 
