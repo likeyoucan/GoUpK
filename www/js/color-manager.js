@@ -14,6 +14,7 @@ import {
 import { t } from "./i18n.js?v=VERSION";
 import { sm } from "./sound.js?v=VERSION";
 import { themeManager } from "./theme.js?v=VERSION";
+import { APP_EVENTS } from "./constants/events.js?v=VERSION";
 
 const MAX_CUSTOM_COLORS = 50;
 const LONG_PRESS_DURATION = 500;
@@ -60,7 +61,7 @@ export const colorManager = {
       this.customAccentColors =
         JSON.parse(safeGetLS("custom_accent_colors")) || [];
       this.customBgColors = JSON.parse(safeGetLS("custom_bg_colors")) || [];
-    } catch (e) {
+    } catch {
       this.customAccentColors = [];
       this.customBgColors = [];
     }
@@ -78,7 +79,7 @@ export const colorManager = {
 
       picker.addEventListener("change", (e) => {
         document.dispatchEvent(
-          new CustomEvent("colorSelected", {
+          new CustomEvent(APP_EVENTS.COLOR_SELECTED, {
             detail: { type, color: e.target.value, fromPicker: true },
           }),
         );
@@ -94,6 +95,7 @@ export const colorManager = {
         }
       });
     };
+
     setupPickerEvents("accent");
     setupPickerEvents("bg");
   },
@@ -211,10 +213,11 @@ export const colorManager = {
 
       const color = swatchWrapper.dataset.color;
       document.dispatchEvent(
-        new CustomEvent("colorSelected", {
+        new CustomEvent(APP_EVENTS.COLOR_SELECTED, {
           detail: { type, color, fromPicker: false },
         }),
       );
+
       if (swatchWrapper.dataset.custom === "true") {
         this._showActionButton(swatchWrapper, "delete");
       }
@@ -230,8 +233,9 @@ export const colorManager = {
   },
 
   _showActionButton(targetWrapper, action) {
-    if (this.activeActionTarget && this.activeActionTarget !== targetWrapper)
+    if (this.activeActionTarget && this.activeActionTarget !== targetWrapper) {
       this._hideActionButton();
+    }
 
     sm.vibrate(30, "medium");
     this.activeActionTarget = targetWrapper;
@@ -258,16 +262,19 @@ export const colorManager = {
       btn.dataset.color = color;
       btn.append(createSVGIcon("M6 18L18 6M6 6l12 12", ["w-5", "h-5"]));
     }
+
     targetWrapper.append(btn);
   },
 
   _hideActionButton() {
     if (!this.activeActionTarget) return;
+
     const btn = this.activeActionTarget.querySelector(".color-action-btn");
     if (btn) {
       btn.classList.add("is-hiding");
       btn.addEventListener("animationend", () => btn.remove(), { once: true });
     }
+
     this.activeActionTarget = null;
   },
 
@@ -311,14 +318,17 @@ export const colorManager = {
 
     this._hideActionButton();
     sm.vibrate(40, "medium");
+
     customColors.push(newColor);
     safeSetLS(
       isAccent ? "custom_accent_colors" : "custom_bg_colors",
       JSON.stringify(customColors),
     );
+
     this._addColorToDOM(newColor, type);
+
     document.dispatchEvent(
-      new CustomEvent("colorSelected", {
+      new CustomEvent(APP_EVENTS.COLOR_SELECTED, {
         detail: { type, color: newColor, fromPicker: false },
       }),
     );
@@ -327,6 +337,7 @@ export const colorManager = {
   _deleteColor(color, type) {
     sm.vibrate(40, "medium");
     this._hideActionButton();
+
     const isAccent = type === "accent";
     const container = $(
       isAccent ? "accent-colors-container" : "bg-colors-container",
@@ -337,20 +348,24 @@ export const colorManager = {
     if (!wrapper) return;
 
     document.dispatchEvent(
-      new CustomEvent("colorDeleted", { detail: { type, color } }),
+      new CustomEvent(APP_EVENTS.COLOR_DELETED, { detail: { type, color } }),
     );
 
     let removed = false;
+
     const doRemove = () => {
       if (removed) return;
       removed = true;
+
       wrapper.remove();
-      let customColors = isAccent
+
+      const customColors = isAccent
         ? this.customAccentColors
         : this.customBgColors;
       const index = customColors
         .map(normalizeColor)
         .indexOf(normalizeColor(color));
+
       if (index > -1) {
         customColors.splice(index, 1);
         safeSetLS(
@@ -370,15 +385,19 @@ export const colorManager = {
       type === "accent" ? "accent-colors-container" : "bg-colors-container",
     );
     if (!container) return;
+
     container
       .querySelectorAll(".color-swatch-wrapper")
       .forEach((el) => el.remove());
+
     const isAccent = type === "accent";
     const colors = [
       ...(isAccent ? this.standardAccentColors : this.standardBgColors),
       ...(isAccent ? this.customAccentColors : this.customBgColors),
     ];
+
     const picker = container.querySelector(".color-picker-wrapper");
+
     colors.forEach((color) => {
       const isCustom = (
         isAccent ? this.customAccentColors : this.customBgColors
@@ -395,6 +414,7 @@ export const colorManager = {
     wrapper.className = "color-swatch-wrapper relative rounded-full";
     wrapper.dataset.color = color;
     wrapper.dataset.custom = String(isCustom);
+
     const button = document.createElement("button");
     button.type = "button";
     button.className =
@@ -405,11 +425,8 @@ export const colorManager = {
     );
 
     if (color === "default") {
-      if (type === "accent") {
-        button.classList.add("default-accent-btn");
-      } else {
-        button.classList.add("default-bg-btn");
-      }
+      if (type === "accent") button.classList.add("default-accent-btn");
+      else button.classList.add("default-bg-btn");
     } else {
       button.style.backgroundColor = color;
     }
@@ -459,44 +476,48 @@ export const colorManager = {
       }
     }
 
-    if (activeWrapper) {
-      activeWrapper.classList.add(
-        "ring-2",
-        "ring-[var(--primary-color)]",
-        "ring-offset-2",
-        "ring-offset-surface",
-      );
-      if (!activeWrapper.matches(".color-picker-wrapper")) {
-        const isDefault = normalizedColor === "default";
-        let luminance;
+    if (!activeWrapper) return;
 
-        if (isDefault) {
-          const cssVar = type === "accent" ? "--primary-color" : "--bg-color";
-          const currentTheme = themeManager.getCurrentTheme();
-          const defaultVarForTheme =
-            type === "accent"
-              ? getCssVariable(`--default-accent-${currentTheme}`)
-              : getCssVariable(`--default-bg-${currentTheme}`);
-          const currentColor = getCssVariable(cssVar) || defaultVarForTheme;
-          luminance = getLuminance(...Object.values(hexToRGB(currentColor)));
-        } else {
-          luminance = getLuminance(...Object.values(hexToRGB(normalizedColor)));
-        }
-        const iconColor = luminance > 0.5 ? "#1f2937" : "#ffffff";
-        const svgIcon = createSVGIcon("M4.5 12.75l6 6 9-13.5", [
-          "w-5",
-          "h-5",
-          "injected-checkmark",
-        ]);
-        svgIcon.style.color = iconColor;
-        activeWrapper.querySelector(".color-btn")?.append(svgIcon);
+    activeWrapper.classList.add(
+      "ring-2",
+      "ring-[var(--primary-color)]",
+      "ring-offset-2",
+      "ring-offset-surface",
+    );
+
+    if (!activeWrapper.matches(".color-picker-wrapper")) {
+      const isDefault = normalizedColor === "default";
+      let luminance;
+
+      if (isDefault) {
+        const cssVar = type === "accent" ? "--primary-color" : "--bg-color";
+        const currentTheme = themeManager.getCurrentTheme();
+        const defaultVarForTheme =
+          type === "accent"
+            ? getCssVariable(`--default-accent-${currentTheme}`)
+            : getCssVariable(`--default-bg-${currentTheme}`);
+        const currentColor = getCssVariable(cssVar) || defaultVarForTheme;
+        luminance = getLuminance(...Object.values(hexToRGB(currentColor)));
+      } else {
+        luminance = getLuminance(...Object.values(hexToRGB(normalizedColor)));
       }
-      if (doScroll)
-        activeWrapper.scrollIntoView({
-          behavior: "smooth",
-          block: "nearest",
-          inline: "center",
-        });
+
+      const iconColor = luminance > 0.5 ? "#1f2937" : "#ffffff";
+      const svgIcon = createSVGIcon("M4.5 12.75l6 6 9-13.5", [
+        "w-5",
+        "h-5",
+        "injected-checkmark",
+      ]);
+      svgIcon.style.color = iconColor;
+      activeWrapper.querySelector(".color-btn")?.append(svgIcon);
+    }
+
+    if (doScroll) {
+      activeWrapper.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+        inline: "center",
+      });
     }
   },
 

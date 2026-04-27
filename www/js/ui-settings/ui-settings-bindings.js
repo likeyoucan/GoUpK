@@ -2,6 +2,7 @@
 
 import { $, safeSetLS } from "../utils.js?v=VERSION";
 import { sm } from "../sound.js?v=VERSION";
+import { APP_EVENTS } from "../constants/events.js?v=VERSION";
 
 import {
   setFontSize,
@@ -18,8 +19,11 @@ import {
 } from "./ui-settings-apply.js?v=VERSION";
 
 export function bindUiSettingsEvents(state) {
-  document.addEventListener("languageChanged", () => syncSliderUIs(state));
-  document.addEventListener("vibroToggled", (e) =>
+  document.addEventListener(APP_EVENTS.LANGUAGE_CHANGED, () =>
+    syncSliderUIs(state),
+  );
+
+  document.addEventListener(APP_EVENTS.VIBRO_TOGGLED, (e) =>
     updateVibroSliderUI(e.detail.enabled),
   );
 
@@ -27,36 +31,42 @@ export function bindUiSettingsEvents(state) {
     "toggle-ms": (val) => {
       state.showMs = val;
       safeSetLS("app_show_ms", val);
-      document.dispatchEvent(new CustomEvent("msChanged"));
+      document.dispatchEvent(new CustomEvent(APP_EVENTS.MS_CHANGED));
     },
+
     "toggle-foreground-banner": (val) => {
       state.showForegroundBanner = val;
       safeSetLS("app_show_foreground_banner", val);
       document.dispatchEvent(
-        new CustomEvent("foregroundNotificationSettingChanged"),
+        new CustomEvent(APP_EVENTS.FOREGROUND_NOTIFICATION_SETTING_CHANGED),
       );
     },
+
     "toggle-nav-labels": (val) => {
       state.hideNavLabels = val;
       safeSetLS("app_hide_nav_labels", val);
       applyNavLabelsVisibility(state);
     },
+
     "toggle-glass": (val) => {
       state.isLiquidGlass = val;
       safeSetLS("app_liquid_glass", val);
       updateGlass(state);
     },
+
     "toggle-vignette": (val) => {
       state.hasVignette = val;
       safeSetLS("app_vignette", val);
       updateVignette(state);
       if (state.hasVignette) syncSliderUIs(state);
     },
+
     "toggle-adaptive-bg": (val) => {
       state.isAdaptiveBg = val;
       safeSetLS("app_adaptive_bg", val);
-      document.dispatchEvent(new CustomEvent("adaptiveBgChanged"));
+      document.dispatchEvent(new CustomEvent(APP_EVENTS.ADAPTIVE_BG_CHANGED));
     },
+
     "toggle-sw-minute-beep": (val) => {
       state.swMinuteBeep = val;
       safeSetLS("app_sw_minute_beep", val);

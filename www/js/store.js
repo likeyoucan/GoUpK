@@ -1,6 +1,7 @@
 // Файл: www/js/store.js
 
 import { safeSetLS, safeGetLS, safeRemoveLS } from "./utils.js?v=VERSION";
+import { APP_EVENTS } from "./constants/events.js?v=VERSION";
 
 const storeData = {
   activeTimer: safeGetLS("active_timer") || null,
@@ -8,7 +9,7 @@ const storeData = {
 
 function emitActiveTimerChanged(value) {
   document.dispatchEvent(
-    new CustomEvent("activeTimerChanged", {
+    new CustomEvent(APP_EVENTS.ACTIVE_TIMER_CHANGED, {
       detail: { activeTimer: value },
     }),
   );
@@ -17,7 +18,7 @@ function emitActiveTimerChanged(value) {
 export const store = {
   activate(timerName) {
     document.dispatchEvent(
-      new CustomEvent("timerStarted", { detail: timerName }),
+      new CustomEvent(APP_EVENTS.TIMER_STARTED, { detail: timerName }),
     );
     this.setActiveTimer(timerName);
   },

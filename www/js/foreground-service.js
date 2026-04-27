@@ -13,6 +13,7 @@ import { navigation } from "./navigation.js?v=VERSION";
 import { uiSettingsManager } from "./ui-settings.js?v=VERSION";
 import { sm } from "./sound.js?v=VERSION";
 import { t } from "./i18n.js?v=VERSION";
+import { APP_EVENTS } from "./constants/events.js?v=VERSION";
 
 import {
   isNative,
@@ -169,12 +170,18 @@ function bindDocumentEvents() {
   listeners.languageChanged = () => syncNotification();
   listeners.foregroundSettingChanged = () => syncNotification();
 
-  document.addEventListener("activeTimerChanged", listeners.activeTimerChanged);
-  document.addEventListener("timerStarted", listeners.timerStarted);
-  document.addEventListener("msChanged", listeners.msChanged);
-  document.addEventListener("languageChanged", listeners.languageChanged);
   document.addEventListener(
-    "foregroundNotificationSettingChanged",
+    APP_EVENTS.ACTIVE_TIMER_CHANGED,
+    listeners.activeTimerChanged,
+  );
+  document.addEventListener(APP_EVENTS.TIMER_STARTED, listeners.timerStarted);
+  document.addEventListener(APP_EVENTS.MS_CHANGED, listeners.msChanged);
+  document.addEventListener(
+    APP_EVENTS.LANGUAGE_CHANGED,
+    listeners.languageChanged,
+  );
+  document.addEventListener(
+    APP_EVENTS.FOREGROUND_NOTIFICATION_SETTING_CHANGED,
     listeners.foregroundSettingChanged,
   );
 }
@@ -182,22 +189,28 @@ function bindDocumentEvents() {
 function unbindDocumentEvents() {
   if (listeners.activeTimerChanged) {
     document.removeEventListener(
-      "activeTimerChanged",
+      APP_EVENTS.ACTIVE_TIMER_CHANGED,
       listeners.activeTimerChanged,
     );
   }
   if (listeners.timerStarted) {
-    document.removeEventListener("timerStarted", listeners.timerStarted);
+    document.removeEventListener(
+      APP_EVENTS.TIMER_STARTED,
+      listeners.timerStarted,
+    );
   }
   if (listeners.msChanged) {
-    document.removeEventListener("msChanged", listeners.msChanged);
+    document.removeEventListener(APP_EVENTS.MS_CHANGED, listeners.msChanged);
   }
   if (listeners.languageChanged) {
-    document.removeEventListener("languageChanged", listeners.languageChanged);
+    document.removeEventListener(
+      APP_EVENTS.LANGUAGE_CHANGED,
+      listeners.languageChanged,
+    );
   }
   if (listeners.foregroundSettingChanged) {
     document.removeEventListener(
-      "foregroundNotificationSettingChanged",
+      APP_EVENTS.FOREGROUND_NOTIFICATION_SETTING_CHANGED,
       listeners.foregroundSettingChanged,
     );
   }

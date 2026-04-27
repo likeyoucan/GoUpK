@@ -1,6 +1,6 @@
 // Файл: www/js/tabata.js
 
-import { $, adjustVal, formatTime, updateText } from "./utils.js?v=VERSION";
+import { $, adjustVal, formatTime } from "./utils.js?v=VERSION";
 import { sm } from "./sound.js?v=VERSION";
 
 import { setupTabataRender } from "./tabata/tabata-render.js?v=VERSION";

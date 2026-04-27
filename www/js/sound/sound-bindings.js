@@ -1,9 +1,8 @@
 // Файл: www/js/sound/sound-bindings.js
 
-export function bindSoundControls(
-  sm,
-  { $, safeSetLS, CustomSelect, t },
-) {
+import { APP_EVENTS } from "../constants/events.js?v=VERSION";
+
+export function bindSoundControls(sm, { $, safeSetLS, CustomSelect, t }) {
   $("toggle-sound")?.addEventListener("change", (e) => {
     const enabled = e.target.checked;
 
@@ -24,7 +23,7 @@ export function bindSoundControls(
     safeSetLS("app_vibro", sm.vibroEnabled);
 
     document.dispatchEvent(
-      new CustomEvent("vibroToggled", {
+      new CustomEvent(APP_EVENTS.VIBRO_TOGGLED, {
         detail: { enabled: sm.vibroEnabled },
       }),
     );

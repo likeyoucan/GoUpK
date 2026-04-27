@@ -1,6 +1,7 @@
 // Файл: www/js/custom-select.js
 
 import { getCssVariable, hexToRGB, getLuminance } from "./utils.js?v=VERSION";
+import { APP_EVENTS } from "./constants/events.js?v=VERSION";
 
 const activeSelects = new Set();
 const TRANSITION_DURATION = 200;
@@ -86,6 +87,7 @@ export class CustomSelect {
     this.optionsPanel.replaceChildren();
 
     const fragment = document.createDocumentFragment();
+
     this.options.forEach((option, index) => {
       const optionEl = document.createElement("div");
       optionEl.className = "custom-select-option";
@@ -204,6 +206,7 @@ export class CustomSelect {
     });
 
     this.optionsPanel.classList.remove("hidden");
+
     requestAnimationFrame(() => {
       this.optionsPanel.classList.add("is-open");
       this.arrow.style.transform = "rotate(180deg)";
@@ -214,6 +217,7 @@ export class CustomSelect {
         (opt) => opt.value === this.currentValue,
       );
       this.focusedIndex = selectedIdx >= 0 ? selectedIdx : 0;
+
       this.syncAriaActive();
       this.focusCurrentOption();
       this.optionsPanel.focus();
@@ -274,7 +278,6 @@ export class CustomSelect {
     if (!selectedOption) return;
 
     this.currentValue = value;
-
     this.selectedValueEl.replaceChildren(
       document.createTextNode(selectedOption.text),
     );
@@ -299,9 +302,11 @@ export class CustomSelect {
 
   updateSelectedTextColor(selectedEl) {
     if (!selectedEl) return;
+
     const primaryColor = getCssVariable("--primary-color");
     const { r, g, b } = hexToRGB(primaryColor);
     const luminance = getLuminance(r, g, b);
+
     selectedEl.classList.toggle("needs-dark-text", luminance > 0.55);
   }
 }
@@ -312,7 +317,7 @@ document.addEventListener("click", () => {
   });
 });
 
-document.addEventListener("accentColorChanged", () => {
+document.addEventListener(APP_EVENTS.ACCENT_COLOR_CHANGED, () => {
   activeSelects.forEach((s) => {
     const selectedEl = s.optionsPanel.querySelector(".is-selected");
     if (selectedEl) s.updateSelectedTextColor(selectedEl);

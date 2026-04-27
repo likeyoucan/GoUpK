@@ -10,6 +10,7 @@ import {
 import { sm } from "../sound.js?v=VERSION";
 import { t } from "../i18n.js?v=VERSION";
 import { store } from "../store.js?v=VERSION";
+import { APP_EVENTS } from "../constants/events.js?v=VERSION";
 
 function startTimerContext() {
   requestWakeLock();
@@ -149,7 +150,7 @@ export function setupTabataCore(tb) {
     tb.els.startBtn?.addEventListener("click", () => tb.toggle());
     tb.els.stopBtn?.addEventListener("click", () => tb.stop());
 
-    document.addEventListener("timerStarted", (e) => {
+    document.addEventListener(APP_EVENTS.TIMER_STARTED, (e) => {
       if (e.detail !== "tabata" && tb.status !== "STOPPED" && !tb.paused) {
         tb.pause();
       }

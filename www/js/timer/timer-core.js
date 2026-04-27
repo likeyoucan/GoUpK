@@ -1,5 +1,7 @@
 // Файл: www/js/timer/timer-core.js
 
+import { APP_EVENTS } from "../constants/events.js?v=VERSION";
+
 export function setupTimerCore(tm, { showToast, updateText }) {
   tm.getRemainingTime = () => {
     if (!tm.isRunning && !tm.isPaused) return 0;
@@ -91,7 +93,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
   };
 
   tm.bindCoreEvents = () => {
-    document.addEventListener("timerStarted", (e) => {
+    document.addEventListener(APP_EVENTS.TIMER_STARTED, (e) => {
       if (e.detail !== "timer" && tm.isRunning) tm.toggle();
     });
 

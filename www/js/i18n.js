@@ -2,6 +2,7 @@
 
 import { safeGetLS, safeSetLS, safeRemoveLS } from "./utils.js?v=VERSION";
 import { CustomSelect } from "./custom-select.js?v=VERSION";
+import { APP_EVENTS } from "./constants/events.js?v=VERSION";
 
 export const translations = {
   en: {
@@ -295,6 +296,7 @@ export const langManager = {
   setLang(lang, isAuto = false) {
     this.current = lang;
     document.documentElement.lang = lang;
+
     if (!isAuto) {
       safeSetLS("app_lang", lang);
     }
@@ -311,20 +313,23 @@ export const langManager = {
 
     document.querySelectorAll("[data-i18n]").forEach((el) => {
       const newText = t(el.getAttribute("data-i18n"));
+
       if (el.children.length === 0) {
         el.textContent = newText;
         return;
       }
+
       const existingTextNode = Array.from(el.childNodes).find(
         (node) =>
           node.nodeType === Node.TEXT_NODE && node.nodeValue.trim() !== "",
       );
+
       if (existingTextNode) {
         existingTextNode.nodeValue = newText;
       }
     });
 
-    document.dispatchEvent(new CustomEvent("languageChanged"));
+    document.dispatchEvent(new CustomEvent(APP_EVENTS.LANGUAGE_CHANGED));
   },
 };
 
@@ -332,7 +337,7 @@ export function t(key) {
   return (
     (translations[langManager.current] &&
       translations[langManager.current][key]) ||
-    translations["en"][key] ||
+    translations.en[key] ||
     key
   );
 }

@@ -1,5 +1,7 @@
 // Файл: www/js/sound/sound-state.js
 
+import { APP_EVENTS } from "../constants/events.js?v=VERSION";
+
 export function syncVolumeUI(sm, $, value = sm.volume) {
   const volumeSlider = $("volumeSlider");
   if (volumeSlider) volumeSlider.value = String(value);
@@ -158,7 +160,9 @@ export function applySettings(sm, { $, safeGetLS, safeSetLS }) {
   updateVolumeUI($);
 
   document.dispatchEvent(
-    new CustomEvent("vibroToggled", { detail: { enabled: sm.vibroEnabled } }),
+    new CustomEvent(APP_EVENTS.VIBRO_TOGGLED, {
+      detail: { enabled: sm.vibroEnabled },
+    }),
   );
 }
 

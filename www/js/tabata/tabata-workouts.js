@@ -1,8 +1,16 @@
 // Файл: www/js/tabata/tabata-workouts.js
 
-import { $, showToast, updateText, safeSetLS, safeGetLS, getUniqueName } from "../utils.js?v=VERSION";
+import {
+  $,
+  showToast,
+  updateText,
+  safeSetLS,
+  safeGetLS,
+  getUniqueName,
+} from "../utils.js?v=VERSION";
 import { t } from "../i18n.js?v=VERSION";
 import { modalManager } from "../modal.js?v=VERSION";
+import { APP_EVENTS } from "../constants/events.js?v=VERSION";
 
 export function setupTabataWorkouts(tb) {
   tb.prepareEdit = (idToEdit = null) => {
@@ -45,7 +53,9 @@ export function setupTabataWorkouts(tb) {
     }
 
     const exists = tb.workouts.some(
-      (w) => w.name.toLowerCase() === finalName.toLowerCase() && w.id !== tb.editingWorkoutId,
+      (w) =>
+        w.name.toLowerCase() === finalName.toLowerCase() &&
+        w.id !== tb.editingWorkoutId,
     );
 
     if (exists) {
@@ -124,7 +134,9 @@ export function setupTabataWorkouts(tb) {
 
     updateText(tb.els.activeName, w.name);
 
-    const detailsText = `${w.work}${t("sec").toLowerCase()} / ${w.rest}${t("sec").toLowerCase()} • ${w.rounds} ${t("rds")}`;
+    const detailsText = `${w.work}${t("sec").toLowerCase()} / ${w.rest}${t(
+      "sec",
+    ).toLowerCase()} • ${w.rounds} ${t("rds")}`;
     updateText(tb.els.activeDetail, detailsText);
 
     tb.renderList();
@@ -154,16 +166,22 @@ export function setupTabataWorkouts(tb) {
       workoutElement.classList.toggle("shadow-md", isAct);
 
       workoutElement.dataset.id = w.id;
-      workoutElement.querySelector('[data-template-id="editBtn"]').dataset.id = w.id;
-      workoutElement.querySelector('[data-template-id="deleteBtn"]').dataset.id = w.id;
+      workoutElement.querySelector('[data-template-id="editBtn"]').dataset.id =
+        w.id;
+      workoutElement.querySelector(
+        '[data-template-id="deleteBtn"]',
+      ).dataset.id = w.id;
 
       const nameEl = workoutElement.querySelector('[data-template="name"]');
       nameEl.textContent = w.name;
       nameEl.classList.toggle("primary-text", isAct);
       nameEl.classList.toggle("app-text", !isAct);
 
-      const detailsText = `${w.work}${t("sec").toLowerCase()} / ${w.rest}${t("sec").toLowerCase()} • ${w.rounds} ${t("rds")}`;
-      workoutElement.querySelector('[data-template="details"]').textContent = detailsText;
+      const detailsText = `${w.work}${t("sec").toLowerCase()} / ${w.rest}${t(
+        "sec",
+      ).toLowerCase()} • ${w.rounds} ${t("rds")}`;
+      workoutElement.querySelector('[data-template="details"]').textContent =
+        detailsText;
 
       workoutElement
         .querySelector('[data-template-id="editBtn"]')
@@ -221,7 +239,7 @@ export function setupTabataWorkouts(tb) {
       }
     });
 
-    document.addEventListener("languageChanged", () => {
+    document.addEventListener(APP_EVENTS.LANGUAGE_CHANGED, () => {
       tb.renderList();
       if (tb.selectedId) tb.selectWorkout(tb.selectedId);
     });

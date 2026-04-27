@@ -11,6 +11,7 @@ import {
 } from "./utils.js?v=VERSION";
 import { uiSettingsManager } from "./ui-settings.js?v=VERSION";
 import { colorManager } from "./color-manager.js?v=VERSION";
+import { APP_EVENTS } from "./constants/events.js?v=VERSION";
 
 import {
   applyModeToDocument,
@@ -20,7 +21,7 @@ import {
 import { createColorHistory } from "./theme/theme-color-history.js?v=VERSION";
 import {
   applyAccentVars,
-  applyBgTheme,
+  applyBgTheme as applyBgThemeVars,
 } from "./theme/theme-colors.js?v=VERSION";
 
 export const themeManager = {
@@ -50,7 +51,7 @@ export const themeManager = {
       if (this.currentMode === "system") this.setMode("system");
     });
 
-    document.addEventListener("adaptiveBgChanged", () => {
+    document.addEventListener(APP_EVENTS.ADAPTIVE_BG_CHANGED, () => {
       document.body.classList.add("is-updating-theme");
       this.applyBgTheme(this.currentBg);
       requestAnimationFrame(() =>
@@ -58,13 +59,13 @@ export const themeManager = {
       );
     });
 
-    document.addEventListener("colorSelected", (e) => {
+    document.addEventListener(APP_EVENTS.COLOR_SELECTED, (e) => {
       const { type, color, fromPicker } = e.detail;
       if (type === "accent") this.setColor(color, !fromPicker);
       else this.setBgColor(color, !fromPicker);
     });
 
-    document.addEventListener("colorDeleted", (e) => {
+    document.addEventListener(APP_EVENTS.COLOR_DELETED, (e) => {
       const { type, color } = e.detail;
 
       if (type === "accent") {
@@ -187,7 +188,7 @@ export const themeManager = {
       hexToHSL,
     });
 
-    document.dispatchEvent(new CustomEvent("accentColorChanged"));
+    document.dispatchEvent(new CustomEvent(APP_EVENTS.ACCENT_COLOR_CHANGED));
 
     colorManager.updateSelectionUI("accent", hex, doScroll);
     colorManager.syncPickers(this.currentAccent, this.currentBg);
@@ -210,7 +211,7 @@ export const themeManager = {
   },
 
   applyBgTheme(hex) {
-    applyBgTheme({
+    applyBgThemeVars({
       hex,
       uiSettingsManager,
       hexToRGB,

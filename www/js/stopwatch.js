@@ -15,6 +15,7 @@ import { t } from "./i18n.js?v=VERSION";
 import { uiSettingsManager } from "./ui-settings.js?v=VERSION";
 import { store } from "./store.js?v=VERSION";
 import { shareResults } from "./share-results.js?v=VERSION";
+import { APP_EVENTS } from "./constants/events.js?v=VERSION";
 
 import { setupStopwatchRender } from "./stopwatch/stopwatch-render.js?v=VERSION";
 import { setupStopwatchSessions } from "./stopwatch/stopwatch-sessions.js?v=VERSION";
@@ -73,7 +74,7 @@ const stopwatchModule = {
     this.els.lapBtn?.addEventListener("click", () => this.recordLapOrReset());
     this.bindShareButtons();
 
-    document.addEventListener("timerStarted", (e) => {
+    document.addEventListener(APP_EVENTS.TIMER_STARTED, (e) => {
       if (e.detail !== "stopwatch" && this.isRunning) this.toggle();
     });
 
@@ -90,11 +91,11 @@ const stopwatchModule = {
       }
     });
 
-    document.addEventListener("languageChanged", () => {
+    document.addEventListener(APP_EVENTS.LANGUAGE_CHANGED, () => {
       this.onLanguageChangedForSessions();
     });
 
-    document.addEventListener("msChanged", () => {
+    document.addEventListener(APP_EVENTS.MS_CHANGED, () => {
       if (!this.isRunning && this.elapsedTime > 0) this.updateDisplay();
       if (this.laps.length > 0) this.reRenderCurrentLaps();
     });
