@@ -1612,7 +1612,7 @@ body.hide-nav-labels .nav-btn {
 }
 
 /* =========================================
-   26. ULTRA-SAFE NAV TRANSITIONS
+   26. NAV SNAPSHOT TRANSITIONS (STABLE)
 ========================================= */
 
 #viewsContainer {
@@ -1625,49 +1625,19 @@ body.hide-nav-labels .nav-btn {
   pointer-events: none;
 }
 
+/* Во время перехода не дергаем локальные transition */
 #app.is-view-transitioning #viewsContainer > div,
 #app.is-view-transitioning .timer-display,
 #app.is-view-transitioning .progress-ring__circle {
   transition: none !important;
 }
 
-/* Tap animation for target view */
-@keyframes navTapIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-#viewsContainer > div.nav-tap-in {
-  animation: navTapIn 260ms cubic-bezier(0.32, 0.72, 0, 1) both;
-}
-
-/* Solid overlay for swipe (no old-view rendering => no overlap artifacts) */
-.nav-solid-overlay {
+.nav-snapshot-layer {
   position: absolute;
-  inset: 0;
-  z-index: 50;
+  z-index: 40;
   pointer-events: none;
-  background-color: var(--bg-color);
-  transform: translateX(0);
-  opacity: 1;
-  will-change: transform, opacity;
+  overflow: hidden;
   backface-visibility: hidden;
-}
-
-@keyframes navSolidInLeft {
-  from { transform: translateX(0); opacity: 1; }
-  to { transform: translateX(-100%); opacity: 1; }
-}
-
-@keyframes navSolidInRight {
-  from { transform: translateX(0); opacity: 1; }
-  to { transform: translateX(100%); opacity: 1; }
-}
-
-.nav-solid-in-left {
-  animation: navSolidInLeft 360ms cubic-bezier(0.32, 0.72, 0, 1) both;
-}
-
-.nav-solid-in-right {
-  animation: navSolidInRight 360ms cubic-bezier(0.32, 0.72, 0, 1) both;
+  transform: translateZ(0);
+  will-change: transform, opacity;
 }
