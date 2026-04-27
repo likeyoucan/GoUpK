@@ -73,7 +73,6 @@ function buildStopwatchText(payload) {
 
 function buildStopwatchCsv(payload) {
   const rows = [];
-
   rows.push(`sep=${CSV_SEPARATOR}`);
 
   rows.push(
@@ -107,15 +106,17 @@ function makeFilename(payload, ext) {
 
 function isUserShareCancel(error) {
   if (!error) return false;
-
   const name = String(error.name || "").toLowerCase();
   const message = String(error.message || "").toLowerCase();
 
   return (
     name === "aborterror" ||
+    name === "notallowederror" ||
     message.includes("cancel") ||
     message.includes("aborted") ||
-    message.includes("dismissed")
+    message.includes("dismissed") ||
+    message.includes("user aborted") ||
+    message.includes("user cancelled")
   );
 }
 
@@ -153,7 +154,9 @@ export const shareResults = {
           text,
         });
         return true;
-      } catch {}
+      } catch (error) {
+        if (isUserShareCancel(error)) return false;
+      }
     }
 
     const copied = await copyToClipboard(text);
@@ -190,12 +193,7 @@ export const shareResults = {
         });
         return true;
       } catch (error) {
-        // Пользователь отменил отправку: это не ошибка.
-        if (isUserShareCancel(error)) {
-          return false;
-        }
-
-        // Реальный сбой отправки.
+        if (isUserShareCancel(error)) return false;
         showToast(t("share_file_failed"));
         return false;
       }

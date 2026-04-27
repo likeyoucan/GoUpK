@@ -1100,7 +1100,6 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
    18. АНИМАЦИИ ПЕРЕХОДОВ (VIEW TRANSITIONS)
 ========================================= */
 
-/* Swipe transitions (iOS-like slide) */
 @keyframes slide-in-from-right {
   from {
     transform: translateX(18%);
@@ -1145,7 +1144,6 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
   }
 }
 
-/* Tap transitions (no shift, smooth iOS-style fade/scale) */
 @keyframes tap-old-fade {
   from {
     opacity: 1;
@@ -1172,7 +1170,6 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
   }
 }
 
-/* Forward swipe */
 html.js-nav-forward::view-transition-old(root) {
   animation: 420ms cubic-bezier(0.32, 0.72, 0, 1) both slide-out-to-left;
 }
@@ -1180,7 +1177,6 @@ html.js-nav-forward::view-transition-new(root) {
   animation: 420ms cubic-bezier(0.32, 0.72, 0, 1) both slide-in-from-right;
 }
 
-/* Backward swipe */
 html.js-nav-backward::view-transition-old(root) {
   animation: 420ms cubic-bezier(0.32, 0.72, 0, 1) both slide-out-to-right;
 }
@@ -1188,7 +1184,6 @@ html.js-nav-backward::view-transition-new(root) {
   animation: 420ms cubic-bezier(0.32, 0.72, 0, 1) both slide-in-from-left;
 }
 
-/* Tap nav */
 html.js-nav-tap::view-transition-old(root) {
   animation: 280ms cubic-bezier(0.32, 0.72, 0, 1) both tap-old-fade;
 }
@@ -1371,6 +1366,11 @@ body.hide-nav-labels .nav-btn {
 /* Во время view transition временно блокируем повторные нажатия по навигации */
 #app.is-view-transitioning .nav-btn {
   pointer-events: none;
+}
+
+/* снимает дергание от параллельных transition в самих view */
+#app.is-view-transitioning #viewsContainer > div {
+  transition: none !important;
 }
 
 /* Более стабильный рендер иконок при цветовых/трансформ-анимациях */

@@ -38,8 +38,6 @@ export const navigation = {
 
     html.classList.remove(CLASS_FORWARD, CLASS_BACKWARD, CLASS_TAP);
 
-    // По тапу: без смещения (fade/scale)
-    // По свайпу: со смещением (left/right slide)
     if (source === "swipe") {
       if (toIdx > fromIdx) html.classList.add(CLASS_FORWARD);
       else html.classList.add(CLASS_BACKWARD);
@@ -93,7 +91,6 @@ export const navigation = {
         if (el.contains(document.activeElement)) {
           document.activeElement.blur();
         }
-
         el.classList.add("opacity-0", "pointer-events-none");
         el.classList.remove("z-10");
         el.setAttribute("aria-hidden", "true");
