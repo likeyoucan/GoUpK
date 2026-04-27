@@ -319,8 +319,7 @@ const stopwatchModule = {
       }),
     );
 
-    const appEl = $("app");
-    if (this.els.ring && !appEl?.classList.contains("is-view-transitioning")) {
+    if (this.els.ring) {
       this.els.ring.style.strokeDashoffset =
         this.ringLength -
         ((this.elapsedTime % 60000) / 60000) * this.ringLength;

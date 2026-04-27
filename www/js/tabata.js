@@ -546,12 +546,10 @@ export const tb = {
     updateText(this.els.timer, timeStr);
     updateTitle(`${this.status}: ${timeStr}`);
 
-    const appEl = $("app");
-    if (this.els.ring && !appEl?.classList.contains("is-view-transitioning")) {
+    if (this.els.ring)
       this.els.ring.style.strokeDashoffset =
         this.ringLength -
         (Math.max(0, this.phaseDuration - rem) / this.phaseDuration) *
           this.ringLength;
-    }
   },
 };
