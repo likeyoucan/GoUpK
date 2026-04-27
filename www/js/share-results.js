@@ -1,123 +1,24 @@
-// www/js/share-results.js
+// Файл: www/js/share-results.js
 
 import { formatTime, showToast } from "./utils.js?v=VERSION";
 import { t } from "./i18n.js?v=VERSION";
 
-const CSV_SEPARATOR = ";";
+import {
+  buildStopwatchPayload,
+  buildStopwatchText,
+  buildStopwatchCsv,
+  makeFilename,
+} from "./share/share-builders.js?v=VERSION";
 
-function escapeCsv(value) {
-  const str = String(value ?? "");
-  if (str.includes('"') || str.includes(CSV_SEPARATOR) || str.includes("\n")) {
-    return `"${str.replace(/"/g, '""')}"`;
-  }
-  return str;
-}
+import {
+  isUserShareCancel,
+  downloadFile,
+  copyToClipboard,
+} from "./share/share-transport.js?v=VERSION";
 
-function toLocalDateTime(ts) {
-  const d = new Date(ts || Date.now());
-  return `${d.toLocaleDateString()} ${d.toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
-  })}`;
-}
-
-function downloadFile(blob, filename) {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 500);
-}
-
-async function copyToClipboard(text) {
-  try {
-    await navigator.clipboard.writeText(text);
-    return true;
-  } catch {
-    const ta = document.createElement("textarea");
-    ta.value = text;
-    ta.style.position = "fixed";
-    ta.style.opacity = "0";
-    document.body.appendChild(ta);
-    ta.focus();
-    ta.select();
-    let ok = false;
-    try {
-      ok = document.execCommand("copy");
-    } catch {
-      ok = false;
-    }
-    ta.remove();
-    return ok;
-  }
-}
-
-function buildStopwatchText(payload) {
-  const lines = [];
-  lines.push(`Stopwatch Pro - ${t("stopwatch")}`);
-  lines.push(`${t("name")}: ${payload.name}`);
-  lines.push(`${t("date_new")}: ${payload.dateText}`);
-  lines.push(`${t("total_time")}: ${payload.totalTimeText}`);
-  lines.push("");
-  lines.push(`${t("lap_text")}\t${t("total_time")}\t${t("split_time")}`);
-
-  payload.rows.forEach((r) => {
-    lines.push(`${r.index}\t${r.total}\t${r.split}`);
-  });
-
-  return lines.join("\n");
-}
-
-function buildStopwatchCsv(payload) {
-  const rows = [];
-  rows.push(`sep=${CSV_SEPARATOR}`);
-
-  rows.push(
-    [t("lap_text"), t("total_time"), t("split_time")]
-      .map(escapeCsv)
-      .join(CSV_SEPARATOR),
-  );
-
-  payload.rows.forEach((r) => {
-    rows.push([r.index, r.total, r.split].map(escapeCsv).join(CSV_SEPARATOR));
-  });
-
-  const header = [
-    `Stopwatch Pro - ${t("stopwatch")}`,
-    `${t("name")}: ${payload.name}`,
-    `${t("date_new")}: ${payload.dateText}`,
-    `${t("total_time")}: ${payload.totalTimeText}`,
-    "",
-  ];
-
-  return [...header, ...rows].join("\r\n") + "\r\n";
-}
-
-function makeFilename(payload, ext) {
-  const safeName = (payload.name || "stopwatch")
-    .replace(/[\\/:*?"<>|]/g, "_")
-    .trim();
-  const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-  return `${safeName || "stopwatch"}_${stamp}.${ext}`;
-}
-
-function isUserShareCancel(error) {
-  if (!error) return false;
-  const name = String(error.name || "").toLowerCase();
-  const message = String(error.message || "").toLowerCase();
-
-  return (
-    name === "aborterror" ||
-    name === "notallowederror" ||
-    message.includes("cancel") ||
-    message.includes("aborted") ||
-    message.includes("dismissed") ||
-    message.includes("user aborted") ||
-    message.includes("user cancelled")
-  );
+function getShareFileFailedText() {
+  const key = t("share_file_failed");
+  return key === "share_file_failed" ? t("share_failed") : key;
 }
 
 export const shareResults = {
@@ -125,27 +26,12 @@ export const shareResults = {
     return Number(lapsCount) > 0;
   },
 
-  buildStopwatchPayload(session, { showMs = true } = {}) {
-    const forceHours = (session?.totalTime || 0) >= 3600000;
-    const laps = Array.isArray(session?.laps) ? session.laps : [];
-
-    return {
-      name: session?.name || t("stopwatch"),
-      dateText: toLocalDateTime(session?.date || session?.id),
-      totalTimeText: formatTime(session?.totalTime || 0, {
-        showMs,
-        forceHours,
-      }),
-      rows: laps.map((lap) => ({
-        index: `${t("lap_text")} ${lap.index}`,
-        total: formatTime(lap.total, { showMs, forceHours }),
-        split: formatTime(lap.diff, { showMs, forceHours }),
-      })),
-    };
+  buildStopwatchPayload(session, options = {}) {
+    return buildStopwatchPayload(session, formatTime, t, options);
   },
 
   async shareAsText(payload) {
-    const text = buildStopwatchText(payload);
+    const text = buildStopwatchText(payload, t);
 
     if (navigator.share) {
       try {
@@ -171,11 +57,11 @@ export const shareResults = {
 
   async shareAsFile(payload, { format = "csv" } = {}) {
     if (format !== "csv") {
-      showToast(t("share_file_failed"));
+      showToast(getShareFileFailedText());
       return false;
     }
 
-    const csv = buildStopwatchCsv(payload);
+    const csv = buildStopwatchCsv(payload, t);
     const fileName = makeFilename(payload, "csv");
 
     const bom = "\uFEFF";
@@ -194,7 +80,7 @@ export const shareResults = {
         return true;
       } catch (error) {
         if (isUserShareCancel(error)) return false;
-        showToast(t("share_file_failed"));
+        showToast(getShareFileFailedText());
         return false;
       }
     }
@@ -204,7 +90,7 @@ export const shareResults = {
       showToast(t("share_file_saved"));
       return true;
     } catch {
-      showToast(t("share_file_failed"));
+      showToast(getShareFileFailedText());
       return false;
     }
   },

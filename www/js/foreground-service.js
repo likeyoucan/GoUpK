@@ -1,4 +1,4 @@
-// www/js/foreground-service.js
+// Файл: www/js/foreground-service.js
 
 import {
   $,
@@ -9,16 +9,35 @@ import {
 import { sw } from "./stopwatch.js?v=VERSION";
 import { tm } from "./timer.js?v=VERSION";
 import { tb } from "./tabata.js?v=VERSION";
-import { store } from "./store.js?v=VERSION";
 import { navigation } from "./navigation.js?v=VERSION";
 import { uiSettingsManager } from "./ui-settings.js?v=VERSION";
 import { sm } from "./sound.js?v=VERSION";
 import { t } from "./i18n.js?v=VERSION";
 
+import {
+  isNative,
+  getPlugins,
+  ensureNotificationPermission,
+  ensureNotificationChannel,
+  rememberHandle,
+  removeAllHandles,
+  resetPlatformCache,
+} from "./foreground/fg-platform.js?v=VERSION";
+
+import {
+  getForegroundState,
+  buildForegroundPayload,
+} from "./foreground/fg-state.js?v=VERSION";
+
 const FG_ID = 101;
 const ACTION_TOGGLE = 1;
 const POLL_MS = 500;
-const CHANNEL_ID = "stopwatch_channel";
+const CHANNEL = {
+  id: "stopwatch_channel",
+  name: "Stopwatch Pro",
+  description: "Background stopwatch, timer and tabata controls",
+  importance: 3,
+};
 const SMALL_ICON = "ic_stat_name";
 
 let isInitialized = false;
@@ -26,8 +45,6 @@ let appIsActive = true;
 let poller = null;
 let lastSignature = "";
 let isForegroundShown = false;
-let handles = [];
-let pluginsRef = null;
 
 const listeners = {
   appState: null,
@@ -38,143 +55,15 @@ const listeners = {
   foregroundSettingChanged: null,
 };
 
-function isNative() {
-  return !!(window.Capacitor && window.Capacitor.isNativePlatform());
-}
-
-function getPlugins() {
-  if (pluginsRef) return pluginsRef;
-  if (!isNative()) return null;
-
-  const { App, CapacitorAndroidForegroundService: FgService } =
-    window.Capacitor.Plugins || {};
-  if (!App || !FgService) return null;
-
-  const start =
-    FgService.startForegroundService?.bind(FgService) ??
-    FgService.start?.bind(FgService);
-
-  const update =
-    FgService.updateForegroundService?.bind(FgService) ??
-    FgService.update?.bind(FgService) ??
-    start;
-
-  const stop =
-    FgService.stopForegroundService?.bind(FgService) ??
-    FgService.stop?.bind(FgService);
-
-  pluginsRef = { App, FgService, start, update, stop };
-  return pluginsRef;
-}
-
-async function ensureNotificationPermission(FgService) {
-  if (!FgService?.checkPermissions || !FgService?.requestPermissions) return;
-  const status = await FgService.checkPermissions().catch(() => null);
-  if (status?.display !== "granted") {
-    await FgService.requestPermissions().catch(() => {});
-  }
-}
-
-async function ensureNotificationChannel(FgService) {
-  if (!FgService?.createNotificationChannel) return;
-  await FgService.createNotificationChannel({
-    id: CHANNEL_ID,
-    name: "Stopwatch Pro",
-    description: "Background stopwatch, timer and tabata controls",
-    importance: 3, // Importance.Default
-  }).catch(() => {});
-}
-
-function rememberHandle(handlePromise) {
-  handlePromise
-    ?.then((h) => {
-      if (h && typeof h.remove === "function") handles.push(h);
-    })
-    .catch(() => {});
-}
-
-function canResumeStopwatch() {
-  return !sw.isRunning && sw.elapsedTime > 0;
-}
-
-function canResumeTimer() {
-  return tm.isPaused && tm.getRemainingTime() > 0;
-}
-
-function canResumeTabata() {
-  return tb.status !== "STOPPED" && tb.paused;
-}
-
-function isModeAvailable(mode) {
-  if (mode === "stopwatch") return sw.isRunning || canResumeStopwatch();
-  if (mode === "timer") return tm.isRunning || canResumeTimer();
-  if (mode === "tabata") {
-    return (tb.status !== "STOPPED" && !tb.paused) || canResumeTabata();
-  }
-  return false;
-}
-
-function getForegroundState() {
-  if (sw.isRunning) return { mode: "stopwatch", running: true };
-  if (tm.isRunning) return { mode: "timer", running: true };
-  if (tb.status !== "STOPPED" && !tb.paused)
-    return { mode: "tabata", running: true };
-
-  if (isModeAvailable(navigation.activeView)) {
-    return { mode: navigation.activeView, running: false };
-  }
-
-  if (canResumeStopwatch()) return { mode: "stopwatch", running: false };
-  if (canResumeTimer()) return { mode: "timer", running: false };
-  if (canResumeTabata()) return { mode: "tabata", running: false };
-
-  return null;
-}
-
-function buildPayload(state) {
-  const showMs = uiSettingsManager.showMs;
-  const buttonIcon = state.running ? "■" : "▶";
-
-  if (state.mode === "stopwatch") {
-    return {
-      title: t("stopwatch"),
-      body: formatTime(sw.elapsedTime, {
-        showMs,
-        forceHours: sw.elapsedTime >= 3600000,
-      }),
-      buttonTitle: buttonIcon,
-    };
-  }
-
-  if (state.mode === "timer") {
-    const rem = tm.getRemainingTime();
-    return {
-      title: t("timer"),
-      body: formatTime(rem, {
-        showMs: false,
-        forceHours: rem >= 3600000,
-      }),
-      buttonTitle: buttonIcon,
-    };
-  }
-
-  const remTb = state.running
-    ? Math.max(0, tb.phaseEndTime - performance.now())
-    : Math.max(0, tb.remainingAtPause || 0);
-
-  const phaseText = state.running
-    ? tb.status === "WORK"
-      ? t("work")
-      : tb.status === "REST"
-        ? t("rest")
-        : t("get_ready")
-    : t("pause");
-
-  return {
-    title: $("tb-activeName")?.textContent || t("tabata"),
-    body: `${t("round")} ${tb.currentRound}/${tb.rounds} • ${phaseText}: ${formatTime(remTb, { showMs })}`,
-    buttonTitle: buttonIcon,
-  };
+function buildSignature(state, payload) {
+  return [
+    state.mode,
+    state.running ? "1" : "0",
+    payload.title,
+    payload.body,
+    payload.buttonTitle,
+    uiSettingsManager.showMs ? "ms1" : "ms0",
+  ].join("|");
 }
 
 async function stopForeground() {
@@ -195,22 +84,30 @@ export async function syncNotification() {
     return;
   }
 
-  const state = getForegroundState();
+  const state = getForegroundState({
+    sw,
+    tm,
+    tb,
+    activeView: navigation.activeView,
+  });
+
   if (!state) {
     await stopForeground();
     return;
   }
 
-  const payload = buildPayload(state);
-  const signature = [
-    state.mode,
-    state.running ? "1" : "0",
-    payload.title,
-    payload.body,
-    payload.buttonTitle,
-    uiSettingsManager.showMs ? "ms1" : "ms0",
-  ].join("|");
+  const payload = buildForegroundPayload({
+    state,
+    sw,
+    tm,
+    tb,
+    showMs: uiSettingsManager.showMs,
+    t,
+    $,
+    formatTime,
+  });
 
+  const signature = buildSignature(state, payload);
   if (signature === lastSignature) return;
   lastSignature = signature;
 
@@ -219,7 +116,7 @@ export async function syncNotification() {
     title: payload.title,
     body: payload.body,
     smallIcon: SMALL_ICON,
-    notificationChannelId: CHANNEL_ID,
+    notificationChannelId: CHANNEL.id,
     silent: true,
     buttons: [{ id: ACTION_TOGGLE, title: payload.buttonTitle }],
   };
@@ -248,7 +145,12 @@ function stopPolling() {
 }
 
 async function handleNotificationToggle() {
-  const state = getForegroundState();
+  const state = getForegroundState({
+    sw,
+    tm,
+    tb,
+    activeView: navigation.activeView,
+  });
   if (!state) return;
 
   if (state.mode === "stopwatch") sw.toggle();
@@ -318,7 +220,7 @@ export async function initForegroundService() {
   appIsActive = true;
 
   await ensureNotificationPermission(plugins.FgService);
-  await ensureNotificationChannel(plugins.FgService);
+  await ensureNotificationChannel(plugins.FgService, CHANNEL);
 
   bindDocumentEvents();
 
@@ -365,8 +267,9 @@ export async function destroyForegroundService() {
   unbindDocumentEvents();
   await stopForeground();
 
-  await Promise.all(handles.map((h) => h.remove().catch(() => {})));
-  handles = [];
-  pluginsRef = null;
+  await removeAllHandles();
+  resetPlatformCache();
+
   isInitialized = false;
+  appIsActive = true;
 }
