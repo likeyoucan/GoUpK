@@ -9,10 +9,13 @@ function prefersReducedMotion() {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-function stripIds(root) {
-  if (!root) return;
-  if (root.removeAttribute) root.removeAttribute("id");
-  root.querySelectorAll?.("[id]").forEach((el) => el.removeAttribute("id"));
+function createOverlay(direction) {
+  const overlay = document.createElement("div");
+  overlay.className = `nav-solid-overlay ${
+    direction === "left" ? "nav-solid-in-left" : "nav-solid-in-right"
+  }`;
+  overlay.setAttribute("aria-hidden", "true");
+  return overlay;
 }
 
 export const navigation = {
@@ -39,12 +42,9 @@ export const navigation = {
     }
 
     const fromId = this.activeView;
-    const fromEl = $(`view-${fromId}`);
-    const toEl = $(`view-${viewId}`);
     const viewsContainer = $("viewsContainer");
     const appEl = $("app");
-
-    if (!fromEl || !toEl || !viewsContainer) {
+    if (!viewsContainer) {
       this.updateDOM(viewId, { instant: true });
       return true;
     }
@@ -52,66 +52,61 @@ export const navigation = {
     this.isTransitioning = true;
     appEl?.classList.add("is-view-transitioning");
 
-    // Чистим старые snapshot
+    // cleanup старых оверлеев
     viewsContainer
-      .querySelectorAll(".nav-snapshot-layer")
+      .querySelectorAll(".nav-solid-overlay")
       .forEach((n) => n.remove());
 
-    const snapshot = fromEl.cloneNode(true);
-    stripIds(snapshot);
+    if (source === "tap") {
+      // Тап: обычный fade-in нового экрана (быстро и стабильно)
+      const nextEl = $(`view-${viewId}`);
+      if (nextEl) {
+        nextEl.classList.add("nav-tap-in");
+      }
 
-    snapshot.classList.remove(
-      "opacity-0",
-      "pointer-events-none",
-      "z-10",
-      "z-20",
-    );
-    snapshot.classList.add("nav-snapshot-layer");
-    snapshot.setAttribute("aria-hidden", "true");
-    snapshot.setAttribute("inert", "");
+      this.updateDOM(viewId, { instant: true });
 
-    // КЛЮЧЕВОЕ: всегда на весь контейнер, без rect-вычислений
-    snapshot.style.position = "absolute";
-    snapshot.style.inset = "0";
-    snapshot.style.width = "100%";
-    snapshot.style.height = "100%";
-    snapshot.style.left = "0";
-    snapshot.style.top = "0";
-    snapshot.style.opacity = "1";
-    snapshot.style.transform = "translateX(0)";
+      this.updateIcons(viewId);
 
-    viewsContainer.appendChild(snapshot);
+      const finish = () => {
+        nextEl?.classList.remove("nav-tap-in");
+        this.isTransitioning = false;
+        appEl?.classList.remove("is-view-transitioning");
+      };
 
-    // Реальные экраны сразу переключаем в итоговое состояние
-    this.updateDOM(viewId, { instant: true });
-    this.updateIcons(viewId);
+      if (nextEl) {
+        let done = false;
+        const onEnd = () => {
+          if (done) return;
+          done = true;
+          nextEl.removeEventListener("animationend", onEnd);
+          finish();
+        };
+        nextEl.addEventListener("animationend", onEnd, { once: true });
+        setTimeout(onEnd, 320);
+      } else {
+        setTimeout(finish, 200);
+      }
 
+      return true;
+    }
+
+    // SWIPE: только solid overlay + мгновенный switch
     const fromIdx = VIEWS.indexOf(fromId);
     const toIdx = VIEWS.indexOf(viewId);
-    const isSwipe = source === "swipe";
-    const dirForward = toIdx > fromIdx;
+    const direction = toIdx > fromIdx ? "left" : "right";
+    const overlay = createOverlay(direction);
+    viewsContainer.appendChild(overlay);
 
-    const duration = isSwipe ? 360 : 260;
-    const easing = "cubic-bezier(0.32, 0.72, 0, 1)";
-
-    snapshot.style.transition = `transform ${duration}ms ${easing}, opacity ${duration}ms ${easing}`;
-
-    requestAnimationFrame(() => {
-      if (!isSwipe) {
-        // Тап: просто fade-out старого snapshot
-        snapshot.style.opacity = "0";
-      } else {
-        // Свайп: сдвиг snapshot в сторону жеста
-        snapshot.style.transform = `translateX(${dirForward ? "-100%" : "100%"})`;
-        snapshot.style.opacity = "1";
-      }
-    });
+    // Мгновенно переключаем реальный экран под оверлеем
+    this.updateDOM(viewId, { instant: true });
+    this.updateIcons(viewId);
 
     let done = false;
     const finish = () => {
       if (done) return;
       done = true;
-      snapshot.remove();
+      overlay.remove();
       this.isTransitioning = false;
       appEl?.classList.remove("is-view-transitioning");
 
@@ -120,8 +115,8 @@ export const navigation = {
       }
     };
 
-    snapshot.addEventListener("transitionend", finish, { once: true });
-    setTimeout(finish, duration + 80);
+    overlay.addEventListener("animationend", finish, { once: true });
+    setTimeout(finish, 420);
 
     return true;
   },
