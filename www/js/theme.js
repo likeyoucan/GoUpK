@@ -17,10 +17,12 @@ export const themeManager = {
   currentAccent: "default",
   currentBg: "default",
 
-  // FIX (memory leak): сохраняем ref на mediaQuery-listener, чтобы иметь
-  // возможность снять его при необходимости (реинициализация, тесты, SPA-роутинг).
-  // Без сохранения ref слушатель нельзя корректно удалить — типичный memory leak
-  // в long-lived SPA и Capacitor-приложениях.
+  // История выбора цветов в рамках текущего запуска приложения.
+  // Нужна для fallback после удаления активного кастомного цвета.
+  accentSelectionHistory: [],
+  bgSelectionHistory: [],
+  HISTORY_LIMIT: 20,
+
   _darkModeListener: null,
 
   init() {
@@ -40,10 +42,10 @@ export const themeManager = {
         ),
       );
 
-    // FIX: сохраняем ref на listener → можно снять через destroy() при реинициализации
     this._darkModeListener = () => {
       if (this.currentMode === "system") this.setMode("system");
     };
+
     window
       .matchMedia("(prefers-color-scheme: dark)")
       .addEventListener("change", this._darkModeListener);
@@ -64,24 +66,34 @@ export const themeManager = {
 
     document.addEventListener("colorDeleted", (e) => {
       const { type, color } = e.detail;
-      if (
-        type === "accent" &&
-        this.currentAccent.toLowerCase() === color.toLowerCase()
-      ) {
-        this.setColor("default");
-      } else if (
-        type === "bg" &&
-        this.currentBg.toLowerCase() === color.toLowerCase()
-      ) {
-        this.setBgColor("default");
+
+      if (type === "accent") {
+        const isDeletedActive =
+          String(this.currentAccent).toLowerCase() ===
+          String(color).toLowerCase();
+
+        this._removeColorFromHistory("accent", color);
+
+        if (isDeletedActive) {
+          const fallback = this._getLastValidColorFromHistory("accent");
+          this.setColor(fallback || "default", true, { recordHistory: false });
+        }
+      } else if (type === "bg") {
+        const isDeletedActive =
+          String(this.currentBg).toLowerCase() === String(color).toLowerCase();
+
+        this._removeColorFromHistory("bg", color);
+
+        if (isDeletedActive) {
+          const fallback = this._getLastValidColorFromHistory("bg");
+          this.setBgColor(fallback || "default", true, {
+            recordHistory: false,
+          });
+        }
       }
     });
   },
 
-  /**
-   * Снимает mediaQuery-listener. Вызывать при реинициализации модуля или
-   * уничтожении компонента, чтобы избежать утечки памяти.
-   */
   destroy() {
     if (this._darkModeListener) {
       window
@@ -92,6 +104,11 @@ export const themeManager = {
   },
 
   applySettings() {
+    // После перезапуска истории нет: это как раз нужный сценарий,
+    // при удалении активного кастомного цвета fallback -> default.
+    this.accentSelectionHistory = [];
+    this.bgSelectionHistory = [];
+
     this.currentAccent = safeGetLS("theme_color") || "default";
     this.currentBg = safeGetLS("theme_bg_color") || "default";
     this.currentMode = safeGetLS("theme_mode") || "system";
@@ -99,8 +116,8 @@ export const themeManager = {
     colorManager.syncPickers(this.currentAccent, this.currentBg);
 
     this.setMode(this.currentMode, false);
-    this.setColor(this.currentAccent, false);
-    this.setBgColor(this.currentBg, false);
+    this.setColor(this.currentAccent, false, { recordHistory: false });
+    this.setBgColor(this.currentBg, false, { recordHistory: false });
   },
 
   resetSettings() {
@@ -108,8 +125,11 @@ export const themeManager = {
     safeRemoveLS("theme_color");
     safeRemoveLS("theme_bg_color");
 
-    uiSettingsManager.resetSettings();
+    // Сброс настроек должен возвращать default.
+    this.accentSelectionHistory = [];
+    this.bgSelectionHistory = [];
 
+    uiSettingsManager.resetSettings();
     this.applySettings();
   },
 
@@ -117,6 +137,65 @@ export const themeManager = {
     return document.documentElement.classList.contains("dark")
       ? "dark"
       : "light";
+  },
+
+  _rememberPreviousSelection(type, previousColor, nextColor) {
+    if (!previousColor) return;
+
+    const prev = String(previousColor).toLowerCase();
+    const next = String(nextColor).toLowerCase();
+    if (prev === next) return;
+
+    const history =
+      type === "accent" ? this.accentSelectionHistory : this.bgSelectionHistory;
+
+    const last = history[history.length - 1];
+    if (String(last || "").toLowerCase() === prev) return;
+
+    history.push(previousColor);
+    if (history.length > this.HISTORY_LIMIT) {
+      history.splice(0, history.length - this.HISTORY_LIMIT);
+    }
+  },
+
+  _removeColorFromHistory(type, color) {
+    const history =
+      type === "accent" ? this.accentSelectionHistory : this.bgSelectionHistory;
+    const normalized = String(color).toLowerCase();
+
+    const filtered = history.filter(
+      (item) => String(item).toLowerCase() !== normalized,
+    );
+
+    if (type === "accent") this.accentSelectionHistory = filtered;
+    else this.bgSelectionHistory = filtered;
+  },
+
+  _getAvailableColorSet(type) {
+    const base =
+      type === "accent"
+        ? [
+            ...colorManager.standardAccentColors,
+            ...colorManager.customAccentColors,
+          ]
+        : [...colorManager.standardBgColors, ...colorManager.customBgColors];
+
+    return new Set(base.map((c) => String(c).toLowerCase()));
+  },
+
+  _getLastValidColorFromHistory(type) {
+    const history =
+      type === "accent" ? this.accentSelectionHistory : this.bgSelectionHistory;
+    const available = this._getAvailableColorSet(type);
+
+    while (history.length > 0) {
+      const candidate = history.pop();
+      if (available.has(String(candidate).toLowerCase())) {
+        return candidate;
+      }
+    }
+
+    return null;
   },
 
   setMode(mode, useTransition = true) {
@@ -129,6 +208,7 @@ export const themeManager = {
       b.classList.remove("app-surface", "shadow-sm", "app-text");
       b.classList.add("app-text-sec");
     });
+
     const activeBtn = $(`theme-${mode}`);
     if (activeBtn) {
       activeBtn.classList.remove("app-text-sec");
@@ -139,10 +219,11 @@ export const themeManager = {
       mode === "dark" ||
       (mode === "system" &&
         window.matchMedia("(prefers-color-scheme: dark)").matches);
+
     document.documentElement.classList.toggle("dark", isDark);
     document.documentElement.style.colorScheme = isDark ? "dark" : "light";
 
-    this.setColor(this.currentAccent, false);
+    this.setColor(this.currentAccent, false, { recordHistory: false });
     this.applyBgTheme(this.currentBg);
 
     colorManager.syncPickers(this.currentAccent, this.currentBg);
@@ -171,7 +252,13 @@ export const themeManager = {
     return "hsl(0, 90%, 60%)";
   },
 
-  setColor(hex, doScroll = true) {
+  setColor(hex, doScroll = true, options = {}) {
+    const { recordHistory = true } = options;
+
+    if (recordHistory) {
+      this._rememberPreviousSelection("accent", this.currentAccent, hex);
+    }
+
     this.currentAccent = hex;
     safeSetLS("theme_color", hex);
 
@@ -200,7 +287,13 @@ export const themeManager = {
     colorManager.syncPickers(this.currentAccent, this.currentBg);
   },
 
-  setBgColor(hex, doScroll = true) {
+  setBgColor(hex, doScroll = true, options = {}) {
+    const { recordHistory = true } = options;
+
+    if (recordHistory) {
+      this._rememberPreviousSelection("bg", this.currentBg, hex);
+    }
+
     this.currentBg = hex;
     safeSetLS("theme_bg_color", hex);
 
@@ -233,6 +326,7 @@ export const themeManager = {
           "--surface-color",
           `color-mix(in srgb, ${hex}, ${isDark ? "white 10%" : l > 90 ? "black 5%" : "white 25%"})`,
         );
+
         const luminance = getLuminance(r, g, b);
         document.body.classList.toggle("force-light-text", luminance < 0.48);
         document.body.classList.toggle("force-dark-text", luminance >= 0.48);

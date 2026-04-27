@@ -212,18 +212,23 @@ document.addEventListener("DOMContentLoaded", () => {
   );
 
   const appContainer = $("app");
-  const swipeAreaLeft = $("swipe-area-left");
-  const swipeAreaRight = $("swipe-area-right");
+  const bottomNav = appContainer?.querySelector("nav");
 
-  if (!appContainer || !swipeAreaLeft || !swipeAreaRight) {
+  if (!appContainer || !bottomNav) {
     console.warn(
-      "[main] Swipe elements not found in DOM (#app, #swipe-area-left, #swipe-area-right). Swipe navigation disabled.",
+      "[main] Swipe elements not found in DOM (#app, nav). Swipe navigation disabled.",
     );
   } else {
     const tabs = ["stopwatch", "timer", "tabata", "settings"];
     let touchStartX = 0;
     let touchStartY = 0;
+    let isSwipeCandidate = false;
     let isSwipeActive = false;
+
+    const isInsideNavArea = (touch) => {
+      const navRect = bottomNav.getBoundingClientRect();
+      return touch.clientY >= navRect.top && touch.clientY <= navRect.bottom;
+    };
 
     appContainer.addEventListener(
       "touchstart",
@@ -231,18 +236,37 @@ document.addEventListener("DOMContentLoaded", () => {
         if (modalManager.hasActiveModal()) return;
 
         const touch = e.touches[0];
-        const x = touch.clientX;
-        const leftRect = swipeAreaLeft.getBoundingClientRect();
-        const rightRect = swipeAreaRight.getBoundingClientRect();
+        if (!touch || !isInsideNavArea(touch)) return;
 
-        if (
-          (x >= leftRect.left && x <= leftRect.right) ||
-          (x >= rightRect.left && x <= rightRect.right)
-        ) {
+        isSwipeCandidate = true;
+        isSwipeActive = false;
+        touchStartX = touch.clientX;
+        touchStartY = touch.clientY;
+      },
+      { passive: true },
+    );
+
+    appContainer.addEventListener(
+      "touchmove",
+      (e) => {
+        if (!isSwipeCandidate) return;
+
+        const touch = e.touches[0];
+        if (!touch) return;
+
+        const deltaX = touch.clientX - touchStartX;
+        const deltaY = touch.clientY - touchStartY;
+
+        // Активируем перехват только при выраженном горизонтальном жесте.
+        if (!isSwipeActive && Math.abs(deltaX) > 14 && Math.abs(deltaY) < 26) {
           isSwipeActive = true;
-          touchStartX = x;
-          touchStartY = touch.clientY;
           appContainer.classList.add("is-swiping");
+          return;
+        }
+
+        // Вертикальный жест в меню не должен превращаться в свайп экранов.
+        if (!isSwipeActive && Math.abs(deltaY) > 26) {
+          isSwipeCandidate = false;
         }
       },
       { passive: true },
@@ -251,7 +275,12 @@ document.addEventListener("DOMContentLoaded", () => {
     appContainer.addEventListener(
       "touchend",
       (e) => {
-        if (!isSwipeActive) return;
+        if (!isSwipeCandidate) return;
+
+        if (!isSwipeActive) {
+          isSwipeCandidate = false;
+          return;
+        }
 
         const touch = e.changedTouches[0];
         const deltaX = touch.clientX - touchStartX;
@@ -266,8 +295,10 @@ document.addEventListener("DOMContentLoaded", () => {
           }
         }
 
+        isSwipeCandidate = false;
         isSwipeActive = false;
         touchStartX = 0;
+        touchStartY = 0;
         appContainer.classList.remove("is-swiping");
       },
       { passive: true },
@@ -276,11 +307,11 @@ document.addEventListener("DOMContentLoaded", () => {
     appContainer.addEventListener(
       "touchcancel",
       () => {
-        if (isSwipeActive) {
-          isSwipeActive = false;
-          touchStartX = 0;
-          appContainer.classList.remove("is-swiping");
-        }
+        isSwipeCandidate = false;
+        isSwipeActive = false;
+        touchStartX = 0;
+        touchStartY = 0;
+        appContainer.classList.remove("is-swiping");
       },
       { passive: true },
     );

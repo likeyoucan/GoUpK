@@ -74,7 +74,6 @@ function buildStopwatchText(payload) {
 function buildStopwatchCsv(payload) {
   const rows = [];
 
-  // Excel hint for separator (especially RU locales)
   rows.push(`sep=${CSV_SEPARATOR}`);
 
   rows.push(
@@ -95,7 +94,6 @@ function buildStopwatchCsv(payload) {
     "",
   ];
 
-  // CRLF for better Excel compatibility
   return [...header, ...rows].join("\r\n") + "\r\n";
 }
 
@@ -105,6 +103,20 @@ function makeFilename(payload, ext) {
     .trim();
   const stamp = new Date().toISOString().replace(/[:.]/g, "-");
   return `${safeName || "stopwatch"}_${stamp}.${ext}`;
+}
+
+function isUserShareCancel(error) {
+  if (!error) return false;
+
+  const name = String(error.name || "").toLowerCase();
+  const message = String(error.message || "").toLowerCase();
+
+  return (
+    name === "aborterror" ||
+    message.includes("cancel") ||
+    message.includes("aborted") ||
+    message.includes("dismissed")
+  );
 }
 
 export const shareResults = {
@@ -156,14 +168,13 @@ export const shareResults = {
 
   async shareAsFile(payload, { format = "csv" } = {}) {
     if (format !== "csv") {
-      showToast(t("share_failed"));
+      showToast(t("share_file_failed"));
       return false;
     }
 
     const csv = buildStopwatchCsv(payload);
     const fileName = makeFilename(payload, "csv");
 
-    // UTF-8 BOM + text/csv => Excel opens Cyrillic correctly
     const bom = "\uFEFF";
     const blob = new Blob([bom, csv], { type: "text/csv;charset=utf-8;" });
     const file = new File([blob], fileName, {
@@ -178,11 +189,25 @@ export const shareResults = {
           files: [file],
         });
         return true;
-      } catch {}
+      } catch (error) {
+        // Пользователь отменил отправку: это не ошибка.
+        if (isUserShareCancel(error)) {
+          return false;
+        }
+
+        // Реальный сбой отправки.
+        showToast(t("share_file_failed"));
+        return false;
+      }
     }
 
-    downloadFile(blob, fileName);
-    showToast(t("share_file_saved"));
-    return true;
+    try {
+      downloadFile(blob, fileName);
+      showToast(t("share_file_saved"));
+      return true;
+    } catch {
+      showToast(t("share_file_failed"));
+      return false;
+    }
   },
 };
