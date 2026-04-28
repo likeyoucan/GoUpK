@@ -22,6 +22,22 @@ import { bindAppLifecycle } from "./bootstrap/app-lifecycle.js?v=VERSION";
 import { initializeApp } from "./bootstrap/app-init.js?v=VERSION";
 import { bindUiInteractions } from "./bootstrap/ui-interactions.js?v=VERSION";
 
+function bindRunAgainButton() {
+  const runAgainBtn = $("tm-runAgainBtn");
+  if (!runAgainBtn || runAgainBtn.dataset.bound === "1") return;
+
+  runAgainBtn.dataset.bound = "1";
+  runAgainBtn.addEventListener("click", () => {
+    if (typeof tm.runAgain === "function") {
+      tm.runAgain();
+      return;
+    }
+
+    if (typeof tm.reset === "function") tm.reset(false);
+    if (typeof tm.toggle === "function") tm.toggle();
+  });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   initializeApp({
     applyPerformanceProfile,
@@ -36,6 +52,8 @@ document.addEventListener("DOMContentLoaded", () => {
     navigation,
     modalManager,
   });
+
+  bindRunAgainButton();
 
   bindAppLifecycle({
     preload,

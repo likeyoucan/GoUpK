@@ -21,6 +21,7 @@ export function bindNavSwipe({ appContainer, bottomNav, navigation, modalManager
   const onTouchStart = (e) => {
     if (modalManager.hasActiveModal()) return;
     if (navigation.isTransitioning) return;
+    if (navigation.panel?.isDragging) return;
 
     const touch = e.touches[0];
     if (!touch || !isInsideNavArea(touch)) return;
@@ -33,6 +34,11 @@ export function bindNavSwipe({ appContainer, bottomNav, navigation, modalManager
 
   const onTouchMove = (e) => {
     if (!isSwipeCandidate) return;
+    if (navigation.panel?.isDragging) {
+      isSwipeCandidate = false;
+      isSwipeActive = false;
+      return;
+    }
 
     const touch = e.touches[0];
     if (!touch) return;
@@ -48,6 +54,7 @@ export function bindNavSwipe({ appContainer, bottomNav, navigation, modalManager
 
     if (!isSwipeActive && Math.abs(deltaY) > 26) {
       isSwipeCandidate = false;
+      appContainer.classList.remove("is-swiping");
     }
   };
 
@@ -56,6 +63,7 @@ export function bindNavSwipe({ appContainer, bottomNav, navigation, modalManager
 
     if (!isSwipeActive) {
       isSwipeCandidate = false;
+      appContainer.classList.remove("is-swiping");
       return;
     }
 
@@ -63,7 +71,11 @@ export function bindNavSwipe({ appContainer, bottomNav, navigation, modalManager
     const deltaX = touch.clientX - touchStartX;
     const deltaY = touch.clientY - touchStartY;
 
-    if (Math.abs(deltaX) > 60 && Math.abs(deltaY) < 100) {
+    if (
+      !navigation.panel?.isDragging &&
+      Math.abs(deltaX) > 60 &&
+      Math.abs(deltaY) < 100
+    ) {
       const currentIdx = tabs.indexOf(navigation.activeView);
 
       if (deltaX < 0 && currentIdx < tabs.length - 1) {

@@ -22,7 +22,10 @@ function bindPreloaderLifecycle(preload) {
   };
 }
 
-function bindForegroundLifecycle({ initForegroundService, destroyForegroundService }) {
+function bindForegroundLifecycle({
+  initForegroundService,
+  destroyForegroundService,
+}) {
   initForegroundService();
 
   const onBeforeUnload = () => {
@@ -69,6 +72,26 @@ function bindCapacitorLifecycle({ modalManager, navigation }) {
   };
 }
 
+function bindViewportLayoutSync(navigation) {
+  let timer = null;
+
+  const sync = () => {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      navigation.refreshPanelLayout?.(true);
+    }, 60);
+  };
+
+  window.addEventListener("resize", sync);
+  window.addEventListener("orientationchange", sync);
+
+  return () => {
+    clearTimeout(timer);
+    window.removeEventListener("resize", sync);
+    window.removeEventListener("orientationchange", sync);
+  };
+}
+
 export function bindAppLifecycle({
   preload,
   initForegroundService,
@@ -84,10 +107,12 @@ export function bindAppLifecycle({
     destroyForegroundService,
   });
   const unbindCapacitor = bindCapacitorLifecycle({ modalManager, navigation });
+  const unbindViewportSync = bindViewportLayoutSync(navigation);
 
   return () => {
     unbindPreloader?.();
     unbindForeground?.();
     unbindCapacitor?.();
+    unbindViewportSync?.();
   };
 }

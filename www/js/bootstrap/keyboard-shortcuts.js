@@ -23,11 +23,19 @@ function isInteractiveElement(target) {
   return false;
 }
 
-export function bindKeyboardShortcuts({ navigation, modalManager, sw, tm, tb }) {
+export function bindKeyboardShortcuts({
+  navigation,
+  modalManager,
+  sw,
+  tm,
+  tb,
+}) {
   const onKeydown = (e) => {
     const target = e.target instanceof HTMLElement ? e.target : null;
 
-    if (modalManager.hasActiveModal() || isInteractiveElement(target)) return;
+    if (modalManager.hasActiveModal()) return;
+    if (navigation.panel?.isDragging) return;
+    if (isInteractiveElement(target)) return;
 
     const view = navigation.activeView;
 
@@ -36,11 +44,21 @@ export function bindKeyboardShortcuts({ navigation, modalManager, sw, tm, tb }) 
       if (view === "stopwatch") sw.toggle();
       else if (view === "timer") tm.toggle();
       else if (view === "tabata") tb.toggle();
-    } else if (e.key.toLowerCase() === "l" && view === "stopwatch") {
+      return;
+    }
+
+    if (e.key.toLowerCase() === "l" && view === "stopwatch") {
       sw.recordLapOrReset();
-    } else if (e.key.toLowerCase() === "r") {
-      if (view === "timer") tm.reset(true);
-      else if (view === "tabata") tb.stop();
+      return;
+    }
+
+    if (e.key.toLowerCase() === "r") {
+      if (view === "timer") {
+        if (tm.isFinished && typeof tm.runAgain === "function") tm.runAgain();
+        else tm.reset(true);
+      } else if (view === "tabata") {
+        tb.stop();
+      }
     }
   };
 

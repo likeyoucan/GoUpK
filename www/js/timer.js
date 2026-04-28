@@ -26,7 +26,10 @@ export const tm = {
   remainingAtPause: 0,
   isRunning: false,
   isPaused: false,
+  isFinished: false,
   timeRemainingMs: 0,
+
+  lastCompletedDuration: 0,
 
   els: {},
   ringLength: 282.74,
@@ -49,6 +52,7 @@ export const tm = {
       inputs: $("tm-inputs"),
       resetBtn: $("tm-resetBtn"),
       resetBtnWrap: $("tm-resetBtn-wrap"),
+      runAgainBtn: $("tm-runAgainBtn"),
       circleBtn: $("tm-circleBtn"),
       status: $("tm-statusText"),
       display: $("tm-mainDisplay"),
@@ -74,5 +78,7 @@ export const tm = {
 
     this.bindInputEvents();
     this.bindCoreEvents();
+
+    this.updateUIState();
   },
 };

@@ -413,6 +413,257 @@ body.hide-nav-labels .nav-btn {
 }
 
 /* =========================================
+   Liquid Glass (Restored + Updated)
+========================================= */
+
+:root.glass-effect body #bottom-sheet-overlay {
+  background-color: rgba(255, 255, 255, 0.36);
+  backdrop-filter: blur(3px);
+}
+
+:root.dark.glass-effect body #bottom-sheet-overlay {
+  background-color: rgba(0, 0, 0, 0.52);
+  backdrop-filter: blur(3px);
+}
+
+/* Middle panel in new composition */
+:root.glass-effect body .panel-sheet {
+  background-color: color-mix(in srgb, var(--surface-color) 38%, transparent);
+  backdrop-filter: blur(18px) saturate(150%);
+  border-color: color-mix(in srgb, var(--border-color) 55%, transparent);
+}
+
+:root.dark.glass-effect body .panel-sheet {
+  background-color: color-mix(in srgb, var(--surface-color) 26%, transparent);
+}
+
+/* Bottom sheets */
+:root.glass-effect body #tb-modal,
+:root.glass-effect body #sw-sessions-modal {
+  background-color: rgba(255, 255, 255, 0.42);
+  backdrop-filter: blur(18px) saturate(150%);
+}
+
+:root.dark.glass-effect body #tb-modal,
+:root.dark.glass-effect body #sw-sessions-modal {
+  background-color: rgba(0, 0, 0, 0.52);
+}
+
+/* Alert dialogs */
+:root.glass-effect body #reset-modal-content,
+:root.glass-effect body #sw-clear-modal-content,
+:root.glass-effect body #sw-name-modal-content,
+:root.glass-effect body #sw-share-mode-content {
+  background-color: color-mix(in srgb, var(--surface-color) 70%, transparent);
+  backdrop-filter: blur(24px) saturate(150%);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.68),
+    0 20px 40px rgba(0, 0, 0, 0.14);
+  border: none;
+}
+
+:root.dark.glass-effect body #reset-modal-content,
+:root.dark.glass-effect body #sw-clear-modal-content,
+:root.dark.glass-effect body #sw-name-modal-content,
+:root.dark.glass-effect body #sw-share-mode-content {
+  background-color: color-mix(in srgb, var(--surface-color) 52%, transparent);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.08),
+    0 20px 40px rgba(0, 0, 0, 0.5);
+}
+
+/* Navigation */
+:root.glass-effect body nav {
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--surface-color) 30%, transparent),
+    color-mix(in srgb, var(--surface-color) 3%, transparent)
+  );
+  backdrop-filter: blur(12px) saturate(150%);
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: none;
+}
+
+:root.dark.glass-effect body nav {
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--surface-color) 24%, transparent),
+    color-mix(in srgb, var(--surface-color) 0%, transparent)
+  );
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Inputs/select wrappers */
+:root.glass-effect body .select-wrapper.app-surface,
+:root.glass-effect body .custom-select-trigger {
+  background-color: rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(12px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.42);
+  color: var(--text-color);
+}
+
+:root.dark.glass-effect body .select-wrapper.app-surface,
+:root.dark.glass-effect body .custom-select-trigger {
+  background-color: rgba(0, 0, 0, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05);
+}
+
+/* Buttons */
+:root.glass-effect body button.app-surface {
+  background: color-mix(in srgb, var(--surface-color) 35%, transparent);
+  backdrop-filter: blur(16px) saturate(150%);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.4),
+    0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+:root.dark.glass-effect body button.app-surface {
+  background: color-mix(in srgb, var(--surface-color) 20%, transparent);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.05),
+    0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+:root.glass-effect body button#sw-lapBtn:not(.is-reset) {
+  background: color-mix(in srgb, var(--surface-color) 62%, transparent);
+  backdrop-filter: blur(16px) saturate(150%);
+  box-shadow:
+    inset 0 1px 2px rgba(255, 255, 255, 0.6),
+    0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+:root.dark.glass-effect body button#sw-lapBtn:not(.is-reset) {
+  background: color-mix(in srgb, var(--surface-color) 40%, transparent);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.1),
+    0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Primary confirm buttons */
+:root.glass-effect body #sw-name-confirm,
+:root.glass-effect body #tb-saveModalBtn,
+:root.glass-effect body #tm-runAgainBtn {
+  background: color-mix(in srgb, var(--primary-color) 70%, transparent);
+  backdrop-filter: blur(16px) saturate(150%);
+  box-shadow:
+    inset 0 1px 2px rgba(255, 255, 255, 0.32),
+    0 4px 12px color-mix(in srgb, var(--primary-color) 30%, transparent);
+  color: #fff;
+}
+
+:root.glass-effect body #sw-clear-confirm,
+:root.glass-effect body #reset-confirm,
+:root.glass-effect body #tb-stopBtn,
+:root.glass-effect body .is-reset {
+  background: rgba(239, 68, 68, 0.86);
+  backdrop-filter: blur(16px) saturate(150%);
+  box-shadow:
+    inset 0 1px 2px rgba(255, 255, 255, 0.4),
+    0 4px 15px rgba(239, 68, 68, 0.4);
+  color: #fff;
+}
+
+/* Surfaces and toast */
+:root.glass-effect body .app-surface:not(button):not(.select-wrapper),
+:root.glass-effect body #toast {
+  background-color: color-mix(in srgb, var(--surface-color) 52%, transparent);
+  backdrop-filter: blur(12px) saturate(150%);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.5),
+    0 8px 32px rgba(0, 0, 0, 0.05);
+}
+
+:root.dark.glass-effect body .app-surface:not(button):not(.select-wrapper),
+:root.dark.glass-effect body #toast {
+  background-color: color-mix(in srgb, var(--surface-color) 30%, transparent);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.05),
+    0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+/* Alert backdrop */
+:root.glass-effect body #reset-modal,
+:root.glass-effect body #sw-clear-modal,
+:root.glass-effect body #sw-name-modal,
+:root.glass-effect body #sw-share-mode-modal {
+  background-color: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10px);
+}
+
+:root.dark.glass-effect body #reset-modal,
+:root.dark.glass-effect body #sw-clear-modal,
+:root.dark.glass-effect body #sw-name-modal,
+:root.dark.glass-effect body #sw-share-mode-modal {
+  background-color: rgba(0, 0, 0, 0.6);
+}
+
+/* Lists */
+:root.glass-effect body .lap-row,
+:root.glass-effect body .tb-workout-row,
+:root.glass-effect body .sw-session-header,
+:root.glass-effect body [id^="sw-details-"] > div:last-child {
+  background-color: color-mix(in srgb, var(--surface-color) 58%, transparent);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.12),
+    0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+:root.dark.glass-effect body .lap-row,
+:root.dark.glass-effect body .tb-workout-row,
+:root.dark.glass-effect body .sw-session-header,
+:root.dark.glass-effect body [id^="sw-details-"] > div:last-child {
+  background-color: color-mix(in srgb, var(--surface-color) 15%, transparent);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.05),
+    0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Text depth */
+:root.glass-effect .app-text,
+:root.glass-effect .timer-display {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+:root.dark.glass-effect .app-text {
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* =========================================
+   Adaptive Glass Quality (Lite)
+========================================= */
+:root.glass-lite.glass-effect body #tb-modal,
+:root.glass-lite.glass-effect body #sw-sessions-modal,
+:root.glass-lite.glass-effect body .panel-sheet {
+  backdrop-filter: blur(8px) saturate(120%);
+}
+
+:root.glass-lite.glass-effect body nav {
+  backdrop-filter: blur(5px) saturate(120%);
+}
+
+:root.glass-lite.glass-effect body #reset-modal-content,
+:root.glass-lite.glass-effect body #sw-clear-modal-content,
+:root.glass-lite.glass-effect body #sw-name-modal-content,
+:root.glass-lite.glass-effect body #sw-share-mode-content {
+  backdrop-filter: blur(8px) saturate(120%);
+}
+
+:root.glass-lite.glass-effect
+  body
+  .app-surface:not(button):not(.select-wrapper),
+:root.glass-lite.glass-effect body #toast {
+  backdrop-filter: blur(4px) saturate(115%);
+}
+
+:root.glass-lite.glass-effect body .lap-row,
+:root.glass-lite.glass-effect body .tb-workout-row,
+:root.glass-lite.glass-effect body .sw-session-header,
+:root.glass-lite.glass-effect body [id^="sw-details-"] > div:last-child {
+  backdrop-filter: none !important;
+}
+
+/* =========================================
    8. Inputs / Toggles / Range
 ========================================= */
 .timer-input {

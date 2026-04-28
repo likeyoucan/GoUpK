@@ -18,6 +18,8 @@ export function setupTimerRender(tm, { updateText, updateTitle }) {
   tm.updateUIState = () => {
     if (!tm.els.form) return;
 
+    const runAgainBtn = tm.els.runAgainBtn;
+
     if (tm.isRunning) {
       tm.els.form.classList.add("hidden");
       tm.els.resetBtnWrap?.classList.add("hidden");
@@ -25,6 +27,7 @@ export function setupTimerRender(tm, { updateText, updateTitle }) {
       tm.els.display?.classList.remove("is-go");
       tm.els.adjustControls?.classList.remove("hidden");
       tm.els.adjustControls?.classList.add("flex");
+      runAgainBtn?.classList.add("hidden");
       return;
     }
 
@@ -35,16 +38,25 @@ export function setupTimerRender(tm, { updateText, updateTitle }) {
       updateText(tm.els.status, tm.t("pause"));
       tm.els.adjustControls?.classList.add("hidden");
       tm.els.adjustControls?.classList.remove("flex");
+      runAgainBtn?.classList.add("hidden");
       return;
     }
 
     tm.els.form.classList.remove("hidden");
     tm.els.resetBtnWrap?.classList.add("hidden");
     tm.els.status?.classList.add("hidden");
-    tm.els.display?.classList.add("is-go");
-    updateText(tm.els.display, "GO");
     tm.els.adjustControls?.classList.add("hidden");
     tm.els.adjustControls?.classList.remove("flex");
+
+    if (tm.isFinished) {
+      tm.els.display?.classList.remove("is-go");
+      runAgainBtn?.classList.remove("hidden");
+      return;
+    }
+
+    runAgainBtn?.classList.add("hidden");
+    tm.els.display?.classList.add("is-go");
+    updateText(tm.els.display, "GO");
   };
 
   tm.updateAdjustButtons = () => {

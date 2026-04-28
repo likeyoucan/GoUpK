@@ -50,7 +50,11 @@ export function bindUiInteractions({
     }),
   );
 
-  unbinders.push(bindStopwatchDoubleTapLap({ $, sw }));
+  unbinders.push(bindStopwatchDoubleTapLap({ $, sw, navigation }));
+
+  const onResize = () => navigation.refreshPanelLayout?.(true);
+  window.addEventListener("resize", onResize);
+  unbinders.push(() => window.removeEventListener("resize", onResize));
 
   return () => {
     unbinders.forEach((fn) => {

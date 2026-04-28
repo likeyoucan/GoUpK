@@ -3,9 +3,29 @@
 import { APP_EVENTS } from "../constants/events.js?v=VERSION";
 
 export function setupTimerCore(tm, { showToast, updateText }) {
+  tm.isFinished = false;
+  tm.lastCompletedDuration = 0;
+
   tm.getRemainingTime = () => {
-    if (!tm.isRunning && !tm.isPaused) return 0;
+    if (!tm.isRunning && !tm.isPaused && !tm.isFinished) return 0;
     return tm.timeRemainingMs;
+  };
+
+  tm.runAgain = () => {
+    if (!tm.lastCompletedDuration || tm.lastCompletedDuration <= 0) return;
+
+    tm.isFinished = false;
+    tm.isPaused = false;
+    tm.isRunning = false;
+
+    tm.totalDuration = tm.lastCompletedDuration;
+    tm.timeRemainingMs = tm.lastCompletedDuration;
+    tm.remainingAtPause = 0;
+    tm.currentAdjustmentSec = 0;
+
+    tm.updateUIState();
+    tm.updateDisplay(tm.lastCompletedDuration);
+    tm.toggle();
   };
 
   tm.toggle = () => {
@@ -35,9 +55,11 @@ export function setupTimerCore(tm, { showToast, updateText }) {
       duration = tm.totalDuration;
       tm.timeRemainingMs = tm.totalDuration;
       tm.currentAdjustmentSec = 0;
+      tm.isFinished = false;
     } else {
       duration = tm.remainingAtPause;
       tm.timeRemainingMs = duration;
+      tm.isFinished = false;
     }
 
     if (duration <= 0) {
@@ -68,6 +90,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
 
     tm.isRunning = false;
     tm.isPaused = false;
+    tm.isFinished = false;
     tm.remainingAtPause = 0;
     tm.totalDuration = 0;
     tm.timeRemainingMs = 0;
@@ -80,6 +103,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
       if (tm.els.h) tm.els.h.value = "00";
       if (tm.els.m) tm.els.m.value = "00";
       if (tm.els.s) tm.els.s.value = "00";
+      tm.lastCompletedDuration = 0;
     }
 
     tm.updateUIState();
@@ -99,6 +123,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
 
     tm.els.circleBtn?.addEventListener("click", () => tm.toggle());
     tm.els.resetBtn?.addEventListener("click", () => tm.reset(true));
+    tm.els.runAgainBtn?.addEventListener("click", () => tm.runAgain());
 
     tm.bgWorker.addEventListener("message", (e) => {
       if (e.data?.type !== "tick") return;
@@ -114,16 +139,20 @@ export function setupTimerCore(tm, { showToast, updateText }) {
 
       if (remaining <= 0 && tm.isRunning) {
         tm.isRunning = false;
+        tm.isPaused = false;
+        tm.isFinished = true;
+        tm.lastCompletedDuration = tm.totalDuration;
+
         tm.store.clearActiveTimer();
+        tm.releaseWakeLock();
+        tm.updateTitle("");
 
         tm.sm.vibrate([200, 100, 200, 100, 400], "strong");
         tm.sm.play("complete");
         tm.announceToScreenReader(tm.t("timer_finished"));
+        showToast(tm.t("timer_finished"));
 
-        requestAnimationFrame(() => {
-          showToast(tm.t("timer_finished"));
-          tm.reset(false);
-        });
+        tm.updateUIState();
       }
     });
 

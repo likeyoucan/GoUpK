@@ -104,6 +104,7 @@ export function setupTimerInputs(tm, { pad }) {
       i.addEventListener("input", () => {
         i.value = i.value.replace(/\D/g, "").slice(0, 2);
         if (parseInt(i.value, 10) > 59) i.value = "59";
+        tm.isFinished = false;
       });
 
       i.addEventListener("blur", () => {
@@ -121,6 +122,7 @@ export function setupTimerInputs(tm, { pad }) {
       tm.els.h.addEventListener("input", () => {
         tm.els.h.value = tm.els.h.value.replace(/\D/g, "").slice(0, 2);
         if (parseInt(tm.els.h.value, 10) > 99) tm.els.h.value = "99";
+        tm.isFinished = false;
       });
 
       tm.els.h.addEventListener("blur", () => {
