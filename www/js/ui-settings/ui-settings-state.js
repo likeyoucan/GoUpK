@@ -1,18 +1,19 @@
 // Файл: www/js/ui-settings/ui-settings-state.js
 
 import { safeGetLS, safeRemoveLS } from "../utils.js?v=VERSION";
+import { STORAGE_KEYS } from "../constants/storage-keys.js?v=VERSION";
 
 export const UI_SETTINGS_KEYS = {
-  fontSize: "font_size",
-  adaptiveBg: "app_adaptive_bg",
-  vignette: "app_vignette",
-  vignetteAlpha: "app_vignette_alpha",
-  liquidGlass: "app_liquid_glass",
-  hideNavLabels: "app_hide_nav_labels",
-  ringWidth: "app_ring_width",
-  showMs: "app_show_ms",
-  showForegroundBanner: "app_show_foreground_banner",
-  swMinuteBeep: "app_sw_minute_beep",
+  fontSize: STORAGE_KEYS.FONT_SIZE,
+  adaptiveBg: STORAGE_KEYS.APP_ADAPTIVE_BG,
+  vignette: STORAGE_KEYS.APP_VIGNETTE,
+  vignetteAlpha: STORAGE_KEYS.APP_VIGNETTE_ALPHA,
+  liquidGlass: STORAGE_KEYS.APP_LIQUID_GLASS,
+  hideNavLabels: STORAGE_KEYS.APP_HIDE_NAV_LABELS,
+  ringWidth: STORAGE_KEYS.APP_RING_WIDTH,
+  showMs: STORAGE_KEYS.APP_SHOW_MS,
+  showForegroundBanner: STORAGE_KEYS.APP_SHOW_FOREGROUND_BANNER,
+  swMinuteBeep: STORAGE_KEYS.APP_SW_MINUTE_BEEP,
 };
 
 export function createUiSettingsState() {

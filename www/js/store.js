@@ -2,9 +2,10 @@
 
 import { safeSetLS, safeGetLS, safeRemoveLS } from "./utils.js?v=VERSION";
 import { APP_EVENTS } from "./constants/events.js?v=VERSION";
+import { STORAGE_KEYS } from "./constants/storage-keys.js?v=VERSION";
 
 const storeData = {
-  activeTimer: safeGetLS("active_timer") || null,
+  activeTimer: safeGetLS(STORAGE_KEYS.ACTIVE_TIMER) || null,
 };
 
 function emitActiveTimerChanged(value) {
@@ -29,8 +30,8 @@ export const store = {
 
     storeData.activeTimer = next;
 
-    if (next) safeSetLS("active_timer", next);
-    else safeRemoveLS("active_timer");
+    if (next) safeSetLS(STORAGE_KEYS.ACTIVE_TIMER, next);
+    else safeRemoveLS(STORAGE_KEYS.ACTIVE_TIMER);
 
     emitActiveTimerChanged(next);
   },

@@ -1,13 +1,16 @@
 // Файл: www/js/ui-settings/ui-settings-apply.js
 
-import { $, safeSetLS } from "../utils.js?v=VERSION";
+import { $ } from "../utils.js?v=VERSION";
 import { t } from "../i18n.js?v=VERSION";
+import { STORAGE_KEYS } from "../constants/storage-keys.js?v=VERSION";
 
 export function applyUiSettingsToControls(state) {
-  if ($("toggle-adaptive-bg")) $("toggle-adaptive-bg").checked = state.isAdaptiveBg;
+  if ($("toggle-adaptive-bg"))
+    $("toggle-adaptive-bg").checked = state.isAdaptiveBg;
   if ($("toggle-vignette")) $("toggle-vignette").checked = state.hasVignette;
   if ($("toggle-glass")) $("toggle-glass").checked = state.isLiquidGlass;
-  if ($("toggle-nav-labels")) $("toggle-nav-labels").checked = state.hideNavLabels;
+  if ($("toggle-nav-labels"))
+    $("toggle-nav-labels").checked = state.hideNavLabels;
   if ($("toggle-ms")) $("toggle-ms").checked = state.showMs;
   if ($("toggle-foreground-banner")) {
     $("toggle-foreground-banner").checked = state.showForegroundBanner;
@@ -71,7 +74,10 @@ export function updateVibroSliderUI(isEnabled) {
 }
 
 export function updateGlass(state) {
-  document.documentElement.classList.toggle("glass-effect", state.isLiquidGlass);
+  document.documentElement.classList.toggle(
+    "glass-effect",
+    state.isLiquidGlass,
+  );
 }
 
 export function applyNavLabelsVisibility(state) {
@@ -106,13 +112,13 @@ export function syncSliderUIs(state) {
 }
 
 export function persistFontSize(size) {
-  safeSetLS("font_size", size);
+  localStorage.setItem(STORAGE_KEYS.FONT_SIZE, String(size));
 }
 
 export function persistRingWidth(width) {
-  safeSetLS("app_ring_width", width);
+  localStorage.setItem(STORAGE_KEYS.APP_RING_WIDTH, String(width));
 }
 
 export function persistVignetteAlpha(alpha) {
-  safeSetLS("app_vignette_alpha", alpha);
+  localStorage.setItem(STORAGE_KEYS.APP_VIGNETTE_ALPHA, String(alpha));
 }

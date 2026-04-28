@@ -1,6 +1,7 @@
 // Файл: www/js/sound/sound-bindings.js
 
 import { APP_EVENTS } from "../constants/events.js?v=VERSION";
+import { STORAGE_KEYS } from "../constants/storage-keys.js?v=VERSION";
 
 export function bindSoundControls(sm, { $, safeSetLS, CustomSelect, t }) {
   $("toggle-sound")?.addEventListener("change", (e) => {
@@ -20,7 +21,7 @@ export function bindSoundControls(sm, { $, safeSetLS, CustomSelect, t }) {
 
   $("toggle-vibro")?.addEventListener("change", (e) => {
     sm.vibroEnabled = e.target.checked;
-    safeSetLS("app_vibro", sm.vibroEnabled);
+    safeSetLS(STORAGE_KEYS.APP_VIBRO, sm.vibroEnabled);
 
     document.dispatchEvent(
       new CustomEvent(APP_EVENTS.VIBRO_TOGGLED, {
@@ -60,7 +61,7 @@ export function bindSoundControls(sm, { $, safeSetLS, CustomSelect, t }) {
     soundThemeOptions,
     (newTheme) => {
       sm.theme = newTheme;
-      safeSetLS("app_sound_theme", sm.theme);
+      safeSetLS(STORAGE_KEYS.APP_SOUND_THEME, sm.theme);
       sm.play("click", { theme: newTheme });
     },
     sm.theme,

@@ -1,5 +1,7 @@
 // Файл: www/js/color/color-data.js
 
+import { STORAGE_KEYS } from "../constants/storage-keys.js?v=VERSION";
+
 export const MAX_CUSTOM_COLORS = 50;
 export const LONG_PRESS_DURATION = 500;
 export const MOVE_CANCEL_THRESHOLD = 8;
@@ -10,8 +12,9 @@ export function normalizeColor(normalizeHexColor, color) {
 
 export function loadCustomColors({ safeGetLS }) {
   try {
-    const accent = JSON.parse(safeGetLS("custom_accent_colors")) || [];
-    const bg = JSON.parse(safeGetLS("custom_bg_colors")) || [];
+    const accent =
+      JSON.parse(safeGetLS(STORAGE_KEYS.CUSTOM_ACCENT_COLORS)) || [];
+    const bg = JSON.parse(safeGetLS(STORAGE_KEYS.CUSTOM_BG_COLORS)) || [];
     return { accent, bg };
   } catch {
     return { accent: [], bg: [] };
@@ -20,7 +23,9 @@ export function loadCustomColors({ safeGetLS }) {
 
 export function persistCustomColors({ safeSetLS }, type, colors) {
   safeSetLS(
-    type === "accent" ? "custom_accent_colors" : "custom_bg_colors",
+    type === "accent"
+      ? STORAGE_KEYS.CUSTOM_ACCENT_COLORS
+      : STORAGE_KEYS.CUSTOM_BG_COLORS,
     JSON.stringify(colors),
   );
 }
@@ -35,6 +40,7 @@ export function removeColorFromList({ normalizeHexColor }, list, color) {
     list.splice(index, 1);
     return true;
   }
+
   return false;
 }
 
