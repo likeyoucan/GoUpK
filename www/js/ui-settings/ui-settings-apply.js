@@ -1,6 +1,6 @@
 // Файл: www/js/ui-settings/ui-settings-apply.js
 
-import { $ } from "../utils.js?v=VERSION";
+import { $, safeSetLS } from "../utils.js?v=VERSION";
 import { t } from "../i18n.js?v=VERSION";
 import { STORAGE_KEYS } from "../constants/storage-keys.js?v=VERSION";
 
@@ -112,13 +112,13 @@ export function syncSliderUIs(state) {
 }
 
 export function persistFontSize(size) {
-  localStorage.setItem(STORAGE_KEYS.FONT_SIZE, String(size));
+  safeSetLS(STORAGE_KEYS.FONT_SIZE, String(size));
 }
 
 export function persistRingWidth(width) {
-  localStorage.setItem(STORAGE_KEYS.APP_RING_WIDTH, String(width));
+  safeSetLS(STORAGE_KEYS.APP_RING_WIDTH, String(width));
 }
 
 export function persistVignetteAlpha(alpha) {
-  localStorage.setItem(STORAGE_KEYS.APP_VIGNETTE_ALPHA, String(alpha));
+  safeSetLS(STORAGE_KEYS.APP_VIGNETTE_ALPHA, String(alpha));
 }
