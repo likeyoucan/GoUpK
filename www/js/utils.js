@@ -1,13 +1,8 @@
 // Файл: www/js/utils.js
 
+export { safeGetLS, safeSetLS, safeRemoveLS } from "./storage.js?v=VERSION";
+
 export const $ = (id) => document.getElementById(id);
-
-const DEBUG_STORAGE = false;
-
-function logStorageError(action, key, error) {
-  if (!DEBUG_STORAGE) return;
-  console.error(`[storage:${action}] key="${key}"`, error);
-}
 
 export const getCssVariable = (variable) =>
   getComputedStyle(document.documentElement).getPropertyValue(variable).trim();
@@ -36,31 +31,6 @@ export const updateTitle = (text) => {
   }
 };
 
-export const safeSetLS = (key, value) => {
-  try {
-    localStorage.setItem(key, value);
-  } catch (e) {
-    logStorageError("set", key, e);
-  }
-};
-
-export const safeGetLS = (key) => {
-  try {
-    return localStorage.getItem(key);
-  } catch (e) {
-    logStorageError("get", key, e);
-    return null;
-  }
-};
-
-export const safeRemoveLS = (key) => {
-  try {
-    localStorage.removeItem(key);
-  } catch (e) {
-    logStorageError("remove", key, e);
-  }
-};
-
 let wakeLock = null;
 
 export const requestWakeLock = async () => {
@@ -70,7 +40,7 @@ export const requestWakeLock = async () => {
       wakeLock.addEventListener("release", () => {
         wakeLock = null;
       });
-    } catch (err) {}
+    } catch {}
   }
 };
 
@@ -88,6 +58,7 @@ export const releaseWakeLock = () => {
 };
 
 let toastTimeout = null;
+
 export const showToast = (message) => {
   const toast = $("toast");
   if (!toast) return;
@@ -138,6 +109,7 @@ export function getUniqueName(baseName, items, key = "name") {
   while (lowerCaseNames.includes(name.toLowerCase())) {
     name = `${baseName} ${counter++}`;
   }
+
   return name;
 }
 
@@ -154,6 +126,7 @@ export function formatTime(ms, options = {}) {
     const totalS = Math.floor(ms / 1000);
     const d = Math.floor(totalS / 86400);
     const h = Math.floor((totalS % 86400) / 3600);
+
     if (d > 0) return `${d}${daySuffix} ${h}${hourSuffix}`;
     if (h > 0) return `${h}${hourSuffix}`;
     return "";
@@ -184,6 +157,7 @@ export const getLuminance = (r, g, b) => {
     v /= 255;
     return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
   });
+
   return a[0] * 0.2126 + a[1] * 0.7152 + a[2] * 0.0722;
 };
 
@@ -276,6 +250,7 @@ export const normalizeHexColor = (hex) => {
   if (!hex || hex.length !== 4 || hex[0] !== "#") {
     return hex;
   }
+
   const r = hex[1];
   const g = hex[2];
   const b = hex[3];
