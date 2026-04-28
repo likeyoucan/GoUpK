@@ -12,10 +12,11 @@ import { t } from "../i18n.js?v=VERSION";
 import { modalManager } from "../modal.js?v=VERSION";
 import { CustomSelect } from "../custom-select.js?v=VERSION";
 import { APP_EVENTS } from "../constants/events.js?v=VERSION";
+import { STORAGE_KEYS } from "../constants/storage-keys.js?v=VERSION";
 
 export function setupStopwatchSessions(sw) {
   try {
-    const stored = safeGetLS("sw_saved_sessions");
+    const stored = safeGetLS(STORAGE_KEYS.SW_SAVED_SESSIONS);
     sw.savedSessions = stored ? JSON.parse(stored) : [];
   } catch {
     sw.savedSessions = [];
@@ -146,7 +147,10 @@ export function setupStopwatchSessions(sw) {
       const session = sw.nameModalState.pendingSession;
       session.name = finalName;
       sw.savedSessions.push(session);
-      safeSetLS("sw_saved_sessions", JSON.stringify(sw.savedSessions));
+      safeSetLS(
+        STORAGE_KEYS.SW_SAVED_SESSIONS,
+        JSON.stringify(sw.savedSessions),
+      );
       showToast(t("session_saved"));
     } else if (sw.nameModalState.action === "rename") {
       const session = sw.savedSessions.find(
@@ -154,7 +158,10 @@ export function setupStopwatchSessions(sw) {
       );
       if (session) {
         session.name = finalName;
-        safeSetLS("sw_saved_sessions", JSON.stringify(sw.savedSessions));
+        safeSetLS(
+          STORAGE_KEYS.SW_SAVED_SESSIONS,
+          JSON.stringify(sw.savedSessions),
+        );
         sw.sortSessions(sw.currentSort);
       }
     }
@@ -164,7 +171,7 @@ export function setupStopwatchSessions(sw) {
 
   sw.confirmClearAll = () => {
     sw.savedSessions = [];
-    safeRemoveLS("sw_saved_sessions");
+    safeRemoveLS(STORAGE_KEYS.SW_SAVED_SESSIONS);
     sw.renderSavedSessions();
     modalManager.closeCurrent();
     showToast(t("history_cleared"));
@@ -188,7 +195,7 @@ export function setupStopwatchSessions(sw) {
 
   sw.deleteSession = (id) => {
     sw.savedSessions = sw.savedSessions.filter((s) => s.id !== id);
-    safeSetLS("sw_saved_sessions", JSON.stringify(sw.savedSessions));
+    safeSetLS(STORAGE_KEYS.SW_SAVED_SESSIONS, JSON.stringify(sw.savedSessions));
     sw.renderSavedSessions();
   };
 

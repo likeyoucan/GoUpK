@@ -3,6 +3,7 @@
 import { $, safeSetLS } from "../utils.js?v=VERSION";
 import { sm } from "../sound.js?v=VERSION";
 import { APP_EVENTS } from "../constants/events.js?v=VERSION";
+import { STORAGE_KEYS } from "../constants/storage-keys.js?v=VERSION";
 
 import {
   setFontSize,
@@ -22,7 +23,6 @@ export function bindUiSettingsEvents(state) {
   document.addEventListener(APP_EVENTS.LANGUAGE_CHANGED, () =>
     syncSliderUIs(state),
   );
-
   document.addEventListener(APP_EVENTS.VIBRO_TOGGLED, (e) =>
     updateVibroSliderUI(e.detail.enabled),
   );
@@ -30,46 +30,40 @@ export function bindUiSettingsEvents(state) {
   const toggleListeners = {
     "toggle-ms": (val) => {
       state.showMs = val;
-      safeSetLS("app_show_ms", val);
+      safeSetLS(STORAGE_KEYS.APP_SHOW_MS, val);
       document.dispatchEvent(new CustomEvent(APP_EVENTS.MS_CHANGED));
     },
-
     "toggle-foreground-banner": (val) => {
       state.showForegroundBanner = val;
-      safeSetLS("app_show_foreground_banner", val);
+      safeSetLS(STORAGE_KEYS.APP_SHOW_FOREGROUND_BANNER, val);
       document.dispatchEvent(
         new CustomEvent(APP_EVENTS.FOREGROUND_NOTIFICATION_SETTING_CHANGED),
       );
     },
-
     "toggle-nav-labels": (val) => {
       state.hideNavLabels = val;
-      safeSetLS("app_hide_nav_labels", val);
+      safeSetLS(STORAGE_KEYS.APP_HIDE_NAV_LABELS, val);
       applyNavLabelsVisibility(state);
     },
-
     "toggle-glass": (val) => {
       state.isLiquidGlass = val;
-      safeSetLS("app_liquid_glass", val);
+      safeSetLS(STORAGE_KEYS.APP_LIQUID_GLASS, val);
       updateGlass(state);
     },
-
     "toggle-vignette": (val) => {
       state.hasVignette = val;
-      safeSetLS("app_vignette", val);
+      safeSetLS(STORAGE_KEYS.APP_VIGNETTE, val);
       updateVignette(state);
       if (state.hasVignette) syncSliderUIs(state);
     },
-
     "toggle-adaptive-bg": (val) => {
       state.isAdaptiveBg = val;
-      safeSetLS("app_adaptive_bg", val);
+      safeSetLS(STORAGE_KEYS.APP_ADAPTIVE_BG, val);
       document.dispatchEvent(new CustomEvent(APP_EVENTS.ADAPTIVE_BG_CHANGED));
     },
-
     "toggle-sw-minute-beep": (val) => {
       state.swMinuteBeep = val;
-      safeSetLS("app_sw_minute_beep", val);
+      safeSetLS(STORAGE_KEYS.APP_SW_MINUTE_BEEP, val);
     },
   };
 
@@ -117,7 +111,7 @@ export function bindUiSettingsEvents(state) {
     const newLevel = levels[Number(e.target.value)] || 1;
     sm.vibroLevel = newLevel;
     updateSliderLabel("vibroSlider", "vibro-label", state.vibroLabels);
-    safeSetLS("app_vibro_level", newLevel);
+    safeSetLS(STORAGE_KEYS.APP_VIBRO_LEVEL, newLevel);
     sm.vibrate(50, "strong");
   });
 

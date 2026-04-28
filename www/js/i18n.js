@@ -3,6 +3,7 @@
 import { safeGetLS, safeSetLS, safeRemoveLS } from "./utils.js?v=VERSION";
 import { CustomSelect } from "./custom-select.js?v=VERSION";
 import { APP_EVENTS } from "./constants/events.js?v=VERSION";
+import { STORAGE_KEYS } from "./constants/storage-keys.js?v=VERSION";
 
 export const translations = {
   en: {
@@ -251,7 +252,7 @@ export const langManager = {
   langSelect: null,
 
   init() {
-    const stored = safeGetLS("app_lang");
+    const stored = safeGetLS(STORAGE_KEYS.APP_LANG);
     const initialLang = stored || "auto";
 
     if (this.langSelect) {
@@ -272,7 +273,7 @@ export const langManager = {
         if (value === "auto") {
           const sys = navigator.language.startsWith("ru") ? "ru" : "en";
           this.setLang(sys, true);
-          safeSetLS("app_lang", "auto");
+          safeSetLS(STORAGE_KEYS.APP_LANG, "auto");
         } else {
           this.setLang(value);
         }
@@ -289,7 +290,7 @@ export const langManager = {
   },
 
   resetSettings() {
-    safeRemoveLS("app_lang");
+    safeRemoveLS(STORAGE_KEYS.APP_LANG);
     this.init();
   },
 
@@ -298,7 +299,7 @@ export const langManager = {
     document.documentElement.lang = lang;
 
     if (!isAuto) {
-      safeSetLS("app_lang", lang);
+      safeSetLS(STORAGE_KEYS.APP_LANG, lang);
     }
 
     if (this.langSelect) {

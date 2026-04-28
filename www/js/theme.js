@@ -12,6 +12,7 @@ import {
 import { uiSettingsManager } from "./ui-settings.js?v=VERSION";
 import { colorManager } from "./color-manager.js?v=VERSION";
 import { APP_EVENTS } from "./constants/events.js?v=VERSION";
+import { STORAGE_KEYS } from "./constants/storage-keys.js?v=VERSION";
 
 import {
   applyModeToDocument,
@@ -105,9 +106,9 @@ export const themeManager = {
   applySettings() {
     this._history.reset();
 
-    this.currentAccent = safeGetLS("theme_color") || "default";
-    this.currentBg = safeGetLS("theme_bg_color") || "default";
-    this.currentMode = safeGetLS("theme_mode") || "system";
+    this.currentAccent = safeGetLS(STORAGE_KEYS.THEME_COLOR) || "default";
+    this.currentBg = safeGetLS(STORAGE_KEYS.THEME_BG_COLOR) || "default";
+    this.currentMode = safeGetLS(STORAGE_KEYS.THEME_MODE) || "system";
 
     colorManager.syncPickers(this.currentAccent, this.currentBg);
 
@@ -117,9 +118,9 @@ export const themeManager = {
   },
 
   resetSettings() {
-    safeRemoveLS("theme_mode");
-    safeRemoveLS("theme_color");
-    safeRemoveLS("theme_bg_color");
+    safeRemoveLS(STORAGE_KEYS.THEME_MODE);
+    safeRemoveLS(STORAGE_KEYS.THEME_COLOR);
+    safeRemoveLS(STORAGE_KEYS.THEME_BG_COLOR);
 
     this._history.reset();
     uiSettingsManager.resetSettings();
@@ -137,7 +138,7 @@ export const themeManager = {
     if (useTransition) document.body.classList.add("is-updating-theme");
 
     this.currentMode = mode;
-    safeSetLS("theme_mode", mode);
+    safeSetLS(STORAGE_KEYS.THEME_MODE, mode);
 
     syncModeButtons($, mode);
     applyModeToDocument(mode);
@@ -180,7 +181,7 @@ export const themeManager = {
     }
 
     this.currentAccent = hex;
-    safeSetLS("theme_color", hex);
+    safeSetLS(STORAGE_KEYS.THEME_COLOR, hex);
 
     applyAccentVars({
       hex,
@@ -202,7 +203,7 @@ export const themeManager = {
     }
 
     this.currentBg = hex;
-    safeSetLS("theme_bg_color", hex);
+    safeSetLS(STORAGE_KEYS.THEME_BG_COLOR, hex);
 
     this.applyBgTheme(hex);
 

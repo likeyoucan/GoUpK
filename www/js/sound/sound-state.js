@@ -1,6 +1,7 @@
 // Файл: www/js/sound/sound-state.js
 
 import { APP_EVENTS } from "../constants/events.js?v=VERSION";
+import { STORAGE_KEYS } from "../constants/storage-keys.js?v=VERSION";
 
 export function syncVolumeUI(sm, $, value = sm.volume) {
   const volumeSlider = $("volumeSlider");
@@ -41,7 +42,7 @@ export function setSoundEnabled(
   if (!enabled) {
     if (sm.volume > 0) {
       sm.lastNonZeroVolume = sm.volume;
-      safeSetLS("app_volume_last_non_zero", sm.lastNonZeroVolume);
+      safeSetLS(STORAGE_KEYS.APP_VOLUME_LAST_NON_ZERO, sm.lastNonZeroVolume);
     }
 
     sm.volume = 0;
@@ -57,8 +58,8 @@ export function setSoundEnabled(
   }
 
   if (persist) {
-    safeSetLS("app_sound", sm.soundEnabled);
-    safeSetLS("app_volume", sm.volume);
+    safeSetLS(STORAGE_KEYS.APP_SOUND, sm.soundEnabled);
+    safeSetLS(STORAGE_KEYS.APP_VOLUME, sm.volume);
   }
 }
 
@@ -80,24 +81,24 @@ export function applySliderVolume(
 
     if (prevVolume > 0) {
       sm.lastNonZeroVolume = prevVolume;
-      safeSetLS("app_volume_last_non_zero", sm.lastNonZeroVolume);
+      safeSetLS(STORAGE_KEYS.APP_VOLUME_LAST_NON_ZERO, sm.lastNonZeroVolume);
     }
 
     if (sm.soundEnabled) {
       setSoundEnabled(false, { persist: true, restoreVolume: false });
     } else {
-      safeSetLS("app_volume", 0);
+      safeSetLS(STORAGE_KEYS.APP_VOLUME, 0);
     }
     return;
   }
 
   sm.lastNonZeroVolume = newVolume;
-  safeSetLS("app_volume_last_non_zero", sm.lastNonZeroVolume);
+  safeSetLS(STORAGE_KEYS.APP_VOLUME_LAST_NON_ZERO, sm.lastNonZeroVolume);
 
   if (!sm.soundEnabled) {
     setSoundEnabled(true, { persist: true, restoreVolume: false });
   } else {
-    safeSetLS("app_volume", newVolume);
+    safeSetLS(STORAGE_KEYS.APP_VOLUME, newVolume);
   }
 
   if (withPreview) {
@@ -106,16 +107,18 @@ export function applySliderVolume(
 }
 
 export function applySettings(sm, { $, safeGetLS, safeSetLS }) {
-  sm.soundEnabled = safeGetLS("app_sound") !== "false";
-  sm.vibroEnabled = safeGetLS("app_vibro") !== "false";
-  sm.vibroLevel = parseFloat(safeGetLS("app_vibro_level")) || 1;
+  sm.soundEnabled = safeGetLS(STORAGE_KEYS.APP_SOUND) !== "false";
+  sm.vibroEnabled = safeGetLS(STORAGE_KEYS.APP_VIBRO) !== "false";
+  sm.vibroLevel = parseFloat(safeGetLS(STORAGE_KEYS.APP_VIBRO_LEVEL)) || 1;
 
   sm.volume =
-    safeGetLS("app_volume") !== null ? parseFloat(safeGetLS("app_volume")) : 1;
+    safeGetLS(STORAGE_KEYS.APP_VOLUME) !== null
+      ? parseFloat(safeGetLS(STORAGE_KEYS.APP_VOLUME))
+      : 1;
 
   sm.lastNonZeroVolume =
-    safeGetLS("app_volume_last_non_zero") !== null
-      ? parseFloat(safeGetLS("app_volume_last_non_zero"))
+    safeGetLS(STORAGE_KEYS.APP_VOLUME_LAST_NON_ZERO) !== null
+      ? parseFloat(safeGetLS(STORAGE_KEYS.APP_VOLUME_LAST_NON_ZERO))
       : 1;
 
   if (!Number.isFinite(sm.lastNonZeroVolume) || sm.lastNonZeroVolume <= 0) {
@@ -129,12 +132,12 @@ export function applySettings(sm, { $, safeGetLS, safeSetLS }) {
   } else {
     if (Number.isFinite(sm.volume) && sm.volume > 0) {
       sm.lastNonZeroVolume = sm.volume;
-      safeSetLS("app_volume_last_non_zero", sm.lastNonZeroVolume);
+      safeSetLS(STORAGE_KEYS.APP_VOLUME_LAST_NON_ZERO, sm.lastNonZeroVolume);
     }
     sm.volume = 0;
   }
 
-  sm.theme = safeGetLS("app_sound_theme") || "classic";
+  sm.theme = safeGetLS(STORAGE_KEYS.APP_SOUND_THEME) || "classic";
 
   if ($("toggle-sound")) $("toggle-sound").checked = sm.soundEnabled;
   if ($("toggle-vibro")) $("toggle-vibro").checked = sm.vibroEnabled;
@@ -168,12 +171,12 @@ export function applySettings(sm, { $, safeGetLS, safeSetLS }) {
 
 export function resetSettings(sm, { safeRemoveLS, applySettings, initAudio }) {
   const soundKeys = [
-    "app_sound",
-    "app_vibro",
-    "app_vibro_level",
-    "app_sound_theme",
-    "app_volume",
-    "app_volume_last_non_zero",
+    STORAGE_KEYS.APP_SOUND,
+    STORAGE_KEYS.APP_VIBRO,
+    STORAGE_KEYS.APP_VIBRO_LEVEL,
+    STORAGE_KEYS.APP_SOUND_THEME,
+    STORAGE_KEYS.APP_VOLUME,
+    STORAGE_KEYS.APP_VOLUME_LAST_NON_ZERO,
   ];
 
   soundKeys.forEach(safeRemoveLS);

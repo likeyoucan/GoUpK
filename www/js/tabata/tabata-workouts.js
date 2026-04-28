@@ -11,6 +11,7 @@ import {
 import { t } from "../i18n.js?v=VERSION";
 import { modalManager } from "../modal.js?v=VERSION";
 import { APP_EVENTS } from "../constants/events.js?v=VERSION";
+import { STORAGE_KEYS } from "../constants/storage-keys.js?v=VERSION";
 
 export function setupTabataWorkouts(tb) {
   tb.prepareEdit = (idToEdit = null) => {
@@ -95,7 +96,7 @@ export function setupTabataWorkouts(tb) {
       workoutIdToSelect = newW.id;
     }
 
-    safeSetLS("tb_workouts", JSON.stringify(tb.workouts));
+    safeSetLS(STORAGE_KEYS.TB_WORKOUTS, JSON.stringify(tb.workouts));
     tb.renderList();
     tb.selectWorkout(workoutIdToSelect);
     modalManager.closeCurrent();
@@ -113,7 +114,7 @@ export function setupTabataWorkouts(tb) {
     }
 
     tb.workouts = tb.workouts.filter((w) => w.id !== id);
-    safeSetLS("tb_workouts", JSON.stringify(tb.workouts));
+    safeSetLS(STORAGE_KEYS.TB_WORKOUTS, JSON.stringify(tb.workouts));
 
     if (tb.selectedId === id) tb.selectWorkout(tb.workouts[0].id);
     tb.renderList();
@@ -126,7 +127,7 @@ export function setupTabataWorkouts(tb) {
     if (!w) return;
 
     tb.selectedId = id;
-    safeSetLS("tb_selected_id", id);
+    safeSetLS(STORAGE_KEYS.TB_SELECTED_ID, id);
 
     tb.work = w.work * 1000;
     tb.rest = w.rest * 1000;
@@ -198,7 +199,7 @@ export function setupTabataWorkouts(tb) {
 
   tb.loadWorkoutsFromStorage = () => {
     try {
-      const stored = safeGetLS("tb_workouts");
+      const stored = safeGetLS(STORAGE_KEYS.TB_WORKOUTS);
       if (stored && JSON.parse(stored).length > 0) {
         tb.workouts = JSON.parse(stored);
       } else {
@@ -208,10 +209,10 @@ export function setupTabataWorkouts(tb) {
       tb.workouts = [
         { id: 1, name: "Standard Tabata", work: 20, rest: 10, rounds: 8 },
       ];
-      safeSetLS("tb_workouts", JSON.stringify(tb.workouts));
+      safeSetLS(STORAGE_KEYS.TB_WORKOUTS, JSON.stringify(tb.workouts));
     }
 
-    const lastSelectedId = safeGetLS("tb_selected_id");
+    const lastSelectedId = safeGetLS(STORAGE_KEYS.TB_SELECTED_ID);
     const exists = tb.workouts.find((w) => w.id === Number(lastSelectedId));
 
     tb.selectWorkout(exists ? Number(lastSelectedId) : tb.workouts[0]?.id);
