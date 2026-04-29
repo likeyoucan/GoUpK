@@ -1,24 +1,30 @@
 (function () {
-  if (window.__erudaDockLoaded) return;
-  window.__erudaDockLoaded = true;
-
+  // ---------- Debug enable ----------
   const enabled =
     /(^|[?&])eruda=true(&|$)/.test(location.search) ||
     localStorage.getItem("active-eruda") === "true";
   if (!enabled) return;
 
-  const BASE = "https://cdn.jsdelivr.net/npm/";
+  // Чтобы не запуститься дважды
+  if (window.__erudaDockLoaded === true) return;
+  window.__erudaDockLoaded = true;
 
-  const CORE_SRC = `${BASE}eruda`;
+  // ---------- Assets ----------
+  // Для APK/offline лучше положить файлы в www/vendor/eruda/ и поставить:
+  // const ASSET_BASE = "./vendor/eruda/";
+  const ASSET_BASE = "https://cdn.jsdelivr.net/npm/";
+
+  const CORE_SRC = `${ASSET_BASE}eruda`;
   const PLUGINS = [
-    `${BASE}eruda-dom/eruda-dom.js`,
-    `${BASE}eruda-monitor/eruda-monitor.js`,
-    `${BASE}eruda-timing/eruda-timing.js`,
-    `${BASE}eruda-features/eruda-features.js`,
-    `${BASE}eruda-orientation/eruda-orientation.js`,
-    `${BASE}eruda-touches/eruda-touches.js`,
+    `${ASSET_BASE}eruda-dom/eruda-dom.js`,
+    `${ASSET_BASE}eruda-monitor/eruda-monitor.js`,
+    `${ASSET_BASE}eruda-timing/eruda-timing.js`,
+    `${ASSET_BASE}eruda-features/eruda-features.js`,
+    `${ASSET_BASE}eruda-orientation/eruda-orientation.js`,
+    `${ASSET_BASE}eruda-touches/eruda-touches.js`,
   ];
 
+  // ---------- Helpers ----------
   function onReady(fn) {
     if (document.readyState === "loading") {
       document.addEventListener("DOMContentLoaded", fn, { once: true });
@@ -47,8 +53,12 @@
     return n;
   }
 
-  function loadScript(src) {
-    return new Promise((resolve, reject) => {
+  function loadScriptOnce(src) {
+    window.__erudaDockScriptPromises ||= {};
+    if (window.__erudaDockScriptPromises[src])
+      return window.__erudaDockScriptPromises[src];
+
+    window.__erudaDockScriptPromises[src] = new Promise((resolve, reject) => {
       const s = document.createElement("script");
       s.src = src;
       s.async = true;
@@ -56,6 +66,8 @@
       s.onerror = () => reject(new Error("Failed to load: " + src));
       document.body.appendChild(s);
     });
+
+    return window.__erudaDockScriptPromises[src];
   }
 
   function clamp(n, a, b) {
@@ -72,9 +84,13 @@
     },
   };
 
+  // ---------- CSS ----------
   const CSS = `
-  /* controls always on top */
-  #__erudaGear, #__erudaDockBar { z-index: 2147483647; }
+  /* Root wrapper for easy cleanup */
+  #__erudaDockRoot { position: relative; z-index: 2147483647; }
+
+  /* Always on top */
+  #__erudaGear, #__erudaDockBar { z-index: 2147483647; pointer-events:auto; }
 
   #__erudaGear{
     position:fixed; right:12px; bottom:12px;
@@ -82,33 +98,54 @@
     border:1px solid rgba(0,0,0,.25);
     background:rgba(255,255,255,.92);
     font-size:20px; line-height:44px; text-align:center;
+    color:#111;
     -webkit-tap-highlight-color: transparent;
   }
+  #__erudaGear:active{ transform: translateY(1px); }
 
   #__erudaDockBar{
     position:fixed; right:12px; bottom:62px;
-    display:none; gap:8px; padding:10px; width:290px;
+    display:none;
+    gap:8px;
+    padding:10px;
+    width:300px;
     border-radius:12px;
     background:rgba(255,255,255,.82);
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
-    font: 12px/1.2 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-serif;
+    font:12px/1.2 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-serif;
+    color:#111;
     box-sizing:border-box;
   }
   #__erudaDockBar.__open{ display:grid; }
 
-  #__erudaDockBtns{ display:flex; gap:6px; }
-  #__erudaDockBtns button{
-    flex:1; padding:6px 8px; border-radius:10px;
+  /* top row */
+  #__erudaDockTopRow{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  #__erudaDockTitle{ font-weight: 600; opacity:.9; }
+  #__erudaDockToggleUi{
+    padding:6px 10px;
+    border-radius:10px;
     border:1px solid rgba(0,0,0,.25);
     background:rgba(255,255,255,.92);
+    color:#111;
+  }
+  #__erudaDockBar.__compact #__erudaDockSettings{ display:none; }
+
+  #__erudaDockBtns{ display:flex; gap:6px; margin-top:2px; }
+  #__erudaDockBtns button{
+    flex:1;
+    padding:6px 8px;
+    border-radius:10px;
+    border:1px solid rgba(0,0,0,.25);
+    background:rgba(255,255,255,.92);
+    color:#111;
   }
 
-  #__erudaSizeRow{ display:grid; gap:4px; }
+  #__erudaSizeRow{ display:grid; gap:4px; margin-top:6px; }
   #__erudaSize{ width:100%; touch-action: pan-x; }
   #__erudaSizeLabel{ opacity:.85; }
 
-  /* dock + mount */
+  /* Dock */
   #__erudaDock{
     position:fixed;
     z-index:2147483645;
@@ -120,11 +157,9 @@
   #__erudaDock.__left{ left:0; top:0; bottom:0; }
   #__erudaDock.__right{ right:0; top:0; bottom:0; }
 
-  #__erudaMount{
-    position:absolute; inset:0;
-  }
+  #__erudaMount{ position:absolute; inset:0; }
 
-  /* resize handle */
+  /* Resize handle */
   #__erudaResizeHandle{
     position:absolute;
     z-index:2147483646;
@@ -153,27 +188,64 @@
   #__erudaDock.__right #__erudaResizeHandle{ top:0; bottom:0; left:0; width:12px; }
   #__erudaDock.__right #__erudaResizeHandle::after{ width:4px; height:44px; }
 
-  /* IMPORTANT: force eruda to stay inside our mount (works only with useShadowDom:false) */
-  #__erudaDock .eruda-dev-tools{
+  /* IMPORTANT: keep eruda inside our mount (needs useShadowDom:false) */
+  #__erudaDock #eruda{
     position:absolute !important;
     inset:0 !important;
-    height:100% !important;
     width:100% !important;
+    height:100% !important;
   }
   #__erudaDock .eruda-container{
     position:absolute !important;
     inset:0 !important;
+    width:100% !important;
+    height:100% !important;
   }
   `;
 
   onReady(async () => {
+    // ---------- Cleanup old instances (если были) ----------
+    try {
+      window.eruda?.destroy?.();
+    } catch (_) {}
+    document.getElementById("eruda")?.remove(); // на всякий случай
+
+    document.getElementById("__erudaDockRoot")?.remove();
+    // (Если у вас раньше создавалось без root)
+    [
+      "__erudaGear",
+      "__erudaDockBar",
+      "__erudaDock",
+      "__erudaMount",
+      "__erudaResizeHandle",
+    ].forEach((id) => document.getElementById(id)?.remove());
+
     injectStyle(CSS);
 
-    const gear = el("button", { id: "__erudaGear", text: "⚙" }, document.body);
+    // ---------- Build UI ----------
+    const root = el("div", { id: "__erudaDockRoot" }, document.body);
 
-    const bar = el("div", { id: "__erudaDockBar" }, document.body);
-    const btns = el("div", { id: "__erudaDockBtns" }, bar);
-    const sizeRow = el("div", { id: "__erudaSizeRow" }, bar);
+    const gear = el(
+      "button",
+      { id: "__erudaGear", text: "⚙", title: "Eruda" },
+      root,
+    );
+
+    const bar = el("div", { id: "__erudaDockBar" }, root);
+
+    const topRow = el("div", { id: "__erudaDockTopRow" }, bar);
+    el("div", { id: "__erudaDockTitle", text: "Eruda Dock" }, topRow);
+    const toggleUiBtn = el(
+      "button",
+      { id: "__erudaDockToggleUi", text: "Hide UI" },
+      topRow,
+    );
+
+    const settings = el("div", { id: "__erudaDockSettings" }, bar);
+
+    const btns = el("div", { id: "__erudaDockBtns" }, settings);
+
+    const sizeRow = el("div", { id: "__erudaSizeRow" }, settings);
     const sizeLabel = el(
       "div",
       { id: "__erudaSizeLabel", text: "Size: —" },
@@ -185,23 +257,40 @@
       sizeRow,
     );
 
-    const dock = el("div", { id: "__erudaDock" }, document.body);
+    const dock = el("div", { id: "__erudaDock" }, root);
     const mount = el("div", { id: "__erudaMount" }, dock);
-    const resizeHandle = el("div", { id: "__erudaResizeHandle" }, dock);
+    const resizeHandle = el(
+      "div",
+      { id: "__erudaResizeHandle", title: "Drag to resize" },
+      dock,
+    );
 
-    function bringControlsToFront() {
-      document.body.appendChild(bar);
-      document.body.appendChild(gear);
+    function bringToFront() {
+      document.body.appendChild(root);
     }
 
+    // ---------- State ----------
     let open = LS.get("eruda-open", "false") === "true";
-    const positions = ["top", "bottom", "left", "right"];
+    let compact = LS.get("eruda-ui-compact", "false") === "true";
 
+    const positions = ["top", "bottom", "left", "right"];
     let pos = LS.get("eruda-dock-pos", "bottom");
     if (!positions.includes(pos)) pos = "bottom";
 
     let sizeV = Number(LS.get("eruda-dock-size-v", "45")); // vh
     let sizeH = Number(LS.get("eruda-dock-size-h", "55")); // vw
+
+    function renderCompact() {
+      if (compact) {
+        bar.classList.add("__compact");
+        toggleUiBtn.textContent = "Show UI";
+      } else {
+        bar.classList.remove("__compact");
+        toggleUiBtn.textContent = "Hide UI";
+      }
+      LS.set("eruda-ui-compact", compact);
+      bringToFront();
+    }
 
     function applyDock() {
       dock.classList.remove("__top", "__bottom", "__left", "__right");
@@ -232,7 +321,7 @@
         sizeLabel.textContent = `Size: ${sizeH}vw (width)`;
       }
 
-      bringControlsToFront();
+      bringToFront();
     }
 
     function setPos(p) {
@@ -241,6 +330,7 @@
       applyDock();
     }
 
+    // ---------- Dock buttons ----------
     [
       { p: "top", t: "Top" },
       { p: "bottom", t: "Bottom" },
@@ -250,6 +340,7 @@
       el("button", { text: t, onclick: () => setPos(p) }, btns),
     );
 
+    // ---------- Slider ----------
     function onSize() {
       const val = Number(sizeInput.value);
       if (pos === "top" || pos === "bottom") {
@@ -260,59 +351,91 @@
         LS.set("eruda-dock-size-h", sizeH);
       }
       applyDock();
-      // если Eruda открыта — иногда полезно “пере-обновить” layout
-      try {
-        window.eruda?.scale?.(window.eruda?.scale?.() || 1);
-      } catch (_) {}
     }
     sizeInput.addEventListener("input", onSize);
     sizeInput.addEventListener("change", onSize);
 
-    // drag resize
+    // ---------- Drag resize ----------
     let drag = null;
     resizeHandle.addEventListener("pointerdown", (e) => {
       e.preventDefault();
       resizeHandle.setPointerCapture(e.pointerId);
       drag = { x: e.clientX, y: e.clientY, sizeV, sizeH };
     });
+
+    // для производительности: обновляем максимум 1 раз на кадр
+    let raf = 0;
+    let lastMove = null;
+
     resizeHandle.addEventListener("pointermove", (e) => {
       if (!drag) return;
-      const vw = Math.max(1, window.innerWidth);
-      const vh = Math.max(1, window.innerHeight);
-      const dx = e.clientX - drag.x;
-      const dy = e.clientY - drag.y;
+      lastMove = { x: e.clientX, y: e.clientY };
+      if (raf) return;
 
-      if (pos === "bottom")
-        sizeV = clamp(drag.sizeV + (-dy / vh) * 100, 20, 90);
-      if (pos === "top") sizeV = clamp(drag.sizeV + (dy / vh) * 100, 20, 90);
-      if (pos === "left") sizeH = clamp(drag.sizeH + (dx / vw) * 100, 20, 90);
-      if (pos === "right") sizeH = clamp(drag.sizeH + (-dx / vw) * 100, 20, 90);
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        if (!lastMove || !drag) return;
 
-      LS.set("eruda-dock-size-v", sizeV);
-      LS.set("eruda-dock-size-h", sizeH);
-      applyDock();
+        const vw = Math.max(1, window.innerWidth);
+        const vh = Math.max(1, window.innerHeight);
+
+        const dx = lastMove.x - drag.x;
+        const dy = lastMove.y - drag.y;
+
+        if (pos === "bottom")
+          sizeV = clamp(drag.sizeV + (-dy / vh) * 100, 20, 90);
+        if (pos === "top") sizeV = clamp(drag.sizeV + (dy / vh) * 100, 20, 90);
+        if (pos === "left") sizeH = clamp(drag.sizeH + (dx / vw) * 100, 20, 90);
+        if (pos === "right")
+          sizeH = clamp(drag.sizeH + (-dx / vw) * 100, 20, 90);
+
+        LS.set("eruda-dock-size-v", sizeV);
+        LS.set("eruda-dock-size-h", sizeH);
+
+        applyDock();
+      });
     });
+
     function endDrag() {
       drag = null;
+      lastMove = null;
+      if (raf) cancelAnimationFrame(raf);
+      raf = 0;
     }
     resizeHandle.addEventListener("pointerup", endDrag);
     resizeHandle.addEventListener("pointercancel", endDrag);
 
-    // load scripts once
-    let scriptsLoaded = false;
-    async function ensureScripts() {
-      if (scriptsLoaded) return;
-      await loadScript(CORE_SRC);
-      for (const src of PLUGINS) await loadScript(src);
-      scriptsLoaded = true;
+    // ---------- Toggle UI button ----------
+    toggleUiBtn.addEventListener("click", () => {
+      compact = !compact;
+      renderCompact();
+    });
+
+    // ---------- Load scripts once ----------
+    let assetsReady = false;
+    async function ensureAssets() {
+      if (assetsReady) return;
+      await loadScriptOnce(CORE_SRC);
+      for (const src of PLUGINS) await loadScriptOnce(src);
+      assetsReady = true;
     }
 
-    let inited = false;
-    async function initErudaOnce() {
-      if (inited) return;
-      await ensureScripts();
+    // ---------- Open/Close (most reliable: destroy/init) ----------
+    async function openEruda() {
+      dock.style.display = "block";
+      bar.classList.add("__open");
+      applyDock();
+      renderCompact();
 
-      // ВАЖНО: useShadowDom:false, чтобы наш CSS внутри #__erudaDock мог “прибить” position у eruda-элементов
+      await ensureAssets();
+
+      // гарантированно убрать старый UI, если есть
+      try {
+        window.eruda?.destroy?.();
+      } catch (_) {}
+      document.getElementById("eruda")?.remove();
+
+      // ВАЖНО: useShadowDom:false, потому что мы фиксируем #eruda/.eruda-container CSS-ом
       eruda.init({
         container: mount,
         inline: true,
@@ -321,7 +444,7 @@
         defaults: { transparency: 0.95, displaySize: 100 },
       });
 
-      // плагины
+      // plugins (добавляем после init)
       if (window.erudaDom) eruda.add(erudaDom);
       if (window.erudaMonitor) eruda.add(erudaMonitor);
       if (window.erudaTiming) eruda.add(erudaTiming);
@@ -329,55 +452,51 @@
       if (window.erudaOrientation) eruda.add(erudaOrientation);
       if (window.erudaTouches) eruda.add(erudaTouches);
 
-      inited = true;
+      bringToFront();
     }
 
-    async function doOpen() {
-      dock.style.display = "block";
-      bar.classList.add("__open");
-      applyDock();
-
-      await initErudaOnce();
-
-      // гарантированно показать
-      try {
-        eruda.show();
-      } catch (_) {}
-      bringControlsToFront();
-    }
-
-    function doClose() {
+    function closeEruda() {
       bar.classList.remove("__open");
       dock.style.display = "none";
-      bringControlsToFront();
+      bringToFront();
 
-      // даже если eruda вдруг “уехала” из контейнера — hide уберёт её (штатный API)
+      // это у вас реально “железно” скрывает Eruda
       try {
-        eruda.hide();
+        window.eruda?.destroy?.();
       } catch (_) {}
+      document.getElementById("eruda")?.remove();
     }
 
     gear.addEventListener("click", async () => {
       open = !open;
       LS.set("eruda-open", open);
-      if (open) await doOpen();
-      else doClose();
+      if (open) await openEruda();
+      else closeEruda();
     });
 
-    // initial
-    applyDock();
-    if (open) await doOpen();
-    else doClose();
+    // Resize/orientation change: просто пересчитать геометрию
+    window.addEventListener("resize", () => {
+      if (!open) return;
+      applyDock();
+    });
 
-    // expose debug helpers
+    // ---------- Initial render ----------
+    applyDock();
+    renderCompact();
+    if (open) await openEruda();
+    else closeEruda();
+
+    // ---------- Debug helpers ----------
     window.__erudaDock = {
+      open: openEruda,
+      close: closeEruda,
+      setPos,
+      getState: () => ({ open, compact, pos, sizeV, sizeH }),
+      root,
       dock,
       mount,
       bar,
       gear,
-      setPos,
-      open: doOpen,
-      close: doClose,
     };
   });
 })();
