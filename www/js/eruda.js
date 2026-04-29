@@ -1,20 +1,14 @@
 (function () {
-  // ВКЛ/ВЫКЛ "режим отладки" как вам удобно:
-  // 1) по URL: ?eruda=true
-  // 2) или по флагу: localStorage.active-eruda = 'true'
   const enabled =
     /(^|[?&])eruda=true(&|$)/.test(location.search) ||
     localStorage.getItem("active-eruda") === "true";
-
   if (!enabled) return;
 
-  // --- helpers ---
   function injectStyle(cssText) {
     const s = document.createElement("style");
     s.type = "text/css";
     s.appendChild(document.createTextNode(cssText));
     document.head.appendChild(s);
-    return s;
   }
 
   function el(tag, attrs, parent) {
@@ -43,29 +37,35 @@
     });
   }
 
-  // --- UI: dock container + buttons ---
   const CSS = `
     #__erudaDock {
       position: fixed;
       z-index: 2147483647;
       background: transparent;
+      /* размер будем задавать инлайном через JS (height/width) */
     }
-    /* Позиции дока */
-    #__erudaDock.__bottom { left: 0; right: 0; bottom: 0; height: 45vh; }
-    #__erudaDock.__top    { left: 0; right: 0; top: 0; height: 45vh; }
-    #__erudaDock.__left   { left: 0; top: 0; bottom: 0; width: 55vw; }
-    #__erudaDock.__right  { right: 0; top: 0; bottom: 0; width: 55vw; }
+    #__erudaDock.__bottom { left: 0; right: 0; bottom: 0; }
+    #__erudaDock.__top    { left: 0; right: 0; top: 0; }
+    #__erudaDock.__left   { left: 0; top: 0; bottom: 0; }
+    #__erudaDock.__right  { right: 0; top: 0; bottom: 0; }
 
-    /* Панель кнопок */
-    #__erudaDockBtns {
+    #__erudaDockBar {
       position: fixed;
       z-index: 2147483647;
       right: 8px;
       top: 8px;
-      display: flex;
+      display: grid;
       gap: 6px;
+      padding: 8px;
+      border-radius: 10px;
+      background: rgba(255,255,255,.80);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
       font: 12px/1.2 -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Arial, sans-serif;
+      color: #111;
     }
+
+    #__erudaDockBtns { display: flex; gap: 6px; }
     #__erudaDockBtns button {
       padding: 6px 8px;
       border-radius: 8px;
@@ -75,27 +75,73 @@
     }
     #__erudaDockBtns button:active { transform: translateY(1px); }
 
-    /* Чтобы кнопки не мешали кликам по странице — можно скрывать их в один тап:
-       (опционально, но оставлю класс) */
-    #__erudaDockBtns.__hidden { opacity: .2; }
+    #__erudaSizeRow { display: grid; gap: 4px; }
+    #__erudaSizeLabel { opacity: .85; }
+    #__erudaSize {
+      width: 220px;
+      touch-action: pan-x;
+    }
   `;
 
-  // гарантируем head/body
   function onReady(fn) {
-    if (document.readyState === "loading")
+    if (document.readyState === "loading") {
       document.addEventListener("DOMContentLoaded", fn, { once: true });
-    else fn();
+    } else fn();
   }
 
   onReady(async () => {
     injectStyle(CSS);
 
     const dock = el("div", { id: "__erudaDock" }, document.body);
-    const btns = el("div", { id: "__erudaDockBtns" }, document.body);
+
+    // Панель управления: кнопки + ползунок
+    const bar = el("div", { id: "__erudaDockBar" }, document.body);
+    const btns = el("div", { id: "__erudaDockBtns" }, bar);
+
+    const sizeRow = el("div", { id: "__erudaSizeRow" }, bar);
+    const sizeLabel = el(
+      "div",
+      { id: "__erudaSizeLabel", text: "Size: —" },
+      sizeRow,
+    );
+    const sizeInput = el(
+      "input",
+      {
+        id: "__erudaSize",
+        type: "range",
+        min: "20",
+        max: "90",
+        step: "1",
+        value: "45",
+      },
+      sizeRow,
+    );
 
     const positions = ["top", "bottom", "left", "right"];
-    const saved = localStorage.getItem("eruda-dock-pos");
-    let currentPos = positions.includes(saved) ? saved : "bottom";
+
+    // размеры в процентах экрана:
+    // вертикальный (vh) для top/bottom и горизонтальный (vw) для left/right
+    let sizeV = Number(localStorage.getItem("eruda-dock-size-v")) || 45; // height in vh
+    let sizeH = Number(localStorage.getItem("eruda-dock-size-h")) || 55; // width in vw
+
+    let currentPos = localStorage.getItem("eruda-dock-pos");
+    if (!positions.includes(currentPos)) currentPos = "bottom";
+
+    function applySize() {
+      // сброс
+      dock.style.height = "";
+      dock.style.width = "";
+
+      if (currentPos === "top" || currentPos === "bottom") {
+        dock.style.height = sizeV + "vh";
+        sizeInput.value = String(sizeV);
+        sizeLabel.textContent = `Size: ${sizeV}vh (height)`;
+      } else {
+        dock.style.width = sizeH + "vw";
+        sizeInput.value = String(sizeH);
+        sizeLabel.textContent = `Size: ${sizeH}vw (width)`;
+      }
+    }
 
     function setDock(pos) {
       currentPos = pos;
@@ -103,9 +149,10 @@
 
       dock.classList.remove("__top", "__bottom", "__left", "__right");
       dock.classList.add("__" + pos);
+
+      applySize();
     }
 
-    // Кнопки переключения
     positions.forEach((p) => {
       el(
         "button",
@@ -117,16 +164,25 @@
       );
     });
 
-    // (опционально) тап по “пустому месту” кнопок — приглушить/показать
-    btns.addEventListener("dblclick", () => btns.classList.toggle("__hidden"));
+    sizeInput.addEventListener("input", () => {
+      const val = Number(sizeInput.value);
 
-    setDock(currentPos);
+      if (currentPos === "top" || currentPos === "bottom") {
+        sizeV = val;
+        localStorage.setItem("eruda-dock-size-v", String(sizeV));
+      } else {
+        sizeH = val;
+        localStorage.setItem("eruda-dock-size-h", String(sizeH));
+      }
+      applySize();
+    });
+
+    setDock(currentPos); // выставит и позицию, и размер
 
     // --- load eruda + plugins ---
     try {
-      // Eruda core
       await loadScript("https://cdn.jsdelivr.net/npm/eruda");
-      // init: inline=true + container (кнопка входа исчезает, Eruda рендерится в container) <!--citation:1-->
+
       eruda.init({
         container: dock,
         inline: true,
@@ -135,7 +191,6 @@
         defaults: { transparency: 0.95, displaySize: 100 },
       });
 
-      // plugins (важно: Eruda должна быть загружена до плагинов, и потом eruda.add(...)) <!--citation:2-->
       await loadScript("https://cdn.jsdelivr.net/npm/eruda-dom/eruda-dom.js");
       await loadScript(
         "https://cdn.jsdelivr.net/npm/eruda-monitor/eruda-monitor.js",
@@ -160,11 +215,7 @@
       eruda.add(erudaOrientation);
       eruda.add(erudaTouches);
 
-      // пример: сразу открыть нужную вкладку
-      // eruda.show('console');
-
-      // наружу — чтобы можно было дергать из консоли
-      window.__erudaDock = { setDock, dock, btns, eruda };
+      window.__erudaDock = { setDock, dock, bar, applySize, eruda };
     } catch (e) {
       console.error("[eruda dock] init failed:", e);
     }
