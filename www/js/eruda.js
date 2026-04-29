@@ -1,7 +1,5 @@
 (function () {
-  // =========================
-  // Enable / Disable
-  // =========================
+  // ========= enable =========
   const enabled =
     /(^|[?&])eruda=true(&|$)/.test(location.search) ||
     localStorage.getItem("active-eruda") === "true";
@@ -10,13 +8,9 @@
   if (window.__erudaDockLoaded) return;
   window.__erudaDockLoaded = true;
 
-  // =========================
-  // Assets (CDN or local)
-  // =========================
-  // Для APK/offline лучше положить файлы в www/vendor/eruda/ и поставить:
-  // const BASE = "./vendor/eruda/";
+  // ========= assets =========
+  // Для APK/offline лучше: const BASE = "./vendor/eruda/";
   const BASE = "https://cdn.jsdelivr.net/npm/";
-
   const CORE_SRC = `${BASE}eruda`;
   const PLUGINS = [
     `${BASE}eruda-dom/eruda-dom.js`,
@@ -27,9 +21,7 @@
     `${BASE}eruda-touches/eruda-touches.js`,
   ];
 
-  // =========================
-  // Helpers
-  // =========================
+  // ========= helpers =========
   function onReady(fn) {
     if (document.readyState === "loading") {
       document.addEventListener("DOMContentLoaded", fn, { once: true });
@@ -89,13 +81,13 @@
     },
   };
 
-  // =========================
-  // CSS (important fixes included)
-  // - Slider stable: we don't re-append controls during input()
-  // - Left/Right min size fix: overflow hidden + min-width:0 on eruda internals
-  // =========================
+  function nextFrame() {
+    return new Promise((r) => requestAnimationFrame(() => r()));
+  }
+
+  // ========= CSS =========
   const CSS = `
-  /* Always on top */
+  /* Controls always on top */
   #__erudaGear, #__erudaDockBar { z-index: 2147483647; pointer-events:auto; }
 
   #__erudaGear{
@@ -110,11 +102,8 @@
   #__erudaGear:active{ transform: translateY(1px); }
 
   #__erudaDockBar{
-    position:fixed;
-    display:none;
-    gap:8px;
-    padding:10px;
-    width:300px;
+    position:fixed; right:12px; bottom:62px;
+    display:none; gap:8px; padding:10px; width:300px;
     border-radius:12px;
     background:rgba(255,255,255,.82);
     backdrop-filter: blur(6px);
@@ -122,21 +111,12 @@
     font:12px/1.2 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-serif;
     color:#111;
     box-sizing:border-box;
-    right:12px; bottom:62px; /* default */
   }
   #__erudaDockBar.__open{ display:grid; }
 
-  /* DockBar positions: br/bl/tr/tl */
-  #__erudaDockBar.__pos-br { right:12px; bottom:62px; top:auto; left:auto; }
-  #__erudaDockBar.__pos-bl { left:12px;  bottom:62px; top:auto; right:auto; }
-  #__erudaDockBar.__pos-tr { right:12px; top:12px; bottom:auto; left:auto; }
-  #__erudaDockBar.__pos-tl { left:12px;  top:12px; bottom:auto; right:auto; }
-
-  /* Top row */
   #__erudaDockTopRow{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
-  #__erudaDockTitle{ font-weight: 600; opacity:.9; }
-  #__erudaDockTopBtns{ display:flex; gap:8px; align-items:center; }
-  #__erudaDockToggleUi, #__erudaDockMove{
+  #__erudaDockTitle{ font-weight:600; opacity:.9; }
+  #__erudaDockToggleUi{
     padding:6px 10px;
     border-radius:10px;
     border:1px solid rgba(0,0,0,.25);
@@ -145,20 +125,17 @@
   }
   #__erudaDockBar.__compact #__erudaDockSettings{ display:none; }
 
-  /* Settings */
   #__erudaDockBtns{ display:flex; gap:6px; margin-top:2px; }
   #__erudaDockBtns button{
-    flex:1;
-    padding:6px 8px;
-    border-radius:10px;
+    flex:1; padding:6px 8px; border-radius:10px;
     border:1px solid rgba(0,0,0,.25);
     background:rgba(255,255,255,.92);
     color:#111;
   }
 
   #__erudaSizeRow{ display:grid; gap:4px; margin-top:6px; }
-  #__erudaSize{ width:100%; touch-action: pan-x; }
   #__erudaSizeLabel{ opacity:.85; }
+  #__erudaSize{ width:100%; touch-action: pan-x; }
 
   /* Dock */
   #__erudaDock{
@@ -166,10 +143,10 @@
     z-index:2147483645;
     display:none;
     background:transparent;
-    box-sizing:border-box;
 
-    /* FIX: clip everything when very small */
+    /* FIX left/right min-width effects */
     overflow:hidden;
+    box-sizing:border-box;
   }
   #__erudaDock.__bottom{ left:0; right:0; bottom:0; }
   #__erudaDock.__top{ left:0; right:0; top:0; }
@@ -178,7 +155,7 @@
 
   #__erudaMount{
     position:absolute; inset:0;
-    overflow:hidden; /* FIX: extra clipping */
+    overflow:hidden; /* FIX */
   }
 
   /* Resize handle */
@@ -210,18 +187,10 @@
   #__erudaDock.__right #__erudaResizeHandle{ top:0; bottom:0; left:0; width:12px; }
   #__erudaDock.__right #__erudaResizeHandle::after{ width:4px; height:44px; }
 
-  /* IMPORTANT:
-     - We run eruda with useShadowDom:false
-     - So we can force it to fully respect container size and not keep min-width */
+  /* FIX: remove min-width constraints inside eruda (works because useShadowDom:false) */
   #__erudaDock #eruda,
   #__erudaDock .eruda-dev-tools,
   #__erudaDock .eruda-container{
-    position:absolute !important;
-    inset:0 !important;
-    width:100% !important;
-    height:100% !important;
-
-    /* FIX for left/right minimal width: */
     min-width:0 !important;
     min-height:0 !important;
     max-width:100% !important;
@@ -231,49 +200,27 @@
   `;
 
   onReady(async () => {
-    // =========================
-    // Cleanup old UI (if any)
-    // =========================
+    // ---- cleanup old UI (if any) ----
     try {
       window.eruda?.destroy?.();
     } catch (_) {}
     document.getElementById("eruda")?.remove();
-
-    // remove old dock UI if it exists
-    [
-      "__erudaGear",
-      "__erudaDockBar",
-      "__erudaDock",
-      "__erudaMount",
-      "__erudaResizeHandle",
-    ].forEach((id) => document.getElementById(id)?.remove());
+    ["__erudaGear", "__erudaDockBar", "__erudaDock"].forEach((id) =>
+      document.getElementById(id)?.remove(),
+    );
 
     injectStyle(CSS);
 
-    // =========================
-    // Build UI
-    // =========================
-    const gear = el(
-      "button",
-      { id: "__erudaGear", text: "⚙", title: "Toggle Eruda" },
-      document.body,
-    );
+    // ---- build UI ----
+    const gear = el("button", { id: "__erudaGear", text: "⚙" }, document.body);
 
     const bar = el("div", { id: "__erudaDockBar" }, document.body);
-
     const topRow = el("div", { id: "__erudaDockTopRow" }, bar);
     el("div", { id: "__erudaDockTitle", text: "Eruda Dock" }, topRow);
-
-    const topBtns = el("div", { id: "__erudaDockTopBtns" }, topRow);
-    const moveBtn = el(
-      "button",
-      { id: "__erudaDockMove", text: "Move" },
-      topBtns,
-    );
     const toggleUiBtn = el(
       "button",
       { id: "__erudaDockToggleUi", text: "Hide UI" },
-      topBtns,
+      topRow,
     );
 
     const settings = el("div", { id: "__erudaDockSettings" }, bar);
@@ -288,39 +235,23 @@
     );
     const sizeInput = el(
       "input",
-      {
-        id: "__erudaSize",
-        type: "range",
-        min: "20",
-        max: "90",
-        step: "1",
-      },
+      { id: "__erudaSize", type: "range", min: "20", max: "90", step: "1" },
       sizeRow,
     );
 
     const dock = el("div", { id: "__erudaDock" }, document.body);
     const mount = el("div", { id: "__erudaMount" }, dock);
-    const resizeHandle = el(
-      "div",
-      { id: "__erudaResizeHandle", title: "Drag to resize" },
-      dock,
-    );
+    const resizeHandle = el("div", { id: "__erudaResizeHandle" }, dock);
 
-    // If Eruda overlays jump above controls -> append controls after show/init
     function bringControlsToFront() {
+      // DOM order matters when z-index ties; do it only on safe moments (not during slider input)
       document.body.appendChild(bar);
       document.body.appendChild(gear);
     }
 
-    // =========================
-    // State
-    // =========================
+    // ---- state ----
     let open = LS.get("eruda-open", "false") === "true";
     let compact = LS.get("eruda-ui-compact", "false") === "true";
-
-    const barPosOrder = ["br", "bl", "tr", "tl"];
-    let barPos = LS.get("eruda-bar-pos", "br");
-    if (!barPosOrder.includes(barPos)) barPos = "br";
 
     const positions = ["top", "bottom", "left", "right"];
     let pos = LS.get("eruda-dock-pos", "bottom");
@@ -328,13 +259,6 @@
 
     let sizeV = Number(LS.get("eruda-dock-size-v", "45")); // vh
     let sizeH = Number(LS.get("eruda-dock-size-h", "55")); // vw
-
-    function renderBarPos() {
-      bar.classList.remove("__pos-br", "__pos-bl", "__pos-tr", "__pos-tl");
-      bar.classList.add(`__pos-${barPos}`);
-      LS.set("eruda-bar-pos", barPos);
-      bringControlsToFront();
-    }
 
     function renderCompact() {
       if (compact) {
@@ -348,11 +272,15 @@
       bringControlsToFront();
     }
 
+    toggleUiBtn.addEventListener("click", () => {
+      compact = !compact;
+      renderCompact();
+    });
+
     function applyDock() {
       dock.classList.remove("__top", "__bottom", "__left", "__right");
       dock.classList.add("__" + pos);
 
-      // reset
       dock.style.top =
         dock.style.right =
         dock.style.bottom =
@@ -367,7 +295,6 @@
         dock.style[pos] = "0";
         dock.style.height = sizeV + "vh";
         dock.style.width = "100%";
-
         sizeInput.value = String(sizeV);
         sizeLabel.textContent = `Size: ${sizeV}vh (height)`;
       } else {
@@ -376,8 +303,7 @@
         dock.style.bottom = "0";
         dock.style[pos] = "0";
         dock.style.width = sizeH + "vw";
-        dock.style.height = "100%"; // important for some WebView layouts
-
+        dock.style.height = "100%";
         sizeInput.value = String(sizeH);
         sizeLabel.textContent = `Size: ${sizeH}vw (width)`;
       }
@@ -387,11 +313,9 @@
       pos = p;
       LS.set("eruda-dock-pos", pos);
       applyDock();
-      // safe moment to raise controls (not dragging slider)
       bringControlsToFront();
     }
 
-    // Position buttons
     [
       { p: "top", t: "Top" },
       { p: "bottom", t: "Bottom" },
@@ -401,7 +325,7 @@
       el("button", { text: t, onclick: () => setPos(p) }, btns),
     );
 
-    // Slider: do NOT bringControlsToFront() on input (it can break drag on Android)
+    // slider: don't re-append controls during drag
     function onSizeInput() {
       const val = Number(sizeInput.value);
       if (pos === "top" || pos === "bottom") {
@@ -412,9 +336,6 @@
         LS.set("eruda-dock-size-h", sizeH);
       }
       applyDock();
-      try {
-        window.eruda?.scale?.(window.eruda?.scale?.() || 1);
-      } catch (_) {}
     }
     sizeInput.addEventListener("input", onSizeInput);
     sizeInput.addEventListener("change", () => {
@@ -422,17 +343,15 @@
       bringControlsToFront();
     });
 
-    // Drag resize handle
+    // drag resize handle
     let drag = null;
     resizeHandle.addEventListener("pointerdown", (e) => {
       e.preventDefault();
       resizeHandle.setPointerCapture(e.pointerId);
       drag = { x: e.clientX, y: e.clientY, sizeV, sizeH };
     });
-
     resizeHandle.addEventListener("pointermove", (e) => {
       if (!drag) return;
-
       const vw = Math.max(1, window.innerWidth);
       const vh = Math.max(1, window.innerHeight);
       const dx = e.clientX - drag.x;
@@ -448,7 +367,6 @@
       LS.set("eruda-dock-size-h", sizeH);
       applyDock();
     });
-
     function endDrag() {
       drag = null;
       bringControlsToFront();
@@ -456,22 +374,7 @@
     resizeHandle.addEventListener("pointerup", endDrag);
     resizeHandle.addEventListener("pointercancel", endDrag);
 
-    // Hide UI / Show UI
-    toggleUiBtn.addEventListener("click", () => {
-      compact = !compact;
-      renderCompact();
-    });
-
-    // Move DockBar around screen corners
-    moveBtn.addEventListener("click", () => {
-      const i = barPosOrder.indexOf(barPos);
-      barPos = barPosOrder[(i + 1) % barPosOrder.length];
-      renderBarPos();
-    });
-
-    // =========================
-    // Load scripts (once)
-    // =========================
+    // ---- assets ready (once) ----
     let assetsReady = false;
     async function ensureAssets() {
       if (assetsReady) return;
@@ -480,34 +383,34 @@
       assetsReady = true;
     }
 
-    // =========================
-    // Open/Close (reliable: destroy/init)
-    // =========================
+    // ---- OPEN/CLOSE: key fix is "always init on open" ----
     async function openEruda() {
       dock.style.display = "block";
       bar.classList.add("__open");
-
       applyDock();
-      renderBarPos();
       renderCompact();
 
       await ensureAssets();
 
-      // reliable cleanup
+      // IMPORTANT: wait 1 frame so dock has non-zero size before init
+      await nextFrame();
+
+      // hard cleanup
       try {
         window.eruda?.destroy?.();
       } catch (_) {}
       document.getElementById("eruda")?.remove();
 
-      // IMPORTANT: useShadowDom:false (we pin/clip eruda internals with CSS)
+      // init EVERY time we open (no "initOnce" flag!)
       eruda.init({
         container: mount,
         inline: true,
-        useShadowDom: false,
+        useShadowDom: false, // needed for our CSS fixes (min-width/overflow)
         autoScale: true,
         defaults: { transparency: 0.95, displaySize: 100 },
       });
 
+      // add plugins each init (new instance)
       if (window.erudaDom) eruda.add(erudaDom);
       if (window.erudaMonitor) eruda.add(erudaMonitor);
       if (window.erudaTiming) eruda.add(erudaTiming);
@@ -515,7 +418,7 @@
       if (window.erudaOrientation) eruda.add(erudaOrientation);
       if (window.erudaTouches) eruda.add(erudaTouches);
 
-      // after init/show: raise controls above eruda in DOM
+      // make sure controls are above eruda
       bringControlsToFront();
       setTimeout(bringControlsToFront, 0);
     }
@@ -523,17 +426,15 @@
     function closeEruda() {
       bar.classList.remove("__open");
       dock.style.display = "none";
+      bringControlsToFront();
 
-      // destroy works best in your setup
+      // DESTROY on close — most reliable for your case
       try {
         window.eruda?.destroy?.();
       } catch (_) {}
       document.getElementById("eruda")?.remove();
-
-      bringControlsToFront();
     }
 
-    // toggle by gear
     gear.addEventListener("click", async () => {
       open = !open;
       LS.set("eruda-open", open);
@@ -541,34 +442,26 @@
       else closeEruda();
     });
 
-    // On resize/orientation change
     window.addEventListener("resize", () => {
       if (!open) return;
       applyDock();
-      renderBarPos();
-      // safe moment to ensure UI on top
       bringControlsToFront();
     });
 
-    // =========================
-    // Initial render
-    // =========================
+    // ---- initial ----
     applyDock();
-    renderBarPos();
     renderCompact();
     if (open) await openEruda();
     else closeEruda();
 
-    // Debug helpers
     window.__erudaDock = {
       open: openEruda,
       close: closeEruda,
-      setPos,
-      getState: () => ({ open, compact, barPos, pos, sizeV, sizeH }),
       dock,
       mount,
       bar,
       gear,
+      setPos,
     };
   });
 })();
