@@ -14,7 +14,7 @@
   - img-src / font-src: разрешает локальные ресурсы и data-uri (иконки).
   - capacitor:// и http://localhost: необходимы для работы нативных движков iOS/Android.
 -->
-    <meta
+    <!-- <meta
       http-equiv="Content-Security-Policy"
       content="
   default-src 'self'; 
@@ -28,7 +28,7 @@
   form-action 'self';
   upgrade-insecure-requests;
 "
-    />
+    /> -->
 
     <meta
       http-equiv="Permissions-Policy"
@@ -78,11 +78,43 @@
 
     <script src="./js/js-check.js?v=VERSION"></script>
 
-    <script src="//cdn.jsdelivr.net/npm/eruda"></script>
+    <!-- <script src="//cdn.jsdelivr.net/npm/eruda"></script>
     <script src="//cdn.jsdelivr.net/npm/eruda-fps"></script>
     <script>
       eruda.init();
       eruda.add(erudaFps);
+    </script> -->
+
+    <!-- Eruda core -->
+    <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+
+    <!-- Plugins -->
+    <script src="https://cdn.jsdelivr.net/npm/eruda-dom/eruda-dom.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/eruda-monitor/eruda-monitor.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/eruda-timing/eruda-timing.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/eruda-features/eruda-features.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/eruda-orientation/eruda-orientation.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/eruda-touches/eruda-touches.js"></script>
+
+    <script>
+      // 1) init
+      eruda.init({
+        // по желанию: оставить только нужные стандартные вкладки
+        tool: ["console", "elements", "sources", "resources", "network"],
+        useShadowDom: true,
+        autoScale: true,
+      });
+
+      // 2) подключить плагины (они добавят вкладки)
+      eruda.add(erudaDom);
+      eruda.add(erudaMonitor);
+      eruda.add(erudaTiming);
+      eruda.add(erudaFeatures);
+      eruda.add(erudaOrientation);
+      eruda.add(erudaTouches);
+
+      // 3) опционально сразу открыть нужную вкладку
+      // eruda.show('monitor');
     </script>
 
     <link rel="stylesheet" href="js-check.css?v=VERSION" />
