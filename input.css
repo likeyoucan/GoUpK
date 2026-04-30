@@ -450,6 +450,7 @@ html.dark .app-bg::before {
   bottom: 100%;
   right: 0;
   left: 0;
+  opacity: 0;
 }
 .resizer_handler::before {
   content: "";
@@ -457,6 +458,9 @@ html.dark .app-bg::before {
   height: 30%;
   background: white;
   border-radius: 999px;
+}
+.resizer_handler:hover {
+  opacity: 1;
 }
 
 @media (min-width: 768px) and (orientation: landscape) {
@@ -558,6 +562,7 @@ html.dark .app-bg::before {
   margin: 1vh auto;
   max-height: 45vh;
   display: flex;
+  position: relative;
   align-items: center;
   justify-content: center;
   container-type: inline-size;
