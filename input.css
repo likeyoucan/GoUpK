@@ -51,7 +51,7 @@
   --nav-height: 5rem;
   --nav-total: calc(var(--nav-height) + var(--safe-bottom));
   --split: 60%;
-  --handler-size: 32px;
+  --handler-size: clamp(12px, 20px, 32px);
   --title-gap: clamp(8px, 1.5vmin, 20px);
 }
 
@@ -447,16 +447,43 @@ html.dark .app-bg::before {
   touch-action: none;
   position: absolute;
   margin: auto;
-  bottom: calc(100% + var(--handler-size));
+  bottom: 100%;
   right: 0;
   left: 0;
 }
 .resizer_handler::before {
   content: "";
   width: clamp(24px, 30%, 84px);
-  height: 8px;
+  height: 30%;
   background: white;
   border-radius: 999px;
+}
+
+@media (min-width: 768px) and (orientation: landscape) {
+  :root {
+    --split: 50%;
+  }
+  #view-stopwatch,
+  #view-timer,
+  #view-tabata {
+    flex-direction: row;
+    align-items: stretch;
+  }
+  .top_content {
+    padding: 24px;
+  }
+  .resizer_handler {
+    width: var(--handler-size);
+    height: 100%;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: auto;
+  }
+  .resizer_handler::before {
+    height: clamp(24px, 30%, 84px);
+    width: 30%;
+  }
 }
 
 /* @media (min-width: 768px) {
