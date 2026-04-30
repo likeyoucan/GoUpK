@@ -427,11 +427,13 @@ html.dark .app-bg::before {
   min-height: var(--handler-size);
   position: relative;
 }
+
 .mid_content {
   flex: 1;
   overflow: auto;
   min-height: 0;
 }
+
 .resizer_handler {
   height: var(--handler-size);
   flex-shrink: 0;
@@ -447,7 +449,9 @@ html.dark .app-bg::before {
   right: 0;
   left: 0;
   opacity: 0;
+  background-color: #5e5e5e30;
 }
+
 .resizer_handler::before {
   content: "";
   width: clamp(24px, 30%, 84px);
@@ -455,6 +459,7 @@ html.dark .app-bg::before {
   background: white;
   border-radius: 999px;
 }
+
 .resizer_handler:hover {
   opacity: 1;
 }
@@ -463,19 +468,27 @@ html.dark .app-bg::before {
   :root {
     --split: 50%;
   }
+
   #view-stopwatch,
   #view-timer,
   #view-tabata {
     flex-direction: row;
     align-items: stretch;
   }
+
+  .view-bottom-half {
+    border-right: 1px solid var(--border-color);
+  }
+
   .top_content {
     padding: 24px;
   }
+
   .view-bottom-half {
     margin-top: 0;
     margin-left: var(--handler-size);
   }
+
   .resizer_handler {
     width: var(--handler-size);
     height: 100%;
@@ -484,6 +497,7 @@ html.dark .app-bg::before {
     left: auto;
     right: 100%;
   }
+
   .resizer_handler::before {
     height: clamp(24px, 30%, 84px);
     width: 30%;
