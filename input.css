@@ -472,6 +472,10 @@ html.dark .app-bg::before {
   .top_content {
     padding: 24px;
   }
+  .view-bottom-half {
+    margin-top: 0;
+    margin-left: var(--handler-size);
+  }
   .resizer_handler {
     width: var(--handler-size);
     height: 100%;
