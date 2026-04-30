@@ -421,6 +421,7 @@ html.dark .app-bg::before {
 }
 
 .view-bottom-half {
+  margin-top: var(--handler-size);
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -428,11 +429,31 @@ html.dark .app-bg::before {
   min-height: var(--handler-size);
 }
 .mid_content {
-    flex: 1;
-    overflow: auto;
-    background: #858585;
-    min-height: 0;
+  flex: 1;
+  overflow: auto;
+  background: #858585;
+  min-height: 0;
 }
+.resizer_handler {
+  height: var(--handler-size);
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #6e6e6e;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  transform: translateY(-100%);
+}
+.resizer_handler::before {
+  content: "";
+  width: clamp(24px, 30%, 84px);
+  height: 8px;
+  background: white;
+  border-radius: 999px;
+}
+
 /* @media (min-width: 768px) {
   .view-top-half {
     padding-top: 1rem;
