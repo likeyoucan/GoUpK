@@ -715,22 +715,9 @@ html.dark .app-bg::before {
 /* =========================================
    13. МАЛЫЕ ЭКРАНЫ В ПОРТРЕТЕ
 ========================================= */
-/* @media (max-height: 700px) and (orientation: portrait) {
+@media (max-height: 700px) and (orientation: portrait) {
   .timer-circle-wrap {
     max-height: 40vh;
-  }
-
-  h2 {
-    margin-bottom: 0.25rem;
-    margin-top: 0;
-  }
-
-  .view-top-half {
-    height: 50%;
-  }
-
-  .view-bottom-half {
-    height: 50%;
   }
 
   .timer-input {
@@ -745,7 +732,7 @@ html.dark .app-bg::before {
   .timer-display.is-go {
     font-size: clamp(2.5rem, 30cqi, 3.8rem);
   }
-} */
+}
 
 /* =========================================
    14. УТИЛИТЫ
