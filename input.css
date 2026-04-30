@@ -427,6 +427,7 @@ html.dark .app-bg::before {
   flex-direction: column;
   background: #dab9b9;
   min-height: var(--handler-size);
+  position: relative;
 }
 .mid_content {
   flex: 1;
@@ -444,7 +445,11 @@ html.dark .app-bg::before {
   cursor: grab;
   user-select: none;
   touch-action: none;
-  transform: translateY(-100%);
+  position: absolute;
+  margin: auto;
+  bottom: calc(100% + var(--handler-size));
+  right: 0;
+  left: 0;
 }
 .resizer_handler::before {
   content: "";
