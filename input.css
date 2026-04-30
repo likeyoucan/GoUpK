@@ -50,6 +50,8 @@
 
   --nav-height: 5rem;
   --nav-total: calc(var(--nav-height) + var(--safe-bottom));
+  --split: 60%;
+  --handler-size: 32px;
 }
 
 :root.dark {
@@ -389,22 +391,30 @@ html.dark .app-bg::before {
    5. ВЕРХНЯЯ ПОЛОВИНА ВИДОВ (ТАЙМЕР + КРУГ)
 ========================================= */
 .view-top-half {
-  margin-top: var(--safe-top);
-  margin-bottom: 8px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 50%;
-  width: 100%;
+  flex-basis: var(--split);
   flex-shrink: 0;
-  padding-top: var(--safe-top);
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: #f18d8d;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: flex-basis 0.25s ease;
 }
 
 .view-top-half h2 {
   margin: 0.5rem 0;
   min-height: 1.25rem;
 }
+
+ .view-bottom-half {
+        flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #dab9b9;
+    min-height: var(--handler-size);
+  }
 
 /* @media (min-width: 768px) {
   .view-top-half {
