@@ -442,14 +442,11 @@ html.dark .app-bg::before {
   min-height: 0;
 }
 
-<<<<<<< HEAD
+
 #tb-runningControls {
   justify-content: flex-start;
 }
 
-=======
-
->>>>>>> 04c25b48bb0312ddbe0f70ad2ef351740d405e38
 .resizer_handler {
   margin: auto;
   width: 100%;
@@ -494,17 +491,10 @@ html.dark .app-bg::before {
     align-items: stretch;
   }
 
-<<<<<<< HEAD
   #tb-runningControls {
     justify-content: center;
   }
 
-=======
-  #runningControls{
-    justify-content: center;
-  }
-
->>>>>>> 04c25b48bb0312ddbe0f70ad2ef351740d405e38
   .view-top-half {
     border-right: 1px solid var(--border-color);
   }
