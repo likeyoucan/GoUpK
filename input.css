@@ -426,7 +426,6 @@ html.dark .app-bg::before {
 }
 
 .view-bottom-half {
-  margin-top: var(--handler-size);
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -482,14 +481,12 @@ html.dark .app-bg::before {
     align-items: stretch;
   }
 
-  .top_content {
-    padding: 24px;
+  .view-top-half {
+    border-right: 1px solid var(--border-color);
   }
 
-  .view-bottom-half {
-    margin-top: 0;
-    margin-left: var(--handler-size);
-    border-left: 1px solid var(--border-color);
+  .top_content {
+    padding: 24px;
   }
 
   .resizer_handler {
