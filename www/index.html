@@ -329,189 +329,6 @@
             </div>
           </div>
 
-          <!-- <div
-            id="view-stopwatch"
-            class="absolute inset-0 flex flex-col transition-opacity duration-300 z-10"
-          >
-            <div
-              class="view-top-half w-full flex flex-col items-center justify-center shrink-0 px-6"
-            >
-              <h2
-                class="text-sm font-bold app-text-sec uppercase tracking-widest"
-                data-i18n="stopwatch"
-              >
-                Stopwatch
-              </h2>
-              <div
-                class="timer-circle-wrap relative shrink-0 flex items-center justify-center"
-                data-ring="sw"
-              >
-                <button
-                  type="button"
-                  id="sw-startStopBtn"
-                  aria-label="Start or Stop Stopwatch"
-                  class="absolute inset-0 flex flex-col items-center justify-center rounded-full focus:outline-none group active:scale-95 transition-transform overflow-hidden cursor-pointer"
-                >
-                  <div
-                    id="sw-lapFlash"
-                    class="h-full absolute inset-0 rounded-full primary-bg opacity-0 mx-auto aspect-[1] pointer-events-none"
-                  ></div>
-                  <span
-                    id="sw-statusText"
-                    aria-live="assertive"
-                    data-i18n="pause"
-                    class="hidden text-sm font-bold tracking-widest uppercase mb-1 app-text-sec relative z-10"
-                    >PAUSE</span
-                  >
-                  <span
-                    id="sw-mainDisplay"
-                    aria-hidden="true"
-                    class="font-mono font-bold tracking-tighter tabular-nums primary-text timer-display is-go relative z-10 select-none"
-                    >GO</span
-                  >
-                  <span
-                    id="sw-extendedDisplay"
-                    class="hidden font-bold app-text-sec text-sm mt-1 relative z-10"
-                  ></span>
-                </button>
-              </div>
-            </div>
-
-            <div
-              class="view-bottom-half h-[45%] w-full flex flex-col shrink-0 min-h-0"
-            >
-              <div
-                class="w-full flex justify-center items-center h-24 md:h-30 shrink-0 mb-2 mt-2"
-              >
-                <button
-                  type="button"
-                  id="sw-lapBtn"
-                  data-i18n="lap"
-                  class="hidden app-surface app-text w-32 min-h-[44px] rounded-full text-lg font-bold shadow-sm active:scale-95 transition-transform focus:outline-none"
-                >
-                  Lap
-                </button>
-              </div>
-              <div
-                class="w-full flex-1 flex flex-col min-h-0 border-t app-border pt-2 px-2 sm:px-4"
-              >
-                <div
-                  class="flex justify-between items-center mb-1 px-2 shrink-0"
-                >
-                  <h3
-                    class="text-xs font-bold app-text-sec uppercase tracking-wider"
-                    data-i18n="laps_history"
-                  >
-                    Laps History
-                  </h3>
-                  <div class="flex items-center gap-1">
-                    <button
-                      type="button"
-                      id="sw-saveBtn"
-                      class="hidden flex items-center justify-center min-w-[44px] min-h-[44px] app-text-sec hover:primary-text transition-colors focus:outline-none custom-focus rounded-lg"
-                      aria-label="Save Session"
-                    >
-                      <svg
-                        focusable="false"
-                        aria-hidden="true"
-                        class="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        stroke-width="2"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-                        ></path>
-                      </svg>
-                    </button>
-                    <button
-                      type="button"
-                      id="sw-shareBtn"
-                      class="hidden flex items-center justify-center min-w-[44px] min-h-[44px] app-text-sec hover:primary-text transition-colors focus:outline-none custom-focus rounded-lg"
-                      aria-label="Share Session"
-                    >
-                      <svg
-                        focusable="false"
-                        aria-hidden="true"
-                        class="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        stroke-width="2"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          d="M8.684 13.342 15.316 9.658M8.684 10.658 15.316 14.342M6 12a2 2 0 1 1 0-.001V12Zm12-4a2 2 0 1 1 0-.001V8Zm0 8a2 2 0 1 1 0-.001V16Z"
-                        ></path>
-                      </svg>
-                    </button>
-                    <button
-                      type="button"
-                      id="sw-openResultsBtn"
-                      class="flex items-center justify-center min-w-[44px] min-h-[44px] app-text-sec hover:primary-text transition-colors focus:outline-none custom-focus rounded-lg"
-                      aria-label="Saved Results"
-                    >
-                      <svg
-                        focusable="false"
-                        aria-hidden="true"
-                        class="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        stroke-width="2"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                        ></path>
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-
-                <div
-                  id="sw-currentLapsHeader"
-                  class="hidden flex justify-between items-center px-3 py-1.5 border-b app-border shrink-0 mt-1"
-                >
-                  <span
-                    class="text-[10px] font-bold app-text-sec uppercase tracking-wider"
-                    data-i18n="lap_text"
-                    >Lap</span
-                  >
-                  <div class="flex items-center gap-4">
-                    <span
-                      class="text-[10px] font-bold app-text-sec uppercase tracking-wider w-16 text-right"
-                      data-i18n="total_time"
-                      >Total</span
-                    >
-                    <span
-                      class="text-[10px] font-bold app-text-sec uppercase tracking-wider w-16 text-right"
-                      data-i18n="split_time"
-                      >Split</span
-                    >
-                  </div>
-                </div>
-
-                <div
-                  class="scroll-list flex-1 overflow-y-auto scroll-lock no-scrollbar px-1 select-none"
-                  id="sw-lapsContainer"
-                >
-                  <div
-                    class="text-center app-text-sec opacity-50 mt-4 text-sm"
-                    data-i18n="no_laps"
-                  >
-                    No laps recorded
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div> -->
-
           <!-- ═══════════════════════════════════════════
            TIMER VIEW
       ═══════════════════════════════════════════ -->
@@ -521,19 +338,14 @@
             aria-hidden="true"
             class="absolute inset-0 flex flex-col transition-opacity duration-300 opacity-0 pointer-events-none"
           >
-            <div
-              class="view-top-half h-[45%] w-full flex flex-col items-center justify-start md:justify-center pt-6 md:pt-0 shrink-0 px-6"
-            >
+            <div class="view-top-half">
               <h2
                 class="text-sm font-bold app-text-sec uppercase tracking-widest"
                 data-i18n="countdown"
               >
                 Countdown
               </h2>
-              <div
-                class="timer-circle-wrap relative shrink-0 flex items-center justify-center"
-                data-ring="tm"
-              >
+              <div class="timer-circle-wrap" data-ring="tm">
                 <button
                   type="button"
                   id="tm-circleBtn"
@@ -557,159 +369,160 @@
               </div>
             </div>
 
-            <div
-              class="view-bottom-half h-[45%] w-full flex flex-col shrink-0 min-h-0"
-            >
-              <form
-                id="tm-form"
-                class="w-full flex justify-center flex-col items-center h-24 md:h-30 shrink-0 mb-2 mt-2"
-              >
-                <div
-                  id="tm-inputs"
-                  class="flex items-center gap-2 transition-all duration-300"
+            <div class="view-bottom-half">
+              <div class="resizer_handler"></div>
+              <div class="mid_content">
+                <form
+                  id="tm-form"
+                  class="w-full flex justify-center flex-col items-center h-24 md:h-30 shrink-0 mb-2 mt-2"
                 >
-                  <div class="flex flex-col items-center">
-                    <input
-                      type="text"
-                      inputmode="numeric"
-                      pattern="[0-9]*"
-                      autocomplete="off"
-                      enterkeyhint="next"
-                      maxlength="2"
-                      aria-label="Hours"
-                      id="tm-h"
-                      placeholder="00"
-                      class="timer-input w-16 h-16 text-center bg-transparent border-b-2 app-border outline-none font-mono transition-colors primary-focus-border"
-                    />
-                    <label
-                      for="tm-h"
-                      class="text-[10px] mt-1 font-bold opacity-50 cursor-pointer"
-                      data-i18n="hr"
-                      >HR</label
-                    >
-                  </div>
-                  <span class="text-4xl opacity-30 pb-5" aria-hidden="true"
-                    >:</span
+                  <div
+                    id="tm-inputs"
+                    class="flex items-center gap-2 transition-all duration-300"
                   >
-                  <div class="flex flex-col items-center">
-                    <input
-                      type="text"
-                      inputmode="numeric"
-                      pattern="[0-9]*"
-                      autocomplete="off"
-                      enterkeyhint="next"
-                      maxlength="2"
-                      aria-label="Minutes"
-                      id="tm-m"
-                      placeholder="00"
-                      class="timer-input w-16 h-16 text-center bg-transparent border-b-2 app-border outline-none font-mono transition-colors primary-focus-border"
-                    />
-                    <label
-                      for="tm-m"
-                      class="text-[10px] mt-1 font-bold opacity-50 cursor-pointer"
-                      data-i18n="min"
-                      >MIN</label
+                    <div class="flex flex-col items-center">
+                      <input
+                        type="text"
+                        inputmode="numeric"
+                        pattern="[0-9]*"
+                        autocomplete="off"
+                        enterkeyhint="next"
+                        maxlength="2"
+                        aria-label="Hours"
+                        id="tm-h"
+                        placeholder="00"
+                        class="timer-input w-16 h-16 text-center bg-transparent border-b-2 app-border outline-none font-mono transition-colors primary-focus-border"
+                      />
+                      <label
+                        for="tm-h"
+                        class="text-[10px] mt-1 font-bold opacity-50 cursor-pointer"
+                        data-i18n="hr"
+                        >HR</label
+                      >
+                    </div>
+                    <span class="text-4xl opacity-30 pb-5" aria-hidden="true"
+                      >:</span
                     >
+                    <div class="flex flex-col items-center">
+                      <input
+                        type="text"
+                        inputmode="numeric"
+                        pattern="[0-9]*"
+                        autocomplete="off"
+                        enterkeyhint="next"
+                        maxlength="2"
+                        aria-label="Minutes"
+                        id="tm-m"
+                        placeholder="00"
+                        class="timer-input w-16 h-16 text-center bg-transparent border-b-2 app-border outline-none font-mono transition-colors primary-focus-border"
+                      />
+                      <label
+                        for="tm-m"
+                        class="text-[10px] mt-1 font-bold opacity-50 cursor-pointer"
+                        data-i18n="min"
+                        >MIN</label
+                      >
+                    </div>
+                    <span class="text-4xl opacity-30 pb-5" aria-hidden="true"
+                      >:</span
+                    >
+                    <div class="flex flex-col items-center">
+                      <input
+                        type="text"
+                        inputmode="numeric"
+                        pattern="[0-9]*"
+                        autocomplete="off"
+                        enterkeyhint="done"
+                        maxlength="2"
+                        aria-label="Seconds"
+                        id="tm-s"
+                        placeholder="00"
+                        class="timer-input w-16 h-16 text-center bg-transparent border-b-2 app-border outline-none font-mono transition-colors primary-focus-border"
+                      />
+                      <label
+                        for="tm-s"
+                        class="text-[10px] mt-1 font-bold opacity-50 cursor-pointer"
+                        data-i18n="sec"
+                        >SEC</label
+                      >
+                    </div>
                   </div>
-                  <span class="text-4xl opacity-30 pb-5" aria-hidden="true"
-                    >:</span
+                  <button type="submit" class="sr-only" tabindex="-1"></button>
+                </form>
+
+                <div
+                  id="tm-resetBtn-wrap"
+                  class="hidden w-full flex justify-center items-center h-24 md:h-30 shrink-0 mb-2 mt-2"
+                >
+                  <button
+                    type="button"
+                    id="tm-resetBtn"
+                    data-i18n="reset"
+                    class="app-surface app-text w-32 min-h-[44px] rounded-full text-lg font-bold shadow-sm active:scale-95 transition-transform focus:outline-none custom-focus"
                   >
-                  <div class="flex flex-col items-center">
-                    <input
-                      type="text"
-                      inputmode="numeric"
-                      pattern="[0-9]*"
-                      autocomplete="off"
-                      enterkeyhint="done"
-                      maxlength="2"
-                      aria-label="Seconds"
-                      id="tm-s"
-                      placeholder="00"
-                      class="timer-input w-16 h-16 text-center bg-transparent border-b-2 app-border outline-none font-mono transition-colors primary-focus-border"
-                    />
-                    <label
-                      for="tm-s"
-                      class="text-[10px] mt-1 font-bold opacity-50 cursor-pointer"
-                      data-i18n="sec"
-                      >SEC</label
-                    >
-                  </div>
+                    Reset
+                  </button>
                 </div>
-                <button type="submit" class="sr-only" tabindex="-1"></button>
-              </form>
 
-              <div
-                id="tm-resetBtn-wrap"
-                class="hidden w-full flex justify-center items-center h-24 md:h-30 shrink-0 mb-2 mt-2"
-              >
-                <button
-                  type="button"
-                  id="tm-resetBtn"
-                  data-i18n="reset"
-                  class="app-surface app-text w-32 min-h-[44px] rounded-full text-lg font-bold shadow-sm active:scale-95 transition-transform focus:outline-none custom-focus"
-                >
-                  Reset
-                </button>
-              </div>
-
-              <div
-                id="tm-adjust-controls"
-                class="hidden w-full flex-col items-center justify-center gap-4 mt-2"
-              >
                 <div
-                  class="flex items-center h-24 md:h-30 justify-center gap-4"
+                  id="tm-adjust-controls"
+                  class="hidden w-full flex-col items-center justify-center gap-4 mt-2"
                 >
-                  <!-- Кнопка МИНУС -->
-                  <button
-                    type="button"
-                    id="tm-adjust-minus"
-                    aria-label="Decrease time"
-                    class="flex flex-col items-center justify-center w-20 h-20 app-surface app-text rounded-2xl shadow-sm active:scale-95 transition-transform focus:outline-none custom-focus"
+                  <div
+                    class="flex items-center h-24 md:h-30 justify-center gap-4"
                   >
-                    <svg
-                      class="w-6 h-6"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      stroke-width="2.5"
+                    <!-- Кнопка МИНУС -->
+                    <button
+                      type="button"
+                      id="tm-adjust-minus"
+                      aria-label="Decrease time"
+                      class="flex flex-col items-center justify-center w-20 h-20 app-surface app-text rounded-2xl shadow-sm active:scale-95 transition-transform focus:outline-none custom-focus"
                     >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M20 12H4"
-                      ></path>
-                    </svg>
-                    <span
-                      id="tm-minus-value"
-                      class="text-xs font-bold mt-1"
-                    ></span>
-                  </button>
+                      <svg
+                        class="w-6 h-6"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        stroke-width="2.5"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="M20 12H4"
+                        ></path>
+                      </svg>
+                      <span
+                        id="tm-minus-value"
+                        class="text-xs font-bold mt-1"
+                      ></span>
+                    </button>
 
-                  <!-- Кнопка ПЛЮС -->
-                  <button
-                    type="button"
-                    id="tm-adjust-plus"
-                    aria-label="Increase time"
-                    class="flex flex-col items-center justify-center w-20 h-20 app-surface app-text rounded-2xl shadow-sm active:scale-95 transition-transform focus:outline-none custom-focus"
-                  >
-                    <svg
-                      class="w-6 h-6"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      stroke-width="2.5"
+                    <!-- Кнопка ПЛЮС -->
+                    <button
+                      type="button"
+                      id="tm-adjust-plus"
+                      aria-label="Increase time"
+                      class="flex flex-col items-center justify-center w-20 h-20 app-surface app-text rounded-2xl shadow-sm active:scale-95 transition-transform focus:outline-none custom-focus"
                     >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M12 4v16m8-8H4"
-                      ></path>
-                    </svg>
-                    <span
-                      id="tm-plus-value"
-                      class="text-xs font-bold mt-1"
-                    ></span>
-                  </button>
+                      <svg
+                        class="w-6 h-6"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        stroke-width="2.5"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="M12 4v16m8-8H4"
+                        ></path>
+                      </svg>
+                      <span
+                        id="tm-plus-value"
+                        class="text-xs font-bold mt-1"
+                      ></span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
