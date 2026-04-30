@@ -422,7 +422,7 @@ html.dark .app-bg::before {
   right: 0;
   left: 0;
   bottom: calc(100% + 1dvh);
-  text-align: center
+  text-align: center;
 }
 
 .view-bottom-half {
@@ -440,6 +440,8 @@ html.dark .app-bg::before {
 }
 
 .resizer_handler {
+  margin: auto;
+  width: 100%;
   height: var(--handler-size);
   flex-shrink: 0;
   display: flex;
@@ -449,12 +451,12 @@ html.dark .app-bg::before {
   user-select: none;
   touch-action: none;
   position: absolute;
-  margin: auto;
   bottom: 100%;
   right: 0;
   left: 0;
   opacity: 0;
   background-color: #5e5e5e30;
+  transition: opacity 0.3s ease-in-out;
 }
 
 .resizer_handler::before {
@@ -618,7 +620,7 @@ html.dark .app-bg::before {
   height: calc(var(--nav-height) + var(--safe-bottom));
 }
 
-/* @media (min-width: 768px) {
+@media (min-width: 768px) {
   .app-nav-safe {
     padding-bottom: 0.5rem;
     height: var(--nav-height);
@@ -626,7 +628,7 @@ html.dark .app-bg::before {
     border-bottom-right-radius: inherit;
     overflow: hidden;
   }
-} */
+}
 
 /* =========================================
    9. ОТСТУПЫ СКРОЛЛ-КОНТЕЙНЕРОВ ОТ НАВИГАЦИИ
