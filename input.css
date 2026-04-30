@@ -170,28 +170,28 @@ body {
 }
 
 /* Планшеты */
-@media (min-width: 768px) {
+/* @media (min-width: 768px) {
   #app-preloader-icon {
     width: clamp(88px, 12vmin, 144px);
     height: clamp(88px, 12vmin, 144px);
   }
-}
+} */
 
 /* Десктопы */
-@media (min-width: 1280px) {
+/* @media (min-width: 1280px) {
   #app-preloader-icon {
     width: clamp(96px, 8vmin, 168px);
     height: clamp(96px, 8vmin, 168px);
   }
-}
+} */
 
 /* Очень большие экраны */
-@media (min-width: 1920px) {
+/* @media (min-width: 1920px) {
   #app-preloader-icon {
     width: 180px;
     height: 180px;
   }
-}
+} */
 
 @keyframes preloader-pulse {
   0%,
@@ -271,7 +271,7 @@ button {
 }
 
 /* Mobile portrait only: верхнюю часть прижимаем вниз */
-@media (max-width: 767px) and (orientation: portrait) {
+/* @media (max-width: 767px) and (orientation: portrait) {
   #view-stopwatch .view-top-half,
   #view-timer .view-top-half,
   #view-tabata .view-top-half {
@@ -279,10 +279,10 @@ button {
     justify-content: flex-end;
     row-gap: 1.5rem;
   }
-}
+} */
 
 /* --- Планшет (портретная ориентация) --- */
-@media (min-width: 768px) and (orientation: portrait) {
+/* @media (min-width: 768px) and (orientation: portrait) {
   #app {
     width: 430px;
     max-width: 430px;
@@ -300,9 +300,9 @@ button {
     margin-top: 3vh;
     margin-bottom: 2vh;
   }
-}
+} */
 
-@media (min-width: 768px) and (max-width: 1023px) and (orientation: portrait) {
+/* @media (min-width: 768px) and (max-width: 1023px) and (orientation: portrait) {
   #app {
     width: 100%;
     max-width: 100%;
@@ -315,20 +315,20 @@ button {
     padding-left: var(--safe-left);
     padding-right: var(--safe-right);
   }
-}
+} */
 
 /* --- Большой планшет (iPad Pro) в портретной ориентации --- */
-@media (min-width: 1024px) and (orientation: portrait) {
+/* @media (min-width: 1024px) and (orientation: portrait) {
   #app {
     width: 480px;
     max-width: 480px;
     height: 90dvh;
     max-height: 960px;
   }
-}
+} */
 
 /* --- Десктоп / очень большой планшет (ландшафтная ориентация, режим "карточки") --- */
-@media (min-width: 1281px) and (orientation: landscape) {
+/* @media (min-width: 1281px) and (orientation: landscape) {
   #app {
     width: 760px;
     max-width: 760px;
@@ -340,10 +340,10 @@ button {
       0 10px 30px rgba(17, 17, 17, 0.3);
     padding: 0;
   }
-}
+} */
 
 /* --- ПЛАНШЕТ В АЛЬБОМНОЙ ОРИЕНТАЦИИ (ПОЛНЫЙ ЭКРАН) --- */
-@media (min-width: 768px) and (max-width: 1280px) and (orientation: landscape) {
+/* @media (min-width: 768px) and (max-width: 1280px) and (orientation: landscape) {
   #app {
     width: 100%;
     max-width: 100%;
@@ -357,7 +357,7 @@ button {
     padding-left: var(--safe-left);
     padding-right: var(--safe-right);
   }
-}
+} */
 
 /* =========================================
    4. ВИНЬЕТКА
@@ -406,16 +406,16 @@ html.dark .app-bg::before {
   min-height: 1.25rem;
 }
 
-@media (min-width: 768px) {
+/* @media (min-width: 768px) {
   .view-top-half {
     padding-top: 1rem;
   }
-}
+} */
 
 /* =========================================
    АДАПТИВНОСТЬ ДЛЯ ДВУХКОЛОНОЧНОГО МАКЕТА
 ========================================= */
-@media (min-width: 768px) and (orientation: landscape) {
+/* @media (min-width: 768px) and (orientation: landscape) {
   #view-stopwatch,
   #view-timer,
   #view-tabata {
@@ -462,7 +462,7 @@ html.dark .app-bg::before {
   #tm-adjust-controls {
     margin: 0;
   }
-}
+} */
 
 /* =========================================
    6. КРУЖОК ТАЙМЕРА
@@ -504,12 +504,12 @@ html.dark .app-bg::before {
   min-height: calc(55px + var(--safe-top));
 }
 
-@media (min-width: 768px) {
+/* @media (min-width: 768px) {
   #view-settings > div:first-child {
     padding-top: 1.5rem;
     min-height: auto;
   }
-}
+} */
 
 /* =========================================
    8. НАВИГАЦИОННАЯ ПАНЕЛЬ (НИЖНЯЯ)
@@ -519,7 +519,7 @@ html.dark .app-bg::before {
   height: calc(var(--nav-height) + var(--safe-bottom));
 }
 
-@media (min-width: 768px) {
+/* @media (min-width: 768px) {
   .app-nav-safe {
     padding-bottom: 0.5rem;
     height: var(--nav-height);
@@ -527,7 +527,7 @@ html.dark .app-bg::before {
     border-bottom-right-radius: inherit;
     overflow: hidden;
   }
-}
+} */
 
 /* =========================================
    9. ОТСТУПЫ СКРОЛЛ-КОНТЕЙНЕРОВ ОТ НАВИГАЦИИ
@@ -571,7 +571,7 @@ html.dark .app-bg::before {
 /* =========================================
    12. LANDSCAPE НА ТЕЛЕФОНЕ
 ========================================= */
-@media (orientation: landscape) and (max-width: 767px) {
+/* @media (orientation: landscape) and (max-width: 767px) {
   .view-top-half {
     padding-top: 0.5rem;
     height: auto;
@@ -609,12 +609,12 @@ html.dark .app-bg::before {
     flex-direction: column;
     touch-action: pan-y;
   }
-}
+} */
 
 /* =========================================
    13. МАЛЫЕ ЭКРАНЫ В ПОРТРЕТЕ
 ========================================= */
-@media (max-height: 700px) and (orientation: portrait) {
+/* @media (max-height: 700px) and (orientation: portrait) {
   .timer-circle-wrap {
     max-height: 40vh;
   }
@@ -644,7 +644,7 @@ html.dark .app-bg::before {
   .timer-display.is-go {
     font-size: clamp(2.5rem, 30cqi, 3.8rem);
   }
-}
+} */
 
 /* =========================================
    14. УТИЛИТЫ
