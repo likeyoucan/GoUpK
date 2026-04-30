@@ -506,6 +506,11 @@ html.dark .app-bg::before {
     height: clamp(24px, 30%, 84px);
     width: 30%;
   }
+  #tm-form,
+  #tm-adjust-controls,
+  #tm-resetBtn-wrap {
+    flex: 1;
+  }
 }
 
 /* @media (min-width: 768px) {
