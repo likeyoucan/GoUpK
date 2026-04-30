@@ -422,6 +422,7 @@ html.dark .app-bg::before {
   right: 0;
   left: 0;
   bottom: 100%;
+  text-align: center
 }
 
 .view-bottom-half {
@@ -481,7 +482,7 @@ html.dark .app-bg::before {
     align-items: stretch;
   }
 
-  .view-bottom-half {
+  .view-top-half {
     border-right: 1px solid var(--border-color);
   }
 
