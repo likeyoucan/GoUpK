@@ -397,7 +397,6 @@ html.dark .app-bg::before {
   min-width: 0;
   min-height: 0;
   overflow: hidden;
-  background: #f18d8d;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -425,14 +424,12 @@ html.dark .app-bg::before {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: #dab9b9;
   min-height: var(--handler-size);
   position: relative;
 }
 .mid_content {
   flex: 1;
   overflow: auto;
-  background: #858585;
   min-height: 0;
 }
 .resizer_handler {
@@ -441,7 +438,6 @@ html.dark .app-bg::before {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: #6e6e6e;
   cursor: grab;
   user-select: none;
   touch-action: none;
