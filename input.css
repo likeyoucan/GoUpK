@@ -482,10 +482,6 @@ html.dark .app-bg::before {
     align-items: stretch;
   }
 
-  .view-top-half {
-    border-right: 1px solid var(--border-color);
-  }
-
   .top_content {
     padding: 24px;
   }
@@ -493,6 +489,7 @@ html.dark .app-bg::before {
   .view-bottom-half {
     margin-top: 0;
     margin-left: var(--handler-size);
+    border-left: 1px solid var(--border-color);
   }
 
   .resizer_handler {
