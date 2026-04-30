@@ -442,6 +442,10 @@ html.dark .app-bg::before {
   min-height: 0;
 }
 
+  #runningControls{
+    justify-content: flex-start;
+  }
+
 .resizer_handler {
   margin: auto;
   width: 100%;
@@ -484,6 +488,10 @@ html.dark .app-bg::before {
   #view-tabata {
     flex-direction: row;
     align-items: stretch;
+  }
+
+  #runningControls{
+    justify-content: center;
   }
 
   .view-top-half {
