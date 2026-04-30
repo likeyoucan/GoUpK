@@ -437,7 +437,7 @@ html.dark .app-bg::before {
   display: flex;
   flex-direction: column;
   flex: 1;
-  overflow: auto;
+  overflow-y: auto;
   min-height: 0;
 }
 
