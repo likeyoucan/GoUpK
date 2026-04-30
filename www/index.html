@@ -339,33 +339,35 @@
             class="absolute inset-0 flex flex-col transition-opacity duration-300 opacity-0 pointer-events-none"
           >
             <div class="view-top-half">
-              <h2
-                class="text-sm font-bold app-text-sec uppercase tracking-widest"
-                data-i18n="countdown"
-              >
-                Countdown
-              </h2>
-              <div class="timer-circle-wrap" data-ring="tm">
-                <button
-                  type="button"
-                  id="tm-circleBtn"
-                  aria-label="Start or Stop Timer"
-                  class="absolute inset-0 flex flex-col items-center justify-center rounded-full focus:outline-none group active:scale-95 transition-transform overflow-hidden cursor-pointer"
+              <div class="top_content">
+                <h2
+                  class="text-sm font-bold app-text-sec uppercase tracking-widest"
+                  data-i18n="countdown"
                 >
-                  <span
-                    id="tm-statusText"
-                    aria-live="assertive"
-                    data-i18n="pause"
-                    class="hidden text-sm font-bold tracking-widest uppercase mb-1 app-text-sec"
-                    >PAUSE</span
+                  Countdown
+                </h2>
+                <div class="timer-circle-wrap" data-ring="tm">
+                  <button
+                    type="button"
+                    id="tm-circleBtn"
+                    aria-label="Start or Stop Timer"
+                    class="absolute inset-0 flex flex-col items-center justify-center rounded-full focus:outline-none group active:scale-95 transition-transform overflow-hidden cursor-pointer"
                   >
-                  <span
-                    id="tm-mainDisplay"
-                    aria-hidden="true"
-                    class="font-mono font-bold tracking-tighter tabular-nums primary-text timer-display is-go"
-                    >GO</span
-                  >
-                </button>
+                    <span
+                      id="tm-statusText"
+                      aria-live="assertive"
+                      data-i18n="pause"
+                      class="hidden text-sm font-bold tracking-widest uppercase mb-1 app-text-sec"
+                      >PAUSE</span
+                    >
+                    <span
+                      id="tm-mainDisplay"
+                      aria-hidden="true"
+                      class="font-mono font-bold tracking-tighter tabular-nums primary-text timer-display is-go"
+                      >GO</span
+                    >
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -537,128 +539,133 @@
             aria-hidden="true"
             class="absolute inset-0 flex flex-col transition-opacity duration-300 opacity-0 pointer-events-none"
           >
-            <div
-              class="view-top-half w-full h-[55%] flex flex-col items-center justify-center shrink-0 px-6"
-            >
-              <h2
-                class="text-sm font-bold app-text-sec uppercase tracking-widest"
-                data-i18n="tabata_interval"
-              >
-                Tabata Interval
-              </h2>
-              <div
-                class="timer-circle-wrap relative shrink-0 flex items-center justify-center"
-                data-ring="tb"
-              >
-                <button
-                  type="button"
-                  id="tb-startBtn"
-                  aria-label="Start or Pause Tabata"
-                  class="absolute inset-0 flex flex-col items-center justify-center rounded-full focus:outline-none group active:scale-95 transition-transform overflow-hidden cursor-pointer"
+            <div class="view-top-half">
+              <div class="top_content">
+                <h2
+                  class="text-sm font-bold app-text-sec uppercase tracking-widest"
+                  data-i18n="tabata_interval"
                 >
-                  <span
-                    id="tb-statusText"
-                    aria-live="assertive"
-                    class="hidden text-sm font-bold tracking-widest uppercase mb-1 app-text-sec"
-                    >PAUSE</span
+                  Tabata Interval
+                </h2>
+                <div
+                  class="timer-circle-wrap relative shrink-0 flex items-center justify-center"
+                  data-ring="tb"
+                >
+                  <button
+                    type="button"
+                    id="tb-startBtn"
+                    aria-label="Start or Pause Tabata"
+                    class="absolute inset-0 flex flex-col items-center justify-center rounded-full focus:outline-none group active:scale-95 transition-transform overflow-hidden cursor-pointer"
                   >
-                  <span
-                    id="tb-mainTimer"
-                    aria-hidden="true"
-                    class="font-mono font-bold tracking-tighter tabular-nums primary-text timer-display is-go"
-                    >GO</span
-                  >
-                </button>
+                    <span
+                      id="tb-statusText"
+                      aria-live="assertive"
+                      class="hidden text-sm font-bold tracking-widest uppercase mb-1 app-text-sec"
+                      >PAUSE</span
+                    >
+                    <span
+                      id="tb-mainTimer"
+                      aria-hidden="true"
+                      class="font-mono font-bold tracking-tighter tabular-nums primary-text timer-display is-go"
+                      >GO</span
+                    >
+                  </button>
+                </div>
               </div>
             </div>
 
-            <div
-              class="view-bottom-half h-[45%] w-full flex flex-col shrink-0 min-h-0"
-            >
-              <div
-                id="tb-list-section"
-                class="w-full flex-1 flex flex-col min-h-0"
-              >
+            <div class="view-bottom-half">
+              <div class="resizer_handler"></div>
+              <div class="mid_content">
                 <div
-                  class="w-full flex flex-col justify-center shrink-0 h-24 md:h-30 mb-2 mt-2"
+                  id="tb-list-section"
+                  class="w-full flex-1 flex flex-col min-h-0"
                 >
                   <div
-                    class="flex flex-col items-center mb-4 shrink-0 mt-2 px-2 sm:px-4"
+                    class="w-full flex flex-col justify-center shrink-0 h-24 md:h-30 mb-2 mt-2"
                   >
-                    <span id="tb-activeName" class="text-xl font-bold app-text"
-                      >Standard Tabata</span
+                    <div
+                      class="flex flex-col items-center mb-4 shrink-0 mt-2 px-2 sm:px-4"
                     >
-                    <span id="tb-activeDetail" class="text-sm app-text-sec"
-                      >20s / 10s • 8 Rounds</span
-                    >
-                  </div>
-                  <div
-                    class="flex justify-between items-center mb-2 px-4 sm:px-6 shrink-0"
-                  >
-                    <h3
-                      class="text-xs font-bold app-text-sec uppercase tracking-wider"
-                      data-i18n="my_workouts"
-                    >
-                      My Workouts
-                    </h3>
-                    <button
-                      type="button"
-                      id="tb-openModalBtn"
-                      class="min-h-[44px] text-sm font-bold primary-text uppercase tracking-wider px-2 py-1 active:scale-95 transition-transform focus:outline-none custom-focus rounded-lg"
-                      data-i18n="create_new"
-                    >
-                      + New
-                    </button>
-                  </div>
-                </div>
-                <div
-                  class="flex-1 flex flex-col min-h-0 border-t app-border pt-3 px-2 sm:px-4"
-                >
-                  <div
-                    class="scroll-list flex-1 overflow-y-auto scroll-lock no-scrollbar px-1 select-none"
-                    id="tb-workoutsList"
-                  ></div>
-                </div>
-              </div>
-
-              <div
-                id="tb-runningControls"
-                class="hidden w-full flex-col items-center justify-center h-full px-6"
-                style="
-                  padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
-                "
-              >
-                <div
-                  class="w-full flex flex-col items-center justify-center mb-8 gap-2"
-                >
-                  <span
-                    id="tb-runningWorkoutName"
-                    class="text-xl font-bold app-text text-center truncate w-full"
-                  ></span>
-
-                  <div class="flex items-baseline gap-2">
-                    <span
-                      class="text-sm font-bold app-text-sec uppercase"
-                      data-i18n="round"
-                      >РАУНД</span
-                    >
-                    <span class="text-2xl font-bold primary-text">
-                      <span id="tb-currentRound">1</span>/<span
-                        id="tb-totalRounds"
-                        >8</span
+                      <span
+                        id="tb-activeName"
+                        class="text-xl font-bold app-text"
+                        >Standard Tabata</span
                       >
-                    </span>
+                      <span id="tb-activeDetail" class="text-sm app-text-sec"
+                        >20s / 10s • 8 Rounds</span
+                      >
+                    </div>
+                    <div
+                      class="flex justify-between items-center mb-2 px-4 sm:px-6 shrink-0"
+                    >
+                      <h3
+                        class="text-xs font-bold app-text-sec uppercase tracking-wider"
+                        data-i18n="my_workouts"
+                      >
+                        My Workouts
+                      </h3>
+                      <button
+                        type="button"
+                        id="tb-openModalBtn"
+                        class="min-h-[44px] text-sm font-bold primary-text uppercase tracking-wider px-2 py-1 active:scale-95 transition-transform focus:outline-none custom-focus rounded-lg"
+                        data-i18n="create_new"
+                      >
+                        + New
+                      </button>
+                    </div>
+                  </div>
+                  <div
+                    class="flex-1 flex flex-col min-h-0 border-t app-border pt-3 px-2 sm:px-4"
+                  >
+                    <div
+                      class="scroll-list flex-1 overflow-y-auto scroll-lock no-scrollbar px-1 select-none"
+                      id="tb-workoutsList"
+                    ></div>
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  id="tb-stopBtn"
-                  data-i18n="stop"
-                  class="w-80 bg-alert min-h-[56px] rounded-2xl font-bold shadow-lg active:scale-95 transition-transform focus:outline-none custom-focus"
+                <div
+                  id="tb-runningControls"
+                  class="hidden w-full flex-col items-center justify-center h-full px-6"
+                  style="
+                    padding-bottom: calc(
+                      5rem + env(safe-area-inset-bottom, 0px)
+                    );
+                  "
                 >
-                  STOP
-                </button>
+                  <div
+                    class="w-full flex flex-col items-center justify-center mb-8 gap-2"
+                  >
+                    <span
+                      id="tb-runningWorkoutName"
+                      class="text-xl font-bold app-text text-center truncate w-full"
+                    ></span>
+
+                    <div class="flex items-baseline gap-2">
+                      <span
+                        class="text-sm font-bold app-text-sec uppercase"
+                        data-i18n="round"
+                        >РАУНД</span
+                      >
+                      <span class="text-2xl font-bold primary-text">
+                        <span id="tb-currentRound">1</span>/<span
+                          id="tb-totalRounds"
+                          >8</span
+                        >
+                      </span>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    id="tb-stopBtn"
+                    data-i18n="stop"
+                    class="w-80 bg-alert min-h-[56px] rounded-2xl font-bold shadow-lg active:scale-95 transition-transform focus:outline-none custom-focus"
+                  >
+                    STOP
+                  </button>
+                </div>
               </div>
             </div>
           </div>
