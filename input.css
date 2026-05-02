@@ -600,6 +600,7 @@ html.dark .app-bg::before {
   margin: 1vh auto;
   min-height: 0;
   max-height: 45vh;
+  flex: 0 1 45dvh;
   display: flex;
   position: relative;
   align-items: center;
