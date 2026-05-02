@@ -14,7 +14,7 @@
   - img-src / font-src: разрешает локальные ресурсы и data-uri (иконки).
   - capacitor:// и http://localhost: необходимы для работы нативных движков iOS/Android.
 -->
-    <!-- <meta
+    <meta
       http-equiv="Content-Security-Policy"
       content="
   default-src 'self'; 
@@ -28,7 +28,7 @@
   form-action 'self';
   upgrade-insecure-requests;
 "
-    /> -->
+    />
 
     <meta
       http-equiv="Permissions-Policy"
@@ -189,6 +189,18 @@
                       class="hidden font-bold app-text-sec text-sm mt-1 relative z-10"
                     ></span>
                   </button>
+                  <div
+                    class="w-full flex justify-center items-center h-24 md:h-30 shrink-0 mb-2 mt-2"
+                  >
+                    <button
+                      type="button"
+                      id="sw-lapBtn"
+                      data-i18n="lap"
+                      class="hidden app-surface app-text w-32 min-h-[44px] rounded-full text-lg font-bold shadow-sm active:scale-95 transition-transform focus:outline-none"
+                    >
+                      Lap
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -196,18 +208,6 @@
             <div class="view-bottom-half">
               <div class="resizer_handler"></div>
               <div class="mid_content">
-                <div
-                  class="w-full flex justify-center items-center h-24 md:h-30 shrink-0 mb-2 mt-2"
-                >
-                  <button
-                    type="button"
-                    id="sw-lapBtn"
-                    data-i18n="lap"
-                    class="hidden app-surface app-text w-32 min-h-[44px] rounded-full text-lg font-bold shadow-sm active:scale-95 transition-transform focus:outline-none"
-                  >
-                    Lap
-                  </button>
-                </div>
                 <div
                   class="w-full flex-1 flex flex-col min-h-0 border-t app-border pt-2 px-2 sm:px-4"
                 >
