@@ -408,11 +408,11 @@ html.dark .app-bg::before {
   height: 100%;
   padding: 30px;
   display: flex;
-  flex: 0 1 auto; 
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--title-gap);
+  gap: var(--title-gap, 1rem);
+  overflow: hidden;
 }
 
 .view-top-half h2 {
@@ -442,7 +442,6 @@ html.dark .app-bg::before {
   overflow-y: auto;
   min-height: 0;
 }
-
 
 #tb-runningControls {
   justify-content: flex-start;
@@ -599,6 +598,7 @@ html.dark .app-bg::before {
   max-width: 80%;
   aspect-ratio: 1 / 1;
   margin: 1vh auto;
+  min-height: 0;
   max-height: 45vh;
   display: flex;
   position: relative;
