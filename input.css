@@ -50,7 +50,7 @@
 
   --nav-height: 5rem;
   --nav-total: calc(var(--nav-height) + var(--safe-bottom));
-  --split: 60%;
+  --split: 65%;
   --handler-size: clamp(12px, 20px, 32px);
   --title-gap: clamp(8px, 1.5vmin, 20px);
 }
