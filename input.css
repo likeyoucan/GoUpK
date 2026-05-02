@@ -594,7 +594,7 @@ html.dark .app-bg::before {
   max-width: 80%;
   aspect-ratio: 1 / 1;
   margin: 1dvh auto;
-  max-height: 45dvh;
+  max-height: 100dvh;
   display: flex;
   position: relative;
   align-items: center;
@@ -739,7 +739,7 @@ html.dark .app-bg::before {
 ========================================= */
 @media (max-height: 700px) and (orientation: portrait) {
   .timer-circle-wrap {
-    max-height: 70dvh;
+    max-height: 40dvh;
   }
 
   .timer-input {
