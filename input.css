@@ -111,7 +111,6 @@ body.is-updating-theme .app-surface {
 }
 
 body {
-  height: 100vh;
   height: 100dvh;
   background-color: var(--surface-color, #000);
   color: var(--text-color);
@@ -144,7 +143,7 @@ body {
   inset: 0;
   width: 100vw;
   height: 100dvh;
-  min-height: 100vh;
+  min-height: 100dvh;
   z-index: 200;
   background-color: #fcfcfc; /* фон preload */
   display: flex;
@@ -254,7 +253,6 @@ button {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  height: 100vh;
   height: 100dvh;
   width: 100%;
   max-width: 100%;
@@ -300,8 +298,8 @@ button {
 
   .timer-circle-wrap {
     max-width: 280px;
-    margin-top: 3vh;
-    margin-bottom: 2vh;
+    margin-top: 3dvh;
+    margin-bottom: 2dvh;
   }
 } */
 
@@ -350,7 +348,6 @@ button {
   #app {
     width: 100%;
     max-width: 100%;
-    height: 100vh;
     height: 100dvh;
     max-height: 100%;
     border-radius: 0;
@@ -371,7 +368,7 @@ button {
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  box-shadow: inset 0 0 15vh rgba(0, 0, 0, var(--vignette-alpha, 0.15));
+  box-shadow: inset 0 0 15dvh rgba(0, 0, 0, var(--vignette-alpha, 0.15));
   border-radius: inherit;
   opacity: 0;
   transition:
@@ -380,7 +377,7 @@ button {
 }
 
 html.dark .app-bg::before {
-  box-shadow: inset 0 0 20vh
+  box-shadow: inset 0 0 20dvh
     rgba(0, 0, 0, calc(var(--vignette-alpha, 0.15) + 0.1));
 }
 
@@ -597,10 +594,10 @@ html.dark .app-bg::before {
   width: 100%;
   max-width: 80%;
   aspect-ratio: 1 / 1;
-  margin: 1vh auto;
+  margin: 1dvh auto;
   min-height: 0;
   max-height: 45dvh;
-  flex: 0 1 45dvh;
+   flex: 1 1 45dvh;
   display: flex;
   position: relative;
   align-items: center;
@@ -724,7 +721,7 @@ html.dark .app-bg::before {
   }
 
   .timer-circle-wrap {
-    max-height: 70vh;
+    max-height: 70dvh;
     max-width: 220px;
   }
 
@@ -745,7 +742,7 @@ html.dark .app-bg::before {
 ========================================= */
 @media (max-height: 700px) and (orientation: portrait) {
   .timer-circle-wrap {
-    max-height: 40vh;
+    max-height: 40dvh;
   }
 
   .timer-input {
