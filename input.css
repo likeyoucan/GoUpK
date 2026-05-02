@@ -417,11 +417,11 @@ html.dark .app-bg::before {
 .view-top-half h2 {
   margin: 0.5rem 0;
   min-height: 1.25rem;
-  position: absolute;
+  /* position: absolute;
   margin: auto;
   right: 0;
   left: 0;
-  bottom: calc(100% + 1dvh);
+  bottom: calc(100% + 1dvh); */
   text-align: center;
 }
 
@@ -479,13 +479,13 @@ html.dark .app-bg::before {
   opacity: 1;
 }
 
-.lap_wrap{
+/* .lap_wrap{
   margin: auto;
   position: absolute;
   top: calc(100% + 1dvh);
   right: 0;
   left: 0;
-}
+} */
 
 @media (min-width: 768px) and (orientation: landscape) {
   :root {
