@@ -592,7 +592,16 @@ html.dark .app-bg::before {
    6. КРУЖОК ТАЙМЕРА
 ========================================= */
 .timer-circle-wrap {
-  height: 100%;
+  width: 100%;
+  max-width: 80%;
+  aspect-ratio: 1 / 1;
+  margin: 1dvh auto;
+  max-height: 100dvh;
+  display: flex;
+  position: relative;
+  align-items: center;
+  justify-content: center;
+  container-type: inline-size;
 }
 
 .timer-display {
