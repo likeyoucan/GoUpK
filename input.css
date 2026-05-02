@@ -479,6 +479,14 @@ html.dark .app-bg::before {
   opacity: 1;
 }
 
+#sw-lapBtn{
+  margin: auto;
+  position: absolute;
+  top: calc(100% + 1dvh);
+  right: 0;
+  left: 0;
+}
+
 @media (min-width: 768px) and (orientation: landscape) {
   :root {
     --split: 50%;
