@@ -1549,7 +1549,7 @@ body.hide-nav-labels .nav-btn {
   --tr-thumb-size: 32px;
   --tr-track-bg: var(--border-color);
   --tr-fill-color: var(--primary-color);
-  --tr-thumb-color: var(--surface-color); /* Фон бегунка, как был */
+  --tr-thumb-color: var(--surface-color);
 }
 
 .tr-thumb {
