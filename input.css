@@ -401,30 +401,19 @@ html.dark .app-bg::before {
 }
 
 .top_content {
+  padding: 32px;
+  gap: 24px;
+  height: auto;
+  max-height: 100%;
   display: grid;
-  /* 
-    Суть: 
-    1 строка: занимает минимум по своему контенту, но столько же, сколько строка 3 (1fr). Максимум 120px.
-    2 строка: круг, размер по контенту, но не больше 45dvh.
-    3 строка: зеркально 1-й строке (1fr). Максимум 120px.
-  */
-  grid-template-rows: minmax(auto, 120px) minmax(auto, 45dvh) minmax(auto, 120px);
-  align-items: center; /* Центрирует всё внутри ячеек */
-  justify-content: center;
-    width: 100%;
-  height: 100%;
-  padding: 30px;
-  overflow: hidden;
+  grid-template-rows: 1fr minmax(0, 65dvh) 1fr;
+  align-items: center;
+  justify-items: center;
 }
 
 .view-top-half h2 {
   margin: 0.5rem 0;
   min-height: 1.25rem;
-  /* position: absolute;
-  margin: auto;
-  right: 0;
-  left: 0;
-  bottom: calc(100% + 1dvh); */
   text-align: center;
 }
 
