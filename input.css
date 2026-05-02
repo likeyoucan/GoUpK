@@ -402,7 +402,7 @@ html.dark .app-bg::before {
 
 .top_content {
   padding: 32px;
-  gap: 24px;
+  gap: 8px;
   height: auto;
   max-height: 100%;
   display: grid;
