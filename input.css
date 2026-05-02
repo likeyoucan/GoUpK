@@ -594,8 +594,8 @@ html.dark .app-bg::before {
   max-width: 80%;
   aspect-ratio: 1 / 1;
   margin: 1dvh auto;
-  max-height: 100dvh;
-  flex: 1 1 100dvh;
+  max-height: 75dvh;
+  flex: 1 1 75dvh;
   display: flex;
   position: relative;
   align-items: center;
