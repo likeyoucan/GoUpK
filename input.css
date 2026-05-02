@@ -502,6 +502,10 @@ html.dark .app-bg::before {
   .top_content {
     padding: 24px;
   }
+  
+  .mid_content .app-border{
+    border: none;
+  }
 
   .resizer_handler {
     width: var(--handler-size);
@@ -588,7 +592,7 @@ html.dark .app-bg::before {
   width: 100%;
   max-width: 80%;
   aspect-ratio: 1 / 1;
-  margin: 1dvh auto;
+  margin: 0 auto;
   height: 100%;
   max-height: 100dvh;
   display: flex;
