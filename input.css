@@ -479,7 +479,7 @@ html.dark .app-bg::before {
   opacity: 1;
 }
 
-#sw-lapBtn{
+.lap_wrap{
   margin: auto;
   position: absolute;
   top: calc(100% + 1dvh);
