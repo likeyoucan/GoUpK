@@ -503,7 +503,7 @@ html.dark .app-bg::before {
     padding: 24px;
   }
   
-  .mid_content > .app-border{
+  .mid_content > div.app-border{
     border: none;
   }
 
