@@ -1583,7 +1583,7 @@ body.hide-nav-labels .nav-btn {
   body
   .app-surface:not(button):not(.select-wrapper),
 :root.glass-lite.glass-effect body #toast {
-  backdrop-filter: blur(4px) saturate(115%);
+  backdrop-filter: blur(8px) saturate(120%);
 }
 
 /* На lite-профиле всегда без фильтров в длинных списках */
