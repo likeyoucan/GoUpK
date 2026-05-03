@@ -635,7 +635,7 @@ html.dark .app-bg::before {
 }
 
 .timer-display {
-  font-size: clamp(1.9rem, min(21cqi, 21cqb), 3.2rem);
+  font-size: clamp(1.9rem, min(21cqi, 21cqb), 2.4rem);
   line-height: 0.95;
   letter-spacing: -0.04em;
   white-space: nowrap;
