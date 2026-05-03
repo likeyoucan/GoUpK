@@ -393,7 +393,7 @@ html.dark .app-bg::before {
 
 .top_content {
   aspect-ratio: 1 / 1;
-  padding: 32px;
+  padding-block: 32px;
   gap: 8px;
   height: auto;
   max-height: 100%;
@@ -486,7 +486,7 @@ html.dark .app-bg::before {
   }
 
   .top_content {
-    padding: 24px;
+    padding-block: 24px;
   }
 
   .mid_content > div.app-border {
