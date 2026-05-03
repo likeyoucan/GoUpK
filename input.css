@@ -317,7 +317,7 @@ html.dark .app-bg::before {
   padding-block: 32px;
   gap: 8px;
   height: 100%;
-  max-height: dvw;
+  max-height: min(15dvw, 480px);
   display: grid;
   grid-template-rows: 1fr minmax(0, 65dvh) 1fr;
   grid-template-columns: 80%;
@@ -412,7 +412,7 @@ html.dark .app-bg::before {
   .top_content {
     padding-block: 24px;
     grid-template-columns: 70%;
-    max-height: 62.5dvw;
+    max-height: min(62.5dvw, 480px);
   }
 
   .mid_content {
