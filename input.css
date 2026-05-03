@@ -476,7 +476,7 @@ html.dark .app-bg::before {
   }
 
   .top_content{
-    width: 37.5dvw;
+    max-height: 37.5dvw;
   }
 }
 
