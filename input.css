@@ -172,28 +172,28 @@ body {
 }
 
 /* Планшеты */
-/* @media (min-width: 768px) {
+@media (min-width: 768px) {
   #app-preloader-icon {
     width: clamp(88px, 12vmin, 144px);
     height: clamp(88px, 12vmin, 144px);
   }
-} */
+}
 
 /* Десктопы */
-/* @media (min-width: 1280px) {
+@media (min-width: 1280px) {
   #app-preloader-icon {
     width: clamp(96px, 8vmin, 168px);
     height: clamp(96px, 8vmin, 168px);
   }
-} */
+}
 
 /* Очень большие экраны */
-/* @media (min-width: 1920px) {
+@media (min-width: 1920px) {
   #app-preloader-icon {
     width: 180px;
     height: 180px;
   }
-} */
+}
 
 @keyframes preloader-pulse {
   0%,
@@ -473,14 +473,6 @@ html.dark .app-bg::before {
 .resizer_handler:hover {
   opacity: 1;
 }
-
-/* .lap_wrap{
-  margin: auto;
-  position: absolute;
-  top: calc(100% + 1dvh);
-  right: 0;
-  left: 0;
-} */
 
 @media (min-width: 768px) and (orientation: landscape) {
   :root {
