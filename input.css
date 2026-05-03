@@ -389,6 +389,8 @@ html.dark .app-bg::before {
    5. ВЕРХНЯЯ ПОЛОВИНА ВИДОВ (ТАЙМЕР + КРУГ)
 ========================================= */
 .view-top-half {
+    padding: 32px;
+    box-sizing: content-box;
   flex-basis: var(--split);
   flex-shrink: 0;
   min-width: 0;
@@ -402,7 +404,6 @@ html.dark .app-bg::before {
 
 .top_content {
   aspect-ratio: 1 / 1;
-  padding: 32px;
   gap: 8px;
   height: auto;
   max-height: 100dvh;
@@ -498,11 +499,8 @@ html.dark .app-bg::before {
   }
 
   .view-top-half {
-    border-right: 1px solid var(--border-color);
-  }
-
-  .top_content {
     padding: 24px;
+    border-right: 1px solid var(--border-color);
   }
 
   .mid_content > div.app-border {
