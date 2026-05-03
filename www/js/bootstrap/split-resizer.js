@@ -14,6 +14,12 @@ function getMiddleAnchor() {
   return isPhone && isPortrait ? 60 : 50;
 }
 
+function getEdgeVisualRange(viewEl) {
+  const row = isRowLayout(viewEl);
+  // Держим handler всегда видимым у краев
+  return row ? { min: 2.5, max: 97.5 } : { min: 3.5, max: 96.5 };
+}
+
 function nearestAnchor(value, anchors) {
   let best = anchors[0];
   let bestDist = Math.abs(value - best);
@@ -29,13 +35,12 @@ function nearestAnchor(value, anchors) {
   return best;
 }
 
-function setFinalStateClass(viewEl, target) {
+function setStateClass(viewEl, target) {
   viewEl.classList.remove(
     "split-top-hidden",
     "split-middle",
     "split-bottom-hidden",
   );
-
   if (target === 0) viewEl.classList.add("split-top-hidden");
   else if (target === 100) viewEl.classList.add("split-bottom-hidden");
   else viewEl.classList.add("split-middle");
@@ -43,26 +48,23 @@ function setFinalStateClass(viewEl, target) {
 
 function setupHandler(viewEl) {
   const handler = viewEl.querySelector(".resizer_handler");
-  const topHalf = viewEl.querySelector(".view-top-half");
-  if (!handler || !topHalf) return;
+  if (!handler) return;
 
-  const SNAP_THRESHOLD = 12;
+  const SNAP_THRESHOLD = 10;
+  const MAX_INERTIA_SHIFT = 8; // максимум добавки от скорости в процентах
+
   let dragging = false;
   let lastRaw = getMiddleAnchor();
+  let lastTs = 0;
+  let lastRawForVel = lastRaw;
+  let velocity = 0; // %/ms
   let tapTimer = null;
-  let snapToken = 0;
 
-  // Инерция
-  let lastMoveTs = 0;
-  let lastMoveRaw = lastRaw;
-  let velocity = 0; // % / ms
+  function getAnchors() {
+    return [0, getMiddleAnchor(), 100];
+  }
 
-  const getAnchors = () => {
-    const middle = getMiddleAnchor();
-    return [0, middle, 100];
-  };
-
-  const readRawPercent = (ev) => {
+  function toRawFromPointer(ev) {
     const rect = viewEl.getBoundingClientRect();
     const row = isRowLayout(viewEl);
 
@@ -78,98 +80,82 @@ function setupHandler(viewEl) {
       0,
       100,
     );
-  };
+  }
 
-  const applyLiveRaw = (raw) => {
-    lastRaw = clamp(raw, 0, 100);
+  function applyLive(raw) {
+    const { min, max } = getEdgeVisualRange(viewEl);
+    lastRaw = clamp(raw, min, max);
 
+    viewEl.classList.add("split-live");
     viewEl.classList.remove(
       "split-top-hidden",
       "split-middle",
       "split-bottom-hidden",
     );
-    viewEl.classList.remove("split-animating");
-    viewEl.classList.add("split-live");
     viewEl.style.setProperty("--split", `${lastRaw}%`);
-  };
+  }
 
-  const animateToAnchor = (target, v = 0) => {
-    const token = ++snapToken;
-
-    // Длительность зависит от скорости, чтобы чувствовалась "инертность"
-    const speed = Math.abs(v);
-    const duration = Math.round(clamp(240 + speed * 1200, 240, 430));
-    viewEl.style.setProperty("--split-snap-duration", `${duration}ms`);
+  function animateTo(target) {
+    const middle = getMiddleAnchor();
+    const { min, max } = getEdgeVisualRange(viewEl);
+    const visualTarget = target === 0 ? min : target === 100 ? max : middle;
 
     viewEl.classList.remove("split-live");
     viewEl.classList.add("split-animating");
-
-    // На время анимации держим neutral-state, чтобы не дергать layout.
-    setFinalStateClass(viewEl, getMiddleAnchor());
-
-    // Анти-рывок: не прыгаем в "жесткий 0/100" во время самой анимации
-    const visualTarget = target === 0 ? 0.12 : target === 100 ? 99.88 : target;
+    setStateClass(viewEl, middle); // нейтраль во время анимации
     viewEl.style.setProperty("--split", `${visualTarget}%`);
 
-    const onEnd = (e) => {
-      if (token !== snapToken) return;
-      if (e.target !== topHalf || e.propertyName !== "flex-basis") return;
-
-      topHalf.removeEventListener("transitionend", onEnd);
+    const topHalf = viewEl.querySelector(".view-top-half");
+    const end = () => {
       viewEl.classList.remove("split-animating");
-
-      // Финальное состояние после анимации
-      if (target === 0) viewEl.style.setProperty("--split", "0.12%");
-      else if (target === 100) viewEl.style.setProperty("--split", "99.88%");
-      else viewEl.style.setProperty("--split", `${target}%`);
-
-      setFinalStateClass(viewEl, target);
+      setStateClass(viewEl, target);
     };
 
-    topHalf.addEventListener("transitionend", onEnd);
+    let done = false;
+    const onEnd = (e) => {
+      if (done) return;
+      if (e.target !== topHalf || e.propertyName !== "flex-basis") return;
+      done = true;
+      topHalf?.removeEventListener("transitionend", onEnd);
+      end();
+    };
 
+    topHalf?.addEventListener("transitionend", onEnd);
     setTimeout(() => {
-      if (token !== snapToken) return;
-      topHalf.removeEventListener("transitionend", onEnd);
-      viewEl.classList.remove("split-animating");
+      if (done) return;
+      done = true;
+      topHalf?.removeEventListener("transitionend", onEnd);
+      end();
+    }, 320);
+  }
 
-      if (target === 0) viewEl.style.setProperty("--split", "0.12%");
-      else if (target === 100) viewEl.style.setProperty("--split", "99.88%");
-      else viewEl.style.setProperty("--split", `${target}%`);
-
-      setFinalStateClass(viewEl, target);
-    }, duration + 70);
-  };
-
-  const snapToAnchor = () => {
+  function snapToNearestWithInertia() {
     const anchors = getAnchors();
     const middle = anchors[1];
 
-    // Инерционная проекция
-    const projected = clamp(lastRaw + velocity * 170, 0, 100);
+    // Мягкая инерция: ограничиваем смещение, чтобы не "перелетать" к другому краю
+    const inertiaShift = clamp(
+      velocity * 110,
+      -MAX_INERTIA_SHIFT,
+      MAX_INERTIA_SHIFT,
+    );
+    const projected = clamp(lastRaw + inertiaShift, 0, 100);
 
-    let target = projected;
+    let target;
     if (Math.abs(projected - 0) <= SNAP_THRESHOLD) target = 0;
     else if (Math.abs(projected - middle) <= SNAP_THRESHOLD) target = middle;
     else if (Math.abs(projected - 100) <= SNAP_THRESHOLD) target = 100;
     else target = nearestAnchor(projected, anchors);
 
-    animateToAnchor(target, velocity);
-  };
+    animateTo(target);
+  }
 
-  const cycleState = () => {
+  function cycleState() {
     const middle = getMiddleAnchor();
-
-    if (viewEl.classList.contains("split-top-hidden")) {
-      animateToAnchor(middle, 0.12);
-      return;
-    }
-    if (viewEl.classList.contains("split-middle")) {
-      animateToAnchor(100, 0.12);
-      return;
-    }
-    animateToAnchor(0, 0.12);
-  };
+    if (viewEl.classList.contains("split-top-hidden")) return animateTo(middle);
+    if (viewEl.classList.contains("split-middle")) return animateTo(100);
+    return animateTo(0);
+  }
 
   handler.setAttribute("tabindex", "0");
   handler.setAttribute("role", "button");
@@ -181,8 +167,8 @@ function setupHandler(viewEl) {
 
     dragging = true;
     velocity = 0;
-    lastMoveTs = performance.now();
-    lastMoveRaw = lastRaw;
+    lastTs = performance.now();
+    lastRawForVel = lastRaw;
 
     handler.classList.add("is-dragging");
     handler.setPointerCapture?.(e.pointerId);
@@ -190,25 +176,23 @@ function setupHandler(viewEl) {
     const onMove = (ev) => {
       if (!dragging) return;
 
+      const raw = toRawFromPointer(ev);
       const now = performance.now();
-      const raw = readRawPercent(ev);
-      const dt = Math.max(1, now - lastMoveTs);
-      const instV = (raw - lastMoveRaw) / dt;
+      const dt = Math.max(1, now - lastTs);
+      const instV = (raw - lastRawForVel) / dt;
 
-      // low-pass, чтобы скорость была плавной
-      velocity = velocity * 0.72 + instV * 0.28;
-      lastMoveTs = now;
-      lastMoveRaw = raw;
+      velocity = velocity * 0.78 + instV * 0.22;
+      lastTs = now;
+      lastRawForVel = raw;
 
-      applyLiveRaw(raw);
+      applyLive(raw);
     };
 
     const onUp = () => {
       if (!dragging) return;
-
       dragging = false;
       handler.classList.remove("is-dragging");
-      snapToAnchor();
+      snapToNearestWithInertia();
 
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
@@ -232,7 +216,7 @@ function setupHandler(viewEl) {
 
     tapTimer = setTimeout(() => {
       tapTimer = null;
-    }, 260);
+    }, 250);
   });
 
   handler.addEventListener("keydown", (e) => {
@@ -243,42 +227,47 @@ function setupHandler(viewEl) {
       cycleState();
       return;
     }
+
     if (e.key === "Home") {
       e.preventDefault();
-      animateToAnchor(0, 0.1);
+      animateTo(0);
       return;
     }
+
     if (e.key === "End") {
       e.preventDefault();
-      animateToAnchor(100, 0.1);
+      animateTo(100);
       return;
     }
+
     if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
       e.preventDefault();
-      animateToAnchor(0, 0.1);
+      animateTo(0);
       return;
     }
+
     if (e.key === "ArrowRight" || e.key === "ArrowDown") {
       e.preventDefault();
-      animateToAnchor(100, 0.1);
+      animateTo(100);
       return;
     }
+
     if (e.key === "m" || e.key === "M") {
       e.preventDefault();
-      animateToAnchor(middle, 0.1);
+      animateTo(middle);
     }
   });
 
   const middle = getMiddleAnchor();
   viewEl.style.setProperty("--split", `${middle}%`);
-  setFinalStateClass(viewEl, middle);
+  setStateClass(viewEl, middle);
 }
 
 export function initSplitResizer() {
   ["view-stopwatch", "view-timer", "view-tabata"]
     .map((id) => document.getElementById(id))
     .filter(Boolean)
-    .forEach((viewEl) => setupHandler(viewEl));
+    .forEach(setupHandler);
 
   window.addEventListener("resize", () => {
     const middle = getMiddleAnchor();

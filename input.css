@@ -489,10 +489,7 @@ html.dark .app-bg::before {
 #view-tabata.split-live .view-top-half,
 #view-stopwatch.split-live .view-bottom-half,
 #view-timer.split-live .view-bottom-half,
-#view-tabata.split-live .view-bottom-half,
-#view-stopwatch.split-live .mid_content,
-#view-timer.split-live .mid_content,
-#view-tabata.split-live .mid_content {
+#view-tabata.split-live .view-bottom-half {
   transition: none !important;
 }
 
@@ -507,6 +504,13 @@ html.dark .app-bg::before {
     flex-basis var(--split-snap-duration) cubic-bezier(0.22, 0.8, 0.18, 1),
     min-height var(--split-snap-duration) cubic-bezier(0.22, 0.8, 0.18, 1),
     min-width var(--split-snap-duration) cubic-bezier(0.22, 0.8, 0.18, 1) !important;
+}
+
+/* Handler всегда в зоне видимости */
+#view-stopwatch.split-top-hidden .view-bottom-half,
+#view-timer.split-top-hidden .view-bottom-half,
+#view-tabata.split-top-hidden .view-bottom-half {
+  overflow: visible;
 }
 
 .view-top-half,
