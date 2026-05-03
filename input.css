@@ -405,11 +405,12 @@ html.dark .app-bg::before {
   padding: 32px;
   gap: 8px;
   height: auto;
-  max-height: 45dvh;
+  max-height: 100dvh;
   display: grid;
   grid-template-rows: 1fr minmax(0, 65dvh) 1fr;
   align-items: center;
   justify-items: center;
+  overflow: hidden
 }
 
 .view-top-half h2 {
@@ -501,7 +502,6 @@ html.dark .app-bg::before {
   }
 
   .top_content {
-    max-height: 80dvh;
     padding: 24px;
   }
 
@@ -592,7 +592,7 @@ html.dark .app-bg::before {
 ========================================= */
 .timer-circle-wrap {
   width: 100%;
-  max-width: 80%;
+  max-width: 100%;
   aspect-ratio: 1 / 1;
   margin: 0 auto;
   height: 100%;
