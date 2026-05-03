@@ -406,6 +406,10 @@ html.dark .app-bg::before {
     border-right: 1px solid var(--border-color);
   }
 
+  .view-bottom-half {
+    flex-direction: row;
+  }
+
   .top_content {
     padding-block: 24px;
     grid-template-columns: 70%;
@@ -470,7 +474,7 @@ html.dark .app-bg::before {
     padding-bottom: 0;
   }
 
-  .top_content{
+  .top_content {
     max-height: min(37.5dvw, 480px);
   }
 }
