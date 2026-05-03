@@ -473,30 +473,16 @@ html.dark .app-bg::before {
   }
 }
 
-/* @media (min-width: 768px) {
+@media (min-width: 768px) {
   .view-top-half {
     padding-top: 1rem;
   }
-} */
+}
 
 /* =========================================
    АДАПТИВНОСТЬ ДЛЯ ДВУХКОЛОНОЧНОГО МАКЕТА
 ========================================= */
 @media (min-width: 768px) and (orientation: landscape) {
-  #view-stopwatch,
-  #view-timer,
-  #view-tabata {
-    flex-direction: row;
-    align-items: stretch;
-  }
-
-  .view-top-half {
-    width: 50%;
-    height: 100%;
-    padding-top: 2rem;
-    border-right: 1px solid var(--border-color);
-    padding-bottom: var(--nav-height);
-  }
 
   .view-top-half h2 {
     margin-top: 0;
@@ -510,16 +496,6 @@ html.dark .app-bg::before {
     width: 85%;
     max-width: 360px;
     max-height: 360px;
-  }
-
-  .view-bottom-half {
-    width: 50%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    padding-top: 0;
   }
 
   #tb-activeName {
