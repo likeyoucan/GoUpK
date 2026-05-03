@@ -271,8 +271,8 @@ button {
   z-index: 0;
 }
 
-/* --- Планшет (портретная ориентация) --- */
-@media (min-width: 768px) and (orientation: portrait) {
+/* --- Планшет (портретная ориентация) --- здесь стиль телефона*/
+/* @media (min-width: 768px) and (orientation: portrait) {
   #app {
     width: 430px;
     max-width: 430px;
@@ -290,9 +290,9 @@ button {
     margin-top: 3dvh;
     margin-bottom: 2dvh;
   }
-}
+} */
 
-/* @media (min-width: 768px) and (max-width: 1023px) and (orientation: portrait) {
+@media (min-width: 768px) and (max-width: 1023px) and (orientation: portrait) {
   #app {
     width: 100%;
     max-width: 100%;
@@ -305,7 +305,7 @@ button {
     padding-left: var(--safe-left);
     padding-right: var(--safe-right);
   }
-} */
+}
 
 /* --- Большой планшет (iPad Pro) в портретной ориентации --- */
 /* @media (min-width: 1024px) and (orientation: portrait) {
