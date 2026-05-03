@@ -469,15 +469,10 @@ html.dark .app-bg::before {
   overflow: hidden;
 }
 
-@media (max-width: 767px) and (orientation: portrait) {
-  :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
-    .view-bottom-half {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: calc(var(--nav-total) + 4px);
-    z-index: 40;
-  }
+#view-stopwatch,
+#view-timer,
+#view-tabata {
+  padding-bottom: var(--nav-total);
 }
 
 :is(#view-stopwatch, #view-timer, #view-tabata).split-live .view-top-half,
@@ -572,6 +567,17 @@ html.dark .app-bg::before {
     bottom: auto;
   }
 
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden .view-bottom-half {
+  flex: 0 0 auto;
+  height: var(--handler-size);
+  min-height: var(--handler-size);
+  overflow: visible;
+  position: relative;
+  left: auto;
+  right: auto;
+  bottom: auto;
+}
+
   #tm-form,
   #tm-adjust-controls,
   #tm-resetBtn-wrap {
@@ -612,7 +618,7 @@ html.dark .app-bg::before {
   }
 
   .top_content {
-    max-height: min(37.5dvw, 480px);
+    max-height: min(150vw, calc(100dvh - var(--nav-total) - var(--safe-top)));
   }
 }
 
