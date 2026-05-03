@@ -19,7 +19,6 @@ export function bindUiInteractions({
   tm,
   tb,
   navigation,
-  initSplitResizer();
 }) {
   const unbinders = [];
 
@@ -53,6 +52,8 @@ export function bindUiInteractions({
   );
 
   unbinders.push(bindStopwatchDoubleTapLap({ $, sw }));
+
+  initSplitResizer();
 
   return () => {
     unbinders.forEach((fn) => {

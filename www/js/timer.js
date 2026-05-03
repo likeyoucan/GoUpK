@@ -26,8 +26,8 @@ export const tm = {
   remainingAtPause: 0,
   isRunning: false,
   isPaused: false,
-  timeRemainingMs: 0,
   isFinished: false,
+  timeRemainingMs: 0,
 
   els: {},
   ringLength: 282.74,
@@ -43,13 +43,13 @@ export const tm = {
   updateTitle,
   formatTime,
   announceToScreenReader,
-  restartBtn: $("tm-restartBtn"),
 
   init() {
     this.els = {
       form: $("tm-form"),
       inputs: $("tm-inputs"),
       resetBtn: $("tm-resetBtn"),
+      restartBtn: $("tm-restartBtn"),
       resetBtnWrap: $("tm-resetBtn-wrap"),
       circleBtn: $("tm-circleBtn"),
       status: $("tm-statusText"),
