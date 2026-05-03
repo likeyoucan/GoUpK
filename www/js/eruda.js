@@ -1,3 +1,5 @@
+// Файл: www/js/eruda.js
+
 function activateEruda() {
   localStorage.setItem("active-eruda", "true");
   location.reload();
