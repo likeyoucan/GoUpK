@@ -411,9 +411,10 @@ html.dark .app-bg::before {
   .top_content {
     padding-block: 24px;
     grid-template-columns: 70%;
+    max-height: 480px;
   }
 
-  .mid_content{
+  .mid_content {
     padding-block: 24px;
   }
 
@@ -456,7 +457,6 @@ html.dark .app-bg::before {
 
 /* --- Десктоп / очень большой планшет (ландшафтная ориентация, режим "карточки") --- */
 @media (min-width: 1281px) and (orientation: landscape) {
-  
   #app {
     width: 760px;
     max-width: 760px;
