@@ -344,13 +344,17 @@
           >
             <div class="view-top-half">
               <div class="top_content">
-                <div class="timer-circle-wrap" data-ring="tm">
+                <div
+                  class="flex justify-center items-center w-full h-full min-h-10 max-h-30"
+                >
                   <h2
                     class="text-sm font-bold app-text-sec uppercase tracking-widest"
                     data-i18n="countdown"
                   >
                     Countdown
                   </h2>
+                </div>
+                <div class="timer-circle-wrap" data-ring="tm">
                   <button
                     type="button"
                     id="tm-circleBtn"
@@ -370,6 +374,19 @@
                       class="font-mono font-bold tracking-tighter tabular-nums primary-text timer-display is-go"
                       >GO</span
                     >
+                  </button>
+                </div>
+                <div
+                  id="tm-resetBtn-wrap"
+                  class="flex justify-center items-center w-full h-full min-h-10 max-h-30 hidden"
+                >
+                  <button
+                    type="button"
+                    id="tm-resetBtn"
+                    data-i18n="reset"
+                    class="app-surface app-text w-32 min-h-[44px] rounded-full text-lg font-bold shadow-sm active:scale-95 transition-transform focus:outline-none custom-focus"
+                  >
+                    Reset
                   </button>
                 </div>
               </div>
@@ -457,20 +474,6 @@
                 </form>
 
                 <div
-                  id="tm-resetBtn-wrap"
-                  class="hidden w-full flex justify-center items-center h-24 md:h-30 shrink-0 mb-2 mt-2"
-                >
-                  <button
-                    type="button"
-                    id="tm-resetBtn"
-                    data-i18n="reset"
-                    class="app-surface app-text w-32 min-h-[44px] rounded-full text-lg font-bold shadow-sm active:scale-95 transition-transform focus:outline-none custom-focus"
-                  >
-                    Reset
-                  </button>
-                </div>
-
-                <div
                   id="tm-adjust-controls"
                   class="hidden w-full flex-col items-center justify-center gap-4 mt-2"
                 >
@@ -545,13 +548,17 @@
           >
             <div class="view-top-half">
               <div class="top_content">
-                <div class="timer-circle-wrap" data-ring="tb">
+                <div
+                  class="flex justify-center items-center w-full h-full min-h-10 max-h-30"
+                >
                   <h2
                     class="text-sm font-bold app-text-sec uppercase tracking-widest"
                     data-i18n="tabata_interval"
                   >
                     Tabata Interval
                   </h2>
+                </div>
+                <div class="timer-circle-wrap" data-ring="tb">
                   <button
                     type="button"
                     id="tb-startBtn"
@@ -572,6 +579,9 @@
                     >
                   </button>
                 </div>
+                <div
+                  class="flex justify-center items-center w-full h-full min-h-10 max-h-30 hidden"
+                ></div>
               </div>
             </div>
 
