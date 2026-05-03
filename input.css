@@ -474,6 +474,10 @@ html.dark .app-bg::before {
   #view-tabata {
     padding-bottom: 0;
   }
+
+  .top_content{
+    width: 37.5dvw;
+  }
 }
 
 /* =========================================
