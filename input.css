@@ -271,24 +271,6 @@ button {
   z-index: 0;
 }
 
-/* --- Десктоп / очень большой планшет (ландшафтная ориентация, режим "карточки") --- */
-@media (min-width: 1281px) and (orientation: landscape) {
-  #app {
-    width: 760px;
-    max-width: 760px;
-    height: 86dvh;
-    max-height: 720px;
-    border-radius: 2.5rem;
-    box-shadow:
-      0 0 0 1px rgba(255, 255, 255, 0.08),
-      0 10px 30px rgba(17, 17, 17, 0.3);
-    padding: 0;
-  }
-  #view-stopwatch, #view-timer, #view-tabata{
-    padding-bottom: 0;
-  }
-}
-
 /* =========================================
    4. ВИНЬЕТКА
 ========================================= */
@@ -466,6 +448,25 @@ html.dark .app-bg::before {
     margin: 0;
   }
 }
+
+/* --- Десктоп / очень большой планшет (ландшафтная ориентация, режим "карточки") --- */
+@media (min-width: 1281px) and (orientation: landscape) {
+  #app {
+    width: 760px;
+    max-width: 760px;
+    height: 86dvh;
+    max-height: 720px;
+    border-radius: 2.5rem;
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.08),
+      0 10px 30px rgba(17, 17, 17, 0.3);
+    padding: 0;
+  }
+  #view-stopwatch, #view-timer, #view-tabata{
+    padding-bottom: 0;
+  }
+}
+
 
 /* =========================================
    6. КРУЖОК ТАЙМЕРА
