@@ -401,6 +401,7 @@ html.dark .app-bg::before {
 }
 
 .top_content {
+  aspect-ratio: 1 / 1;
   padding: 32px;
   gap: 8px;
   height: auto;
