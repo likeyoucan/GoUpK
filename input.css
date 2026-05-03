@@ -301,7 +301,6 @@ html.dark .app-bg::before {
    5. ВЕРХНЯЯ ПОЛОВИНА ВИДОВ (ТАЙМЕР + КРУГ)
 ========================================= */
 .view-top-half {
-  padding-block: 32px;
   flex-basis: var(--split);
   flex-shrink: 0;
   min-width: 0;
@@ -406,7 +405,6 @@ html.dark .app-bg::before {
   }
 
   .view-top-half {
-    padding-block: 24px;
     border-right: 1px solid var(--border-color);
   }
 
