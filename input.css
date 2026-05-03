@@ -491,13 +491,6 @@ html.dark .app-bg::before {
     letter-spacing: 0.25em;
   }
 
-  .timer-circle-wrap {
-    margin: 0;
-    width: 85%;
-    max-width: 360px;
-    max-height: 360px;
-  }
-
   #tb-activeName {
     padding-top: 8px;
   }
@@ -549,12 +542,12 @@ html.dark .app-bg::before {
   min-height: calc(55px + var(--safe-top));
 }
 
-/* @media (min-width: 768px) {
+ @media (min-width: 768px) {
   #view-settings > div:first-child {
     padding-top: 1.5rem;
     min-height: auto;
   }
-} */
+}
 
 /* =========================================
    8. НАВИГАЦИОННАЯ ПАНЕЛЬ (НИЖНЯЯ)
