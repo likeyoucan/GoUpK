@@ -29,41 +29,32 @@ function nearestAnchor(value, anchors) {
   return best;
 }
 
-function applyState(viewEl, targetValue) {
-  const middle = getMiddleAnchor();
-  const snapped = targetValue === 0 ? 0 : targetValue === 100 ? 100 : middle;
+function setFinalStateClass(viewEl, target) {
+  viewEl.classList.remove(
+    "split-top-hidden",
+    "split-middle",
+    "split-bottom-hidden",
+  );
 
-  // Небольшая защита от "рывка": сначала ставим split, потом класс в следующий кадр
-  viewEl.style.setProperty("--split", `${snapped}%`);
-  viewEl.classList.add("split-snapping");
-
-  requestAnimationFrame(() => {
-    viewEl.classList.remove(
-      "split-top-hidden",
-      "split-middle",
-      "split-bottom-hidden",
-    );
-
-    if (snapped === 0) {
-      viewEl.classList.add("split-top-hidden");
-    } else if (snapped === 100) {
-      viewEl.classList.add("split-bottom-hidden");
-    } else {
-      viewEl.classList.add("split-middle");
-    }
-
-    setTimeout(() => viewEl.classList.remove("split-snapping"), 230);
-  });
+  if (target === 0) {
+    viewEl.classList.add("split-top-hidden");
+  } else if (target === 100) {
+    viewEl.classList.add("split-bottom-hidden");
+  } else {
+    viewEl.classList.add("split-middle");
+  }
 }
 
 function setupHandler(viewEl) {
   const handler = viewEl.querySelector(".resizer_handler");
-  if (!handler) return;
+  const topHalf = viewEl.querySelector(".view-top-half");
+  if (!handler || !topHalf) return;
 
   const SNAP_THRESHOLD = 12;
   let dragging = false;
   let lastRaw = getMiddleAnchor();
-  let singleTapTimer = null;
+  let tapTimer = null;
+  let snapToken = 0;
 
   const getAnchors = () => {
     const middle = getMiddleAnchor();
@@ -89,17 +80,48 @@ function setupHandler(viewEl) {
     );
   };
 
-  const applyRaw = (raw) => {
+  const applyLiveRaw = (raw) => {
     lastRaw = clamp(raw, 0, 100);
 
-    // В drag-состоянии без резкого переключения display/flex
     viewEl.classList.remove(
       "split-top-hidden",
       "split-middle",
       "split-bottom-hidden",
     );
+    viewEl.classList.remove("split-animating");
     viewEl.classList.add("split-live");
+
     viewEl.style.setProperty("--split", `${lastRaw}%`);
+  };
+
+  const animateToAnchor = (target) => {
+    const token = ++snapToken;
+
+    viewEl.classList.remove("split-live");
+    viewEl.classList.add("split-animating");
+
+    // На время анимации держим "middle", чтобы не было резкого пересчета layout.
+    setFinalStateClass(viewEl, getMiddleAnchor());
+    viewEl.style.setProperty("--split", `${target}%`);
+
+    const onEnd = (e) => {
+      if (token !== snapToken) return;
+      if (e.target !== topHalf || e.propertyName !== "flex-basis") return;
+
+      topHalf.removeEventListener("transitionend", onEnd);
+      viewEl.classList.remove("split-animating");
+      setFinalStateClass(viewEl, target);
+    };
+
+    topHalf.addEventListener("transitionend", onEnd);
+
+    // fallback
+    setTimeout(() => {
+      if (token !== snapToken) return;
+      topHalf.removeEventListener("transitionend", onEnd);
+      viewEl.classList.remove("split-animating");
+      setFinalStateClass(viewEl, target);
+    }, 280);
   };
 
   const snapToAnchor = () => {
@@ -112,24 +134,23 @@ function setupHandler(viewEl) {
     else if (Math.abs(lastRaw - 100) <= SNAP_THRESHOLD) target = 100;
     else target = nearestAnchor(lastRaw, anchors);
 
-    viewEl.classList.remove("split-live");
-    applyState(viewEl, target);
+    animateToAnchor(target);
   };
 
   const cycleState = () => {
     const middle = getMiddleAnchor();
 
     if (viewEl.classList.contains("split-top-hidden")) {
-      applyState(viewEl, middle);
+      animateToAnchor(middle);
       return;
     }
 
     if (viewEl.classList.contains("split-middle")) {
-      applyState(viewEl, 100);
+      animateToAnchor(100);
       return;
     }
 
-    applyState(viewEl, 0);
+    animateToAnchor(0);
   };
 
   handler.setAttribute("tabindex", "0");
@@ -146,7 +167,7 @@ function setupHandler(viewEl) {
 
     const onMove = (ev) => {
       if (!dragging) return;
-      applyRaw(readRawPercent(ev));
+      applyLiveRaw(readRawPercent(ev));
     };
 
     const onUp = () => {
@@ -165,19 +186,18 @@ function setupHandler(viewEl) {
     window.addEventListener("pointercancel", onUp);
   });
 
-  // Двойной тап: цикл 0 -> middle -> 100 -> 0
   handler.addEventListener("click", () => {
     if (dragging) return;
 
-    if (singleTapTimer) {
-      clearTimeout(singleTapTimer);
-      singleTapTimer = null;
+    if (tapTimer) {
+      clearTimeout(tapTimer);
+      tapTimer = null;
       cycleState();
       return;
     }
 
-    singleTapTimer = setTimeout(() => {
-      singleTapTimer = null;
+    tapTimer = setTimeout(() => {
+      tapTimer = null;
     }, 260);
   });
 
@@ -192,35 +212,37 @@ function setupHandler(viewEl) {
 
     if (e.key === "Home") {
       e.preventDefault();
-      applyState(viewEl, 0);
+      animateToAnchor(0);
       return;
     }
 
     if (e.key === "End") {
       e.preventDefault();
-      applyState(viewEl, 100);
+      animateToAnchor(100);
       return;
     }
 
     if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
       e.preventDefault();
-      applyState(viewEl, 0);
+      animateToAnchor(0);
       return;
     }
 
     if (e.key === "ArrowRight" || e.key === "ArrowDown") {
       e.preventDefault();
-      applyState(viewEl, 100);
+      animateToAnchor(100);
       return;
     }
 
     if (e.key === "m" || e.key === "M") {
       e.preventDefault();
-      applyState(viewEl, middle);
+      animateToAnchor(middle);
     }
   });
 
-  applyState(viewEl, getMiddleAnchor());
+  const middle = getMiddleAnchor();
+  viewEl.style.setProperty("--split", `${middle}%`);
+  setFinalStateClass(viewEl, middle);
 }
 
 export function initSplitResizer() {

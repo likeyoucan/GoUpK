@@ -332,7 +332,7 @@ html.dark .app-bg::before {
 }
 
 .view-bottom-half {
- flex: 1 1 auto;
+  flex: 1 1 auto;
   min-height: var(--handler-size);
   min-width: var(--handler-size);
   display: flex;
@@ -370,7 +370,7 @@ html.dark .app-bg::before {
   cursor: grab;
   user-select: none;
   touch-action: none;
-  position: relative;
+  position: absolute;
   z-index: 40;
   background: transparent;
 }
@@ -473,15 +473,46 @@ html.dark .app-bg::before {
   overflow: hidden;
 }
 
-  #view-stopwatch.split-bottom-hidden .view-bottom-half,
-  #view-timer.split-bottom-hidden .view-bottom-half,
-  #view-tabata.split-bottom-hidden .view-bottom-half {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: calc(var(--nav-total) + 4px);
-    z-index: 40;
-  }
+#view-stopwatch.split-bottom-hidden .view-bottom-half,
+#view-timer.split-bottom-hidden .view-bottom-half,
+#view-tabata.split-bottom-hidden .view-bottom-half {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--nav-total) + 4px);
+  z-index: 40;
+}
+
+/* Во время drag отключаем transitions, чтобы не было лагов и рывка */
+#view-stopwatch.split-live .view-top-half,
+#view-timer.split-live .view-top-half,
+#view-tabata.split-live .view-top-half,
+#view-stopwatch.split-live .view-bottom-half,
+#view-timer.split-live .view-bottom-half,
+#view-tabata.split-live .view-bottom-half,
+#view-stopwatch.split-live .mid_content,
+#view-timer.split-live .mid_content,
+#view-tabata.split-live .mid_content {
+  transition: none !important;
+}
+
+/* Во время snap включаем только нужную анимацию */
+#view-stopwatch.split-animating .view-top-half,
+#view-timer.split-animating .view-top-half,
+#view-tabata.split-animating .view-top-half,
+#view-stopwatch.split-animating .view-bottom-half,
+#view-timer.split-animating .view-bottom-half,
+#view-tabata.split-animating .view-bottom-half {
+  transition:
+    flex-basis 220ms cubic-bezier(0.32, 0.72, 0, 1),
+    min-height 220ms cubic-bezier(0.32, 0.72, 0, 1),
+    min-width 220ms cubic-bezier(0.32, 0.72, 0, 1) !important;
+}
+
+.view-top-half,
+.view-bottom-half {
+  will-change: flex-basis;
+}
 
 /* =========================================
    АДАПТИВНОСТЬ ДЛЯ ДВУХКОЛОНОЧНОГО МАКЕТА
