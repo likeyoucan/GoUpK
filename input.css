@@ -271,19 +271,8 @@ button {
   z-index: 0;
 }
 
-/* Mobile portrait only: верхнюю часть прижимаем вниз */
-@media (max-width: 767px) and (orientation: portrait) {
-  #view-stopwatch .view-top-half,
-  #view-timer .view-top-half,
-  #view-tabata .view-top-half {
-    padding-bottom: 1rem;
-    justify-content: flex-end;
-    row-gap: 1.5rem;
-  }
-}
-
 /* --- Планшет (портретная ориентация) --- */
-/* @media (min-width: 768px) and (orientation: portrait) {
+@media (min-width: 768px) and (orientation: portrait) {
   #app {
     width: 430px;
     max-width: 430px;
@@ -301,7 +290,7 @@ button {
     margin-top: 3dvh;
     margin-bottom: 2dvh;
   }
-} */
+}
 
 /* @media (min-width: 768px) and (max-width: 1023px) and (orientation: portrait) {
   #app {
