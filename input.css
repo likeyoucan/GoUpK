@@ -361,18 +361,18 @@ html.dark .app-bg::before {
 
 /* Handler: большая зона касания, но мягкий визуал */
 .resizer_handler {
-  width: 100%;
-  height: clamp(16px, 2.4dvh, 24px);
-  flex-shrink: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: grab;
-  user-select: none;
-  touch-action: none;
   position: absolute;
-  z-index: 40;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: clamp(16px, 2.4dvh, 24px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: transparent;
+  cursor: grab;
+  touch-action: none;
+  z-index: 40;
 }
 
 .resizer_handler::before {
@@ -381,11 +381,14 @@ html.dark .app-bg::before {
   height: 3px;
   border-radius: 999px;
   background: color-mix(in srgb, var(--text-color) 26%, transparent);
-  opacity: 0.42;
-  transition:
-    opacity 0.16s ease,
-    background-color 0.16s ease,
-    transform 0.16s ease;
+  opacity: 0.38;
+  transition: opacity 0.16s ease, background-color 0.16s ease, transform 0.16s ease;
+}
+
+.resizer_handler::after {
+  content: "";
+  position: absolute;
+  inset: -10px 0;
 }
 
 @media (hover: hover) {
@@ -395,8 +398,9 @@ html.dark .app-bg::before {
   }
 }
 
-.resizer_handler:active::before,
-.resizer_handler.is-dragging::before {
+.resizer_handler:focus-visible::before,
+.resizer_handler.is-dragging::before,
+.resizer_handler:active::before {
   opacity: 1;
   background: color-mix(in srgb, var(--primary-color) 70%, var(--text-color));
   transform: scale(1.05);
