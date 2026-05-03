@@ -317,7 +317,7 @@ html.dark .app-bg::before {
   padding-block: 32px;
   gap: 8px;
   height: 100%;
-  max-height: min(15dvw, 480px);
+  max-height: 150dvw;
   display: grid;
   grid-template-rows: 1fr minmax(0, 65dvh) 1fr;
   grid-template-columns: 80%;
