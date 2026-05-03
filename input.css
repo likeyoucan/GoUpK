@@ -423,7 +423,7 @@ html.dark .app-bg::before {
   }
 
   .top_content {
-    padding-block: 24px;
+    padding-block: 0;
   }
 
   .mid_content > div.app-border {
@@ -462,8 +462,6 @@ html.dark .app-bg::before {
 @media (min-width: 768px) and (orientation: landscape) {
 
   .view-top-half h2 {
-    margin-top: 0;
-    margin-bottom: 1.5rem;
     font-size: 0.85rem;
     letter-spacing: 0.25em;
   }
