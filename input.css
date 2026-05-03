@@ -414,6 +414,10 @@ html.dark .app-bg::before {
     padding-block: 24px;
   }
 
+  .mid_content{
+    padding-block: 24px;
+  }
+
   .mid_content > div.app-border {
     border: none;
   }
