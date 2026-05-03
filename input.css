@@ -321,6 +321,7 @@ html.dark .app-bg::before {
   max-height: 100%;
   display: grid;
   grid-template-rows: 1fr minmax(0, 65dvh) 1fr;
+  grid-template-columns: 100%;
   align-items: center;
   justify-items: center;
   overflow: hidden;
