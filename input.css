@@ -452,6 +452,7 @@ html.dark .app-bg::before {
 
 /* --- Десктоп / очень большой планшет (ландшафтная ориентация, режим "карточки") --- */
 @media (min-width: 1281px) and (orientation: landscape) {
+  
   #app {
     width: 760px;
     max-width: 760px;
@@ -463,11 +464,18 @@ html.dark .app-bg::before {
       0 10px 30px rgba(17, 17, 17, 0.3);
     padding: 0;
   }
-  #view-stopwatch, #view-timer, #view-tabata{
+
+  #view-stopwatch,
+  #view-timer,
+  #view-tabata {
     padding-bottom: 0;
   }
-}
 
+  .top_content {
+    gap: 18px;
+    height: 80%;
+  }
+}
 
 /* =========================================
    6. КРУЖОК ТАЙМЕРА
