@@ -1576,7 +1576,7 @@ body.hide-nav-labels .nav-btn {
 :root.glass-lite.glass-effect body #sw-clear-modal-content,
 :root.glass-lite.glass-effect body #sw-name-modal-content,
 :root.glass-lite.glass-effect body #sw-share-mode-content {
-  backdrop-filter: blur(8px) saturate(120%);
+  backdrop-filter: blur(12px) saturate(135%);
 }
 
 :root.glass-lite.glass-effect
