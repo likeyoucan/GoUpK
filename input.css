@@ -482,7 +482,7 @@ html.dark .app-bg::before {
 /* =========================================
    АДАПТИВНОСТЬ ДЛЯ ДВУХКОЛОНОЧНОГО МАКЕТА
 ========================================= */
-/* @media (min-width: 768px) and (orientation: landscape) {
+@media (min-width: 768px) and (orientation: landscape) {
   #view-stopwatch,
   #view-timer,
   #view-tabata {
@@ -529,7 +529,7 @@ html.dark .app-bg::before {
   #tm-adjust-controls {
     margin: 0;
   }
-} */
+}
 
 /* =========================================
    6. КРУЖОК ТАЙМЕРА
