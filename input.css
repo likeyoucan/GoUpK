@@ -286,7 +286,6 @@ button {
   }
 }
 
-
 /* =========================================
    4. ВИНЬЕТКА
 ========================================= */
@@ -400,6 +399,9 @@ html.dark .app-bg::before {
   opacity: 1;
 }
 
+/* =========================================
+   АДАПТИВНОСТЬ ДЛЯ ДВУХКОЛОНОЧНОГО МАКЕТА
+========================================= */
 @media (min-width: 768px) and (orientation: landscape) {
   :root {
     --split: 50%;
@@ -423,7 +425,7 @@ html.dark .app-bg::before {
   }
 
   .top_content {
-    padding-block: 12px;
+    padding-block: 24px;
   }
 
   .mid_content > div.app-border {
@@ -448,18 +450,6 @@ html.dark .app-bg::before {
   #tm-resetBtn-wrap {
     flex: 1;
   }
-}
-
-@media (min-width: 768px) {
-  .view-top-half {
-    padding-top: 1rem;
-  }
-}
-
-/* =========================================
-   АДАПТИВНОСТЬ ДЛЯ ДВУХКОЛОНОЧНОГО МАКЕТА
-========================================= */
-@media (min-width: 768px) and (orientation: landscape) {
 
   .view-top-half h2 {
     font-size: 0.85rem;
@@ -517,7 +507,7 @@ html.dark .app-bg::before {
   min-height: calc(55px + var(--safe-top));
 }
 
- @media (min-width: 768px) {
+@media (min-width: 768px) {
   #view-settings > div:first-child {
     padding-top: 1.5rem;
     min-height: auto;
@@ -585,7 +575,6 @@ html.dark .app-bg::before {
    12. LANDSCAPE НА ТЕЛЕФОНЕ
 ========================================= */
 @media (orientation: landscape) and (max-width: 767px) {
-
   #viewsContainer > div:not(#view-settings) {
     flex-direction: row;
     align-items: center;
@@ -609,7 +598,6 @@ html.dark .app-bg::before {
    13. МАЛЫЕ ЭКРАНЫ В ПОРТРЕТЕ
 ========================================= */
 @media (max-height: 700px) and (orientation: portrait) {
-
   .timer-input {
     width: 3rem;
     height: 3rem;
