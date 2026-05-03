@@ -8,57 +8,52 @@ function isRowLayout(viewEl) {
   return getComputedStyle(viewEl).flexDirection.startsWith("row");
 }
 
-function getMiddleAnchor(viewEl) {
+function getMiddleAnchor() {
   const isPhone = window.matchMedia("(max-width: 767px)").matches;
   const isPortrait = window.matchMedia("(orientation: portrait)").matches;
-
-  // На телефоне в портрете оставляем 60%, в остальных случаях 50%.
-  if (isPhone && isPortrait) return 60;
-  return 50;
+  return isPhone && isPortrait ? 60 : 50;
 }
 
 function nearestAnchor(value, anchors) {
-  let nearest = anchors[0];
-  let minDist = Math.abs(value - nearest);
+  let best = anchors[0];
+  let bestDist = Math.abs(value - best);
 
   for (let i = 1; i < anchors.length; i += 1) {
-    const dist = Math.abs(value - anchors[i]);
-    if (dist < minDist) {
-      minDist = dist;
-      nearest = anchors[i];
+    const d = Math.abs(value - anchors[i]);
+    if (d < bestDist) {
+      bestDist = d;
+      best = anchors[i];
     }
   }
 
-  return nearest;
+  return best;
 }
 
-function applyState(viewEl, value, middle) {
-  const top = viewEl.querySelector(".view-top-half");
-  const bottom = viewEl.querySelector(".view-bottom-half");
-  const midContent = bottom?.querySelector(".mid_content");
+function applyState(viewEl, targetValue) {
+  const middle = getMiddleAnchor();
+  const snapped = targetValue === 0 ? 0 : targetValue === 100 ? 100 : middle;
 
-  if (!top || !bottom || !midContent) return;
+  // Небольшая защита от "рывка": сначала ставим split, потом класс в следующий кадр
+  viewEl.style.setProperty("--split", `${snapped}%`);
+  viewEl.classList.add("split-snapping");
 
-  viewEl.classList.remove(
-    "split-top-hidden",
-    "split-middle",
-    "split-bottom-hidden",
-  );
+  requestAnimationFrame(() => {
+    viewEl.classList.remove(
+      "split-top-hidden",
+      "split-middle",
+      "split-bottom-hidden",
+    );
 
-  if (value === 0) {
-    viewEl.classList.add("split-top-hidden");
-    viewEl.style.setProperty("--split", "0%");
-    return;
-  }
+    if (snapped === 0) {
+      viewEl.classList.add("split-top-hidden");
+    } else if (snapped === 100) {
+      viewEl.classList.add("split-bottom-hidden");
+    } else {
+      viewEl.classList.add("split-middle");
+    }
 
-  if (value === 100) {
-    viewEl.classList.add("split-bottom-hidden");
-    viewEl.style.setProperty("--split", "100%");
-    return;
-  }
-
-  viewEl.classList.add("split-middle");
-  viewEl.style.setProperty("--split", `${middle}%`);
+    setTimeout(() => viewEl.classList.remove("split-snapping"), 230);
+  });
 }
 
 function setupHandler(viewEl) {
@@ -67,16 +62,15 @@ function setupHandler(viewEl) {
 
   const SNAP_THRESHOLD = 12;
   let dragging = false;
-  let lastRaw = getMiddleAnchor(viewEl);
-  let lastPointerId = null;
-  let tapTimer = null;
+  let lastRaw = getMiddleAnchor();
+  let singleTapTimer = null;
 
   const getAnchors = () => {
-    const middle = getMiddleAnchor(viewEl);
-    return { anchors: [0, middle, 100], middle };
+    const middle = getMiddleAnchor();
+    return [0, middle, 100];
   };
 
-  const getRawPercent = (ev) => {
+  const readRawPercent = (ev) => {
     const rect = viewEl.getBoundingClientRect();
     const row = isRowLayout(viewEl);
 
@@ -97,16 +91,20 @@ function setupHandler(viewEl) {
 
   const applyRaw = (raw) => {
     lastRaw = clamp(raw, 0, 100);
+
+    // В drag-состоянии без резкого переключения display/flex
     viewEl.classList.remove(
       "split-top-hidden",
       "split-middle",
       "split-bottom-hidden",
     );
+    viewEl.classList.add("split-live");
     viewEl.style.setProperty("--split", `${lastRaw}%`);
   };
 
-  const snapCurrent = () => {
-    const { anchors, middle } = getAnchors();
+  const snapToAnchor = () => {
+    const anchors = getAnchors();
+    const middle = anchors[1];
 
     let target = lastRaw;
     if (Math.abs(lastRaw - 0) <= SNAP_THRESHOLD) target = 0;
@@ -114,49 +112,48 @@ function setupHandler(viewEl) {
     else if (Math.abs(lastRaw - 100) <= SNAP_THRESHOLD) target = 100;
     else target = nearestAnchor(lastRaw, anchors);
 
-    applyState(viewEl, target, middle);
+    viewEl.classList.remove("split-live");
+    applyState(viewEl, target);
   };
 
   const cycleState = () => {
-    const { middle } = getAnchors();
+    const middle = getMiddleAnchor();
 
     if (viewEl.classList.contains("split-top-hidden")) {
-      applyState(viewEl, middle, middle);
+      applyState(viewEl, middle);
       return;
     }
 
     if (viewEl.classList.contains("split-middle")) {
-      applyState(viewEl, 100, middle);
+      applyState(viewEl, 100);
       return;
     }
 
-    applyState(viewEl, 0, middle);
+    applyState(viewEl, 0);
   };
 
   handler.setAttribute("tabindex", "0");
-  handler.setAttribute("role", "slider");
+  handler.setAttribute("role", "button");
   handler.setAttribute("aria-label", "Resize panels");
 
-  const onPointerDown = (e) => {
+  handler.addEventListener("pointerdown", (e) => {
     if (e.button !== undefined && e.button !== 0) return;
     e.preventDefault();
 
     dragging = true;
-    lastPointerId = e.pointerId ?? null;
     handler.classList.add("is-dragging");
-    if (lastPointerId !== null) handler.setPointerCapture?.(lastPointerId);
+    handler.setPointerCapture?.(e.pointerId);
 
     const onMove = (ev) => {
       if (!dragging) return;
-      applyRaw(getRawPercent(ev));
+      applyRaw(readRawPercent(ev));
     };
 
     const onUp = () => {
       if (!dragging) return;
-
       dragging = false;
       handler.classList.remove("is-dragging");
-      snapCurrent();
+      snapToAnchor();
 
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
@@ -166,26 +163,26 @@ function setupHandler(viewEl) {
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerup", onUp);
     window.addEventListener("pointercancel", onUp);
-  };
+  });
 
-  // Двойной тап: быстрый UX-переключатель 0 -> middle -> 100 -> 0 ...
-  const onClick = () => {
+  // Двойной тап: цикл 0 -> middle -> 100 -> 0
+  handler.addEventListener("click", () => {
     if (dragging) return;
 
-    if (tapTimer) {
-      clearTimeout(tapTimer);
-      tapTimer = null;
+    if (singleTapTimer) {
+      clearTimeout(singleTapTimer);
+      singleTapTimer = null;
       cycleState();
       return;
     }
 
-    tapTimer = setTimeout(() => {
-      tapTimer = null;
+    singleTapTimer = setTimeout(() => {
+      singleTapTimer = null;
     }, 260);
-  };
+  });
 
-  const onKeyDown = (e) => {
-    const { middle } = getAnchors();
+  handler.addEventListener("keydown", (e) => {
+    const middle = getMiddleAnchor();
 
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
@@ -195,34 +192,35 @@ function setupHandler(viewEl) {
 
     if (e.key === "Home") {
       e.preventDefault();
-      applyState(viewEl, 0, middle);
+      applyState(viewEl, 0);
       return;
     }
 
     if (e.key === "End") {
       e.preventDefault();
-      applyState(viewEl, 100, middle);
+      applyState(viewEl, 100);
       return;
     }
 
-    if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
+    if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
       e.preventDefault();
-      applyState(viewEl, 0, middle);
+      applyState(viewEl, 0);
       return;
     }
 
-    if (e.key === "ArrowDown" || e.key === "ArrowRight") {
+    if (e.key === "ArrowRight" || e.key === "ArrowDown") {
       e.preventDefault();
-      applyState(viewEl, 100, middle);
+      applyState(viewEl, 100);
+      return;
     }
-  };
 
-  handler.addEventListener("pointerdown", onPointerDown);
-  handler.addEventListener("click", onClick);
-  handler.addEventListener("keydown", onKeyDown);
+    if (e.key === "m" || e.key === "M") {
+      e.preventDefault();
+      applyState(viewEl, middle);
+    }
+  });
 
-  const { middle } = getAnchors();
-  applyState(viewEl, middle, middle);
+  applyState(viewEl, getMiddleAnchor());
 }
 
 export function initSplitResizer() {
@@ -231,13 +229,13 @@ export function initSplitResizer() {
     .filter(Boolean)
     .forEach((viewEl) => setupHandler(viewEl));
 
-  // При смене ориентации/размера переводим middle в корректный 50/60.
   window.addEventListener("resize", () => {
+    const middle = getMiddleAnchor();
+
     ["view-stopwatch", "view-timer", "view-tabata"]
       .map((id) => document.getElementById(id))
       .filter(Boolean)
       .forEach((viewEl) => {
-        const middle = getMiddleAnchor(viewEl);
         if (viewEl.classList.contains("split-middle")) {
           viewEl.style.setProperty("--split", `${middle}%`);
         }

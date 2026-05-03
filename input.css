@@ -309,7 +309,7 @@ html.dark .app-bg::before {
   display: flex;
   justify-content: center;
   align-items: center;
-  transition: flex-basis 0.25s ease;
+  transition: flex-basis 0.22s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 .top_content {
@@ -332,11 +332,17 @@ html.dark .app-bg::before {
 }
 
 .view-bottom-half {
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: var(--handler-size);
+  min-width: var(--handler-size);
   display: flex;
   flex-direction: column;
   min-height: var(--handler-size);
   position: relative;
+  transition:
+    flex-basis 0.22s cubic-bezier(0.32, 0.72, 0, 1),
+    min-height 0.22s cubic-bezier(0.32, 0.72, 0, 1),
+    min-width 0.22s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 .mid_content {
@@ -346,16 +352,17 @@ html.dark .app-bg::before {
   overflow-x: hidden;
   overflow-y: auto;
   min-height: 0;
+  transition: opacity 0.18s ease;
 }
 
 #tb-runningControls {
   justify-content: flex-start;
 }
 
-/* resizer_handler */
+/* Handler: большая зона касания, но мягкий визуал */
 .resizer_handler {
   width: 100%;
-  height: var(--handler-size);
+  height: clamp(16px, 2.4dvh, 24px);
   flex-shrink: 0;
   display: flex;
   justify-content: center;
@@ -363,49 +370,70 @@ html.dark .app-bg::before {
   cursor: grab;
   user-select: none;
   touch-action: none;
-  opacity: 1;
-  background: color-mix(in srgb, var(--text-color) 10%, transparent);
-  transition: background-color 0.2s ease;
+  position: relative;
+  z-index: 40;
+  background: transparent;
 }
 
 .resizer_handler::before {
   content: "";
-  width: clamp(28px, 22vw, 90px);
-  height: 4px;
+  width: clamp(28px, 18vw, 72px);
+  height: 3px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--text-color) 45%, transparent);
+  background: color-mix(in srgb, var(--text-color) 26%, transparent);
+  opacity: 0.42;
+  transition:
+    opacity 0.16s ease,
+    background-color 0.16s ease,
+    transform 0.16s ease;
+}
+
+@media (hover: hover) {
+  .resizer_handler:hover::before {
+    opacity: 0.9;
+    background: color-mix(in srgb, var(--text-color) 42%, transparent);
+  }
+}
+
+.resizer_handler:active::before,
+.resizer_handler.is-dragging::before {
+  opacity: 1;
+  background: color-mix(in srgb, var(--primary-color) 70%, var(--text-color));
+  transform: scale(1.05);
 }
 
 .resizer_handler:active,
 .resizer_handler.is-dragging {
   cursor: grabbing;
-  background: color-mix(in srgb, var(--text-color) 18%, transparent);
 }
 
-/* middle state */
+/* Live drag */
+#view-stopwatch.split-live .view-top-half,
+#view-timer.split-live .view-top-half,
+#view-tabata.split-live .view-top-half {
+  flex-basis: var(--split);
+}
+
+/* Middle */
 #view-stopwatch.split-middle .view-top-half,
 #view-timer.split-middle .view-top-half,
 #view-tabata.split-middle .view-top-half {
   flex-basis: var(--split);
 }
 
-#view-stopwatch.split-middle .view-bottom-half,
-#view-timer.split-middle .view-bottom-half,
-#view-tabata.split-middle .view-bottom-half {
-  flex: 1 1 auto;
-}
-
 #view-stopwatch.split-middle .view-bottom-half .mid_content,
 #view-timer.split-middle .view-bottom-half .mid_content,
 #view-tabata.split-middle .view-bottom-half .mid_content {
-  display: flex;
+  opacity: 1;
+  pointer-events: auto;
+  visibility: visible;
 }
 
-/* top hidden (0%) */
+/* 0%: top hidden */
 #view-stopwatch.split-top-hidden .view-top-half,
 #view-timer.split-top-hidden .view-top-half,
 #view-tabata.split-top-hidden .view-top-half {
-  flex: 0 0 0% !important;
+  flex-basis: 0%;
   min-height: 0;
   min-width: 0;
   overflow: hidden;
@@ -415,34 +443,47 @@ html.dark .app-bg::before {
 #view-stopwatch.split-top-hidden .view-bottom-half,
 #view-timer.split-top-hidden .view-bottom-half,
 #view-tabata.split-top-hidden .view-bottom-half {
-  flex: 1 1 auto !important;
+  flex: 1 1 auto;
 }
 
-#view-stopwatch.split-top-hidden .view-bottom-half .mid_content,
-#view-timer.split-top-hidden .view-bottom-half .mid_content,
-#view-tabata.split-top-hidden .view-bottom-half .mid_content {
-  display: flex;
-}
-
-/* bottom hidden (100%) */
+/* 100%: bottom hidden, но handler остается видимым над nav */
 #view-stopwatch.split-bottom-hidden .view-top-half,
 #view-timer.split-bottom-hidden .view-top-half,
 #view-tabata.split-bottom-hidden .view-top-half {
-  flex: 1 1 auto !important;
+  flex: 1 1 auto;
 }
 
 #view-stopwatch.split-bottom-hidden .view-bottom-half,
 #view-timer.split-bottom-hidden .view-bottom-half,
 #view-tabata.split-bottom-hidden .view-bottom-half {
-  flex: 0 0 var(--handler-size) !important;
-  min-height: var(--handler-size);
-  min-width: var(--handler-size);
+  flex: 0 0 auto;
+  height: clamp(16px, 2.4dvh, 24px);
+  min-height: clamp(16px, 2.4dvh, 24px);
+  overflow: visible;
 }
 
 #view-stopwatch.split-bottom-hidden .view-bottom-half .mid_content,
 #view-timer.split-bottom-hidden .view-bottom-half .mid_content,
 #view-tabata.split-bottom-hidden .view-bottom-half .mid_content {
-  display: none !important;
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+  height: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Чтобы handler гарантированно не прятался под нижним nav на телефоне */
+@media (max-width: 767px) and (orientation: portrait) {
+  #view-stopwatch.split-bottom-hidden .view-bottom-half,
+  #view-timer.split-bottom-hidden .view-bottom-half,
+  #view-tabata.split-bottom-hidden .view-bottom-half {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: calc(var(--nav-total) + 4px);
+    z-index: 40;
+  }
 }
 
 /* =========================================
@@ -495,6 +536,16 @@ html.dark .app-bg::before {
   .resizer_handler::before {
     width: 4px;
     height: clamp(28px, 22vh, 90px);
+  }
+
+  #view-stopwatch.split-bottom-hidden .view-bottom-half,
+  #view-timer.split-bottom-hidden .view-bottom-half,
+  #view-tabata.split-bottom-hidden .view-bottom-half {
+    width: clamp(16px, 2.2dvw, 24px);
+    min-width: clamp(16px, 2.2dvw, 24px);
+    height: auto;
+    position: relative;
+    bottom: auto;
   }
 
   #tm-form,
