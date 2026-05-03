@@ -284,6 +284,9 @@ button {
       0 10px 30px rgba(17, 17, 17, 0.3);
     padding: 0;
   }
+  #view-stopwatch, #view-timer, #view-tabata{
+    padding-bottom: 0;
+  }
 }
 
 /* =========================================
@@ -316,8 +319,7 @@ html.dark .app-bg::before {
    5. ВЕРХНЯЯ ПОЛОВИНА ВИДОВ (ТАЙМЕР + КРУГ)
 ========================================= */
 .view-top-half {
-  padding: 32px;
-  box-sizing: content-box;
+  padding-block: 32px;
   flex-basis: var(--split);
   flex-shrink: 0;
   min-width: 0;
@@ -420,7 +422,7 @@ html.dark .app-bg::before {
   }
 
   .view-top-half {
-    padding: 24px;
+    padding-block: 24px;
     border-right: 1px solid var(--border-color);
   }
 
