@@ -20,7 +20,7 @@ export function setupTimerRender(tm, { updateText, updateTitle }) {
 
     if (tm.isRunning) {
       tm.els.form.classList.add("hidden");
-      tm.els.resetBtnWrap?.classList.add("hidden");
+      tm.els.resetBtn?.classList.add("hidden");
       tm.els.status?.classList.add("hidden");
       tm.els.display?.classList.remove("is-go");
       tm.els.adjustControls?.classList.remove("hidden");
@@ -30,7 +30,7 @@ export function setupTimerRender(tm, { updateText, updateTitle }) {
 
     if (tm.isPaused) {
       tm.els.form.classList.add("hidden");
-      tm.els.resetBtnWrap?.classList.remove("hidden");
+      tm.els.resetBtn?.classList.remove("hidden");
       tm.els.status?.classList.remove("hidden");
       updateText(tm.els.status, tm.t("pause"));
       tm.els.adjustControls?.classList.add("hidden");
@@ -39,7 +39,7 @@ export function setupTimerRender(tm, { updateText, updateTitle }) {
     }
 
     tm.els.form.classList.remove("hidden");
-    tm.els.resetBtnWrap?.classList.add("hidden");
+    tm.els.resetBtn?.classList.add("hidden");
     tm.els.status?.classList.add("hidden");
     tm.els.display?.classList.add("is-go");
     updateText(tm.els.display, "GO");
