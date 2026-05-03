@@ -271,27 +271,6 @@ button {
   z-index: 0;
 }
 
-/* --- Планшет (портретная ориентация) --- здесь стиль телефона*/
-/* @media (min-width: 768px) and (orientation: portrait) {
-  #app {
-    width: 430px;
-    max-width: 430px;
-    height: 92dvh;
-    max-height: 900px;
-    border-radius: 2.5rem;
-    box-shadow:
-      0 0 0 1px rgba(255, 255, 255, 0.08),
-      0 10px 30px rgba(17, 17, 17, 0.3);
-    padding: 0;
-  }
-
-  .timer-circle-wrap {
-    max-width: 280px;
-    margin-top: 3dvh;
-    margin-bottom: 2dvh;
-  }
-} */
-
 /* --- Десктоп / очень большой планшет (ландшафтная ориентация, режим "карточки") --- */
 @media (min-width: 1281px) and (orientation: landscape) {
   #app {
@@ -609,32 +588,13 @@ html.dark .app-bg::before {
 /* =========================================
    12. LANDSCAPE НА ТЕЛЕФОНЕ
 ========================================= */
-/* @media (orientation: landscape) and (max-width: 767px) {
-  .view-top-half {
-    padding-top: 0.5rem;
-    height: auto;
-    width: 50%;
-    flex: none;
-  }
+@media (orientation: landscape) and (max-width: 767px) {
 
   #viewsContainer > div:not(#view-settings) {
     flex-direction: row;
     align-items: center;
     justify-content: center;
     gap: 1rem;
-  }
-
-  .view-bottom-half {
-    height: 50%;
-    width: 50%;
-    flex: none;
-    justify-content: center;
-    padding-bottom: calc(var(--safe-bottom) + 0.5rem);
-  }
-
-  .timer-circle-wrap {
-    max-height: 70dvh;
-    max-width: 220px;
   }
 
   .app-nav-safe {
@@ -647,7 +607,7 @@ html.dark .app-bg::before {
     flex-direction: column;
     touch-action: pan-y;
   }
-} */
+}
 
 /* =========================================
    13. МАЛЫЕ ЭКРАНЫ В ПОРТРЕТЕ
