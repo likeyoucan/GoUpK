@@ -529,13 +529,13 @@ html.dark .app-bg::before {
   }
 
   .resizer_handler {
-    width: var(--handler-size);
+    width: clamp(16px, 2.2dvw, 24px);
     height: 100%;
   }
 
   .resizer_handler::before {
-    width: 4px;
-    height: clamp(28px, 22vh, 90px);
+    width: 3px;
+    height: clamp(28px, 20vh, 72px);
   }
 
   #view-stopwatch.split-bottom-hidden .view-bottom-half,
