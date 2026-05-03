@@ -368,6 +368,7 @@ html.dark .app-bg::before {
   right: 0;
   left: 0;
   opacity: 0;
+  transform: translateY(50%);
   background-color: #5e5e5e30;
   transition: opacity 0.3s ease-in-out;
 }
@@ -429,6 +430,8 @@ html.dark .app-bg::before {
     bottom: 0;
     left: auto;
     right: 100%;
+    transform: translateY(0);
+    transform: translateX(50%);
   }
 
   .resizer_handler::before {
