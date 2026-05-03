@@ -724,9 +724,6 @@ html.dark .app-bg::before {
    13. МАЛЫЕ ЭКРАНЫ В ПОРТРЕТЕ
 ========================================= */
 @media (max-height: 700px) and (orientation: portrait) {
-  .timer-circle-wrap {
-    max-height: 40dvh;
-  }
 
   .timer-input {
     width: 3rem;
