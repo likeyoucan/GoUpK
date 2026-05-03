@@ -349,8 +349,7 @@ html.dark .app-bg::before {
   display: flex;
   flex-direction: column;
   flex: 1;
-  overflow-x: hidden;
-  overflow-y: auto;
+  overflow: hidden;
   min-height: 0;
   transition: opacity 0.18s ease;
 }
