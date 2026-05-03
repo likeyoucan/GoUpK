@@ -473,8 +473,6 @@ html.dark .app-bg::before {
   overflow: hidden;
 }
 
-/* Чтобы handler гарантированно не прятался под нижним nav на телефоне */
-@media (max-width: 767px) and (orientation: portrait) {
   #view-stopwatch.split-bottom-hidden .view-bottom-half,
   #view-timer.split-bottom-hidden .view-bottom-half,
   #view-tabata.split-bottom-hidden .view-bottom-half {
@@ -484,7 +482,6 @@ html.dark .app-bg::before {
     bottom: calc(var(--nav-total) + 4px);
     z-index: 40;
   }
-}
 
 /* =========================================
    АДАПТИВНОСТЬ ДЛЯ ДВУХКОЛОНОЧНОГО МАКЕТА
