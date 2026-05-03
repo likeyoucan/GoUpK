@@ -4,7 +4,7 @@ import { APP_EVENTS } from "../constants/events.js?v=VERSION";
 
 export function setupTimerCore(tm, { showToast, updateText }) {
   tm.getRemainingTime = () => {
-    if (!tm.isRunning && !tm.isPaused) return 0;
+    if (!tm.isRunning && !tm.isPaused && !tm.isFinished) return 0;
     return tm.timeRemainingMs;
   };
 
@@ -17,6 +17,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
       tm.store.clearActiveTimer();
       tm.isRunning = false;
       tm.isPaused = true;
+      tm.isFinished = false;
       tm.remainingAtPause = tm.timeRemainingMs;
       tm.bgWorker.postMessage({ command: "stop" });
       tm.releaseWakeLock();
@@ -27,7 +28,10 @@ export function setupTimerCore(tm, { showToast, updateText }) {
 
     let duration;
 
-    if (!tm.isPaused) {
+    if (tm.isPaused) {
+      duration = tm.remainingAtPause;
+      tm.timeRemainingMs = duration;
+    } else {
       const h = parseInt(tm.els.h?.value, 10) || 0;
       const m = parseInt(tm.els.m?.value, 10) || 0;
       const s = parseInt(tm.els.s?.value, 10) || 0;
@@ -35,9 +39,6 @@ export function setupTimerCore(tm, { showToast, updateText }) {
       duration = tm.totalDuration;
       tm.timeRemainingMs = tm.totalDuration;
       tm.currentAdjustmentSec = 0;
-    } else {
-      duration = tm.remainingAtPause;
-      tm.timeRemainingMs = duration;
     }
 
     if (duration <= 0) {
@@ -51,12 +52,48 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     tm.store.activate("timer");
     tm.isRunning = true;
     tm.isPaused = false;
+    tm.isFinished = false;
     tm.targetTime = performance.now() + duration;
     tm.requestWakeLock();
     tm.updateUIState();
     tm.updateDisplay(duration);
     tm.updateAdjustButtons();
 
+    tm.bgWorker.postMessage({ command: "start", time: duration });
+  };
+
+  tm.restart = () => {
+    tm.sm.vibrate(30, "medium");
+    tm.sm.play("click");
+
+    let duration = tm.totalDuration;
+
+    if (!duration || duration <= 0) {
+      const h = parseInt(tm.els.h?.value, 10) || 0;
+      const m = parseInt(tm.els.m?.value, 10) || 0;
+      const s = parseInt(tm.els.s?.value, 10) || 0;
+      duration = (h * 3600 + m * 60 + s) * 1000;
+      tm.totalDuration = duration;
+    }
+
+    if (duration <= 0) {
+      showToast(tm.t("timer_zero"));
+      return;
+    }
+
+    tm.store.activate("timer");
+    tm.isRunning = true;
+    tm.isPaused = false;
+    tm.isFinished = false;
+    tm.remainingAtPause = 0;
+    tm.timeRemainingMs = duration;
+    tm.targetTime = performance.now() + duration;
+    tm.currentAdjustmentSec = 0;
+
+    tm.requestWakeLock();
+    tm.updateUIState();
+    tm.updateDisplay(duration);
+    tm.updateAdjustButtons();
     tm.bgWorker.postMessage({ command: "start", time: duration });
   };
 
@@ -68,6 +105,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
 
     tm.isRunning = false;
     tm.isPaused = false;
+    tm.isFinished = false;
     tm.remainingAtPause = 0;
     tm.totalDuration = 0;
     tm.timeRemainingMs = 0;
@@ -99,6 +137,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
 
     tm.els.circleBtn?.addEventListener("click", () => tm.toggle());
     tm.els.resetBtn?.addEventListener("click", () => tm.reset(true));
+    tm.els.restartBtn?.addEventListener("click", () => tm.restart());
 
     tm.bgWorker.addEventListener("message", (e) => {
       if (e.data?.type !== "tick") return;
@@ -114,7 +153,15 @@ export function setupTimerCore(tm, { showToast, updateText }) {
 
       if (remaining <= 0 && tm.isRunning) {
         tm.isRunning = false;
+        tm.isPaused = false;
+        tm.isFinished = true;
+        tm.timeRemainingMs = 0;
+        tm.remainingAtPause = 0;
+
         tm.store.clearActiveTimer();
+        tm.releaseWakeLock();
+        tm.updateTitle("");
+        tm.updateUIState();
 
         tm.sm.vibrate([200, 100, 200, 100, 400], "strong");
         tm.sm.play("complete");
@@ -122,7 +169,6 @@ export function setupTimerCore(tm, { showToast, updateText }) {
 
         requestAnimationFrame(() => {
           showToast(tm.t("timer_finished"));
-          tm.reset(false);
         });
       }
     });

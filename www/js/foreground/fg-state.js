@@ -5,6 +5,14 @@ export function getForegroundState({ sw, tm, tb, activeView }) {
   const canResumeTimer = tm.isPaused && tm.getRemainingTime() > 0;
   const canResumeTabata = tb.status !== "STOPPED" && tb.paused;
 
+  const tabataMeta = () =>
+    `${tb.selectedId || "na"}|${tb.currentRound || 0}|${tb.rounds || 0}|${tb.status || "STOPPED"}`;
+
+  const makeState = (mode, running) =>
+    mode === "tabata"
+      ? { mode, running, metaKey: tabataMeta() }
+      : { mode, running, metaKey: "" };
+
   const isModeAvailable = (mode) => {
     if (mode === "stopwatch") return sw.isRunning || canResumeStopwatch;
     if (mode === "timer") return tm.isRunning || canResumeTimer;
@@ -14,18 +22,14 @@ export function getForegroundState({ sw, tm, tb, activeView }) {
     return false;
   };
 
-  if (sw.isRunning) return { mode: "stopwatch", running: true };
-  if (tm.isRunning) return { mode: "timer", running: true };
-  if (tb.status !== "STOPPED" && !tb.paused)
-    return { mode: "tabata", running: true };
+  if (sw.isRunning) return makeState("stopwatch", true);
+  if (tm.isRunning) return makeState("timer", true);
+  if (tb.status !== "STOPPED" && !tb.paused) return makeState("tabata", true);
 
-  if (isModeAvailable(activeView)) {
-    return { mode: activeView, running: false };
-  }
-
-  if (canResumeStopwatch) return { mode: "stopwatch", running: false };
-  if (canResumeTimer) return { mode: "timer", running: false };
-  if (canResumeTabata) return { mode: "tabata", running: false };
+  if (isModeAvailable(activeView)) return makeState(activeView, false);
+  if (canResumeStopwatch) return makeState("stopwatch", false);
+  if (canResumeTimer) return makeState("timer", false);
+  if (canResumeTabata) return makeState("tabata", false);
 
   return null;
 }
@@ -40,7 +44,7 @@ export function buildForegroundPayload({
   $,
   formatTime,
 }) {
-  const buttonIcon = state.running ? "■" : "▶";
+  const buttonTitle = state.running ? t("stop") : t("play");
 
   if (state.mode === "stopwatch") {
     return {
@@ -49,7 +53,7 @@ export function buildForegroundPayload({
         showMs,
         forceHours: sw.elapsedTime >= 3600000,
       }),
-      buttonTitle: buttonIcon,
+      buttonTitle,
     };
   }
 
@@ -61,7 +65,7 @@ export function buildForegroundPayload({
         showMs: false,
         forceHours: rem >= 3600000,
       }),
-      buttonTitle: buttonIcon,
+      buttonTitle,
     };
   }
 
@@ -77,9 +81,14 @@ export function buildForegroundPayload({
         : t("get_ready")
     : t("pause");
 
+  const workoutName =
+    $("tb-runningWorkoutName")?.textContent?.trim() ||
+    $("tb-activeName")?.textContent?.trim() ||
+    t("tabata");
+
   return {
-    title: $("tb-activeName")?.textContent || t("tabata"),
+    title: `${t("tabata")} - ${workoutName}`,
     body: `${t("round")} ${tb.currentRound}/${tb.rounds} • ${phaseText}: ${formatTime(remTb, { showMs })}`,
-    buttonTitle: buttonIcon,
+    buttonTitle,
   };
 }

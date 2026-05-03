@@ -336,6 +336,7 @@ html.dark .app-bg::before {
   display: flex;
   flex-direction: column;
   min-height: var(--handler-size);
+  min-width: var(--handler-size);
   position: relative;
 }
 
@@ -353,7 +354,6 @@ html.dark .app-bg::before {
 }
 
 .resizer_handler {
-  margin: auto;
   width: 100%;
   height: var(--handler-size);
   flex-shrink: 0;
@@ -363,26 +363,23 @@ html.dark .app-bg::before {
   cursor: grab;
   user-select: none;
   touch-action: none;
-  position: absolute;
-  bottom: 100%;
-  right: 0;
-  left: 0;
-  opacity: 0;
-  transform: translateY(50%);
-  background-color: #5e5e5e30;
-  transition: opacity 0.3s ease-in-out;
+  opacity: 1;
+  background: color-mix(in srgb, var(--text-color) 10%, transparent);
+  transition: background-color 0.2s ease;
 }
 
 .resizer_handler::before {
   content: "";
-  width: clamp(24px, 30%, 84px);
-  height: 30%;
-  background: white;
+  width: clamp(28px, 20vw, 84px);
+  height: 4px;
   border-radius: 999px;
+  background: color-mix(in srgb, var(--text-color) 45%, transparent);
 }
 
-.resizer_handler:hover {
-  opacity: 1;
+.resizer_handler:active,
+.resizer_handler.is-dragging {
+  cursor: grabbing;
+  background: color-mix(in srgb, var(--text-color) 18%, transparent);
 }
 
 /* =========================================
@@ -426,18 +423,13 @@ html.dark .app-bg::before {
   .resizer_handler {
     width: var(--handler-size);
     height: 100%;
-    top: 0;
-    bottom: 0;
-    left: auto;
-    right: 100%;
-    transform: translateY(0);
-    transform: translateX(50%);
   }
 
   .resizer_handler::before {
-    height: clamp(24px, 30%, 84px);
-    width: 30%;
+    width: 4px;
+    height: clamp(28px, 20vh, 84px);
   }
+
   #tm-form,
   #tm-adjust-controls,
   #tm-resetBtn-wrap {

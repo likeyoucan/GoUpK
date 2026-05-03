@@ -379,14 +379,27 @@
                 <div
                   class="flex justify-center items-center w-full h-full min-h-10 max-h-30"
                 >
-                  <button
-                    type="button"
-                    id="tm-resetBtn"
-                    data-i18n="reset"
-                    class="app-surface app-text w-32 min-h-[44px] rounded-full text-lg font-bold shadow-sm active:scale-95 transition-transform focus:outline-none custom-focus hidden"
+                  <div
+                    id="tm-resetBtn-wrap"
+                    class="hidden flex justify-center items-center w-full h-full min-h-10 max-h-30 gap-3"
                   >
-                    Reset
-                  </button>
+                    <button
+                      type="button"
+                      id="tm-resetBtn"
+                      data-i18n="reset"
+                      class="app-surface app-text w-32 min-h-[44px] rounded-full text-lg font-bold shadow-sm active:scale-95 transition-transform focus:outline-none custom-focus hidden"
+                    >
+                      Reset
+                    </button>
+                    <button
+                      type="button"
+                      id="tm-restartBtn"
+                      data-i18n="restart"
+                      class="app-surface app-text w-32 min-h-[44px] rounded-full text-lg font-bold shadow-sm active:scale-95 transition-transform focus:outline-none custom-focus hidden"
+                    >
+                      Restart
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

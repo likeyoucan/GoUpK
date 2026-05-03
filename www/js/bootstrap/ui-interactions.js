@@ -5,6 +5,7 @@ import { bindKeyboardShortcuts } from "./keyboard-shortcuts.js?v=VERSION";
 import { bindBottomNav } from "./navigation-bindings.js?v=VERSION";
 import { bindNavSwipe } from "./navigation-gesture-controller.js?v=VERSION";
 import { bindStopwatchDoubleTapLap } from "./stopwatch-gestures.js?v=VERSION";
+import { initSplitResizer } from "./split-resizer.js?v=VERSION";
 
 export function bindUiInteractions({
   $,
@@ -18,6 +19,7 @@ export function bindUiInteractions({
   tm,
   tb,
   navigation,
+  initSplitResizer();
 }) {
   const unbinders = [];
 

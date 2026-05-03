@@ -27,6 +27,7 @@ export const tm = {
   isRunning: false,
   isPaused: false,
   timeRemainingMs: 0,
+  isFinished: false,
 
   els: {},
   ringLength: 282.74,
@@ -42,6 +43,7 @@ export const tm = {
   updateTitle,
   formatTime,
   announceToScreenReader,
+  restartBtn: $("tm-restartBtn"),
 
   init() {
     this.els = {
