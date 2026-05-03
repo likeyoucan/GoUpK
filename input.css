@@ -407,7 +407,7 @@ html.dark .app-bg::before {
   padding: 32px;
   gap: 8px;
   height: auto;
-  max-height: 100dvh;
+  max-height: 100%;
   display: grid;
   grid-template-rows: 1fr minmax(0, 65dvh) 1fr;
   align-items: center;
