@@ -412,6 +412,7 @@ html.dark .app-bg::before {
 
   .top_content {
     padding-block: 24px;
+    grid-template-columns: 70%;
   }
 
   .mid_content{
