@@ -36,13 +36,9 @@ function setFinalStateClass(viewEl, target) {
     "split-bottom-hidden",
   );
 
-  if (target === 0) {
-    viewEl.classList.add("split-top-hidden");
-  } else if (target === 100) {
-    viewEl.classList.add("split-bottom-hidden");
-  } else {
-    viewEl.classList.add("split-middle");
-  }
+  if (target === 0) viewEl.classList.add("split-top-hidden");
+  else if (target === 100) viewEl.classList.add("split-bottom-hidden");
+  else viewEl.classList.add("split-middle");
 }
 
 function setupHandler(viewEl) {
@@ -55,6 +51,11 @@ function setupHandler(viewEl) {
   let lastRaw = getMiddleAnchor();
   let tapTimer = null;
   let snapToken = 0;
+
+  // Инерция
+  let lastMoveTs = 0;
+  let lastMoveRaw = lastRaw;
+  let velocity = 0; // % / ms
 
   const getAnchors = () => {
     const middle = getMiddleAnchor();
@@ -72,7 +73,6 @@ function setupHandler(viewEl) {
         100,
       );
     }
-
     return clamp(
       ((ev.clientY - rect.top) / Math.max(1, rect.height)) * 100,
       0,
@@ -90,19 +90,26 @@ function setupHandler(viewEl) {
     );
     viewEl.classList.remove("split-animating");
     viewEl.classList.add("split-live");
-
     viewEl.style.setProperty("--split", `${lastRaw}%`);
   };
 
-  const animateToAnchor = (target) => {
+  const animateToAnchor = (target, v = 0) => {
     const token = ++snapToken;
+
+    // Длительность зависит от скорости, чтобы чувствовалась "инертность"
+    const speed = Math.abs(v);
+    const duration = Math.round(clamp(240 + speed * 1200, 240, 430));
+    viewEl.style.setProperty("--split-snap-duration", `${duration}ms`);
 
     viewEl.classList.remove("split-live");
     viewEl.classList.add("split-animating");
 
-    // На время анимации держим "middle", чтобы не было резкого пересчета layout.
+    // На время анимации держим neutral-state, чтобы не дергать layout.
     setFinalStateClass(viewEl, getMiddleAnchor());
-    viewEl.style.setProperty("--split", `${target}%`);
+
+    // Анти-рывок: не прыгаем в "жесткий 0/100" во время самой анимации
+    const visualTarget = target === 0 ? 0.12 : target === 100 ? 99.88 : target;
+    viewEl.style.setProperty("--split", `${visualTarget}%`);
 
     const onEnd = (e) => {
       if (token !== snapToken) return;
@@ -110,47 +117,58 @@ function setupHandler(viewEl) {
 
       topHalf.removeEventListener("transitionend", onEnd);
       viewEl.classList.remove("split-animating");
+
+      // Финальное состояние после анимации
+      if (target === 0) viewEl.style.setProperty("--split", "0.12%");
+      else if (target === 100) viewEl.style.setProperty("--split", "99.88%");
+      else viewEl.style.setProperty("--split", `${target}%`);
+
       setFinalStateClass(viewEl, target);
     };
 
     topHalf.addEventListener("transitionend", onEnd);
 
-    // fallback
     setTimeout(() => {
       if (token !== snapToken) return;
       topHalf.removeEventListener("transitionend", onEnd);
       viewEl.classList.remove("split-animating");
+
+      if (target === 0) viewEl.style.setProperty("--split", "0.12%");
+      else if (target === 100) viewEl.style.setProperty("--split", "99.88%");
+      else viewEl.style.setProperty("--split", `${target}%`);
+
       setFinalStateClass(viewEl, target);
-    }, 280);
+    }, duration + 70);
   };
 
   const snapToAnchor = () => {
     const anchors = getAnchors();
     const middle = anchors[1];
 
-    let target = lastRaw;
-    if (Math.abs(lastRaw - 0) <= SNAP_THRESHOLD) target = 0;
-    else if (Math.abs(lastRaw - middle) <= SNAP_THRESHOLD) target = middle;
-    else if (Math.abs(lastRaw - 100) <= SNAP_THRESHOLD) target = 100;
-    else target = nearestAnchor(lastRaw, anchors);
+    // Инерционная проекция
+    const projected = clamp(lastRaw + velocity * 170, 0, 100);
 
-    animateToAnchor(target);
+    let target = projected;
+    if (Math.abs(projected - 0) <= SNAP_THRESHOLD) target = 0;
+    else if (Math.abs(projected - middle) <= SNAP_THRESHOLD) target = middle;
+    else if (Math.abs(projected - 100) <= SNAP_THRESHOLD) target = 100;
+    else target = nearestAnchor(projected, anchors);
+
+    animateToAnchor(target, velocity);
   };
 
   const cycleState = () => {
     const middle = getMiddleAnchor();
 
     if (viewEl.classList.contains("split-top-hidden")) {
-      animateToAnchor(middle);
+      animateToAnchor(middle, 0.12);
       return;
     }
-
     if (viewEl.classList.contains("split-middle")) {
-      animateToAnchor(100);
+      animateToAnchor(100, 0.12);
       return;
     }
-
-    animateToAnchor(0);
+    animateToAnchor(0, 0.12);
   };
 
   handler.setAttribute("tabindex", "0");
@@ -162,16 +180,32 @@ function setupHandler(viewEl) {
     e.preventDefault();
 
     dragging = true;
+    velocity = 0;
+    lastMoveTs = performance.now();
+    lastMoveRaw = lastRaw;
+
     handler.classList.add("is-dragging");
     handler.setPointerCapture?.(e.pointerId);
 
     const onMove = (ev) => {
       if (!dragging) return;
-      applyLiveRaw(readRawPercent(ev));
+
+      const now = performance.now();
+      const raw = readRawPercent(ev);
+      const dt = Math.max(1, now - lastMoveTs);
+      const instV = (raw - lastMoveRaw) / dt;
+
+      // low-pass, чтобы скорость была плавной
+      velocity = velocity * 0.72 + instV * 0.28;
+      lastMoveTs = now;
+      lastMoveRaw = raw;
+
+      applyLiveRaw(raw);
     };
 
     const onUp = () => {
       if (!dragging) return;
+
       dragging = false;
       handler.classList.remove("is-dragging");
       snapToAnchor();
@@ -209,34 +243,29 @@ function setupHandler(viewEl) {
       cycleState();
       return;
     }
-
     if (e.key === "Home") {
       e.preventDefault();
-      animateToAnchor(0);
+      animateToAnchor(0, 0.1);
       return;
     }
-
     if (e.key === "End") {
       e.preventDefault();
-      animateToAnchor(100);
+      animateToAnchor(100, 0.1);
       return;
     }
-
     if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
       e.preventDefault();
-      animateToAnchor(0);
+      animateToAnchor(0, 0.1);
       return;
     }
-
     if (e.key === "ArrowRight" || e.key === "ArrowDown") {
       e.preventDefault();
-      animateToAnchor(100);
+      animateToAnchor(100, 0.1);
       return;
     }
-
     if (e.key === "m" || e.key === "M") {
       e.preventDefault();
-      animateToAnchor(middle);
+      animateToAnchor(middle, 0.1);
     }
   });
 

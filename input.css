@@ -53,6 +53,7 @@
   --split: 65%;
   --handler-size: clamp(12px, 20px, 32px);
   --title-gap: clamp(8px, 1.5vmin, 20px);
+  --split-snap-duration: 260ms;
 }
 
 :root.dark {
@@ -503,9 +504,9 @@ html.dark .app-bg::before {
 #view-timer.split-animating .view-bottom-half,
 #view-tabata.split-animating .view-bottom-half {
   transition:
-    flex-basis 220ms cubic-bezier(0.32, 0.72, 0, 1),
-    min-height 220ms cubic-bezier(0.32, 0.72, 0, 1),
-    min-width 220ms cubic-bezier(0.32, 0.72, 0, 1) !important;
+    flex-basis var(--split-snap-duration) cubic-bezier(0.22, 0.8, 0.18, 1),
+    min-height var(--split-snap-duration) cubic-bezier(0.22, 0.8, 0.18, 1),
+    min-width var(--split-snap-duration) cubic-bezier(0.22, 0.8, 0.18, 1) !important;
 }
 
 .view-top-half,
