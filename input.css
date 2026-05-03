@@ -366,6 +366,7 @@ html.dark .app-bg::before {
   opacity: 1;
   background: color-mix(in srgb, var(--text-color) 10%, transparent);
   transition: background-color 0.2s ease;
+  transform: translateY(50%);
 }
 
 .resizer_handler::before {
@@ -427,6 +428,8 @@ html.dark .app-bg::before {
   .resizer_handler {
     width: var(--handler-size);
     height: 100%;
+    transform: translateY(0);
+    transform: translateX(50%);
   }
 
   .resizer_handler::before {
