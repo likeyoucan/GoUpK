@@ -292,18 +292,8 @@ button {
   }
 } */
 
-/* --- Большой планшет (iPad Pro) в портретной ориентации --- */
-@media (min-width: 1024px) and (orientation: portrait) {
-  #app {
-    width: 480px;
-    max-width: 480px;
-    height: 90dvh;
-    max-height: 960px;
-  }
-}
-
 /* --- Десктоп / очень большой планшет (ландшафтная ориентация, режим "карточки") --- */
-/* @media (min-width: 1281px) and (orientation: landscape) {
+@media (min-width: 1281px) and (orientation: landscape) {
   #app {
     width: 760px;
     max-width: 760px;
@@ -315,23 +305,8 @@ button {
       0 10px 30px rgba(17, 17, 17, 0.3);
     padding: 0;
   }
-} */
+}
 
-/* --- ПЛАНШЕТ В АЛЬБОМНОЙ ОРИЕНТАЦИИ (ПОЛНЫЙ ЭКРАН) --- */
-/* @media (min-width: 768px) and (max-width: 1280px) and (orientation: landscape) {
-  #app {
-    width: 100%;
-    max-width: 100%;
-    height: 100dvh;
-    max-height: 100%;
-    border-radius: 0;
-    box-shadow: none;
-    padding-top: var(--safe-top);
-    padding-bottom: var(--safe-bottom);
-    padding-left: var(--safe-left);
-    padding-right: var(--safe-right);
-  }
-} */
 
 /* =========================================
    4. ВИНЬЕТКА
