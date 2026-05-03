@@ -337,7 +337,7 @@ html.dark .app-bg::before {
   min-width: var(--handler-size);
   display: flex;
   flex-direction: column;
-  min-height: var(--handler-size);
+  overflow: hidden;
   position: relative;
   transition:
     flex-basis 0.22s cubic-bezier(0.32, 0.72, 0, 1),
