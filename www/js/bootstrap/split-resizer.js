@@ -16,7 +16,6 @@ function getMiddleAnchor() {
 
 function getEdgeVisualRange(viewEl) {
   const row = isRowLayout(viewEl);
-  // Держим handler всегда видимым у краев
   return row ? { min: 2.5, max: 97.5 } : { min: 3.5, max: 96.5 };
 }
 
@@ -51,14 +50,13 @@ function setupHandler(viewEl) {
   if (!handler) return;
 
   const SNAP_THRESHOLD = 10;
-  const MAX_INERTIA_SHIFT = 8; // максимум добавки от скорости в процентах
-
   let dragging = false;
   let lastRaw = getMiddleAnchor();
   let lastTs = 0;
   let lastRawForVel = lastRaw;
-  let velocity = 0; // %/ms
+  let velocity = 0;
   let tapTimer = null;
+  let activePointerType = "touch";
 
   function getAnchors() {
     return [0, getMiddleAnchor(), 100];
@@ -75,11 +73,42 @@ function setupHandler(viewEl) {
         100,
       );
     }
+
     return clamp(
       ((ev.clientY - rect.top) / Math.max(1, rect.height)) * 100,
       0,
       100,
     );
+  }
+
+  function getInertiaTuning(pointerType) {
+    if (pointerType === "mouse") {
+      return {
+        gain: 55,
+        maxShift: 4,
+        smoothKeep: 0.9,
+        smoothNew: 0.1,
+        duration: 230,
+      };
+    }
+
+    if (pointerType === "pen") {
+      return {
+        gain: 95,
+        maxShift: 7,
+        smoothKeep: 0.82,
+        smoothNew: 0.18,
+        duration: 250,
+      };
+    }
+
+    return {
+      gain: 140,
+      maxShift: 10,
+      smoothKeep: 0.75,
+      smoothNew: 0.25,
+      duration: 280,
+    };
   }
 
   function applyLive(raw) {
@@ -95,50 +124,52 @@ function setupHandler(viewEl) {
     viewEl.style.setProperty("--split", `${lastRaw}%`);
   }
 
-  function animateTo(target) {
+  function animateTo(target, durationMs) {
     const middle = getMiddleAnchor();
     const { min, max } = getEdgeVisualRange(viewEl);
     const visualTarget = target === 0 ? min : target === 100 ? max : middle;
 
+    viewEl.style.setProperty("--split-snap-duration", `${durationMs}ms`);
     viewEl.classList.remove("split-live");
     viewEl.classList.add("split-animating");
-    setStateClass(viewEl, middle); // нейтраль во время анимации
+
+    setStateClass(viewEl, middle);
     viewEl.style.setProperty("--split", `${visualTarget}%`);
 
     const topHalf = viewEl.querySelector(".view-top-half");
-    const end = () => {
+    let done = false;
+
+    const finish = () => {
+      if (done) return;
+      done = true;
       viewEl.classList.remove("split-animating");
       setStateClass(viewEl, target);
     };
 
-    let done = false;
     const onEnd = (e) => {
-      if (done) return;
       if (e.target !== topHalf || e.propertyName !== "flex-basis") return;
-      done = true;
-      topHalf?.removeEventListener("transitionend", onEnd);
-      end();
+      topHalf.removeEventListener("transitionend", onEnd);
+      finish();
     };
 
     topHalf?.addEventListener("transitionend", onEnd);
     setTimeout(() => {
-      if (done) return;
-      done = true;
       topHalf?.removeEventListener("transitionend", onEnd);
-      end();
-    }, 320);
+      finish();
+    }, durationMs + 80);
   }
 
   function snapToNearestWithInertia() {
     const anchors = getAnchors();
     const middle = anchors[1];
+    const tuning = getInertiaTuning(activePointerType);
 
-    // Мягкая инерция: ограничиваем смещение, чтобы не "перелетать" к другому краю
     const inertiaShift = clamp(
-      velocity * 110,
-      -MAX_INERTIA_SHIFT,
-      MAX_INERTIA_SHIFT,
+      velocity * tuning.gain,
+      -tuning.maxShift,
+      tuning.maxShift,
     );
+
     const projected = clamp(lastRaw + inertiaShift, 0, 100);
 
     let target;
@@ -147,14 +178,15 @@ function setupHandler(viewEl) {
     else if (Math.abs(projected - 100) <= SNAP_THRESHOLD) target = 100;
     else target = nearestAnchor(projected, anchors);
 
-    animateTo(target);
+    animateTo(target, tuning.duration);
   }
 
   function cycleState() {
     const middle = getMiddleAnchor();
-    if (viewEl.classList.contains("split-top-hidden")) return animateTo(middle);
-    if (viewEl.classList.contains("split-middle")) return animateTo(100);
-    return animateTo(0);
+    if (viewEl.classList.contains("split-top-hidden"))
+      return animateTo(middle, 250);
+    if (viewEl.classList.contains("split-middle")) return animateTo(100, 250);
+    return animateTo(0, 250);
   }
 
   handler.setAttribute("tabindex", "0");
@@ -166,6 +198,7 @@ function setupHandler(viewEl) {
     e.preventDefault();
 
     dragging = true;
+    activePointerType = e.pointerType || "touch";
     velocity = 0;
     lastTs = performance.now();
     lastRawForVel = lastRaw;
@@ -181,7 +214,9 @@ function setupHandler(viewEl) {
       const dt = Math.max(1, now - lastTs);
       const instV = (raw - lastRawForVel) / dt;
 
-      velocity = velocity * 0.78 + instV * 0.22;
+      const tuning = getInertiaTuning(activePointerType);
+      velocity = velocity * tuning.smoothKeep + instV * tuning.smoothNew;
+
       lastTs = now;
       lastRawForVel = raw;
 
@@ -190,6 +225,7 @@ function setupHandler(viewEl) {
 
     const onUp = () => {
       if (!dragging) return;
+
       dragging = false;
       handler.classList.remove("is-dragging");
       snapToNearestWithInertia();
@@ -230,31 +266,31 @@ function setupHandler(viewEl) {
 
     if (e.key === "Home") {
       e.preventDefault();
-      animateTo(0);
+      animateTo(0, 230);
       return;
     }
 
     if (e.key === "End") {
       e.preventDefault();
-      animateTo(100);
+      animateTo(100, 230);
       return;
     }
 
     if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
       e.preventDefault();
-      animateTo(0);
+      animateTo(0, 230);
       return;
     }
 
     if (e.key === "ArrowRight" || e.key === "ArrowDown") {
       e.preventDefault();
-      animateTo(100);
+      animateTo(100, 230);
       return;
     }
 
     if (e.key === "m" || e.key === "M") {
       e.preventDefault();
-      animateTo(middle);
+      animateTo(middle, 230);
     }
   });
 

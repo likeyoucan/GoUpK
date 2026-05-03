@@ -50,10 +50,21 @@
 
   --nav-height: 5rem;
   --nav-total: calc(var(--nav-height) + var(--safe-bottom));
+
   --split: 65%;
-  --handler-size: clamp(12px, 20px, 32px);
-  --title-gap: clamp(8px, 1.5vmin, 20px);
   --split-snap-duration: 260ms;
+  --handler-size: clamp(14px, 2.2dvh, 22px);
+  --title-gap: clamp(8px, 1.5vmin, 20px);
+
+  --secondary-accent-color: #3b82f6;
+  --alert-color: hsl(0 90% 60%);
+  --alert-color-fg: #ffffff;
+
+  --tr-track-height: 4px;
+  --tr-thumb-size: 24px;
+  --tr-track-bg: var(--border-color);
+  --tr-fill-color: var(--primary-color);
+  --tr-thumb-color: var(--surface-color);
 }
 
 :root.dark {
@@ -146,7 +157,7 @@ body {
   height: 100dvh;
   min-height: 100dvh;
   z-index: 200;
-  background-color: #fcfcfc; /* фон preload */
+  background-color: #fcfcfc;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -165,14 +176,12 @@ body {
 }
 
 #app-preloader-icon {
-  /* Базовый адаптив для телефонов */
   width: clamp(56px, 16vmin, 112px);
   height: clamp(56px, 16vmin, 112px);
   object-fit: contain;
   animation: preloader-pulse 1.4s ease-in-out infinite;
 }
 
-/* Планшеты */
 @media (min-width: 768px) {
   #app-preloader-icon {
     width: clamp(88px, 12vmin, 144px);
@@ -180,7 +189,6 @@ body {
   }
 }
 
-/* Десктопы */
 @media (min-width: 1280px) {
   #app-preloader-icon {
     width: clamp(96px, 8vmin, 168px);
@@ -188,7 +196,6 @@ body {
   }
 }
 
-/* Очень большие экраны */
 @media (min-width: 1920px) {
   #app-preloader-icon {
     width: 180px;
@@ -299,7 +306,7 @@ html.dark .app-bg::before {
 }
 
 /* =========================================
-   5. ВЕРХНЯЯ ПОЛОВИНА ВИДОВ (ТАЙМЕР + КРУГ)
+   5. SPLIT LAYOUT + HANDLER
 ========================================= */
 .view-top-half {
   flex-basis: var(--split);
@@ -310,7 +317,6 @@ html.dark .app-bg::before {
   display: flex;
   justify-content: center;
   align-items: center;
-  transition: flex-basis 0.22s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 .top_content {
@@ -340,18 +346,14 @@ html.dark .app-bg::before {
   flex-direction: column;
   overflow: hidden;
   position: relative;
-  transition:
-    flex-basis 0.22s cubic-bezier(0.32, 0.72, 0, 1),
-    min-height 0.22s cubic-bezier(0.32, 0.72, 0, 1),
-    min-width 0.22s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 .mid_content {
   display: flex;
   flex-direction: column;
   flex: 1;
-  overflow: hidden;
   min-height: 0;
+  overflow: hidden;
   transition: opacity 0.18s ease;
 }
 
@@ -359,20 +361,20 @@ html.dark .app-bg::before {
   justify-content: flex-start;
 }
 
-/* Handler: большая зона касания, но мягкий визуал */
 .resizer_handler {
   position: absolute;
   left: 0;
   right: 0;
   top: 0;
-  height: clamp(16px, 2.4dvh, 24px);
+  height: var(--handler-size);
   display: flex;
   align-items: center;
   justify-content: center;
-  background: transparent;
-  cursor: grab;
-  touch-action: none;
   z-index: 40;
+  background: transparent;
+  user-select: none;
+  touch-action: none;
+  cursor: grab;
 }
 
 .resizer_handler::before {
@@ -381,8 +383,11 @@ html.dark .app-bg::before {
   height: 3px;
   border-radius: 999px;
   background: color-mix(in srgb, var(--text-color) 26%, transparent);
-  opacity: 0.38;
-  transition: opacity 0.16s ease, background-color 0.16s ease, transform 0.16s ease;
+  opacity: 0.4;
+  transition:
+    opacity 0.16s ease,
+    background-color 0.16s ease,
+    transform 0.16s ease;
 }
 
 .resizer_handler::after {
@@ -393,8 +398,8 @@ html.dark .app-bg::before {
 
 @media (hover: hover) {
   .resizer_handler:hover::before {
-    opacity: 0.9;
-    background: color-mix(in srgb, var(--text-color) 42%, transparent);
+    opacity: 0.88;
+    background: color-mix(in srgb, var(--text-color) 40%, transparent);
   }
 }
 
@@ -411,114 +416,90 @@ html.dark .app-bg::before {
   cursor: grabbing;
 }
 
-/* Live drag */
-#view-stopwatch.split-live .view-top-half,
-#view-timer.split-live .view-top-half,
-#view-tabata.split-live .view-top-half {
+:is(#view-stopwatch, #view-timer, #view-tabata).split-middle .view-top-half {
   flex-basis: var(--split);
 }
 
-/* Middle */
-#view-stopwatch.split-middle .view-top-half,
-#view-timer.split-middle .view-top-half,
-#view-tabata.split-middle .view-top-half {
-  flex-basis: var(--split);
-}
-
-#view-stopwatch.split-middle .view-bottom-half .mid_content,
-#view-timer.split-middle .view-bottom-half .mid_content,
-#view-tabata.split-middle .view-bottom-half .mid_content {
+:is(#view-stopwatch, #view-timer, #view-tabata).split-middle
+  .view-bottom-half
+  .mid_content {
   opacity: 1;
-  pointer-events: auto;
   visibility: visible;
+  pointer-events: auto;
+  height: auto;
+  min-height: 0;
 }
 
-/* 0%: top hidden */
-#view-stopwatch.split-top-hidden .view-top-half,
-#view-timer.split-top-hidden .view-top-half,
-#view-tabata.split-top-hidden .view-top-half {
-  flex-basis: 0%;
+:is(#view-stopwatch, #view-timer, #view-tabata).split-top-hidden
+  .view-top-half {
+  flex-basis: 0.12%;
   min-height: 0;
   min-width: 0;
   overflow: hidden;
   pointer-events: none;
 }
 
-#view-stopwatch.split-top-hidden .view-bottom-half,
-#view-timer.split-top-hidden .view-bottom-half,
-#view-tabata.split-top-hidden .view-bottom-half {
+:is(#view-stopwatch, #view-timer, #view-tabata).split-top-hidden
+  .view-bottom-half {
   flex: 1 1 auto;
-}
-
-/* 100%: bottom hidden, но handler остается видимым над nav */
-#view-stopwatch.split-bottom-hidden .view-top-half,
-#view-timer.split-bottom-hidden .view-top-half,
-#view-tabata.split-bottom-hidden .view-top-half {
-  flex: 1 1 auto;
-}
-
-#view-stopwatch.split-bottom-hidden .view-bottom-half,
-#view-timer.split-bottom-hidden .view-bottom-half,
-#view-tabata.split-bottom-hidden .view-bottom-half {
-  flex: 0 0 auto;
-  height: clamp(16px, 2.4dvh, 24px);
-  min-height: clamp(16px, 2.4dvh, 24px);
   overflow: visible;
 }
 
-#view-stopwatch.split-bottom-hidden .view-bottom-half .mid_content,
-#view-timer.split-bottom-hidden .view-bottom-half .mid_content,
-#view-tabata.split-bottom-hidden .view-bottom-half .mid_content {
+:is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
+  .view-top-half {
+  flex: 1 1 auto;
+}
+
+:is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
+  .view-bottom-half {
+  flex: 0 0 auto;
+  height: var(--handler-size);
+  min-height: var(--handler-size);
+  overflow: visible;
+}
+
+:is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
+  .view-bottom-half
+  .mid_content {
   opacity: 0;
-  pointer-events: none;
   visibility: hidden;
+  pointer-events: none;
   height: 0;
   min-height: 0;
   overflow: hidden;
 }
 
-#view-stopwatch.split-bottom-hidden .view-bottom-half,
-#view-timer.split-bottom-hidden .view-bottom-half,
-#view-tabata.split-bottom-hidden .view-bottom-half {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: calc(var(--nav-total) + 4px);
-  z-index: 40;
+@media (max-width: 767px) and (orientation: portrait) {
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
+    .view-bottom-half {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: calc(var(--nav-total) + 4px);
+    z-index: 40;
+  }
 }
 
-/* Во время drag отключаем transitions, чтобы не было лагов и рывка */
-#view-stopwatch.split-live .view-top-half,
-#view-timer.split-live .view-top-half,
-#view-tabata.split-live .view-top-half,
-#view-stopwatch.split-live .view-bottom-half,
-#view-timer.split-live .view-bottom-half,
-#view-tabata.split-live .view-bottom-half {
+:is(#view-stopwatch, #view-timer, #view-tabata).split-live .view-top-half,
+:is(#view-stopwatch, #view-timer, #view-tabata).split-live .view-bottom-half,
+:is(#view-stopwatch, #view-timer, #view-tabata).split-live .mid_content {
   transition: none !important;
 }
 
-/* Во время snap включаем только нужную анимацию */
-#view-stopwatch.split-animating .view-top-half,
-#view-timer.split-animating .view-top-half,
-#view-tabata.split-animating .view-top-half,
-#view-stopwatch.split-animating .view-bottom-half,
-#view-timer.split-animating .view-bottom-half,
-#view-tabata.split-animating .view-bottom-half {
+:is(#view-stopwatch, #view-timer, #view-tabata).split-animating .view-top-half,
+:is(#view-stopwatch, #view-timer, #view-tabata).split-animating
+  .view-bottom-half {
   transition:
     flex-basis var(--split-snap-duration) cubic-bezier(0.22, 0.8, 0.18, 1),
     min-height var(--split-snap-duration) cubic-bezier(0.22, 0.8, 0.18, 1),
     min-width var(--split-snap-duration) cubic-bezier(0.22, 0.8, 0.18, 1) !important;
 }
 
-/* Handler всегда в зоне видимости */
-#view-stopwatch.split-top-hidden .view-bottom-half,
-#view-timer.split-top-hidden .view-bottom-half,
-#view-tabata.split-top-hidden .view-bottom-half {
-  overflow: visible;
-}
-
-.view-top-half,
-.view-bottom-half {
+:is(#view-stopwatch, #view-timer, #view-tabata).split-live .view-top-half,
+:is(#view-stopwatch, #view-timer, #view-tabata).split-live .view-bottom-half,
+:is(#view-stopwatch, #view-timer, #view-tabata).split-animating .view-top-half,
+:is(#view-stopwatch, #view-timer, #view-tabata).split-animating
+  .view-bottom-half {
   will-change: flex-basis;
 }
 
@@ -565,7 +546,11 @@ html.dark .app-bg::before {
   }
 
   .resizer_handler {
-    width: clamp(16px, 2.2dvw, 24px);
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: auto;
+    width: var(--handler-size);
     height: 100%;
   }
 
@@ -574,11 +559,14 @@ html.dark .app-bg::before {
     height: clamp(28px, 20vh, 72px);
   }
 
-  #view-stopwatch.split-bottom-hidden .view-bottom-half,
-  #view-timer.split-bottom-hidden .view-bottom-half,
-  #view-tabata.split-bottom-hidden .view-bottom-half {
-    width: clamp(16px, 2.2dvw, 24px);
-    min-width: clamp(16px, 2.2dvw, 24px);
+  .resizer_handler::after {
+    inset: 0 -10px;
+  }
+
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
+    .view-bottom-half {
+    width: var(--handler-size);
+    min-width: var(--handler-size);
     height: auto;
     position: relative;
     bottom: auto;
@@ -604,7 +592,6 @@ html.dark .app-bg::before {
   }
 }
 
-/* --- Десктоп / очень большой планшет (ландшафтная ориентация, режим "карточки") --- */
 @media (min-width: 1281px) and (orientation: landscape) {
   #app {
     width: 760px;
@@ -630,7 +617,7 @@ html.dark .app-bg::before {
 }
 
 /* =========================================
-   6. КРУЖОК ТАЙМЕРА
+   6. КРУЖОК ТАЙМЕРА (UX REFACTORED)
 ========================================= */
 .timer-circle-wrap {
   width: 100%;
@@ -643,23 +630,39 @@ html.dark .app-bg::before {
   position: relative;
   align-items: center;
   justify-content: center;
-  container-type: inline-size;
+  container-type: size;
+  container-name: timer-ring;
 }
 
 .timer-display {
-  font-size: clamp(2rem, 22cqi, 2.8rem);
-  line-height: 1;
-  letter-spacing: -0.05em;
+  font-size: clamp(1.9rem, min(21cqi, 21cqb), 3.2rem);
+  line-height: 0.95;
+  letter-spacing: -0.04em;
   white-space: nowrap;
-  transition: all 0.3s ease;
+  max-inline-size: 92%;
+  overflow: hidden;
+  text-overflow: clip;
+  transition:
+    font-size 220ms cubic-bezier(0.32, 0.72, 0, 1),
+    color 300ms ease;
   font-style: normal;
   font-variant-numeric: tabular-nums;
 }
 
 .timer-display.is-go {
-  font-size: clamp(3rem, 35cqi, 4.8rem);
+  font-size: clamp(2.6rem, min(31cqi, 31cqb), 5rem);
   font-style: italic;
-  padding-right: 0.1em;
+  padding-right: 0.04em;
+}
+
+@container timer-ring (max-width: 260px) {
+  .timer-display {
+    font-size: clamp(1.55rem, min(18cqi, 18cqb), 2.35rem);
+  }
+
+  .timer-display.is-go {
+    font-size: clamp(2.2rem, min(26cqi, 26cqb), 3.7rem);
+  }
 }
 
 /* =========================================
@@ -714,7 +717,6 @@ html.dark .app-bg::before {
 /* =========================================
    11. МОДАЛЬНЫЕ ОКНА (BOTTOM SHEETS)
 ========================================= */
-
 #modal-container {
   position: absolute;
   inset: 0;
@@ -768,11 +770,11 @@ html.dark .app-bg::before {
   }
 
   .timer-display {
-    font-size: clamp(1.6rem, 20cqi, 2.2rem);
+    font-size: clamp(1.5rem, min(19cqi, 19cqb), 2.2rem);
   }
 
   .timer-display.is-go {
-    font-size: clamp(2.5rem, 30cqi, 3.8rem);
+    font-size: clamp(2.2rem, min(28cqi, 28cqb), 3.7rem);
   }
 }
 
@@ -878,7 +880,6 @@ html.dark .app-bg::before {
 /* =========================================
    15. МОДАЛЬНЫЕ ОКНА — АЛЕРТЫ
 ========================================= */
-
 #reset-modal,
 #sw-clear-modal,
 #sw-name-modal,
@@ -898,7 +899,6 @@ html.dark .app-bg::before {
 /* =========================================
    16. КАСТОМИЗАЦИЯ ЭЛЕМЕНТОВ УПРАВЛЕНИЯ
 ========================================= */
-
 .select-wrapper {
   min-width: 120px;
 }
@@ -1020,7 +1020,6 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
 /* =========================================
    17. ЭФФЕКТ ЖИДКОГО СТЕКЛА (LIQUID GLASS)
 ========================================= */
-/* Стили для оверлея под модальными окнами при эффекте стекла (без размытия) */
 :root.glass-effect body #bottom-sheet-overlay {
   background-color: rgba(255, 255, 255, 0.4);
   backdrop-filter: blur(2px);
@@ -1030,6 +1029,7 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
   background-color: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(2px);
 }
+
 :root.glass-effect body #tb-modal,
 :root.glass-effect body #sw-sessions-modal {
   background-color: rgba(255, 255, 255, 0.4);
@@ -1229,7 +1229,6 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
 /* =========================================
    18. АНИМАЦИИ ПЕРЕХОДОВ (VIEW TRANSITIONS)
 ========================================= */
-
 @keyframes slide-in-from-right {
   from {
     transform: translateX(18%);
@@ -1324,7 +1323,6 @@ html.js-nav-tap::view-transition-new(root) {
 /* =========================================
    19. ФИКСЫ И ДОСТУПНОСТЬ
 ========================================= */
-
 #btn-open-reset {
   cursor: pointer;
 }
@@ -1394,9 +1392,8 @@ body.hide-nav-labels .nav-btn {
 }
 
 /* =========================================
-   СТИЛИ И АНИМАЦИИ ДЛЯ УПРАВЛЕНИЯ ЦВЕТАМИ
+   20. СТИЛИ И АНИМАЦИИ ДЛЯ УПРАВЛЕНИЯ ЦВЕТАМИ
 ========================================= */
-
 @keyframes fadeInScale {
   from {
     opacity: 0;
@@ -1426,7 +1423,7 @@ body.hide-nav-labels .nav-btn {
     max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
     margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1),
     margin-right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  max-width: 2.25rem; /* w-9 */
+  max-width: 2.25rem;
   animation: fadeInScale 0.3s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 
@@ -1466,7 +1463,6 @@ body.hide-nav-labels .nav-btn {
   animation: fadeOutScale 0.2s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 
-/* Стили для color picker */
 .color-picker-wrapper {
   flex-shrink: 0;
   animation: fadeInScale 0.3s 0.1s cubic-bezier(0.4, 0, 0.2, 1) both;
@@ -1483,35 +1479,26 @@ body.hide-nav-labels .nav-btn {
 }
 
 /* =========================================
-   20. АНИМАЦИЯ НИЖНЕГО МЕНЮ (iOS стиль, УПРОЩЕНО)
+   21. АНИМАЦИЯ НИЖНЕГО МЕНЮ (iOS стиль)
 ========================================= */
-
-/* Задаем плавный переход для трансформации иконки */
 .nav-btn > div {
   transition:
     transform 0.25s cubic-bezier(0.32, 0.72, 0, 1),
     color 0.3s;
 }
 
-/* Во время view transition временно блокируем повторные нажатия по навигации */
 #app.is-view-transitioning .nav-btn {
   pointer-events: none;
 }
 
-/* снимает дергание от параллельных transition в самих view */
 #app.is-view-transitioning #viewsContainer > div {
   transition: none !important;
 }
 
-/* Более стабильный рендер иконок при цветовых/трансформ-анимациях */
 .nav-btn svg {
   vector-effect: non-scaling-stroke;
 }
 
-/* 
-  Применяем hover-эффекты ТОЛЬКО для устройств с мышью 
-  и ТОЛЬКО для НЕАКТИВНЫХ элементов.
-*/
 @media (hover: hover) {
   .nav-btn:hover > div:not(.primary-text) {
     transform: scale(1.08);
@@ -1523,22 +1510,13 @@ body.hide-nav-labels .nav-btn {
 }
 
 /* =========================================
-   21. АДАПТИВНЫЕ ЦВЕТА UI (УПРОЩЕННАЯ ВЕРСИЯ)
+   22. АДАПТИВНЫЕ ЦВЕТА UI
 ========================================= */
-
-:root {
-  /* JS будет напрямую устанавливать значения этих переменных */
-  --secondary-accent-color: #3b82f6; /* Синий как безопасный fallback */
-  --alert-color: hsl(0 90% 60%); /* Красный как безопасный fallback */
-  --alert-color-fg: #ffffff;
-}
-
-/* --- Утилитарные классы --- */
-
 .secondary-accent-text {
   color: var(--secondary-accent-color);
   transition: color 0.3s;
 }
+
 .secondary-accent-stroke {
   stroke: var(--secondary-accent-color);
   transition: stroke 0.3s;
@@ -1549,34 +1527,29 @@ body.hide-nav-labels .nav-btn {
   color: var(--alert-color-fg);
   transition: background-color 0.3s;
 }
+
 .bg-alert:hover {
   filter: brightness(95%);
 }
+
 .text-alert {
   color: var(--alert-color);
   transition: color 0.3s;
 }
+
 .is-reset {
   background-color: var(--alert-color) !important;
   color: var(--alert-color-fg) !important;
   box-shadow: none !important;
 }
+
 .is-reset:hover {
   filter: brightness(95%);
 }
 
 /* =========================================
-   22. TOUCH-RANGE СТИЛИЗАЦИЯ
+   23. TOUCH-RANGE СТИЛИЗАЦИЯ
 ========================================= */
-:root {
-  /* Переопределяем переменные из touch-range.js */
-  --tr-track-height: 4px;
-  --tr-thumb-size: 24px;
-  --tr-track-bg: var(--border-color);
-  --tr-fill-color: var(--primary-color);
-  --tr-thumb-color: var(--surface-color);
-}
-
 .tr-thumb {
   border: 2px solid var(--primary-color);
   box-sizing: border-box;
@@ -1593,7 +1566,7 @@ body.hide-nav-labels .nav-btn {
 }
 
 /* =========================================
-   23. CUSTOM SELECT (ВЫПАДАЮЩИЕ СПИСКИ)
+   24. CUSTOM SELECT (ВЫПАДАЮЩИЕ СПИСКИ)
 ========================================= */
 .custom-select-container.is-open .custom-select-trigger {
   border-color: var(--primary-color);
@@ -1641,31 +1614,27 @@ body.hide-nav-labels .nav-btn {
   user-select: none;
 }
 
-/* 1. Стиль для УЖЕ ВЫБРАННОГО элемента (сплошной фон) */
 .custom-select-option.is-selected {
   background-color: var(--primary-color);
-  color: #ffffff; /* По умолчанию текст белый */
+  color: #ffffff;
   font-weight: 700;
 }
 
-/* 2. Стиль для НАВЕДЕНИЯ МЫШЬЮ (полупрозрачный фон) */
-/* Этот блок будет работать ТОЛЬКО на устройствах с мышью, предотвращая "залипание" на мобильных */
 @media (hover: hover) {
   .custom-select-option:hover:not(.is-selected) {
     background-color: color-mix(in srgb, var(--primary-color) 20%, transparent);
   }
 }
 
-/* 3. Класс для смены цвета текста на ВЫБРАННОМ элементе, если основной цвет светлый */
 .custom-select-option.is-selected.needs-dark-text {
   color: #1f2937;
 }
 
-/* Стили для темы Liquid Glass */
 :root.glass-effect .custom-select-trigger {
   background-color: color-mix(in srgb, var(--surface-color) 30%, transparent);
   backdrop-filter: blur(12px) saturate(150%);
 }
+
 :root.glass-effect .custom-select-options {
   background-color: color-mix(in srgb, var(--surface-color) 90%, transparent);
   backdrop-filter: blur(10px) saturate(180%);
@@ -1673,10 +1642,8 @@ body.hide-nav-labels .nav-btn {
 }
 
 /* =========================================
-   24. ОПТИМИЗАЦИЯ ПРОИЗВОДИТЕЛЬНОСТИ АНИМАЦИЙ
+   25. ОПТИМИЗАЦИЯ ПРОИЗВОДИТЕЛЬНОСТИ АНИМАЦИЙ
 ========================================= */
-
-/* Оставляем will-change только там, где реально идут короткие анимации */
 #tb-modal,
 #sw-sessions-modal {
   will-change: transform;
@@ -1690,7 +1657,6 @@ body.hide-nav-labels .nav-btn {
   will-change: transform, opacity;
 }
 
-/* Снимаем лишнюю нагрузку с навигации и списков */
 .nav-btn > div,
 .custom-select-options,
 .custom-toggle::after,
@@ -1698,7 +1664,6 @@ body.hide-nav-labels .nav-btn {
   will-change: auto;
 }
 
-/* Экономим перерисовки больших скролл-контейнеров */
 #sw-lapsContainer,
 #tb-workoutsList,
 #sw-sessionsList {
@@ -1706,10 +1671,8 @@ body.hide-nav-labels .nav-btn {
 }
 
 /* =========================================
-   25. ADAPTIVE GLASS QUALITY
+   26. ADAPTIVE GLASS QUALITY
 ========================================= */
-
-/* Упрощенный профиль для слабых устройств */
 :root.glass-lite.glass-effect body #tb-modal,
 :root.glass-lite.glass-effect body #sw-sessions-modal {
   backdrop-filter: blur(8px) saturate(120%);
@@ -1733,7 +1696,6 @@ body.hide-nav-labels .nav-btn {
   backdrop-filter: blur(8px) saturate(120%);
 }
 
-/* На lite-профиле всегда без фильтров в длинных списках */
 :root.glass-lite.glass-effect body .lap-row,
 :root.glass-lite.glass-effect body .tb-workout-row,
 :root.glass-lite.glass-effect body .sw-session-header,
@@ -1742,9 +1704,8 @@ body.hide-nav-labels .nav-btn {
 }
 
 /* =========================================
-   26. NAV SNAPSHOT TRANSITIONS (STABLE)
+   27. NAV SNAPSHOT TRANSITIONS (STABLE)
 ========================================= */
-
 #viewsContainer {
   position: relative;
   overflow: hidden;
@@ -1755,7 +1716,6 @@ body.hide-nav-labels .nav-btn {
   pointer-events: none;
 }
 
-/* Во время перехода не дергаем локальные transition */
 #app.is-view-transitioning #viewsContainer > div,
 #app.is-view-transitioning .timer-display,
 #app.is-view-transitioning .progress-ring__circle {
