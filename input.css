@@ -857,7 +857,7 @@ html.dark .app-bg::before {
   text-align: center;
 }
 
-#sw-statusText{
+#sw-statusText {
   position: absolute;
   inset: 0 0 72px 0;
   width: 100%;
@@ -1628,6 +1628,22 @@ body.hide-nav-labels .nav-btn {
   opacity: 1;
 }
 
+@media (hover: hover) and (pointer: fine) and (min-width: 768px) {
+  button:not(:disabled),
+  a[href],
+  [role="button"],
+  .nav-btn,
+  .tb-workout-row,
+  .sw-session-header,
+  .custom-select-trigger,
+  .custom-select-option,
+  .resizer_handler,
+  #sw-modal-handler,
+  #tb-modal-handler {
+    cursor: pointer;
+  }
+}
+
 /* =========================================
    20. СТИЛИ И АНИМАЦИИ ДЛЯ УПРАВЛЕНИЯ ЦВЕТАМИ
 ========================================= */
@@ -1873,9 +1889,13 @@ body.hide-nav-labels .nav-btn {
 }
 
 :root.glass-effect .custom-select-options {
-  background-color: color-mix(in srgb, var(--surface-color) 90%, transparent);
-  backdrop-filter: blur(10px) saturate(180%);
-  border: 1px solid color-mix(in srgb, var(--border-color) 50%, transparent);
+  background-color: color-mix(in srgb, var(--surface-color) 62%, transparent);
+  backdrop-filter: blur(14px) saturate(180%);
+  border: 1px solid color-mix(in srgb, var(--border-color) 45%, transparent);
+}
+
+:root.dark.glass-effect .custom-select-options {
+  background-color: color-mix(in srgb, var(--surface-color) 38%, transparent);
 }
 
 /* =========================================
