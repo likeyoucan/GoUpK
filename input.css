@@ -853,15 +853,22 @@ html.dark .app-bg::before {
 /* Stopwatch: keep main time width stable */
 #sw-mainDisplay {
   display: inline-block;
-  min-inline-size: 12ch; /* HH:MM:SS.cc */
+  min-inline-size: 8ch; /* HH:MM:SS.cc */
   text-align: center;
 }
 
 /* Stopwatch: reserve line for days/hours label */
 #sw-extendedDisplay {
-  display: block;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   min-height: 1.25em;
   text-align: center;
+  margin: auto;
+  position: absolute;
+  inset: 98px 0 0 0;
+  width: 100%;
+  height: 48px;
 }
 
 @container timer-ring (max-width: 260px) {
