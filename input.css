@@ -1082,6 +1082,11 @@ html.dark .app-bg::before {
   transform-origin: 50% 50%;
 }
 
+/* Stopwatch ring updates every frame from JS, transition can create jitter */
+#sw-progressRing.progress-ring__circle {
+  transition: none;
+}
+
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
