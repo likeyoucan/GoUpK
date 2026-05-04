@@ -1628,7 +1628,7 @@ body.hide-nav-labels .nav-btn {
   opacity: 1;
 }
 
-@media (hover: hover) and (pointer: fine) and (min-width: 768px) {
+/* @media (hover: hover) and (pointer: fine) and (min-width: 768px) {
   button:not(:disabled),
   a[href],
   [role="button"],
@@ -1642,7 +1642,7 @@ body.hide-nav-labels .nav-btn {
   #tb-modal-handler {
     cursor: pointer;
   }
-}
+} */
 
 /* =========================================
    20. СТИЛИ И АНИМАЦИИ ДЛЯ УПРАВЛЕНИЯ ЦВЕТАМИ
@@ -1867,10 +1867,22 @@ body.hide-nav-labels .nav-btn {
   user-select: none;
 }
 
+/* Базовый selected (без glass) */
 .custom-select-option.is-selected {
   background-color: var(--primary-color);
   color: #ffffff;
   font-weight: 700;
+}
+
+/* Glass: selected с прозрачностью от primary */
+:root.glass-effect .custom-select-option.is-selected {
+  background-color: color-mix(in srgb, var(--primary-color) 62%, transparent);
+  backdrop-filter: blur(8px) saturate(160%);
+}
+
+/* Если нужен более темный текст для светлых акцентов */
+:root.glass-effect .custom-select-option.is-selected.needs-dark-text {
+  color: #1f2937;
 }
 
 @media (hover: hover) {
@@ -1890,6 +1902,12 @@ body.hide-nav-labels .nav-btn {
 
 :root.glass-effect .custom-select-options {
   background-color: color-mix(in srgb, var(--surface-color) 62%, transparent);
+  backdrop-filter: blur(14px) saturate(180%);
+  
+}
+
+:root.glass-effect .custom-select-options {
+  background-color: color-mix(in srgb, var(--surface-color) 55%, transparent);
   backdrop-filter: blur(14px) saturate(180%);
   border: 1px solid color-mix(in srgb, var(--border-color) 45%, transparent);
 }
