@@ -640,7 +640,6 @@ html.dark .app-bg::before {
   letter-spacing: -0.04em;
   white-space: nowrap;
   max-inline-size: 92%;
-  overflow: hidden;
   text-overflow: clip;
   transition:
     font-size 220ms cubic-bezier(0.32, 0.72, 0, 1),
