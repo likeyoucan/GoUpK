@@ -1898,6 +1898,10 @@ body.hide-nav-labels .nav-btn {
   background-color: color-mix(in srgb, var(--surface-color) 38%, transparent);
 }
 
+.test{
+  
+}
+
 /* =========================================
    25. ОПТИМИЗАЦИЯ ПРОИЗВОДИТЕЛЬНОСТИ АНИМАЦИЙ
 ========================================= */
