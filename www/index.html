@@ -1895,44 +1895,49 @@
           </div>
         </div>
         <!-- Stopwatch: Share Mode -->
-        <h3
-          id="sw-share-mode-title"
-          class="text-xl font-bold app-text"
-          data-i18n="share"
+        <div
+          id="sw-share-mode-content"
+          class="app-surface w-full max-w-sm rounded-3xl p-6 shadow-2xl border app-border flex flex-col gap-3 transform transition-all duration-300 opacity-0 scale-95"
         >
-          Share
-        </h3>
+          <h3
+            id="sw-share-mode-title"
+            class="text-xl font-bold app-text"
+            data-i18n="share"
+          >
+            Share
+          </h3>
 
-        <p class="text-sm app-text-sec leading-relaxed">
-          Choose how you want to share this session.
-        </p>
+          <p class="text-sm app-text-sec leading-relaxed">
+            Choose how you want to share this session.
+          </p>
 
-        <button
-          type="button"
-          id="sw-share-text-btn"
-          class="min-h-[48px] w-full px-4 py-3 rounded-xl font-bold app-text app-surface border app-border active:scale-95 transition-transform"
-          data-i18n="share_as_text"
-        >
-          Share as Text
-        </button>
+          <button
+            type="button"
+            id="sw-share-text-btn"
+            class="min-h-[48px] w-full px-4 py-3 rounded-xl font-bold app-text app-surface border app-border active:scale-95 transition-transform"
+            data-i18n="share_as_text"
+          >
+            Share as Text
+          </button>
 
-        <button
-          type="button"
-          id="sw-share-csv-btn"
-          class="min-h-[48px] w-full px-4 py-3 rounded-xl font-bold app-text app-surface border app-border active:scale-95 transition-transform"
-          data-i18n="share_as_file"
-        >
-          Share as File
-        </button>
+          <button
+            type="button"
+            id="sw-share-csv-btn"
+            class="min-h-[48px] w-full px-4 py-3 rounded-xl font-bold app-text app-surface border app-border active:scale-95 transition-transform"
+            data-i18n="share_as_file"
+          >
+            Share as File
+          </button>
 
-        <button
-          type="button"
-          class="min-h-[44px] w-full px-4 py-2 rounded-xl font-bold app-text-sec active:scale-95 transition-transform"
-          data-modal-close
-          data-i18n="cancel"
-        >
-          Cancel
-        </button>
+          <button
+            type="button"
+            class="min-h-[44px] w-full px-4 py-2 rounded-xl font-bold app-text-sec active:scale-95 transition-transform"
+            data-modal-close
+            data-i18n="cancel"
+          >
+            Cancel
+          </button>
+        </div>
       </div>
     </div>
 
