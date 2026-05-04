@@ -37,6 +37,7 @@ const stopwatchModule = {
   lastMinuteBeep: 0,
   sortSelect: null,
   pendingShareSession: null,
+  pendingLapsRerender: false,
   shareResults,
 
   init() {
@@ -97,7 +98,17 @@ const stopwatchModule = {
 
     document.addEventListener(APP_EVENTS.MS_CHANGED, () => {
       if (!this.isRunning && this.elapsedTime > 0) this.updateDisplay();
-      if (this.laps.length > 0) this.reRenderCurrentLaps();
+
+      if (this.laps.length === 0) return;
+
+      // During run do not re-render all laps synchronously:
+      // it blocks the main thread and causes ring jitter.
+      if (this.isRunning) {
+        this.pendingLapsRerender = true;
+        return;
+      }
+
+      this.reRenderCurrentLaps();
     });
 
     this.updateSaveButtonVisibility();
@@ -131,6 +142,12 @@ const stopwatchModule = {
           forceHours: this.elapsedTime >= 3600000,
         })}`,
       );
+
+      // Apply deferred laps re-render after pause, when UI can afford it.
+      if (this.pendingLapsRerender) {
+        this.reRenderCurrentLaps();
+        this.pendingLapsRerender = false;
+      }
     } else {
       store.activate("stopwatch");
       this.startTime = performance.now() - this.elapsedTime;
@@ -238,6 +255,7 @@ const stopwatchModule = {
       this.laps = [];
       this.pauseTime = 0;
       this.lastMinuteBeep = 0;
+      this.pendingLapsRerender = false;
 
       updateText(this.els.display, "GO");
       this.els.display.classList.add("is-go");
