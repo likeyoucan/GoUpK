@@ -435,7 +435,8 @@ html.dark .app-bg::before {
 }
 
 /* Top collapsed */
-:is(#view-stopwatch, #view-timer, #view-tabata).split-top-hidden .view-top-half {
+:is(#view-stopwatch, #view-timer, #view-tabata).split-top-hidden
+  .view-top-half {
   flex-basis: 0.12%;
   min-height: 0;
   min-width: 0;
@@ -587,15 +588,12 @@ html.dark .app-bg::before {
 
   :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
     .view-bottom-half {
-    flex: 0 0 auto;
     width: var(--handler-size);
     min-width: var(--handler-size);
     height: auto;
     min-height: var(--handler-size);
-    overflow: visible;
-    position: relative;
-    transform: none;
     padding-bottom: 0;
+    transform: none;
   }
 
   :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
