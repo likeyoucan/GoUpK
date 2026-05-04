@@ -1896,12 +1896,12 @@ body.hide-nav-labels .nav-btn {
 }
 
 :root.glass-effect .custom-select-trigger {
-  background-color: color-mix(in srgb, var(--surface-color) 50%, transparent);
+  background-color: color-mix(in srgb, var(--surface-color) 60%, transparent);
   backdrop-filter: blur(12px) saturate(150%);
 }
 
 :root.glass-effect .custom-select-options {
-  background-color: color-mix(in srgb, var(--surface-color) 90%, transparent);
+  background-color: color-mix(in srgb, var(--surface-color) 80%, transparent);
   backdrop-filter: blur(10px) saturate(180%);
   border: 1px solid color-mix(in srgb, var(--border-color) 45%, transparent);
 }
