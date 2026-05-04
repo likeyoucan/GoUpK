@@ -1894,9 +1894,9 @@ body.hide-nav-labels .nav-btn {
   border: 1px solid color-mix(in srgb, var(--border-color) 45%, transparent);
 }
 
-/* :root.dark.glass-effect .custom-select-options {
+:root.dark.glass-effect .custom-select-options {
   background-color: color-mix(in srgb, var(--surface-color) 38%, transparent);
-} */
+}
 
 /* =========================================
    25. ОПТИМИЗАЦИЯ ПРОИЗВОДИТЕЛЬНОСТИ АНИМАЦИЙ
