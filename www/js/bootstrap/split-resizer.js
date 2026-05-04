@@ -1,5 +1,3 @@
-// Файл: www/js/bootstrap/split-resizer.js
-
 const VIEW_IDS = ["view-stopwatch", "view-timer", "view-tabata"];
 let views = [];
 
@@ -25,10 +23,18 @@ function isTwoColumnLayout() {
     .matches;
 }
 
+function getCssPx(varName, fallback = 0) {
+  const v = getComputedStyle(document.documentElement)
+    .getPropertyValue(varName)
+    .trim();
+  const n = parseFloat(v);
+  return Number.isFinite(n) ? n : fallback;
+}
+
 /*
   Stopper semantics:
-  - topStop: сколько % top-half должно остаться, прежде чем разрешаем snap в "top hidden"
-  - bottomStop: начиная с какого split % разрешаем snap в "bottom hidden"
+  - topStop: если projected <= topStop -> snap в "top hidden"
+  - bottomStop: если projected >= bottomStop -> snap в "bottom hidden"
 */
 function getStopperConfig() {
   if (isMobilePortrait()) {
@@ -118,11 +124,7 @@ function updateAllA11y() {
   });
 }
 
-/*
-  Эффекты скрытия включаются ТОЛЬКО после пересечения стопперов:
-  - mobile: top<50, bottom>60
-  - two-column: top<70, bottom>70
-*/
+/* Эффект blur/opacity включается только после пересечения стопперов */
 function setCollapseFx(viewEl, raw) {
   const { topStop, bottomStop } = getStopperConfig();
 
@@ -222,16 +224,20 @@ function setupOneView(ctx) {
       );
     }
 
-    // Чтобы handler не уходил под nav в mobile
-    const bottomHalf = viewEl.querySelector(".view-bottom-half");
-    const bottomPad = bottomHalf
-      ? parseFloat(getComputedStyle(bottomHalf).paddingBottom || "0")
-      : 0;
+    // Ключ: в mobile portrait карта координат ограничена nav+handler,
+    // поэтому handler не проваливается под nav.
+    if (isMobilePortrait()) {
+      const navH = getCssPx("--nav-height", 80);
+      const handlerH = handler.getBoundingClientRect().height || 16;
+      const usableHeight = Math.max(1, rect.height - navH - handlerH);
+      return clamp(((ev.clientY - rect.top) / usableHeight) * 100, 0, 100);
+    }
 
-    const handlerPx = handler.getBoundingClientRect().height || 16;
-    const usableHeight = Math.max(1, rect.height - bottomPad - handlerPx);
-
-    return clamp(((ev.clientY - rect.top) / usableHeight) * 100, 0, 100);
+    return clamp(
+      ((ev.clientY - rect.top) / Math.max(1, rect.height)) * 100,
+      0,
+      100,
+    );
   };
 
   const applyLive = (raw) => {
@@ -244,12 +250,8 @@ function setupOneView(ctx) {
       "split-bottom-hidden",
     );
 
-    // Чтобы в mobile при подходе к bottom handler уже жил на линии nav
-    if (isMobilePortrait() && lastRaw >= 94) {
-      viewEl.dataset.splitTarget = "bottom";
-    } else {
-      viewEl.dataset.splitTarget = "";
-    }
+    // Во время drag никаких принудительных fixed-состояний: только плавный split.
+    viewEl.dataset.splitTarget = "";
 
     viewEl.style.setProperty("--split", `${lastRaw}%`);
     setCollapseFx(viewEl, lastRaw);
@@ -293,20 +295,14 @@ function setupOneView(ctx) {
     const inertiaShift = clamp(velocity * t.gain, -t.maxShift, t.maxShift);
     const projected = clamp(lastRaw + inertiaShift, 0, 100);
 
-    // Стопперы:
-    // top hidden разрешаем только если projected <= topStop
-    // bottom hidden разрешаем только если projected >= bottomStop
     let target;
     if (projected <= topStop) {
       target = 0;
     } else if (projected >= bottomStop) {
       target = 100;
     } else {
-      target =
-        nearestAnchor(projected, [0, middle, 100]) === 0 ||
-        nearestAnchor(projected, [0, middle, 100]) === 100
-          ? middle
-          : middle;
+      // между стопперами всегда возвращаем к middle
+      target = middle;
     }
 
     const duration = target === 100 ? animateBottomDuration : t.duration;
