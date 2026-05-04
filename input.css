@@ -341,6 +341,7 @@ html.dark .app-bg::before {
 }
 
 .view-bottom-half {
+  padding-bottom: var(--nav-height);
   flex: 1 1 auto;
   min-height: var(--handler-size);
   min-width: var(--handler-size);
@@ -541,6 +542,7 @@ html.dark .app-bg::before {
   }
 
   .view-bottom-half {
+    padding-bottom: 0;
     flex-direction: row;
   }
 
