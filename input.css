@@ -1901,13 +1901,13 @@ body.hide-nav-labels .nav-btn {
 }
 
 :root.glass-effect .custom-select-options {
-  background-color: color-mix(in srgb, var(--surface-color) 80%, transparent);
-  backdrop-filter: blur(14px) saturate(180%);
+  background-color: color-mix(in srgb, var(--surface-color) 90%, transparent);
+  backdrop-filter: blur(10px) saturate(180%);
   border: 1px solid color-mix(in srgb, var(--border-color) 45%, transparent);
 }
 
 :root.dark.glass-effect .custom-select-options {
-  background-color: color-mix(in srgb, var(--surface-color) 80%, transparent);
+  background-color: color-mix(in srgb, var(--surface-color) 90%, transparent);
 }
 
 
