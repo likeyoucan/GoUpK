@@ -48,7 +48,9 @@
   --safe-left: env(safe-area-inset-left, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
 
-  --nav-height: 5rem;
+  --nav-height-mobile: 5rem;
+  --nav-height-desktop: 5rem;
+  --nav-height: var(--nav-height-mobile);
   --nav-total: calc(var(--nav-height) + var(--safe-bottom));
 
   --split: 65%;
@@ -584,6 +586,10 @@ html.dark .app-bg::before {
 
 /* TWO-COLUMN LANDSCAPE */
 @media (min-width: 768px) and (orientation: landscape) {
+  :root {
+    --nav-height: var(--nav-height-desktop);
+  }
+
   .view-bottom-half {
     padding-bottom: 0;
     flex-direction: row;
@@ -723,6 +729,7 @@ html.dark .app-bg::before {
 @media (min-width: 768px) and (orientation: landscape) {
   :root {
     --split: 50%;
+    --nav-height: var(--nav-height-desktop);
   }
 
   #view-stopwatch,
@@ -921,7 +928,7 @@ html.dark .app-bg::before {
 }
 
 /* =========================================
-   7. НАСТРОЙКИ — спец. отступ сверху
+   7. НАСТРОЙКИ - спец. отступ сверху
 ========================================= */
 #view-settings > div:first-child {
   padding-top: calc(var(--safe-top) + 0.5rem);
@@ -1082,6 +1089,7 @@ html.dark .app-bg::before {
   background-color: var(--default-accent-light);
   transition: background-color 0.3s;
 }
+
 .dark .default-accent-btn {
   background-color: var(--default-accent-dark);
 }
@@ -1090,6 +1098,7 @@ html.dark .app-bg::before {
   background-color: var(--default-bg-light);
   transition: background-color 0.3s;
 }
+
 .dark .default-bg-btn {
   background-color: var(--default-bg-dark);
 }
@@ -1133,7 +1142,7 @@ html.dark .app-bg::before {
 }
 
 /* =========================================
-   15. МОДАЛЬНЫЕ ОКНА — АЛЕРТЫ
+   15. МОДАЛЬНЫЕ ОКНА - АЛЕРТЫ
 ========================================= */
 #reset-modal,
 #sw-clear-modal,
@@ -1557,6 +1566,7 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
 html.js-nav-forward::view-transition-old(root) {
   animation: 420ms cubic-bezier(0.32, 0.72, 0, 1) both slide-out-to-left;
 }
+
 html.js-nav-forward::view-transition-new(root) {
   animation: 420ms cubic-bezier(0.32, 0.72, 0, 1) both slide-in-from-right;
 }
@@ -1564,6 +1574,7 @@ html.js-nav-forward::view-transition-new(root) {
 html.js-nav-backward::view-transition-old(root) {
   animation: 420ms cubic-bezier(0.32, 0.72, 0, 1) both slide-out-to-right;
 }
+
 html.js-nav-backward::view-transition-new(root) {
   animation: 420ms cubic-bezier(0.32, 0.72, 0, 1) both slide-in-from-left;
 }
@@ -1571,6 +1582,7 @@ html.js-nav-backward::view-transition-new(root) {
 html.js-nav-tap::view-transition-old(root) {
   animation: 280ms cubic-bezier(0.32, 0.72, 0, 1) both tap-old-fade;
 }
+
 html.js-nav-tap::view-transition-new(root) {
   animation: 320ms cubic-bezier(0.32, 0.72, 0, 1) both tap-new-fade;
 }
@@ -1758,6 +1770,7 @@ body.hide-nav-labels .nav-btn {
   .nav-btn:hover > div:not(.primary-text) {
     transform: scale(1.08);
   }
+
   .nav-btn:hover > div:not(.primary-text),
   .nav-btn:hover > span:not(.primary-text) {
     color: var(--primary-color);
