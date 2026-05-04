@@ -18,13 +18,14 @@ export function setupTimerRender(tm, { updateText, updateTitle }) {
   tm.updateUIState = () => {
     if (!tm.els.form) return;
 
-    const showActionWrap = tm.isPaused || tm.isFinished;
+    const showResetWrap = tm.isPaused;
+    const showRestartWrap = tm.isPaused || tm.isFinished;
 
-    tm.els.resetBtnWrap?.classList.toggle("hidden", !showActionWrap);
-    tm.els.resetBtnWrap?.classList.toggle("flex", showActionWrap);
+    tm.els.resetBtnWrap?.classList.toggle("hidden", !showResetWrap);
+    tm.els.resetBtnWrap?.classList.toggle("flex", showResetWrap);
 
-    tm.els.resetBtn?.classList.toggle("hidden", !showActionWrap);
-    tm.els.restartBtn?.classList.toggle("hidden", !showActionWrap);
+    tm.els.restartBtnWrap?.classList.toggle("hidden", !showRestartWrap);
+    tm.els.restartBtnWrap?.classList.toggle("flex", showRestartWrap);
 
     if (tm.isRunning) {
       tm.els.form.classList.add("hidden");

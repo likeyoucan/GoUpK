@@ -22,6 +22,7 @@ import { setupTimerCore } from "./timer/timer-core.js?v=VERSION";
 
 export const tm = {
   totalDuration: 0,
+  initialDurationMs: 0,
   targetTime: 0,
   remainingAtPause: 0,
   isRunning: false,
@@ -48,8 +49,9 @@ export const tm = {
     this.els = {
       form: $("tm-form"),
       inputs: $("tm-inputs"),
-      resetBtn: $("tm-resetBtn"),
       restartBtn: $("tm-restartBtn"),
+      restartBtnWrap: $("tm-restartBtn-wrap"),
+      resetBtn: $("tm-resetBtn"),
       resetBtnWrap: $("tm-resetBtn-wrap"),
       circleBtn: $("tm-circleBtn"),
       status: $("tm-statusText"),

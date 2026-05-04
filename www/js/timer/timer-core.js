@@ -35,7 +35,14 @@ export function setupTimerCore(tm, { showToast, updateText }) {
       const h = parseInt(tm.els.h?.value, 10) || 0;
       const m = parseInt(tm.els.m?.value, 10) || 0;
       const s = parseInt(tm.els.s?.value, 10) || 0;
-      tm.totalDuration = (h * 3600 + m * 60 + s) * 1000;
+
+      const parsedDuration = (h * 3600 + m * 60 + s) * 1000;
+
+      // Базовая длительность, к которой должен возвращаться Restart.
+      tm.initialDurationMs = parsedDuration;
+      // Текущая длительность активного прогона (может меняться кнопками +/-).
+      tm.totalDuration = parsedDuration;
+
       duration = tm.totalDuration;
       tm.timeRemainingMs = tm.totalDuration;
       tm.currentAdjustmentSec = 0;
@@ -44,8 +51,8 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     if (duration <= 0) {
       showToast(tm.t("timer_zero"));
       const elToShake = tm.els.form || tm.els.inputs;
-      elToShake.classList.add("animate-shake");
-      setTimeout(() => elToShake.classList.remove("animate-shake"), 300);
+      elToShake?.classList.add("animate-shake");
+      setTimeout(() => elToShake?.classList.remove("animate-shake"), 300);
       return;
     }
 
@@ -54,6 +61,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     tm.isPaused = false;
     tm.isFinished = false;
     tm.targetTime = performance.now() + duration;
+
     tm.requestWakeLock();
     tm.updateUIState();
     tm.updateDisplay(duration);
@@ -66,20 +74,23 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     tm.sm.vibrate(30, "medium");
     tm.sm.play("click");
 
-    let duration = tm.totalDuration;
+    // Restart всегда уходит к исходно заданному значению, без учета +/- в рантайме.
+    let duration = tm.initialDurationMs;
 
     if (!duration || duration <= 0) {
       const h = parseInt(tm.els.h?.value, 10) || 0;
       const m = parseInt(tm.els.m?.value, 10) || 0;
       const s = parseInt(tm.els.s?.value, 10) || 0;
       duration = (h * 3600 + m * 60 + s) * 1000;
-      tm.totalDuration = duration;
+      tm.initialDurationMs = duration;
     }
 
     if (duration <= 0) {
       showToast(tm.t("timer_zero"));
       return;
     }
+
+    tm.totalDuration = duration;
 
     tm.store.activate("timer");
     tm.isRunning = true;
@@ -108,6 +119,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     tm.isFinished = false;
     tm.remainingAtPause = 0;
     tm.totalDuration = 0;
+    tm.initialDurationMs = 0;
     tm.timeRemainingMs = 0;
 
     tm.bgWorker.postMessage({ command: "reset" });
@@ -127,7 +139,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     }
 
     updateText(tm.els.display, "GO");
-    tm.els.display.classList.add("is-go");
+    tm.els.display?.classList.add("is-go");
   };
 
   tm.bindCoreEvents = () => {
@@ -177,7 +189,8 @@ export function setupTimerCore(tm, { showToast, updateText }) {
       tm.sm.play("tick");
       tm.sm.vibrate(50, "medium");
       const adjustmentMs = tm.currentAdjustmentSec * 1000;
-      tm.totalDuration += adjustmentMs;
+
+      tm.totalDuration = Math.max(1, tm.totalDuration + adjustmentMs);
       tm.bgWorker.postMessage({ command: "adjust", time: adjustmentMs });
     });
 
@@ -185,7 +198,8 @@ export function setupTimerCore(tm, { showToast, updateText }) {
       tm.sm.play("tick");
       tm.sm.vibrate(50, "medium");
       const adjustmentMs = -tm.currentAdjustmentSec * 1000;
-      tm.totalDuration += adjustmentMs;
+
+      tm.totalDuration = Math.max(1, tm.totalDuration + adjustmentMs);
       tm.bgWorker.postMessage({ command: "adjust", time: adjustmentMs });
     });
   };
