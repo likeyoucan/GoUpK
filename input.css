@@ -696,8 +696,7 @@ html.dark .app-bg::before {
   .mid_content {
     padding-block: 24px;
     padding-top: 24px;
-    padding-left: calc(var(--handler-size) + 12px);
-    padding-right: 0;
+    padding-inline: 0;
   }
 
   .mid_content > div.app-border {
