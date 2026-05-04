@@ -310,6 +310,9 @@ html.dark .app-bg::before {
 /* =========================================
    5. SPLIT LAYOUT + HANDLER
 ========================================= */
+/* =========================================
+   5. SPLIT LAYOUT + HANDLER
+========================================= */
 .view-top-half {
   flex-basis: var(--split);
   flex-shrink: 0;
@@ -454,7 +457,7 @@ html.dark .app-bg::before {
   overflow: visible;
 }
 
-/* bottom hidden (default fallback; overridden for mobile portrait below) */
+/* bottom hidden fallback (non-mobile portrait / overridden below) */
 :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
   .view-top-half {
   flex: 1 1 auto;
@@ -488,7 +491,7 @@ html.dark .app-bg::before {
   overflow: hidden;
 }
 
-/* while animating to bottom (fallback) */
+/* animating to bottom fallback */
 :is(
     #view-stopwatch,
     #view-timer,
@@ -511,8 +514,11 @@ html.dark .app-bg::before {
   bottom: auto;
 }
 
-/* MOBILE PORTRAIT:
-   bottom area = nav + handler, top = 100% - nav - handler */
+/* ===== MOBILE PORTRAIT =====
+   Stopper logic target for bottom:
+   top = 100% - nav - handler
+   bottom container = nav + handler
+*/
 @media (max-width: 767px) and (orientation: portrait) {
   :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
     .view-top-half {
@@ -598,7 +604,82 @@ html.dark .app-bg::before {
   }
 }
 
-/* ===== progressive collapse FX (blur + opacity to 0) ===== */
+/* ===== two-column / landscape handling ===== */
+@media (min-width: 768px) and (orientation: landscape) {
+  .view-bottom-half {
+    padding-bottom: 0;
+    flex-direction: row;
+  }
+
+  .mid_content {
+    padding-top: 24px;
+    padding-left: calc(var(--handler-size) + 12px);
+    padding-right: 0;
+  }
+
+  .resizer_handler {
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: auto;
+    width: var(--handler-size);
+    height: 100%;
+  }
+
+  .resizer_handler::before {
+    width: 3px;
+    height: clamp(28px, 20vh, 72px);
+  }
+
+  .resizer_handler::after {
+    inset: 0 -10px;
+  }
+
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
+    .view-bottom-half {
+    flex: 0 0 auto;
+    width: var(--handler-size);
+    min-width: var(--handler-size);
+    height: auto;
+    min-height: var(--handler-size);
+    padding-bottom: 0;
+    transform: none;
+    overflow: visible;
+  }
+
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
+    .view-bottom-half
+    .resizer_handler {
+    top: 0;
+    bottom: auto;
+  }
+
+  :is(
+      #view-stopwatch,
+      #view-timer,
+      #view-tabata
+    ).split-animating[data-split-target="bottom"]
+    .view-bottom-half {
+    width: var(--handler-size);
+    min-width: var(--handler-size);
+    padding-bottom: 0;
+    height: auto;
+    min-height: var(--handler-size);
+  }
+
+  :is(
+      #view-stopwatch,
+      #view-timer,
+      #view-tabata
+    ).split-animating[data-split-target="bottom"]
+    .resizer_handler {
+    top: 0;
+    bottom: auto;
+  }
+}
+
+/* ===== progressive collapse FX
+   (applies only when JS crosses stopper thresholds) ===== */
 
 .view-top-half .top_content {
   opacity: calc(1 - var(--collapse-top-k));
@@ -657,7 +738,6 @@ html.dark .app-bg::before {
   .view-bottom-half {
   will-change: flex-basis;
 }
-
 /* =========================================
    АДАПТИВНОСТЬ ДЛЯ ДВУХКОЛОНОЧНОГО МАКЕТА
 ========================================= */

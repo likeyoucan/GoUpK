@@ -20,8 +20,48 @@ function isMobilePortrait() {
   );
 }
 
+function isTwoColumnLayout() {
+  return window.matchMedia("(min-width: 768px) and (orientation: landscape)")
+    .matches;
+}
+
+/*
+  Stopper semantics:
+  - topStop: сколько % top-half должно остаться, прежде чем разрешаем snap в "top hidden"
+  - bottomStop: начиная с какого split % разрешаем snap в "bottom hidden"
+*/
+function getStopperConfig() {
+  if (isMobilePortrait()) {
+    return {
+      middle: 60,
+      topStop: 50,
+      bottomStop: 60,
+      inertia: { gain: 130, maxShift: 9, keep: 0.76, add: 0.24, duration: 280 },
+      animateBottomDuration: 320,
+    };
+  }
+
+  if (isTwoColumnLayout()) {
+    return {
+      middle: 50,
+      topStop: 70,
+      bottomStop: 70,
+      inertia: { gain: 90, maxShift: 7, keep: 0.82, add: 0.18, duration: 240 },
+      animateBottomDuration: 280,
+    };
+  }
+
+  return {
+    middle: 50,
+    topStop: 60,
+    bottomStop: 60,
+    inertia: { gain: 110, maxShift: 8, keep: 0.8, add: 0.2, duration: 250 },
+    animateBottomDuration: 280,
+  };
+}
+
 function getMiddleAnchor() {
-  return isMobilePortrait() ? 60 : 50;
+  return getStopperConfig().middle;
 }
 
 function nearestAnchor(value, anchors) {
@@ -48,19 +88,6 @@ function setStateClass(viewEl, target) {
   if (target === 0) viewEl.classList.add("split-top-hidden");
   else if (target === 100) viewEl.classList.add("split-bottom-hidden");
   else viewEl.classList.add("split-middle");
-}
-
-function setCollapseFx(viewEl, raw) {
-  const middle = getMiddleAnchor();
-
-  const topLinear = clamp((middle - raw) / middle, 0, 1);
-  const bottomLinear = clamp((raw - middle) / (100 - middle), 0, 1);
-
-  const topK = Math.pow(topLinear, 1.15);
-  const bottomK = Math.pow(bottomLinear, 1.15);
-
-  viewEl.style.setProperty("--collapse-top-k", topK.toFixed(3));
-  viewEl.style.setProperty("--collapse-bottom-k", bottomK.toFixed(3));
 }
 
 function setHandlerA11y(handler, snapValue) {
@@ -91,8 +118,28 @@ function updateAllA11y() {
   });
 }
 
+/*
+  Эффекты скрытия включаются ТОЛЬКО после пересечения стопперов:
+  - mobile: top<50, bottom>60
+  - two-column: top<70, bottom>70
+*/
+function setCollapseFx(viewEl, raw) {
+  const { topStop, bottomStop } = getStopperConfig();
+
+  const topK =
+    raw < topStop ? clamp((topStop - raw) / Math.max(1, topStop), 0, 1) : 0;
+
+  const bottomK =
+    raw > bottomStop
+      ? clamp((raw - bottomStop) / Math.max(1, 100 - bottomStop), 0, 1)
+      : 0;
+
+  viewEl.style.setProperty("--collapse-top-k", topK.toFixed(3));
+  viewEl.style.setProperty("--collapse-bottom-k", bottomK.toFixed(3));
+}
+
 function applySnapToAll(target, { animate = true, duration = 240 } = {}) {
-  const middle = getMiddleAnchor();
+  const { middle } = getStopperConfig();
   const visualTarget = target === 0 ? 0.15 : target === 100 ? 99.85 : middle;
   const targetName =
     target === 0 ? "top" : target === 100 ? "bottom" : "middle";
@@ -146,21 +193,10 @@ function applySnapToAll(target, { animate = true, duration = 240 } = {}) {
   updateAllA11y();
 }
 
-function getInertiaTuning(pointerType) {
-  if (pointerType === "mouse") {
-    return { gain: 55, maxShift: 4, keep: 0.9, add: 0.1, duration: 220 };
-  }
-  if (pointerType === "pen") {
-    return { gain: 90, maxShift: 7, keep: 0.82, add: 0.18, duration: 240 };
-  }
-  return { gain: 130, maxShift: 9, keep: 0.76, add: 0.24, duration: 280 };
-}
-
 function setupOneView(ctx) {
   const { viewEl, handler } = ctx;
   if (!viewEl || !handler) return;
 
-  const SNAP_THRESHOLD = 10;
   let dragging = false;
   let activePointerType = "touch";
   let lastRaw = getTargetFromGlobalSnap();
@@ -170,7 +206,10 @@ function setupOneView(ctx) {
   let velocity = 0;
   let tapTimer = null;
 
-  const getAnchors = () => [0, getMiddleAnchor(), 100];
+  const getAnchors = () => {
+    const { middle } = getStopperConfig();
+    return [0, middle, 100];
+  };
 
   const pointerToRaw = (ev) => {
     const rect = viewEl.getBoundingClientRect();
@@ -183,8 +222,7 @@ function setupOneView(ctx) {
       );
     }
 
-    // Учитываем нижний padding и высоту handler,
-    // чтобы handler не уходил под nav в mobile.
+    // Чтобы handler не уходил под nav в mobile
     const bottomHalf = viewEl.querySelector(".view-bottom-half");
     const bottomPad = bottomHalf
       ? parseFloat(getComputedStyle(bottomHalf).paddingBottom || "0")
@@ -206,8 +244,7 @@ function setupOneView(ctx) {
       "split-bottom-hidden",
     );
 
-    // Когда подходим к нижней границе на mobile,
-    // держим handler у nav уже во время drag.
+    // Чтобы в mobile при подходе к bottom handler уже жил на линии nav
     if (isMobilePortrait() && lastRaw >= 94) {
       viewEl.dataset.splitTarget = "bottom";
     } else {
@@ -220,30 +257,64 @@ function setupOneView(ctx) {
     handler.setAttribute("aria-valuenow", String(Math.round(lastRaw)));
   };
 
+  const getInertia = () => {
+    const cfg = getStopperConfig();
+
+    if (activePointerType === "mouse") {
+      return {
+        ...cfg.inertia,
+        gain: 55,
+        maxShift: 4,
+        keep: 0.9,
+        add: 0.1,
+        duration: 220,
+      };
+    }
+
+    if (activePointerType === "pen") {
+      return {
+        ...cfg.inertia,
+        gain: 90,
+        maxShift: 7,
+        keep: 0.82,
+        add: 0.18,
+        duration: 240,
+      };
+    }
+
+    return cfg.inertia;
+  };
+
   const snapFromCurrent = () => {
-    const anchors = getAnchors();
-    const middle = anchors[1];
-    const tuning = getInertiaTuning(activePointerType);
+    const { middle, topStop, bottomStop, animateBottomDuration } =
+      getStopperConfig();
 
-    const inertiaShift = clamp(
-      velocity * tuning.gain,
-      -tuning.maxShift,
-      tuning.maxShift,
-    );
-
+    const t = getInertia();
+    const inertiaShift = clamp(velocity * t.gain, -t.maxShift, t.maxShift);
     const projected = clamp(lastRaw + inertiaShift, 0, 100);
 
+    // Стопперы:
+    // top hidden разрешаем только если projected <= topStop
+    // bottom hidden разрешаем только если projected >= bottomStop
     let target;
-    if (Math.abs(projected - 0) <= SNAP_THRESHOLD) target = 0;
-    else if (Math.abs(projected - middle) <= SNAP_THRESHOLD) target = middle;
-    else if (Math.abs(projected - 100) <= SNAP_THRESHOLD) target = 100;
-    else target = nearestAnchor(projected, anchors);
+    if (projected <= topStop) {
+      target = 0;
+    } else if (projected >= bottomStop) {
+      target = 100;
+    } else {
+      target =
+        nearestAnchor(projected, [0, middle, 100]) === 0 ||
+        nearestAnchor(projected, [0, middle, 100]) === 100
+          ? middle
+          : middle;
+    }
 
-    applySnapToAll(target, { animate: true, duration: tuning.duration });
+    const duration = target === 100 ? animateBottomDuration : t.duration;
+    applySnapToAll(target, { animate: true, duration });
   };
 
   const cycleState = () => {
-    const middle = getMiddleAnchor();
+    const { middle } = getStopperConfig();
     const currentTarget = getTargetFromGlobalSnap();
 
     if (currentTarget === 0) {
@@ -251,7 +322,7 @@ function setupOneView(ctx) {
       return;
     }
     if (currentTarget === middle) {
-      applySnapToAll(100, { animate: true, duration: 240 });
+      applySnapToAll(100, { animate: true, duration: 260 });
       return;
     }
     applySnapToAll(0, { animate: true, duration: 240 });
@@ -286,7 +357,7 @@ function setupOneView(ctx) {
       const dt = Math.max(1, now - lastTs);
       const instV = (raw - lastRawForVel) / dt;
 
-      const t = getInertiaTuning(activePointerType);
+      const t = getInertia();
       velocity = velocity * t.keep + instV * t.add;
 
       lastTs = now;
@@ -328,7 +399,7 @@ function setupOneView(ctx) {
   });
 
   handler.addEventListener("keydown", (e) => {
-    const middle = getMiddleAnchor();
+    const { middle } = getStopperConfig();
 
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
@@ -344,7 +415,7 @@ function setupOneView(ctx) {
 
     if (e.key === "End") {
       e.preventDefault();
-      applySnapToAll(100, { animate: true, duration: 220 });
+      applySnapToAll(100, { animate: true, duration: 240 });
       return;
     }
 
@@ -356,7 +427,7 @@ function setupOneView(ctx) {
 
     if (e.key === "ArrowRight" || e.key === "ArrowDown") {
       e.preventDefault();
-      applySnapToAll(100, { animate: true, duration: 220 });
+      applySnapToAll(100, { animate: true, duration: 240 });
       return;
     }
 
