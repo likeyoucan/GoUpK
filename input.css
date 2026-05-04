@@ -419,6 +419,7 @@ html.dark .app-bg::before {
   cursor: grabbing;
 }
 
+/* Middle state */
 :is(#view-stopwatch, #view-timer, #view-tabata).split-middle .view-top-half {
   flex-basis: var(--split);
 }
@@ -433,8 +434,8 @@ html.dark .app-bg::before {
   min-height: 0;
 }
 
-:is(#view-stopwatch, #view-timer, #view-tabata).split-top-hidden
-  .view-top-half {
+/* Top collapsed */
+:is(#view-stopwatch, #view-timer, #view-tabata).split-top-hidden .view-top-half {
   flex-basis: 0.12%;
   min-height: 0;
   min-width: 0;
@@ -448,6 +449,7 @@ html.dark .app-bg::before {
   overflow: visible;
 }
 
+/* Bottom collapsed (mobile: handler sits above nav via bottom-half padding) */
 :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
   .view-top-half {
   flex: 1 1 auto;
@@ -485,26 +487,12 @@ html.dark .app-bg::before {
   overflow: hidden;
 }
 
-@media (min-width: 768px) and (orientation: landscape) {
-  :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
-    .view-bottom-half {
-    height: var(--handler-size);
-    min-height: var(--handler-size);
-    padding-bottom: 0;
-  }
-
-  :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
-    .view-bottom-half
-    .resizer_handler {
-    top: 0;
-    bottom: auto;
-  }
-}
-
+/* Progressive collapse FX */
 .view-top-half .top_content {
   opacity: calc(1 - (var(--collapse-top-k) * 0.35));
   filter: blur(calc(var(--collapse-top-k) * 2px));
   transform: scale(calc(1 - (var(--collapse-top-k) * 0.012)));
+  transform-origin: center center;
 }
 
 .view-bottom-half .mid_content {
@@ -512,6 +500,7 @@ html.dark .app-bg::before {
   filter: blur(calc(var(--collapse-bottom-k) * 2.2px));
 }
 
+/* Runtime interaction phases */
 :is(#view-stopwatch, #view-timer, #view-tabata).split-live .view-top-half,
 :is(#view-stopwatch, #view-timer, #view-tabata).split-live .view-bottom-half,
 :is(#view-stopwatch, #view-timer, #view-tabata).split-live .mid_content {
@@ -599,12 +588,21 @@ html.dark .app-bg::before {
   :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
     .view-bottom-half {
     flex: 0 0 auto;
-    height: var(--handler-size);
+    width: var(--handler-size);
+    min-width: var(--handler-size);
+    height: auto;
     min-height: var(--handler-size);
     overflow: visible;
     position: relative;
     transform: none;
-    padding-bottom: 0; /* ключевой фикс */
+    padding-bottom: 0;
+  }
+
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
+    .view-bottom-half
+    .resizer_handler {
+    top: 0;
+    bottom: auto;
   }
 
   #tm-form,
