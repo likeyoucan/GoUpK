@@ -40,11 +40,9 @@ function setStateClass(viewEl, target) {
   else viewEl.classList.add("split-middle");
 }
 
-// Плавно усиливаем blur и уменьшаем opacity к краям (0 и 100)
-function applyCollapseFx(viewEl, raw) {
+function setCollapseFx(viewEl, raw) {
   const middle = getMiddleAnchor();
 
-  // Начинаем эффект сразу от middle к краям, плавной кривой
   const topLinear = clamp((middle - raw) / middle, 0, 1);
   const bottomLinear = clamp((raw - middle) / (100 - middle), 0, 1);
 
@@ -57,21 +55,41 @@ function applyCollapseFx(viewEl, raw) {
 
 function setupResizerForView(viewEl) {
   const handler = viewEl.querySelector(".resizer_handler");
-  if (!handler) return;
+  const topHalf = viewEl.querySelector(".view-top-half");
+  if (!handler || !topHalf) return;
 
   const SNAP_THRESHOLD = 10;
   let dragging = false;
-  let activePointerType = "touch";
   let lastRaw = getMiddleAnchor();
+  let activePointerType = "touch";
 
   let lastTs = 0;
   let lastRawForVel = lastRaw;
   let velocity = 0;
   let tapTimer = null;
 
+  const setAriaSnap = (snapValue) => {
+    const middle = getMiddleAnchor();
+    const normalized =
+      snapValue === middle ? middle : snapValue === 0 ? 0 : 100;
+
+    handler.setAttribute("aria-valuemin", "0");
+    handler.setAttribute("aria-valuemax", "100");
+    handler.setAttribute("aria-valuenow", String(normalized));
+    handler.setAttribute(
+      "aria-valuetext",
+      normalized === middle ? `middle ${middle}%` : `${normalized}%`,
+    );
+  };
+
+  const setAriaLive = (rawValue) => {
+    handler.setAttribute("aria-valuemin", "0");
+    handler.setAttribute("aria-valuemax", "100");
+    handler.setAttribute("aria-valuenow", String(Math.round(rawValue)));
+  };
+
   const getAnchors = () => [0, getMiddleAnchor(), 100];
 
-  // Учитываем mobile padding-bottom у .view-bottom-half, чтобы не было смещения snap
   const pointerToRaw = (ev) => {
     const rect = viewEl.getBoundingClientRect();
 
@@ -96,11 +114,9 @@ function setupResizerForView(viewEl) {
     if (pointerType === "mouse") {
       return { gain: 55, maxShift: 4, keep: 0.9, add: 0.1, duration: 220 };
     }
-
     if (pointerType === "pen") {
       return { gain: 90, maxShift: 7, keep: 0.82, add: 0.18, duration: 240 };
     }
-
     return { gain: 130, maxShift: 9, keep: 0.76, add: 0.24, duration: 280 };
   };
 
@@ -114,7 +130,8 @@ function setupResizerForView(viewEl) {
       "split-bottom-hidden",
     );
     viewEl.style.setProperty("--split", `${lastRaw}%`);
-    applyCollapseFx(viewEl, lastRaw);
+    setCollapseFx(viewEl, lastRaw);
+    setAriaLive(lastRaw);
   };
 
   const animateTo = (target, durationMs) => {
@@ -124,38 +141,38 @@ function setupResizerForView(viewEl) {
     viewEl.classList.remove("split-live");
     viewEl.classList.add("split-animating");
 
-    // На время анимации держим neutral class, потом ставим финальный
     setStateClass(viewEl, middle);
 
     const visualTarget = target === 0 ? 0.15 : target === 100 ? 99.85 : middle;
     viewEl.style.setProperty("--split", `${visualTarget}%`);
-    applyCollapseFx(viewEl, visualTarget);
+    setCollapseFx(viewEl, visualTarget);
 
-    const topHalf = viewEl.querySelector(".view-top-half");
     let done = false;
 
     const finish = () => {
       if (done) return;
       done = true;
+
       viewEl.classList.remove("split-animating");
       setStateClass(viewEl, target);
 
-      if (target === 0) applyCollapseFx(viewEl, 0);
-      else if (target === 100) applyCollapseFx(viewEl, 100);
-      else applyCollapseFx(viewEl, middle);
+      if (target === 0) setCollapseFx(viewEl, 0);
+      else if (target === 100) setCollapseFx(viewEl, 100);
+      else setCollapseFx(viewEl, middle);
+
+      setAriaSnap(target);
     };
 
     const onEnd = (e) => {
-      if (!topHalf) return;
       if (e.target !== topHalf || e.propertyName !== "flex-basis") return;
       topHalf.removeEventListener("transitionend", onEnd);
       finish();
     };
 
-    topHalf?.addEventListener("transitionend", onEnd);
+    topHalf.addEventListener("transitionend", onEnd);
 
     setTimeout(() => {
-      topHalf?.removeEventListener("transitionend", onEnd);
+      topHalf.removeEventListener("transitionend", onEnd);
       finish();
     }, durationMs + 90);
   };
@@ -196,8 +213,8 @@ function setupResizerForView(viewEl) {
   };
 
   handler.setAttribute("tabindex", "0");
-  handler.setAttribute("role", "button");
-  handler.setAttribute("aria-label", "Resize panels");
+  handler.setAttribute("role", "slider");
+  handler.setAttribute("aria-label", "Split view size");
 
   handler.addEventListener("pointerdown", (e) => {
     if (e.button !== undefined && e.button !== 0) return;
@@ -246,7 +263,6 @@ function setupResizerForView(viewEl) {
     window.addEventListener("pointercancel", onUp);
   });
 
-  // Двойной тап/клик: 0 -> middle -> 100 -> 0
   handler.addEventListener("click", () => {
     if (dragging) return;
 
@@ -306,6 +322,7 @@ function setupResizerForView(viewEl) {
   viewEl.style.setProperty("--collapse-top-k", "0");
   viewEl.style.setProperty("--collapse-bottom-k", "0");
   setStateClass(viewEl, middle);
+  setAriaSnap(middle);
 }
 
 export function initSplitResizer() {
@@ -325,6 +342,9 @@ export function initSplitResizer() {
           viewEl.style.setProperty("--split", `${middle}%`);
           viewEl.style.setProperty("--collapse-top-k", "0");
           viewEl.style.setProperty("--collapse-bottom-k", "0");
+          const handler = viewEl.querySelector(".resizer_handler");
+          handler?.setAttribute("aria-valuenow", String(middle));
+          handler?.setAttribute("aria-valuetext", `middle ${middle}%`);
         }
       });
   });

@@ -456,14 +456,22 @@ html.dark .app-bg::before {
 :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
   .view-bottom-half {
   flex: 0 0 auto;
-  height: var(--handler-size);
-  min-height: var(--handler-size);
+  height: calc(var(--handler-size) + var(--nav-height));
+  min-height: calc(var(--handler-size) + var(--nav-height));
   overflow: visible;
   position: relative;
   left: auto;
   right: auto;
   bottom: auto;
-  transform: translateY(calc(-1 * var(--nav-total) + 2px));
+  transform: none;
+  padding-bottom: var(--nav-height);
+}
+
+:is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
+  .view-bottom-half
+  .resizer_handler {
+  top: auto;
+  bottom: var(--nav-height);
 }
 
 :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
@@ -480,7 +488,16 @@ html.dark .app-bg::before {
 @media (min-width: 768px) and (orientation: landscape) {
   :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
     .view-bottom-half {
-    transform: none;
+    height: var(--handler-size);
+    min-height: var(--handler-size);
+    padding-bottom: 0;
+  }
+
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
+    .view-bottom-half
+    .resizer_handler {
+    top: 0;
+    bottom: auto;
   }
 }
 
@@ -590,11 +607,6 @@ html.dark .app-bg::before {
     padding-bottom: 0; /* ключевой фикс */
   }
 
-  :is(#view-stopwatch, #view-timer, #view-tabata):not(.split-bottom-hidden)
-    .view-bottom-half {
-    padding-bottom: var(--nav-height);
-  }
-
   #tm-form,
   #tm-adjust-controls,
   #tm-resetBtn-wrap,
@@ -663,7 +675,7 @@ html.dark .app-bg::before {
   line-height: 0.95;
   letter-spacing: -0.04em;
   white-space: nowrap;
-  max-inline-size: 92%;
+  max-inline-size: 90%;
   text-overflow: clip;
   transition:
     font-size 220ms cubic-bezier(0.32, 0.72, 0, 1),
