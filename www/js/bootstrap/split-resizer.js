@@ -42,8 +42,14 @@ function setStateClass(viewEl, target) {
 
 // Плавно усиливаем blur и уменьшаем opacity к краям (0 и 100)
 function applyCollapseFx(viewEl, raw) {
-  const topK = clamp((22 - raw) / 22, 0, 1);
-  const bottomK = clamp((raw - 78) / 22, 0, 1);
+  const middle = getMiddleAnchor();
+
+  // Начинаем эффект сразу от middle к краям, плавной кривой
+  const topLinear = clamp((middle - raw) / middle, 0, 1);
+  const bottomLinear = clamp((raw - middle) / (100 - middle), 0, 1);
+
+  const topK = Math.pow(topLinear, 1.15);
+  const bottomK = Math.pow(bottomLinear, 1.15);
 
   viewEl.style.setProperty("--collapse-top-k", topK.toFixed(3));
   viewEl.style.setProperty("--collapse-bottom-k", bottomK.toFixed(3));

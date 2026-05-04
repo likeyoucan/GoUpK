@@ -37,10 +37,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
       const s = parseInt(tm.els.s?.value, 10) || 0;
 
       const parsedDuration = (h * 3600 + m * 60 + s) * 1000;
-
-      // Базовая длительность, к которой должен возвращаться Restart.
       tm.initialDurationMs = parsedDuration;
-      // Текущая длительность активного прогона (может меняться кнопками +/-).
       tm.totalDuration = parsedDuration;
 
       duration = tm.totalDuration;
@@ -74,7 +71,6 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     tm.sm.vibrate(30, "medium");
     tm.sm.play("click");
 
-    // Restart всегда уходит к исходно заданному значению, без учета +/- в рантайме.
     let duration = tm.initialDurationMs;
 
     if (!duration || duration <= 0) {
@@ -91,7 +87,6 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     }
 
     tm.totalDuration = duration;
-
     tm.store.activate("timer");
     tm.isRunning = true;
     tm.isPaused = false;
@@ -134,9 +129,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
 
     tm.updateUIState();
 
-    if (tm.els.ring) {
-      tm.els.ring.style.strokeDashoffset = tm.ringLength;
-    }
+    if (tm.els.ring) tm.els.ring.style.strokeDashoffset = tm.ringLength;
 
     updateText(tm.els.display, "GO");
     tm.els.display?.classList.add("is-go");
@@ -189,7 +182,6 @@ export function setupTimerCore(tm, { showToast, updateText }) {
       tm.sm.play("tick");
       tm.sm.vibrate(50, "medium");
       const adjustmentMs = tm.currentAdjustmentSec * 1000;
-
       tm.totalDuration = Math.max(1, tm.totalDuration + adjustmentMs);
       tm.bgWorker.postMessage({ command: "adjust", time: adjustmentMs });
     });
@@ -198,7 +190,6 @@ export function setupTimerCore(tm, { showToast, updateText }) {
       tm.sm.play("tick");
       tm.sm.vibrate(50, "medium");
       const adjustmentMs = -tm.currentAdjustmentSec * 1000;
-
       tm.totalDuration = Math.max(1, tm.totalDuration + adjustmentMs);
       tm.bgWorker.postMessage({ command: "adjust", time: adjustmentMs });
     });

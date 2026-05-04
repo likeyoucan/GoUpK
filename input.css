@@ -485,22 +485,14 @@ html.dark .app-bg::before {
 }
 
 .view-top-half .top_content {
-  opacity: calc(1 - (var(--collapse-top-k) * 0.45));
-  filter: blur(calc(var(--collapse-top-k) * 2.8px));
-  transform: scale(calc(1 - (var(--collapse-top-k) * 0.018)));
-  transform-origin: center center;
-  transition:
-    opacity 120ms linear,
-    filter 120ms linear,
-    transform 120ms linear;
+  opacity: calc(1 - (var(--collapse-top-k) * 0.35));
+  filter: blur(calc(var(--collapse-top-k) * 2px));
+  transform: scale(calc(1 - (var(--collapse-top-k) * 0.012)));
 }
 
 .view-bottom-half .mid_content {
-  opacity: calc(1 - (var(--collapse-bottom-k) * 0.5));
-  filter: blur(calc(var(--collapse-bottom-k) * 3px));
-  transition:
-    opacity 120ms linear,
-    filter 120ms linear;
+  opacity: calc(1 - (var(--collapse-bottom-k) * 0.4));
+  filter: blur(calc(var(--collapse-bottom-k) * 2.2px));
 }
 
 :is(#view-stopwatch, #view-timer, #view-tabata).split-live .view-top-half,
@@ -589,11 +581,18 @@ html.dark .app-bg::before {
 
   :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
     .view-bottom-half {
-    width: var(--handler-size);
-    min-width: var(--handler-size);
-    height: auto;
+    flex: 0 0 auto;
+    height: var(--handler-size);
+    min-height: var(--handler-size);
+    overflow: visible;
     position: relative;
-    bottom: auto;
+    transform: none;
+    padding-bottom: 0; /* ключевой фикс */
+  }
+
+  :is(#view-stopwatch, #view-timer, #view-tabata):not(.split-bottom-hidden)
+    .view-bottom-half {
+    padding-bottom: var(--nav-height);
   }
 
   #tm-form,
