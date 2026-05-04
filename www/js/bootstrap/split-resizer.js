@@ -45,6 +45,15 @@ function setStateClass(viewEl, target) {
   else viewEl.classList.add("split-middle");
 }
 
+function setCollapseFx(viewEl, raw) {
+  // Мягкий fade/blur к краям, чтобы перегруппировка не бросалась в глаза
+  const topK = clamp((18 - raw) / 18, 0, 1);
+  const bottomK = clamp((raw - 82) / 18, 0, 1);
+
+  viewEl.style.setProperty("--collapse-top-k", topK.toFixed(3));
+  viewEl.style.setProperty("--collapse-bottom-k", bottomK.toFixed(3));
+}
+
 function setupHandler(viewEl) {
   const handler = viewEl.querySelector(".resizer_handler");
   if (!handler) return;
@@ -83,32 +92,12 @@ function setupHandler(viewEl) {
 
   function getInertiaTuning(pointerType) {
     if (pointerType === "mouse") {
-      return {
-        gain: 55,
-        maxShift: 4,
-        smoothKeep: 0.9,
-        smoothNew: 0.1,
-        duration: 230,
-      };
+      return { gain: 55, maxShift: 4, keep: 0.9, add: 0.1, duration: 230 };
     }
-
     if (pointerType === "pen") {
-      return {
-        gain: 95,
-        maxShift: 7,
-        smoothKeep: 0.82,
-        smoothNew: 0.18,
-        duration: 250,
-      };
+      return { gain: 95, maxShift: 7, keep: 0.82, add: 0.18, duration: 250 };
     }
-
-    return {
-      gain: 140,
-      maxShift: 10,
-      smoothKeep: 0.75,
-      smoothNew: 0.25,
-      duration: 280,
-    };
+    return { gain: 140, maxShift: 10, keep: 0.75, add: 0.25, duration: 280 };
   }
 
   function applyLive(raw) {
@@ -122,6 +111,7 @@ function setupHandler(viewEl) {
       "split-bottom-hidden",
     );
     viewEl.style.setProperty("--split", `${lastRaw}%`);
+    setCollapseFx(viewEl, lastRaw);
   }
 
   function animateTo(target, durationMs) {
@@ -135,6 +125,7 @@ function setupHandler(viewEl) {
 
     setStateClass(viewEl, middle);
     viewEl.style.setProperty("--split", `${visualTarget}%`);
+    setCollapseFx(viewEl, visualTarget);
 
     const topHalf = viewEl.querySelector(".view-top-half");
     let done = false;
@@ -144,6 +135,17 @@ function setupHandler(viewEl) {
       done = true;
       viewEl.classList.remove("split-animating");
       setStateClass(viewEl, target);
+
+      if (target === 0) {
+        viewEl.style.setProperty("--collapse-top-k", "1");
+        viewEl.style.setProperty("--collapse-bottom-k", "0");
+      } else if (target === 100) {
+        viewEl.style.setProperty("--collapse-top-k", "0");
+        viewEl.style.setProperty("--collapse-bottom-k", "1");
+      } else {
+        viewEl.style.setProperty("--collapse-top-k", "0");
+        viewEl.style.setProperty("--collapse-bottom-k", "0");
+      }
     };
 
     const onEnd = (e) => {
@@ -215,7 +217,7 @@ function setupHandler(viewEl) {
       const instV = (raw - lastRawForVel) / dt;
 
       const tuning = getInertiaTuning(activePointerType);
-      velocity = velocity * tuning.smoothKeep + instV * tuning.smoothNew;
+      velocity = velocity * tuning.keep + instV * tuning.add;
 
       lastTs = now;
       lastRawForVel = raw;
@@ -296,6 +298,8 @@ function setupHandler(viewEl) {
 
   const middle = getMiddleAnchor();
   viewEl.style.setProperty("--split", `${middle}%`);
+  viewEl.style.setProperty("--collapse-top-k", "0");
+  viewEl.style.setProperty("--collapse-bottom-k", "0");
   setStateClass(viewEl, middle);
 }
 
@@ -314,6 +318,8 @@ export function initSplitResizer() {
       .forEach((viewEl) => {
         if (viewEl.classList.contains("split-middle")) {
           viewEl.style.setProperty("--split", `${middle}%`);
+          viewEl.style.setProperty("--collapse-top-k", "0");
+          viewEl.style.setProperty("--collapse-bottom-k", "0");
         }
       });
   });

@@ -54,6 +54,8 @@
   --split: 65%;
   --split-snap-duration: 260ms;
   --handler-size: clamp(14px, 2.2dvh, 22px);
+  --collapse-top-k: 0;
+  --collapse-bottom-k: 0;
   --title-gap: clamp(8px, 1.5vmin, 20px);
 
   --secondary-accent-color: #3b82f6;
@@ -420,9 +422,7 @@ html.dark .app-bg::before {
   flex-basis: var(--split);
 }
 
-:is(#view-stopwatch, #view-timer, #view-tabata).split-middle
-  .view-bottom-half
-  .mid_content {
+:is(#view-stopwatch, #view-timer, #view-tabata).split-middle .view-bottom-half .mid_content {
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
@@ -430,8 +430,7 @@ html.dark .app-bg::before {
   min-height: 0;
 }
 
-:is(#view-stopwatch, #view-timer, #view-tabata).split-top-hidden
-  .view-top-half {
+:is(#view-stopwatch, #view-timer, #view-tabata).split-top-hidden .view-top-half {
   flex-basis: 0.12%;
   min-height: 0;
   min-width: 0;
@@ -439,28 +438,28 @@ html.dark .app-bg::before {
   pointer-events: none;
 }
 
-:is(#view-stopwatch, #view-timer, #view-tabata).split-top-hidden
-  .view-bottom-half {
+:is(#view-stopwatch, #view-timer, #view-tabata).split-top-hidden .view-bottom-half {
   flex: 1 1 auto;
   overflow: visible;
 }
 
-:is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
-  .view-top-half {
+:is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden .view-top-half {
   flex: 1 1 auto;
 }
 
-:is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
-  .view-bottom-half {
+:is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden .view-bottom-half {
   flex: 0 0 auto;
   height: var(--handler-size);
   min-height: var(--handler-size);
   overflow: visible;
+  position: relative;
+  left: auto;
+  right: auto;
+  bottom: auto;
+  transform: translateY(calc(-1 * var(--nav-total) + 2px));
 }
 
-:is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
-  .view-bottom-half
-  .mid_content {
+:is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden .view-bottom-half .mid_content {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
@@ -469,15 +468,29 @@ html.dark .app-bg::before {
   overflow: hidden;
 }
 
-@media (max-width: 767px) and (orientation: portrait) {
-  :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
-    .view-bottom-half {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: calc(var(--nav-total) + 4px);
-    z-index: 40;
+@media (min-width: 768px) and (orientation: landscape) {
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden .view-bottom-half {
+    transform: none;
   }
+}
+
+.view-top-half .top_content {
+  opacity: calc(1 - (var(--collapse-top-k) * 0.42));
+  filter: blur(calc(var(--collapse-top-k) * 2.8px));
+  transform: scale(calc(1 - (var(--collapse-top-k) * 0.015)));
+  transform-origin: center center;
+  transition:
+    opacity 120ms linear,
+    filter 120ms linear,
+    transform 120ms linear;
+}
+
+.view-bottom-half .mid_content {
+  opacity: calc(1 - (var(--collapse-bottom-k) * 0.5));
+  filter: blur(calc(var(--collapse-bottom-k) * 3px));
+  transition:
+    opacity 120ms linear,
+    filter 120ms linear;
 }
 
 :is(#view-stopwatch, #view-timer, #view-tabata).split-live .view-top-half,
