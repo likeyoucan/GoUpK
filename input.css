@@ -439,8 +439,7 @@ html.dark .app-bg::before {
 }
 
 /* top hidden */
-:is(#view-stopwatch, #view-timer, #view-tabata).split-top-hidden
-  .view-top-half {
+:is(#view-stopwatch, #view-timer, #view-tabata).split-top-hidden .view-top-half {
   flex-basis: 0.12%;
   min-height: 0;
   min-width: 0;
@@ -489,22 +488,14 @@ html.dark .app-bg::before {
 }
 
 /* while animating to bottom (fallback) */
-:is(
-    #view-stopwatch,
-    #view-timer,
-    #view-tabata
-  ).split-animating[data-split-target="bottom"]
+:is(#view-stopwatch, #view-timer, #view-tabata).split-animating[data-split-target="bottom"]
   .view-bottom-half {
   height: var(--handler-size);
   min-height: var(--handler-size);
   padding-bottom: 0;
 }
 
-:is(
-    #view-stopwatch,
-    #view-timer,
-    #view-tabata
-  ).split-animating[data-split-target="bottom"]
+:is(#view-stopwatch, #view-timer, #view-tabata).split-animating[data-split-target="bottom"]
   .resizer_handler {
   top: 0;
   bottom: auto;
@@ -513,8 +504,7 @@ html.dark .app-bg::before {
 /* MOBILE PORTRAIT:
    bottom does not collapse to 0; top becomes 100% - nav-height */
 @media (max-width: 767px) and (orientation: portrait) {
-  :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
-    .view-top-half {
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden .view-top-half {
     flex-basis: calc(100% - var(--nav-height));
     max-height: calc(100% - var(--nav-height));
   }
@@ -546,21 +536,13 @@ html.dark .app-bg::before {
     overflow: hidden;
   }
 
-  :is(
-      #view-stopwatch,
-      #view-timer,
-      #view-tabata
-    ).split-live[data-split-target="bottom"]
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-live[data-split-target="bottom"]
     .view-top-half {
     flex-basis: calc(100% - var(--nav-height));
     max-height: calc(100% - var(--nav-height));
   }
 
-  :is(
-      #view-stopwatch,
-      #view-timer,
-      #view-tabata
-    ).split-live[data-split-target="bottom"]
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-live[data-split-target="bottom"]
     .view-bottom-half {
     flex: 0 0 var(--nav-height);
     min-height: var(--nav-height);
@@ -568,31 +550,19 @@ html.dark .app-bg::before {
     padding-bottom: 0;
   }
 
-  :is(
-      #view-stopwatch,
-      #view-timer,
-      #view-tabata
-    ).split-live[data-split-target="bottom"]
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-live[data-split-target="bottom"]
     .resizer_handler {
     top: 0;
     bottom: auto;
   }
 
-  :is(
-      #view-stopwatch,
-      #view-timer,
-      #view-tabata
-    ).split-animating[data-split-target="bottom"]
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-animating[data-split-target="bottom"]
     .view-top-half {
     flex-basis: calc(100% - var(--nav-height));
     max-height: calc(100% - var(--nav-height));
   }
 
-  :is(
-      #view-stopwatch,
-      #view-timer,
-      #view-tabata
-    ).split-animating[data-split-target="bottom"]
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-animating[data-split-target="bottom"]
     .view-bottom-half {
     flex: 0 0 var(--nav-height);
     min-height: var(--nav-height);
@@ -600,11 +570,7 @@ html.dark .app-bg::before {
     padding-bottom: 0;
   }
 
-  :is(
-      #view-stopwatch,
-      #view-timer,
-      #view-tabata
-    ).split-animating[data-split-target="bottom"]
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-animating[data-split-target="bottom"]
     .resizer_handler {
     top: 0;
     bottom: auto;
@@ -632,16 +598,12 @@ html.dark .app-bg::before {
     filter 120ms linear;
 }
 
-:is(#view-stopwatch, #view-timer, #view-tabata).split-top-hidden
-  .view-top-half
-  .top_content {
+:is(#view-stopwatch, #view-timer, #view-tabata).split-top-hidden .view-top-half .top_content {
   opacity: 0;
   filter: blur(2.4px);
 }
 
-:is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
-  .view-bottom-half
-  .mid_content {
+:is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden .view-bottom-half .mid_content {
   opacity: 0;
   filter: blur(2.4px);
 }
@@ -669,6 +631,133 @@ html.dark .app-bg::before {
 :is(#view-stopwatch, #view-timer, #view-tabata).split-animating
   .view-bottom-half {
   will-change: flex-basis;
+}
+
+/* =========================================
+   АДАПТИВНОСТЬ ДЛЯ ДВУХКОЛОНОЧНОГО МАКЕТА
+========================================= */
+@media (min-width: 768px) and (orientation: landscape) {
+  :root {
+    --split: 50%;
+  }
+
+  #view-stopwatch,
+  #view-timer,
+  #view-tabata {
+    padding-bottom: var(--nav-height);
+    flex-direction: row;
+    align-items: stretch;
+  }
+
+  #tb-runningControls {
+    justify-content: center;
+  }
+
+  .view-top-half {
+    border-right: 1px solid var(--border-color);
+  }
+
+  .view-bottom-half {
+    padding-bottom: 0;
+    flex-direction: row;
+  }
+
+  .top_content {
+    padding-block: 24px;
+    grid-template-columns: 70%;
+    max-height: min(62.5dvw, 480px);
+  }
+
+  .mid_content {
+    padding-block: 24px;
+    padding-top: 24px;
+    padding-left: calc(var(--handler-size) + 12px);
+    padding-right: 0;
+  }
+
+  .mid_content > div.app-border {
+    border: none;
+  }
+
+  .resizer_handler {
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: auto;
+    width: var(--handler-size);
+    height: 100%;
+  }
+
+  .resizer_handler::before {
+    width: 3px;
+    height: clamp(28px, 20vh, 72px);
+  }
+
+  .resizer_handler::after {
+    inset: 0 -10px;
+  }
+
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
+    .view-bottom-half {
+    flex: 0 0 auto;
+    width: var(--handler-size);
+    min-width: var(--handler-size);
+    height: auto;
+    min-height: var(--handler-size);
+    padding-bottom: 0;
+    transform: none;
+    overflow: visible;
+  }
+
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
+    .view-bottom-half
+    .resizer_handler {
+    top: 0;
+    bottom: auto;
+  }
+
+  :is(
+      #view-stopwatch,
+      #view-timer,
+      #view-tabata
+    ).split-animating[data-split-target="bottom"]
+    .view-bottom-half {
+    width: var(--handler-size);
+    min-width: var(--handler-size);
+    padding-bottom: 0;
+    height: auto;
+    min-height: var(--handler-size);
+  }
+
+  :is(
+      #view-stopwatch,
+      #view-timer,
+      #view-tabata
+    ).split-animating[data-split-target="bottom"]
+    .resizer_handler {
+    top: 0;
+    bottom: auto;
+  }
+
+  #tm-form,
+  #tm-adjust-controls,
+  #tm-resetBtn-wrap,
+  #tm-restartBtn-wrap {
+    flex: 1;
+  }
+
+  .view-top-half h2 {
+    font-size: 0.85rem;
+    letter-spacing: 0.25em;
+  }
+
+  #tb-activeName {
+    padding-top: 8px;
+  }
+
+  #tm-adjust-controls {
+    margin: 0;
+  }
 }
 
 /* ===============================================================
