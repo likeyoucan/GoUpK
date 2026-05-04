@@ -138,15 +138,14 @@ touch-action: manipulation;
 
 /* =========================================
 PRELOADER OVERLAY
-========================================= /
-#app-preloader {
+========================================= / */
 position: fixed;
 inset: 0;
 width: 100vw;
 height: 100dvh;
 min-height: 100dvh;
 z-index: 200;
-background-color: #fcfcfc; / фон preload */
+background-color: #fcfcfc; / фон preload 
 display: flex;
 align-items: center;
 justify-content: center;
@@ -629,17 +628,18 @@ max-height: min(37.5dvw, 480px);
 6. КРУЖОК ТАЙМЕРА
 ========================================= */
 .timer-circle-wrap {
-width: 100%;
-max-width: 100%;
-aspect-ratio: 1 / 1;
-margin: 0 auto;
-height: 100%;
-max-height: 100dvh;
-display: flex;
-position: relative;
-align-items: center;
-justify-content: center;
-container-type: inline-size;
+  width: 100%;
+  max-width: 100%;
+  aspect-ratio: 1 / 1;
+  margin: 0 auto;
+  height: 100%;
+  max-height: 100dvh;
+  display: flex;
+  position: relative;
+  align-items: center;
+  justify-content: center;
+  container-type: size;
+  container-name: timer-ring;
 }
 
 .timer-display {
