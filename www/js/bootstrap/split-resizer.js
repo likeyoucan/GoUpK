@@ -14,11 +14,6 @@ function getMiddleAnchor() {
   return isPhone && isPortrait ? 60 : 50;
 }
 
-function getEdgeVisualRange(viewEl) {
-  const row = isRowLayout(viewEl);
-  return row ? { min: 2.5, max: 97.5 } : { min: 3.5, max: 96.5 };
-}
-
 function nearestAnchor(value, anchors) {
   let best = anchors[0];
   let bestDist = Math.abs(value - best);
@@ -45,37 +40,36 @@ function setStateClass(viewEl, target) {
   else viewEl.classList.add("split-middle");
 }
 
-function setCollapseFx(viewEl, raw) {
-  // Мягкий fade/blur к краям, чтобы перегруппировка не бросалась в глаза
-  const topK = clamp((18 - raw) / 18, 0, 1);
-  const bottomK = clamp((raw - 82) / 18, 0, 1);
+// Плавно усиливаем blur и уменьшаем opacity к краям (0 и 100)
+function applyCollapseFx(viewEl, raw) {
+  const topK = clamp((22 - raw) / 22, 0, 1);
+  const bottomK = clamp((raw - 78) / 22, 0, 1);
 
   viewEl.style.setProperty("--collapse-top-k", topK.toFixed(3));
   viewEl.style.setProperty("--collapse-bottom-k", bottomK.toFixed(3));
 }
 
-function setupHandler(viewEl) {
+function setupResizerForView(viewEl) {
   const handler = viewEl.querySelector(".resizer_handler");
   if (!handler) return;
 
   const SNAP_THRESHOLD = 10;
   let dragging = false;
+  let activePointerType = "touch";
   let lastRaw = getMiddleAnchor();
+
   let lastTs = 0;
   let lastRawForVel = lastRaw;
   let velocity = 0;
   let tapTimer = null;
-  let activePointerType = "touch";
 
-  function getAnchors() {
-    return [0, getMiddleAnchor(), 100];
-  }
+  const getAnchors = () => [0, getMiddleAnchor(), 100];
 
-  function toRawFromPointer(ev) {
+  // Учитываем mobile padding-bottom у .view-bottom-half, чтобы не было смещения snap
+  const pointerToRaw = (ev) => {
     const rect = viewEl.getBoundingClientRect();
-    const row = isRowLayout(viewEl);
 
-    if (row) {
+    if (isRowLayout(viewEl)) {
       return clamp(
         ((ev.clientX - rect.left) / Math.max(1, rect.width)) * 100,
         0,
@@ -83,26 +77,29 @@ function setupHandler(viewEl) {
       );
     }
 
-    return clamp(
-      ((ev.clientY - rect.top) / Math.max(1, rect.height)) * 100,
-      0,
-      100,
-    );
-  }
+    const bottomHalf = viewEl.querySelector(".view-bottom-half");
+    const bottomPad = bottomHalf
+      ? parseFloat(getComputedStyle(bottomHalf).paddingBottom || "0")
+      : 0;
 
-  function getInertiaTuning(pointerType) {
+    const usableHeight = Math.max(1, rect.height - bottomPad);
+    return clamp(((ev.clientY - rect.top) / usableHeight) * 100, 0, 100);
+  };
+
+  const getInertiaTuning = (pointerType) => {
     if (pointerType === "mouse") {
-      return { gain: 55, maxShift: 4, keep: 0.9, add: 0.1, duration: 230 };
+      return { gain: 55, maxShift: 4, keep: 0.9, add: 0.1, duration: 220 };
     }
-    if (pointerType === "pen") {
-      return { gain: 95, maxShift: 7, keep: 0.82, add: 0.18, duration: 250 };
-    }
-    return { gain: 140, maxShift: 10, keep: 0.75, add: 0.25, duration: 280 };
-  }
 
-  function applyLive(raw) {
-    const { min, max } = getEdgeVisualRange(viewEl);
-    lastRaw = clamp(raw, min, max);
+    if (pointerType === "pen") {
+      return { gain: 90, maxShift: 7, keep: 0.82, add: 0.18, duration: 240 };
+    }
+
+    return { gain: 130, maxShift: 9, keep: 0.76, add: 0.24, duration: 280 };
+  };
+
+  const applyLive = (raw) => {
+    lastRaw = clamp(raw, 0, 100);
 
     viewEl.classList.add("split-live");
     viewEl.classList.remove(
@@ -111,21 +108,22 @@ function setupHandler(viewEl) {
       "split-bottom-hidden",
     );
     viewEl.style.setProperty("--split", `${lastRaw}%`);
-    setCollapseFx(viewEl, lastRaw);
-  }
+    applyCollapseFx(viewEl, lastRaw);
+  };
 
-  function animateTo(target, durationMs) {
+  const animateTo = (target, durationMs) => {
     const middle = getMiddleAnchor();
-    const { min, max } = getEdgeVisualRange(viewEl);
-    const visualTarget = target === 0 ? min : target === 100 ? max : middle;
 
     viewEl.style.setProperty("--split-snap-duration", `${durationMs}ms`);
     viewEl.classList.remove("split-live");
     viewEl.classList.add("split-animating");
 
+    // На время анимации держим neutral class, потом ставим финальный
     setStateClass(viewEl, middle);
+
+    const visualTarget = target === 0 ? 0.15 : target === 100 ? 99.85 : middle;
     viewEl.style.setProperty("--split", `${visualTarget}%`);
-    setCollapseFx(viewEl, visualTarget);
+    applyCollapseFx(viewEl, visualTarget);
 
     const topHalf = viewEl.querySelector(".view-top-half");
     let done = false;
@@ -136,32 +134,27 @@ function setupHandler(viewEl) {
       viewEl.classList.remove("split-animating");
       setStateClass(viewEl, target);
 
-      if (target === 0) {
-        viewEl.style.setProperty("--collapse-top-k", "1");
-        viewEl.style.setProperty("--collapse-bottom-k", "0");
-      } else if (target === 100) {
-        viewEl.style.setProperty("--collapse-top-k", "0");
-        viewEl.style.setProperty("--collapse-bottom-k", "1");
-      } else {
-        viewEl.style.setProperty("--collapse-top-k", "0");
-        viewEl.style.setProperty("--collapse-bottom-k", "0");
-      }
+      if (target === 0) applyCollapseFx(viewEl, 0);
+      else if (target === 100) applyCollapseFx(viewEl, 100);
+      else applyCollapseFx(viewEl, middle);
     };
 
     const onEnd = (e) => {
+      if (!topHalf) return;
       if (e.target !== topHalf || e.propertyName !== "flex-basis") return;
       topHalf.removeEventListener("transitionend", onEnd);
       finish();
     };
 
     topHalf?.addEventListener("transitionend", onEnd);
+
     setTimeout(() => {
       topHalf?.removeEventListener("transitionend", onEnd);
       finish();
-    }, durationMs + 80);
-  }
+    }, durationMs + 90);
+  };
 
-  function snapToNearestWithInertia() {
+  const snapToNearest = () => {
     const anchors = getAnchors();
     const middle = anchors[1];
     const tuning = getInertiaTuning(activePointerType);
@@ -181,15 +174,20 @@ function setupHandler(viewEl) {
     else target = nearestAnchor(projected, anchors);
 
     animateTo(target, tuning.duration);
-  }
+  };
 
-  function cycleState() {
+  const cycleState = () => {
     const middle = getMiddleAnchor();
-    if (viewEl.classList.contains("split-top-hidden"))
-      return animateTo(middle, 250);
-    if (viewEl.classList.contains("split-middle")) return animateTo(100, 250);
-    return animateTo(0, 250);
-  }
+    if (viewEl.classList.contains("split-top-hidden")) {
+      animateTo(middle, 240);
+      return;
+    }
+    if (viewEl.classList.contains("split-middle")) {
+      animateTo(100, 240);
+      return;
+    }
+    animateTo(0, 240);
+  };
 
   handler.setAttribute("tabindex", "0");
   handler.setAttribute("role", "button");
@@ -211,13 +209,13 @@ function setupHandler(viewEl) {
     const onMove = (ev) => {
       if (!dragging) return;
 
-      const raw = toRawFromPointer(ev);
+      const raw = pointerToRaw(ev);
       const now = performance.now();
       const dt = Math.max(1, now - lastTs);
       const instV = (raw - lastRawForVel) / dt;
 
-      const tuning = getInertiaTuning(activePointerType);
-      velocity = velocity * tuning.keep + instV * tuning.add;
+      const t = getInertiaTuning(activePointerType);
+      velocity = velocity * t.keep + instV * t.add;
 
       lastTs = now;
       lastRawForVel = raw;
@@ -230,7 +228,7 @@ function setupHandler(viewEl) {
 
       dragging = false;
       handler.classList.remove("is-dragging");
-      snapToNearestWithInertia();
+      snapToNearest();
 
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
@@ -242,6 +240,7 @@ function setupHandler(viewEl) {
     window.addEventListener("pointercancel", onUp);
   });
 
+  // Двойной тап/клик: 0 -> middle -> 100 -> 0
   handler.addEventListener("click", () => {
     if (dragging) return;
 
@@ -254,7 +253,7 @@ function setupHandler(viewEl) {
 
     tapTimer = setTimeout(() => {
       tapTimer = null;
-    }, 250);
+    }, 260);
   });
 
   handler.addEventListener("keydown", (e) => {
@@ -268,31 +267,31 @@ function setupHandler(viewEl) {
 
     if (e.key === "Home") {
       e.preventDefault();
-      animateTo(0, 230);
+      animateTo(0, 220);
       return;
     }
 
     if (e.key === "End") {
       e.preventDefault();
-      animateTo(100, 230);
+      animateTo(100, 220);
       return;
     }
 
     if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
       e.preventDefault();
-      animateTo(0, 230);
+      animateTo(0, 220);
       return;
     }
 
     if (e.key === "ArrowRight" || e.key === "ArrowDown") {
       e.preventDefault();
-      animateTo(100, 230);
+      animateTo(100, 220);
       return;
     }
 
     if (e.key === "m" || e.key === "M") {
       e.preventDefault();
-      animateTo(middle, 230);
+      animateTo(middle, 220);
     }
   });
 
@@ -307,7 +306,7 @@ export function initSplitResizer() {
   ["view-stopwatch", "view-timer", "view-tabata"]
     .map((id) => document.getElementById(id))
     .filter(Boolean)
-    .forEach(setupHandler);
+    .forEach((viewEl) => setupResizerForView(viewEl));
 
   window.addEventListener("resize", () => {
     const middle = getMiddleAnchor();
