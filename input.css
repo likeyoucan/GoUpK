@@ -1876,7 +1876,7 @@ body.hide-nav-labels .nav-btn {
 
 /* Glass: selected с прозрачностью от primary */
 :root.glass-effect .custom-select-option.is-selected {
-  background-color: color-mix(in srgb, var(--primary-color) 62%, transparent);
+  background-color: color-mix(in srgb, var(--primary-color) 80%, transparent);
   backdrop-filter: blur(8px) saturate(160%);
 }
 
@@ -1887,7 +1887,7 @@ body.hide-nav-labels .nav-btn {
 
 @media (hover: hover) {
   .custom-select-option:hover:not(.is-selected) {
-    background-color: color-mix(in srgb, var(--primary-color) 20%, transparent);
+    background-color: color-mix(in srgb, var(--primary-color) 50%, transparent);
   }
 }
 
@@ -1896,7 +1896,7 @@ body.hide-nav-labels .nav-btn {
 }
 
 :root.glass-effect .custom-select-trigger {
-  background-color: color-mix(in srgb, var(--surface-color) 60%, transparent);
+  background-color: color-mix(in srgb, var(--surface-color) 50%, transparent);
   backdrop-filter: blur(12px) saturate(150%);
 }
 
