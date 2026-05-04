@@ -439,7 +439,8 @@ html.dark .app-bg::before {
 }
 
 /* top hidden */
-:is(#view-stopwatch, #view-timer, #view-tabata).split-top-hidden .view-top-half {
+:is(#view-stopwatch, #view-timer, #view-tabata).split-top-hidden
+  .view-top-half {
   flex-basis: 0.12%;
   min-height: 0;
   min-width: 0;
@@ -453,7 +454,7 @@ html.dark .app-bg::before {
   overflow: visible;
 }
 
-/* bottom hidden (fallback for non-mobile portrait) */
+/* bottom hidden (default fallback; overridden for mobile portrait below) */
 :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
   .view-top-half {
   flex: 1 1 auto;
@@ -461,9 +462,9 @@ html.dark .app-bg::before {
 
 :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
   .view-bottom-half {
-  flex: 0 0 auto;
-  height: var(--handler-size);
+  flex: 0 0 var(--handler-size);
   min-height: var(--handler-size);
+  height: var(--handler-size);
   overflow: visible;
   position: relative;
   transform: none;
@@ -488,32 +489,42 @@ html.dark .app-bg::before {
 }
 
 /* while animating to bottom (fallback) */
-:is(#view-stopwatch, #view-timer, #view-tabata).split-animating[data-split-target="bottom"]
+:is(
+    #view-stopwatch,
+    #view-timer,
+    #view-tabata
+  ).split-animating[data-split-target="bottom"]
   .view-bottom-half {
-  height: var(--handler-size);
+  flex: 0 0 var(--handler-size);
   min-height: var(--handler-size);
+  height: var(--handler-size);
   padding-bottom: 0;
 }
 
-:is(#view-stopwatch, #view-timer, #view-tabata).split-animating[data-split-target="bottom"]
+:is(
+    #view-stopwatch,
+    #view-timer,
+    #view-tabata
+  ).split-animating[data-split-target="bottom"]
   .resizer_handler {
   top: 0;
   bottom: auto;
 }
 
 /* MOBILE PORTRAIT:
-   bottom does not collapse to 0; top becomes 100% - nav-height */
+   bottom area = nav + handler, top = 100% - nav - handler */
 @media (max-width: 767px) and (orientation: portrait) {
-  :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden .view-top-half {
-    flex-basis: calc(100% - var(--nav-height));
-    max-height: calc(100% - var(--nav-height));
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
+    .view-top-half {
+    flex-basis: calc(100% - var(--nav-height) - var(--handler-size));
+    max-height: calc(100% - var(--nav-height) - var(--handler-size));
   }
 
   :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
     .view-bottom-half {
-    flex: 0 0 var(--nav-height);
-    min-height: var(--nav-height);
-    height: var(--nav-height);
+    flex: 0 0 calc(var(--nav-height) + var(--handler-size));
+    min-height: calc(var(--nav-height) + var(--handler-size));
+    height: calc(var(--nav-height) + var(--handler-size));
     padding-bottom: 0;
     overflow: visible;
     transform: none;
@@ -536,41 +547,51 @@ html.dark .app-bg::before {
     overflow: hidden;
   }
 
-  :is(#view-stopwatch, #view-timer, #view-tabata).split-live[data-split-target="bottom"]
+  :is(
+      #view-stopwatch,
+      #view-timer,
+      #view-tabata
+    ).split-live[data-split-target="bottom"]
+    .view-top-half,
+  :is(
+      #view-stopwatch,
+      #view-timer,
+      #view-tabata
+    ).split-animating[data-split-target="bottom"]
     .view-top-half {
-    flex-basis: calc(100% - var(--nav-height));
-    max-height: calc(100% - var(--nav-height));
+    flex-basis: calc(100% - var(--nav-height) - var(--handler-size));
+    max-height: calc(100% - var(--nav-height) - var(--handler-size));
   }
 
-  :is(#view-stopwatch, #view-timer, #view-tabata).split-live[data-split-target="bottom"]
+  :is(
+      #view-stopwatch,
+      #view-timer,
+      #view-tabata
+    ).split-live[data-split-target="bottom"]
+    .view-bottom-half,
+  :is(
+      #view-stopwatch,
+      #view-timer,
+      #view-tabata
+    ).split-animating[data-split-target="bottom"]
     .view-bottom-half {
-    flex: 0 0 var(--nav-height);
-    min-height: var(--nav-height);
-    height: var(--nav-height);
+    flex: 0 0 calc(var(--nav-height) + var(--handler-size));
+    min-height: calc(var(--nav-height) + var(--handler-size));
+    height: calc(var(--nav-height) + var(--handler-size));
     padding-bottom: 0;
   }
 
-  :is(#view-stopwatch, #view-timer, #view-tabata).split-live[data-split-target="bottom"]
-    .resizer_handler {
-    top: 0;
-    bottom: auto;
-  }
-
-  :is(#view-stopwatch, #view-timer, #view-tabata).split-animating[data-split-target="bottom"]
-    .view-top-half {
-    flex-basis: calc(100% - var(--nav-height));
-    max-height: calc(100% - var(--nav-height));
-  }
-
-  :is(#view-stopwatch, #view-timer, #view-tabata).split-animating[data-split-target="bottom"]
-    .view-bottom-half {
-    flex: 0 0 var(--nav-height);
-    min-height: var(--nav-height);
-    height: var(--nav-height);
-    padding-bottom: 0;
-  }
-
-  :is(#view-stopwatch, #view-timer, #view-tabata).split-animating[data-split-target="bottom"]
+  :is(
+      #view-stopwatch,
+      #view-timer,
+      #view-tabata
+    ).split-live[data-split-target="bottom"]
+    .resizer_handler,
+  :is(
+      #view-stopwatch,
+      #view-timer,
+      #view-tabata
+    ).split-animating[data-split-target="bottom"]
     .resizer_handler {
     top: 0;
     bottom: auto;
@@ -598,12 +619,16 @@ html.dark .app-bg::before {
     filter 120ms linear;
 }
 
-:is(#view-stopwatch, #view-timer, #view-tabata).split-top-hidden .view-top-half .top_content {
+:is(#view-stopwatch, #view-timer, #view-tabata).split-top-hidden
+  .view-top-half
+  .top_content {
   opacity: 0;
   filter: blur(2.4px);
 }
 
-:is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden .view-bottom-half .mid_content {
+:is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
+  .view-bottom-half
+  .mid_content {
   opacity: 0;
   filter: blur(2.4px);
 }
