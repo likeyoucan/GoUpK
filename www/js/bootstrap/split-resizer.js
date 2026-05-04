@@ -13,10 +13,15 @@ function isRowLayout(viewEl) {
   return getComputedStyle(viewEl).flexDirection.startsWith("row");
 }
 
+function isMobilePortrait() {
+  return (
+    window.matchMedia("(max-width: 767px)").matches &&
+    window.matchMedia("(orientation: portrait)").matches
+  );
+}
+
 function getMiddleAnchor() {
-  const isPhone = window.matchMedia("(max-width: 767px)").matches;
-  const isPortrait = window.matchMedia("(orientation: portrait)").matches;
-  return isPhone && isPortrait ? 60 : 50;
+  return isMobilePortrait() ? 60 : 50;
 }
 
 function nearestAnchor(value, anchors) {
@@ -95,7 +100,6 @@ function applySnapToAll(target, { animate = true, duration = 240 } = {}) {
   views.forEach(({ viewEl, topHalf }) => {
     if (!viewEl || !topHalf) return;
 
-    // Нужен для CSS, чтобы handler сразу занимал правильную позицию в split-animating
     viewEl.dataset.splitTarget = targetName;
 
     if (!animate) {
@@ -111,7 +115,6 @@ function applySnapToAll(target, { animate = true, duration = 240 } = {}) {
     viewEl.classList.remove("split-live");
     viewEl.classList.add("split-animating");
 
-    // Нейтральный класс на время анимации
     setStateClass(viewEl, middle);
     viewEl.style.setProperty("--split", `${visualTarget}%`);
     setCollapseFx(viewEl, visualTarget);
@@ -120,7 +123,6 @@ function applySnapToAll(target, { animate = true, duration = 240 } = {}) {
     const finish = () => {
       if (done) return;
       done = true;
-
       viewEl.classList.remove("split-animating");
       setStateClass(viewEl, target);
       setCollapseFx(viewEl, target === 0 ? 0 : target === 100 ? 100 : middle);
@@ -181,13 +183,16 @@ function setupOneView(ctx) {
       );
     }
 
-    // На mobile учитываем padding-bottom у view-bottom-half (чтобы stop был на высоте nav)
+    // Учитываем нижний padding и высоту handler,
+    // чтобы handler не уходил под nav в mobile.
     const bottomHalf = viewEl.querySelector(".view-bottom-half");
     const bottomPad = bottomHalf
       ? parseFloat(getComputedStyle(bottomHalf).paddingBottom || "0")
       : 0;
 
-    const usableHeight = Math.max(1, rect.height - bottomPad);
+    const handlerPx = handler.getBoundingClientRect().height || 16;
+    const usableHeight = Math.max(1, rect.height - bottomPad - handlerPx);
+
     return clamp(((ev.clientY - rect.top) / usableHeight) * 100, 0, 100);
   };
 
@@ -200,6 +205,14 @@ function setupOneView(ctx) {
       "split-middle",
       "split-bottom-hidden",
     );
+
+    // Когда подходим к нижней границе на mobile,
+    // держим handler у nav уже во время drag.
+    if (isMobilePortrait() && lastRaw >= 94) {
+      viewEl.dataset.splitTarget = "bottom";
+    } else {
+      viewEl.dataset.splitTarget = "";
+    }
 
     viewEl.style.setProperty("--split", `${lastRaw}%`);
     setCollapseFx(viewEl, lastRaw);

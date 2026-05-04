@@ -439,7 +439,8 @@ html.dark .app-bg::before {
 }
 
 /* top hidden */
-:is(#view-stopwatch, #view-timer, #view-tabata).split-top-hidden .view-top-half {
+:is(#view-stopwatch, #view-timer, #view-tabata).split-top-hidden
+  .view-top-half {
   flex-basis: 0.12%;
   min-height: 0;
   min-width: 0;
@@ -453,7 +454,7 @@ html.dark .app-bg::before {
   overflow: visible;
 }
 
-/* bottom hidden (default fallback; landscape overrides below) */
+/* bottom hidden (default fallback; mobile override below) */
 :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
   .view-top-half {
   flex: 1 1 auto;
@@ -488,26 +489,37 @@ html.dark .app-bg::before {
 }
 
 /* while animating to bottom, pin handler to nav zone immediately */
-:is(#view-stopwatch, #view-timer, #view-tabata).split-animating[data-split-target="bottom"]
+:is(
+    #view-stopwatch,
+    #view-timer,
+    #view-tabata
+  ).split-animating[data-split-target="bottom"]
   .view-bottom-half {
   height: calc(var(--handler-size) + var(--nav-height));
   min-height: calc(var(--handler-size) + var(--nav-height));
   padding-bottom: var(--nav-height);
 }
 
-:is(#view-stopwatch, #view-timer, #view-tabata).split-animating[data-split-target="bottom"]
+:is(
+    #view-stopwatch,
+    #view-timer,
+    #view-tabata
+  ).split-animating[data-split-target="bottom"]
   .resizer_handler {
   top: auto;
   bottom: var(--nav-height);
 }
 
-/* ===== MOBILE PORTRAIT: do not collapse bottom height physically ===== */
+/* MOBILE PORTRAIT: do not physically collapse bottom half;
+   only hide its content and keep handler at nav line */
 @media (max-width: 767px) and (orientation: portrait) {
-  :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden .view-top-half {
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
+    .view-top-half {
     flex-basis: 100%;
   }
 
-  :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden .view-bottom-half {
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
+    .view-bottom-half {
     flex: 1 1 auto;
     min-height: 0;
     height: auto;
@@ -533,7 +545,11 @@ html.dark .app-bg::before {
     overflow: hidden;
   }
 
-  :is(#view-stopwatch, #view-timer, #view-tabata).split-animating[data-split-target="bottom"]
+  :is(
+      #view-stopwatch,
+      #view-timer,
+      #view-tabata
+    ).split-live[data-split-target="bottom"]
     .view-bottom-half {
     flex: 1 1 auto;
     min-height: 0;
@@ -541,7 +557,33 @@ html.dark .app-bg::before {
     padding-bottom: var(--nav-height);
   }
 
-  :is(#view-stopwatch, #view-timer, #view-tabata).split-animating[data-split-target="bottom"]
+  :is(
+      #view-stopwatch,
+      #view-timer,
+      #view-tabata
+    ).split-live[data-split-target="bottom"]
+    .resizer_handler {
+    top: auto;
+    bottom: var(--nav-height);
+  }
+
+  :is(
+      #view-stopwatch,
+      #view-timer,
+      #view-tabata
+    ).split-animating[data-split-target="bottom"]
+    .view-bottom-half {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto;
+    padding-bottom: var(--nav-height);
+  }
+
+  :is(
+      #view-stopwatch,
+      #view-timer,
+      #view-tabata
+    ).split-animating[data-split-target="bottom"]
     .resizer_handler {
     top: auto;
     bottom: var(--nav-height);
@@ -569,12 +611,16 @@ html.dark .app-bg::before {
     filter 120ms linear;
 }
 
-:is(#view-stopwatch, #view-timer, #view-tabata).split-top-hidden .view-top-half .top_content {
+:is(#view-stopwatch, #view-timer, #view-tabata).split-top-hidden
+  .view-top-half
+  .top_content {
   opacity: 0;
   filter: blur(2.4px);
 }
 
-:is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden .view-bottom-half .mid_content {
+:is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
+  .view-bottom-half
+  .mid_content {
   opacity: 0;
   filter: blur(2.4px);
 }
@@ -687,7 +733,11 @@ html.dark .app-bg::before {
     bottom: auto;
   }
 
-  :is(#view-stopwatch, #view-timer, #view-tabata).split-animating[data-split-target="bottom"]
+  :is(
+      #view-stopwatch,
+      #view-timer,
+      #view-tabata
+    ).split-animating[data-split-target="bottom"]
     .view-bottom-half {
     width: var(--handler-size);
     min-width: var(--handler-size);
@@ -696,7 +746,11 @@ html.dark .app-bg::before {
     min-height: var(--handler-size);
   }
 
-  :is(#view-stopwatch, #view-timer, #view-tabata).split-animating[data-split-target="bottom"]
+  :is(
+      #view-stopwatch,
+      #view-timer,
+      #view-tabata
+    ).split-animating[data-split-target="bottom"]
     .resizer_handler {
     top: 0;
     bottom: auto;
