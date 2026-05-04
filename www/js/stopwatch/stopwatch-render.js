@@ -4,6 +4,42 @@ import { $, formatTime, updateText } from "../utils.js?v=VERSION";
 import { t } from "../i18n.js?v=VERSION";
 import { uiSettingsManager } from "../ui-settings.js?v=VERSION";
 
+const pad2 = (n) => String(n).padStart(2, "0");
+
+// Main stopwatch display:
+// < 1h  -> MM:SS(.cc)
+// >= 1h -> HH:MM:SS(.cc)
+// When days exist, hours are shown in 00-23 range (not cumulative 84, 120, etc.)
+function formatStopwatchMain(ms, { showMs = false } = {}) {
+  const safeMs = Math.max(0, Math.floor(ms));
+  const totalSec = Math.floor(safeMs / 1000);
+
+  const days = Math.floor(totalSec / 86400);
+  const totalHours = Math.floor(totalSec / 3600);
+  const hours = days > 0 ? totalHours % 24 : totalHours;
+
+  const minutes = Math.floor((totalSec % 3600) / 60);
+  const seconds = totalSec % 60;
+  const centis = Math.floor((safeMs % 1000) / 10);
+
+  const base =
+    totalHours > 0 || days > 0
+      ? `${pad2(hours)}:${pad2(minutes)}:${pad2(seconds)}`
+      : `${pad2(minutes)}:${pad2(seconds)}`;
+
+  return showMs ? `${base}.${pad2(centis)}` : base;
+}
+
+function formatStopwatchExtended(ms) {
+  const totalSec = Math.floor(Math.max(0, ms) / 1000);
+  const days = Math.floor(totalSec / 86400);
+  const hours = Math.floor((totalSec % 86400) / 3600);
+
+  if (days > 0) return `${days}${t("day_short")} ${hours}${t("hour_short")}`;
+  if (hours > 0) return `${hours}${t("hour_short")}`;
+  return "";
+}
+
 export function setupStopwatchRender(sw) {
   sw.createLapElement = (lap, isLatest = false) => {
     const lapTemplate = $("sw-lap-row-template");
@@ -29,11 +65,15 @@ export function setupStopwatchRender(sw) {
 
     const shouldForceHours = sw.elapsedTime >= 3600000;
 
-    div.querySelector('[data-template="lap-index"]').textContent = `${t("lap_text")} ${lap.index}`;
-    div.querySelector('[data-template="lap-total"]').textContent = formatTime(lap.total, {
-      showMs: uiSettingsManager.showMs,
-      forceHours: shouldForceHours,
-    });
+    div.querySelector('[data-template="lap-index"]').textContent =
+      `${t("lap_text")} ${lap.index}`;
+    div.querySelector('[data-template="lap-total"]').textContent = formatTime(
+      lap.total,
+      {
+        showMs: uiSettingsManager.showMs,
+        forceHours: shouldForceHours,
+      },
+    );
 
     const splitTimeEl = div.querySelector('[data-template="lap-split"]');
     splitTimeEl.textContent = formatTime(lap.diff, {
@@ -63,7 +103,9 @@ export function setupStopwatchRender(sw) {
     }
 
     [...sw.laps].reverse().forEach((lap, i, arr) => {
-      sw.els.lapsContainer.prepend(sw.createLapElement(lap, i === arr.length - 1));
+      sw.els.lapsContainer.prepend(
+        sw.createLapElement(lap, i === arr.length - 1),
+      );
     });
   };
 
@@ -116,32 +158,45 @@ export function setupStopwatchRender(sw) {
       const shouldForceHours = session.totalTime >= 3600000;
 
       const dateObj = new Date(session.date || session.id);
-      const dateStr = `${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      })}`;
-
-      sessionElement.querySelector('[data-template="name"]').textContent = session.name;
-      sessionElement.querySelector('[data-template="date"]').textContent = dateStr;
-      sessionElement.querySelector('[data-template="totalTime"]').textContent = formatTime(
-        session.totalTime,
+      const dateStr = `${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString(
+        [],
         {
+          hour: "2-digit",
+          minute: "2-digit",
+        },
+      )}`;
+
+      sessionElement.querySelector('[data-template="name"]').textContent =
+        session.name;
+      sessionElement.querySelector('[data-template="date"]').textContent =
+        dateStr;
+      sessionElement.querySelector('[data-template="totalTime"]').textContent =
+        formatTime(session.totalTime, {
           showMs: uiSettingsManager.showMs,
           forceHours: shouldForceHours,
-        },
-      );
+        });
 
-      const header = sessionElement.querySelector('[data-template-id="header"]');
-      const share = sessionElement.querySelector('[data-template-id="shareBtn"]');
-      const rename = sessionElement.querySelector('[data-template-id="renameBtn"]');
-      const del = sessionElement.querySelector('[data-template-id="deleteBtn"]');
+      const header = sessionElement.querySelector(
+        '[data-template-id="header"]',
+      );
+      const share = sessionElement.querySelector(
+        '[data-template-id="shareBtn"]',
+      );
+      const rename = sessionElement.querySelector(
+        '[data-template-id="renameBtn"]',
+      );
+      const del = sessionElement.querySelector(
+        '[data-template-id="deleteBtn"]',
+      );
 
       header.dataset.id = session.id;
       if (share) share.dataset.id = session.id;
       if (rename) rename.dataset.id = session.id;
       if (del) del.dataset.id = session.id;
 
-      const detailsEl = sessionElement.querySelector('[data-template-id="details"]');
+      const detailsEl = sessionElement.querySelector(
+        '[data-template-id="details"]',
+      );
       const iconEl = sessionElement.querySelector('[data-template-id="icon"]');
       detailsEl.id = `sw-details-${session.id}`;
       iconEl.id = `sw-icon-${session.id}`;
@@ -150,14 +205,17 @@ export function setupStopwatchRender(sw) {
       if (rename) rename.textContent = t("rename");
       if (del) del.textContent = t("delete");
 
-      const lapsContainer = sessionElement.querySelector('[data-template="lapsContainer"]');
+      const lapsContainer = sessionElement.querySelector(
+        '[data-template="lapsContainer"]',
+      );
 
       const headerDiv = document.createElement("div");
       headerDiv.className =
         "flex justify-between items-center py-1.5 border-b border-gray-500/30 mb-1 px-2";
 
       const lapSpan = document.createElement("span");
-      lapSpan.className = "text-[10px] font-bold app-text-sec uppercase tracking-wider";
+      lapSpan.className =
+        "text-[10px] font-bold app-text-sec uppercase tracking-wider";
       lapSpan.textContent = t("lap_text");
 
       const timesDiv = document.createElement("div");
@@ -184,15 +242,17 @@ export function setupStopwatchRender(sw) {
         lapElement.querySelector('[data-template="lap-index"]').textContent =
           `${t("lap_text")} ${lap.index}`;
 
-        lapElement.querySelector('[data-template="lap-total"]').textContent = formatTime(lap.total, {
-          showMs: uiSettingsManager.showMs,
-          forceHours: shouldForceHours,
-        });
+        lapElement.querySelector('[data-template="lap-total"]').textContent =
+          formatTime(lap.total, {
+            showMs: uiSettingsManager.showMs,
+            forceHours: shouldForceHours,
+          });
 
-        lapElement.querySelector('[data-template="lap-split"]').textContent = formatTime(lap.diff, {
-          showMs: uiSettingsManager.showMs,
-          forceHours: shouldForceHours,
-        });
+        lapElement.querySelector('[data-template="lap-split"]').textContent =
+          formatTime(lap.diff, {
+            showMs: uiSettingsManager.showMs,
+            forceHours: shouldForceHours,
+          });
 
         lapsContainer.appendChild(lapElement);
       });
@@ -219,31 +279,21 @@ export function setupStopwatchRender(sw) {
 
   sw.updateDisplay = () => {
     const showMs = uiSettingsManager.showMs;
-    const shouldForceHours = sw.elapsedTime >= 3600000;
 
-    const mainDisplayParts = formatTime(sw.elapsedTime, {
-      showMs,
-      forceHours: shouldForceHours,
-    }).split(":");
-
-    const mainDisplayStr = shouldForceHours
-      ? mainDisplayParts.join(":")
-      : mainDisplayParts.slice(-2).join(":");
-
+    const mainDisplayStr = formatStopwatchMain(sw.elapsedTime, { showMs });
     updateText(sw.els.display, mainDisplayStr);
 
     if (sw.els.extendedDisplay) {
-      const extStr = formatTime(sw.elapsedTime, {
-        showDays: true,
-        daySuffix: t("day_short"),
-        hourSuffix: t("hour_short"),
-      });
+      const extStr = formatStopwatchExtended(sw.elapsedTime);
 
       if (extStr) {
         updateText(sw.els.extendedDisplay, extStr);
-        sw.els.extendedDisplay.classList.remove("hidden");
+        sw.els.extendedDisplay.classList.remove("hidden", "opacity-0");
       } else {
-        sw.els.extendedDisplay.classList.add("hidden");
+        // Keep line height stable without visible text
+        updateText(sw.els.extendedDisplay, " ");
+        sw.els.extendedDisplay.classList.remove("hidden");
+        sw.els.extendedDisplay.classList.add("opacity-0");
       }
     }
 

@@ -850,6 +850,20 @@ html.dark .app-bg::before {
   padding-right: 0.04em;
 }
 
+/* Stopwatch: keep main time width stable */
+#sw-mainDisplay {
+  display: inline-block;
+  min-inline-size: 12ch; /* HH:MM:SS.cc */
+  text-align: center;
+}
+
+/* Stopwatch: reserve line for days/hours label */
+#sw-extendedDisplay {
+  display: block;
+  min-height: 1.25em;
+  text-align: center;
+}
+
 @container timer-ring (max-width: 260px) {
   .timer-display {
     font-size: clamp(1.55rem, min(18cqi, 18cqb), 2.35rem);
