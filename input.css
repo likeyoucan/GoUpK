@@ -48,9 +48,7 @@
   --safe-left: env(safe-area-inset-left, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
 
-  --nav-height-mobile: 5rem;
-  --nav-height-desktop: 5rem;
-  --nav-height: var(--nav-height-mobile);
+  --nav-height: 5rem;
   --nav-total: calc(var(--nav-height) + var(--safe-bottom));
 
   --split: 65%;
@@ -456,7 +454,7 @@ html.dark .app-bg::before {
   overflow: visible;
 }
 
-/* bottom hidden fallback */
+/* bottom hidden (default fallback; overridden for mobile portrait below) */
 :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
   .view-top-half {
   flex: 1 1 auto;
@@ -490,7 +488,7 @@ html.dark .app-bg::before {
   overflow: hidden;
 }
 
-/* animating to bottom fallback */
+/* while animating to bottom (fallback) */
 :is(
     #view-stopwatch,
     #view-timer,
@@ -514,9 +512,7 @@ html.dark .app-bg::before {
 }
 
 /* MOBILE PORTRAIT:
-   bottom area = nav + handler
-   top area = 100% - nav - handler
-*/
+   bottom area = nav + handler, top = 100% - nav - handler */
 @media (max-width: 767px) and (orientation: portrait) {
   :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
     .view-top-half {
@@ -555,12 +551,24 @@ html.dark .app-bg::before {
       #view-stopwatch,
       #view-timer,
       #view-tabata
+    ).split-live[data-split-target="bottom"]
+    .view-top-half,
+  :is(
+      #view-stopwatch,
+      #view-timer,
+      #view-tabata
     ).split-animating[data-split-target="bottom"]
     .view-top-half {
     flex-basis: calc(100% - var(--nav-height) - var(--handler-size));
     max-height: calc(100% - var(--nav-height) - var(--handler-size));
   }
 
+  :is(
+      #view-stopwatch,
+      #view-timer,
+      #view-tabata
+    ).split-live[data-split-target="bottom"]
+    .view-bottom-half,
   :is(
       #view-stopwatch,
       #view-timer,
@@ -577,80 +585,8 @@ html.dark .app-bg::before {
       #view-stopwatch,
       #view-timer,
       #view-tabata
-    ).split-animating[data-split-target="bottom"]
-    .resizer_handler {
-    top: 0;
-    bottom: auto;
-  }
-}
-
-/* TWO-COLUMN LANDSCAPE */
-@media (min-width: 768px) and (orientation: landscape) {
-  :root {
-    --nav-height: var(--nav-height-desktop);
-  }
-
-  .view-bottom-half {
-    padding-bottom: 0;
-    flex-direction: row;
-  }
-
-  .mid_content {
-    padding-top: 24px;
-    padding-left: calc(var(--handler-size) + 12px);
-    padding-right: 0;
-  }
-
-  .resizer_handler {
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: auto;
-    width: var(--handler-size);
-    height: 100%;
-  }
-
-  .resizer_handler::before {
-    width: 3px;
-    height: clamp(28px, 20vh, 72px);
-  }
-
-  .resizer_handler::after {
-    inset: 0 -10px;
-  }
-
-  :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
-    .view-bottom-half {
-    flex: 0 0 auto;
-    width: var(--handler-size);
-    min-width: var(--handler-size);
-    height: auto;
-    min-height: var(--handler-size);
-    padding-bottom: 0;
-    transform: none;
-    overflow: visible;
-  }
-
-  :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
-    .view-bottom-half
-    .resizer_handler {
-    top: 0;
-    bottom: auto;
-  }
-
-  :is(
-      #view-stopwatch,
-      #view-timer,
-      #view-tabata
-    ).split-animating[data-split-target="bottom"]
-    .view-bottom-half {
-    width: var(--handler-size);
-    min-width: var(--handler-size);
-    padding-bottom: 0;
-    height: auto;
-    min-height: var(--handler-size);
-  }
-
+    ).split-live[data-split-target="bottom"]
+    .resizer_handler,
   :is(
       #view-stopwatch,
       #view-timer,
@@ -662,8 +598,7 @@ html.dark .app-bg::before {
   }
 }
 
-/* ===== progressive collapse FX
-   (enabled only after stopper crossing by JS vars) ===== */
+/* ===== progressive collapse FX (blur + opacity to 0) ===== */
 
 .view-top-half .top_content {
   opacity: calc(1 - var(--collapse-top-k));
@@ -729,7 +664,6 @@ html.dark .app-bg::before {
 @media (min-width: 768px) and (orientation: landscape) {
   :root {
     --split: 50%;
-    --nav-height: var(--nav-height-desktop);
   }
 
   #view-stopwatch,
@@ -928,7 +862,7 @@ html.dark .app-bg::before {
 }
 
 /* =========================================
-   7. НАСТРОЙКИ - спец. отступ сверху
+   7. НАСТРОЙКИ — спец. отступ сверху
 ========================================= */
 #view-settings > div:first-child {
   padding-top: calc(var(--safe-top) + 0.5rem);
@@ -1089,7 +1023,6 @@ html.dark .app-bg::before {
   background-color: var(--default-accent-light);
   transition: background-color 0.3s;
 }
-
 .dark .default-accent-btn {
   background-color: var(--default-accent-dark);
 }
@@ -1098,7 +1031,6 @@ html.dark .app-bg::before {
   background-color: var(--default-bg-light);
   transition: background-color 0.3s;
 }
-
 .dark .default-bg-btn {
   background-color: var(--default-bg-dark);
 }
@@ -1142,7 +1074,7 @@ html.dark .app-bg::before {
 }
 
 /* =========================================
-   15. МОДАЛЬНЫЕ ОКНА - АЛЕРТЫ
+   15. МОДАЛЬНЫЕ ОКНА — АЛЕРТЫ
 ========================================= */
 #reset-modal,
 #sw-clear-modal,
@@ -1566,7 +1498,6 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
 html.js-nav-forward::view-transition-old(root) {
   animation: 420ms cubic-bezier(0.32, 0.72, 0, 1) both slide-out-to-left;
 }
-
 html.js-nav-forward::view-transition-new(root) {
   animation: 420ms cubic-bezier(0.32, 0.72, 0, 1) both slide-in-from-right;
 }
@@ -1574,7 +1505,6 @@ html.js-nav-forward::view-transition-new(root) {
 html.js-nav-backward::view-transition-old(root) {
   animation: 420ms cubic-bezier(0.32, 0.72, 0, 1) both slide-out-to-right;
 }
-
 html.js-nav-backward::view-transition-new(root) {
   animation: 420ms cubic-bezier(0.32, 0.72, 0, 1) both slide-in-from-left;
 }
@@ -1582,7 +1512,6 @@ html.js-nav-backward::view-transition-new(root) {
 html.js-nav-tap::view-transition-old(root) {
   animation: 280ms cubic-bezier(0.32, 0.72, 0, 1) both tap-old-fade;
 }
-
 html.js-nav-tap::view-transition-new(root) {
   animation: 320ms cubic-bezier(0.32, 0.72, 0, 1) both tap-new-fade;
 }
@@ -1770,7 +1699,6 @@ body.hide-nav-labels .nav-btn {
   .nav-btn:hover > div:not(.primary-text) {
     transform: scale(1.08);
   }
-
   .nav-btn:hover > div:not(.primary-text),
   .nav-btn:hover > span:not(.primary-text) {
     color: var(--primary-color);
