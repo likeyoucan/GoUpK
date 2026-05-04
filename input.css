@@ -357,7 +357,10 @@ html.dark .app-bg::before {
   flex: 1;
   min-height: 0;
   overflow: hidden;
-  transition: opacity 0.18s ease;
+  padding-top: calc(var(--handler-size) + 10px);
+  transition:
+    opacity 0.18s ease,
+    filter 0.18s ease;
 }
 
 #tb-runningControls {
@@ -419,7 +422,8 @@ html.dark .app-bg::before {
   cursor: grabbing;
 }
 
-/* Middle state */
+/* ===== split states ===== */
+
 :is(#view-stopwatch, #view-timer, #view-tabata).split-middle .view-top-half {
   flex-basis: var(--split);
 }
@@ -434,7 +438,6 @@ html.dark .app-bg::before {
   min-height: 0;
 }
 
-/* Top collapsed */
 :is(#view-stopwatch, #view-timer, #view-tabata).split-top-hidden
   .view-top-half {
   flex-basis: 0.12%;
@@ -450,12 +453,12 @@ html.dark .app-bg::before {
   overflow: visible;
 }
 
-/* Bottom collapsed (mobile: handler sits above nav via bottom-half padding) */
 :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
   .view-top-half {
   flex: 1 1 auto;
 }
 
+/* Mobile: bottom-half stops at nav via its own padding-bottom */
 :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
   .view-bottom-half {
   flex: 0 0 auto;
@@ -463,9 +466,6 @@ html.dark .app-bg::before {
   min-height: calc(var(--handler-size) + var(--nav-height));
   overflow: visible;
   position: relative;
-  left: auto;
-  right: auto;
-  bottom: auto;
   transform: none;
   padding-bottom: var(--nav-height);
 }
@@ -488,20 +488,65 @@ html.dark .app-bg::before {
   overflow: hidden;
 }
 
-/* Progressive collapse FX */
+/* During animation to bottom: keep handler at nav height immediately */
+:is(
+    #view-stopwatch,
+    #view-timer,
+    #view-tabata
+  ).split-animating[data-split-target="bottom"]
+  .view-bottom-half {
+  height: calc(var(--handler-size) + var(--nav-height));
+  min-height: calc(var(--handler-size) + var(--nav-height));
+  padding-bottom: var(--nav-height);
+}
+
+:is(
+    #view-stopwatch,
+    #view-timer,
+    #view-tabata
+  ).split-animating[data-split-target="bottom"]
+  .resizer_handler {
+  top: auto;
+  bottom: var(--nav-height);
+}
+
+/* ===== progressive collapse FX ===== */
+
 .view-top-half .top_content {
-  opacity: calc(1 - (var(--collapse-top-k) * 0.35));
-  filter: blur(calc(var(--collapse-top-k) * 2px));
+  opacity: calc(1 - var(--collapse-top-k));
+  filter: blur(calc(var(--collapse-top-k) * 2.2px));
   transform: scale(calc(1 - (var(--collapse-top-k) * 0.012)));
   transform-origin: center center;
+  transition:
+    opacity 120ms linear,
+    filter 120ms linear,
+    transform 120ms linear;
 }
 
 .view-bottom-half .mid_content {
-  opacity: calc(1 - (var(--collapse-bottom-k) * 0.4));
-  filter: blur(calc(var(--collapse-bottom-k) * 2.2px));
+  opacity: calc(1 - var(--collapse-bottom-k));
+  filter: blur(calc(var(--collapse-bottom-k) * 2.4px));
+  transition:
+    opacity 120ms linear,
+    filter 120ms linear;
 }
 
-/* Runtime interaction phases */
+:is(#view-stopwatch, #view-timer, #view-tabata).split-top-hidden
+  .view-top-half
+  .top_content {
+  opacity: 0;
+  filter: blur(2.4px);
+}
+
+:is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
+  .view-bottom-half
+  .mid_content {
+  opacity: 0;
+  filter: blur(2.4px);
+}
+
+/* ===== runtime interaction phases ===== */
+
 :is(#view-stopwatch, #view-timer, #view-tabata).split-live .view-top-half,
 :is(#view-stopwatch, #view-timer, #view-tabata).split-live .view-bottom-half,
 :is(#view-stopwatch, #view-timer, #view-tabata).split-live .mid_content {
@@ -562,6 +607,9 @@ html.dark .app-bg::before {
 
   .mid_content {
     padding-block: 24px;
+    padding-top: 24px;
+    padding-left: calc(var(--handler-size) + 12px);
+    padding-right: 0;
   }
 
   .mid_content > div.app-border {
@@ -588,16 +636,41 @@ html.dark .app-bg::before {
 
   :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
     .view-bottom-half {
+    flex: 0 0 auto;
     width: var(--handler-size);
     min-width: var(--handler-size);
     height: auto;
     min-height: var(--handler-size);
     padding-bottom: 0;
     transform: none;
+    overflow: visible;
   }
 
   :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
     .view-bottom-half
+    .resizer_handler {
+    top: 0;
+    bottom: auto;
+  }
+
+  :is(
+      #view-stopwatch,
+      #view-timer,
+      #view-tabata
+    ).split-animating[data-split-target="bottom"]
+    .view-bottom-half {
+    width: var(--handler-size);
+    min-width: var(--handler-size);
+    padding-bottom: 0;
+    height: auto;
+    min-height: var(--handler-size);
+  }
+
+  :is(
+      #view-stopwatch,
+      #view-timer,
+      #view-tabata
+    ).split-animating[data-split-target="bottom"]
     .resizer_handler {
     top: 0;
     bottom: auto;
@@ -623,6 +696,10 @@ html.dark .app-bg::before {
     margin: 0;
   }
 }
+
+/* ===============================================================
+   АДАПТИВНОСТЬ ДЛЯ ДВУХКОЛОНОЧНОГО МАКЕТА ДЛЯ БОЛЬШИХ ЭКРАНОВ
+=============================================================== */
 
 @media (min-width: 1281px) and (orientation: landscape) {
   #app {

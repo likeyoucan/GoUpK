@@ -89,15 +89,21 @@ function updateAllA11y() {
 function applySnapToAll(target, { animate = true, duration = 240 } = {}) {
   const middle = getMiddleAnchor();
   const visualTarget = target === 0 ? 0.15 : target === 100 ? 99.85 : middle;
+  const targetName =
+    target === 0 ? "top" : target === 100 ? "bottom" : "middle";
 
   views.forEach(({ viewEl, topHalf }) => {
     if (!viewEl || !topHalf) return;
+
+    // Нужен для CSS, чтобы handler сразу занимал правильную позицию в split-animating
+    viewEl.dataset.splitTarget = targetName;
 
     if (!animate) {
       viewEl.classList.remove("split-live", "split-animating");
       viewEl.style.setProperty("--split", `${visualTarget}%`);
       setStateClass(viewEl, target);
       setCollapseFx(viewEl, target === 0 ? 0 : target === 100 ? 100 : middle);
+      viewEl.dataset.splitTarget = "";
       return;
     }
 
@@ -105,6 +111,7 @@ function applySnapToAll(target, { animate = true, duration = 240 } = {}) {
     viewEl.classList.remove("split-live");
     viewEl.classList.add("split-animating");
 
+    // Нейтральный класс на время анимации
     setStateClass(viewEl, middle);
     viewEl.style.setProperty("--split", `${visualTarget}%`);
     setCollapseFx(viewEl, visualTarget);
@@ -113,9 +120,11 @@ function applySnapToAll(target, { animate = true, duration = 240 } = {}) {
     const finish = () => {
       if (done) return;
       done = true;
+
       viewEl.classList.remove("split-animating");
       setStateClass(viewEl, target);
       setCollapseFx(viewEl, target === 0 ? 0 : target === 100 ? 100 : middle);
+      viewEl.dataset.splitTarget = "";
     };
 
     const onEnd = (e) => {
@@ -131,7 +140,7 @@ function applySnapToAll(target, { animate = true, duration = 240 } = {}) {
     }, duration + 90);
   });
 
-  globalSnap = target === 0 ? "top" : target === 100 ? "bottom" : "middle";
+  globalSnap = targetName;
   updateAllA11y();
 }
 
@@ -153,6 +162,7 @@ function setupOneView(ctx) {
   let dragging = false;
   let activePointerType = "touch";
   let lastRaw = getTargetFromGlobalSnap();
+
   let lastTs = 0;
   let lastRawForVel = lastRaw;
   let velocity = 0;
@@ -171,6 +181,7 @@ function setupOneView(ctx) {
       );
     }
 
+    // На mobile учитываем padding-bottom у view-bottom-half (чтобы stop был на высоте nav)
     const bottomHalf = viewEl.querySelector(".view-bottom-half");
     const bottomPad = bottomHalf
       ? parseFloat(getComputedStyle(bottomHalf).paddingBottom || "0")
@@ -189,6 +200,7 @@ function setupOneView(ctx) {
       "split-middle",
       "split-bottom-hidden",
     );
+
     viewEl.style.setProperty("--split", `${lastRaw}%`);
     setCollapseFx(viewEl, lastRaw);
 
@@ -243,9 +255,11 @@ function setupOneView(ctx) {
     activePointerType = e.pointerType || "touch";
     velocity = 0;
     lastTs = performance.now();
+
     lastRaw =
       parseFloat(viewEl.style.getPropertyValue("--split")) ||
       getTargetFromGlobalSnap();
+
     lastRawForVel = lastRaw;
 
     handler.classList.add("is-dragging");
