@@ -941,10 +941,10 @@ html.dark .app-bg::before {
 /* =========================================
    9. ОТСТУПЫ СКРОЛЛ-КОНТЕЙНЕРОВ ОТ НАВИГАЦИИ
 ========================================= */
-/* #sw-lapsContainer,
+#sw-lapsContainer,
 #tb-workoutsList {
-  padding-bottom: calc(var(--nav-total) + 2rem);
-} */
+  padding-bottom: var(--nav-height);
+}
 
 /* =========================================
    10. TOAST УВЕДОМЛЕНИЕ
