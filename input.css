@@ -873,9 +873,9 @@ html.dark .app-bg::before {
 
 #sw-statusText{
   position: absolute;
-  inset: 0 0 64px 0;
+  inset: 0 0 68px 0;
   width: 100%;
-  height: 42px;
+  height: 48px;
   display: flex;
   justify-content: center;
   align-items: center;
