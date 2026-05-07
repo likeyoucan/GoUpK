@@ -48,7 +48,7 @@ export function setupTabataRender(tb) {
     const timeStr = formatTime(rem);
     updateText(tb.els.timer, timeStr);
 
-    // Avoid title updates every frame on active screen (reduces micro-jank)
+    // Avoid title churn each frame on active screen
     if (document.hidden) updateTitle(`${tb.status}: ${timeStr}`);
 
     if (tb.els.ring) {
@@ -57,25 +57,22 @@ export function setupTabataRender(tb) {
         tb.phaseDuration > 0
           ? Math.max(0, Math.min(1, elapsed / tb.phaseDuration))
           : 0;
+
       const targetOffset = tb.ringLength - progress * tb.ringLength;
 
-      const now = performance.now();
-
-      if (tb.ringSoftSync && now < tb.ringSoftSync.end) {
-        const p =
-          (now - tb.ringSoftSync.start) /
-          (tb.ringSoftSync.end - tb.ringSoftSync.start);
-        const clamped = Math.max(0, Math.min(1, p));
-        const eased = 1 - Math.pow(1 - clamped, 3);
-
-        tb.els.ring.style.strokeDashoffset =
-          tb.ringSoftSync.from + (targetOffset - tb.ringSoftSync.from) * eased;
-
-        if (clamped >= 1) tb.ringSoftSync = null;
-      } else {
-        tb.ringSoftSync = null;
-        tb.els.ring.style.strokeDashoffset = targetOffset;
+      if (!Number.isFinite(tb.ringVisualOffset)) {
+        tb.ringVisualOffset = targetOffset;
       }
+
+      // Slightly faster than timer for crisper phase transitions
+      const alpha = 0.26;
+      tb.ringVisualOffset += (targetOffset - tb.ringVisualOffset) * alpha;
+
+      if (Math.abs(targetOffset - tb.ringVisualOffset) < 0.25) {
+        tb.ringVisualOffset = targetOffset;
+      }
+
+      tb.els.ring.style.strokeDashoffset = tb.ringVisualOffset;
     }
   };
 }

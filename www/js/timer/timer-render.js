@@ -84,7 +84,7 @@ export function setupTimerRender(tm, { updateText, updateTitle }) {
     const timeStr = tm.formatTime(rem, { forceHours });
     updateText(tm.els.display, timeStr);
 
-    // Avoid title updates every frame on active screen (reduces micro-jank)
+    // Avoid title churn each frame on active screen
     if (document.hidden) updateTitle(timeStr);
 
     if (tm.els.ring && tm.totalDuration > 0) {
@@ -92,23 +92,19 @@ export function setupTimerRender(tm, { updateText, updateTitle }) {
       const progress = Math.max(0, Math.min(1, rem / safeTotal)); // remaining ratio
       const targetOffset = tm.ringLength * progress;
 
-      const now = performance.now();
-
-      if (tm.ringSoftSync && now < tm.ringSoftSync.end) {
-        const p =
-          (now - tm.ringSoftSync.start) /
-          (tm.ringSoftSync.end - tm.ringSoftSync.start);
-        const clamped = Math.max(0, Math.min(1, p));
-        const eased = 1 - Math.pow(1 - clamped, 3);
-
-        tm.els.ring.style.strokeDashoffset =
-          tm.ringSoftSync.from + (targetOffset - tm.ringSoftSync.from) * eased;
-
-        if (clamped >= 1) tm.ringSoftSync = null;
-      } else {
-        tm.ringSoftSync = null;
-        tm.els.ring.style.strokeDashoffset = targetOffset;
+      if (!Number.isFinite(tm.ringVisualOffset)) {
+        tm.ringVisualOffset = targetOffset;
       }
+
+      // Smooth approach to target; prevents blink/jumps on fast +/- changes
+      const alpha = 0.22; // 0.18..0.30
+      tm.ringVisualOffset += (targetOffset - tm.ringVisualOffset) * alpha;
+
+      if (Math.abs(targetOffset - tm.ringVisualOffset) < 0.25) {
+        tm.ringVisualOffset = targetOffset;
+      }
+
+      tm.els.ring.style.strokeDashoffset = tm.ringVisualOffset;
     }
   };
 }
