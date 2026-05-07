@@ -123,8 +123,15 @@ export function setupTabataCore(tb) {
     tb.els.timer.classList.add("is-go");
 
     if (tb.els.ring) {
+      // Smooth reset to full ring on stop/complete
+      tb.els.ring.style.transition =
+        "stroke-dashoffset 180ms cubic-bezier(0.32, 0.72, 0, 1)";
       tb.els.ring.style.strokeDashoffset = tb.ringLength;
       tb.ringVisualOffset = tb.ringLength;
+
+      setTimeout(() => {
+        if (tb.els?.ring) tb.els.ring.style.transition = "none";
+      }, 220);
     }
   };
 
