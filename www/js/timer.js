@@ -35,6 +35,10 @@ export const tm = {
   currentAdjustmentSec: 0,
   ringSoftSync: null,
 
+  // Smooth UI loop state
+  rAF: null,
+  lastUiRem: 0,
+
   $,
   t,
   sm,
@@ -80,7 +84,7 @@ export const tm = {
     this.bindInputEvents();
     this.bindCoreEvents();
 
-    // On resume from background, prepare a short ring soft-sync.
+    // On resume from background, prepare a short ring soft-sync and restart smooth UI loop.
     document.addEventListener("visibilitychange", () => {
       if (
         document.visibilityState === "visible" &&
@@ -96,6 +100,8 @@ export const tm = {
           start: now,
           end: now + 220,
         };
+
+        this.startUiLoop?.();
       }
     });
   },

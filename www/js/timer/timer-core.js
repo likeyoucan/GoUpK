@@ -8,6 +8,34 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     return tm.timeRemainingMs;
   };
 
+  // Smooth visual loop: ring/time update each frame from targetTime
+  tm.startUiLoop = () => {
+    if (tm.rAF) cancelAnimationFrame(tm.rAF);
+
+    const loop = () => {
+      if (!tm.isRunning) {
+        tm.rAF = null;
+        return;
+      }
+
+      const rem = Math.max(0, tm.targetTime - performance.now());
+      tm.lastUiRem = rem;
+      tm.timeRemainingMs = rem;
+
+      tm.updateDisplay(rem);
+      tm.updateAdjustButtons();
+
+      tm.rAF = requestAnimationFrame(loop);
+    };
+
+    tm.rAF = requestAnimationFrame(loop);
+  };
+
+  tm.stopUiLoop = () => {
+    if (tm.rAF) cancelAnimationFrame(tm.rAF);
+    tm.rAF = null;
+  };
+
   tm.toggle = () => {
     tm.sm.vibrate(40, "light");
     tm.sm.play("click");
@@ -20,6 +48,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
       tm.isFinished = false;
       tm.remainingAtPause = tm.timeRemainingMs;
       tm.bgWorker.postMessage({ command: "stop" });
+      tm.stopUiLoop();
       tm.releaseWakeLock();
       tm.updateTitle("");
       tm.updateUIState();
@@ -58,11 +87,13 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     tm.isPaused = false;
     tm.isFinished = false;
     tm.targetTime = performance.now() + duration;
+    tm.lastUiRem = duration;
 
     tm.requestWakeLock();
     tm.updateUIState();
     tm.updateDisplay(duration);
     tm.updateAdjustButtons();
+    tm.startUiLoop();
 
     tm.bgWorker.postMessage({ command: "start", time: duration });
   };
@@ -94,12 +125,15 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     tm.remainingAtPause = 0;
     tm.timeRemainingMs = duration;
     tm.targetTime = performance.now() + duration;
+    tm.lastUiRem = duration;
     tm.currentAdjustmentSec = 0;
 
     tm.requestWakeLock();
     tm.updateUIState();
     tm.updateDisplay(duration);
     tm.updateAdjustButtons();
+    tm.startUiLoop();
+
     tm.bgWorker.postMessage({ command: "start", time: duration });
   };
 
@@ -116,8 +150,11 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     tm.totalDuration = 0;
     tm.initialDurationMs = 0;
     tm.timeRemainingMs = 0;
+    tm.lastUiRem = 0;
+    tm.ringSoftSync = null;
 
     tm.bgWorker.postMessage({ command: "reset" });
+    tm.stopUiLoop();
     tm.releaseWakeLock();
     tm.updateTitle("");
 
@@ -152,8 +189,6 @@ export function setupTimerCore(tm, { showToast, updateText }) {
 
       if (tm.isRunning) {
         tm.targetTime = performance.now() + remaining;
-        tm.updateDisplay(remaining);
-        tm.updateAdjustButtons();
       }
 
       if (remaining <= 0 && tm.isRunning) {
@@ -164,6 +199,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
         tm.remainingAtPause = 0;
 
         tm.store.clearActiveTimer();
+        tm.stopUiLoop();
         tm.releaseWakeLock();
         tm.updateTitle("");
         tm.updateUIState();
