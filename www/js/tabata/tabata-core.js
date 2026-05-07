@@ -47,6 +47,9 @@ export function setupTabataCore(tb) {
     tb.paused = false;
     tb.lastBeepSec = 0;
 
+    // New phase cycle stamp for render sync
+    tb.phaseStamp += 1;
+
     tb.els.listSection.classList.add("hidden");
     tb.els.runningControls.classList.remove("hidden");
     tb.els.runningControls.classList.add("flex");
@@ -83,6 +86,9 @@ export function setupTabataCore(tb) {
     tb.phaseEndTime = performance.now() + tb.remainingAtPause;
     tb.lastBeepSec = 0;
 
+    // Resume counts as phase restart for render sync
+    tb.phaseStamp += 1;
+
     startTimerContext();
     bgWorker.postMessage({ command: "start" });
 
@@ -116,7 +122,10 @@ export function setupTabataCore(tb) {
     updateText(tb.els.timer, "GO");
     tb.els.timer.classList.add("is-go");
 
-    if (tb.els.ring) tb.els.ring.style.strokeDashoffset = tb.ringLength;
+    if (tb.els.ring) {
+      tb.els.ring.style.strokeDashoffset = tb.ringLength;
+      tb.ringVisualOffset = tb.ringLength;
+    }
   };
 
   tb.tick = (isBackground = false) => {

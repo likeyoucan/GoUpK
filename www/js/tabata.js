@@ -27,6 +27,11 @@ export const tb = {
   editingWorkoutId: null,
   ringLength: 282.74,
   ringVisualOffset: null,
+
+  // Track phase changes to avoid reverse-jump smoothing at phase boundaries
+  phaseStamp: 0,
+  lastRenderedPhaseStamp: -1,
+
   formatTime,
 
   init() {

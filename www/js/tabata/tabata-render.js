@@ -60,19 +60,25 @@ export function setupTabataRender(tb) {
 
       const targetOffset = tb.ringLength - progress * tb.ringLength;
 
-      if (!Number.isFinite(tb.ringVisualOffset)) {
+      // First frame of a new phase: snap once to avoid reverse jump.
+      if (tb.lastRenderedPhaseStamp !== tb.phaseStamp) {
+        tb.lastRenderedPhaseStamp = tb.phaseStamp;
         tb.ringVisualOffset = targetOffset;
+        tb.els.ring.style.strokeDashoffset = targetOffset;
+      } else {
+        if (!Number.isFinite(tb.ringVisualOffset)) {
+          tb.ringVisualOffset = targetOffset;
+        }
+
+        const alpha = 0.22;
+        tb.ringVisualOffset += (targetOffset - tb.ringVisualOffset) * alpha;
+
+        if (Math.abs(targetOffset - tb.ringVisualOffset) < 0.25) {
+          tb.ringVisualOffset = targetOffset;
+        }
+
+        tb.els.ring.style.strokeDashoffset = tb.ringVisualOffset;
       }
-
-      // Slightly faster than timer for crisper phase transitions
-      const alpha = 0.26;
-      tb.ringVisualOffset += (targetOffset - tb.ringVisualOffset) * alpha;
-
-      if (Math.abs(targetOffset - tb.ringVisualOffset) < 0.25) {
-        tb.ringVisualOffset = targetOffset;
-      }
-
-      tb.els.ring.style.strokeDashoffset = tb.ringVisualOffset;
     }
   };
 }

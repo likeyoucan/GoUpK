@@ -9,6 +9,7 @@ export function setupTabataPhases(tb) {
     if (tb.status === "READY") {
       tb.status = "WORK";
       tb.phaseDuration = tb.work;
+      tb.phaseStamp += 1;
       sm.play("work_start");
     } else if (tb.status === "WORK") {
       if (tb.currentRound >= tb.rounds) {
@@ -16,11 +17,13 @@ export function setupTabataPhases(tb) {
       }
       tb.status = "REST";
       tb.phaseDuration = tb.rest;
+      tb.phaseStamp += 1;
       sm.play("rest_start");
     } else if (tb.status === "REST") {
       tb.currentRound += 1;
       tb.status = "WORK";
       tb.phaseDuration = tb.work;
+      tb.phaseStamp += 1;
       sm.play("work_start");
     }
 
@@ -32,7 +35,11 @@ export function setupTabataPhases(tb) {
 
     while (remainingMissed > 0 && tb.status !== "STOPPED") {
       const currentPhaseDuration =
-        tb.status === "READY" ? tb.phaseDuration : tb.status === "WORK" ? tb.work : tb.rest;
+        tb.status === "READY"
+          ? tb.phaseDuration
+          : tb.status === "WORK"
+            ? tb.work
+            : tb.rest;
 
       const step = Math.min(remainingMissed, currentPhaseDuration);
       remainingMissed -= step;
