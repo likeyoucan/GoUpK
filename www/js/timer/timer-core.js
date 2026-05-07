@@ -8,7 +8,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     return tm.timeRemainingMs;
   };
 
-  // Smooth visual loop: ring/time update each frame from targetTime
+  // Smooth visual loop: UI/ring updates each frame from targetTime
   tm.startUiLoop = () => {
     if (tm.rAF) cancelAnimationFrame(tm.rAF);
 
@@ -36,6 +36,32 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     tm.rAF = null;
   };
 
+  tm.finishAsCompleted = () => {
+    tm.isRunning = false;
+    tm.isPaused = false;
+    tm.isFinished = true;
+    tm.timeRemainingMs = 0;
+    tm.remainingAtPause = 0;
+    tm.ringSoftSync = null;
+
+    tm.updateDisplay(0);
+    if (tm.els?.ring) tm.els.ring.style.strokeDashoffset = 0;
+
+    tm.store.clearActiveTimer();
+    tm.stopUiLoop();
+    tm.releaseWakeLock();
+    tm.updateTitle("");
+    tm.updateUIState();
+
+    tm.sm.vibrate([200, 100, 200, 100, 400], "strong");
+    tm.sm.play("complete");
+    tm.announceToScreenReader(tm.t("timer_finished"));
+
+    requestAnimationFrame(() => {
+      showToast(tm.t("timer_finished"));
+    });
+  };
+
   tm.toggle = () => {
     tm.sm.vibrate(40, "light");
     tm.sm.play("click");
@@ -47,6 +73,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
       tm.isPaused = true;
       tm.isFinished = false;
       tm.remainingAtPause = tm.timeRemainingMs;
+
       tm.bgWorker.postMessage({ command: "stop" });
       tm.stopUiLoop();
       tm.releaseWakeLock();
@@ -194,45 +221,51 @@ export function setupTimerCore(tm, { showToast, updateText }) {
       }
 
       if (remaining <= 0 && tm.isRunning) {
-        tm.isRunning = false;
-        tm.isPaused = false;
-        tm.isFinished = true;
-        tm.timeRemainingMs = 0;
-        tm.remainingAtPause = 0;
-
-        // Final visual sync before stopping loop
-        tm.updateDisplay(0);
-        if (tm.els?.ring) tm.els.ring.style.strokeDashoffset = 0;
-
-        tm.store.clearActiveTimer();
-        tm.stopUiLoop();
-        tm.releaseWakeLock();
-        tm.updateTitle("");
-        tm.updateUIState();
-
-        tm.sm.vibrate([200, 100, 200, 100, 400], "strong");
-        tm.sm.play("complete");
-        tm.announceToScreenReader(tm.t("timer_finished"));
-
-        requestAnimationFrame(() => {
-          showToast(tm.t("timer_finished"));
-        });
+        tm.finishAsCompleted();
       }
     });
 
     tm.els.adjustPlusBtn?.addEventListener("click", () => {
       tm.sm.play("tick");
       tm.sm.vibrate(50, "medium");
+
       const adjustmentMs = tm.currentAdjustmentSec * 1000;
+
+      // Local immediate sync (prevents ring blink before worker responds)
       tm.totalDuration = Math.max(1, tm.totalDuration + adjustmentMs);
+      tm.timeRemainingMs = Math.max(0, tm.timeRemainingMs + adjustmentMs);
+      tm.targetTime = performance.now() + tm.timeRemainingMs;
+      tm.lastUiRem = tm.timeRemainingMs;
+      tm.ringSoftSync = null;
+
+      tm.updateDisplay(tm.timeRemainingMs);
+      tm.updateAdjustButtons();
+
       tm.bgWorker.postMessage({ command: "adjust", time: adjustmentMs });
     });
 
     tm.els.adjustMinusBtn?.addEventListener("click", () => {
       tm.sm.play("tick");
       tm.sm.vibrate(50, "medium");
+
       const adjustmentMs = -tm.currentAdjustmentSec * 1000;
+
+      // Local immediate sync
       tm.totalDuration = Math.max(1, tm.totalDuration + adjustmentMs);
+      tm.timeRemainingMs = Math.max(0, tm.timeRemainingMs + adjustmentMs);
+      tm.targetTime = performance.now() + tm.timeRemainingMs;
+      tm.lastUiRem = tm.timeRemainingMs;
+      tm.ringSoftSync = null;
+
+      if (tm.timeRemainingMs <= 0 && tm.isRunning) {
+        tm.bgWorker.postMessage({ command: "reset" });
+        tm.finishAsCompleted();
+        return;
+      }
+
+      tm.updateDisplay(tm.timeRemainingMs);
+      tm.updateAdjustButtons();
+
       tm.bgWorker.postMessage({ command: "adjust", time: adjustmentMs });
     });
   };
