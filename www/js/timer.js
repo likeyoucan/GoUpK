@@ -39,6 +39,9 @@ export const tm = {
   rAF: null,
   lastUiRem: 0,
 
+  // Ignore stale worker ticks briefly after +/- adjustments
+  skipWorkerTickUntil: 0,
+
   $,
   t,
   sm,
@@ -84,7 +87,7 @@ export const tm = {
     this.bindInputEvents();
     this.bindCoreEvents();
 
-    // On resume from background, prepare a short ring soft-sync and restart smooth UI loop.
+    // On resume from background, prepare short ring soft-sync and restart smooth UI loop.
     document.addEventListener("visibilitychange", () => {
       if (
         document.visibilityState === "visible" &&

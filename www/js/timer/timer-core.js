@@ -116,6 +116,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     tm.targetTime = performance.now() + duration;
     tm.lastUiRem = duration;
     tm.ringSoftSync = null;
+    tm.skipWorkerTickUntil = 0;
 
     tm.requestWakeLock();
     tm.updateUIState();
@@ -156,6 +157,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     tm.lastUiRem = duration;
     tm.currentAdjustmentSec = 0;
     tm.ringSoftSync = null;
+    tm.skipWorkerTickUntil = 0;
 
     tm.requestWakeLock();
     tm.updateUIState();
@@ -181,6 +183,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     tm.timeRemainingMs = 0;
     tm.lastUiRem = 0;
     tm.ringSoftSync = null;
+    tm.skipWorkerTickUntil = 0;
 
     tm.bgWorker.postMessage({ command: "reset" });
     tm.stopUiLoop();
@@ -214,10 +217,26 @@ export function setupTimerCore(tm, { showToast, updateText }) {
       if (e.data?.type !== "tick") return;
 
       const remaining = e.data.time;
+      const now = performance.now();
+
+      // Ignore stale worker ticks right after +/- adjust,
+      // but never ignore completion tick.
+      if (
+        tm.skipWorkerTickUntil &&
+        now < tm.skipWorkerTickUntil &&
+        remaining > 0
+      ) {
+        return;
+      }
+
       tm.timeRemainingMs = remaining;
 
       if (tm.isRunning) {
-        tm.targetTime = performance.now() + remaining;
+        // Re-sync targetTime only on noticeable drift to prevent visual snapping.
+        const predicted = Math.max(0, tm.targetTime - now);
+        if (Math.abs(predicted - remaining) > 220) {
+          tm.targetTime = now + remaining;
+        }
       }
 
       if (remaining <= 0 && tm.isRunning) {
@@ -238,6 +257,9 @@ export function setupTimerCore(tm, { showToast, updateText }) {
       tm.lastUiRem = tm.timeRemainingMs;
       tm.ringSoftSync = null;
 
+      // Ignore stale worker ticks briefly
+      tm.skipWorkerTickUntil = performance.now() + 180;
+
       tm.updateDisplay(tm.timeRemainingMs);
       tm.updateAdjustButtons();
 
@@ -256,6 +278,8 @@ export function setupTimerCore(tm, { showToast, updateText }) {
       tm.targetTime = performance.now() + tm.timeRemainingMs;
       tm.lastUiRem = tm.timeRemainingMs;
       tm.ringSoftSync = null;
+
+      tm.skipWorkerTickUntil = performance.now() + 180;
 
       if (tm.timeRemainingMs <= 0 && tm.isRunning) {
         tm.bgWorker.postMessage({ command: "reset" });

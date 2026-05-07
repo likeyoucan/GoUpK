@@ -47,29 +47,19 @@ export function setupTabataRender(tb) {
 
     const timeStr = formatTime(rem);
     updateText(tb.els.timer, timeStr);
-    updateTitle(`${tb.status}: ${timeStr}`);
+
+    // Avoid title updates every frame on active screen (reduces micro-jank)
+    if (document.hidden) updateTitle(`${tb.status}: ${timeStr}`);
 
     if (tb.els.ring) {
-      const targetOffset =
-        tb.ringLength -
-        (Math.max(0, tb.phaseDuration - rem) / tb.phaseDuration) *
-          tb.ringLength;
+      const elapsed = Math.max(0, tb.phaseDuration - rem);
+      const progress =
+        tb.phaseDuration > 0
+          ? Math.max(0, Math.min(1, elapsed / tb.phaseDuration))
+          : 0;
+      const targetOffset = tb.ringLength - progress * tb.ringLength;
 
-      const currentOffset = parseFloat(tb.els.ring.style.strokeDashoffset);
       const now = performance.now();
-
-      // Auto-start short soft-sync when offset gap is visually noticeable.
-      if (
-        !tb.ringSoftSync &&
-        Number.isFinite(currentOffset) &&
-        Math.abs(currentOffset - targetOffset) > 8
-      ) {
-        tb.ringSoftSync = {
-          from: currentOffset,
-          start: now,
-          end: now + 200,
-        };
-      }
 
       if (tb.ringSoftSync && now < tb.ringSoftSync.end) {
         const p =

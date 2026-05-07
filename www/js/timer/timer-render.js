@@ -83,7 +83,9 @@ export function setupTimerRender(tm, { updateText, updateTitle }) {
 
     const timeStr = tm.formatTime(rem, { forceHours });
     updateText(tm.els.display, timeStr);
-    updateTitle(timeStr);
+
+    // Avoid title updates every frame on active screen (reduces micro-jank)
+    if (document.hidden) updateTitle(timeStr);
 
     if (tm.els.ring && tm.totalDuration > 0) {
       const safeTotal = Math.max(1, tm.totalDuration);
