@@ -50,7 +50,6 @@ export function setupTabataCore(tb) {
     tb.phaseStamp += 1;
     tb.lastRenderedPhaseStamp = -1;
 
-    // Start new run from full ring
     tb.ringCtrl?.snap(tb.ringLength);
 
     tb.els.listSection.classList.add("hidden");
@@ -99,9 +98,13 @@ export function setupTabataCore(tb) {
     tb.updatePhaseStyles();
   };
 
-  tb.stop = () => {
-    sm.vibrate(30, "medium");
-    sm.play("click");
+  // resetRing=false используется при завершении тренировки, чтобы не было визуального рывка.
+  // silent=true отключает "click"/vibrate stop, чтобы не перебивать complete-сигнал.
+  tb.stop = ({ resetRing = true, silent = false } = {}) => {
+    if (!silent) {
+      sm.vibrate(30, "medium");
+      sm.play("click");
+    }
 
     store.clearActiveTimer();
 
@@ -125,7 +128,9 @@ export function setupTabataCore(tb) {
     updateText(tb.els.timer, "GO");
     tb.els.timer.classList.add("is-go");
 
-    tb.ringCtrl?.snap(tb.ringLength);
+    if (resetRing) {
+      tb.ringCtrl?.snap(tb.ringLength);
+    }
   };
 
   tb.tick = (isBackground = false) => {

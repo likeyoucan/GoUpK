@@ -48,7 +48,7 @@ export function setupTabataPhases(tb) {
       if (leftInPhase <= 0) {
         const result = tb.advancePhase();
         if (result === "complete") {
-          tb.stop();
+          tb.stop({ resetRing: false, silent: true });
           return false;
         }
         if (remainingMissed === 0) {
@@ -79,7 +79,7 @@ export function setupTabataPhases(tb) {
 
         requestAnimationFrame(() => {
           showToast(t("tabata_complete"));
-          tb.stop();
+          tb.stop({ resetRing: false, silent: true });
         });
 
         return;
