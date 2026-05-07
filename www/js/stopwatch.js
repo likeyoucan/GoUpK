@@ -17,6 +17,7 @@ import { store } from "./store.js?v=VERSION";
 import { shareResults } from "./share-results.js?v=VERSION";
 import { APP_EVENTS } from "./constants/events.js?v=VERSION";
 
+import { createRingController } from "./ring/ring-controller.js?v=VERSION";
 import { setupStopwatchRender } from "./stopwatch/stopwatch-render.js?v=VERSION";
 import { setupStopwatchSessions } from "./stopwatch/stopwatch-sessions.js?v=VERSION";
 import { setupStopwatchShareController } from "./stopwatch/stopwatch-share-controller.js?v=VERSION";
@@ -34,11 +35,11 @@ const stopwatchModule = {
   pauseTime: 0,
   nameModalState: { action: null, targetId: null, pendingSession: null },
   ringLength: 282.74,
+  ringCtrl: null,
   lastMinuteBeep: 0,
   sortSelect: null,
   pendingShareSession: null,
   pendingLapsRerender: false,
-  ringSoftSync: null,
   shareResults,
 
   init() {
@@ -66,6 +67,13 @@ const stopwatchModule = {
     if (this.els.ring) {
       this.els.ring.style.strokeDasharray = this.ringLength;
       this.els.ring.style.strokeDashoffset = this.ringLength;
+
+      this.ringCtrl = createRingController({
+        ringEl: this.els.ring,
+        initialOffset: this.ringLength,
+        alpha: 0.22,
+      });
+      this.ringCtrl.start();
     }
 
     setupStopwatchRender(this);
@@ -98,28 +106,16 @@ const stopwatchModule = {
     });
 
     document.addEventListener(APP_EVENTS.MS_CHANGED, () => {
-      if (!this.isRunning && this.elapsedTime > 0) {
-        this.updateDisplay();
+      if (!this.isRunning && this.elapsedTime > 0) this.updateDisplay();
+
+      if (this.laps.length === 0) return;
+
+      if (this.isRunning) {
+        this.pendingLapsRerender = true;
+        return;
       }
 
-      if (this.laps.length > 0) {
-        if (this.isRunning) this.pendingLapsRerender = true;
-        else this.reRenderCurrentLaps();
-      }
-
-      // Smooth ring sync to avoid visible jump after ms toggle.
-      if (this.isRunning && this.els?.ring) {
-        const currentOffset = parseFloat(this.els.ring.style.strokeDashoffset);
-        const now = performance.now();
-
-        this.ringSoftSync = {
-          from: Number.isFinite(currentOffset)
-            ? currentOffset
-            : this.ringLength,
-          start: now,
-          end: now + 220,
-        };
-      }
+      this.reRenderCurrentLaps();
     });
 
     this.updateSaveButtonVisibility();
@@ -164,7 +160,6 @@ const stopwatchModule = {
       this.lastMinuteBeep = Math.floor(this.elapsedTime / 60000);
       this.isRunning = true;
       this.pauseTime = 0;
-      this.ringSoftSync = null;
 
       requestWakeLock();
       bgWorker.postMessage({ command: "start" });
@@ -202,6 +197,13 @@ const stopwatchModule = {
     if (now - this.lastRender >= 16 || isBackground) {
       if (!isBackground) {
         this.updateDisplay();
+
+        if (this.ringCtrl) {
+          const targetOffset =
+            this.ringLength -
+            ((this.elapsedTime % 60000) / 60000) * this.ringLength;
+          this.ringCtrl.setTarget(targetOffset);
+        }
       } else {
         updateTitle(
           formatTime(this.elapsedTime, {
@@ -267,14 +269,15 @@ const stopwatchModule = {
       this.pauseTime = 0;
       this.lastMinuteBeep = 0;
       this.pendingLapsRerender = false;
-      this.ringSoftSync = null;
 
       updateText(this.els.display, "GO");
       this.els.display.classList.add("is-go");
       this.els.status.classList.add("hidden");
       this.els.extendedDisplay?.classList.add("hidden");
 
-      if (this.els.ring) this.els.ring.style.strokeDashoffset = this.ringLength;
+      if (this.ringCtrl) this.ringCtrl.snap(this.ringLength);
+      else if (this.els.ring)
+        this.els.ring.style.strokeDashoffset = this.ringLength;
 
       this.els.lapBtn.classList.add("hidden");
       this.els.currentLapsHeader.classList.add("hidden");

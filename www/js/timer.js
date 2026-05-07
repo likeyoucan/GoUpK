@@ -15,6 +15,7 @@ import {
 import { sm } from "./sound.js?v=VERSION";
 import { t } from "./i18n.js?v=VERSION";
 import { store } from "./store.js?v=VERSION";
+import { createRingController } from "./ring/ring-controller.js?v=VERSION";
 
 import { setupTimerRender } from "./timer/timer-render.js?v=VERSION";
 import { setupTimerInputs } from "./timer/timer-inputs.js?v=VERSION";
@@ -32,11 +33,8 @@ export const tm = {
 
   els: {},
   ringLength: 282.74,
+  ringCtrl: null,
   currentAdjustmentSec: 0,
-
-  // Ring smoothing state
-  ringVisualOffset: null,
-  ringSoftSync: null,
 
   // Smooth UI loop state
   rAF: null,
@@ -81,7 +79,13 @@ export const tm = {
     if (this.els.ring) {
       this.els.ring.style.strokeDasharray = this.ringLength;
       this.els.ring.style.strokeDashoffset = this.ringLength;
-      this.ringVisualOffset = this.ringLength;
+
+      this.ringCtrl = createRingController({
+        ringEl: this.els.ring,
+        initialOffset: this.ringLength,
+        alpha: 0.22,
+      });
+      this.ringCtrl.start();
     }
 
     setupTimerRender(this, { updateText, updateTitle });

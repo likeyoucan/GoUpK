@@ -84,27 +84,7 @@ export function setupTimerRender(tm, { updateText, updateTitle }) {
     const timeStr = tm.formatTime(rem, { forceHours });
     updateText(tm.els.display, timeStr);
 
-    // Avoid title churn each frame on active screen
+    // Keep title updates out of hot path on active screen
     if (document.hidden) updateTitle(timeStr);
-
-    if (tm.els.ring && tm.totalDuration > 0) {
-      const safeTotal = Math.max(1, tm.totalDuration);
-      const progress = Math.max(0, Math.min(1, rem / safeTotal)); // remaining ratio
-      const targetOffset = tm.ringLength * progress;
-
-      if (!Number.isFinite(tm.ringVisualOffset)) {
-        tm.ringVisualOffset = targetOffset;
-      }
-
-      // Smooth approach to target; prevents blink/jumps on fast +/- changes
-      const alpha = 0.22; // 0.18..0.30
-      tm.ringVisualOffset += (targetOffset - tm.ringVisualOffset) * alpha;
-
-      if (Math.abs(targetOffset - tm.ringVisualOffset) < 0.25) {
-        tm.ringVisualOffset = targetOffset;
-      }
-
-      tm.els.ring.style.strokeDashoffset = tm.ringVisualOffset;
-    }
   };
 }

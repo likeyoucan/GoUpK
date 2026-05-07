@@ -2,6 +2,7 @@
 
 import { $, adjustVal, formatTime } from "./utils.js?v=VERSION";
 import { sm } from "./sound.js?v=VERSION";
+import { createRingController } from "./ring/ring-controller.js?v=VERSION";
 
 import { setupTabataRender } from "./tabata/tabata-render.js?v=VERSION";
 import { setupTabataPhases } from "./tabata/tabata-phases.js?v=VERSION";
@@ -26,9 +27,9 @@ export const tb = {
   lastBeepSec: 0,
   editingWorkoutId: null,
   ringLength: 282.74,
-  ringVisualOffset: null,
+  ringCtrl: null,
 
-  // Track phase changes to avoid reverse-jump smoothing at phase boundaries
+  // Phase marker to handle ring reset at phase boundaries without reverse sweep
   phaseStamp: 0,
   lastRenderedPhaseStamp: -1,
 
@@ -59,7 +60,13 @@ export const tb = {
     if (this.els.ring) {
       this.els.ring.style.strokeDasharray = this.ringLength;
       this.els.ring.style.strokeDashoffset = this.ringLength;
-      this.ringVisualOffset = this.ringLength;
+
+      this.ringCtrl = createRingController({
+        ringEl: this.els.ring,
+        initialOffset: this.ringLength,
+        alpha: 0.22,
+      });
+      this.ringCtrl.start();
     }
 
     setupTabataRender(this);

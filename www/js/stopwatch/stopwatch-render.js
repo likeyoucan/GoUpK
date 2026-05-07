@@ -281,33 +281,9 @@ export function setupStopwatchRender(sw) {
         updateText(sw.els.extendedDisplay, extStr);
         sw.els.extendedDisplay.classList.remove("hidden", "opacity-0");
       } else {
-        // Keep line height stable when there is no d/h text.
         updateText(sw.els.extendedDisplay, " ");
         sw.els.extendedDisplay.classList.remove("hidden");
         sw.els.extendedDisplay.classList.add("opacity-0");
-      }
-    }
-
-    if (sw.els.ring) {
-      const now = performance.now();
-      const targetOffset =
-        sw.ringLength - ((sw.elapsedTime % 60000) / 60000) * sw.ringLength;
-
-      if (sw.ringSoftSync && now < sw.ringSoftSync.end) {
-        const p =
-          (now - sw.ringSoftSync.start) /
-          (sw.ringSoftSync.end - sw.ringSoftSync.start);
-        const clamped = Math.max(0, Math.min(1, p));
-        const eased = 1 - Math.pow(1 - clamped, 3);
-
-        const val =
-          sw.ringSoftSync.from + (targetOffset - sw.ringSoftSync.from) * eased;
-        sw.els.ring.style.strokeDashoffset = val;
-
-        if (clamped >= 1) sw.ringSoftSync = null;
-      } else {
-        sw.ringSoftSync = null;
-        sw.els.ring.style.strokeDashoffset = targetOffset;
       }
     }
   };

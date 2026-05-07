@@ -48,20 +48,25 @@ export function setupTabataRender(tb) {
     const timeStr = formatTime(rem);
     updateText(tb.els.timer, timeStr);
 
-    // Avoid title churn on every visible frame
+    // Keep title churn out of visible hot path
     if (document.hidden) updateTitle(`${tb.status}: ${timeStr}`);
 
-    if (tb.els.ring) {
-      const elapsed = Math.max(0, tb.phaseDuration - rem);
-      const progress =
-        tb.phaseDuration > 0
-          ? Math.max(0, Math.min(1, elapsed / tb.phaseDuration))
-          : 0;
+    if (!tb.ringCtrl) return;
 
-      // Direct ring mapping (no smoothing) to avoid phase-end jump artifacts
-      const targetOffset = tb.ringLength - progress * tb.ringLength;
-      tb.ringVisualOffset = targetOffset;
-      tb.els.ring.style.strokeDashoffset = targetOffset;
+    const elapsed = Math.max(0, tb.phaseDuration - rem);
+    const progress =
+      tb.phaseDuration > 0
+        ? Math.max(0, Math.min(1, elapsed / tb.phaseDuration))
+        : 0;
+
+    const targetOffset = tb.ringLength - progress * tb.ringLength;
+
+    // On phase change, snap once to avoid reverse sweep artifacts
+    if (tb.lastRenderedPhaseStamp !== tb.phaseStamp) {
+      tb.lastRenderedPhaseStamp = tb.phaseStamp;
+      tb.ringCtrl.snap(targetOffset);
+    } else {
+      tb.ringCtrl.setTarget(targetOffset);
     }
   };
 }

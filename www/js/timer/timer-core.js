@@ -8,7 +8,6 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     return tm.timeRemainingMs;
   };
 
-  // Smooth visual loop: UI/ring updates each frame from targetTime
   tm.startUiLoop = () => {
     if (tm.rAF) cancelAnimationFrame(tm.rAF);
 
@@ -21,6 +20,13 @@ export function setupTimerCore(tm, { showToast, updateText }) {
       const rem = Math.max(0, tm.targetTime - performance.now());
       tm.lastUiRem = rem;
       tm.timeRemainingMs = rem;
+
+      if (tm.ringCtrl && tm.totalDuration > 0) {
+        const safeTotal = Math.max(1, tm.totalDuration);
+        const progress = Math.max(0, Math.min(1, rem / safeTotal));
+        const targetOffset = tm.ringLength * progress;
+        tm.ringCtrl.setTarget(targetOffset);
+      }
 
       tm.updateDisplay(rem);
       tm.updateAdjustButtons();
@@ -42,10 +48,10 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     tm.isFinished = true;
     tm.timeRemainingMs = 0;
     tm.remainingAtPause = 0;
-    tm.ringSoftSync = null;
 
     tm.updateDisplay(0);
-    if (tm.els?.ring) tm.els.ring.style.strokeDashoffset = 0;
+    if (tm.ringCtrl) tm.ringCtrl.snap(0);
+    else if (tm.els?.ring) tm.els.ring.style.strokeDashoffset = 0;
 
     tm.store.clearActiveTimer();
     tm.stopUiLoop();
@@ -115,15 +121,22 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     tm.isFinished = false;
     tm.targetTime = performance.now() + duration;
     tm.lastUiRem = duration;
-    tm.ringSoftSync = null;
     tm.skipWorkerTickUntil = 0;
 
     tm.requestWakeLock();
     tm.updateUIState();
     tm.updateDisplay(duration);
     tm.updateAdjustButtons();
-    tm.startUiLoop();
 
+    if (tm.ringCtrl && tm.totalDuration > 0) {
+      const progress = Math.max(
+        0,
+        Math.min(1, duration / Math.max(1, tm.totalDuration)),
+      );
+      tm.ringCtrl.snap(tm.ringLength * progress);
+    }
+
+    tm.startUiLoop();
     tm.bgWorker.postMessage({ command: "start", time: duration });
   };
 
@@ -156,15 +169,16 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     tm.targetTime = performance.now() + duration;
     tm.lastUiRem = duration;
     tm.currentAdjustmentSec = 0;
-    tm.ringSoftSync = null;
     tm.skipWorkerTickUntil = 0;
 
     tm.requestWakeLock();
     tm.updateUIState();
     tm.updateDisplay(duration);
     tm.updateAdjustButtons();
-    tm.startUiLoop();
 
+    if (tm.ringCtrl) tm.ringCtrl.snap(tm.ringLength);
+
+    tm.startUiLoop();
     tm.bgWorker.postMessage({ command: "start", time: duration });
   };
 
@@ -182,7 +196,6 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     tm.initialDurationMs = 0;
     tm.timeRemainingMs = 0;
     tm.lastUiRem = 0;
-    tm.ringSoftSync = null;
     tm.skipWorkerTickUntil = 0;
 
     tm.bgWorker.postMessage({ command: "reset" });
@@ -198,7 +211,8 @@ export function setupTimerCore(tm, { showToast, updateText }) {
 
     tm.updateUIState();
 
-    if (tm.els.ring) tm.els.ring.style.strokeDashoffset = tm.ringLength;
+    if (tm.ringCtrl) tm.ringCtrl.snap(tm.ringLength);
+    else if (tm.els.ring) tm.els.ring.style.strokeDashoffset = tm.ringLength;
 
     updateText(tm.els.display, "GO");
     tm.els.display?.classList.add("is-go");
@@ -219,8 +233,6 @@ export function setupTimerCore(tm, { showToast, updateText }) {
       const remaining = e.data.time;
       const now = performance.now();
 
-      // Ignore stale worker ticks right after +/- adjust,
-      // but never ignore completion tick.
       if (
         tm.skipWorkerTickUntil &&
         now < tm.skipWorkerTickUntil &&
@@ -232,7 +244,6 @@ export function setupTimerCore(tm, { showToast, updateText }) {
       tm.timeRemainingMs = remaining;
 
       if (tm.isRunning) {
-        // Re-sync targetTime only on noticeable drift to prevent visual snapping.
         const predicted = Math.max(0, tm.targetTime - now);
         if (Math.abs(predicted - remaining) > 220) {
           tm.targetTime = now + remaining;
@@ -250,15 +261,20 @@ export function setupTimerCore(tm, { showToast, updateText }) {
 
       const adjustmentMs = tm.currentAdjustmentSec * 1000;
 
-      // Local immediate sync (prevents ring blink before worker responds)
       tm.totalDuration = Math.max(1, tm.totalDuration + adjustmentMs);
       tm.timeRemainingMs = Math.max(0, tm.timeRemainingMs + adjustmentMs);
       tm.targetTime = performance.now() + tm.timeRemainingMs;
       tm.lastUiRem = tm.timeRemainingMs;
-      tm.ringSoftSync = null;
 
-      // Ignore stale worker ticks briefly
       tm.skipWorkerTickUntil = performance.now() + 180;
+
+      if (tm.ringCtrl && tm.totalDuration > 0) {
+        const p = Math.max(
+          0,
+          Math.min(1, tm.timeRemainingMs / Math.max(1, tm.totalDuration)),
+        );
+        tm.ringCtrl.setTarget(tm.ringLength * p);
+      }
 
       tm.updateDisplay(tm.timeRemainingMs);
       tm.updateAdjustButtons();
@@ -272,12 +288,10 @@ export function setupTimerCore(tm, { showToast, updateText }) {
 
       const adjustmentMs = -tm.currentAdjustmentSec * 1000;
 
-      // Local immediate sync
       tm.totalDuration = Math.max(1, tm.totalDuration + adjustmentMs);
       tm.timeRemainingMs = Math.max(0, tm.timeRemainingMs + adjustmentMs);
       tm.targetTime = performance.now() + tm.timeRemainingMs;
       tm.lastUiRem = tm.timeRemainingMs;
-      tm.ringSoftSync = null;
 
       tm.skipWorkerTickUntil = performance.now() + 180;
 
@@ -285,6 +299,14 @@ export function setupTimerCore(tm, { showToast, updateText }) {
         tm.bgWorker.postMessage({ command: "reset" });
         tm.finishAsCompleted();
         return;
+      }
+
+      if (tm.ringCtrl && tm.totalDuration > 0) {
+        const p = Math.max(
+          0,
+          Math.min(1, tm.timeRemainingMs / Math.max(1, tm.totalDuration)),
+        );
+        tm.ringCtrl.setTarget(tm.ringLength * p);
       }
 
       tm.updateDisplay(tm.timeRemainingMs);
