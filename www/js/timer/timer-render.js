@@ -85,12 +85,7 @@ export function setupTimerRender(tm, { updateText, updateTitle }) {
     updateText(tm.els.display, timeStr);
     updateTitle(timeStr);
 
-    const appEl = tm.$("app");
-    if (
-      tm.els.ring &&
-      tm.totalDuration > 0 &&
-      !appEl?.classList.contains("is-view-transitioning")
-    ) {
+    if (tm.els.ring && tm.totalDuration > 0) {
       const elapsed = tm.totalDuration - rem;
       const progress = Math.max(0, Math.min(1, elapsed / tm.totalDuration));
       tm.els.ring.style.strokeDashoffset = tm.ringLength * (1 - progress);

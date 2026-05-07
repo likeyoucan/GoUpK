@@ -288,8 +288,7 @@ export function setupStopwatchRender(sw) {
       }
     }
 
-    const appEl = $("app");
-    if (sw.els.ring && !appEl?.classList.contains("is-view-transitioning")) {
+    if (sw.els.ring) {
       const now = performance.now();
       const targetOffset =
         sw.ringLength - ((sw.elapsedTime % 60000) / 60000) * sw.ringLength;

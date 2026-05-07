@@ -49,11 +49,11 @@ export function setupTabataRender(tb) {
     updateText(tb.els.timer, timeStr);
     updateTitle(`${tb.status}: ${timeStr}`);
 
-    const appEl = document.getElementById("app");
-    if (tb.els.ring && !appEl?.classList.contains("is-view-transitioning")) {
+    if (tb.els.ring) {
       tb.els.ring.style.strokeDashoffset =
         tb.ringLength -
-        (Math.max(0, tb.phaseDuration - rem) / tb.phaseDuration) * tb.ringLength;
+        (Math.max(0, tb.phaseDuration - rem) / tb.phaseDuration) *
+          tb.ringLength;
     }
   };
 }
