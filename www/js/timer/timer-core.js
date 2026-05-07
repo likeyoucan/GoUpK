@@ -88,6 +88,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     tm.isFinished = false;
     tm.targetTime = performance.now() + duration;
     tm.lastUiRem = duration;
+    tm.ringSoftSync = null;
 
     tm.requestWakeLock();
     tm.updateUIState();
@@ -127,6 +128,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     tm.targetTime = performance.now() + duration;
     tm.lastUiRem = duration;
     tm.currentAdjustmentSec = 0;
+    tm.ringSoftSync = null;
 
     tm.requestWakeLock();
     tm.updateUIState();
@@ -197,6 +199,10 @@ export function setupTimerCore(tm, { showToast, updateText }) {
         tm.isFinished = true;
         tm.timeRemainingMs = 0;
         tm.remainingAtPause = 0;
+
+        // Final visual sync before stopping loop
+        tm.updateDisplay(0);
+        if (tm.els?.ring) tm.els.ring.style.strokeDashoffset = 0;
 
         tm.store.clearActiveTimer();
         tm.stopUiLoop();

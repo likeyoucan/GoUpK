@@ -86,25 +86,11 @@ export function setupTimerRender(tm, { updateText, updateTitle }) {
     updateTitle(timeStr);
 
     if (tm.els.ring && tm.totalDuration > 0) {
-      const elapsed = tm.totalDuration - rem;
-      const progress = Math.max(0, Math.min(1, elapsed / tm.totalDuration));
-      const targetOffset = tm.ringLength * (1 - progress);
+      const safeTotal = Math.max(1, tm.totalDuration);
+      const progress = Math.max(0, Math.min(1, rem / safeTotal)); // remaining ratio
+      const targetOffset = tm.ringLength * progress;
 
-      const currentOffset = parseFloat(tm.els.ring.style.strokeDashoffset);
       const now = performance.now();
-
-      // Auto-start short soft-sync when offset gap is visually noticeable.
-      if (
-        !tm.ringSoftSync &&
-        Number.isFinite(currentOffset) &&
-        Math.abs(currentOffset - targetOffset) > 8
-      ) {
-        tm.ringSoftSync = {
-          from: currentOffset,
-          start: now,
-          end: now + 200,
-        };
-      }
 
       if (tm.ringSoftSync && now < tm.ringSoftSync.end) {
         const p =
