@@ -38,6 +38,7 @@ const stopwatchModule = {
   sortSelect: null,
   pendingShareSession: null,
   pendingLapsRerender: false,
+  ringSoftSync: null,
   shareResults,
 
   init() {
@@ -97,18 +98,28 @@ const stopwatchModule = {
     });
 
     document.addEventListener(APP_EVENTS.MS_CHANGED, () => {
-      if (!this.isRunning && this.elapsedTime > 0) this.updateDisplay();
-
-      if (this.laps.length === 0) return;
-
-      // During run do not re-render all laps synchronously:
-      // it blocks the main thread and causes ring jitter.
-      if (this.isRunning) {
-        this.pendingLapsRerender = true;
-        return;
+      if (!this.isRunning && this.elapsedTime > 0) {
+        this.updateDisplay();
       }
 
-      this.reRenderCurrentLaps();
+      if (this.laps.length > 0) {
+        if (this.isRunning) this.pendingLapsRerender = true;
+        else this.reRenderCurrentLaps();
+      }
+
+      // Smooth ring sync to avoid visible jump after ms toggle.
+      if (this.isRunning && this.els?.ring) {
+        const currentOffset = parseFloat(this.els.ring.style.strokeDashoffset);
+        const now = performance.now();
+
+        this.ringSoftSync = {
+          from: Number.isFinite(currentOffset)
+            ? currentOffset
+            : this.ringLength,
+          start: now,
+          end: now + 220,
+        };
+      }
     });
 
     this.updateSaveButtonVisibility();
@@ -143,7 +154,6 @@ const stopwatchModule = {
         })}`,
       );
 
-      // Apply deferred laps re-render after pause, when UI can afford it.
       if (this.pendingLapsRerender) {
         this.reRenderCurrentLaps();
         this.pendingLapsRerender = false;
@@ -154,6 +164,7 @@ const stopwatchModule = {
       this.lastMinuteBeep = Math.floor(this.elapsedTime / 60000);
       this.isRunning = true;
       this.pauseTime = 0;
+      this.ringSoftSync = null;
 
       requestWakeLock();
       bgWorker.postMessage({ command: "start" });
@@ -256,6 +267,7 @@ const stopwatchModule = {
       this.pauseTime = 0;
       this.lastMinuteBeep = 0;
       this.pendingLapsRerender = false;
+      this.ringSoftSync = null;
 
       updateText(this.els.display, "GO");
       this.els.display.classList.add("is-go");

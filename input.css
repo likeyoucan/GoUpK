@@ -1377,6 +1377,8 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
 :root.glass-effect body #sw-clear-confirm,
 :root.glass-effect body #reset-confirm,
 :root.glass-effect body #tb-stopBtn,
+:root.glass-effect body #tm-resetBtn.is-reset,
+:root.glass-effect body #sw-lapBtn.is-reset,
 :root.glass-effect body .is-reset {
   background: rgba(239, 68, 68, 0.85);
   backdrop-filter: blur(16px) saturate(150%);
@@ -1791,9 +1793,11 @@ body.hide-nav-labels .nav-btn {
 }
 
 .is-reset {
-  background-color: var(--alert-color) !important;
+    background-color: var(--alert-color) !important;
   color: var(--alert-color-fg) !important;
-  box-shadow: none !important;
+  box-shadow:
+    0 4px 10px rgba(0, 0, 0, 0.12),
+    0 1px 2px rgba(0, 0, 0, 0.08) !important;
 }
 
 .is-reset:hover {
