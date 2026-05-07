@@ -33,6 +33,7 @@ export const tm = {
   els: {},
   ringLength: 282.74,
   currentAdjustmentSec: 0,
+  ringSoftSync: null,
 
   $,
   t,
@@ -78,5 +79,24 @@ export const tm = {
 
     this.bindInputEvents();
     this.bindCoreEvents();
+
+    // On resume from background, prepare a short ring soft-sync.
+    document.addEventListener("visibilitychange", () => {
+      if (
+        document.visibilityState === "visible" &&
+        this.isRunning &&
+        this.els?.ring
+      ) {
+        const currentOffset = parseFloat(this.els.ring.style.strokeDashoffset);
+        const now = performance.now();
+        this.ringSoftSync = {
+          from: Number.isFinite(currentOffset)
+            ? currentOffset
+            : this.ringLength,
+          start: now,
+          end: now + 220,
+        };
+      }
+    });
   },
 };

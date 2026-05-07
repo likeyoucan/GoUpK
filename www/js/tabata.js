@@ -26,6 +26,7 @@ export const tb = {
   lastBeepSec: 0,
   editingWorkoutId: null,
   ringLength: 282.74,
+  ringSoftSync: null,
   formatTime,
 
   init() {
@@ -72,6 +73,26 @@ export const tb = {
         adjustVal(id, parseInt(delta, 10));
       }),
     );
+
+    // On resume from background, prepare a short ring soft-sync.
+    document.addEventListener("visibilitychange", () => {
+      if (
+        document.visibilityState === "visible" &&
+        this.status !== "STOPPED" &&
+        !this.paused &&
+        this.els?.ring
+      ) {
+        const currentOffset = parseFloat(this.els.ring.style.strokeDashoffset);
+        const now = performance.now();
+        this.ringSoftSync = {
+          from: Number.isFinite(currentOffset)
+            ? currentOffset
+            : this.ringLength,
+          start: now,
+          end: now + 220,
+        };
+      }
+    });
 
     this.loadWorkoutsFromStorage();
   },

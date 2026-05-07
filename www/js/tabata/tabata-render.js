@@ -50,10 +50,42 @@ export function setupTabataRender(tb) {
     updateTitle(`${tb.status}: ${timeStr}`);
 
     if (tb.els.ring) {
-      tb.els.ring.style.strokeDashoffset =
+      const targetOffset =
         tb.ringLength -
         (Math.max(0, tb.phaseDuration - rem) / tb.phaseDuration) *
           tb.ringLength;
+
+      const currentOffset = parseFloat(tb.els.ring.style.strokeDashoffset);
+      const now = performance.now();
+
+      // Auto-start short soft-sync when offset gap is visually noticeable.
+      if (
+        !tb.ringSoftSync &&
+        Number.isFinite(currentOffset) &&
+        Math.abs(currentOffset - targetOffset) > 8
+      ) {
+        tb.ringSoftSync = {
+          from: currentOffset,
+          start: now,
+          end: now + 200,
+        };
+      }
+
+      if (tb.ringSoftSync && now < tb.ringSoftSync.end) {
+        const p =
+          (now - tb.ringSoftSync.start) /
+          (tb.ringSoftSync.end - tb.ringSoftSync.start);
+        const clamped = Math.max(0, Math.min(1, p));
+        const eased = 1 - Math.pow(1 - clamped, 3);
+
+        tb.els.ring.style.strokeDashoffset =
+          tb.ringSoftSync.from + (targetOffset - tb.ringSoftSync.from) * eased;
+
+        if (clamped >= 1) tb.ringSoftSync = null;
+      } else {
+        tb.ringSoftSync = null;
+        tb.els.ring.style.strokeDashoffset = targetOffset;
+      }
     }
   };
 }

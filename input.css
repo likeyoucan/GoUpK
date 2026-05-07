@@ -1087,7 +1087,9 @@ html.dark .app-bg::before {
 }
 
 /* Stopwatch ring updates every frame from JS, transition can create jitter */
-#sw-progressRing.progress-ring__circle {
+#sw-progressRing.progress-ring__circle,
+#tm-progressRing.progress-ring__circle,
+#tb-progressRing.progress-ring__circle {
   transition: none;
 }
 
@@ -1793,7 +1795,7 @@ body.hide-nav-labels .nav-btn {
 }
 
 .is-reset {
-    background-color: var(--alert-color) !important;
+  background-color: var(--alert-color) !important;
   color: var(--alert-color-fg) !important;
   box-shadow:
     0 4px 10px rgba(0, 0, 0, 0.12),
@@ -1913,7 +1915,6 @@ body.hide-nav-labels .nav-btn {
 :root.dark.glass-effect .custom-select-options {
   background-color: color-mix(in srgb, var(--surface-color) 90%, transparent);
 }
-
 
 /* =========================================
    25. ОПТИМИЗАЦИЯ ПРОИЗВОДИТЕЛЬНОСТИ АНИМАЦИЙ
