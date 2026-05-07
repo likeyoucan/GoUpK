@@ -1,5 +1,4 @@
 // Файл: www/js/tabata/tabata-core.js
-
 import {
   requestWakeLock,
   releaseWakeLock,
@@ -49,6 +48,12 @@ export function setupTabataCore(tb) {
 
     // New phase cycle stamp for render sync
     tb.phaseStamp += 1;
+
+    // Reset ring only on start (not on stop) to avoid stop-time visual jump.
+    if (tb.els.ring) {
+      tb.els.ring.style.strokeDashoffset = tb.ringLength;
+      tb.ringVisualOffset = tb.ringLength;
+    }
 
     tb.els.listSection.classList.add("hidden");
     tb.els.runningControls.classList.remove("hidden");
@@ -122,17 +127,8 @@ export function setupTabataCore(tb) {
     updateText(tb.els.timer, "GO");
     tb.els.timer.classList.add("is-go");
 
-    if (tb.els.ring) {
-      // Smooth reset to full ring on stop/complete
-      tb.els.ring.style.transition =
-        "stroke-dashoffset 180ms cubic-bezier(0.32, 0.72, 0, 1)";
-      tb.els.ring.style.strokeDashoffset = tb.ringLength;
-      tb.ringVisualOffset = tb.ringLength;
-
-      setTimeout(() => {
-        if (tb.els?.ring) tb.els.ring.style.transition = "none";
-      }, 220);
-    }
+    // Intentionally do NOT reset ring here to prevent stop-time visual jump.
+    // Ring resets on next tb.start().
   };
 
   tb.tick = (isBackground = false) => {
