@@ -23,7 +23,9 @@ import { setupStopwatchSessions } from "./stopwatch/stopwatch-sessions.js?v=VERS
 import { setupStopwatchShareController } from "./stopwatch/stopwatch-share-controller.js?v=VERSION";
 
 const stopwatchModule = {
-  startTime: 0,
+  // Date.now()-based anchor for stable wall-clock timing
+  startEpochMs: 0,
+
   elapsedTime: 0,
   isRunning: false,
   laps: [],
@@ -156,7 +158,9 @@ const stopwatchModule = {
       }
     } else {
       store.activate("stopwatch");
-      this.startTime = performance.now() - this.elapsedTime;
+
+      // Keep elapsed continuity with wall-clock base.
+      this.startEpochMs = Date.now() - this.elapsedTime;
       this.lastMinuteBeep = Math.floor(this.elapsedTime / 60000);
       this.isRunning = true;
       this.pauseTime = 0;
@@ -180,8 +184,7 @@ const stopwatchModule = {
   tick(isBackground = false) {
     if (!this.isRunning) return;
 
-    const now = performance.now();
-    this.elapsedTime = now - this.startTime;
+    this.elapsedTime = Math.max(0, Date.now() - this.startEpochMs);
 
     const currentMinute = Math.floor(this.elapsedTime / 60000);
     if (
@@ -194,7 +197,8 @@ const stopwatchModule = {
       sm.vibrate(40, "light");
     }
 
-    if (now - this.lastRender >= 16 || isBackground) {
+    const nowPerf = performance.now();
+    if (nowPerf - this.lastRender >= 16 || isBackground) {
       if (!isBackground) {
         this.updateDisplay();
 
@@ -212,7 +216,8 @@ const stopwatchModule = {
           }),
         );
       }
-      this.lastRender = now;
+
+      this.lastRender = nowPerf;
     }
 
     if (!isBackground) {
@@ -265,6 +270,7 @@ const stopwatchModule = {
       if (store.isActive("stopwatch")) store.clearActiveTimer();
 
       this.elapsedTime = 0;
+      this.startEpochMs = 0;
       this.laps = [];
       this.pauseTime = 0;
       this.lastMinuteBeep = 0;

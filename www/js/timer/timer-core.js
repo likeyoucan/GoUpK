@@ -17,7 +17,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
         return;
       }
 
-      const rem = Math.max(0, tm.targetTime - performance.now());
+      const rem = Math.max(0, tm.targetEpochMs - Date.now());
       tm.lastUiRem = rem;
       tm.timeRemainingMs = rem;
 
@@ -30,6 +30,12 @@ export function setupTimerCore(tm, { showToast, updateText }) {
 
       tm.updateDisplay(rem);
       tm.updateAdjustButtons();
+
+      if (rem <= 0 && tm.isRunning) {
+        tm.finishAsCompleted();
+        tm.rAF = null;
+        return;
+      }
 
       tm.rAF = requestAnimationFrame(loop);
     };
@@ -48,10 +54,13 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     tm.isFinished = true;
     tm.timeRemainingMs = 0;
     tm.remainingAtPause = 0;
+    tm.targetEpochMs = 0;
 
     tm.updateDisplay(0);
     if (tm.ringCtrl) tm.ringCtrl.snap(0);
     else if (tm.els?.ring) tm.els.ring.style.strokeDashoffset = 0;
+
+    tm.bgWorker.postMessage({ command: "reset" });
 
     tm.store.clearActiveTimer();
     tm.stopUiLoop();
@@ -119,7 +128,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     tm.isRunning = true;
     tm.isPaused = false;
     tm.isFinished = false;
-    tm.targetTime = performance.now() + duration;
+    tm.targetEpochMs = Date.now() + duration;
     tm.lastUiRem = duration;
     tm.skipWorkerTickUntil = 0;
 
@@ -166,7 +175,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     tm.isFinished = false;
     tm.remainingAtPause = 0;
     tm.timeRemainingMs = duration;
-    tm.targetTime = performance.now() + duration;
+    tm.targetEpochMs = Date.now() + duration;
     tm.lastUiRem = duration;
     tm.currentAdjustmentSec = 0;
     tm.skipWorkerTickUntil = 0;
@@ -195,6 +204,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     tm.totalDuration = 0;
     tm.initialDurationMs = 0;
     tm.timeRemainingMs = 0;
+    tm.targetEpochMs = 0;
     tm.lastUiRem = 0;
     tm.skipWorkerTickUntil = 0;
 
@@ -231,11 +241,12 @@ export function setupTimerCore(tm, { showToast, updateText }) {
       if (e.data?.type !== "tick") return;
 
       const remaining = e.data.time;
-      const now = performance.now();
+      const nowPerf = performance.now();
+      const nowEpoch = Date.now();
 
       if (
         tm.skipWorkerTickUntil &&
-        now < tm.skipWorkerTickUntil &&
+        nowPerf < tm.skipWorkerTickUntil &&
         remaining > 0
       ) {
         return;
@@ -244,10 +255,15 @@ export function setupTimerCore(tm, { showToast, updateText }) {
       tm.timeRemainingMs = remaining;
 
       if (tm.isRunning) {
-        const predicted = Math.max(0, tm.targetTime - now);
+        const predicted = Math.max(0, tm.targetEpochMs - nowEpoch);
         if (Math.abs(predicted - remaining) > 220) {
-          tm.targetTime = now + remaining;
+          tm.targetEpochMs = nowEpoch + remaining;
         }
+      }
+
+      if (document.hidden && tm.isRunning) {
+        const forceHours = tm.totalDuration >= 3600000;
+        tm.updateTitle(tm.formatTime(remaining, { forceHours }));
       }
 
       if (remaining <= 0 && tm.isRunning) {
@@ -263,7 +279,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
 
       tm.totalDuration = Math.max(1, tm.totalDuration + adjustmentMs);
       tm.timeRemainingMs = Math.max(0, tm.timeRemainingMs + adjustmentMs);
-      tm.targetTime = performance.now() + tm.timeRemainingMs;
+      tm.targetEpochMs = Date.now() + tm.timeRemainingMs;
       tm.lastUiRem = tm.timeRemainingMs;
 
       tm.skipWorkerTickUntil = performance.now() + 180;
@@ -290,7 +306,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
 
       tm.totalDuration = Math.max(1, tm.totalDuration + adjustmentMs);
       tm.timeRemainingMs = Math.max(0, tm.timeRemainingMs + adjustmentMs);
-      tm.targetTime = performance.now() + tm.timeRemainingMs;
+      tm.targetEpochMs = Date.now() + tm.timeRemainingMs;
       tm.lastUiRem = tm.timeRemainingMs;
 
       tm.skipWorkerTickUntil = performance.now() + 180;

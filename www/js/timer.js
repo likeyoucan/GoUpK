@@ -24,7 +24,10 @@ import { setupTimerCore } from "./timer/timer-core.js?v=VERSION";
 export const tm = {
   totalDuration: 0,
   initialDurationMs: 0,
-  targetTime: 0,
+
+  // Epoch deadline for stable timing in background/inactive tab.
+  targetEpochMs: 0,
+
   remainingAtPause: 0,
   isRunning: false,
   isPaused: false,
@@ -96,7 +99,17 @@ export const tm = {
     this.bindCoreEvents();
 
     document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "visible" && this.isRunning) {
+      if (document.visibilityState === "hidden") {
+        this.stopUiLoop?.();
+        return;
+      }
+
+      // visible
+      if (this.isRunning) {
+        const rem = Math.max(0, this.targetEpochMs - Date.now());
+        this.timeRemainingMs = rem;
+        this.lastUiRem = rem;
+        this.updateDisplay(rem);
         this.startUiLoop?.();
       }
     });
