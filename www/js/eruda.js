@@ -89,49 +89,105 @@
 #__erudaGear { z-index: 2147483647; }
 #__erudaBar { z-index: 2147483646; }
 #__erudaPanel { z-index: 2147483645; }
+
 #__erudaGear {
-  position: fixed; right: 12px; bottom: 12px;
-  width: 48px; height: 48px; border-radius: 14px;
+  position: fixed;
+  right: 12px;
+  bottom: 12px;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
   border: 1px solid rgba(120,120,128,0.25);
   background: rgba(255,255,255,0.92);
-  color: #111; font-size: 22px; line-height: 48px; text-align: center;
+  color: #111;
+  font-size: 22px;
+  line-height: 48px;
+  text-align: center;
   box-shadow: 0 4px 12px rgba(0,0,0,0.14);
 }
+
 #__erudaBar {
-  position: fixed; right: 12px; bottom: 70px;
-  display: none; width: 280px; padding: 10px; gap: 8px;
-  border-radius: 14px; border: 1px solid rgba(0,0,0,0.08);
+  position: fixed;
+  right: 12px;
+  bottom: 70px;
+  display: none;
+  width: 300px;
+  padding: 10px;
+  gap: 8px;
+  border-radius: 14px;
+  border: 1px solid rgba(0,0,0,0.08);
   background: rgba(255,255,255,0.94);
   box-shadow: 0 8px 24px rgba(0,0,0,0.15);
   font: 12px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
 }
 #__erudaBar.__open { display: grid; }
+
 #__erudaBar button {
-  min-height: 32px; border-radius: 10px;
+  min-height: 32px;
+  border-radius: 10px;
   border: 1px solid rgba(0,0,0,0.22);
-  background: #fff; color: #111; cursor: pointer;
+  background: #fff;
+  color: #111;
+  cursor: pointer;
 }
+
 #__erudaPanel {
-  position: fixed; inset: auto 0 0 0; height: 45vh; display: none;
-  background: transparent; overflow: hidden;
+  position: fixed;
+  display: none;
+  background: transparent;
+  overflow: hidden;
 }
 #__erudaPanel.__open { display: block; }
-#__erudaMount { position: absolute; inset: 0; overflow: hidden; }
-#__erudaResize {
-  position: absolute; left: 0; right: 0; top: 0; height: 12px;
-  background: rgba(0,0,0,0.15); cursor: ns-resize; touch-action: none;
+
+#__erudaPanel.__bottom {
+  left: 0; right: 0; bottom: 0; top: auto;
 }
+#__erudaPanel.__top {
+  left: 0; right: 0; top: 0; bottom: auto;
+}
+#__erudaPanel.__left {
+  left: 0; top: 0; bottom: 0; right: auto;
+}
+#__erudaPanel.__right {
+  right: 0; top: 0; bottom: 0; left: auto;
+}
+
+#__erudaMount { position: absolute; inset: 0; overflow: hidden; }
+
+#__erudaResize {
+  position: absolute;
+  background: rgba(0,0,0,0.15);
+  touch-action: none;
+  user-select: none;
+}
+#__erudaPanel.__bottom #__erudaResize {
+  left: 0; right: 0; top: 0; height: 12px; cursor: ns-resize;
+}
+#__erudaPanel.__top #__erudaResize {
+  left: 0; right: 0; bottom: 0; height: 12px; cursor: ns-resize;
+}
+#__erudaPanel.__left #__erudaResize {
+  top: 0; bottom: 0; right: 0; width: 12px; cursor: ew-resize;
+}
+#__erudaPanel.__right #__erudaResize {
+  top: 0; bottom: 0; left: 0; width: 12px; cursor: ew-resize;
+}
+
 @media (prefers-color-scheme: dark) {
   #__erudaGear {
-    background: rgba(25,25,30,0.92); color: #fff;
+    background: rgba(25,25,30,0.92);
+    color: #fff;
     border-color: rgba(255,255,255,0.12);
   }
   #__erudaBar {
-    background: rgba(25,25,30,0.94); color: #eee;
+    background: rgba(25,25,30,0.94);
+    color: #eee;
     border-color: rgba(255,255,255,0.12);
   }
   #__erudaBar button {
-    background: #1f1f24; color: #eee; border-color: rgba(255,255,255,0.15);
+    background: #1f1f24;
+    color: #eee;
+    border-color: rgba(255,255,255,0.15);
   }
 }
 `;
@@ -147,13 +203,17 @@
     row1.style.gridTemplateColumns = "1fr auto";
     row1.style.gap = "8px";
     el("div", { text: "Eruda Dock" }, row1);
-
     const toggleUiBtn = el("button", { text: "Hide UI" }, row1);
 
-    const row2 = el("div", null, bar);
-    row2.style.display = "grid";
-    row2.style.gridTemplateColumns = "repeat(3, 1fr)";
-    row2.style.gap = "6px";
+    const rowPos = el("div", null, bar);
+    rowPos.style.display = "grid";
+    rowPos.style.gridTemplateColumns = "repeat(4, 1fr)";
+    rowPos.style.gap = "6px";
+
+    const rowTabs = el("div", null, bar);
+    rowTabs.style.display = "grid";
+    rowTabs.style.gridTemplateColumns = "repeat(3, 1fr)";
+    rowTabs.style.gap = "6px";
 
     const hardReloadBtn = el("button", { text: "Hard Reload" }, bar);
     hardReloadBtn.style.background = "#ff3b30";
@@ -166,7 +226,6 @@
       { type: "range", min: "20", max: "90", step: "1" },
       bar,
     );
-    sizeInput.value = LS.get("eruda-panel-size-vh", "45");
 
     const panel = el("div", { id: "__erudaPanel" }, document.body);
     const resize = el("div", { id: "__erudaResize" }, panel);
@@ -176,24 +235,50 @@
     let compact = LS.get("eruda-ui-compact", "false") === "true";
     let inited = false;
 
-    function applySize(vh) {
-      const clamped = clamp(Number(vh) || 45, 20, 90);
-      panel.style.height = `${clamped}vh`;
-      sizeInput.value = String(clamped);
-      sizeLabel.textContent = `Size: ${clamped}vh`;
-      LS.set("eruda-panel-size-vh", clamped);
+    let panelPos = LS.get("eruda-panel-pos", "bottom"); // bottom|top|left|right
+    let sizeVh = Number(LS.get("eruda-panel-size-vh", "45"));
+    let sizeVw = Number(LS.get("eruda-panel-size-vw", "55"));
+
+    function applyPanelGeometry() {
+      panel.classList.remove("__top", "__bottom", "__left", "__right");
+      panel.classList.add(`__${panelPos}`);
+
+      if (panelPos === "top" || panelPos === "bottom") {
+        sizeVh = clamp(sizeVh, 20, 90);
+        panel.style.width = "100%";
+        panel.style.height = `${sizeVh}vh`;
+        sizeInput.value = String(sizeVh);
+        sizeLabel.textContent = `Size: ${sizeVh}vh (height)`;
+      } else {
+        sizeVw = clamp(sizeVw, 20, 90);
+        panel.style.height = "100%";
+        panel.style.width = `${sizeVw}vw`;
+        sizeInput.value = String(sizeVw);
+        sizeLabel.textContent = `Size: ${sizeVw}vw (width)`;
+      }
+
+      LS.set("eruda-panel-pos", panelPos);
+      LS.set("eruda-panel-size-vh", sizeVh);
+      LS.set("eruda-panel-size-vw", sizeVw);
     }
 
-    applySize(sizeInput.value);
+    function setPanelPos(nextPos) {
+      panelPos = nextPos;
+      applyPanelGeometry();
+    }
 
-    const posBtns = [
+    ["Top", "Bottom", "Left", "Right"].forEach((name) => {
+      const key = name.toLowerCase();
+      const b = el("button", { text: name }, rowPos);
+      b.addEventListener("click", () => setPanelPos(key));
+    });
+
+    [
       ["Console", () => window.eruda?.show?.("console")],
       ["Elements", () => window.eruda?.show?.("elements")],
       ["Network", () => window.eruda?.show?.("network")],
-    ];
-
-    posBtns.forEach(([name, fn]) => {
-      const b = el("button", { text: name }, row2);
+    ].forEach(([name, fn]) => {
+      const b = el("button", { text: name }, rowTabs);
       b.addEventListener("click", () => {
         try {
           fn();
@@ -223,22 +308,44 @@
       if (confirm("Clear cache and reload?")) location.reload();
     });
 
-    sizeInput.addEventListener("input", () => applySize(sizeInput.value));
+    sizeInput.addEventListener("input", () => {
+      const val = clamp(Number(sizeInput.value) || 45, 20, 90);
+      if (panelPos === "top" || panelPos === "bottom") sizeVh = val;
+      else sizeVw = val;
+      applyPanelGeometry();
+    });
 
     let drag = null;
     resize.addEventListener("pointerdown", (e) => {
       e.preventDefault();
       resize.setPointerCapture(e.pointerId);
-      drag = { y: e.clientY, h: panel.getBoundingClientRect().height };
+      drag = {
+        x: e.clientX,
+        y: e.clientY,
+        vh: sizeVh,
+        vw: sizeVw,
+      };
     });
 
     resize.addEventListener("pointermove", (e) => {
       if (!drag) return;
-      const vh = window.innerHeight || 1;
+
+      const vw = Math.max(1, window.innerWidth);
+      const vh = Math.max(1, window.innerHeight);
+      const dx = e.clientX - drag.x;
       const dy = e.clientY - drag.y;
-      const nextPx = drag.h - dy;
-      const nextVh = (nextPx / vh) * 100;
-      applySize(nextVh);
+
+      if (panelPos === "bottom") {
+        sizeVh = clamp(drag.vh + (-dy / vh) * 100, 20, 90);
+      } else if (panelPos === "top") {
+        sizeVh = clamp(drag.vh + (dy / vh) * 100, 20, 90);
+      } else if (panelPos === "left") {
+        sizeVw = clamp(drag.vw + (dx / vw) * 100, 20, 90);
+      } else if (panelPos === "right") {
+        sizeVw = clamp(drag.vw + (-dx / vw) * 100, 20, 90);
+      }
+
+      applyPanelGeometry();
     });
 
     const stopDrag = () => {
@@ -249,8 +356,6 @@
 
     async function ensureErudaLoaded() {
       await loadScriptOnce(ERUDA_CORE);
-
-      // Plugins should not crash the whole initialization.
       await Promise.allSettled(ERUDA_PLUGINS.map((src) => loadScriptOnce(src)));
     }
 
@@ -310,7 +415,13 @@
       else closeEruda();
     });
 
+    window.addEventListener("resize", () => {
+      applyPanelGeometry();
+    });
+
     renderCompact();
+    applyPanelGeometry();
+
     if (open) {
       await openEruda();
     } else {
