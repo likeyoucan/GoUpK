@@ -32,10 +32,23 @@ export function setupTabataWorkouts(tb) {
         tb.els.editRounds.value = w.rounds;
       }
     } else {
+      const selectedWorkout =
+        tb.workouts.find((x) => x.id === tb.selectedId) || null;
+
+      const baseWork = selectedWorkout
+        ? selectedWorkout.work
+        : Math.max(1, Math.round((tb.work || 20000) / 1000));
+      const baseRest = selectedWorkout
+        ? selectedWorkout.rest
+        : Math.max(1, Math.round((tb.rest || 10000) / 1000));
+      const baseRounds = selectedWorkout
+        ? selectedWorkout.rounds
+        : Math.max(1, tb.rounds || 8);
+
       tb.els.editName.value = getUniqueName(t("tabata"), tb.workouts, "name");
-      tb.els.editWork.value = 20;
-      tb.els.editRest.value = 10;
-      tb.els.editRounds.value = 8;
+      tb.els.editWork.value = baseWork;
+      tb.els.editRest.value = baseRest;
+      tb.els.editRounds.value = baseRounds;
     }
 
     setTimeout(() => tb.els.editName?.focus(), 300);

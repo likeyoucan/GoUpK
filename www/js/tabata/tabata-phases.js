@@ -13,23 +13,9 @@ export function setupTabataPhases(tb) {
     sm.play("complete");
     announceToScreenReader(t("tabata_complete"));
 
-    // Финальное положение кольца перед stop
-    tb.ringCtrl?.snap(0);
-
-    // В фоне сразу сбрасываем кольцо в исходное состояние, чтобы при возврате не "замирало"
-    const resetRingNow = document.hidden;
-
-    tb.stop({ resetRing: resetRingNow, silent: true });
+    // On completion always reset to idle ring to avoid post-background blink/freeze.
+    tb.stop({ resetRing: true, silent: true });
     showToast(t("tabata_complete"));
-
-    // Если завершение на активном экране, коротко показываем 0 и затем возвращаем idle-кольцо
-    if (!resetRingNow) {
-      setTimeout(() => {
-        if (tb.status === "STOPPED") {
-          tb.ringCtrl?.snap(tb.ringLength);
-        }
-      }, 220);
-    }
   };
 
   tb.advancePhase = () => {
@@ -39,7 +25,9 @@ export function setupTabataPhases(tb) {
       tb.phaseStamp += 1;
       sm.play("work_start");
     } else if (tb.status === "WORK") {
-      if (tb.currentRound >= tb.rounds) return "complete";
+      if (tb.currentRound >= tb.rounds) {
+        return "complete";
+      }
       tb.status = "REST";
       tb.phaseDuration = tb.rest;
       tb.phaseStamp += 1;
@@ -72,8 +60,12 @@ export function setupTabataPhases(tb) {
       const leftInPhase = currentPhaseDuration - step;
       if (leftInPhase <= 0) {
         const result = tb.advancePhase();
-        if (result === "complete") return "complete";
-        if (remainingMissed === 0) tb.phaseDuration = tb.phaseDuration + leftInPhase;
+        if (result === "complete") {
+          return "complete";
+        }
+        if (remainingMissed === 0) {
+          tb.phaseDuration = tb.phaseDuration + leftInPhase;
+        }
       } else {
         tb.phaseDuration = leftInPhase;
       }
@@ -101,6 +93,7 @@ export function setupTabataPhases(tb) {
         handleCompletion();
         return;
       }
+
       tb.phaseEndTime = performance.now() + tb.phaseDuration;
     }
 

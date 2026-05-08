@@ -105,6 +105,7 @@ export function setupTabataCore(tb) {
     tb.updatePhaseStyles();
   };
 
+  // resetRing=false used only for manual stop feel; on completion we reset ring.
   tb.stop = ({ resetRing = true, silent = false } = {}) => {
     if (!silent) {
       sm.vibrate(30, "medium");
@@ -135,7 +136,9 @@ export function setupTabataCore(tb) {
     updateText(tb.els.timer, "GO");
     tb.els.timer.classList.add("is-go");
 
-    if (resetRing) tb.ringCtrl?.snap(tb.ringLength);
+    if (resetRing) {
+      tb.ringCtrl?.snap(tb.ringLength);
+    }
   };
 
   tb.tick = (isBackground = false) => {
@@ -145,6 +148,11 @@ export function setupTabataCore(tb) {
     const rem = tb.phaseEndTime - now;
 
     if (rem <= 0) {
+      // Render final frame at exactly zero before phase switch: avoids abrupt closure feel.
+      if (!isBackground) {
+        tb.render(0);
+      }
+
       const isDeepSleepWakeup = rem < -2000;
       tb.nextPhase(isDeepSleepWakeup ? Math.abs(rem) : 0);
       return;
@@ -190,7 +198,13 @@ export function setupTabataCore(tb) {
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState !== "visible") return;
 
-      if (tb.status !== "STOPPED" && !tb.paused && !tb.completionHandled) {
+      // If finished while hidden, force stable idle ring and exit.
+      if (tb.status === "STOPPED") {
+        tb.ringCtrl?.snap(tb.ringLength);
+        return;
+      }
+
+      if (!tb.paused && !tb.completionHandled) {
         const rem = tb.phaseEndTime - performance.now();
 
         if (rem <= 0) {
@@ -201,11 +215,6 @@ export function setupTabataCore(tb) {
         tb.lastRender = 0;
         tb.render(rem);
         tb.tick();
-      }
-
-      // На случай завершения в фоне и неконсистентного визуального состояния
-      if (tb.status === "STOPPED") {
-        tb.ringCtrl?.snap(tb.ringLength);
       }
     });
   };

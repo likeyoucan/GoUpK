@@ -33,7 +33,7 @@ export const tb = {
   phaseStamp: 0,
   lastRenderedPhaseStamp: -1,
 
-  // Prevent repeated completion flow (sound/vibrate/toast) in background/heartbeat race cases
+  // Completion guard (prevents repeated complete logic in background race)
   completionHandled: false,
 
   formatTime,
