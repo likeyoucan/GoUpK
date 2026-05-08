@@ -1863,6 +1863,7 @@ body.hide-nav-labels .nav-btn {
   transform: scale(0.95) translateY(-10px);
   transform-origin: top center;
   pointer-events: none;
+  background-clip: padding-box;
   transition:
     opacity 0.2s cubic-bezier(0.32, 0.72, 0, 1),
     transform 0.2s cubic-bezier(0.32, 0.72, 0, 1);
@@ -1926,6 +1927,43 @@ body.hide-nav-labels .nav-btn {
 
 :root.dark.glass-effect .custom-select-options {
   background-color: color-mix(in srgb, var(--surface-color) 90%, transparent);
+}
+
+/* Strong glass override for custom select dropdown */
+:root.glass-effect .custom-select-options {
+  background-color: color-mix(
+    in srgb,
+    var(--surface-color) 38%,
+    transparent
+  ) !important;
+  border-color: color-mix(
+    in srgb,
+    var(--border-color) 55%,
+    transparent
+  ) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+  backdrop-filter: blur(16px) saturate(180%) !important;
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.45),
+    0 10px 28px rgba(0, 0, 0, 0.16) !important;
+}
+
+:root.dark.glass-effect .custom-select-options {
+  background-color: color-mix(
+    in srgb,
+    var(--surface-color) 26%,
+    transparent
+  ) !important;
+  border-color: color-mix(
+    in srgb,
+    var(--border-color) 60%,
+    transparent
+  ) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+  backdrop-filter: blur(16px) saturate(180%) !important;
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.08),
+    0 12px 30px rgba(0, 0, 0, 0.38) !important;
 }
 
 /* =========================================
