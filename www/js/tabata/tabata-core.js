@@ -49,6 +49,7 @@ export function setupTabataCore(tb) {
     tb.lastBeepSec = 0;
     tb.lastRender = 0;
     tb.completionHandled = false;
+    tb.hiddenAtEpoch = 0;
 
     tb.phaseClosing = false;
     if (tb.phaseCloseTimer) {
@@ -79,6 +80,7 @@ export function setupTabataCore(tb) {
   tb.pause = () => {
     store.clearActiveTimer();
     tb.paused = true;
+    tb.hiddenAtEpoch = 0;
 
     bgWorker.postMessage({ command: "stop" });
 
@@ -100,6 +102,7 @@ export function setupTabataCore(tb) {
     tb.phaseEndTime = performance.now() + Math.max(0, tb.remainingAtPause || 0);
     tb.lastBeepSec = 0;
     tb.lastRender = 0;
+    tb.hiddenAtEpoch = 0;
 
     tb.phaseClosing = false;
     if (tb.phaseCloseTimer) {
@@ -138,6 +141,7 @@ export function setupTabataCore(tb) {
       tb.phaseCloseTimer = null;
     }
     tb.phaseClosing = false;
+    tb.hiddenAtEpoch = 0;
 
     tb.status = "STOPPED";
     tb.paused = false;
@@ -233,18 +237,32 @@ export function setupTabataCore(tb) {
     });
 
     document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState !== "visible") return;
+      if (document.visibilityState === "hidden") {
+        // Mark wall-clock hide moment to compensate suspended performance.now
+        if (tb.status !== "STOPPED" && !tb.paused && !tb.completionHandled) {
+          tb.hiddenAtEpoch = Date.now();
+        }
+        return;
+      }
 
-      // If finished while hidden, force stable idle ring.
+      // visible
       if (tb.status === "STOPPED") {
         if (tb.phaseCloseTimer) {
           clearTimeout(tb.phaseCloseTimer);
           tb.phaseCloseTimer = null;
         }
         tb.phaseClosing = false;
+        tb.hiddenAtEpoch = 0;
         tb.ringCtrl?.snap(tb.ringLength);
         return;
       }
+
+      // Compensate time spent in background (wall clock)
+      if (tb.hiddenAtEpoch && !tb.paused && !tb.completionHandled) {
+        const hiddenDelta = Math.max(0, Date.now() - tb.hiddenAtEpoch);
+        tb.phaseEndTime -= hiddenDelta;
+      }
+      tb.hiddenAtEpoch = 0;
 
       if (!tb.paused && !tb.completionHandled) {
         const rem = tb.phaseEndTime - performance.now();

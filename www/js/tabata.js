@@ -40,6 +40,9 @@ export const tb = {
   phaseClosing: false,
   phaseCloseTimer: null,
 
+  // Real-world timestamp when app got hidden during active tabata
+  hiddenAtEpoch: 0,
+
   formatTime,
 
   init() {
