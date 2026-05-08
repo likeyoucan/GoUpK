@@ -5,6 +5,20 @@ import { sm } from "../sound.js?v=VERSION";
 import { t } from "../i18n.js?v=VERSION";
 
 export function setupTabataPhases(tb) {
+  const handleCompletion = () => {
+    if (tb.completionHandled) return;
+
+    tb.completionHandled = true;
+    sm.vibrate([200, 100, 200, 100, 400]);
+    sm.play("complete");
+    announceToScreenReader(t("tabata_complete"));
+
+    // Important: stop immediately (no requestAnimationFrame),
+    // otherwise in background the completion branch may repeat.
+    tb.stop({ resetRing: false, silent: true });
+    showToast(t("tabata_complete"));
+  };
+
   tb.advancePhase = () => {
     if (tb.status === "READY") {
       tb.status = "WORK";
@@ -30,6 +44,7 @@ export function setupTabataPhases(tb) {
     return "ok";
   };
 
+  // Fast-forward phases when app wakes after long background pause.
   tb.applyMissedTime = (missedTime) => {
     let remainingMissed = missedTime;
 
@@ -48,8 +63,7 @@ export function setupTabataPhases(tb) {
       if (leftInPhase <= 0) {
         const result = tb.advancePhase();
         if (result === "complete") {
-          tb.stop({ resetRing: false, silent: true });
-          return false;
+          return "complete";
         }
         if (remainingMissed === 0) {
           tb.phaseDuration = tb.phaseDuration + leftInPhase;
@@ -59,29 +73,26 @@ export function setupTabataPhases(tb) {
       }
     }
 
-    return true;
+    return "ok";
   };
 
   tb.nextPhase = (missedTime = 0) => {
+    if (tb.status === "STOPPED" || tb.completionHandled) return;
+
     if (missedTime === 0) sm.vibrate([100, 50, 100], "strong");
     tb.lastBeepSec = 0;
 
     if (missedTime > 0) {
-      const shouldContinue = tb.applyMissedTime(missedTime);
-      if (!shouldContinue) return;
+      const result = tb.applyMissedTime(missedTime);
+      if (result === "complete") {
+        handleCompletion();
+        return;
+      }
       tb.phaseEndTime = performance.now() + tb.phaseDuration;
     } else {
       const result = tb.advancePhase();
       if (result === "complete") {
-        sm.vibrate([200, 100, 200, 100, 400]);
-        sm.play("complete");
-        announceToScreenReader(t("tabata_complete"));
-
-        requestAnimationFrame(() => {
-          showToast(t("tabata_complete"));
-          tb.stop({ resetRing: false, silent: true });
-        });
-
+        handleCompletion();
         return;
       }
 

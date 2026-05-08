@@ -45,7 +45,10 @@ export function setupTabataCore(tb) {
     tb.phaseDuration = 5000;
     tb.phaseEndTime = performance.now() + tb.phaseDuration;
     tb.paused = false;
+    tb.remainingAtPause = 0;
     tb.lastBeepSec = 0;
+    tb.lastRender = 0;
+    tb.completionHandled = false;
 
     tb.phaseStamp += 1;
     tb.lastRenderedPhaseStamp = -1;
@@ -76,17 +79,21 @@ export function setupTabataCore(tb) {
     if (tb.rAF) cancelAnimationFrame(tb.rAF);
     tb.rAF = null;
 
-    tb.remainingAtPause = tb.phaseEndTime - performance.now();
+    tb.remainingAtPause = Math.max(0, tb.phaseEndTime - performance.now());
     updateText(tb.els.status, t("pause"));
 
     stopTimerContext();
   };
 
   tb.resume = () => {
+    if (tb.status === "STOPPED") return;
+
     store.activate("tabata");
     tb.paused = false;
-    tb.phaseEndTime = performance.now() + tb.remainingAtPause;
+    tb.completionHandled = false;
+    tb.phaseEndTime = performance.now() + Math.max(0, tb.remainingAtPause || 0);
     tb.lastBeepSec = 0;
+    tb.lastRender = 0;
 
     tb.phaseStamp += 1;
     tb.lastRenderedPhaseStamp = -1;
@@ -98,8 +105,8 @@ export function setupTabataCore(tb) {
     tb.updatePhaseStyles();
   };
 
-  // resetRing=false используется при завершении тренировки, чтобы не было визуального рывка.
-  // silent=true отключает "click"/vibrate stop, чтобы не перебивать complete-сигнал.
+  // resetRing=false used on completion to avoid a visual snap-back.
+  // silent=true skips stop click/vibration to not interrupt completion signal.
   tb.stop = ({ resetRing = true, silent = false } = {}) => {
     if (!silent) {
       sm.vibrate(30, "medium");
@@ -117,6 +124,8 @@ export function setupTabataCore(tb) {
 
     tb.status = "STOPPED";
     tb.paused = false;
+    tb.remainingAtPause = 0;
+    tb.completionHandled = true;
 
     stopTimerContext();
 
@@ -134,7 +143,7 @@ export function setupTabataCore(tb) {
   };
 
   tb.tick = (isBackground = false) => {
-    if (tb.status === "STOPPED" || tb.paused) return;
+    if (tb.status === "STOPPED" || tb.paused || tb.completionHandled) return;
 
     const now = performance.now();
     const rem = tb.phaseEndTime - now;
@@ -175,6 +184,7 @@ export function setupTabataCore(tb) {
         e.data?.type === "heartbeat" &&
         tb.status !== "STOPPED" &&
         !tb.paused &&
+        !tb.completionHandled &&
         document.hidden
       ) {
         tb.tick(true);
@@ -185,9 +195,17 @@ export function setupTabataCore(tb) {
       if (
         document.visibilityState === "visible" &&
         tb.status !== "STOPPED" &&
-        !tb.paused
+        !tb.paused &&
+        !tb.completionHandled
       ) {
+        const rem = tb.phaseEndTime - performance.now();
+        if (rem <= 0) {
+          tb.nextPhase(Math.abs(rem));
+          return;
+        }
+
         tb.lastRender = 0;
+        tb.render(rem);
         tb.tick();
       }
     });

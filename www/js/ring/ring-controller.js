@@ -7,31 +7,44 @@ export function createRingController({
 }) {
   let visual = Number.isFinite(initialOffset) ? initialOffset : 0;
   let target = visual;
-  let running = false;
+  let active = false;
   let rafId = 0;
 
+  const EPS = 0.2;
+
   const tick = () => {
-    if (!running || !ringEl) return;
+    if (!active || !ringEl) {
+      rafId = 0;
+      return;
+    }
 
     visual += (target - visual) * alpha;
 
-    if (Math.abs(target - visual) < 0.2) {
+    if (Math.abs(target - visual) < EPS) {
       visual = target;
+      ringEl.style.strokeDashoffset = String(visual);
+      rafId = 0;
+      return;
     }
 
     ringEl.style.strokeDashoffset = String(visual);
     rafId = requestAnimationFrame(tick);
   };
 
+  const ensureTick = () => {
+    if (!active || !ringEl || rafId) return;
+    rafId = requestAnimationFrame(tick);
+  };
+
   return {
     start() {
-      if (running) return;
-      running = true;
-      rafId = requestAnimationFrame(tick);
+      if (active) return;
+      active = true;
+      ensureTick();
     },
 
     stop() {
-      running = false;
+      active = false;
       if (rafId) cancelAnimationFrame(rafId);
       rafId = 0;
     },
@@ -39,6 +52,12 @@ export function createRingController({
     setTarget(offset) {
       if (!Number.isFinite(offset)) return;
       target = offset;
+      if (Math.abs(target - visual) < EPS) {
+        visual = target;
+        if (ringEl) ringEl.style.strokeDashoffset = String(visual);
+        return;
+      }
+      ensureTick();
     },
 
     snap(offset) {
