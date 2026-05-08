@@ -43,13 +43,12 @@ export function setupTabataCore(tb) {
     tb.currentRound = 1;
     tb.status = "READY";
     tb.phaseDuration = 5000;
-    tb.phaseEndTime = performance.now() + tb.phaseDuration;
+    tb.phaseEndTime = Date.now() + tb.phaseDuration;
     tb.paused = false;
     tb.remainingAtPause = 0;
     tb.lastBeepSec = 0;
     tb.lastRender = 0;
     tb.completionHandled = false;
-    tb.hiddenAtEpoch = 0;
 
     tb.phaseClosing = false;
     if (tb.phaseCloseTimer) {
@@ -80,14 +79,13 @@ export function setupTabataCore(tb) {
   tb.pause = () => {
     store.clearActiveTimer();
     tb.paused = true;
-    tb.hiddenAtEpoch = 0;
 
     bgWorker.postMessage({ command: "stop" });
 
     if (tb.rAF) cancelAnimationFrame(tb.rAF);
     tb.rAF = null;
 
-    tb.remainingAtPause = Math.max(0, tb.phaseEndTime - performance.now());
+    tb.remainingAtPause = Math.max(0, tb.phaseEndTime - Date.now());
     updateText(tb.els.status, t("pause"));
 
     stopTimerContext();
@@ -99,10 +97,9 @@ export function setupTabataCore(tb) {
     store.activate("tabata");
     tb.paused = false;
     tb.completionHandled = false;
-    tb.phaseEndTime = performance.now() + Math.max(0, tb.remainingAtPause || 0);
+    tb.phaseEndTime = Date.now() + Math.max(0, tb.remainingAtPause || 0);
     tb.lastBeepSec = 0;
     tb.lastRender = 0;
-    tb.hiddenAtEpoch = 0;
 
     tb.phaseClosing = false;
     if (tb.phaseCloseTimer) {
@@ -120,7 +117,6 @@ export function setupTabataCore(tb) {
     tb.updatePhaseStyles();
   };
 
-  // resetRing=false can be used for manual visual flow; completion uses resetRing=true.
   tb.stop = ({ resetRing = true, silent = false } = {}) => {
     if (!silent) {
       sm.vibrate(30, "medium");
@@ -141,7 +137,6 @@ export function setupTabataCore(tb) {
       tb.phaseCloseTimer = null;
     }
     tb.phaseClosing = false;
-    tb.hiddenAtEpoch = 0;
 
     tb.status = "STOPPED";
     tb.paused = false;
@@ -167,24 +162,21 @@ export function setupTabataCore(tb) {
     if (tb.status === "STOPPED" || tb.paused || tb.completionHandled) return;
     if (tb.phaseClosing) return;
 
-    const now = performance.now();
-    const rem = tb.phaseEndTime - now;
+    const rem = tb.phaseEndTime - Date.now();
 
     if (rem <= 0) {
       const missed = Math.abs(rem);
 
-      // If app was sleeping/backgrounded for long, fast-forward without phase-close hold.
-      if (missed > 2000 || document.hidden) {
+      // In background or after long freeze: fast-forward immediately.
+      if (document.hidden || missed > 2000) {
         tb.nextPhase(missed);
         return;
       }
 
-      // Visual close-hold: show fully closed ring before switching to next phase.
+      // Foreground visual close-hold before phase switch.
       tb.phaseClosing = true;
 
-      if (!isBackground) {
-        tb.render(0);
-      }
+      if (!isBackground) tb.render(0);
       tb.ringCtrl?.setTarget(0);
 
       tb.phaseCloseTimer = setTimeout(() => {
@@ -199,6 +191,7 @@ export function setupTabataCore(tb) {
       return;
     }
 
+    const now = performance.now();
     if (now - tb.lastRender >= 16 || isBackground) {
       if (!isBackground) {
         tb.render(rem);
@@ -237,35 +230,20 @@ export function setupTabataCore(tb) {
     });
 
     document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "hidden") {
-        // Mark wall-clock hide moment to compensate suspended performance.now
-        if (tb.status !== "STOPPED" && !tb.paused && !tb.completionHandled) {
-          tb.hiddenAtEpoch = Date.now();
-        }
-        return;
-      }
+      if (document.visibilityState !== "visible") return;
 
-      // visible
       if (tb.status === "STOPPED") {
         if (tb.phaseCloseTimer) {
           clearTimeout(tb.phaseCloseTimer);
           tb.phaseCloseTimer = null;
         }
         tb.phaseClosing = false;
-        tb.hiddenAtEpoch = 0;
         tb.ringCtrl?.snap(tb.ringLength);
         return;
       }
 
-      // Compensate time spent in background (wall clock)
-      if (tb.hiddenAtEpoch && !tb.paused && !tb.completionHandled) {
-        const hiddenDelta = Math.max(0, Date.now() - tb.hiddenAtEpoch);
-        tb.phaseEndTime -= hiddenDelta;
-      }
-      tb.hiddenAtEpoch = 0;
-
       if (!tb.paused && !tb.completionHandled) {
-        const rem = tb.phaseEndTime - performance.now();
+        const rem = tb.phaseEndTime - Date.now();
 
         if (rem <= 0) {
           tb.nextPhase(Math.abs(rem));

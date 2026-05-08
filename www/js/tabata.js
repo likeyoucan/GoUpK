@@ -18,6 +18,7 @@ export const tb = {
   currentRound: 1,
   status: "STOPPED",
   phaseDuration: 0,
+  // IMPORTANT: for Tabata this is now epoch milliseconds (Date.now base)
   phaseEndTime: 0,
   remainingAtPause: 0,
   rAF: null,
@@ -36,12 +37,9 @@ export const tb = {
   // Completion guard (prevents repeated complete logic in background race)
   completionHandled: false,
 
-  // Short visual hold when a phase reaches zero before switching to next phase
+  // Visual close-hold at phase edge (foreground only)
   phaseClosing: false,
   phaseCloseTimer: null,
-
-  // Real-world timestamp when app got hidden during active tabata
-  hiddenAtEpoch: 0,
 
   formatTime,
 

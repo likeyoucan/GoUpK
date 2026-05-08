@@ -70,7 +70,7 @@ export function buildForegroundPayload({
   }
 
   const remTb = state.running
-    ? Math.max(0, tb.phaseEndTime - performance.now())
+    ? Math.max(0, tb.phaseEndTime - Date.now())
     : Math.max(0, tb.remainingAtPause || 0);
 
   const phaseText = state.running

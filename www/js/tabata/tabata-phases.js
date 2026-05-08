@@ -13,27 +13,8 @@ export function setupTabataPhases(tb) {
     sm.play("complete");
     announceToScreenReader(t("tabata_complete"));
 
-    // Если завершилось в фоне — сразу в стабильный idle, без визуальных эффектов.
-    if (document.hidden) {
-      tb.stop({ resetRing: true, silent: true });
-      showToast(t("tabata_complete"));
-      return;
-    }
-
-    // На активном экране: даем кольцу "досомкнуться" до 0,
-    // затем мягко переводим в idle.
-    if (tb.rAF) cancelAnimationFrame(tb.rAF);
-    tb.rAF = null;
-
-    // Финальный кадр "00:00" + цель кольца в ноль.
-    tb.render(0);
-    tb.ringCtrl?.setTarget(0);
-
-    // Небольшая пауза, чтобы пользователь увидел завершение анимации.
-    setTimeout(() => {
-      tb.stop({ resetRing: true, silent: true });
-      showToast(t("tabata_complete"));
-    }, 220);
+    tb.stop({ resetRing: true, silent: true });
+    showToast(t("tabata_complete"));
   };
 
   tb.advancePhase = () => {
@@ -42,7 +23,10 @@ export function setupTabataPhases(tb) {
       tb.phaseDuration = tb.work;
       tb.phaseStamp += 1;
       sm.play("work_start");
-    } else if (tb.status === "WORK") {
+      return "ok";
+    }
+
+    if (tb.status === "WORK") {
       if (tb.currentRound >= tb.rounds) {
         return "complete";
       }
@@ -50,71 +34,51 @@ export function setupTabataPhases(tb) {
       tb.phaseDuration = tb.rest;
       tb.phaseStamp += 1;
       sm.play("rest_start");
-    } else if (tb.status === "REST") {
-      tb.currentRound += 1;
-      tb.status = "WORK";
-      tb.phaseDuration = tb.work;
-      tb.phaseStamp += 1;
-      sm.play("work_start");
+      return "ok";
     }
 
+    // REST -> next WORK
+    tb.currentRound += 1;
+    tb.status = "WORK";
+    tb.phaseDuration = tb.work;
+    tb.phaseStamp += 1;
+    sm.play("work_start");
     return "ok";
   };
 
-  tb.applyMissedTime = (missedTime) => {
-    let remainingMissed = missedTime;
-
-    while (remainingMissed > 0 && tb.status !== "STOPPED") {
-      const currentPhaseDuration =
-        tb.status === "READY"
-          ? tb.phaseDuration
-          : tb.status === "WORK"
-            ? tb.work
-            : tb.rest;
-
-      const step = Math.min(remainingMissed, currentPhaseDuration);
-      remainingMissed -= step;
-
-      const leftInPhase = currentPhaseDuration - step;
-      if (leftInPhase <= 0) {
-        const result = tb.advancePhase();
-        if (result === "complete") {
-          return "complete";
-        }
-        if (remainingMissed === 0) {
-          tb.phaseDuration = tb.phaseDuration + leftInPhase;
-        }
-      } else {
-        tb.phaseDuration = leftInPhase;
-      }
-    }
-
-    return "ok";
-  };
-
+  // Fully Date.now-driven fast-forward logic.
   tb.nextPhase = (missedTime = 0) => {
     if (tb.status === "STOPPED" || tb.completionHandled) return;
 
     if (missedTime === 0) sm.vibrate([100, 50, 100], "strong");
     tb.lastBeepSec = 0;
 
-    if (missedTime > 0) {
-      const result = tb.applyMissedTime(missedTime);
-      if (result === "complete") {
-        handleCompletion();
-        return;
-      }
-      tb.phaseEndTime = performance.now() + tb.phaseDuration;
-    } else {
+    let overshoot = Math.max(0, missedTime);
+
+    const enterNextPhase = () => {
       const result = tb.advancePhase();
       if (result === "complete") {
         handleCompletion();
-        return;
+        return false;
       }
+      return true;
+    };
 
-      tb.phaseEndTime = performance.now() + tb.phaseDuration;
+    // Current phase has ended -> move to next phase at least once.
+    if (!enterNextPhase()) return;
+
+    // Consume additional overshoot across multiple phases.
+    while (overshoot > 0 && tb.status !== "STOPPED" && !tb.completionHandled) {
+      if (overshoot >= tb.phaseDuration) {
+        overshoot -= tb.phaseDuration;
+        if (!enterNextPhase()) return;
+      } else {
+        tb.phaseDuration -= overshoot;
+        overshoot = 0;
+      }
     }
 
+    tb.phaseEndTime = Date.now() + tb.phaseDuration;
     tb.updatePhaseStyles();
     tb.tick();
   };
