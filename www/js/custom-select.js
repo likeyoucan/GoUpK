@@ -16,6 +16,7 @@ export class CustomSelect {
     this.currentValue = initialValue;
     this.isOpening = false;
     this.focusedIndex = -1;
+    this._onViewportChange = null;
 
     this.render();
     this.attachEventListeners();
@@ -23,6 +24,14 @@ export class CustomSelect {
   }
 
   destroy() {
+    if (!this.container) return;
+
+    if (this._onViewportChange) {
+      window.removeEventListener("resize", this._onViewportChange);
+      window.removeEventListener("scroll", this._onViewportChange, true);
+      this._onViewportChange = null;
+    }
+
     activeSelects.delete(this);
     this.container.replaceChildren();
     this.container.classList.remove(
@@ -77,6 +86,7 @@ export class CustomSelect {
     this.optionsPanel.setAttribute("tabindex", "-1");
 
     this.container.classList.add("custom-select-container", "relative");
+
     this.container.append(this.trigger, this.optionsPanel);
 
     this.populateOptions();
@@ -192,6 +202,53 @@ export class CustomSelect {
       const target = e.target.closest(".custom-select-option");
       if (target) target.classList.remove("needs-dark-text");
     });
+
+    this._onViewportChange = () => {
+      if (this.isOpening) this.positionPanel();
+    };
+
+    window.addEventListener("resize", this._onViewportChange, {
+      passive: true,
+    });
+    window.addEventListener("scroll", this._onViewportChange, {
+      passive: true,
+      capture: true,
+    });
+  }
+
+  positionPanel() {
+    if (!this.trigger || !this.optionsPanel) return;
+
+    const rect = this.trigger.getBoundingClientRect();
+    const gap = 8;
+    const vw = window.innerWidth || document.documentElement.clientWidth || 0;
+    const vh = window.innerHeight || document.documentElement.clientHeight || 0;
+
+    const panelWidth = Math.max(120, Math.round(rect.width));
+    const maxPanelWidth = Math.max(120, vw - 16);
+
+    const width = Math.min(panelWidth, maxPanelWidth);
+    let left = Math.round(rect.left);
+    let top = Math.round(rect.bottom + gap);
+
+    // keep panel in viewport horizontally
+    if (left + width > vw - 8) left = Math.max(8, vw - width - 8);
+    if (left < 8) left = 8;
+
+    // if no space below, open above
+    const estimatedHeight = Math.min(
+      250,
+      Math.max(120, this.optionsPanel.scrollHeight || 250),
+    );
+    const spaceBelow = vh - rect.bottom - gap - 8;
+    const spaceAbove = rect.top - gap - 8;
+    if (spaceBelow < 140 && spaceAbove > spaceBelow) {
+      top = Math.round(rect.top - gap - Math.min(estimatedHeight, spaceAbove));
+    }
+
+    this.optionsPanel.style.left = `${left}px`;
+    this.optionsPanel.style.top = `${top}px`;
+    this.optionsPanel.style.width = `${width}px`;
   }
 
   toggle() {
@@ -206,8 +263,10 @@ export class CustomSelect {
     });
 
     this.optionsPanel.classList.remove("hidden");
+    this.positionPanel();
 
     requestAnimationFrame(() => {
+      this.positionPanel();
       this.optionsPanel.classList.add("is-open");
       this.arrow.style.transform = "rotate(180deg)";
       this.trigger.setAttribute("aria-expanded", "true");
@@ -235,6 +294,9 @@ export class CustomSelect {
     setTimeout(() => {
       if (!this.isOpening) {
         this.optionsPanel.classList.add("hidden");
+        this.optionsPanel.style.left = "";
+        this.optionsPanel.style.top = "";
+        this.optionsPanel.style.width = "";
       }
     }, TRANSITION_DURATION);
   }
@@ -319,7 +381,7 @@ document.addEventListener("click", () => {
 
 document.addEventListener(APP_EVENTS.ACCENT_COLOR_CHANGED, () => {
   activeSelects.forEach((s) => {
-    const selectedEl = s.optionsPanel.querySelector(".is-selected");
+    const selectedEl = s.optionsPanel?.querySelector(".is-selected");
     if (selectedEl) s.updateSelectedTextColor(selectedEl);
   });
 });
