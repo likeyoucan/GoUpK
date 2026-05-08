@@ -1,4 +1,4 @@
-// Файл: www/js/bootstrap/navigation-gesture-controller.js
+// Файл: www/js/bootstrap/navigation-gesture-controller.js /
 
 export function bindNavSwipe({ appContainer, bottomNav, navigation, modalManager }) {
   if (!appContainer || !bottomNav) {
