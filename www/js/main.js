@@ -95,6 +95,7 @@ function initProSettingsUi() {
         ? t("pro_status_active")
         : t("pro_status_free");
     }
+
     modeSelect?.setValue(appProManager.mode, false);
 
     featureMap.forEach(([id, key]) => {
@@ -125,6 +126,7 @@ function initProSettingsUi() {
   });
 
   document.addEventListener(APP_EVENTS.PRO_STATUS_CHANGED, sync);
+  document.addEventListener(APP_EVENTS.LANGUAGE_CHANGED, sync);
   sync();
 }
 
