@@ -5,8 +5,15 @@ import { STORAGE_KEYS } from "../constants/storage-keys.js?v=VERSION";
 import { appProManager } from "../app-pro.js?v=VERSION";
 import { showToast } from "../utils.js?v=VERSION";
 
-function notifySoundThemeProLocked() {
-  showToast("Sound themes are available in Pro");
+function tr(t, key, fallback = "") {
+  const v = t(key);
+  return v === key ? fallback || key : v;
+}
+
+function notifySoundThemeProLocked(t) {
+  showToast(
+    tr(t, "pro_sound_themes_locked", "Sound themes are available in Pro"),
+  );
   document.dispatchEvent(
     new CustomEvent(APP_EVENTS.PRO_PAYWALL_REQUESTED, {
       detail: { feature: "sound_themes" },
@@ -71,9 +78,8 @@ export function bindSoundControls(sm, { $, safeSetLS, CustomSelect, t }) {
     "soundThemeSelectContainer",
     soundThemeOptions,
     (newTheme) => {
-      // Free baseline: classic.
       if (newTheme !== "classic" && !appProManager.canUse("sound_themes")) {
-        notifySoundThemeProLocked();
+        notifySoundThemeProLocked(t);
         sm.soundThemeSelect?.setValue(sm.theme || "classic", false);
         return;
       }
@@ -85,7 +91,6 @@ export function bindSoundControls(sm, { $, safeSetLS, CustomSelect, t }) {
     sm.theme,
   );
 
-  // If current saved theme is Pro-only and user has no access, fallback to classic.
   if (sm.theme !== "classic" && !appProManager.canUse("sound_themes")) {
     sm.theme = "classic";
     safeSetLS(STORAGE_KEYS.APP_SOUND_THEME, sm.theme);

@@ -27,6 +27,11 @@ function dispatch(name, detail = {}) {
   document.dispatchEvent(new CustomEvent(name, { detail }));
 }
 
+function tr(key, fallback = "") {
+  const v = t(key);
+  return v === key ? fallback || key : v;
+}
+
 export const appProManager = {
   mode: DEFAULT_MODE,
   purchased: false,
@@ -89,7 +94,9 @@ export const appProManager = {
     this.persist();
     this.applyProIcon();
 
-    showToast("Pro data reset due to integrity check");
+    showToast(
+      tr("pro_integrity_reset", "Pro data was reset after integrity check"),
+    );
     dispatch(APP_EVENTS.PRO_TAMPER_DETECTED, { reason });
     dispatch(APP_EVENTS.PRO_STATUS_CHANGED, { purchased: false });
   },
@@ -159,14 +166,14 @@ export const appProManager = {
     this.purchased = true;
     await this.persist();
     this.applyProIcon();
-    showToast(t("pro_activated"));
+    showToast(tr("pro_activated", "Pro activated"));
   },
 
   async revoke() {
     this.purchased = false;
     await this.persist();
     this.applyProIcon();
-    showToast(t("pro_deactivated"));
+    showToast(tr("pro_deactivated", "Pro deactivated"));
   },
 
   async setMode(nextMode) {
@@ -186,7 +193,6 @@ export const appProManager = {
     const isPro = !!this.purchased;
     document.documentElement.classList.toggle("is-pro-user", isPro);
 
-    // Optional native bridge for alternate app icon
     const iconPlugin = window.Capacitor?.Plugins?.AppIconSwitcher;
     if (iconPlugin?.setIconName) {
       iconPlugin

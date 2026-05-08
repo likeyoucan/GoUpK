@@ -40,6 +40,11 @@ function isErudaNoiseFromRejection(event) {
   return reasonText.includes(ERUDA_CDN_MARKER);
 }
 
+function tr(key, fallback = "") {
+  const v = t(key);
+  return v === key ? fallback || key : v;
+}
+
 function renderBootError(error) {
   const msg = (error && (error.stack || error.message)) || String(error);
   console.error("[BOOT ERROR]", error);
@@ -116,7 +121,7 @@ function renderProBadgesFromConfig() {
 
     const btn = document.createElement("button");
     btn.type = "button";
-    btn.textContent = "Pro";
+    btn.textContent = tr("pro", "Pro");
     btn.dataset.proFeature = feature;
     btn.dataset.proInjected = "1";
     btn.className =
@@ -132,13 +137,34 @@ function initProStatusUi() {
 
   const sync = () => {
     statusEl.textContent = appProManager.purchased
-      ? t("pro_status_active")
-      : t("pro_status_free");
+      ? tr("pro_status_active", "Pro active")
+      : tr("pro_status_free", "Free");
   };
 
   document.addEventListener(APP_EVENTS.PRO_STATUS_CHANGED, sync);
   document.addEventListener(APP_EVENTS.LANGUAGE_CHANGED, sync);
   sync();
+}
+
+function bindProPaywallToasts() {
+  const featureNameByKey = {
+    custom_colors: () => tr("pro_feature_name_custom_colors", "Custom colors"),
+    accent_bg: () => tr("pro_feature_name_accent_bg", "Accent and background"),
+    remove_ads: () => tr("pro_feature_name_remove_ads", "Disable ads"),
+    sound_themes: () => tr("pro_feature_name_sound_themes", "Sound themes"),
+    app_icon: () => tr("pro_feature_name_app_icon", "Pro icon"),
+  };
+
+  document.addEventListener(APP_EVENTS.PRO_PAYWALL_REQUESTED, (e) => {
+    const feature = e?.detail?.feature || "";
+    const label = featureNameByKey[feature]?.();
+
+    if (label) {
+      showToast(`${label}: ${tr("pro_required", "Feature available in Pro")}`);
+    } else {
+      showToast(tr("pro_required", "Feature available in Pro"));
+    }
+  });
 }
 
 async function bootstrap() {
@@ -187,6 +213,7 @@ async function bootstrap() {
 
   initProStatusUi();
   renderProBadgesFromConfig();
+  bindProPaywallToasts();
 
   document.addEventListener(APP_EVENTS.LANGUAGE_CHANGED, () => {
     renderProBadgesFromConfig();
@@ -198,11 +225,6 @@ async function bootstrap() {
         console.error("[pro-revalidate] failed", err);
       });
     }
-  });
-
-  document.addEventListener(APP_EVENTS.PRO_PAYWALL_REQUESTED, (e) => {
-    const feature = e?.detail?.feature || "pro";
-    showToast(`Pro required: ${feature}`);
   });
 }
 
