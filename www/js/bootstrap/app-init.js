@@ -1,4 +1,4 @@
-// Файл: www/js/bootstrap/app-init.js /
+// Файл: www/js/bootstrap/app-init.js
 
 import { createModalConfig } from "./modal-config.js?v=VERSION";
 
