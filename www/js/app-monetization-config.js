@@ -217,7 +217,7 @@ Interstitial не чаще cooldown.
 export const APP_MONETIZATION_CONFIG = {
   pro: {
     enabled: true,
-    forcePurchased: true, // null | true | false
+    forcePurchased: null, // null | true | false
     mode: "subscription", // subscription | lifetime | disabled
     features: {
       custom_colors: true,
