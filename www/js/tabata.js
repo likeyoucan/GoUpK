@@ -67,7 +67,7 @@ export const tb = {
       this.ringCtrl = createRingController({
         ringEl: this.els.ring,
         initialOffset: this.ringLength,
-        alpha: 0.22,
+        alpha: 0.15,
       });
       this.ringCtrl.start();
     }

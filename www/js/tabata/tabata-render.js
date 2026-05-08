@@ -1,5 +1,6 @@
 // Файл: www/js/tabata/tabata-render.js
 
+// Файл: www/js/tabata/tabata-render.js
 import { updateText, updateTitle, formatTime } from "../utils.js?v=VERSION";
 import { t } from "../i18n.js?v=VERSION";
 import { sm } from "../sound.js?v=VERSION";
@@ -39,20 +40,22 @@ export function setupTabataRender(tb) {
   };
 
   tb.render = (rem) => {
-    const sTotal = Math.ceil(rem / 1000);
+    const safeRem = Math.max(0, rem);
+
+    const sTotal = Math.ceil(safeRem / 1000);
     if (sTotal <= 3 && sTotal > 0 && tb.lastBeepSec !== sTotal) {
       sm.play("tick");
       tb.lastBeepSec = sTotal;
     }
 
-    const timeStr = formatTime(rem);
+    const timeStr = formatTime(safeRem);
     updateText(tb.els.timer, timeStr);
 
     if (document.hidden) updateTitle(`${tb.status}: ${timeStr}`);
 
     if (!tb.ringCtrl) return;
 
-    const elapsed = Math.max(0, tb.phaseDuration - rem);
+    const elapsed = Math.max(0, tb.phaseDuration - safeRem);
     const progress =
       tb.phaseDuration > 0
         ? Math.max(0, Math.min(1, elapsed / tb.phaseDuration))
@@ -60,19 +63,24 @@ export function setupTabataRender(tb) {
 
     const targetOffset = tb.ringLength - progress * tb.ringLength;
 
-    // На смене фазы — snap для исключения reverse-sweep артефактов
+    // На смене фазы избегаем резких артефактов:
+    // snap только если скачок действительно большой.
     if (tb.lastRenderedPhaseStamp !== tb.phaseStamp) {
       tb.lastRenderedPhaseStamp = tb.phaseStamp;
-      tb.ringCtrl.snap(targetOffset);
+      const visual = tb.ringCtrl.getVisual
+        ? tb.ringCtrl.getVisual()
+        : tb.ringLength;
+      const jump = Math.abs(targetOffset - visual);
+
+      if (jump > tb.ringLength * 0.45) {
+        tb.ringCtrl.snap(targetOffset);
+      } else {
+        tb.ringCtrl.setTarget(targetOffset);
+      }
       return;
     }
 
-    // В самом конце фазы убираем дрожание: принудительно ставим 0
-    if (rem <= 180) {
-      tb.ringCtrl.snap(0);
-      return;
-    }
-
+    // Важно: без принудительного snap(0) -> финиш выглядит равномернее
     tb.ringCtrl.setTarget(targetOffset);
   };
 }
