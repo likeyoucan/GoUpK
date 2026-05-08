@@ -90,7 +90,8 @@ function collectScrollTargets() {
   if (document.scrollingElement instanceof HTMLElement) {
     set.add(document.scrollingElement);
   }
-  if (document.documentElement instanceof HTMLElement) set.add(document.documentElement);
+  if (document.documentElement instanceof HTMLElement)
+    set.add(document.documentElement);
   if (document.body instanceof HTMLElement) set.add(document.body);
 
   // App-specific scrollable containers
@@ -156,6 +157,36 @@ function unlockPageScroll() {
 
   detachGlobalScrollBlock();
   restoreScrollOnTargets();
+
+  // Hard reset for safety (prevents rare "stuck no-scroll" states)
+  const html = document.documentElement;
+  const body = document.body;
+  const settings = document.getElementById("view-settings");
+
+  if (html) {
+    html.style.overscrollBehavior = "";
+    html.style.overflow = "";
+    html.style.touchAction = "";
+  }
+
+  if (body) {
+    body.style.overscrollBehavior = "";
+    body.style.overflow = "";
+    body.style.touchAction = "";
+    body.style.position = "";
+    body.style.top = "";
+    body.style.left = "";
+    body.style.right = "";
+    body.style.width = "";
+  }
+
+  if (settings) {
+    settings.style.overflow = "";
+    settings.style.overflowY = "";
+    settings.style.touchAction = "";
+    settings.style.overscrollBehavior = "";
+    settings.style.overscrollBehaviorY = "";
+  }
 }
 
 export class CustomSelect {
@@ -204,7 +235,11 @@ export class CustomSelect {
 
     activeSelects.delete(this);
     this.container.replaceChildren();
-    this.container.classList.remove("custom-select-container", "relative", "is-open");
+    this.container.classList.remove(
+      "custom-select-container",
+      "relative",
+      "is-open",
+    );
   }
 
   render() {
@@ -221,11 +256,20 @@ export class CustomSelect {
     this.selectedValueEl = document.createElement("span");
     this.selectedValueEl.className = "custom-select-value text-sm font-bold";
 
-    const arrowSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    const arrowSvg = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "svg",
+    );
     arrowSvg.setAttribute("focusable", "false");
     arrowSvg.setAttribute("aria-hidden", "true");
     arrowSvg.setAttribute("viewBox", "0 0 24 24");
-    arrowSvg.classList.add("w-4", "h-4", "app-text-sec", "transition-transform", "duration-300");
+    arrowSvg.classList.add(
+      "w-4",
+      "h-4",
+      "app-text-sec",
+      "transition-transform",
+      "duration-300",
+    );
 
     const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
     path.setAttribute("stroke-linecap", "round");
@@ -365,7 +409,9 @@ export class CustomSelect {
       this.scheduleReposition();
     };
 
-    window.addEventListener("resize", this._onViewportChange, { passive: true });
+    window.addEventListener("resize", this._onViewportChange, {
+      passive: true,
+    });
     window.addEventListener("scroll", this._onViewportChange, {
       passive: true,
       capture: true,
@@ -373,7 +419,8 @@ export class CustomSelect {
   }
 
   _movePanelToBody() {
-    if (!this.optionsPanel || this.optionsPanel.parentElement === document.body) return;
+    if (!this.optionsPanel || this.optionsPanel.parentElement === document.body)
+      return;
     this._originalParent = this.optionsPanel.parentElement;
     this._nextSibling = this.optionsPanel.nextSibling;
     document.body.appendChild(this.optionsPanel);
@@ -382,7 +429,10 @@ export class CustomSelect {
   _restorePanelToContainer() {
     if (!this.optionsPanel || !this._originalParent) return;
 
-    if (this._nextSibling && this._nextSibling.parentNode === this._originalParent) {
+    if (
+      this._nextSibling &&
+      this._nextSibling.parentNode === this._originalParent
+    ) {
       this._originalParent.insertBefore(this.optionsPanel, this._nextSibling);
     } else {
       this._originalParent.appendChild(this.optionsPanel);
@@ -444,7 +494,10 @@ export class CustomSelect {
 
     let top;
     if (this._placement === "top") {
-      const panelHeight = Math.min(maxHeight, this.optionsPanel.scrollHeight || maxHeight);
+      const panelHeight = Math.min(
+        maxHeight,
+        this.optionsPanel.scrollHeight || maxHeight,
+      );
       top = Math.round(rect.top - gap - panelHeight);
       if (top < 8) top = 8;
     } else {
@@ -488,7 +541,9 @@ export class CustomSelect {
       this.trigger.setAttribute("aria-expanded", "true");
       this.container.classList.add("is-open");
 
-      const selectedIdx = this.options.findIndex((opt) => opt.value === this.currentValue);
+      const selectedIdx = this.options.findIndex(
+        (opt) => opt.value === this.currentValue,
+      );
       this.focusedIndex = selectedIdx >= 0 ? selectedIdx : 0;
 
       this.syncAriaActive();
@@ -532,11 +587,15 @@ export class CustomSelect {
   }
 
   moveFocus(direction) {
-    const optionEls = this.optionsPanel.querySelectorAll(".custom-select-option");
+    const optionEls = this.optionsPanel.querySelectorAll(
+      ".custom-select-option",
+    );
     if (!optionEls.length) return;
 
     if (this.focusedIndex < 0) this.focusedIndex = 0;
-    else this.focusedIndex = (this.focusedIndex + direction + optionEls.length) % optionEls.length;
+    else
+      this.focusedIndex =
+        (this.focusedIndex + direction + optionEls.length) % optionEls.length;
 
     this.syncAriaActive();
     this.focusCurrentOption();
@@ -565,14 +624,18 @@ export class CustomSelect {
     if (!selectedOption) return;
 
     this.currentValue = value;
-    this.selectedValueEl.replaceChildren(document.createTextNode(selectedOption.text));
+    this.selectedValueEl.replaceChildren(
+      document.createTextNode(selectedOption.text),
+    );
 
-    this.optionsPanel.querySelectorAll(".custom-select-option").forEach((el) => {
-      const isSelected = el.dataset.value === value;
-      el.classList.toggle("is-selected", isSelected);
-      el.setAttribute("aria-selected", isSelected.toString());
-      if (isSelected) this.updateSelectedTextColor(el);
-    });
+    this.optionsPanel
+      .querySelectorAll(".custom-select-option")
+      .forEach((el) => {
+        const isSelected = el.dataset.value === value;
+        el.classList.toggle("is-selected", isSelected);
+        el.setAttribute("aria-selected", isSelected.toString());
+        if (isSelected) this.updateSelectedTextColor(el);
+      });
 
     const selectedIdx = this.options.findIndex((opt) => opt.value === value);
     this.focusedIndex = selectedIdx;

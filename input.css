@@ -1853,7 +1853,7 @@ body.hide-nav-labels .nav-btn {
     0 10px 25px -5px rgb(0 0 0 / 0.1),
     0 8px 10px -6px rgb(0 0 0 / 0.1);
 
-  /* fallback, реальный лимит высоты задается из JS */
+  /* fallback, реальный параметр высоты задается из JS */
   max-height: 60dvh;
   overflow-y: auto;
   overscroll-behavior: contain;
