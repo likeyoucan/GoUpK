@@ -22,7 +22,10 @@ function bindPreloaderLifecycle(preload) {
   };
 }
 
-function bindForegroundLifecycle({ initForegroundService, destroyForegroundService }) {
+function bindForegroundLifecycle({
+  initForegroundService,
+  destroyForegroundService,
+}) {
   initForegroundService();
 
   const onBeforeUnload = () => {

@@ -23,7 +23,13 @@ function isInteractiveElement(target) {
   return false;
 }
 
-export function bindKeyboardShortcuts({ navigation, modalManager, sw, tm, tb }) {
+export function bindKeyboardShortcuts({
+  navigation,
+  modalManager,
+  sw,
+  tm,
+  tb,
+}) {
   const onKeydown = (e) => {
     const target = e.target instanceof HTMLElement ? e.target : null;
 

@@ -1,11 +1,6 @@
 // Файл: www/js/color/color-ui.js
 
-export function createColorSwatch({
-  color,
-  isCustom,
-  type,
-  t,
-}) {
+export function createColorSwatch({ color, isCustom, type, t }) {
   const wrapper = document.createElement("div");
   wrapper.className = "color-swatch-wrapper relative rounded-full";
   wrapper.dataset.color = color;
@@ -15,7 +10,10 @@ export function createColorSwatch({
   button.type = "button";
   button.className =
     "color-btn w-9 h-9 flex items-center justify-center rounded-full shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus";
-  button.setAttribute("aria-label", color === "default" ? t("default_color") : color);
+  button.setAttribute(
+    "aria-label",
+    color === "default" ? t("default_color") : color,
+  );
 
   if (color === "default") {
     if (type === "accent") button.classList.add("default-accent-btn");
@@ -37,7 +35,9 @@ export function populateColorSection({
 }) {
   if (!container) return;
 
-  container.querySelectorAll(".color-swatch-wrapper").forEach((el) => el.remove());
+  container
+    .querySelectorAll(".color-swatch-wrapper")
+    .forEach((el) => el.remove());
 
   const picker = container.querySelector(".color-picker-wrapper");
   const colors = [...standardColors, ...customColors];
@@ -56,7 +56,12 @@ export function addColorToDOM({ container, color, type, t }) {
   container.insertBefore(swatch, picker);
 }
 
-export function updateAddButtonColor({ button, color, hexToRGB, getLuminance }) {
+export function updateAddButtonColor({
+  button,
+  color,
+  hexToRGB,
+  getLuminance,
+}) {
   button.style.backgroundColor = color;
   button.dataset.color = color;
 

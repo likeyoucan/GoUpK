@@ -19,6 +19,8 @@ export function bindBottomNav({ navigation, modalManager, sm }) {
   });
 
   return () => {
-    handlers.forEach(({ btn, handler }) => btn.removeEventListener("click", handler));
+    handlers.forEach(({ btn, handler }) =>
+      btn.removeEventListener("click", handler),
+    );
   };
 }

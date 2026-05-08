@@ -1,6 +1,11 @@
 // Файл: www/js/bootstrap/navigation-gesture-controller.js
 
-export function bindNavSwipe({ appContainer, bottomNav, navigation, modalManager }) {
+export function bindNavSwipe({
+  appContainer,
+  bottomNav,
+  navigation,
+  modalManager,
+}) {
   if (!appContainer || !bottomNav) {
     console.warn("[swipe] Missing appContainer or bottomNav. Swipe disabled.");
     return () => {};
@@ -91,7 +96,9 @@ export function bindNavSwipe({ appContainer, bottomNav, navigation, modalManager
   appContainer.addEventListener("touchstart", onTouchStart, { passive: true });
   appContainer.addEventListener("touchmove", onTouchMove, { passive: true });
   appContainer.addEventListener("touchend", onTouchEnd, { passive: true });
-  appContainer.addEventListener("touchcancel", onTouchCancel, { passive: true });
+  appContainer.addEventListener("touchcancel", onTouchCancel, {
+    passive: true,
+  });
 
   return () => {
     appContainer.removeEventListener("touchstart", onTouchStart);
