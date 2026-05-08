@@ -1,6 +1,7 @@
 // Файл: www/js/ui-settings/ui-settings-bindings.js
 
 import { $, safeSetLS, showToast } from "../utils.js?v=VERSION";
+import { t } from "../i18n.js?v=VERSION";
 import { sm } from "../sound.js?v=VERSION";
 import { adsManager } from "../ads.js?v=VERSION";
 import { appProManager } from "../app-pro.js?v=VERSION";
@@ -74,7 +75,7 @@ export function bindUiSettingsEvents(state) {
 
       // remove_ads is Pro-gated by your App Pro config.
       const allowed = appProManager.requirePro("remove_ads", () => {
-        showToast("Disable ads is available in Pro");
+        showToast(t("disable_ads_pro"));
       });
 
       if (!allowed) {

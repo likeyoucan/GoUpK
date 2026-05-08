@@ -69,7 +69,6 @@ export function bindModalActions({
   bind("pro-confirm-buy", "click", async () => {
     await appProManager.purchase();
     modalManager.closeCurrent();
-    showToast(t("pro") === "pro" ? "Pro activated" : `${t("pro")} activated`);
   });
 
   bind("pro-cancel-buy", "click", () => {

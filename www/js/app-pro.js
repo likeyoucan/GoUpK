@@ -1,6 +1,7 @@
 // Файл: www/js/app-pro.js
 
 import { safeGetLS, safeSetLS, showToast } from "./utils.js?v=VERSION";
+import { t } from "./i18n.js?v=VERSION";
 import { STORAGE_KEYS } from "./constants/storage-keys.js?v=VERSION";
 import { APP_EVENTS } from "./constants/events.js?v=VERSION";
 import { proSecurity } from "./app-pro-security.js?v=VERSION";
@@ -54,7 +55,6 @@ export const appProManager = {
 
     const ok = await proSecurity.verify(payload, signature);
 
-    // Signature absent: bootstrap first valid state.
     if (!signature) {
       await this.persist();
       this.initialized = true;
@@ -86,7 +86,7 @@ export const appProManager = {
     safeSetLS(STORAGE_KEYS.APP_PRO_UPDATED_AT, String(this.updatedAt));
     safeSetLS(STORAGE_KEYS.APP_PRO_SIGNATURE, "");
 
-    this.persist(); // async fire-and-forget safe re-sign
+    this.persist();
     this.applyProIcon();
 
     showToast("Pro data reset due to integrity check");
@@ -137,7 +137,6 @@ export const appProManager = {
   },
 
   canUse(featureKey) {
-    // disabled mode = all free
     if (this.mode === "disabled") return true;
 
     const isGated = !!this.features?.[featureKey];
@@ -160,14 +159,14 @@ export const appProManager = {
     this.purchased = true;
     await this.persist();
     this.applyProIcon();
-    showToast("Pro activated");
+    showToast(t("pro_activated"));
   },
 
   async revoke() {
     this.purchased = false;
     await this.persist();
     this.applyProIcon();
-    showToast("Pro deactivated");
+    showToast(t("pro_deactivated"));
   },
 
   async setMode(nextMode) {
@@ -184,7 +183,15 @@ export const appProManager = {
   },
 
   applyProIcon() {
-    // Web fallback marker. Native icon switch can be bound later via Capacitor plugin.
-    document.documentElement.classList.toggle("is-pro-user", !!this.purchased);
+    const isPro = !!this.purchased;
+    document.documentElement.classList.toggle("is-pro-user", isPro);
+
+    // Optional native bridge for alternate app icon
+    const iconPlugin = window.Capacitor?.Plugins?.AppIconSwitcher;
+    if (iconPlugin?.setIconName) {
+      iconPlugin
+        .setIconName({ name: isPro ? "pro" : "default" })
+        .catch(() => {});
+    }
   },
 };

@@ -766,16 +766,33 @@
                   </div>
 
                   <div class="p-4 pb-3 border-b app-border">
-                    <span
-                      class="block font-medium app-text text-sm mb-3"
-                      data-i18n="accent_color"
-                      >Accent Color</span
-                    >
+                    <div class="flex items-center justify-between mb-3">
+                      <span
+                        class="block font-medium app-text text-sm"
+                        data-i18n="accent_color"
+                        >Accent Color</span
+                      >
+                      <div class="flex items-center gap-2">
+                        <button
+                          type="button"
+                          class="text-[10px] font-bold uppercase px-2 py-1 rounded-md border app-border app-text-sec active:scale-95"
+                          data-pro-feature="accent_bg"
+                        >
+                          Pro
+                        </button>
+                        <button
+                          type="button"
+                          class="text-[10px] font-bold uppercase px-2 py-1 rounded-md border app-border app-text-sec active:scale-95"
+                          data-pro-feature="custom_colors"
+                        >
+                          Pro
+                        </button>
+                      </div>
+                    </div>
                     <div
                       id="accent-colors-container"
                       class="flex items-center gap-4 overflow-x-auto no-scrollbar py-2 px-2 -mx-2"
                     >
-                      <!-- Сюда JS вставит стандартные и кастомные цвета -->
                       <div
                         class="color-picker-wrapper relative w-9 h-9 shrink-0 group rounded-full border border-dashed border-[var(--dashed-border-color)] transition-transform active:scale-90 focus-within:ring-2 focus-within:ring-[var(--primary-color)] focus-within:ring-offset-2 focus-within:ring-offset-surface"
                       >
@@ -805,16 +822,33 @@
                   </div>
 
                   <div class="p-4 pb-3 border-b app-border">
-                    <span
-                      class="block font-medium app-text text-sm mb-3"
-                      data-i18n="bg_color"
-                      >Background Color</span
-                    >
+                    <div class="flex items-center justify-between mb-3">
+                      <span
+                        class="block font-medium app-text text-sm"
+                        data-i18n="bg_color"
+                        >Background Color</span
+                      >
+                      <div class="flex items-center gap-2">
+                        <button
+                          type="button"
+                          class="text-[10px] font-bold uppercase px-2 py-1 rounded-md border app-border app-text-sec active:scale-95"
+                          data-pro-feature="accent_bg"
+                        >
+                          Pro
+                        </button>
+                        <button
+                          type="button"
+                          class="text-[10px] font-bold uppercase px-2 py-1 rounded-md border app-border app-text-sec active:scale-95"
+                          data-pro-feature="custom_colors"
+                        >
+                          Pro
+                        </button>
+                      </div>
+                    </div>
                     <div
                       id="bg-colors-container"
                       class="flex items-center gap-4 overflow-x-auto no-scrollbar py-2 px-2 -mx-2"
                     >
-                      <!-- Сюда JS вставит стандартные и кастомные цвета -->
                       <div
                         class="color-picker-wrapper relative w-9 h-9 shrink-0 group rounded-full border border-dashed border-[var(--dashed-border-color)] transition-transform active:scale-90 focus-within:ring-2 focus-within:ring-[var(--primary-color)] focus-within:ring-offset-2 focus-within:ring-offset-surface"
                       >
@@ -1073,7 +1107,16 @@
                       data-i18n="sound_theme"
                       >Sound Theme</label
                     >
-                    <div id="soundThemeSelectContainer" class="w-40"></div>
+                    <div class="flex items-center gap-2">
+                      <button
+                        type="button"
+                        class="text-[10px] font-bold uppercase px-2 py-1 rounded-md border app-border app-text-sec active:scale-95"
+                        data-pro-feature="sound_themes"
+                      >
+                        Pro
+                      </button>
+                      <div id="soundThemeSelectContainer" class="w-40"></div>
+                    </div>
                   </div>
 
                   <div class="p-4 border-t app-border flex flex-col gap-3">
@@ -1127,6 +1170,7 @@
                     </div>
                   </div>
                 </div>
+
                 <h3
                   class="text-xs font-bold app-text-sec uppercase tracking-wider mb-3 ml-2 mt-6"
                   data-i18n="interface"
@@ -1205,7 +1249,71 @@
                     </label>
                   </div>
 
+                  <div
+                    class="flex items-center justify-between p-4 border-t app-border"
+                  >
+                    <label
+                      for="toggle-ads"
+                      class="font-medium app-text text-sm cursor-pointer"
+                      data-i18n="ads"
+                    >
+                      Ads
+                    </label>
+                    <div class="flex items-center gap-2">
+                      <button
+                        type="button"
+                        class="text-[10px] font-bold uppercase px-2 py-1 rounded-md border app-border app-text-sec active:scale-95"
+                        data-pro-feature="remove_ads"
+                      >
+                        Pro
+                      </button>
+                      <label
+                        class="relative inline-flex items-center cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          id="toggle-ads"
+                          class="sr-only"
+                        />
+                        <div class="custom-toggle"></div>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div
+                    class="flex items-center justify-between p-4 border-t app-border"
+                  >
+                    <label
+                      for="adsProvider"
+                      class="font-medium app-text text-sm"
+                      data-i18n="ads_provider"
+                    >
+                      Ads Provider
+                    </label>
+                    <select
+                      id="adsProvider"
+                      class="min-h-[36px] rounded-lg app-surface border app-border px-2 text-sm"
+                    >
+                      <option value="yandex" data-i18n="ads_yandex">
+                        Yandex
+                      </option>
+                      <option value="admob" data-i18n="ads_admob">AdMob</option>
+                      <option value="mediation" data-i18n="ads_mediation">
+                        Mediation
+                      </option>
+                    </select>
+                  </div>
+
                   <div class="p-4 border-t app-border flex flex-col gap-2">
+                    <button
+                      type="button"
+                      id="btn-buy-pro"
+                      class="min-h-[44px] primary-bg text-white font-bold text-xs tracking-widest uppercase active:scale-95 transition-transform focus:outline-none flex items-center justify-center gap-2 rounded-lg"
+                      data-i18n="buy_subscription"
+                    >
+                      Buy Subscription
+                    </button>
+
                     <button
                       type="button"
                       id="btn-open-reset"
@@ -1214,6 +1322,7 @@
                     >
                       Reset to Defaults
                     </button>
+
                     <a
                       href="mailto:support@yourdomain.com?subject=Stopwatch Pro Feedback"
                       class="min-h-[44px] app-text font-bold text-xs tracking-widest uppercase active:scale-95 transition-transform focus:outline-none flex items-center justify-center gap-2 rounded-lg bg-black/5 dark:bg-white/5"
@@ -1883,41 +1992,6 @@
           </form>
         </div>
 
-        <!-- Настройки рекламы -->
-        <div class="p-4 border-t app-border flex items-center justify-between">
-          <label
-            for="toggle-ads"
-            class="font-medium app-text text-sm cursor-pointer"
-            data-i18n="ads"
-          >
-            Ads
-          </label>
-          <label class="relative inline-flex items-center cursor-pointer">
-            <input type="checkbox" id="toggle-ads" class="sr-only" />
-            <div class="custom-toggle"></div>
-          </label>
-        </div>
-
-        <div class="p-4 border-t app-border flex items-center justify-between">
-          <label
-            for="adsProvider"
-            class="font-medium app-text text-sm"
-            data-i18n="ads_provider"
-          >
-            Ads Provider
-          </label>
-          <select
-            id="adsProvider"
-            class="min-h-[36px] rounded-lg app-surface border app-border px-2 text-sm"
-          >
-            <option value="yandex" data-i18n="ads_yandex">Yandex</option>
-            <option value="admob" data-i18n="ads_admob">AdMob</option>
-            <option value="mediation" data-i18n="ads_mediation">
-              Mediation
-            </option>
-          </select>
-        </div>
-
         <!-- Settings: Reset -->
         <div
           id="reset-modal"
@@ -1967,6 +2041,7 @@
             </div>
           </div>
         </div>
+
         <!-- Stopwatch: Share Mode -->
         <div
           id="sw-share-mode-modal"
@@ -2016,6 +2091,57 @@
               type="button"
               class="min-h-[44px] w-full px-4 py-2 rounded-xl font-bold app-text-sec active:scale-95 transition-transform"
               data-modal-close
+              data-i18n="cancel"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+        <!-- App Pro: Subscribe Modal -->
+        <div
+          id="pro-subscribe-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="pro-subscribe-title"
+          inert
+          aria-hidden="true"
+          class="hidden absolute inset-0 z-[110] items-center justify-center p-6 transition-opacity duration-300 opacity-0"
+          data-modal-close
+        >
+          <div
+            id="pro-subscribe-modal-content"
+            class="app-surface w-full max-w-sm rounded-3xl p-6 shadow-2xl border app-border flex flex-col gap-4 transform transition-all duration-300 opacity-0 scale-95"
+          >
+            <h3 id="pro-subscribe-title" class="text-xl font-bold app-text">
+              Stopwatch Pro
+            </h3>
+
+            <p class="app-text-sec text-sm leading-relaxed">
+              Unlock custom colors, accent and background settings, ad removal,
+              sound themes, and Pro app icon.
+            </p>
+
+            <div class="text-xs app-text-sec leading-relaxed">
+              <div>- Custom colors</div>
+              <div>- Accent and background tuning</div>
+              <div>- Disable ads</div>
+              <div>- Sound themes</div>
+              <div>- Pro app icon</div>
+            </div>
+
+            <button
+              type="button"
+              id="pro-confirm-buy"
+              class="min-h-[44px] px-5 py-2 rounded-xl font-bold text-white primary-bg shadow-lg active:scale-95 transition-transform focus:outline-none custom-focus"
+              data-i18n="buy_subscription"
+            >
+              Buy Subscription
+            </button>
+
+            <button
+              type="button"
+              id="pro-cancel-buy"
+              class="min-h-[44px] px-5 py-2 rounded-xl font-bold app-text-sec active:scale-95 transition-transform focus:outline-none custom-focus"
               data-i18n="cancel"
             >
               Cancel
