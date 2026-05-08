@@ -28,8 +28,12 @@ export function setupTimerCore(tm, { showToast, updateText }) {
         tm.ringCtrl.setTarget(targetOffset);
       }
 
-      tm.updateDisplay(rem);
-      tm.updateAdjustButtons();
+      const nowPerf = performance.now();
+      if (nowPerf - (tm._lastUiPaintTs || 0) >= 33) {
+        tm._lastUiPaintTs = nowPerf;
+        tm.updateDisplay(rem);
+        tm.updateAdjustButtons();
+      }
 
       if (rem <= 0 && tm.isRunning) {
         tm.finishAsCompleted();

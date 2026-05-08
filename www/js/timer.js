@@ -42,6 +42,7 @@ export const tm = {
   // Smooth UI loop state
   rAF: null,
   lastUiRem: 0,
+  _lastUiPaintTs: 0,
 
   // Ignore stale worker ticks briefly after +/- adjustments
   skipWorkerTickUntil: 0,
