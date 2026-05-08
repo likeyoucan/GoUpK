@@ -16,7 +16,12 @@ export class CustomSelect {
     this.currentValue = initialValue;
     this.isOpening = false;
     this.focusedIndex = -1;
+
     this._onViewportChange = null;
+    this._rafReposition = 0;
+    this._placement = "bottom";
+    this._originalParent = null;
+    this._nextSibling = null;
 
     this.render();
     this.attachEventListeners();
@@ -31,6 +36,14 @@ export class CustomSelect {
       window.removeEventListener("scroll", this._onViewportChange, true);
       this._onViewportChange = null;
     }
+
+    if (this._rafReposition) {
+      cancelAnimationFrame(this._rafReposition);
+      this._rafReposition = 0;
+    }
+
+    // Вернуть панель домой, если была в body
+    this._restorePanelToContainer();
 
     activeSelects.delete(this);
     this.container.replaceChildren();
@@ -86,7 +99,6 @@ export class CustomSelect {
     this.optionsPanel.setAttribute("tabindex", "-1");
 
     this.container.classList.add("custom-select-container", "relative");
-
     this.container.append(this.trigger, this.optionsPanel);
 
     this.populateOptions();
@@ -203,8 +215,13 @@ export class CustomSelect {
       if (target) target.classList.remove("needs-dark-text");
     });
 
-    this._onViewportChange = () => {
-      if (this.isOpening) this.positionPanel();
+    this._onViewportChange = (ev) => {
+      if (!this.isOpening) return;
+
+      // Если скроллится сам dropdown, не репозиционируем
+      if (ev?.target && this.optionsPanel.contains(ev.target)) return;
+
+      this.scheduleReposition();
     };
 
     window.addEventListener("resize", this._onViewportChange, {
@@ -213,6 +230,54 @@ export class CustomSelect {
     window.addEventListener("scroll", this._onViewportChange, {
       passive: true,
       capture: true,
+    });
+  }
+
+  _movePanelToBody() {
+    if (!this.optionsPanel || this.optionsPanel.parentElement === document.body)
+      return;
+    this._originalParent = this.optionsPanel.parentElement;
+    this._nextSibling = this.optionsPanel.nextSibling;
+    document.body.appendChild(this.optionsPanel);
+  }
+
+  _restorePanelToContainer() {
+    if (!this.optionsPanel || !this._originalParent) return;
+
+    if (
+      this._nextSibling &&
+      this._nextSibling.parentNode === this._originalParent
+    ) {
+      this._originalParent.insertBefore(this.optionsPanel, this._nextSibling);
+    } else {
+      this._originalParent.appendChild(this.optionsPanel);
+    }
+
+    this._originalParent = null;
+    this._nextSibling = null;
+  }
+
+  decidePlacement() {
+    const rect = this.trigger.getBoundingClientRect();
+    const vh = window.innerHeight || document.documentElement.clientHeight || 0;
+    const gap = 8;
+    const estimatedHeight = Math.min(
+      260,
+      Math.max(120, this.optionsPanel.scrollHeight || 220),
+    );
+
+    const spaceBelow = vh - rect.bottom - gap - 8;
+    const spaceAbove = rect.top - gap - 8;
+
+    this._placement =
+      spaceBelow >= 140 || spaceBelow >= spaceAbove ? "bottom" : "top";
+  }
+
+  scheduleReposition() {
+    if (this._rafReposition) return;
+    this._rafReposition = requestAnimationFrame(() => {
+      this._rafReposition = 0;
+      this.positionPanel();
     });
   }
 
@@ -226,24 +291,24 @@ export class CustomSelect {
 
     const panelWidth = Math.max(120, Math.round(rect.width));
     const maxPanelWidth = Math.max(120, vw - 16);
-
     const width = Math.min(panelWidth, maxPanelWidth);
-    let left = Math.round(rect.left);
-    let top = Math.round(rect.bottom + gap);
 
-    // keep panel in viewport horizontally
+    let left = Math.round(rect.left);
     if (left + width > vw - 8) left = Math.max(8, vw - width - 8);
     if (left < 8) left = 8;
 
-    // if no space below, open above
-    const estimatedHeight = Math.min(
-      250,
-      Math.max(120, this.optionsPanel.scrollHeight || 250),
-    );
-    const spaceBelow = vh - rect.bottom - gap - 8;
-    const spaceAbove = rect.top - gap - 8;
-    if (spaceBelow < 140 && spaceAbove > spaceBelow) {
-      top = Math.round(rect.top - gap - Math.min(estimatedHeight, spaceAbove));
+    let top;
+    if (this._placement === "top") {
+      const est = Math.min(
+        260,
+        Math.max(120, this.optionsPanel.scrollHeight || 220),
+      );
+      top = Math.round(rect.top - gap - est);
+      if (top < 8) top = 8;
+    } else {
+      top = Math.round(rect.bottom + gap);
+      const maxTop = vh - 8 - 120;
+      if (top > maxTop) top = Math.max(8, maxTop);
     }
 
     this.optionsPanel.style.left = `${left}px`;
@@ -262,7 +327,11 @@ export class CustomSelect {
       if (s !== this && s.isOpening) s.close();
     });
 
+    this._movePanelToBody();
     this.optionsPanel.classList.remove("hidden");
+
+    // Фиксируем направление один раз на открытие
+    this.decidePlacement();
     this.positionPanel();
 
     requestAnimationFrame(() => {
@@ -291,12 +360,18 @@ export class CustomSelect {
     this.container.classList.remove("is-open");
     this.trigger.removeAttribute("aria-activedescendant");
 
+    if (this._rafReposition) {
+      cancelAnimationFrame(this._rafReposition);
+      this._rafReposition = 0;
+    }
+
     setTimeout(() => {
       if (!this.isOpening) {
         this.optionsPanel.classList.add("hidden");
         this.optionsPanel.style.left = "";
         this.optionsPanel.style.top = "";
         this.optionsPanel.style.width = "";
+        this._restorePanelToContainer();
       }
     }, TRANSITION_DURATION);
   }
@@ -308,10 +383,9 @@ export class CustomSelect {
     if (!optionEls.length) return;
 
     if (this.focusedIndex < 0) this.focusedIndex = 0;
-    else {
+    else
       this.focusedIndex =
         (this.focusedIndex + direction + optionEls.length) % optionEls.length;
-    }
 
     this.syncAriaActive();
     this.focusCurrentOption();
