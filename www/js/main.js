@@ -27,6 +27,19 @@ import { adsManager } from "./ads.js?v=VERSION";
 import { APP_EVENTS } from "./constants/events.js?v=VERSION";
 import { CustomSelect } from "./custom-select.js?v=VERSION";
 
+const ERUDA_CDN_MARKER = "cdn.jsdelivr.net/npm/eruda";
+
+function isErudaNoiseFromErrorEvent(event) {
+  const src = String(event?.filename || "");
+  const msg = String(event?.message || "");
+  return src.includes(ERUDA_CDN_MARKER) || msg.includes(ERUDA_CDN_MARKER);
+}
+
+function isErudaNoiseFromRejection(event) {
+  const reasonText = String(event?.reason?.stack || event?.reason || "");
+  return reasonText.includes(ERUDA_CDN_MARKER);
+}
+
 function renderBootError(error) {
   const msg = (error && (error.stack || error.message)) || String(error);
   console.error("[BOOT ERROR]", error);
@@ -44,8 +57,11 @@ function renderBootError(error) {
   panel.innerHTML = `
     <div class="max-w-3xl mx-auto space-y-3">
       <h2 class="text-lg font-bold">App Boot Failed</h2>
-      <p>Application stopped before initialization. Check error details below.</p>
-      <pre class="whitespace-pre-wrap break-words bg-black/40 p-3 rounded-xl">${msg.replace(/[<>&]/g, (m) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" })[m])}</pre>
+      <p>Application stopped before initialization. Check details below.</p>
+      <pre class="whitespace-pre-wrap break-words bg-black/40 p-3 rounded-xl">${msg.replace(
+        /[<>&]/g,
+        (m) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" })[m],
+      )}</pre>
       <button id="boot-reload-btn" class="px-4 py-2 rounded-lg bg-white text-black font-bold">Reload</button>
     </div>
   `;
@@ -108,6 +124,7 @@ function initProSettingsUi() {
   featureMap.forEach(([id, key]) => {
     const el = $(id);
     if (!el) return;
+
     el.addEventListener("change", async (e) => {
       try {
         await appProManager.setFeatureGate(key, !!e.target.checked);
@@ -190,10 +207,12 @@ async function bootstrap() {
 }
 
 window.addEventListener("error", (e) => {
+  if (isErudaNoiseFromErrorEvent(e)) return;
   console.error("[GLOBAL ERROR]", e.error || e.message);
 });
 
 window.addEventListener("unhandledrejection", (e) => {
+  if (isErudaNoiseFromRejection(e)) return;
   console.error("[UNHANDLED PROMISE]", e.reason);
 });
 
