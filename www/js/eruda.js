@@ -86,12 +86,9 @@
   }
 
   const CSS = `
-#__erudaGear {
-  right: 12px;
-  bottom: calc(12px + env(safe-area-inset-bottom, 0px) + 5rem);
-}
-#__erudaBar { z-index: 120; }      /* выше интерфейса */
-#__erudaPanel { z-index: 120; }    /* выше интерфейса */
+#__erudaGear { z-index: 2147483647; }
+#__erudaBar { z-index: 2147483646; }
+#__erudaPanel { z-index: 2147483645; }
 #__erudaGear {
   position: fixed; right: 12px; bottom: 12px;
   width: 48px; height: 48px; border-radius: 14px;
