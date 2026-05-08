@@ -8,11 +8,18 @@ const TRANSITION_DURATION = 200;
 const SELECT_MAX_VIEWPORT_K = 0.6; // 60dvh
 const SELECT_MIN_HEIGHT_PX = 120;
 
-// Shared scroll lock state for all select instances
+// Shared scroll lock state
 let scrollLockCount = 0;
-let savedScrollY = 0;
-let savedBodyStyle = null;
 let globalScrollBlockAttached = false;
+let lockedScrollTargets = [];
+
+/**
+ * We lock scroll by:
+ * 1) preventing wheel/touchmove/scroll-keys globally
+ * 2) temporarily disabling overflow on known scroll containers
+ *
+ * NOTE: We avoid body: fixed to keep glass/backdrop visuals stable.
+ */
 
 function isInsideOpenSelectPanel(target) {
   if (!(target instanceof Node)) return false;
@@ -26,9 +33,8 @@ function isInsideOpenSelectPanel(target) {
 }
 
 function preventGlobalScrollEvent(e) {
-  // Allow scroll inside opened select panel
+  // Allow scrolling inside active dropdown panel
   if (isInsideOpenSelectPanel(e.target)) return;
-
   e.preventDefault();
   e.stopPropagation();
 }
@@ -77,32 +83,66 @@ function detachGlobalScrollBlock() {
   document.removeEventListener("keydown", preventGlobalScrollKeys, true);
 }
 
+function collectScrollTargets() {
+  const set = new Set();
+
+  // Common page scroll roots
+  if (document.scrollingElement instanceof HTMLElement) {
+    set.add(document.scrollingElement);
+  }
+  if (document.documentElement instanceof HTMLElement) set.add(document.documentElement);
+  if (document.body instanceof HTMLElement) set.add(document.body);
+
+  // App-specific scrollable containers
+  document
+    .querySelectorAll(
+      "#view-settings, .scroll-lock, .no-scrollbar, #sw-lapsContainer, #tb-workoutsList, #sw-sessionsList, #tb-modal-form",
+    )
+    .forEach((el) => {
+      if (el instanceof HTMLElement) set.add(el);
+    });
+
+  return [...set];
+}
+
+function disableScrollOnTargets() {
+  const targets = collectScrollTargets();
+  lockedScrollTargets = targets.map((el) => ({
+    el,
+    overflow: el.style.overflow,
+    overflowY: el.style.overflowY,
+    touchAction: el.style.touchAction,
+    overscrollBehavior: el.style.overscrollBehavior,
+    overscrollBehaviorY: el.style.overscrollBehaviorY,
+  }));
+
+  lockedScrollTargets.forEach(({ el }) => {
+    el.style.overflow = "hidden";
+    el.style.overflowY = "hidden";
+    el.style.touchAction = "none";
+    el.style.overscrollBehavior = "none";
+    el.style.overscrollBehaviorY = "none";
+  });
+}
+
+function restoreScrollOnTargets() {
+  lockedScrollTargets.forEach((row) => {
+    row.el.style.overflow = row.overflow;
+    row.el.style.overflowY = row.overflowY;
+    row.el.style.touchAction = row.touchAction;
+    row.el.style.overscrollBehavior = row.overscrollBehavior;
+    row.el.style.overscrollBehaviorY = row.overscrollBehaviorY;
+  });
+
+  lockedScrollTargets = [];
+}
+
 function lockPageScroll() {
   scrollLockCount += 1;
   if (scrollLockCount > 1) return;
 
-  const body = document.body;
-  const html = document.documentElement;
-
-  savedScrollY = window.scrollY || window.pageYOffset || 0;
-  savedBodyStyle = {
-    position: body.style.position,
-    top: body.style.top,
-    left: body.style.left,
-    right: body.style.right,
-    width: body.style.width,
-    overflow: body.style.overflow,
-  };
-
-  html.style.overscrollBehavior = "none";
-  body.style.position = "fixed";
-  body.style.top = `-${savedScrollY}px`;
-  body.style.left = "0";
-  body.style.right = "0";
-  body.style.width = "100%";
-  body.style.overflow = "hidden";
-
   attachGlobalScrollBlock();
+  disableScrollOnTargets();
 }
 
 function unlockPageScroll() {
@@ -114,23 +154,8 @@ function unlockPageScroll() {
   scrollLockCount -= 1;
   if (scrollLockCount > 0) return;
 
-  const body = document.body;
-  const html = document.documentElement;
-
-  body.style.position = savedBodyStyle?.position || "";
-  body.style.top = savedBodyStyle?.top || "";
-  body.style.left = savedBodyStyle?.left || "";
-  body.style.right = savedBodyStyle?.right || "";
-  body.style.width = savedBodyStyle?.width || "";
-  body.style.overflow = savedBodyStyle?.overflow || "";
-  html.style.overscrollBehavior = "";
-
-  window.scrollTo(0, savedScrollY);
-
   detachGlobalScrollBlock();
-
-  savedBodyStyle = null;
-  savedScrollY = 0;
+  restoreScrollOnTargets();
 }
 
 export class CustomSelect {
@@ -179,11 +204,7 @@ export class CustomSelect {
 
     activeSelects.delete(this);
     this.container.replaceChildren();
-    this.container.classList.remove(
-      "custom-select-container",
-      "relative",
-      "is-open",
-    );
+    this.container.classList.remove("custom-select-container", "relative", "is-open");
   }
 
   render() {
@@ -200,20 +221,11 @@ export class CustomSelect {
     this.selectedValueEl = document.createElement("span");
     this.selectedValueEl.className = "custom-select-value text-sm font-bold";
 
-    const arrowSvg = document.createElementNS(
-      "http://www.w3.org/2000/svg",
-      "svg",
-    );
+    const arrowSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     arrowSvg.setAttribute("focusable", "false");
     arrowSvg.setAttribute("aria-hidden", "true");
     arrowSvg.setAttribute("viewBox", "0 0 24 24");
-    arrowSvg.classList.add(
-      "w-4",
-      "h-4",
-      "app-text-sec",
-      "transition-transform",
-      "duration-300",
-    );
+    arrowSvg.classList.add("w-4", "h-4", "app-text-sec", "transition-transform", "duration-300");
 
     const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
     path.setAttribute("stroke-linecap", "round");
@@ -353,9 +365,7 @@ export class CustomSelect {
       this.scheduleReposition();
     };
 
-    window.addEventListener("resize", this._onViewportChange, {
-      passive: true,
-    });
+    window.addEventListener("resize", this._onViewportChange, { passive: true });
     window.addEventListener("scroll", this._onViewportChange, {
       passive: true,
       capture: true,
@@ -363,8 +373,7 @@ export class CustomSelect {
   }
 
   _movePanelToBody() {
-    if (!this.optionsPanel || this.optionsPanel.parentElement === document.body)
-      return;
+    if (!this.optionsPanel || this.optionsPanel.parentElement === document.body) return;
     this._originalParent = this.optionsPanel.parentElement;
     this._nextSibling = this.optionsPanel.nextSibling;
     document.body.appendChild(this.optionsPanel);
@@ -373,10 +382,7 @@ export class CustomSelect {
   _restorePanelToContainer() {
     if (!this.optionsPanel || !this._originalParent) return;
 
-    if (
-      this._nextSibling &&
-      this._nextSibling.parentNode === this._originalParent
-    ) {
+    if (this._nextSibling && this._nextSibling.parentNode === this._originalParent) {
       this._originalParent.insertBefore(this.optionsPanel, this._nextSibling);
     } else {
       this._originalParent.appendChild(this.optionsPanel);
@@ -438,10 +444,7 @@ export class CustomSelect {
 
     let top;
     if (this._placement === "top") {
-      const panelHeight = Math.min(
-        maxHeight,
-        this.optionsPanel.scrollHeight || maxHeight,
-      );
+      const panelHeight = Math.min(maxHeight, this.optionsPanel.scrollHeight || maxHeight);
       top = Math.round(rect.top - gap - panelHeight);
       if (top < 8) top = 8;
     } else {
@@ -485,9 +488,7 @@ export class CustomSelect {
       this.trigger.setAttribute("aria-expanded", "true");
       this.container.classList.add("is-open");
 
-      const selectedIdx = this.options.findIndex(
-        (opt) => opt.value === this.currentValue,
-      );
+      const selectedIdx = this.options.findIndex((opt) => opt.value === this.currentValue);
       this.focusedIndex = selectedIdx >= 0 ? selectedIdx : 0;
 
       this.syncAriaActive();
@@ -531,15 +532,11 @@ export class CustomSelect {
   }
 
   moveFocus(direction) {
-    const optionEls = this.optionsPanel.querySelectorAll(
-      ".custom-select-option",
-    );
+    const optionEls = this.optionsPanel.querySelectorAll(".custom-select-option");
     if (!optionEls.length) return;
 
     if (this.focusedIndex < 0) this.focusedIndex = 0;
-    else
-      this.focusedIndex =
-        (this.focusedIndex + direction + optionEls.length) % optionEls.length;
+    else this.focusedIndex = (this.focusedIndex + direction + optionEls.length) % optionEls.length;
 
     this.syncAriaActive();
     this.focusCurrentOption();
@@ -568,18 +565,14 @@ export class CustomSelect {
     if (!selectedOption) return;
 
     this.currentValue = value;
-    this.selectedValueEl.replaceChildren(
-      document.createTextNode(selectedOption.text),
-    );
+    this.selectedValueEl.replaceChildren(document.createTextNode(selectedOption.text));
 
-    this.optionsPanel
-      .querySelectorAll(".custom-select-option")
-      .forEach((el) => {
-        const isSelected = el.dataset.value === value;
-        el.classList.toggle("is-selected", isSelected);
-        el.setAttribute("aria-selected", isSelected.toString());
-        if (isSelected) this.updateSelectedTextColor(el);
-      });
+    this.optionsPanel.querySelectorAll(".custom-select-option").forEach((el) => {
+      const isSelected = el.dataset.value === value;
+      el.classList.toggle("is-selected", isSelected);
+      el.setAttribute("aria-selected", isSelected.toString());
+      if (isSelected) this.updateSelectedTextColor(el);
+    });
 
     const selectedIdx = this.options.findIndex((opt) => opt.value === value);
     this.focusedIndex = selectedIdx;
