@@ -1262,6 +1262,13 @@
           </div>
         </main>
 
+        <!-- Слот баннера -->
+        <div
+          id="app-ad-slot"
+          class="hidden w-full app-surface border-t app-border px-2 py-1 text-center select-none"
+          aria-label="Advertisement"
+        ></div>
+
         <!-- ═══════════════════════════════════════════
          BOTTOM NAVIGATION
     ═══════════════════════════════════════════ -->
@@ -1874,6 +1881,41 @@
               </button>
             </div>
           </form>
+        </div>
+
+        <!-- Настройки рекламы -->
+        <div class="p-4 border-t app-border flex items-center justify-between">
+          <label
+            for="toggle-ads"
+            class="font-medium app-text text-sm cursor-pointer"
+            data-i18n="ads"
+          >
+            Ads
+          </label>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="toggle-ads" class="sr-only" />
+            <div class="custom-toggle"></div>
+          </label>
+        </div>
+
+        <div class="p-4 border-t app-border flex items-center justify-between">
+          <label
+            for="adsProvider"
+            class="font-medium app-text text-sm"
+            data-i18n="ads_provider"
+          >
+            Ads Provider
+          </label>
+          <select
+            id="adsProvider"
+            class="min-h-[36px] rounded-lg app-surface border app-border px-2 text-sm"
+          >
+            <option value="yandex" data-i18n="ads_yandex">Yandex</option>
+            <option value="admob" data-i18n="ads_admob">AdMob</option>
+            <option value="mediation" data-i18n="ads_mediation">
+              Mediation
+            </option>
+          </select>
         </div>
 
         <!-- Settings: Reset -->

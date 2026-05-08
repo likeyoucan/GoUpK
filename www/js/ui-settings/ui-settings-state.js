@@ -14,6 +14,10 @@ export const UI_SETTINGS_KEYS = {
   showMs: STORAGE_KEYS.APP_SHOW_MS,
   showForegroundBanner: STORAGE_KEYS.APP_SHOW_FOREGROUND_BANNER,
   swMinuteBeep: STORAGE_KEYS.APP_SW_MINUTE_BEEP,
+
+  // Ads
+  adsEnabled: STORAGE_KEYS.APP_ADS_ENABLED,
+  adsProvider: STORAGE_KEYS.APP_ADS_PROVIDER,
 };
 
 export function createUiSettingsState() {
@@ -28,6 +32,11 @@ export function createUiSettingsState() {
     fontSize: 16,
     ringWidth: 4,
     swMinuteBeep: true,
+
+    // Ads
+    adsEnabled: true,
+    adsProvider: "yandex",
+
     lastSliderValues: {},
 
     vignetteLevels: [0.1, 0.15, 0.2, 0.25, 0.3],
@@ -62,6 +71,10 @@ export function loadUiSettingsFromStorage(state) {
   state.ringWidth = Number(safeGetLS(UI_SETTINGS_KEYS.ringWidth)) || 4;
   state.vignetteAlpha =
     parseFloat(safeGetLS(UI_SETTINGS_KEYS.vignetteAlpha)) || 0.2;
+
+  // Ads
+  state.adsEnabled = safeGetLS(UI_SETTINGS_KEYS.adsEnabled) !== "false";
+  state.adsProvider = safeGetLS(UI_SETTINGS_KEYS.adsProvider) || "yandex";
 }
 
 export function resetUiSettingsStorage() {

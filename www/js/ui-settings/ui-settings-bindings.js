@@ -1,7 +1,9 @@
 // Файл: www/js/ui-settings/ui-settings-bindings.js
 
-import { $, safeSetLS } from "../utils.js?v=VERSION";
+import { $, safeSetLS, showToast } from "../utils.js?v=VERSION";
 import { sm } from "../sound.js?v=VERSION";
+import { adsManager } from "../ads.js?v=VERSION";
+import { appProManager } from "../app-pro.js?v=VERSION";
 import { APP_EVENTS } from "../constants/events.js?v=VERSION";
 import { STORAGE_KEYS } from "../constants/storage-keys.js?v=VERSION";
 
@@ -65,6 +67,26 @@ export function bindUiSettingsEvents(state) {
       state.swMinuteBeep = val;
       safeSetLS(STORAGE_KEYS.APP_SW_MINUTE_BEEP, val);
     },
+
+    // Ads toggle with App Pro guard:
+    "toggle-ads": (val) => {
+      state.adsEnabled = val;
+
+      // remove_ads is Pro-gated by your App Pro config.
+      const allowed = appProManager.requirePro("remove_ads", () => {
+        showToast("Disable ads is available in Pro");
+      });
+
+      if (!allowed) {
+        // force back to true for free users
+        state.adsEnabled = true;
+        if ($("toggle-ads")) $("toggle-ads").checked = true;
+      }
+
+      safeSetLS(STORAGE_KEYS.APP_ADS_ENABLED, state.adsEnabled);
+      adsManager.setEnabled(state.adsEnabled);
+      document.dispatchEvent(new CustomEvent(APP_EVENTS.ADS_SETTINGS_CHANGED));
+    },
   };
 
   Object.entries(toggleListeners).forEach(([id, callback]) => {
@@ -120,4 +142,15 @@ export function bindUiSettingsEvents(state) {
     sm.vibroLevel = levels[Number(e.target.value)] || 1;
     updateSliderLabel("vibroSlider", "vibro-label", state.vibroLabels);
   });
+
+  // Optional provider selector if you add a native/custom select in index.html:
+  const providerSelect = $("adsProvider");
+  if (providerSelect) {
+    providerSelect.addEventListener("change", (e) => {
+      const next = e.target.value || "yandex";
+      state.adsProvider = next;
+      safeSetLS(STORAGE_KEYS.APP_ADS_PROVIDER, next);
+      adsManager.setProvider(next);
+    });
+  }
 }

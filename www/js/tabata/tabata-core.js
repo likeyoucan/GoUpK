@@ -192,7 +192,7 @@ export function setupTabataCore(tb) {
     }
 
     const now = performance.now();
-    if (now - tb.lastRender >= 33 || isBackground) {
+    if (now - tb.lastRender >= 16 || isBackground) {
       if (!isBackground) {
         tb.render(rem);
       } else {

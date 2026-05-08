@@ -19,6 +19,11 @@ export function applyUiSettingsToControls(state) {
     $("toggle-sw-minute-beep").checked = state.swMinuteBeep;
   }
 
+  // Ads controls
+  if ($("toggle-ads")) {
+    $("toggle-ads").checked = state.adsEnabled;
+  }
+
   if ($("fontSlider")) $("fontSlider").value = state.fontSize;
   if ($("ringWidthSlider")) $("ringWidthSlider").value = state.ringWidth;
 

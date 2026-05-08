@@ -17,6 +17,7 @@ import {
   syncSliderUIs,
 } from "./ui-settings/ui-settings-apply.js?v=VERSION";
 import { bindUiSettingsEvents } from "./ui-settings/ui-settings-bindings.js?v=VERSION";
+import { adsManager } from "./ads.js?v=VERSION";
 
 const state = createUiSettingsState();
 
@@ -91,6 +92,21 @@ export const uiSettingsManager = {
     state.swMinuteBeep = !!v;
   },
 
+  // Ads
+  get adsEnabled() {
+    return state.adsEnabled;
+  },
+  set adsEnabled(v) {
+    state.adsEnabled = !!v;
+  },
+
+  get adsProvider() {
+    return state.adsProvider;
+  },
+  set adsProvider(v) {
+    state.adsProvider = v || "yandex";
+  },
+
   get lastSliderValues() {
     return state.lastSliderValues;
   },
@@ -125,6 +141,15 @@ export const uiSettingsManager = {
 
     const vibroEnabled = $("toggle-vibro")?.checked ?? true;
     updateVibroSliderUI(vibroEnabled);
+
+    // Sync ads manager from settings state
+    adsManager.setProvider(state.adsProvider);
+    adsManager.setEnabled(state.adsEnabled);
+
+    const adsProviderSelect = $("adsProvider");
+    if (adsProviderSelect) {
+      adsProviderSelect.value = state.adsProvider;
+    }
   },
 
   resetSettings() {
@@ -140,6 +165,10 @@ export const uiSettingsManager = {
     state.fontSize = 16;
     state.ringWidth = 4;
     state.swMinuteBeep = true;
+
+    // Ads defaults
+    state.adsEnabled = true;
+    state.adsProvider = "yandex";
 
     this.applySettings();
   },

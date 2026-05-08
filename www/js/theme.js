@@ -8,9 +8,11 @@ import {
   hexToHSL,
   hexToRGB,
   getLuminance,
+  showToast,
 } from "./utils.js?v=VERSION";
 import { uiSettingsManager } from "./ui-settings.js?v=VERSION";
 import { colorManager } from "./color-manager.js?v=VERSION";
+import { appProManager } from "./app-pro.js?v=VERSION";
 import { APP_EVENTS } from "./constants/events.js?v=VERSION";
 import { STORAGE_KEYS } from "./constants/storage-keys.js?v=VERSION";
 
@@ -24,6 +26,15 @@ import {
   applyAccentVars,
   applyBgTheme as applyBgThemeVars,
 } from "./theme/theme-colors.js?v=VERSION";
+
+function notifyProBlocked(feature = "accent_bg") {
+  showToast("Feature available in Pro");
+  document.dispatchEvent(
+    new CustomEvent(APP_EVENTS.PRO_PAYWALL_REQUESTED, {
+      detail: { feature },
+    }),
+  );
+}
 
 export const themeManager = {
   currentMode: "system",
@@ -78,7 +89,10 @@ export const themeManager = {
 
         if (isDeletedActive) {
           const fallback = this._getLastValidColor("accent");
-          this.setColor(fallback || "default", true, { recordHistory: false });
+          this.setColor(fallback || "default", true, {
+            recordHistory: false,
+            skipProCheck: true,
+          });
         }
       } else if (type === "bg") {
         const isDeletedActive =
@@ -90,6 +104,7 @@ export const themeManager = {
           const fallback = this._getLastValidColor("bg");
           this.setBgColor(fallback || "default", true, {
             recordHistory: false,
+            skipProCheck: true,
           });
         }
       }
@@ -110,11 +125,28 @@ export const themeManager = {
     this.currentBg = safeGetLS(STORAGE_KEYS.THEME_BG_COLOR) || "default";
     this.currentMode = safeGetLS(STORAGE_KEYS.THEME_MODE) || "system";
 
+    // If Pro is required for accent/bg and user is not Pro,
+    // keep only default values.
+    if (!appProManager.canUse("accent_bg")) {
+      if (this.currentAccent !== "default" || this.currentBg !== "default") {
+        this.currentAccent = "default";
+        this.currentBg = "default";
+        safeSetLS(STORAGE_KEYS.THEME_COLOR, "default");
+        safeSetLS(STORAGE_KEYS.THEME_BG_COLOR, "default");
+      }
+    }
+
     colorManager.syncPickers(this.currentAccent, this.currentBg);
 
     this.setMode(this.currentMode, false);
-    this.setColor(this.currentAccent, false, { recordHistory: false });
-    this.setBgColor(this.currentBg, false, { recordHistory: false });
+    this.setColor(this.currentAccent, false, {
+      recordHistory: false,
+      skipProCheck: true,
+    });
+    this.setBgColor(this.currentBg, false, {
+      recordHistory: false,
+      skipProCheck: true,
+    });
   },
 
   resetSettings() {
@@ -143,7 +175,10 @@ export const themeManager = {
     syncModeButtons($, mode);
     applyModeToDocument(mode);
 
-    this.setColor(this.currentAccent, false, { recordHistory: false });
+    this.setColor(this.currentAccent, false, {
+      recordHistory: false,
+      skipProCheck: true,
+    });
     this.applyBgTheme(this.currentBg);
 
     colorManager.syncPickers(this.currentAccent, this.currentBg);
@@ -174,7 +209,19 @@ export const themeManager = {
   },
 
   setColor(hex, doScroll = true, options = {}) {
-    const { recordHistory = true } = options;
+    const { recordHistory = true, skipProCheck = false } = options;
+
+    // Accent/background feature gating
+    if (
+      !skipProCheck &&
+      hex !== "default" &&
+      !appProManager.canUse("accent_bg")
+    ) {
+      notifyProBlocked("accent_bg");
+      colorManager.updateSelectionUI("accent", this.currentAccent, false);
+      colorManager.syncPickers(this.currentAccent, this.currentBg);
+      return;
+    }
 
     if (recordHistory) {
       this._history.remember("accent", this.currentAccent, hex);
@@ -196,7 +243,19 @@ export const themeManager = {
   },
 
   setBgColor(hex, doScroll = true, options = {}) {
-    const { recordHistory = true } = options;
+    const { recordHistory = true, skipProCheck = false } = options;
+
+    // Accent/background feature gating
+    if (
+      !skipProCheck &&
+      hex !== "default" &&
+      !appProManager.canUse("accent_bg")
+    ) {
+      notifyProBlocked("accent_bg");
+      colorManager.updateSelectionUI("bg", this.currentBg, false);
+      colorManager.syncPickers(this.currentAccent, this.currentBg);
+      return;
+    }
 
     if (recordHistory) {
       this._history.remember("bg", this.currentBg, hex);

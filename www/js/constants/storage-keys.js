@@ -32,4 +32,20 @@ export const STORAGE_KEYS = {
   APP_SHOW_MS: "app_show_ms",
   APP_SHOW_FOREGROUND_BANNER: "app_show_foreground_banner",
   APP_SW_MINUTE_BEEP: "app_sw_minute_beep",
+
+  // Ads
+  APP_ADS_ENABLED: "app_ads_enabled",
+  APP_ADS_PROVIDER: "app_ads_provider",
+  APP_ADS_INTERSTITIAL_COOLDOWN_MS: "app_ads_interstitial_cooldown_ms",
+  APP_ADS_LAST_INTERSTITIAL_AT: "app_ads_last_interstitial_at",
+
+  // App Pro
+  APP_PRO_MODE: "app_pro_mode",
+  APP_PRO_PURCHASED: "app_pro_purchased",
+  APP_PRO_FEATURES: "app_pro_features",
+  APP_PRO_UPDATED_AT: "app_pro_updated_at",
+
+  // Security
+  APP_INSTALL_ID: "app_install_id",
+  APP_PRO_SIGNATURE: "app_pro_signature",
 };

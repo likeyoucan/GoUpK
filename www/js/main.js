@@ -22,7 +22,11 @@ import { bindAppLifecycle } from "./bootstrap/app-lifecycle.js?v=VERSION";
 import { initializeApp } from "./bootstrap/app-init.js?v=VERSION";
 import { bindUiInteractions } from "./bootstrap/ui-interactions.js?v=VERSION";
 
-document.addEventListener("DOMContentLoaded", () => {
+import { appProManager } from "./app-pro.js?v=VERSION";
+import { adsManager } from "./ads.js?v=VERSION";
+import { APP_EVENTS } from "./constants/events.js?v=VERSION";
+
+document.addEventListener("DOMContentLoaded", async () => {
   initializeApp({
     applyPerformanceProfile,
     initRingSvg,
@@ -36,6 +40,12 @@ document.addEventListener("DOMContentLoaded", () => {
     navigation,
     modalManager,
   });
+
+  await appProManager.init();
+
+  adsManager.init();
+  adsManager.bindAutoRefresh();
+  adsManager.bindLifecycleMonetization();
 
   bindAppLifecycle({
     preload,
@@ -57,5 +67,18 @@ document.addEventListener("DOMContentLoaded", () => {
     tm,
     tb,
     navigation,
+  });
+
+  // Runtime integrity re-check
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+      appProManager.revalidateOrReset();
+    }
+  });
+
+  // Generic paywall request feedback
+  document.addEventListener(APP_EVENTS.PRO_PAYWALL_REQUESTED, (e) => {
+    const feature = e?.detail?.feature || "pro";
+    showToast(`Pro required: ${feature}`);
   });
 });

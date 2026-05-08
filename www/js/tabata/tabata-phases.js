@@ -3,6 +3,7 @@
 import { showToast, announceToScreenReader } from "../utils.js?v=VERSION";
 import { sm } from "../sound.js?v=VERSION";
 import { t } from "../i18n.js?v=VERSION";
+import { APP_EVENTS } from "../constants/events.js?v=VERSION";
 
 export function setupTabataPhases(tb) {
   const handleCompletion = () => {
@@ -15,6 +16,16 @@ export function setupTabataPhases(tb) {
 
     tb.stop({ resetRing: true, silent: true });
     showToast(t("tabata_complete"));
+
+    document.dispatchEvent(
+      new CustomEvent(APP_EVENTS.TABATA_COMPLETED, {
+        detail: {
+          at: Date.now(),
+          rounds: tb.rounds,
+          workoutId: tb.selectedId || null,
+        },
+      }),
+    );
   };
 
   tb.advancePhase = () => {

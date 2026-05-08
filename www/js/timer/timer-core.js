@@ -28,7 +28,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
         tm.ringCtrl.setTarget(targetOffset);
       }
 
-      // Paint at ~30fps to reduce UI thread pressure and improve p95 stability.
+      // Paint ~30fps for stable p95.
       const nowPerf = performance.now();
       if (nowPerf - (tm._lastUiPaintTs || 0) >= 33) {
         tm._lastUiPaintTs = nowPerf;
@@ -80,6 +80,15 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     requestAnimationFrame(() => {
       showToast(tm.t("timer_finished"));
     });
+
+    document.dispatchEvent(
+      new CustomEvent(APP_EVENTS.TIMER_COMPLETED, {
+        detail: {
+          at: Date.now(),
+          duration: tm.totalDuration,
+        },
+      }),
+    );
   };
 
   tm.toggle = () => {

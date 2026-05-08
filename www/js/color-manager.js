@@ -14,6 +14,7 @@ import {
 import { t } from "./i18n.js?v=VERSION";
 import { sm } from "./sound.js?v=VERSION";
 import { themeManager } from "./theme.js?v=VERSION";
+import { appProManager } from "./app-pro.js?v=VERSION";
 import { APP_EVENTS } from "./constants/events.js?v=VERSION";
 
 import {
@@ -35,6 +36,19 @@ import {
 } from "./color/color-ui.js?v=VERSION";
 
 const normalize = (c) => normalizeColor(normalizeHexColor, c);
+
+function showProMessage(feature = "custom_colors") {
+  showToast(
+    t("pro_required") === "pro_required"
+      ? "Feature available in Pro"
+      : t("pro_required"),
+  );
+  document.dispatchEvent(
+    new CustomEvent(APP_EVENTS.PRO_PAYWALL_REQUESTED, {
+      detail: { feature },
+    }),
+  );
+}
 
 export const colorManager = {
   customAccentColors: [],
@@ -128,6 +142,12 @@ export const colorManager = {
       );
       if (!swatch) return;
       e.preventDefault();
+
+      if (!appProManager.canUse("custom_colors")) {
+        showProMessage("custom_colors");
+        return;
+      }
+
       this._showActionButton(swatch, "delete");
     });
 
@@ -151,7 +171,13 @@ export const colorManager = {
         if (this.longPressTimer) clearTimeout(this.longPressTimer);
 
         this.longPressTimer = setTimeout(() => {
-          if (!touchMoved) this._showActionButton(swatch, "delete");
+          if (!touchMoved) {
+            if (!appProManager.canUse("custom_colors")) {
+              showProMessage("custom_colors");
+              return;
+            }
+            this._showActionButton(swatch, "delete");
+          }
           this.longPressTimer = null;
         }, LONG_PRESS_DURATION);
       },
@@ -196,14 +222,31 @@ export const colorManager = {
 
     if (actionBtn) {
       event.stopPropagation();
-      if (actionBtn.dataset.action === "add") this.addCustomColor(type);
-      else if (actionBtn.dataset.action === "delete") {
+
+      if (actionBtn.dataset.action === "add") {
+        if (!appProManager.canUse("custom_colors")) {
+          showProMessage("custom_colors");
+          this._hideActionButton();
+          return;
+        }
+        this.addCustomColor(type);
+      } else if (actionBtn.dataset.action === "delete") {
+        if (!appProManager.canUse("custom_colors")) {
+          showProMessage("custom_colors");
+          this._hideActionButton();
+          return;
+        }
         this._deleteColor(actionBtn.dataset.color, type);
       }
       return;
     }
 
     if (pickerWrapper) {
+      if (!appProManager.canUse("custom_colors")) {
+        showProMessage("custom_colors");
+        return;
+      }
+
       if (this.activeActionTarget === pickerWrapper) this._hideActionButton();
       else this._showActionButton(pickerWrapper, "add");
       return;
@@ -218,6 +261,12 @@ export const colorManager = {
 
     if (!swatchWrapper) return;
 
+    const isCustom = swatchWrapper.dataset.custom === "true";
+    if (isCustom && !appProManager.canUse("custom_colors")) {
+      showProMessage("custom_colors");
+      return;
+    }
+
     if (this.activeActionTarget === swatchWrapper) {
       this._hideActionButton();
       return;
@@ -230,7 +279,7 @@ export const colorManager = {
       }),
     );
 
-    if (swatchWrapper.dataset.custom === "true") {
+    if (isCustom) {
       this._showActionButton(swatchWrapper, "delete");
     }
   },
@@ -282,6 +331,11 @@ export const colorManager = {
   },
 
   addCustomColor(type) {
+    const allowed = appProManager.requirePro("custom_colors", () =>
+      showProMessage("custom_colors"),
+    );
+    if (!allowed) return;
+
     const isAccent = type === "accent";
     const customColors = isAccent
       ? this.customAccentColors
@@ -345,6 +399,11 @@ export const colorManager = {
   },
 
   _deleteColor(color, type) {
+    const allowed = appProManager.requirePro("custom_colors", () =>
+      showProMessage("custom_colors"),
+    );
+    if (!allowed) return;
+
     sm.vibrate(40, "medium");
     this._hideActionButton();
 

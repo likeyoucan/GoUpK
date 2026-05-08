@@ -127,6 +127,17 @@ export const translations = {
     vignette_min: "min",
     volume: "Volume",
     work: "Work",
+
+    // Pro + Ads
+    pro: "Pro",
+    pro_required: "Feature available in Pro",
+    buy_subscription: "Buy Subscription",
+    ads: "Ads",
+    ads_provider: "Ads Provider",
+    ads_yandex: "Yandex",
+    ads_admob: "AdMob",
+    ads_mediation: "Mediation",
+    disable_ads_pro: "Disable ads is available in Pro",
   },
   ru: {
     accent_color: "Цвет акцента",
@@ -250,6 +261,17 @@ export const translations = {
     vignette_min: "мин",
     volume: "Громкость",
     work: "Работа",
+
+    // Pro + Ads
+    pro: "Pro",
+    pro_required: "Функция доступна в Pro",
+    buy_subscription: "Купить подписку",
+    ads: "Реклама",
+    ads_provider: "Провайдер рекламы",
+    ads_yandex: "Яндекс",
+    ads_admob: "AdMob",
+    ads_mediation: "Медиация",
+    disable_ads_pro: "Отключение рекламы доступно в Pro",
   },
 };
 
