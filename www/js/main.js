@@ -25,7 +25,6 @@ import { bindUiInteractions } from "./bootstrap/ui-interactions.js?v=VERSION";
 import { appProManager } from "./app-pro.js?v=VERSION";
 import { adsManager } from "./ads.js?v=VERSION";
 import { APP_EVENTS } from "./constants/events.js?v=VERSION";
-import { CustomSelect } from "./custom-select.js?v=VERSION";
 import { APP_MONETIZATION_CONFIG } from "./app-monetization-config.js?v=VERSION";
 
 const ERUDA_CDN_MARKER = "cdn.jsdelivr.net/npm/eruda";
@@ -127,76 +126,15 @@ function renderProBadgesFromConfig() {
   });
 }
 
-function initProSettingsUi() {
+function initProStatusUi() {
   const statusEl = $("pro-status-badge");
-  const revokeBtn = $("btn-revoke-pro");
-  const modeHost = $("proModeSelectContainer");
-
-  if (!modeHost) return;
-
-  const modeOptions = [
-    { value: "subscription", text: "Subscription" },
-    { value: "lifetime", text: "Lifetime" },
-    { value: "disabled", text: "Disabled" },
-  ];
-
-  const modeSelect = new CustomSelect(
-    "proModeSelectContainer",
-    modeOptions,
-    async (value) => {
-      try {
-        await appProManager.setMode(value);
-      } catch (err) {
-        console.error("[pro-mode] failed", err);
-      }
-    },
-    appProManager.mode,
-  );
-
-  const featureMap = [
-    ["pro-gate-custom-colors", "custom_colors"],
-    ["pro-gate-accent-bg", "accent_bg"],
-    ["pro-gate-remove-ads", "remove_ads"],
-    ["pro-gate-sound-themes", "sound_themes"],
-    ["pro-gate-app-icon", "app_icon"],
-  ];
+  if (!statusEl) return;
 
   const sync = () => {
-    if (statusEl) {
-      statusEl.textContent = appProManager.purchased
-        ? t("pro_status_active")
-        : t("pro_status_free");
-    }
-
-    modeSelect?.setValue(appProManager.mode, false);
-
-    featureMap.forEach(([id, key]) => {
-      const el = $(id);
-      if (!el) return;
-      el.checked = !!appProManager.features?.[key];
-    });
+    statusEl.textContent = appProManager.purchased
+      ? t("pro_status_active")
+      : t("pro_status_free");
   };
-
-  featureMap.forEach(([id, key]) => {
-    const el = $(id);
-    if (!el) return;
-
-    el.addEventListener("change", async (e) => {
-      try {
-        await appProManager.setFeatureGate(key, !!e.target.checked);
-      } catch (err) {
-        console.error("[pro-feature] failed", key, err);
-      }
-    });
-  });
-
-  revokeBtn?.addEventListener("click", async () => {
-    try {
-      await appProManager.revoke();
-    } catch (err) {
-      console.error("[pro-revoke] failed", err);
-    }
-  });
 
   document.addEventListener(APP_EVENTS.PRO_STATUS_CHANGED, sync);
   document.addEventListener(APP_EVENTS.LANGUAGE_CHANGED, sync);
@@ -247,7 +185,7 @@ async function bootstrap() {
     navigation,
   });
 
-  initProSettingsUi();
+  initProStatusUi();
   renderProBadgesFromConfig();
 
   document.addEventListener(APP_EVENTS.LANGUAGE_CHANGED, () => {
