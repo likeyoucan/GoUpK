@@ -5,6 +5,65 @@ import { APP_EVENTS } from "./constants/events.js?v=VERSION";
 
 const activeSelects = new Set();
 const TRANSITION_DURATION = 200;
+const SELECT_MAX_VIEWPORT_K = 0.6; // 60dvh
+const SELECT_MIN_HEIGHT_PX = 120;
+
+// Shared scroll lock state for all select instances
+let scrollLockCount = 0;
+let savedScrollY = 0;
+let savedBodyStyle = null;
+
+function lockPageScroll() {
+  scrollLockCount += 1;
+  if (scrollLockCount > 1) return;
+
+  const body = document.body;
+  const html = document.documentElement;
+
+  savedScrollY = window.scrollY || window.pageYOffset || 0;
+  savedBodyStyle = {
+    position: body.style.position,
+    top: body.style.top,
+    left: body.style.left,
+    right: body.style.right,
+    width: body.style.width,
+    overflow: body.style.overflow,
+  };
+
+  html.style.overscrollBehavior = "none";
+  body.style.position = "fixed";
+  body.style.top = `-${savedScrollY}px`;
+  body.style.left = "0";
+  body.style.right = "0";
+  body.style.width = "100%";
+  body.style.overflow = "hidden";
+}
+
+function unlockPageScroll() {
+  if (scrollLockCount <= 0) {
+    scrollLockCount = 0;
+    return;
+  }
+
+  scrollLockCount -= 1;
+  if (scrollLockCount > 0) return;
+
+  const body = document.body;
+  const html = document.documentElement;
+
+  body.style.position = savedBodyStyle?.position || "";
+  body.style.top = savedBodyStyle?.top || "";
+  body.style.left = savedBodyStyle?.left || "";
+  body.style.right = savedBodyStyle?.right || "";
+  body.style.width = savedBodyStyle?.width || "";
+  body.style.overflow = savedBodyStyle?.overflow || "";
+  html.style.overscrollBehavior = "";
+
+  window.scrollTo(0, savedScrollY);
+
+  savedBodyStyle = null;
+  savedScrollY = 0;
+}
 
 export class CustomSelect {
   constructor(elementId, options, onSelect, initialValue) {
@@ -22,6 +81,7 @@ export class CustomSelect {
     this._placement = "bottom";
     this._originalParent = null;
     this._nextSibling = null;
+    this._didLockScroll = false;
 
     this.render();
     this.attachEventListeners();
@@ -42,7 +102,11 @@ export class CustomSelect {
       this._rafReposition = 0;
     }
 
-    // Вернуть панель домой, если была в body
+    if (this._didLockScroll) {
+      this._didLockScroll = false;
+      unlockPageScroll();
+    }
+
     this._restorePanelToContainer();
 
     activeSelects.delete(this);
@@ -217,10 +281,7 @@ export class CustomSelect {
 
     this._onViewportChange = (ev) => {
       if (!this.isOpening) return;
-
-      // Если скроллится сам dropdown, не репозиционируем
       if (ev?.target && this.optionsPanel.contains(ev.target)) return;
-
       this.scheduleReposition();
     };
 
@@ -261,13 +322,9 @@ export class CustomSelect {
     const rect = this.trigger.getBoundingClientRect();
     const vh = window.innerHeight || document.documentElement.clientHeight || 0;
     const gap = 8;
-    const estimatedHeight = Math.min(
-      260,
-      Math.max(120, this.optionsPanel.scrollHeight || 220),
-    );
 
-    const spaceBelow = vh - rect.bottom - gap - 8;
-    const spaceAbove = rect.top - gap - 8;
+    const spaceBelow = Math.max(0, vh - rect.bottom - gap - 8);
+    const spaceAbove = Math.max(0, rect.top - gap - 8);
 
     this._placement =
       spaceBelow >= 140 || spaceBelow >= spaceAbove ? "bottom" : "top";
@@ -297,17 +354,31 @@ export class CustomSelect {
     if (left + width > vw - 8) left = Math.max(8, vw - width - 8);
     if (left < 8) left = 8;
 
+    const spaceBelow = Math.max(0, vh - rect.bottom - gap - 8);
+    const spaceAbove = Math.max(0, rect.top - gap - 8);
+    const viewportCap = Math.floor(vh * SELECT_MAX_VIEWPORT_K);
+    const availableSpace = this._placement === "top" ? spaceAbove : spaceBelow;
+
+    const maxHeight = Math.max(
+      SELECT_MIN_HEIGHT_PX,
+      Math.min(viewportCap, Math.floor(availableSpace)),
+    );
+
+    this.optionsPanel.style.maxHeight = `${maxHeight}px`;
+    this.optionsPanel.style.overflowY = "auto";
+    this.optionsPanel.style.overscrollBehavior = "contain";
+
     let top;
     if (this._placement === "top") {
-      const est = Math.min(
-        260,
-        Math.max(120, this.optionsPanel.scrollHeight || 220),
+      const panelHeight = Math.min(
+        maxHeight,
+        this.optionsPanel.scrollHeight || maxHeight,
       );
-      top = Math.round(rect.top - gap - est);
+      top = Math.round(rect.top - gap - panelHeight);
       if (top < 8) top = 8;
     } else {
       top = Math.round(rect.bottom + gap);
-      const maxTop = vh - 8 - 120;
+      const maxTop = vh - 8 - Math.min(maxHeight, 120);
       if (top > maxTop) top = Math.max(8, maxTop);
     }
 
@@ -321,6 +392,7 @@ export class CustomSelect {
   }
 
   open() {
+    if (this.isOpening) return;
     this.isOpening = true;
 
     activeSelects.forEach((s) => {
@@ -330,9 +402,13 @@ export class CustomSelect {
     this._movePanelToBody();
     this.optionsPanel.classList.remove("hidden");
 
-    // Фиксируем направление один раз на открытие
     this.decidePlacement();
     this.positionPanel();
+
+    if (!this._didLockScroll) {
+      lockPageScroll();
+      this._didLockScroll = true;
+    }
 
     requestAnimationFrame(() => {
       this.positionPanel();
@@ -353,6 +429,8 @@ export class CustomSelect {
   }
 
   close() {
+    if (!this.isOpening && !this._didLockScroll) return;
+
     this.isOpening = false;
     this.optionsPanel.classList.remove("is-open");
     this.arrow.style.transform = "";
@@ -365,12 +443,20 @@ export class CustomSelect {
       this._rafReposition = 0;
     }
 
+    if (this._didLockScroll) {
+      this._didLockScroll = false;
+      unlockPageScroll();
+    }
+
     setTimeout(() => {
       if (!this.isOpening) {
         this.optionsPanel.classList.add("hidden");
         this.optionsPanel.style.left = "";
         this.optionsPanel.style.top = "";
         this.optionsPanel.style.width = "";
+        this.optionsPanel.style.maxHeight = "";
+        this.optionsPanel.style.overflowY = "";
+        this.optionsPanel.style.overscrollBehavior = "";
         this._restorePanelToContainer();
       }
     }, TRANSITION_DURATION);
