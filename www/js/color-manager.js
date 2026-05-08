@@ -100,7 +100,30 @@ export const colorManager = {
       );
       if (!picker) return;
 
+      const blockIfNoPro = (e) => {
+        if (appProManager.canUse("custom_colors")) return;
+
+        // Блокируем системное окно выбора цвета
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation?.();
+
+        showProMessage("custom_colors");
+        return false;
+      };
+
+      // Важно: pointerdown/click/touchstart, чтобы перехватить раньше открытия native picker
+      picker.addEventListener("pointerdown", blockIfNoPro, { capture: true });
+      picker.addEventListener("mousedown", blockIfNoPro, { capture: true });
+      picker.addEventListener("touchstart", blockIfNoPro, {
+        capture: true,
+        passive: false,
+      });
+      picker.addEventListener("click", blockIfNoPro, { capture: true });
+
       picker.addEventListener("change", (e) => {
+        if (!appProManager.canUse("custom_colors")) return;
+
         document.dispatchEvent(
           new CustomEvent(APP_EVENTS.COLOR_SELECTED, {
             detail: { type, color: e.target.value, fromPicker: true },
@@ -109,6 +132,8 @@ export const colorManager = {
       });
 
       picker.addEventListener("input", (e) => {
+        if (!appProManager.canUse("custom_colors")) return;
+
         const pickerWrapper = picker.closest(".color-picker-wrapper");
         if (this.activeActionTarget === pickerWrapper) {
           const actionBtn = pickerWrapper.querySelector(
