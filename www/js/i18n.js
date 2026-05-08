@@ -140,7 +140,21 @@ export const translations = {
     ads_admob: "AdMob",
     ads_mediation: "Mediation",
     disable_ads_pro: "Disable ads is available in Pro",
+
+    // Pro Settings UI
+    pro_settings: "Pro",
+    pro_status: "Status",
+    pro_mode: "Mode",
+    pro_status_free: "Free",
+    pro_status_active: "Pro active",
+    pro_custom_colors: "Custom colors",
+    pro_accent_bg: "Accent and background",
+    pro_remove_ads: "Disable ads",
+    pro_sound_themes: "Sound themes",
+    pro_app_icon: "Pro icon",
+    pro_revoke: "Revoke",
   },
+
   ru: {
     accent_color: "Цвет акцента",
     accent_limit_msg: "Максимум 50 своих цветов акцента",
@@ -276,6 +290,19 @@ export const translations = {
     ads_admob: "AdMob",
     ads_mediation: "Медиация",
     disable_ads_pro: "Отключение рекламы доступно в Pro",
+
+    // Pro Settings UI
+    pro_settings: "Pro",
+    pro_status: "Статус",
+    pro_mode: "Режим",
+    pro_status_free: "Бесплатно",
+    pro_status_active: "Pro активен",
+    pro_custom_colors: "Кастомные цвета",
+    pro_accent_bg: "Акцент и фон",
+    pro_remove_ads: "Отключение рекламы",
+    pro_sound_themes: "Темы звуков",
+    pro_app_icon: "Pro иконка",
+    pro_revoke: "Отключить Pro",
   },
 };
 

@@ -90,8 +90,11 @@ function initProSettingsUi() {
   ];
 
   const sync = () => {
-    if (statusEl)
-      statusEl.textContent = appProManager.purchased ? "Pro active" : "Free";
+    if (statusEl) {
+      statusEl.textContent = appProManager.purchased
+        ? t("pro_status_active")
+        : t("pro_status_free");
+    }
     modeSelect?.setValue(appProManager.mode, false);
 
     featureMap.forEach(([id, key]) => {

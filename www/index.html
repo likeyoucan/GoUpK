@@ -1104,7 +1104,11 @@
                       for="soundThemeSelect"
                       class="font-medium app-text text-sm cursor-pointer"
                       data-i18n="sound_theme"
-                      >Sound Theme</label
+                      ><span
+                        class="font-medium app-text text-sm"
+                        data-i18n="sound_theme"
+                        >Sound Theme</span
+                      ></label
                     >
                     <div class="flex items-center gap-2">
                       <button
@@ -1305,6 +1309,7 @@
 
                 <h3
                   class="text-xs font-bold app-text-sec uppercase tracking-wider mb-3 ml-2 mt-6"
+                  data-i18n="pro_settings"
                 >
                   Pro
                 </h3>
@@ -1312,12 +1317,18 @@
                   class="app-surface rounded-2xl overflow-hidden shadow-sm border app-border"
                 >
                   <div class="flex items-center justify-between p-4">
-                    <span class="font-medium app-text text-sm">Status</span>
+                    <span
+                      class="font-medium app-text text-sm"
+                      data-i18n="pro_status"
+                      >Status</span
+                    >
                     <span
                       id="pro-status-badge"
                       class="text-xs font-bold primary-text"
-                      >Free</span
+                      data-i18n="pro_status_free"
                     >
+                      Free
+                    </span>
                   </div>
 
                   <div
@@ -1326,14 +1337,20 @@
                     <label
                       for="proModeSelectContainer"
                       class="font-medium app-text text-sm"
-                      >Mode</label
-                    >
+                      ><span
+                        class="font-medium app-text text-sm"
+                        data-i18n="pro_mode"
+                        >Mode</span
+                      >
+                    </label>
                     <div id="proModeSelectContainer" class="w-40"></div>
                   </div>
 
                   <div class="p-4 border-t app-border flex flex-col gap-3">
                     <div class="flex items-center justify-between">
-                      <span class="font-medium app-text text-sm"
+                      <span
+                        class="font-medium app-text text-sm"
+                        data-i18n="pro_custom_colors"
                         >Custom colors</span
                       >
                       <label
@@ -1348,7 +1365,9 @@
                       </label>
                     </div>
                     <div class="flex items-center justify-between">
-                      <span class="font-medium app-text text-sm"
+                      <span
+                        class="font-medium app-text text-sm"
+                        data-i18n="pro_accent_bg"
                         >Accent and background</span
                       >
                       <label
@@ -1363,7 +1382,9 @@
                       </label>
                     </div>
                     <div class="flex items-center justify-between">
-                      <span class="font-medium app-text text-sm"
+                      <span
+                        class="font-medium app-text text-sm"
+                        data-i18n="pro_remove_ads"
                         >Disable ads</span
                       >
                       <label
@@ -1378,7 +1399,9 @@
                       </label>
                     </div>
                     <div class="flex items-center justify-between">
-                      <span class="font-medium app-text text-sm"
+                      <span
+                        class="font-medium app-text text-sm"
+                        data-i18n="pro_sound_themes"
                         >Sound themes</span
                       >
                       <label
@@ -1393,7 +1416,11 @@
                       </label>
                     </div>
                     <div class="flex items-center justify-between">
-                      <span class="font-medium app-text text-sm">Pro icon</span>
+                      <span
+                        class="font-medium app-text text-sm"
+                        data-i18n="pro_app_icon"
+                        >Pro icon</span
+                      >
                       <label
                         class="relative inline-flex items-center cursor-pointer"
                       >
@@ -1412,6 +1439,7 @@
                       type="button"
                       id="btn-revoke-pro"
                       class="w-full min-h-[44px] app-surface app-text border app-border font-bold text-xs tracking-widest uppercase rounded-lg active:scale-95 transition-transform"
+                      data-i18n="pro_revoke"
                     >
                       Revoke
                     </button>

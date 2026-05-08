@@ -4,7 +4,7 @@ import { safeGetLS, safeSetLS } from "./utils.js?v=VERSION";
 import { STORAGE_KEYS } from "./constants/storage-keys.js?v=VERSION";
 
 const SECURITY_SALT = "StopwatchPro::Security::v1";
-const VERSION = "1";
+const PRO_SECURITY_VERSION = "1";
 
 function ensureInstallId() {
   let installId = safeGetLS(STORAGE_KEYS.APP_INSTALL_ID);
@@ -29,7 +29,7 @@ async function sha256Hex(text) {
 export const proSecurity = {
   buildPayload({ mode, purchased, features, updatedAt }) {
     return JSON.stringify({
-      v: VERSION,
+      v: PRO_SECURITY_VERSION,
       mode,
       purchased: !!purchased,
       features: features || {},
