@@ -28,6 +28,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
         tm.ringCtrl.setTarget(targetOffset);
       }
 
+      // Paint at ~30fps to reduce UI thread pressure and improve p95 stability.
       const nowPerf = performance.now();
       if (nowPerf - (tm._lastUiPaintTs || 0) >= 33) {
         tm._lastUiPaintTs = nowPerf;
@@ -134,6 +135,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     tm.isFinished = false;
     tm.targetEpochMs = Date.now() + duration;
     tm.lastUiRem = duration;
+    tm._lastUiPaintTs = 0;
     tm.skipWorkerTickUntil = 0;
 
     tm.requestWakeLock();
@@ -182,6 +184,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     tm.targetEpochMs = Date.now() + duration;
     tm.lastUiRem = duration;
     tm.currentAdjustmentSec = 0;
+    tm._lastUiPaintTs = 0;
     tm.skipWorkerTickUntil = 0;
 
     tm.requestWakeLock();
@@ -210,6 +213,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     tm.timeRemainingMs = 0;
     tm.targetEpochMs = 0;
     tm.lastUiRem = 0;
+    tm._lastUiPaintTs = 0;
     tm.skipWorkerTickUntil = 0;
 
     tm.bgWorker.postMessage({ command: "reset" });
