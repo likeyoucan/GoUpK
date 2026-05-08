@@ -7,16 +7,29 @@ import { t } from "../i18n.js?v=VERSION";
 export function setupTabataPhases(tb) {
   const handleCompletion = () => {
     if (tb.completionHandled) return;
-
     tb.completionHandled = true;
+
     sm.vibrate([200, 100, 200, 100, 400]);
     sm.play("complete");
     announceToScreenReader(t("tabata_complete"));
 
-    // Important: stop immediately (no requestAnimationFrame),
-    // otherwise in background the completion branch may repeat.
-    tb.stop({ resetRing: false, silent: true });
+    // Финальное положение кольца перед stop
+    tb.ringCtrl?.snap(0);
+
+    // В фоне сразу сбрасываем кольцо в исходное состояние, чтобы при возврате не "замирало"
+    const resetRingNow = document.hidden;
+
+    tb.stop({ resetRing: resetRingNow, silent: true });
     showToast(t("tabata_complete"));
+
+    // Если завершение на активном экране, коротко показываем 0 и затем возвращаем idle-кольцо
+    if (!resetRingNow) {
+      setTimeout(() => {
+        if (tb.status === "STOPPED") {
+          tb.ringCtrl?.snap(tb.ringLength);
+        }
+      }, 220);
+    }
   };
 
   tb.advancePhase = () => {
@@ -26,9 +39,7 @@ export function setupTabataPhases(tb) {
       tb.phaseStamp += 1;
       sm.play("work_start");
     } else if (tb.status === "WORK") {
-      if (tb.currentRound >= tb.rounds) {
-        return "complete";
-      }
+      if (tb.currentRound >= tb.rounds) return "complete";
       tb.status = "REST";
       tb.phaseDuration = tb.rest;
       tb.phaseStamp += 1;
@@ -44,7 +55,6 @@ export function setupTabataPhases(tb) {
     return "ok";
   };
 
-  // Fast-forward phases when app wakes after long background pause.
   tb.applyMissedTime = (missedTime) => {
     let remainingMissed = missedTime;
 
@@ -62,12 +72,8 @@ export function setupTabataPhases(tb) {
       const leftInPhase = currentPhaseDuration - step;
       if (leftInPhase <= 0) {
         const result = tb.advancePhase();
-        if (result === "complete") {
-          return "complete";
-        }
-        if (remainingMissed === 0) {
-          tb.phaseDuration = tb.phaseDuration + leftInPhase;
-        }
+        if (result === "complete") return "complete";
+        if (remainingMissed === 0) tb.phaseDuration = tb.phaseDuration + leftInPhase;
       } else {
         tb.phaseDuration = leftInPhase;
       }
@@ -95,7 +101,6 @@ export function setupTabataPhases(tb) {
         handleCompletion();
         return;
       }
-
       tb.phaseEndTime = performance.now() + tb.phaseDuration;
     }
 

@@ -48,7 +48,6 @@ export function setupTabataRender(tb) {
     const timeStr = formatTime(rem);
     updateText(tb.els.timer, timeStr);
 
-    // Keep title churn out of visible hot path
     if (document.hidden) updateTitle(`${tb.status}: ${timeStr}`);
 
     if (!tb.ringCtrl) return;
@@ -61,12 +60,19 @@ export function setupTabataRender(tb) {
 
     const targetOffset = tb.ringLength - progress * tb.ringLength;
 
-    // On phase change, snap once to avoid reverse sweep artifacts
+    // На смене фазы — snap для исключения reverse-sweep артефактов
     if (tb.lastRenderedPhaseStamp !== tb.phaseStamp) {
       tb.lastRenderedPhaseStamp = tb.phaseStamp;
       tb.ringCtrl.snap(targetOffset);
-    } else {
-      tb.ringCtrl.setTarget(targetOffset);
+      return;
     }
+
+    // В самом конце фазы убираем дрожание: принудительно ставим 0
+    if (rem <= 180) {
+      tb.ringCtrl.snap(0);
+      return;
+    }
+
+    tb.ringCtrl.setTarget(targetOffset);
   };
 }

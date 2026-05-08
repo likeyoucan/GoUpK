@@ -105,8 +105,6 @@ export function setupTabataCore(tb) {
     tb.updatePhaseStyles();
   };
 
-  // resetRing=false used on completion to avoid a visual snap-back.
-  // silent=true skips stop click/vibration to not interrupt completion signal.
   tb.stop = ({ resetRing = true, silent = false } = {}) => {
     if (!silent) {
       sm.vibrate(30, "medium");
@@ -137,9 +135,7 @@ export function setupTabataCore(tb) {
     updateText(tb.els.timer, "GO");
     tb.els.timer.classList.add("is-go");
 
-    if (resetRing) {
-      tb.ringCtrl?.snap(tb.ringLength);
-    }
+    if (resetRing) tb.ringCtrl?.snap(tb.ringLength);
   };
 
   tb.tick = (isBackground = false) => {
@@ -192,13 +188,11 @@ export function setupTabataCore(tb) {
     });
 
     document.addEventListener("visibilitychange", () => {
-      if (
-        document.visibilityState === "visible" &&
-        tb.status !== "STOPPED" &&
-        !tb.paused &&
-        !tb.completionHandled
-      ) {
+      if (document.visibilityState !== "visible") return;
+
+      if (tb.status !== "STOPPED" && !tb.paused && !tb.completionHandled) {
         const rem = tb.phaseEndTime - performance.now();
+
         if (rem <= 0) {
           tb.nextPhase(Math.abs(rem));
           return;
@@ -207,6 +201,11 @@ export function setupTabataCore(tb) {
         tb.lastRender = 0;
         tb.render(rem);
         tb.tick();
+      }
+
+      // На случай завершения в фоне и неконсистентного визуального состояния
+      if (tb.status === "STOPPED") {
+        tb.ringCtrl?.snap(tb.ringLength);
       }
     });
   };
