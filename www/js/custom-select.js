@@ -8,18 +8,9 @@ const TRANSITION_DURATION = 200;
 const SELECT_MAX_VIEWPORT_K = 0.6; // 60dvh
 const SELECT_MIN_HEIGHT_PX = 120;
 
-// Shared scroll lock state
 let scrollLockCount = 0;
 let globalScrollBlockAttached = false;
 let lockedScrollTargets = [];
-
-/**
- * We lock scroll by:
- * 1) preventing wheel/touchmove/scroll-keys globally
- * 2) temporarily disabling overflow on known scroll containers
- *
- * NOTE: We avoid body: fixed to keep glass/backdrop visuals stable.
- */
 
 function isInsideOpenSelectPanel(target) {
   if (!(target instanceof Node)) return false;
@@ -33,7 +24,6 @@ function isInsideOpenSelectPanel(target) {
 }
 
 function preventGlobalScrollEvent(e) {
-  // Allow scrolling inside active dropdown panel
   if (isInsideOpenSelectPanel(e.target)) return;
   e.preventDefault();
   e.stopPropagation();
@@ -86,7 +76,6 @@ function detachGlobalScrollBlock() {
 function collectScrollTargets() {
   const set = new Set();
 
-  // Common page scroll roots
   if (document.scrollingElement instanceof HTMLElement) {
     set.add(document.scrollingElement);
   }
@@ -94,7 +83,6 @@ function collectScrollTargets() {
     set.add(document.documentElement);
   if (document.body instanceof HTMLElement) set.add(document.body);
 
-  // App-specific scrollable containers
   document
     .querySelectorAll(
       "#view-settings, .scroll-lock, .no-scrollbar, #sw-lapsContainer, #tb-workoutsList, #sw-sessionsList, #tb-modal-form",
@@ -108,6 +96,7 @@ function collectScrollTargets() {
 
 function disableScrollOnTargets() {
   const targets = collectScrollTargets();
+
   lockedScrollTargets = targets.map((el) => ({
     el,
     overflow: el.style.overflow,
@@ -158,7 +147,7 @@ function unlockPageScroll() {
   detachGlobalScrollBlock();
   restoreScrollOnTargets();
 
-  // Hard reset for safety (prevents rare "stuck no-scroll" states)
+  // Hard reset for rare "stuck no-scroll" states
   const html = document.documentElement;
   const body = document.body;
   const settings = document.getElementById("view-settings");
@@ -206,6 +195,7 @@ export class CustomSelect {
     this._originalParent = null;
     this._nextSibling = null;
     this._didLockScroll = false;
+    this._portalRoot = document.getElementById("app") || document.body;
 
     this.render();
     this.attachEventListeners();
@@ -418,12 +408,19 @@ export class CustomSelect {
     });
   }
 
-  _movePanelToBody() {
-    if (!this.optionsPanel || this.optionsPanel.parentElement === document.body)
+  _movePanelToPortal() {
+    if (
+      !this.optionsPanel ||
+      this.optionsPanel.parentElement === this._portalRoot
+    )
       return;
     this._originalParent = this.optionsPanel.parentElement;
     this._nextSibling = this.optionsPanel.nextSibling;
-    document.body.appendChild(this.optionsPanel);
+    this._portalRoot.appendChild(this.optionsPanel);
+
+    // Absolute inside #app keeps glass layering consistent
+    this.optionsPanel.style.position =
+      this._portalRoot === document.body ? "fixed" : "absolute";
   }
 
   _restorePanelToContainer() {
@@ -437,6 +434,8 @@ export class CustomSelect {
     } else {
       this._originalParent.appendChild(this.optionsPanel);
     }
+
+    this.optionsPanel.style.position = "";
 
     this._originalParent = null;
     this._nextSibling = null;
@@ -466,7 +465,9 @@ export class CustomSelect {
     if (!this.trigger || !this.optionsPanel) return;
 
     const rect = this.trigger.getBoundingClientRect();
+    const portalRect = this._portalRoot.getBoundingClientRect();
     const gap = 8;
+
     const vw = window.innerWidth || document.documentElement.clientWidth || 0;
     const vh = window.innerHeight || document.documentElement.clientHeight || 0;
 
@@ -506,9 +507,13 @@ export class CustomSelect {
       if (top > maxTop) top = Math.max(8, maxTop);
     }
 
-    this.optionsPanel.style.left = `${left}px`;
-    this.optionsPanel.style.top = `${top}px`;
+    const localLeft = left - portalRect.left;
+    const localTop = top - portalRect.top;
+
+    this.optionsPanel.style.left = `${localLeft}px`;
+    this.optionsPanel.style.top = `${localTop}px`;
     this.optionsPanel.style.width = `${width}px`;
+    this.optionsPanel.style.zIndex = "1000";
   }
 
   toggle() {
@@ -523,7 +528,7 @@ export class CustomSelect {
       if (s !== this && s.isOpening) s.close();
     });
 
-    this._movePanelToBody();
+    this._movePanelToPortal();
     this.optionsPanel.classList.remove("hidden");
 
     this.decidePlacement();
@@ -581,6 +586,7 @@ export class CustomSelect {
         this.optionsPanel.style.maxHeight = "";
         this.optionsPanel.style.overflowY = "";
         this.optionsPanel.style.overscrollBehavior = "";
+        this.optionsPanel.style.zIndex = "";
         this._restorePanelToContainer();
       }
     }, TRANSITION_DURATION);
@@ -593,9 +599,10 @@ export class CustomSelect {
     if (!optionEls.length) return;
 
     if (this.focusedIndex < 0) this.focusedIndex = 0;
-    else
+    else {
       this.focusedIndex =
         (this.focusedIndex + direction + optionEls.length) % optionEls.length;
+    }
 
     this.syncAriaActive();
     this.focusCurrentOption();
