@@ -12,6 +12,70 @@ const SELECT_MIN_HEIGHT_PX = 120;
 let scrollLockCount = 0;
 let savedScrollY = 0;
 let savedBodyStyle = null;
+let globalScrollBlockAttached = false;
+
+function isInsideOpenSelectPanel(target) {
+  if (!(target instanceof Node)) return false;
+
+  for (const select of activeSelects) {
+    if (!select?.isOpening || !select?.optionsPanel) continue;
+    if (select.optionsPanel.contains(target)) return true;
+  }
+
+  return false;
+}
+
+function preventGlobalScrollEvent(e) {
+  // Allow scroll inside opened select panel
+  if (isInsideOpenSelectPanel(e.target)) return;
+
+  e.preventDefault();
+  e.stopPropagation();
+}
+
+function preventGlobalScrollKeys(e) {
+  const blockedKeys = [
+    "ArrowUp",
+    "ArrowDown",
+    "PageUp",
+    "PageDown",
+    "Home",
+    "End",
+    " ",
+  ];
+
+  if (!blockedKeys.includes(e.key)) return;
+  if (isInsideOpenSelectPanel(e.target)) return;
+
+  e.preventDefault();
+  e.stopPropagation();
+}
+
+function attachGlobalScrollBlock() {
+  if (globalScrollBlockAttached) return;
+  globalScrollBlockAttached = true;
+
+  document.addEventListener("wheel", preventGlobalScrollEvent, {
+    passive: false,
+    capture: true,
+  });
+  document.addEventListener("touchmove", preventGlobalScrollEvent, {
+    passive: false,
+    capture: true,
+  });
+  document.addEventListener("keydown", preventGlobalScrollKeys, {
+    capture: true,
+  });
+}
+
+function detachGlobalScrollBlock() {
+  if (!globalScrollBlockAttached) return;
+  globalScrollBlockAttached = false;
+
+  document.removeEventListener("wheel", preventGlobalScrollEvent, true);
+  document.removeEventListener("touchmove", preventGlobalScrollEvent, true);
+  document.removeEventListener("keydown", preventGlobalScrollKeys, true);
+}
 
 function lockPageScroll() {
   scrollLockCount += 1;
@@ -37,6 +101,8 @@ function lockPageScroll() {
   body.style.right = "0";
   body.style.width = "100%";
   body.style.overflow = "hidden";
+
+  attachGlobalScrollBlock();
 }
 
 function unlockPageScroll() {
@@ -60,6 +126,8 @@ function unlockPageScroll() {
   html.style.overscrollBehavior = "";
 
   window.scrollTo(0, savedScrollY);
+
+  detachGlobalScrollBlock();
 
   savedBodyStyle = null;
   savedScrollY = 0;
