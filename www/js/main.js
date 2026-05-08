@@ -26,6 +26,7 @@ import { appProManager } from "./app-pro.js?v=VERSION";
 import { adsManager } from "./ads.js?v=VERSION";
 import { APP_EVENTS } from "./constants/events.js?v=VERSION";
 import { CustomSelect } from "./custom-select.js?v=VERSION";
+import { APP_MONETIZATION_CONFIG } from "./app-monetization-config.js?v=VERSION";
 
 const ERUDA_CDN_MARKER = "cdn.jsdelivr.net/npm/eruda";
 
@@ -69,6 +70,61 @@ function renderBootError(error) {
 
   const reloadBtn = document.getElementById("boot-reload-btn");
   reloadBtn?.addEventListener("click", () => location.reload());
+}
+
+async function applyMonetizationConfig() {
+  if (!APP_MONETIZATION_CONFIG.pro.enabled) {
+    await appProManager.setMode("disabled");
+  } else {
+    await appProManager.setMode(APP_MONETIZATION_CONFIG.pro.mode);
+
+    const entries = Object.entries(APP_MONETIZATION_CONFIG.pro.features || {});
+    for (const [featureKey, isGated] of entries) {
+      await appProManager.setFeatureGate(featureKey, !!isGated);
+    }
+
+    if (APP_MONETIZATION_CONFIG.pro.forcePurchased === true) {
+      await appProManager.purchase();
+    } else if (APP_MONETIZATION_CONFIG.pro.forcePurchased === false) {
+      await appProManager.revoke();
+    }
+  }
+
+  adsManager.setProvider(APP_MONETIZATION_CONFIG.ads.defaultProvider);
+  adsManager.setInterstitialCooldown(
+    APP_MONETIZATION_CONFIG.ads.interstitialCooldownMs,
+  );
+  adsManager.setEnabled(APP_MONETIZATION_CONFIG.ads.enabledByDefault);
+}
+
+function renderProBadgesFromConfig() {
+  document
+    .querySelectorAll("[data-pro-injected='1']")
+    .forEach((el) => el.remove());
+
+  if (!APP_MONETIZATION_CONFIG.pro.enabled) return;
+
+  APP_MONETIZATION_CONFIG.proBadges.forEach(({ selector, feature }) => {
+    const row = document.querySelector(selector);
+    if (!row) return;
+
+    const slot =
+      row.querySelector("[data-pro-badge-slot]") ||
+      row.querySelector(".flex.items-center.gap-2") ||
+      row.lastElementChild;
+
+    if (!slot) return;
+
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.textContent = "Pro";
+    btn.dataset.proFeature = feature;
+    btn.dataset.proInjected = "1";
+    btn.className =
+      "text-[10px] font-bold uppercase px-2 py-1 rounded-md border app-border app-text-sec active:scale-95";
+
+    slot.prepend(btn);
+  });
 }
 
 function initProSettingsUi() {
@@ -163,6 +219,7 @@ async function bootstrap() {
   });
 
   await appProManager.init();
+  await applyMonetizationConfig();
 
   adsManager.init();
   adsManager.bindAutoRefresh();
@@ -191,6 +248,11 @@ async function bootstrap() {
   });
 
   initProSettingsUi();
+  renderProBadgesFromConfig();
+
+  document.addEventListener(APP_EVENTS.LANGUAGE_CHANGED, () => {
+    renderProBadgesFromConfig();
+  });
 
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") {

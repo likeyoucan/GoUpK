@@ -725,6 +725,7 @@
                 >
                   Appearance
                 </h3>
+
                 <div
                   class="app-surface rounded-2xl overflow-hidden shadow-sm border app-border"
                 >
@@ -765,29 +766,20 @@
                     </div>
                   </div>
 
-                  <div class="p-4 pb-3 border-b app-border">
+                  <div
+                    id="setting-row-accent"
+                    class="p-4 pb-3 border-b app-border"
+                  >
                     <div class="flex items-center justify-between mb-3">
                       <span
                         class="block font-medium app-text text-sm"
                         data-i18n="accent_color"
                         >Accent Color</span
                       >
-                      <div class="flex items-center gap-2">
-                        <button
-                          type="button"
-                          class="text-[10px] font-bold uppercase px-2 py-1 rounded-md border app-border app-text-sec active:scale-95"
-                          data-pro-feature="accent_bg"
-                        >
-                          Pro
-                        </button>
-                        <button
-                          type="button"
-                          class="text-[10px] font-bold uppercase px-2 py-1 rounded-md border app-border app-text-sec active:scale-95"
-                          data-pro-feature="custom_colors"
-                        >
-                          Pro
-                        </button>
-                      </div>
+                      <div
+                        class="flex items-center gap-2"
+                        data-pro-badge-slot
+                      ></div>
                     </div>
                     <div
                       id="accent-colors-container"
@@ -821,29 +813,17 @@
                     </div>
                   </div>
 
-                  <div class="p-4 pb-3 border-b app-border">
+                  <div id="setting-row-bg" class="p-4 pb-3 border-b app-border">
                     <div class="flex items-center justify-between mb-3">
                       <span
                         class="block font-medium app-text text-sm"
                         data-i18n="bg_color"
                         >Background Color</span
                       >
-                      <div class="flex items-center gap-2">
-                        <button
-                          type="button"
-                          class="text-[10px] font-bold uppercase px-2 py-1 rounded-md border app-border app-text-sec active:scale-95"
-                          data-pro-feature="accent_bg"
-                        >
-                          Pro
-                        </button>
-                        <button
-                          type="button"
-                          class="text-[10px] font-bold uppercase px-2 py-1 rounded-md border app-border app-text-sec active:scale-95"
-                          data-pro-feature="custom_colors"
-                        >
-                          Pro
-                        </button>
-                      </div>
+                      <div
+                        class="flex items-center gap-2"
+                        data-pro-badge-slot
+                      ></div>
                     </div>
                     <div
                       id="bg-colors-container"
@@ -883,8 +863,9 @@
                         for="toggle-adaptive-bg"
                         class="font-medium app-text text-sm cursor-pointer"
                         data-i18n="adaptive_bg"
-                        >Adaptive Background Colors</label
                       >
+                        Adaptive Background Colors
+                      </label>
                       <label
                         class="relative inline-flex items-center cursor-pointer"
                       >
@@ -896,13 +877,15 @@
                         <div class="custom-toggle"></div>
                       </label>
                     </div>
+
                     <div class="flex items-center justify-between">
                       <label
                         for="toggle-glass"
                         class="font-medium app-text text-sm cursor-pointer"
                         data-i18n="liquid_glass"
-                        >Liquid Glass</label
                       >
+                        Liquid Glass
+                      </label>
                       <label
                         class="relative inline-flex items-center cursor-pointer"
                       >
@@ -914,14 +897,16 @@
                         <div class="custom-toggle"></div>
                       </label>
                     </div>
+
                     <div class="flex flex-col gap-3">
                       <div class="flex items-center justify-between">
                         <label
                           for="toggle-vignette"
                           class="font-medium app-text text-sm cursor-pointer"
                           data-i18n="vignette"
-                          >Dark Vignette Effect</label
                         >
+                          Dark Vignette Effect
+                        </label>
                         <label
                           class="relative inline-flex items-center cursor-pointer"
                         >
@@ -933,6 +918,7 @@
                           <div class="custom-toggle"></div>
                         </label>
                       </div>
+
                       <div
                         id="vignette-depth-container"
                         class="hidden flex-col gap-1 transition-opacity duration-300"
@@ -1024,8 +1010,9 @@
                   class="text-xs font-bold app-text-sec uppercase tracking-wider mb-3 ml-2 mt-6"
                   data-i18n="audio_settings"
                 >
-                  audio_settings
+                  Audio
                 </h3>
+
                 <div
                   class="app-surface rounded-2xl overflow-hidden shadow-sm border app-border"
                 >
@@ -1098,26 +1085,16 @@
                   </div>
 
                   <div
+                    id="setting-row-sound-theme"
                     class="flex items-center justify-between p-4 border-t app-border"
                   >
-                    <label
-                      for="soundThemeSelect"
-                      class="font-medium app-text text-sm cursor-pointer"
+                    <span
+                      class="font-medium app-text text-sm"
                       data-i18n="sound_theme"
-                      ><span
-                        class="font-medium app-text text-sm"
-                        data-i18n="sound_theme"
-                        >Sound Theme</span
-                      ></label
+                      >Sound Theme</span
                     >
                     <div class="flex items-center gap-2">
-                      <button
-                        type="button"
-                        class="text-[10px] font-bold uppercase px-2 py-1 rounded-md border app-border app-text-sec active:scale-95"
-                        data-pro-feature="sound_themes"
-                      >
-                        Pro
-                      </button>
+                      <div data-pro-badge-slot></div>
                       <div id="soundThemeSelectContainer" class="w-40"></div>
                     </div>
                   </div>
@@ -1141,6 +1118,7 @@
                         <div class="custom-toggle"></div>
                       </label>
                     </div>
+
                     <div
                       id="vibro-level-container"
                       class="hidden flex-col gap-1 transition-opacity duration-300"
@@ -1179,6 +1157,7 @@
                 >
                   General
                 </h3>
+
                 <div
                   class="app-surface rounded-2xl overflow-hidden shadow-sm border app-border"
                 >
@@ -1238,9 +1217,8 @@
                       for="toggle-nav-labels"
                       class="font-medium app-text text-sm cursor-pointer"
                       data-i18n="hide_nav_labels"
+                      >Hide Nav Labels</label
                     >
-                      Hide Nav Labels
-                    </label>
                     <label
                       class="relative inline-flex items-center cursor-pointer"
                     >
@@ -1254,6 +1232,7 @@
                   </div>
 
                   <div
+                    id="setting-row-ads"
                     class="flex items-center justify-between p-4 border-t app-border"
                   >
                     <label
@@ -1263,13 +1242,7 @@
                       >Ads</label
                     >
                     <div class="flex items-center gap-2">
-                      <button
-                        type="button"
-                        class="text-[10px] font-bold uppercase px-2 py-1 rounded-md border app-border app-text-sec active:scale-95"
-                        data-pro-feature="remove_ads"
-                      >
-                        Pro
-                      </button>
+                      <div data-pro-badge-slot></div>
                       <label
                         class="relative inline-flex items-center cursor-pointer"
                       >
@@ -1313,6 +1286,7 @@
                 >
                   Pro
                 </h3>
+
                 <div
                   class="app-surface rounded-2xl overflow-hidden shadow-sm border app-border"
                 >
@@ -1326,23 +1300,18 @@
                       id="pro-status-badge"
                       class="text-xs font-bold primary-text"
                       data-i18n="pro_status_free"
+                      >Free</span
                     >
-                      Free
-                    </span>
                   </div>
 
                   <div
                     class="flex items-center justify-between p-4 border-t app-border"
                   >
-                    <label
-                      for="proModeSelectContainer"
+                    <span
                       class="font-medium app-text text-sm"
-                      ><span
-                        class="font-medium app-text text-sm"
-                        data-i18n="pro_mode"
-                        >Mode</span
-                      >
-                    </label>
+                      data-i18n="pro_mode"
+                      >Mode</span
+                    >
                     <div id="proModeSelectContainer" class="w-40"></div>
                   </div>
 
@@ -1364,6 +1333,7 @@
                         <div class="custom-toggle"></div>
                       </label>
                     </div>
+
                     <div class="flex items-center justify-between">
                       <span
                         class="font-medium app-text text-sm"
@@ -1381,6 +1351,7 @@
                         <div class="custom-toggle"></div>
                       </label>
                     </div>
+
                     <div class="flex items-center justify-between">
                       <span
                         class="font-medium app-text text-sm"
@@ -1398,6 +1369,7 @@
                         <div class="custom-toggle"></div>
                       </label>
                     </div>
+
                     <div class="flex items-center justify-between">
                       <span
                         class="font-medium app-text text-sm"
@@ -1415,6 +1387,7 @@
                         <div class="custom-toggle"></div>
                       </label>
                     </div>
+
                     <div class="flex items-center justify-between">
                       <span
                         class="font-medium app-text text-sm"
