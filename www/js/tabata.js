@@ -36,6 +36,10 @@ export const tb = {
   // Completion guard (prevents repeated complete logic in background race)
   completionHandled: false,
 
+  // Short visual hold when a phase reaches zero before switching to next phase
+  phaseClosing: false,
+  phaseCloseTimer: null,
+
   formatTime,
 
   init() {

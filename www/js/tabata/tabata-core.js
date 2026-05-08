@@ -50,6 +50,12 @@ export function setupTabataCore(tb) {
     tb.lastRender = 0;
     tb.completionHandled = false;
 
+    tb.phaseClosing = false;
+    if (tb.phaseCloseTimer) {
+      clearTimeout(tb.phaseCloseTimer);
+      tb.phaseCloseTimer = null;
+    }
+
     tb.phaseStamp += 1;
     tb.lastRenderedPhaseStamp = -1;
 
@@ -95,6 +101,12 @@ export function setupTabataCore(tb) {
     tb.lastBeepSec = 0;
     tb.lastRender = 0;
 
+    tb.phaseClosing = false;
+    if (tb.phaseCloseTimer) {
+      clearTimeout(tb.phaseCloseTimer);
+      tb.phaseCloseTimer = null;
+    }
+
     tb.phaseStamp += 1;
     tb.lastRenderedPhaseStamp = -1;
 
@@ -105,7 +117,7 @@ export function setupTabataCore(tb) {
     tb.updatePhaseStyles();
   };
 
-  // resetRing=false used only for manual stop feel; on completion we reset ring.
+  // resetRing=false can be used for manual visual flow; completion uses resetRing=true.
   tb.stop = ({ resetRing = true, silent = false } = {}) => {
     if (!silent) {
       sm.vibrate(30, "medium");
@@ -120,6 +132,12 @@ export function setupTabataCore(tb) {
 
     if (tb.rAF) cancelAnimationFrame(tb.rAF);
     tb.rAF = null;
+
+    if (tb.phaseCloseTimer) {
+      clearTimeout(tb.phaseCloseTimer);
+      tb.phaseCloseTimer = null;
+    }
+    tb.phaseClosing = false;
 
     tb.status = "STOPPED";
     tb.paused = false;
@@ -143,18 +161,37 @@ export function setupTabataCore(tb) {
 
   tb.tick = (isBackground = false) => {
     if (tb.status === "STOPPED" || tb.paused || tb.completionHandled) return;
+    if (tb.phaseClosing) return;
 
     const now = performance.now();
     const rem = tb.phaseEndTime - now;
 
     if (rem <= 0) {
-      // Render final frame at exactly zero before phase switch: avoids abrupt closure feel.
+      const missed = Math.abs(rem);
+
+      // If app was sleeping/backgrounded for long, fast-forward without phase-close hold.
+      if (missed > 2000 || document.hidden) {
+        tb.nextPhase(missed);
+        return;
+      }
+
+      // Visual close-hold: show fully closed ring before switching to next phase.
+      tb.phaseClosing = true;
+
       if (!isBackground) {
         tb.render(0);
       }
+      tb.ringCtrl?.setTarget(0);
 
-      const isDeepSleepWakeup = rem < -2000;
-      tb.nextPhase(isDeepSleepWakeup ? Math.abs(rem) : 0);
+      tb.phaseCloseTimer = setTimeout(() => {
+        tb.phaseClosing = false;
+        tb.phaseCloseTimer = null;
+
+        if (tb.status !== "STOPPED" && !tb.paused && !tb.completionHandled) {
+          tb.nextPhase(0);
+        }
+      }, 120);
+
       return;
     }
 
@@ -198,8 +235,13 @@ export function setupTabataCore(tb) {
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState !== "visible") return;
 
-      // If finished while hidden, force stable idle ring and exit.
+      // If finished while hidden, force stable idle ring.
       if (tb.status === "STOPPED") {
+        if (tb.phaseCloseTimer) {
+          clearTimeout(tb.phaseCloseTimer);
+          tb.phaseCloseTimer = null;
+        }
+        tb.phaseClosing = false;
         tb.ringCtrl?.snap(tb.ringLength);
         return;
       }
@@ -213,6 +255,11 @@ export function setupTabataCore(tb) {
         }
 
         tb.lastRender = 0;
+        tb.phaseClosing = false;
+        if (tb.phaseCloseTimer) {
+          clearTimeout(tb.phaseCloseTimer);
+          tb.phaseCloseTimer = null;
+        }
         tb.render(rem);
         tb.tick();
       }
