@@ -153,6 +153,13 @@ export const translations = {
     pro_sound_themes: "Sound themes",
     pro_app_icon: "Pro icon",
     pro_revoke: "Revoke",
+    pro_paywall_title: "Stopwatch Pro",
+    pro_paywall_desc: "Unlock advanced features with Pro.",
+    pro_feature_custom_colors: "- Custom colors",
+    pro_feature_accent_bg: "- Accent and background tuning",
+    pro_feature_remove_ads: "- Disable ads",
+    pro_feature_sound_themes: "- Sound themes",
+    pro_feature_app_icon: "- Pro app icon",
   },
 
   ru: {
@@ -303,6 +310,13 @@ export const translations = {
     pro_sound_themes: "Темы звуков",
     pro_app_icon: "Pro иконка",
     pro_revoke: "Отключить Pro",
+    pro_paywall_title: "Stopwatch Pro",
+    pro_paywall_desc: "Откройте расширенные функции с Pro.",
+    pro_feature_custom_colors: "- Кастомные цвета",
+    pro_feature_accent_bg: "- Настройка акцента и фона",
+    pro_feature_remove_ads: "- Отключение рекламы",
+    pro_feature_sound_themes: "- Темы звуков",
+    pro_feature_app_icon: "- Pro иконка приложения",
   },
 };
 
