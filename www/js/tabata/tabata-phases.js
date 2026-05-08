@@ -13,9 +13,27 @@ export function setupTabataPhases(tb) {
     sm.play("complete");
     announceToScreenReader(t("tabata_complete"));
 
-    // On completion always reset to idle ring to avoid post-background blink/freeze.
-    tb.stop({ resetRing: true, silent: true });
-    showToast(t("tabata_complete"));
+    // Если завершилось в фоне — сразу в стабильный idle, без визуальных эффектов.
+    if (document.hidden) {
+      tb.stop({ resetRing: true, silent: true });
+      showToast(t("tabata_complete"));
+      return;
+    }
+
+    // На активном экране: даем кольцу "досомкнуться" до 0,
+    // затем мягко переводим в idle.
+    if (tb.rAF) cancelAnimationFrame(tb.rAF);
+    tb.rAF = null;
+
+    // Финальный кадр "00:00" + цель кольца в ноль.
+    tb.render(0);
+    tb.ringCtrl?.setTarget(0);
+
+    // Небольшая пауза, чтобы пользователь увидел завершение анимации.
+    setTimeout(() => {
+      tb.stop({ resetRing: true, silent: true });
+      showToast(t("tabata_complete"));
+    }, 220);
   };
 
   tb.advancePhase = () => {
