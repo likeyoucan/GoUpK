@@ -933,7 +933,6 @@
                           <div class="custom-toggle"></div>
                         </label>
                       </div>
-
                       <div
                         id="vignette-depth-container"
                         class="hidden flex-col gap-1 transition-opacity duration-300"
@@ -1138,7 +1137,6 @@
                         <div class="custom-toggle"></div>
                       </label>
                     </div>
-
                     <div
                       id="vibro-level-container"
                       class="hidden flex-col gap-1 transition-opacity duration-300"
@@ -1214,8 +1212,9 @@
                       for="toggle-foreground-banner"
                       class="font-medium app-text text-sm cursor-pointer"
                       data-i18n="show_foreground_banner"
-                      >Show Notification Banner</label
                     >
+                      Show Notification Banner
+                    </label>
                     <label
                       class="relative inline-flex items-center cursor-pointer"
                     >
@@ -1235,8 +1234,9 @@
                       for="toggle-nav-labels"
                       class="font-medium app-text text-sm cursor-pointer"
                       data-i18n="hide_nav_labels"
-                      >Hide Nav Labels</label
                     >
+                      Hide Nav Labels
+                    </label>
                     <label
                       class="relative inline-flex items-center cursor-pointer"
                     >
@@ -1256,9 +1256,8 @@
                       for="toggle-ads"
                       class="font-medium app-text text-sm cursor-pointer"
                       data-i18n="ads"
+                      >Ads</label
                     >
-                      Ads
-                    </label>
                     <div class="flex items-center gap-2">
                       <button
                         type="button"
@@ -1287,9 +1286,8 @@
                       for="adsProvider"
                       class="font-medium app-text text-sm"
                       data-i18n="ads_provider"
+                      >Ads Provider</label
                     >
-                      Ads Provider
-                    </label>
                     <select
                       id="adsProvider"
                       class="min-h-[36px] rounded-lg app-surface border app-border px-2 text-sm"
@@ -1303,7 +1301,126 @@
                       </option>
                     </select>
                   </div>
+                </div>
 
+                <h3
+                  class="text-xs font-bold app-text-sec uppercase tracking-wider mb-3 ml-2 mt-6"
+                >
+                  Pro
+                </h3>
+                <div
+                  class="app-surface rounded-2xl overflow-hidden shadow-sm border app-border"
+                >
+                  <div class="flex items-center justify-between p-4">
+                    <span class="font-medium app-text text-sm">Status</span>
+                    <span
+                      id="pro-status-badge"
+                      class="text-xs font-bold primary-text"
+                      >Free</span
+                    >
+                  </div>
+
+                  <div
+                    class="flex items-center justify-between p-4 border-t app-border"
+                  >
+                    <label
+                      for="proModeSelectContainer"
+                      class="font-medium app-text text-sm"
+                      >Mode</label
+                    >
+                    <div id="proModeSelectContainer" class="w-40"></div>
+                  </div>
+
+                  <div class="p-4 border-t app-border flex flex-col gap-3">
+                    <div class="flex items-center justify-between">
+                      <span class="font-medium app-text text-sm"
+                        >Custom colors</span
+                      >
+                      <label
+                        class="relative inline-flex items-center cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          id="pro-gate-custom-colors"
+                          class="sr-only"
+                        />
+                        <div class="custom-toggle"></div>
+                      </label>
+                    </div>
+                    <div class="flex items-center justify-between">
+                      <span class="font-medium app-text text-sm"
+                        >Accent and background</span
+                      >
+                      <label
+                        class="relative inline-flex items-center cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          id="pro-gate-accent-bg"
+                          class="sr-only"
+                        />
+                        <div class="custom-toggle"></div>
+                      </label>
+                    </div>
+                    <div class="flex items-center justify-between">
+                      <span class="font-medium app-text text-sm"
+                        >Disable ads</span
+                      >
+                      <label
+                        class="relative inline-flex items-center cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          id="pro-gate-remove-ads"
+                          class="sr-only"
+                        />
+                        <div class="custom-toggle"></div>
+                      </label>
+                    </div>
+                    <div class="flex items-center justify-between">
+                      <span class="font-medium app-text text-sm"
+                        >Sound themes</span
+                      >
+                      <label
+                        class="relative inline-flex items-center cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          id="pro-gate-sound-themes"
+                          class="sr-only"
+                        />
+                        <div class="custom-toggle"></div>
+                      </label>
+                    </div>
+                    <div class="flex items-center justify-between">
+                      <span class="font-medium app-text text-sm">Pro icon</span>
+                      <label
+                        class="relative inline-flex items-center cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          id="pro-gate-app-icon"
+                          class="sr-only"
+                        />
+                        <div class="custom-toggle"></div>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div class="p-4 border-t app-border">
+                    <button
+                      type="button"
+                      id="btn-revoke-pro"
+                      class="w-full min-h-[44px] app-surface app-text border app-border font-bold text-xs tracking-widest uppercase rounded-lg active:scale-95 transition-transform"
+                    >
+                      Revoke
+                    </button>
+                  </div>
+                </div>
+
+                <div
+                  class="app-surface rounded-2xl overflow-hidden shadow-sm border app-border mt-6"
+                >
                   <div class="p-4 border-t app-border flex flex-col gap-2">
                     <button
                       type="button"
