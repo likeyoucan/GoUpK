@@ -2080,56 +2080,60 @@
           </div>
         </div>
         <!-- App Pro: Subscribe Modal -->
-        <div
-          id="pro-subscribe-modal"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="pro-subscribe-title"
-          inert
-          aria-hidden="true"
-          class="hidden absolute inset-0 z-[110] items-center justify-center p-6 transition-opacity duration-300 opacity-0"
-          data-modal-close
-        >
-          <div
-            id="pro-subscribe-modal-content"
-            class="app-surface w-full max-w-sm rounded-3xl p-6 shadow-2xl border app-border flex flex-col gap-4 transform transition-all duration-300 opacity-0 scale-95"
-          >
-            <h3 id="pro-subscribe-title" class="text-xl font-bold app-text">
-              Stopwatch Pro
-            </h3>
+        <!-- App Pro: Subscribe Modal -->
+<div
+  id="pro-subscribe-modal"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="pro-subscribe-title"
+  inert
+  aria-hidden="true"
+  class="hidden absolute inset-0 z-[110] items-center justify-center p-6 transition-opacity duration-300 opacity-0"
+  data-modal-close
+>
+  <div
+    id="pro-subscribe-modal-content"
+    class="app-surface w-full max-w-sm rounded-3xl p-6 shadow-2xl border app-border flex flex-col gap-4 transform transition-all duration-300 opacity-0 scale-95"
+  >
+    <h3
+      id="pro-subscribe-title"
+      class="text-xl font-bold app-text"
+      data-i18n="pro_paywall_title"
+    >
+      Stopwatch Pro
+    </h3>
 
-            <p class="app-text-sec text-sm leading-relaxed">
-              Unlock custom colors, accent and background settings, ad removal,
-              sound themes, and Pro app icon.
-            </p>
+    <p class="app-text-sec text-sm leading-relaxed" data-i18n="pro_paywall_desc">
+      Unlock advanced features with Pro.
+    </p>
 
-            <div class="text-xs app-text-sec leading-relaxed">
-              <div>- Custom colors</div>
-              <div>- Accent and background tuning</div>
-              <div>- Disable ads</div>
-              <div>- Sound themes</div>
-              <div>- Pro app icon</div>
-            </div>
+    <div class="text-xs app-text-sec leading-relaxed">
+      <div data-i18n="pro_feature_custom_colors">- Custom colors</div>
+      <div data-i18n="pro_feature_accent_bg">- Accent and background tuning</div>
+      <div data-i18n="pro_feature_remove_ads">- Disable ads</div>
+      <div data-i18n="pro_feature_sound_themes">- Sound themes</div>
+      <div data-i18n="pro_feature_app_icon">- Pro app icon</div>
+    </div>
 
-            <button
-              type="button"
-              id="pro-confirm-buy"
-              class="min-h-[44px] px-5 py-2 rounded-xl font-bold text-white primary-bg shadow-lg active:scale-95 transition-transform focus:outline-none custom-focus"
-              data-i18n="buy_subscription"
-            >
-              Buy Subscription
-            </button>
+    <button
+      type="button"
+      id="pro-confirm-buy"
+      class="min-h-[44px] px-5 py-2 rounded-xl font-bold text-white primary-bg shadow-lg active:scale-95 transition-transform focus:outline-none custom-focus"
+      data-i18n="buy_subscription"
+    >
+      Buy Subscription
+    </button>
 
-            <button
-              type="button"
-              id="pro-cancel-buy"
-              class="min-h-[44px] px-5 py-2 rounded-xl font-bold app-text-sec active:scale-95 transition-transform focus:outline-none custom-focus"
-              data-i18n="cancel"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
+    <button
+      type="button"
+      id="pro-cancel-buy"
+      class="min-h-[44px] px-5 py-2 rounded-xl font-bold app-text-sec active:scale-95 transition-transform focus:outline-none custom-focus"
+      data-i18n="cancel"
+    >
+      Cancel
+    </button>
+  </div>
+</div>
       </div>
     </div>
 
