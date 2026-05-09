@@ -1859,7 +1859,6 @@ body.hide-nav-labels .nav-btn {
     0 10px 25px -5px rgb(0 0 0 / 0.1),
     0 8px 10px -6px rgb(0 0 0 / 0.1);
 
-  /* fallback, реальный параметр высоты задается из JS */
   max-height: 60dvh;
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -1882,6 +1881,8 @@ body.hide-nav-labels .nav-btn {
 }
 
 .custom-select-option {
+  width: 100%;
+  box-sizing: border-box;
   padding: 0.75rem 1rem;
   cursor: pointer;
   font-size: 0.875rem;
@@ -1890,6 +1891,15 @@ body.hide-nav-labels .nav-btn {
     background-color 0.15s,
     color 0.15s;
   user-select: none;
+}
+
+/* внутренний ряд (иконка + текст) заполняет всю ширину */
+.custom-select-option > div {
+  width: 100%;
+}
+
+.custom-select-option svg {
+  flex: 0 0 auto;
 }
 
 /* Базовый selected (без glass) */
@@ -1972,7 +1982,7 @@ body.hide-nav-labels .nav-btn {
     0 12px 30px rgba(0, 0, 0, 0.38) !important;
 }
 
-/* Theme mode select: slightly stronger readability for icon + label */
+/* Theme mode select: icon + label alignment */
 #themeModeSelectContainer .custom-select-trigger {
   min-height: 38px;
 }
@@ -1980,38 +1990,33 @@ body.hide-nav-labels .nav-btn {
 #themeModeSelectContainer .custom-select-value {
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
+  gap: 0.5rem;
   font-weight: 700;
   letter-spacing: 0.01em;
+  white-space: nowrap;
+  line-height: 1;
 }
 
-#themeModeSelectContainer .custom-select-option {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  font-weight: 600;
+#themeModeSelectContainer .custom-select-value svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
 }
 
-/* Theme select: strict horizontal alignment for icon + label */
-#themeModeSelectContainer .custom-select-value,
-#themeModeSelectContainer .custom-select-option {
+#themeModeSelectContainer .custom-select-option > div {
   display: flex;
-  flex-direction: row;
   align-items: center;
   gap: 0.5rem;
   line-height: 1;
 }
 
-#themeModeSelectContainer .custom-select-value svg,
 #themeModeSelectContainer .custom-select-option svg {
   width: 16px;
   height: 16px;
   flex: 0 0 16px;
 }
 
-#themeModeSelectContainer .custom-select-value span,
 #themeModeSelectContainer .custom-select-option span {
-  display: inline-block;
   white-space: nowrap;
 }
 
