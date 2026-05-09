@@ -9,7 +9,7 @@ concurrency:
 
 on:
   push:
-    branches: ["main", "emb_7"]
+    branches: ["main", "emb_8"]
   workflow_dispatch:
 
 permissions:

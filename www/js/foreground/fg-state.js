@@ -8,10 +8,14 @@ export function getForegroundState({ sw, tm, tb, activeView }) {
   const tabataMeta = () =>
     `${tb.selectedId || "na"}|${tb.currentRound || 0}|${tb.rounds || 0}|${tb.status || "STOPPED"}`;
 
-  const makeState = (mode, running) =>
-    mode === "tabata"
-      ? { mode, running, metaKey: tabataMeta() }
-      : { mode, running, metaKey: "" };
+  const timerMeta = () =>
+    `${tm.initialDurationMs || tm.totalDuration || 0}|${tm.getRemainingTime() || 0}|${tm.isPaused ? "p" : "r"}`;
+
+  const makeState = (mode, running) => {
+    if (mode === "tabata") return { mode, running, metaKey: tabataMeta() };
+    if (mode === "timer") return { mode, running, metaKey: timerMeta() };
+    return { mode, running, metaKey: "" };
+  };
 
   const isModeAvailable = (mode) => {
     if (mode === "stopwatch") return sw.isRunning || canResumeStopwatch;
@@ -45,6 +49,8 @@ export function buildForegroundPayload({
   formatTime,
 }) {
   const buttonTitle = state.running ? t("stop") : t("play");
+  const remainingLabel =
+    t("remaining") === "remaining" ? "Remaining" : t("remaining");
 
   if (state.mode === "stopwatch") {
     return {
@@ -59,12 +65,25 @@ export function buildForegroundPayload({
 
   if (state.mode === "timer") {
     const rem = tm.getRemainingTime();
+    const total = tm.initialDurationMs || tm.totalDuration || 0;
+
     return {
-      title: t("timer"),
-      body: formatTime(rem, {
-        showMs: false,
-        forceHours: rem >= 3600000,
-      }),
+      title:
+        total > 0
+          ? `${t("timer")} ${formatTime(total, {
+              showMs: false,
+              forceHours: total >= 3600000,
+            })}`
+          : t("timer"),
+      body: state.running
+        ? `${remainingLabel}: ${formatTime(rem, {
+            showMs: false,
+            forceHours: rem >= 3600000,
+          })}`
+        : `${t("pause")} • ${remainingLabel}: ${formatTime(rem, {
+            showMs: false,
+            forceHours: rem >= 3600000,
+          })}`,
       buttonTitle,
     };
   }
@@ -88,7 +107,7 @@ export function buildForegroundPayload({
 
   return {
     title: `${t("tabata")} - ${workoutName}`,
-    body: `${t("round")} ${tb.currentRound}/${tb.rounds} • ${phaseText}: ${formatTime(remTb, { showMs })}`,
+    body: `${t("round")} ${tb.currentRound}/${tb.rounds} • ${phaseText} • ${formatTime(remTb, { showMs })}`,
     buttonTitle,
   };
 }

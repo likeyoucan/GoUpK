@@ -59,6 +59,7 @@ export const en = {
   reset_confirm_msg: "Are you sure? Your saved workouts will not be deleted.",
   reset_settings: "Reset to Defaults",
   rest: "Rest",
+  remaining: "Remaining",
   restart: "Restart",
   result_fast: "Result (Fastest)",
   ring_width: "Ring Thickness",

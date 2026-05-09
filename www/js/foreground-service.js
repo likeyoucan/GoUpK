@@ -60,6 +60,7 @@ function buildSignature(state, payload) {
   return [
     state.mode,
     state.running ? "1" : "0",
+    state.metaKey || "",
     payload.title,
     payload.body,
     payload.buttonTitle,

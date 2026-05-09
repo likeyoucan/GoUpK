@@ -24,6 +24,7 @@ import { bindUiInteractions } from "./bootstrap/ui-interactions.js?v=VERSION";
 
 import { appProManager } from "./app-pro.js?v=VERSION";
 import { adsManager } from "./ads.js?v=VERSION";
+import { store } from "./store.js?v=VERSION";
 import { APP_EVENTS } from "./constants/events.js?v=VERSION";
 import { APP_MONETIZATION_CONFIG } from "./app-monetization-config.js?v=VERSION";
 
@@ -74,6 +75,26 @@ function renderBootError(error) {
 
   const reloadBtn = document.getElementById("boot-reload-btn");
   reloadBtn?.addEventListener("click", () => location.reload());
+}
+
+async function reconcileNativeTimerAlarm() {
+  const bridge = window.Capacitor?.Plugins?.TimerAlarmBridge;
+  if (!bridge?.readAndClearFiredFlag) return;
+
+  try {
+    const result = await bridge.readAndClearFiredFlag();
+    if (!result?.fired) return;
+
+    store.clearActiveTimer();
+
+    if (tm.isRunning || tm.isPaused) {
+      tm.finishAsCompleted();
+    } else {
+      showToast(t("timer_finished"));
+    }
+  } catch (e) {
+    console.warn("[timer-alarm] read flag failed", e);
+  }
 }
 
 async function applyMonetizationConfig() {
@@ -182,9 +203,14 @@ async function bootstrap() {
     modalManager,
   });
 
+  // Reconcile stale active timer and exact alarm completion after process restart.
+  store.reconcileActiveTimer({ sw, tm, tb });
+  await reconcileNativeTimerAlarm();
+
   await appProManager.init();
   await applyMonetizationConfig();
 
+  adsManager.reconcileActiveTimerState({ sw, tm, tb });
   adsManager.init();
   adsManager.bindAutoRefresh();
   adsManager.bindLifecycleMonetization();

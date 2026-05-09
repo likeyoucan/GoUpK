@@ -9,7 +9,7 @@ concurrency:
 
 on:
   push:
-    branches: ["main"]
+    branches: ["main", "emb_8"]
   workflow_dispatch:
 
 jobs:

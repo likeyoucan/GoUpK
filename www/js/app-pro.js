@@ -61,6 +61,14 @@ export const appProManager = {
     const ok = await proSecurity.verify(payload, signature);
 
     if (!signature) {
+      // Never trust purchased=true state without signature.
+      if (this.purchased) {
+        await this.resetToSafeState("missing_signature_with_purchased_true");
+        this.initialized = true;
+        return;
+      }
+
+      // First-run free-state can be signed.
       await this.persist();
       this.initialized = true;
       this.applyProIcon();
@@ -69,7 +77,7 @@ export const appProManager = {
     }
 
     if (!ok) {
-      this.resetToSafeState("signature_mismatch");
+      await this.resetToSafeState("signature_mismatch");
       this.initialized = true;
       return;
     }
@@ -79,7 +87,7 @@ export const appProManager = {
     dispatch(APP_EVENTS.PRO_STATUS_CHANGED, { purchased: this.purchased });
   },
 
-  resetToSafeState(reason = "unknown") {
+  async resetToSafeState(reason = "unknown") {
     this.mode = DEFAULT_MODE;
     this.purchased = false;
     this.features = { ...DEFAULT_FEATURES };
@@ -91,7 +99,7 @@ export const appProManager = {
     safeSetLS(STORAGE_KEYS.APP_PRO_UPDATED_AT, String(this.updatedAt));
     safeSetLS(STORAGE_KEYS.APP_PRO_SIGNATURE, "");
 
-    this.persist();
+    await this.persist();
     this.applyProIcon();
 
     showToast(
@@ -137,7 +145,7 @@ export const appProManager = {
     const ok = await proSecurity.verify(payload, signature);
 
     if (!ok) {
-      this.resetToSafeState("runtime_revalidation_failed");
+      await this.resetToSafeState("runtime_revalidation_failed");
       return false;
     }
     return true;

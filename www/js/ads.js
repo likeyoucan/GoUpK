@@ -9,6 +9,7 @@ import { appProManager } from "./app-pro.js?v=VERSION";
 const DEFAULT_COOLDOWN_MS = 5 * 60 * 1000;
 const DEFAULT_PROVIDER = "yandex"; // yandex | admob | mediation
 const PROVIDERS = new Set(["yandex", "admob", "mediation"]);
+const KNOWN_TIMER_IDS = new Set(["stopwatch", "timer", "tabata"]);
 
 function isNative() {
   return !!(window.Capacitor && window.Capacitor.isNativePlatform());
@@ -45,6 +46,37 @@ export const adsManager = {
   interstitialCooldownMs: DEFAULT_COOLDOWN_MS,
   bannerMounted: false,
   initialized: false,
+
+  reconcileActiveTimerState(runtime = null) {
+    const active = store.getActiveTimer?.();
+    if (!active) return null;
+
+    // Defensive cleanup for corrupted values.
+    if (!KNOWN_TIMER_IDS.has(active)) {
+      store.clearActiveTimer?.();
+      return null;
+    }
+
+    // Optional deep check with runtime modules.
+    if (runtime) {
+      const hasRunningStopwatch = !!runtime?.sw?.isRunning;
+      const hasRunningTimer = !!runtime?.tm?.isRunning;
+      const hasRunningTabata =
+        !!runtime?.tb?.status &&
+        runtime.tb.status !== "STOPPED" &&
+        !runtime?.tb?.paused;
+
+      const hasRealActive =
+        hasRunningStopwatch || hasRunningTimer || hasRunningTabata;
+
+      if (!hasRealActive) {
+        store.clearActiveTimer?.();
+        return null;
+      }
+    }
+
+    return store.getActiveTimer?.() || null;
+  },
 
   init() {
     this.enabled = readBool(STORAGE_KEYS.APP_ADS_ENABLED, true);
@@ -143,7 +175,7 @@ export const adsManager = {
     if (!this.shouldShowAds()) return false;
 
     // Don't show banner while an active timer/stopwatch/tabata session is running.
-    const active = store.getActiveTimer?.();
+    const active = this.reconcileActiveTimerState();
     if (active) return false;
 
     return true;
@@ -198,8 +230,8 @@ export const adsManager = {
   canShowInterstitial() {
     if (!this.shouldShowAds()) return false;
 
-    // Never show interstitial while timer is active
-    const active = store.getActiveTimer?.();
+    // Never show interstitial while timer is active.
+    const active = this.reconcileActiveTimerState();
     if (active) return false;
 
     const lastAt = readNumber(STORAGE_KEYS.APP_ADS_LAST_INTERSTITIAL_AT, 0);

@@ -47,4 +47,19 @@ export const store = {
   clearActiveTimer() {
     this.setActiveTimer(null);
   },
+
+  // Reconcile persisted ACTIVE_TIMER with real runtime state after process restore.
+  reconcileActiveTimer({ sw, tm, tb }) {
+    const hasRunningStopwatch = !!sw?.isRunning;
+    const hasRunningTimer = !!tm?.isRunning;
+    const hasRunningTabata =
+      !!tb?.status && tb.status !== "STOPPED" && !tb?.paused;
+
+    const hasRealActive =
+      hasRunningStopwatch || hasRunningTimer || hasRunningTabata;
+
+    if (!hasRealActive && storeData.activeTimer) {
+      this.clearActiveTimer();
+    }
+  },
 };

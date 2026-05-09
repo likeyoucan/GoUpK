@@ -2,6 +2,47 @@
 
 import { APP_EVENTS } from "../constants/events.js?v=VERSION";
 
+const TIMER_ALARM_REQUEST_CODE = 1001;
+
+async function scheduleExactTimerAlarm(epochMs) {
+  const bridge = window.Capacitor?.Plugins?.TimerAlarmBridge;
+  if (!bridge?.scheduleExact)
+    return { scheduled: false, reason: "bridge_missing" };
+
+  try {
+    const res = await bridge.scheduleExact({
+      epochMs,
+      requestCode: TIMER_ALARM_REQUEST_CODE,
+    });
+
+    if (
+      res &&
+      res.scheduled === false &&
+      res.reason === "cannot_schedule_exact_alarm"
+    ) {
+      return res;
+    }
+
+    return res || { scheduled: true };
+  } catch (e) {
+    console.warn("[timer-alarm] schedule failed", e);
+    return { scheduled: false, reason: "schedule_failed" };
+  }
+}
+
+async function cancelExactTimerAlarm() {
+  const bridge = window.Capacitor?.Plugins?.TimerAlarmBridge;
+  if (!bridge?.cancel) return { canceled: false, reason: "bridge_missing" };
+
+  try {
+    const res = await bridge.cancel({ requestCode: TIMER_ALARM_REQUEST_CODE });
+    return res || { canceled: true };
+  } catch (e) {
+    console.warn("[timer-alarm] cancel failed", e);
+    return { canceled: false, reason: "cancel_failed" };
+  }
+}
+
 export function setupTimerCore(tm, { showToast, updateText }) {
   tm.getRemainingTime = () => {
     if (!tm.isRunning && !tm.isPaused && !tm.isFinished) return 0;
@@ -66,6 +107,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     else if (tm.els?.ring) tm.els.ring.style.strokeDashoffset = 0;
 
     tm.bgWorker.postMessage({ command: "reset" });
+    cancelExactTimerAlarm();
 
     tm.store.clearActiveTimer();
     tm.stopUiLoop();
@@ -91,7 +133,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     );
   };
 
-  tm.toggle = () => {
+  tm.toggle = async () => {
     tm.sm.vibrate(40, "light");
     tm.sm.play("click");
     tm.sm.unlock();
@@ -105,6 +147,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
 
       tm.bgWorker.postMessage({ command: "stop" });
       tm.stopUiLoop();
+      await cancelExactTimerAlarm();
       tm.releaseWakeLock();
       tm.updateTitle("");
       tm.updateUIState();
@@ -162,9 +205,17 @@ export function setupTimerCore(tm, { showToast, updateText }) {
 
     tm.startUiLoop();
     tm.bgWorker.postMessage({ command: "start", time: duration });
+
+    const scheduled = await scheduleExactTimerAlarm(tm.targetEpochMs);
+    if (
+      scheduled?.scheduled === false &&
+      scheduled?.reason === "cannot_schedule_exact_alarm"
+    ) {
+      showToast("Enable exact alarms for precise background timer");
+    }
   };
 
-  tm.restart = () => {
+  tm.restart = async () => {
     tm.sm.vibrate(30, "medium");
     tm.sm.play("click");
 
@@ -205,9 +256,17 @@ export function setupTimerCore(tm, { showToast, updateText }) {
 
     tm.startUiLoop();
     tm.bgWorker.postMessage({ command: "start", time: duration });
+
+    const scheduled = await scheduleExactTimerAlarm(tm.targetEpochMs);
+    if (
+      scheduled?.scheduled === false &&
+      scheduled?.reason === "cannot_schedule_exact_alarm"
+    ) {
+      showToast("Enable exact alarms for precise background timer");
+    }
   };
 
-  tm.reset = (clearInputs = true) => {
+  tm.reset = async (clearInputs = true) => {
     tm.sm.vibrate(30, "medium");
     tm.sm.play("click");
 
@@ -226,6 +285,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     tm.skipWorkerTickUntil = 0;
 
     tm.bgWorker.postMessage({ command: "reset" });
+    await cancelExactTimerAlarm();
     tm.stopUiLoop();
     tm.releaseWakeLock();
     tm.updateTitle("");
@@ -254,7 +314,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     tm.els.resetBtn?.addEventListener("click", () => tm.reset(true));
     tm.els.restartBtn?.addEventListener("click", () => tm.restart());
 
-    tm.bgWorker.addEventListener("message", (e) => {
+    tm.bgWorker.addEventListener("message", async (e) => {
       if (e.data?.type !== "tick") return;
 
       const remaining = e.data.time;
@@ -275,6 +335,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
         const predicted = Math.max(0, tm.targetEpochMs - nowEpoch);
         if (Math.abs(predicted - remaining) > 220) {
           tm.targetEpochMs = nowEpoch + remaining;
+          await scheduleExactTimerAlarm(tm.targetEpochMs);
         }
       }
 
@@ -288,7 +349,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
       }
     });
 
-    tm.els.adjustPlusBtn?.addEventListener("click", () => {
+    tm.els.adjustPlusBtn?.addEventListener("click", async () => {
       tm.sm.play("tick");
       tm.sm.vibrate(50, "medium");
 
@@ -313,9 +374,10 @@ export function setupTimerCore(tm, { showToast, updateText }) {
       tm.updateAdjustButtons();
 
       tm.bgWorker.postMessage({ command: "adjust", time: adjustmentMs });
+      await scheduleExactTimerAlarm(tm.targetEpochMs);
     });
 
-    tm.els.adjustMinusBtn?.addEventListener("click", () => {
+    tm.els.adjustMinusBtn?.addEventListener("click", async () => {
       tm.sm.play("tick");
       tm.sm.vibrate(50, "medium");
 
@@ -346,6 +408,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
       tm.updateAdjustButtons();
 
       tm.bgWorker.postMessage({ command: "adjust", time: adjustmentMs });
+      await scheduleExactTimerAlarm(tm.targetEpochMs);
     });
   };
 }

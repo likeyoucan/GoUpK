@@ -56,6 +56,7 @@ export const ru = {
   play: "Плей",
   rds: "Рнд",
   rename: "Переим.",
+  remaining: "Осталось",
   reset: "Сброс",
   reset_confirm_msg: "Вы уверены? Ваши тренировки не будут удалены.",
   reset_settings: "Сброс настроек",
