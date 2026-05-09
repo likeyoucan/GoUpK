@@ -189,7 +189,11 @@ export class CustomSelect {
     this.focusedIndex = -1;
 
     this._onViewportChange = null;
+    this._onOrientationChange = null;
+    this._onVisualViewportChange = null;
     this._rafReposition = 0;
+    this._resizeObserver = null;
+
     this._placement = "bottom";
     this._originalParent = null;
     this._nextSibling = null;
@@ -208,6 +212,31 @@ export class CustomSelect {
       window.removeEventListener("resize", this._onViewportChange);
       window.removeEventListener("scroll", this._onViewportChange, true);
       this._onViewportChange = null;
+    }
+
+    if (this._onOrientationChange) {
+      window.removeEventListener(
+        "orientationchange",
+        this._onOrientationChange,
+      );
+      this._onOrientationChange = null;
+    }
+
+    if (window.visualViewport && this._onVisualViewportChange) {
+      window.visualViewport.removeEventListener(
+        "resize",
+        this._onVisualViewportChange,
+      );
+      window.visualViewport.removeEventListener(
+        "scroll",
+        this._onVisualViewportChange,
+      );
+      this._onVisualViewportChange = null;
+    }
+
+    if (this._resizeObserver) {
+      this._resizeObserver.disconnect();
+      this._resizeObserver = null;
     }
 
     if (this._rafReposition) {
@@ -243,7 +272,8 @@ export class CustomSelect {
     this.trigger.setAttribute("aria-expanded", "false");
 
     this.selectedValueEl = document.createElement("span");
-    this.selectedValueEl.className = "custom-select-value text-sm font-bold";
+    this.selectedValueEl.className =
+      "custom-select-value text-sm font-bold inline-flex items-center gap-2 whitespace-nowrap";
 
     const arrowSvg = document.createElementNS(
       "http://www.w3.org/2000/svg",
@@ -297,28 +327,28 @@ export class CustomSelect {
     svg.classList.add("w-4", "h-4", "shrink-0");
 
     option.iconPaths.forEach((d) => {
-      const path = document.createElementNS(
-        "http://www.w3.org/2000/svg",
-        "path",
-      );
-      path.setAttribute("d", d);
-      svg.appendChild(path);
+      const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      p.setAttribute("d", d);
+      svg.appendChild(p);
     });
 
     return svg;
   }
 
   appendOptionContent(container, option) {
+    container.replaceChildren();
+    container.classList.add("inline-flex", "items-center", "gap-2");
+
     const icon = this.createOptionIcon(option);
     if (icon) container.appendChild(icon);
 
     const text = document.createElement("span");
+    text.className = "whitespace-nowrap";
     text.textContent = option.text;
     container.appendChild(text);
   }
 
   renderSelectedValue(option) {
-    this.selectedValueEl.replaceChildren();
     this.appendOptionContent(this.selectedValueEl, option);
   }
 
@@ -329,7 +359,7 @@ export class CustomSelect {
 
     this.options.forEach((option, index) => {
       const optionEl = document.createElement("div");
-      optionEl.className = "custom-select-option";
+      optionEl.className = "custom-select-option flex items-center gap-2";
       optionEl.setAttribute("role", "option");
       optionEl.setAttribute("tabindex", "-1");
       optionEl.id = `${this.container.id}-option-${index}`;
@@ -445,6 +475,43 @@ export class CustomSelect {
       passive: true,
       capture: true,
     });
+
+    this._onOrientationChange = () => {
+      if (!this.isOpening) return;
+      requestAnimationFrame(() => this.scheduleReposition());
+      setTimeout(() => this.scheduleReposition(), 120);
+      setTimeout(() => this.scheduleReposition(), 320);
+    };
+
+    window.addEventListener("orientationchange", this._onOrientationChange, {
+      passive: true,
+    });
+
+    if (window.visualViewport) {
+      this._onVisualViewportChange = () => {
+        if (!this.isOpening) return;
+        this.scheduleReposition();
+      };
+
+      window.visualViewport.addEventListener(
+        "resize",
+        this._onVisualViewportChange,
+        { passive: true },
+      );
+      window.visualViewport.addEventListener(
+        "scroll",
+        this._onVisualViewportChange,
+        { passive: true },
+      );
+    }
+
+    if ("ResizeObserver" in window && this._portalRoot instanceof HTMLElement) {
+      this._resizeObserver = new ResizeObserver(() => {
+        if (!this.isOpening) return;
+        this.scheduleReposition();
+      });
+      this._resizeObserver.observe(this._portalRoot);
+    }
   }
 
   _movePanelToPortal() {
@@ -494,9 +561,12 @@ export class CustomSelect {
   }
 
   scheduleReposition() {
-    if (this._rafReposition) return;
+    if (!this.isOpening) return;
+    if (this._rafReposition) cancelAnimationFrame(this._rafReposition);
+
     this._rafReposition = requestAnimationFrame(() => {
       this._rafReposition = 0;
+      this.decidePlacement();
       this.positionPanel();
     });
   }
@@ -547,8 +617,9 @@ export class CustomSelect {
       if (top > maxTop) top = Math.max(8, maxTop);
     }
 
-    const localLeft = left - portalRect.left;
-    const localTop = top - portalRect.top;
+    const isFixedToBody = this._portalRoot === document.body;
+    const localLeft = isFixedToBody ? left : left - portalRect.left;
+    const localTop = isFixedToBody ? top : top - portalRect.top;
 
     this.optionsPanel.style.left = `${localLeft}px`;
     this.optionsPanel.style.top = `${localTop}px`;
