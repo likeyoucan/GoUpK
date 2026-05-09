@@ -98,7 +98,7 @@ export const ru = {
   tabata_complete: "Тренировка завершена!",
   tabata_interval: "Табата Интервалы",
   theme: "Тема",
-  theme_auto: "Авто",
+  theme_auto: "Системная",
   theme_classic: "Классика",
   theme_dark: "Темная",
   theme_life: "Жизнь",

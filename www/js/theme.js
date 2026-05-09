@@ -15,11 +15,12 @@ import { colorManager } from "./color-manager.js?v=VERSION";
 import { appProManager } from "./app-pro.js?v=VERSION";
 import { APP_EVENTS } from "./constants/events.js?v=VERSION";
 import { STORAGE_KEYS } from "./constants/storage-keys.js?v=VERSION";
+import { CustomSelect } from "./custom-select.js?v=VERSION";
+import { t } from "./i18n.js?v=VERSION";
 
 import {
   applyModeToDocument,
   bindSystemThemeListener,
-  syncModeButtons,
 } from "./theme/theme-mode.js?v=VERSION";
 import { createColorHistory } from "./theme/theme-color-history.js?v=VERSION";
 import {
@@ -43,24 +44,82 @@ export const themeManager = {
 
   _unbindSystemThemeListener: null,
   _history: createColorHistory(20),
+  themeModeSelect: null,
+
+  _getThemeModeOptions() {
+    return [
+      {
+        value: "system",
+        text: t("theme_auto"),
+        iconPaths: ["M12 3v18", "M12 3a9 9 0 1 0 0 18V3z"],
+      },
+      {
+        value: "light",
+        text: t("theme_light"),
+        iconPaths: [
+          "M12 3v2",
+          "M12 19v2",
+          "M3 12h2",
+          "M19 12h2",
+          "M5.64 5.64l1.41 1.41",
+          "M16.95 16.95l1.41 1.41",
+          "M5.64 18.36l1.41-1.41",
+          "M16.95 7.05l1.41-1.41",
+          "M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8",
+        ],
+      },
+      {
+        value: "dark",
+        text: t("theme_dark"),
+        iconPaths: ["M21 12.79A9 9 0 1 1 11.21 3A7 7 0 0 0 21 12.79z"],
+      },
+    ];
+  },
+
+  _initThemeModeSelect() {
+    if (this.themeModeSelect) {
+      this.themeModeSelect.destroy();
+      this.themeModeSelect = null;
+    }
+
+    this.themeModeSelect = new CustomSelect(
+      "themeModeSelectContainer",
+      this._getThemeModeOptions(),
+      (value) => this.setMode(value),
+      this.currentMode || "system",
+    );
+  },
+
+  _syncThemeModeSelectValue() {
+    if (!this.themeModeSelect) return;
+    this.themeModeSelect.setValue(this.currentMode, false);
+  },
+
+  _refreshThemeModeSelectTexts() {
+    if (!this.themeModeSelect) return;
+
+    this.themeModeSelect.options = this._getThemeModeOptions();
+    this.themeModeSelect.populateOptions();
+    this.themeModeSelect.setValue(this.currentMode, false);
+  },
 
   init() {
     uiSettingsManager.init();
     colorManager.init();
 
     this.applySettings();
+    this._initThemeModeSelect();
+    this._syncThemeModeSelectValue();
     this._bindEvents();
   },
 
   _bindEvents() {
-    document.querySelectorAll('[id^="theme-"]').forEach((btn) => {
-      btn.addEventListener("click", (e) =>
-        this.setMode(e.currentTarget.dataset.themeMode),
-      );
-    });
-
     this._unbindSystemThemeListener = bindSystemThemeListener(() => {
       if (this.currentMode === "system") this.setMode("system");
+    });
+
+    document.addEventListener(APP_EVENTS.LANGUAGE_CHANGED, () => {
+      this._refreshThemeModeSelectTexts();
     });
 
     document.addEventListener(APP_EVENTS.ADAPTIVE_BG_CHANGED, () => {
@@ -116,6 +175,11 @@ export const themeManager = {
       this._unbindSystemThemeListener();
       this._unbindSystemThemeListener = null;
     }
+
+    if (this.themeModeSelect) {
+      this.themeModeSelect.destroy();
+      this.themeModeSelect = null;
+    }
   },
 
   applySettings() {
@@ -125,8 +189,6 @@ export const themeManager = {
     this.currentBg = safeGetLS(STORAGE_KEYS.THEME_BG_COLOR) || "default";
     this.currentMode = safeGetLS(STORAGE_KEYS.THEME_MODE) || "system";
 
-    // If Pro is required for accent/bg and user is not Pro,
-    // keep only default values.
     if (!appProManager.canUse("accent_bg")) {
       if (this.currentAccent !== "default" || this.currentBg !== "default") {
         this.currentAccent = "default";
@@ -158,6 +220,7 @@ export const themeManager = {
     uiSettingsManager.resetSettings();
 
     this.applySettings();
+    this._syncThemeModeSelectValue();
   },
 
   getCurrentTheme() {
@@ -172,8 +235,8 @@ export const themeManager = {
     this.currentMode = mode;
     safeSetLS(STORAGE_KEYS.THEME_MODE, mode);
 
-    syncModeButtons($, mode);
     applyModeToDocument(mode);
+    this._syncThemeModeSelectValue();
 
     this.setColor(this.currentAccent, false, {
       recordHistory: false,
@@ -211,7 +274,6 @@ export const themeManager = {
   setColor(hex, doScroll = true, options = {}) {
     const { recordHistory = true, skipProCheck = false } = options;
 
-    // Accent/background feature gating
     if (
       !skipProCheck &&
       hex !== "default" &&
@@ -245,7 +307,6 @@ export const themeManager = {
   setBgColor(hex, doScroll = true, options = {}) {
     const { recordHistory = true, skipProCheck = false } = options;
 
-    // Accent/background feature gating
     if (
       !skipProCheck &&
       hex !== "default" &&

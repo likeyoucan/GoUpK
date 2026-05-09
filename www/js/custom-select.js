@@ -5,7 +5,7 @@ import { APP_EVENTS } from "./constants/events.js?v=VERSION";
 
 const activeSelects = new Set();
 const TRANSITION_DURATION = 200;
-const SELECT_MAX_VIEWPORT_K = 0.6; // 60dvh
+const SELECT_MAX_VIEWPORT_K = 0.6;
 const SELECT_MIN_HEIGHT_PX = 120;
 
 let scrollLockCount = 0;
@@ -147,7 +147,6 @@ function unlockPageScroll() {
   detachGlobalScrollBlock();
   restoreScrollOnTargets();
 
-  // Hard reset for rare "stuck no-scroll" states
   const html = document.documentElement;
   const body = document.body;
   const settings = document.getElementById("view-settings");
@@ -283,6 +282,46 @@ export class CustomSelect {
     this.setValue(this.currentValue, false);
   }
 
+  createOptionIcon(option) {
+    if (!option?.iconPaths || !Array.isArray(option.iconPaths)) return null;
+
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("fill", "none");
+    svg.setAttribute("stroke", "currentColor");
+    svg.setAttribute("stroke-width", "2");
+    svg.setAttribute("stroke-linecap", "round");
+    svg.setAttribute("stroke-linejoin", "round");
+    svg.setAttribute("focusable", "false");
+    svg.setAttribute("aria-hidden", "true");
+    svg.classList.add("w-4", "h-4", "shrink-0");
+
+    option.iconPaths.forEach((d) => {
+      const path = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "path",
+      );
+      path.setAttribute("d", d);
+      svg.appendChild(path);
+    });
+
+    return svg;
+  }
+
+  appendOptionContent(container, option) {
+    const icon = this.createOptionIcon(option);
+    if (icon) container.appendChild(icon);
+
+    const text = document.createElement("span");
+    text.textContent = option.text;
+    container.appendChild(text);
+  }
+
+  renderSelectedValue(option) {
+    this.selectedValueEl.replaceChildren();
+    this.appendOptionContent(this.selectedValueEl, option);
+  }
+
   populateOptions() {
     this.optionsPanel.replaceChildren();
 
@@ -296,12 +335,12 @@ export class CustomSelect {
       optionEl.id = `${this.container.id}-option-${index}`;
       optionEl.dataset.value = option.value;
       optionEl.dataset.index = String(index);
-      optionEl.appendChild(document.createTextNode(option.text));
+
+      this.appendOptionContent(optionEl, option);
 
       if (option.value === this.currentValue) {
         optionEl.classList.add("is-selected");
         optionEl.setAttribute("aria-selected", "true");
-        this.updateSelectedTextColor(optionEl);
         this.focusedIndex = index;
       } else {
         optionEl.setAttribute("aria-selected", "false");
@@ -412,13 +451,14 @@ export class CustomSelect {
     if (
       !this.optionsPanel ||
       this.optionsPanel.parentElement === this._portalRoot
-    )
+    ) {
       return;
+    }
+
     this._originalParent = this.optionsPanel.parentElement;
     this._nextSibling = this.optionsPanel.nextSibling;
     this._portalRoot.appendChild(this.optionsPanel);
 
-    // Absolute inside #app keeps glass layering consistent
     this.optionsPanel.style.position =
       this._portalRoot === document.body ? "fixed" : "absolute";
   }
@@ -631,9 +671,7 @@ export class CustomSelect {
     if (!selectedOption) return;
 
     this.currentValue = value;
-    this.selectedValueEl.replaceChildren(
-      document.createTextNode(selectedOption.text),
-    );
+    this.renderSelectedValue(selectedOption);
 
     this.optionsPanel
       .querySelectorAll(".custom-select-option")

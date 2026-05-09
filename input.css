@@ -1972,6 +1972,26 @@ body.hide-nav-labels .nav-btn {
     0 12px 30px rgba(0, 0, 0, 0.38) !important;
 }
 
+/* Theme mode select: slightly stronger readability for icon + label */
+#themeModeSelectContainer .custom-select-trigger {
+  min-height: 38px;
+}
+
+#themeModeSelectContainer .custom-select-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+#themeModeSelectContainer .custom-select-option {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-weight: 600;
+}
+
 /* =========================================
    25. ОПТИМИЗАЦИЯ ПРОИЗВОДИТЕЛЬНОСТИ АНИМАЦИЙ
 ========================================= */

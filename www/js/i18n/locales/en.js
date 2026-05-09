@@ -97,7 +97,7 @@ export const en = {
   tabata_complete: "Tabata Complete!",
   tabata_interval: "Tabata Interval",
   theme: "Theme",
-  theme_auto: "Auto",
+  theme_auto: "System",
   theme_classic: "Classic",
   theme_dark: "Dark",
   theme_life: "Life",
