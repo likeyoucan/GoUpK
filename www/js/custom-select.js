@@ -337,15 +337,25 @@ export class CustomSelect {
 
   appendOptionContent(container, option) {
     container.replaceChildren();
-    container.classList.add("inline-flex", "items-center", "gap-2");
 
     const icon = this.createOptionIcon(option);
-    if (icon) container.appendChild(icon);
-
     const text = document.createElement("span");
     text.className = "whitespace-nowrap";
     text.textContent = option.text;
-    container.appendChild(text);
+
+    if (container === this.selectedValueEl) {
+      container.classList.add("inline-flex", "items-center", "gap-2");
+      if (icon) container.appendChild(icon);
+      container.appendChild(text);
+      return;
+    }
+
+    const row = document.createElement("div");
+    row.className = "flex items-center gap-2 w-full";
+    if (icon) row.appendChild(icon);
+    row.appendChild(text);
+
+    container.appendChild(row);
   }
 
   renderSelectedValue(option) {
@@ -359,7 +369,7 @@ export class CustomSelect {
 
     this.options.forEach((option, index) => {
       const optionEl = document.createElement("div");
-      optionEl.className = "custom-select-option flex items-center gap-2";
+      optionEl.className = "custom-select-option w-full";
       optionEl.setAttribute("role", "option");
       optionEl.setAttribute("tabindex", "-1");
       optionEl.id = `${this.container.id}-option-${index}`;
@@ -464,7 +474,10 @@ export class CustomSelect {
 
     this._onViewportChange = (ev) => {
       if (!this.isOpening) return;
-      if (ev?.target && this.optionsPanel.contains(ev.target)) return;
+
+      const target = ev?.target;
+      if (target instanceof Node && this.optionsPanel.contains(target)) return;
+
       this.scheduleReposition();
     };
 
