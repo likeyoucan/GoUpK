@@ -37,12 +37,15 @@ export function createModalConfig({ sw, tb }) {
         sw.pendingShareSession = null;
       },
     },
-
-    // App Pro paywall modal
     {
       id: "pro-subscribe-modal",
       type: "alert",
       contentId: "pro-subscribe-modal-content",
+    },
+    {
+      id: "legal-modal",
+      type: "alert",
+      contentId: "legal-modal-content",
     },
   ];
 }

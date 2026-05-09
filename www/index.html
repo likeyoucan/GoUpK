@@ -1326,10 +1326,20 @@
                       </svg>
                       <span data-i18n="feedback">Feedback</span>
                     </a>
+
+                    <button
+                      type="button"
+                      id="btn-open-legal"
+                      class="min-h-[44px] app-text font-bold text-xs tracking-widest uppercase active:scale-95 transition-transform focus:outline-none flex items-center justify-center gap-2 rounded-lg bg-black/5 dark:bg-white/5"
+                      data-i18n="legal"
+                    >
+                      Legal
+                    </button>
                   </div>
                 </div>
 
                 <div
+                  id="debug-eruda-hitbox"
                   class="flex flex-col items-center justify-center pt-8 pb-4 opacity-50"
                 >
                   <span class="text-xs font-bold app-text tracking-widest"
@@ -2080,60 +2090,127 @@
           </div>
         </div>
         <!-- App Pro: Subscribe Modal -->
-        <!-- App Pro: Subscribe Modal -->
-<div
-  id="pro-subscribe-modal"
-  role="dialog"
-  aria-modal="true"
-  aria-labelledby="pro-subscribe-title"
-  inert
-  aria-hidden="true"
-  class="hidden absolute inset-0 z-[110] items-center justify-center p-6 transition-opacity duration-300 opacity-0"
-  data-modal-close
->
-  <div
-    id="pro-subscribe-modal-content"
-    class="app-surface w-full max-w-sm rounded-3xl p-6 shadow-2xl border app-border flex flex-col gap-4 transform transition-all duration-300 opacity-0 scale-95"
-  >
-    <h3
-      id="pro-subscribe-title"
-      class="text-xl font-bold app-text"
-      data-i18n="pro_paywall_title"
-    >
-      Stopwatch Pro
-    </h3>
+        <div
+          id="pro-subscribe-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="pro-subscribe-title"
+          inert
+          aria-hidden="true"
+          class="hidden absolute inset-0 z-[110] items-center justify-center p-6 transition-opacity duration-300 opacity-0"
+          data-modal-close
+        >
+          <div
+            id="pro-subscribe-modal-content"
+            class="app-surface w-full max-w-sm rounded-3xl p-6 shadow-2xl border app-border flex flex-col gap-4 transform transition-all duration-300 opacity-0 scale-95"
+          >
+            <h3
+              id="pro-subscribe-title"
+              class="text-xl font-bold app-text"
+              data-i18n="pro_paywall_title"
+            >
+              Stopwatch Pro
+            </h3>
 
-    <p class="app-text-sec text-sm leading-relaxed" data-i18n="pro_paywall_desc">
-      Unlock advanced features with Pro.
-    </p>
+            <p
+              class="app-text-sec text-sm leading-relaxed"
+              data-i18n="pro_paywall_desc"
+            >
+              Unlock advanced features with Pro.
+            </p>
 
-    <div class="text-xs app-text-sec leading-relaxed">
-      <div data-i18n="pro_feature_custom_colors">- Custom colors</div>
-      <div data-i18n="pro_feature_accent_bg">- Accent and background tuning</div>
-      <div data-i18n="pro_feature_remove_ads">- Disable ads</div>
-      <div data-i18n="pro_feature_sound_themes">- Sound themes</div>
-      <div data-i18n="pro_feature_app_icon">- Pro app icon</div>
-    </div>
+            <div class="text-xs app-text-sec leading-relaxed">
+              <div data-i18n="pro_feature_custom_colors">- Custom colors</div>
+              <div data-i18n="pro_feature_accent_bg">
+                - Accent and background tuning
+              </div>
+              <div data-i18n="pro_feature_remove_ads">- Disable ads</div>
+              <div data-i18n="pro_feature_sound_themes">- Sound themes</div>
+              <div data-i18n="pro_feature_app_icon">- Pro app icon</div>
+            </div>
 
-    <button
-      type="button"
-      id="pro-confirm-buy"
-      class="min-h-[44px] px-5 py-2 rounded-xl font-bold text-white primary-bg shadow-lg active:scale-95 transition-transform focus:outline-none custom-focus"
-      data-i18n="buy_subscription"
-    >
-      Buy Subscription
-    </button>
+            <button
+              type="button"
+              id="pro-confirm-buy"
+              class="min-h-[44px] px-5 py-2 rounded-xl font-bold text-white primary-bg shadow-lg active:scale-95 transition-transform focus:outline-none custom-focus"
+              data-i18n="buy_subscription"
+            >
+              Buy Subscription
+            </button>
 
-    <button
-      type="button"
-      id="pro-cancel-buy"
-      class="min-h-[44px] px-5 py-2 rounded-xl font-bold app-text-sec active:scale-95 transition-transform focus:outline-none custom-focus"
-      data-i18n="cancel"
-    >
-      Cancel
-    </button>
-  </div>
-</div>
+            <button
+              type="button"
+              id="pro-cancel-buy"
+              class="min-h-[44px] px-5 py-2 rounded-xl font-bold app-text-sec active:scale-95 transition-transform focus:outline-none custom-focus"
+              data-i18n="cancel"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+        <!-- App: legal Modal -->
+        <div
+          id="legal-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="legal-modal-title"
+          inert
+          aria-hidden="true"
+          class="hidden absolute inset-0 z-[110] items-center justify-center p-6 transition-opacity duration-300 opacity-0"
+          data-modal-close
+        >
+          <div
+            id="legal-modal-content"
+            class="app-surface w-full max-w-sm rounded-3xl p-6 shadow-2xl border app-border flex flex-col gap-3 transform transition-all duration-300 opacity-0 scale-95"
+          >
+            <h3
+              id="legal-modal-title"
+              class="text-xl font-bold app-text"
+              data-i18n="legal"
+            >
+              Legal
+            </h3>
+
+            <a
+              href="https://yourdomain.com/privacy"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="min-h-[48px] w-full px-4 py-3 rounded-xl font-bold app-text app-surface border app-border active:scale-95 transition-transform flex items-center justify-center"
+              data-i18n="privacy_policy"
+            >
+              Privacy Policy
+            </a>
+
+            <a
+              href="https://yourdomain.com/terms"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="min-h-[48px] w-full px-4 py-3 rounded-xl font-bold app-text app-surface border app-border active:scale-95 transition-transform flex items-center justify-center"
+              data-i18n="terms_conditions"
+            >
+              Terms & Conditions
+            </a>
+
+            <a
+              href="https://yourdomain.com/purchase-terms"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="min-h-[48px] w-full px-4 py-3 rounded-xl font-bold app-text app-surface border app-border active:scale-95 transition-transform flex items-center justify-center"
+              data-i18n="purchase_terms"
+            >
+              Purchase Terms
+            </a>
+
+            <button
+              type="button"
+              class="min-h-[44px] w-full px-4 py-2 rounded-xl font-bold app-text-sec active:scale-95 transition-transform"
+              data-modal-close
+              data-i18n="cancel"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 

@@ -43,6 +43,10 @@ export function bindModalActions({
     modalManager.open("reset-modal");
   });
 
+  bind("btn-open-legal", "click", () => {
+    modalManager.open("legal-modal");
+  });
+
   bind("sw-clearAllBtn", "click", () => {
     if (sw.savedSessions.length > 0) modalManager.open("sw-clear-modal");
   });

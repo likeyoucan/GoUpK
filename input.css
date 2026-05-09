@@ -1123,6 +1123,7 @@ html.dark .app-bg::before {
 #sw-clear-modal,
 #sw-name-modal,
 #sw-share-mode-modal,
+#legal-modal,
 #pro-subscribe-modal {
   backdrop-filter: blur(8px);
   background-color: rgba(0, 0, 0, 0.6);
@@ -1132,6 +1133,7 @@ html.dark .app-bg::before {
 #sw-clear-modal-content,
 #sw-name-modal-content,
 #sw-share-mode-content,
+#legal-modal-content,
 #pro-subscribe-modal-content {
   background-color: var(--surface-color);
   border: 1px solid var(--border-color);
@@ -1286,6 +1288,7 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
 :root.glass-effect body #sw-clear-modal-content,
 :root.glass-effect body #sw-name-modal-content,
 :root.glass-effect body #sw-share-mode-content,
+:root.glass-effect body #legal-modal-content,
 :root.glass-effect body #pro-subscribe-modal-content {
   background-color: color-mix(in srgb, var(--surface-color) 70%, transparent);
   backdrop-filter: blur(24px) saturate(150%);
@@ -1299,6 +1302,7 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
 :root.dark.glass-effect body #sw-clear-modal-content,
 :root.dark.glass-effect body #sw-name-modal-content,
 :root.dark.glass-effect body #sw-share-mode-content,
+:root.dark.glass-effect body #legal-modal-content,
 :root.dark.glass-effect body #pro-subscribe-modal-content {
   background-color: color-mix(in srgb, var(--surface-color) 50%, transparent);
   box-shadow:
@@ -1421,6 +1425,7 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
 :root.glass-effect body #sw-clear-modal,
 :root.glass-effect body #sw-name-modal,
 :root.glass-effect body #sw-share-mode-modal,
+:root.glass-effect body #legal-modal,
 :root.glass-effect body #pro-subscribe-modal {
   background-color: rgba(255, 255, 255, 0.3);
   backdrop-filter: blur(10px);
@@ -1430,6 +1435,7 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
 :root.dark.glass-effect body #sw-clear-modal,
 :root.dark.glass-effect body #sw-name-modal,
 :root.dark.glass-effect body #sw-share-mode-modal,
+:root.dark.glass-effect body #legal-modal,
 :root.dark.glass-effect body #pro-subscribe-modal {
   background-color: rgba(0, 0, 0, 0.6);
 }
@@ -1978,6 +1984,7 @@ body.hide-nav-labels .nav-btn {
 #sw-clear-modal-content,
 #sw-name-modal-content,
 #sw-share-mode-content,
+#legal-modal-content,
 #pro-subscribe-modal-content,
 #toast {
   will-change: transform, opacity;
@@ -2021,7 +2028,9 @@ body.hide-nav-labels .nav-btn {
 :root.glass-lite.glass-effect body #reset-modal-content,
 :root.glass-lite.glass-effect body #sw-clear-modal-content,
 :root.glass-lite.glass-effect body #sw-name-modal-content,
-:root.glass-lite.glass-effect body #sw-share-mode-content {
+:root.glass-lite.glass-effect body #sw-share-mode-content,
+:root.glass-lite.glass-effect body #legal-modal-content,
+:root.glass-lite.glass-effect body #pro-subscribe-modal-content {
   backdrop-filter: blur(12px) saturate(135%);
 }
 
