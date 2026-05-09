@@ -1,22 +1,22 @@
 // Файл: www/js/debug-eruda-toggle.js
 
-// Hidden gesture: 15 fast taps/clicks on version block toggles Eruda.
 export function initErudaTapToggle() {
   const hitbox = document.getElementById("debug-eruda-hitbox");
   if (!hitbox) return;
 
-  const TAP_TARGET = 15;
-  const WINDOW_MS = 4000;
+  const TAP_TARGET = 3;
+  const WINDOW_MS = 4500;
 
   let taps = 0;
   let firstTapAt = 0;
-  let lock = false;
+  let busy = false;
 
   const notify = (msg) => {
-    const toast = document.getElementById("toast-msg");
     const toastWrap = document.getElementById("toast");
-    if (toast && toastWrap) {
-      toast.textContent = msg;
+    const toastMsg = document.getElementById("toast-msg");
+
+    if (toastWrap && toastMsg) {
+      toastMsg.textContent = msg;
       toastWrap.classList.remove("opacity-0", "-translate-y-4");
       setTimeout(() => {
         toastWrap.classList.add("opacity-0", "-translate-y-4");
@@ -27,7 +27,7 @@ export function initErudaTapToggle() {
   };
 
   const onTap = () => {
-    if (lock) return;
+    if (busy) return;
 
     const now = Date.now();
     if (!firstTapAt || now - firstTapAt > WINDOW_MS) {
@@ -38,21 +38,23 @@ export function initErudaTapToggle() {
     taps += 1;
 
     if (taps >= TAP_TARGET) {
-      lock = true;
+      busy = true;
 
-      const enabled = localStorage.getItem("active-eruda") === "true";
-      if (enabled) {
-        localStorage.setItem("active-eruda", "false");
-        notify("Eruda disabled");
-      } else {
-        localStorage.setItem("active-eruda", "true");
-        notify("Eruda enabled");
-      }
+      const isEnabled = localStorage.getItem("active-eruda") === "true";
+      localStorage.setItem("active-eruda", isEnabled ? "false" : "true");
 
-      setTimeout(() => location.reload(), 500);
+      notify(
+        isEnabled
+          ? "Debug mode disabled"
+          : "Debug mode enabled. Reloading..."
+      );
+
+      setTimeout(() => {
+        location.reload();
+      }, 500);
     }
   };
 
-  // pointerup covers mouse + touch on modern browsers
   hitbox.addEventListener("pointerup", onTap, { passive: true });
+  hitbox.addEventListener("click", onTap, { passive: true });
 }

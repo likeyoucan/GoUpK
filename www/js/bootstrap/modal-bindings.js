@@ -43,7 +43,13 @@ export function bindModalActions({
     modalManager.open("reset-modal");
   });
 
+  // Legal modal from legacy settings button (if still present)
   bind("btn-open-legal", "click", () => {
+    modalManager.open("legal-modal");
+  });
+
+  // Legal modal from footer inline privacy link
+  bind("btn-open-legal-inline", "click", () => {
     modalManager.open("legal-modal");
   });
 

@@ -21,6 +21,7 @@ import { applyPerformanceProfile } from "./bootstrap/performance-profile.js?v=VE
 import { bindAppLifecycle } from "./bootstrap/app-lifecycle.js?v=VERSION";
 import { initializeApp } from "./bootstrap/app-init.js?v=VERSION";
 import { bindUiInteractions } from "./bootstrap/ui-interactions.js?v=VERSION";
+import { initErudaTapToggle } from "./debug-eruda-toggle.js?v=VERSION";
 
 import { appProManager } from "./app-pro.js?v=VERSION";
 import { adsManager } from "./ads.js?v=VERSION";
@@ -202,6 +203,9 @@ async function bootstrap() {
     navigation,
     modalManager,
   });
+
+  // Hidden debug gesture toggle for Eruda.
+  initErudaTapToggle();
 
   // Reconcile stale active timer and exact alarm completion after process restart.
   store.reconcileActiveTimer({ sw, tm, tb });

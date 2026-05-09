@@ -1992,6 +1992,29 @@ body.hide-nav-labels .nav-btn {
   font-weight: 600;
 }
 
+/* Theme select: strict horizontal alignment for icon + label */
+#themeModeSelectContainer .custom-select-value,
+#themeModeSelectContainer .custom-select-option {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  line-height: 1;
+}
+
+#themeModeSelectContainer .custom-select-value svg,
+#themeModeSelectContainer .custom-select-option svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+}
+
+#themeModeSelectContainer .custom-select-value span,
+#themeModeSelectContainer .custom-select-option span {
+  display: inline-block;
+  white-space: nowrap;
+}
+
 /* =========================================
    25. ОПТИМИЗАЦИЯ ПРОИЗВОДИТЕЛЬНОСТИ АНИМАЦИЙ
 ========================================= */
