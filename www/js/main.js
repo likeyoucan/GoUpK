@@ -132,7 +132,7 @@ function getPricingState() {
     Math.min(99, Number(p.discountPercent) || 0),
   );
   const currency = String(p.currency || "RUB");
-  const currencySymbol = String(p.currencySymbol || "₽");
+  const currencySymbol = String(p.currencySymbol || "RUB");
   const period = p.period === "month" || p.period === "year" ? p.period : null;
 
   const current = discountEnabled
@@ -185,19 +185,23 @@ function renderProBadgesFromConfig() {
     const row = document.querySelector(selector);
     if (!row) return;
 
+    // accent/bg: title row inside section
+    // sound/ads: selector points to row directly
     const titleRow =
       row.querySelector(".flex.items-center.justify-between") || row;
 
-    let right = titleRow.lastElementChild;
-    if (!right) return;
+    titleRow.classList.add("flex", "items-center", "justify-between");
 
-    if (!(right instanceof HTMLElement) || !right.classList.contains("flex")) {
+    let right = titleRow.lastElementChild;
+    if (!(right instanceof HTMLElement)) return;
+
+    if (!right.classList.contains("flex")) {
       const wrap = document.createElement("div");
       wrap.className = "flex items-center gap-2 ml-auto justify-end";
       titleRow.appendChild(wrap);
       right = wrap;
     } else {
-      right.classList.add("ml-auto", "justify-end");
+      right.classList.add("ml-auto", "justify-end", "items-center", "gap-2");
     }
 
     const btn = document.createElement("button");
@@ -207,11 +211,9 @@ function renderProBadgesFromConfig() {
     btn.dataset.proInjected = "1";
     btn.className = "pro-badge pro-animated-border active:scale-95";
 
-    if (feature === "remove_ads") {
-      right.prepend(btn);
-    } else {
-      right.append(btn);
-    }
+    // Ads badge must be before switch
+    if (feature === "remove_ads") right.prepend(btn);
+    else right.append(btn);
   });
 }
 
@@ -222,7 +224,7 @@ function updateProStatusBadge() {
   const isPurchased = !!appProManager.purchased;
   const mode = appProManager.mode;
 
-  // Plain text status, no pill highlight.
+  // Requested plain text, without highlighted pill
   statusEl.className = "text-xs font-bold app-text-sec";
 
   if (!isPurchased) {

@@ -2179,7 +2179,7 @@ body.hide-nav-labels .nav-btn {
   }
 }
 
-/* Small Pro badge (right side of settings row) */
+/* Small Pro badge */
 .pro-badge {
   --pro-fill: var(--pro-bg-light);
   --pro-text: var(--pro-fg-light);
@@ -2188,14 +2188,15 @@ body.hide-nav-labels .nav-btn {
   padding: 0.15rem 0.5rem;
   border-radius: 0.5rem;
   font-size: 10px;
-  font-style: italic;
   font-weight: 800;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   line-height: 1;
   color: var(--pro-text);
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  white-space: nowrap;
 }
 
 html.dark .pro-badge {
@@ -2203,7 +2204,7 @@ html.dark .pro-badge {
   --pro-text: var(--pro-fg-dark);
 }
 
-/* Main CTA button */
+/* Main CTA */
 .pro-cta {
   min-height: 44px;
   border-radius: 0.75rem;
@@ -2231,7 +2232,6 @@ html.dark .pro-cta-buy {
   --pro-text: var(--pro-fg-dark);
 }
 
-/* Keep Pro fill stable in glass mode */
 :root.glass-effect .pro-cta-buy {
   --pro-fill: var(--pro-bg-light);
 }
@@ -2240,7 +2240,6 @@ html.dark .pro-cta-buy {
   --pro-fill: var(--pro-bg-dark);
 }
 
-/* Cancel subscription button: gray, no animation/border effects */
 .pro-cta-cancel {
   background: var(--pro-muted-bg) !important;
   color: var(--pro-muted-fg) !important;
@@ -2248,37 +2247,7 @@ html.dark .pro-cta-buy {
   animation: none !important;
 }
 
-/* Pro status pill */
-.pro-status {
-  border-radius: 999px;
-  padding: 0.3rem 0.75rem;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.pro-status-active {
-  --pro-fill: var(--pro-bg-light);
-  --pro-text: var(--pro-fg-light);
-  color: var(--pro-text);
-}
-
-html.dark .pro-status-active {
-  --pro-fill: var(--pro-bg-dark);
-  --pro-text: var(--pro-fg-dark);
-}
-
-.pro-status-inactive {
-  background: var(--pro-muted-bg);
-  color: var(--pro-muted-fg);
-  border: 1px solid var(--pro-muted-bg);
-}
-
-/* Price block inside Pro paywall modal */
+/* Price block in paywall modal */
 #pro-paywall-price {
   border: 1px solid var(--border-color);
   border-radius: 0.85rem;
@@ -2305,12 +2274,28 @@ html.dark .pro-status-active {
   color: var(--text-secondary);
 }
 
-#setting-row-sound-theme > .flex.items-center.justify-between > .flex {
-  margin-left: auto;
-  justify-content: flex-end;
+/* Hard alignment fix for injected Pro badges */
+#setting-row-accent > .flex.items-center.justify-between,
+#setting-row-bg > .flex.items-center.justify-between,
+#setting-row-sound-theme,
+#setting-row-ads {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
-/* Respect reduced motion */
+#setting-row-accent > .flex.items-center.justify-between > :last-child,
+#setting-row-bg > .flex.items-center.justify-between > :last-child,
+#setting-row-sound-theme > :last-child,
+#setting-row-ads > :last-child {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  min-width: max-content;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .pro-animated-border {
     animation: none !important;
