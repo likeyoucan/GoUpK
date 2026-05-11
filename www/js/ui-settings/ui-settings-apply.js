@@ -1,5 +1,7 @@
 // Файл: www/js/ui-settings/ui-settings-apply.js
 
+// Файл: www/js/ui-settings/ui-settings-apply.js
+
 import { $, safeSetLS } from "../utils.js?v=VERSION";
 import { t } from "../i18n.js?v=VERSION";
 import { STORAGE_KEYS } from "../constants/storage-keys.js?v=VERSION";
@@ -19,7 +21,6 @@ export function applyUiSettingsToControls(state) {
     $("toggle-sw-minute-beep").checked = state.swMinuteBeep;
   }
 
-  // Ads controls
   if ($("toggle-ads")) {
     $("toggle-ads").checked = state.adsEnabled;
   }
@@ -100,13 +101,21 @@ export function updateSliderLabel(sliderId, labelId, labelsArray) {
 
   label.textContent = t(labelsArray[val] || labelsArray[0]);
 
-  const percent = max - min > 0 ? (val - min) / (max - min) : 0;
-  const thumbWidth = 24;
-  const trackWidth = slider.offsetWidth;
-  if (trackWidth === 0) return;
+  const rect = slider.getBoundingClientRect();
+  const trackWidth = rect.width;
+  if (!trackWidth) return;
 
-  const offset = thumbWidth / 2 - percent * thumbWidth;
-  label.style.left = `calc(${percent * 100}% + ${offset}px)`;
+  const percent = max - min > 0 ? (val - min) / (max - min) : 0;
+
+  const cssThumb = getComputedStyle(document.documentElement)
+    .getPropertyValue("--tr-thumb-size")
+    .trim();
+  const thumb = Number.parseFloat(cssThumb) || 24;
+
+  const x = percent * trackWidth;
+  const leftPx = x + thumb / 2 - percent * thumb;
+
+  label.style.left = `${leftPx}px`;
 }
 
 export function syncSliderUIs(state) {
