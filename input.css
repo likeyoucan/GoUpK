@@ -2126,6 +2126,177 @@ body.hide-nav-labels .nav-btn {
 }
 
 /* =========================================
+   28. PRO UI (BADGES / CTA / STATUS)
+========================================= */
+
+:root {
+  --pro-bg-light: #0f172a;
+  --pro-fg-light: #f8fafc;
+  --pro-bg-dark: #f3f4f6;
+  --pro-fg-dark: #111827;
+
+  --pro-muted-bg: #9ca3af;
+  --pro-muted-fg: #111827;
+}
+
+.pro-animated-border {
+  position: relative;
+  border: 1px solid transparent;
+  background:
+    linear-gradient(var(--pro-fill), var(--pro-fill)) padding-box,
+    linear-gradient(
+        120deg,
+        color-mix(in srgb, var(--primary-color) 25%, transparent) 0%,
+        color-mix(in srgb, var(--primary-color) 85%, #ffffff) 30%,
+        color-mix(in srgb, var(--primary-color) 45%, transparent) 55%,
+        color-mix(in srgb, var(--primary-color) 95%, #ffffff) 80%,
+        color-mix(in srgb, var(--primary-color) 30%, transparent) 100%
+      )
+      border-box;
+  background-size:
+    100% 100%,
+    240% 240%;
+  animation: pro-border-shimmer 3.4s linear infinite;
+}
+
+@keyframes pro-border-shimmer {
+  0%,
+  18% {
+    background-position:
+      0 0,
+      0% 50%;
+  }
+  68% {
+    background-position:
+      0 0,
+      100% 50%;
+  }
+  100% {
+    background-position:
+      0 0,
+      100% 50%;
+  }
+}
+
+.pro-badge {
+  --pro-fill: var(--pro-bg-light);
+  --pro-text: var(--pro-fg-light);
+
+  min-height: 24px;
+  padding: 0.15rem 0.5rem;
+  border-radius: 0.5rem;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--pro-text);
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+html.dark .pro-badge {
+  --pro-fill: var(--pro-bg-dark);
+  --pro-text: var(--pro-fg-dark);
+}
+
+.pro-cta {
+  min-height: 44px;
+  border-radius: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: transform 0.2s ease;
+}
+
+.pro-cta .pro-cta-price {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  opacity: 0.95;
+}
+
+.pro-cta-buy {
+  --pro-fill: var(--pro-bg-light);
+  --pro-text: var(--pro-fg-light);
+  color: var(--pro-text);
+}
+
+html.dark .pro-cta-buy {
+  --pro-fill: var(--pro-bg-dark);
+  --pro-text: var(--pro-fg-dark);
+}
+
+.pro-cta-cancel {
+  background: #9ca3af !important;
+  color: #111827 !important;
+  border: 1px solid #9ca3af !important;
+  animation: none !important;
+}
+
+.pro-status {
+  border-radius: 999px;
+  padding: 0.3rem 0.75rem;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pro-status-active {
+  --pro-fill: var(--pro-bg-light);
+  --pro-text: var(--pro-fg-light);
+  color: var(--pro-text);
+}
+
+html.dark .pro-status-active {
+  --pro-fill: var(--pro-bg-dark);
+  --pro-text: var(--pro-fg-dark);
+}
+
+.pro-status-inactive {
+  background: #9ca3af;
+  color: #111827;
+  border: 1px solid #9ca3af;
+}
+
+#pro-paywall-price {
+  border: 1px solid var(--border-color);
+  border-radius: 0.85rem;
+  padding: 0.65rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+#pro-paywall-price .pro-current {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text-color);
+}
+
+#pro-paywall-price .pro-old {
+  font-size: 0.8rem;
+  text-decoration: line-through;
+  color: var(--text-secondary);
+}
+
+#pro-paywall-price .pro-meta {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pro-animated-border {
+    animation: none !important;
+  }
+}
+
+/* =========================================
    ERUDA
 ========================================= */
 

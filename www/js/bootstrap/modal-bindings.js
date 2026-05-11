@@ -2,11 +2,17 @@
 
 import { APP_EVENTS } from "../constants/events.js?v=VERSION";
 import { appProManager } from "../app-pro.js?v=VERSION";
+import { t } from "../i18n.js?v=VERSION";
+
+function safeToast(showToast, key, fallback) {
+  const text = t(key);
+  showToast(text === key ? fallback : text);
+}
 
 export function bindModalActions({
   $,
   showToast,
-  t,
+  t: tr,
   modalManager,
   themeManager,
   sm,
@@ -19,7 +25,7 @@ export function bindModalActions({
     themeManager.resetSettings();
     sm.resetSettings();
     langManager.resetSettings();
-    setTimeout(() => showToast(t("settings_reset_success")), 450);
+    setTimeout(() => showToast(tr("settings_reset_success")), 450);
   };
 
   const handlers = [];
@@ -70,15 +76,38 @@ export function bindModalActions({
     tb.saveWorkout();
   });
 
-  // Buy Pro main button (in Settings bottom area)
-  bind("btn-buy-pro", "click", () => {
+  // Main Pro button:
+  // - data-pro-action="open-paywall" -> open paywall
+  // - data-pro-action="cancel-subscription" -> revoke subscription
+  bind("btn-buy-pro", "click", async (e) => {
+    const btn = e.currentTarget;
+    const action = btn?.dataset?.proAction || "open-paywall";
+
+    if (action === "hidden") return;
+
+    if (action === "cancel-subscription") {
+      e.preventDefault();
+      try {
+        await appProManager.revoke();
+      } catch (err) {
+        console.error("[pro] revoke failed", err);
+        safeToast(showToast, "share_failed", "Action failed");
+      }
+      return;
+    }
+
     modalManager.open("pro-subscribe-modal");
   });
 
   // Confirm buy in paywall modal
   bind("pro-confirm-buy", "click", async () => {
-    await appProManager.purchase();
-    modalManager.closeCurrent();
+    try {
+      await appProManager.purchase();
+      modalManager.closeCurrent();
+    } catch (err) {
+      console.error("[pro] purchase failed", err);
+      safeToast(showToast, "share_failed", "Purchase failed");
+    }
   });
 
   bind("pro-cancel-buy", "click", () => {

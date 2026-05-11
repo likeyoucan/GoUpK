@@ -66,9 +66,9 @@ function renderBootError(error) {
       <h2 class="text-lg font-bold">App Boot Failed</h2>
       <p>Application stopped before initialization. Check details below.</p>
       <pre class="whitespace-pre-wrap break-words bg-black/40 p-3 rounded-xl">${msg.replace(
-        /[<>&]/g,
-        (m) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" })[m],
-      )}</pre>
+    /[<>&]/g,
+    (m) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" })[m],
+  )}</pre>
       <button id="boot-reload-btn" class="px-4 py-2 rounded-lg bg-white text-black font-bold">Reload</button>
     </div>
   `;
@@ -123,6 +123,57 @@ async function applyMonetizationConfig() {
   adsManager.setEnabled(APP_MONETIZATION_CONFIG.ads.enabledByDefault);
 }
 
+function getPricingState() {
+  const p = APP_MONETIZATION_CONFIG?.pro?.pricing || {};
+  const amount = Math.max(0, Number(p.amount) || 0);
+  const discountEnabled = !!p.discountEnabled;
+  const discountPercent = Math.max(
+    0,
+    Math.min(99, Number(p.discountPercent) || 0),
+  );
+  const currency = String(p.currency || "RUB");
+  const currencySymbol = String(p.currencySymbol || "₽");
+  const period = p.period === "month" || p.period === "year" ? p.period : null;
+
+  const current = discountEnabled
+    ? Math.max(0, Math.round(amount * (1 - discountPercent / 100)))
+    : amount;
+
+  return {
+    amount,
+    current,
+    currency,
+    currencySymbol,
+    period,
+    discountEnabled,
+    discountPercent,
+    hasDiscount: discountEnabled && discountPercent > 0 && current < amount,
+  };
+}
+
+function formatMoney(value, pricing) {
+  const locale = langManager.current === "ru" ? "ru-RU" : "en-US";
+  try {
+    return new Intl.NumberFormat(locale, {
+      style: "currency",
+      currency: pricing.currency,
+      maximumFractionDigits: 0,
+    }).format(value);
+  } catch {
+    return `${value} ${pricing.currencySymbol}`;
+  }
+}
+
+function formatPriceWithPeriod(pricing) {
+  const base = formatMoney(pricing.current, pricing);
+  if (!pricing.period) return base;
+  const periodText =
+    pricing.period === "month"
+      ? tr("pro_period_month", "/ month")
+      : tr("pro_period_year", "/ year");
+  return `${base} ${periodText}`;
+}
+
 function renderProBadgesFromConfig() {
   document
     .querySelectorAll("[data-pro-injected='1']")
@@ -134,33 +185,126 @@ function renderProBadgesFromConfig() {
     const row = document.querySelector(selector);
     if (!row) return;
 
-    const slot =
-      row.querySelector("[data-pro-badge-slot]") ||
-      row.querySelector(".flex.items-center.gap-2") ||
-      row.lastElementChild;
+    let right = row.lastElementChild;
+    if (!right) return;
 
-    if (!slot) return;
+    if (!right.classList.contains("flex")) {
+      right.classList.add("flex", "items-center", "gap-2");
+    }
 
     const btn = document.createElement("button");
     btn.type = "button";
     btn.textContent = tr("pro", "Pro");
     btn.dataset.proFeature = feature;
     btn.dataset.proInjected = "1";
-    btn.className =
-      "text-[10px] font-bold uppercase px-2 py-1 rounded-md border app-border app-text-sec active:scale-95";
+    btn.className = "pro-badge pro-animated-border active:scale-95";
 
-    slot.prepend(btn);
+    right.prepend(btn);
   });
 }
 
-function initProStatusUi() {
+function updateProStatusBadge() {
   const statusEl = $("pro-status-badge");
   if (!statusEl) return;
 
+  const isPurchased = !!appProManager.purchased;
+  const mode = appProManager.mode;
+
+  statusEl.className = "pro-status";
+
+  if (!isPurchased) {
+    statusEl.classList.add("pro-status-inactive");
+    statusEl.textContent = tr("pro_status_free", "Free");
+    return;
+  }
+
+  statusEl.classList.add("pro-status-active", "pro-animated-border");
+  if (mode === "lifetime") {
+    statusEl.textContent = tr("pro_status_lifetime_active", "Pro version active");
+  } else {
+    statusEl.textContent = tr(
+      "pro_status_subscription_active",
+      "Subscription active",
+    );
+  }
+}
+
+function renderPaywallPrice() {
+  const box = $("pro-paywall-price");
+  if (!box) return;
+
+  const pricing = getPricingState();
+  const label = tr("pro_price_from", "Price");
+  const currentText = formatPriceWithPeriod(pricing);
+
+  if (!pricing.hasDiscount) {
+    box.innerHTML = `
+      <span class="pro-meta">${label}</span>
+      <span class="pro-current">${currentText}</span>
+    `;
+    return;
+  }
+
+  const oldText = formatMoney(pricing.amount, pricing);
+  const saveText = formatMoney(pricing.amount - pricing.current, pricing);
+
+  box.innerHTML = `
+    <span class="pro-meta">${label}</span>
+    <span class="pro-current">${currentText}</span>
+    <span class="pro-old">${oldText}</span>
+    <span class="pro-meta">${tr("pro_discount", "Discount")}: -${pricing.discountPercent}%</span>
+    <span class="pro-meta">${tr("pro_you_save", "You save")}: ${saveText}</span>
+  `;
+}
+
+function renderProPurchaseUI() {
+  const buyBtn = $("btn-buy-pro");
+  const confirmBtn = $("pro-confirm-buy");
+  if (!buyBtn || !confirmBtn) return;
+
+  const isPurchased = !!appProManager.purchased;
+  const mode = appProManager.mode;
+  const isLifetime = mode === "lifetime";
+  const isSubscription = mode === "subscription";
+  const pricing = getPricingState();
+
+  renderPaywallPrice();
+
+  if (isPurchased && isLifetime) {
+    buyBtn.classList.add("hidden");
+    buyBtn.dataset.proAction = "hidden";
+  } else if (isPurchased && isSubscription) {
+    buyBtn.classList.remove("hidden", "pro-animated-border", "pro-cta-buy");
+    buyBtn.classList.add("pro-cta", "pro-cta-cancel");
+    buyBtn.dataset.proAction = "cancel-subscription";
+    buyBtn.textContent = tr("cancel_subscription", "Cancel Subscription");
+  } else {
+    buyBtn.classList.remove("hidden", "pro-cta-cancel");
+    buyBtn.classList.add("pro-cta", "pro-cta-buy", "pro-animated-border");
+    buyBtn.dataset.proAction = "open-paywall";
+
+    const label = isLifetime
+      ? tr("buy_pro", "Buy Pro")
+      : tr("buy_subscription", "Buy Subscription");
+
+    buyBtn.innerHTML = `
+      <span>${label}</span>
+      <span class="pro-cta-price">${formatPriceWithPeriod(pricing)}</span>
+    `;
+  }
+
+  confirmBtn.classList.remove("pro-cta-cancel");
+  confirmBtn.classList.add("pro-cta", "pro-cta-buy", "pro-animated-border");
+  confirmBtn.textContent = isLifetime
+    ? tr("buy_pro", "Buy Pro")
+    : tr("buy_subscription", "Buy Subscription");
+}
+
+function bindProUiSync() {
   const sync = () => {
-    statusEl.textContent = appProManager.purchased
-      ? tr("pro_status_active", "Pro active")
-      : tr("pro_status_free", "Free");
+    renderProBadgesFromConfig();
+    updateProStatusBadge();
+    renderProPurchaseUI();
   };
 
   document.addEventListener(APP_EVENTS.PRO_STATUS_CHANGED, sync);
@@ -204,10 +348,8 @@ async function bootstrap() {
     modalManager,
   });
 
-  // Hidden debug gesture toggle for Eruda.
   initErudaTapToggle();
 
-  // Reconcile stale active timer and exact alarm completion after process restart.
   store.reconcileActiveTimer({ sw, tm, tb });
   await reconcileNativeTimerAlarm();
 
@@ -241,13 +383,8 @@ async function bootstrap() {
     navigation,
   });
 
-  initProStatusUi();
-  renderProBadgesFromConfig();
+  bindProUiSync();
   bindProPaywallToasts();
-
-  document.addEventListener(APP_EVENTS.LANGUAGE_CHANGED, () => {
-    renderProBadgesFromConfig();
-  });
 
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") {

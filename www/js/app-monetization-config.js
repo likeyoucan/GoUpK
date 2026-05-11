@@ -2,215 +2,193 @@
 
 /*
 
+===========================================
+APP MONETIZATION CONFIG - СПРАВОЧНИК
+===========================================
+
+Этот файл управляет:
+1) Pro-гейтингом
+2) Рекламой
+3) Pro-бейджами в настройках
+4) Ценообразованием для кнопки/модалки покупки
+
+-------------------------------------------
 1. Раздел pro
+-------------------------------------------
 
 pro.enabled
 Тип: boolean
 Значение:
-true — Pro логика включена.
-false — Pro ограничения отключены, приложение работает как free.
-Использовать:
-false для бесплатной сборки.
-true для обычной монетизированной сборки.
+- true  -> Pro логика включена
+- false -> Pro ограничения отключены, приложение работает как free
 
 pro.forcePurchased
 Тип: null | true | false
 Значение:
-null — обычный режим, берется реальное состояние.
-true — принудительно активировать Pro на старте (тест).
-false — принудительно отключить Pro на старте (тест).
+- null  -> обычный режим, берется реальное состояние
+- true  -> принудительно включить Pro (для QA)
+- false -> принудительно выключить Pro (для QA)
 
 Важно:
-Это QA-переключатель, не оставлять в проде.
+Это тестовый переключатель. Для production обычно: null.
+
 pro.mode
 Тип: "subscription" | "lifetime" | "disabled"
+Логика:
+- subscription -> подписка
+- lifetime     -> разовая покупка Pro
+- disabled     -> Pro-гейтинг отключен
 
-Значение:
-"subscription" — подписка.
-"lifetime" — пожизненная лицензия.
-"disabled" — gating отключен.
-
-Рекомендация:
-В проде: subscription или lifetime.
-Для полностью free: disabled.
 pro.features
 Тип: Record<string, boolean>
-
 Логика:
-true — фича платная (нужен Pro).
-false — фича бесплатная.
-Поддерживаемые ключи:
-custom_colors
-accent_bg
-remove_ads
-sound_themes
-app_icon
+- true  -> фича платная (нужен Pro)
+- false -> фича бесплатная
 
-2. Раздел ads
+Поддерживаемые ключи:
+- custom_colors
+- accent_bg
+- remove_ads
+- sound_themes
+- app_icon
+
+-------------------------------------------
+2. Раздел pro.pricing
+-------------------------------------------
+
+Используется для отображения цены:
+- в кнопке покупки
+- в paywall-модалке
+
+pro.pricing.currency
+Тип: string
+Пример: "RUB", "USD", "EUR"
+Назначение:
+Код валюты (можно использовать в форматтерах).
+
+pro.pricing.currencySymbol
+Тип: string
+Пример: "₽", "$", "€"
+Назначение:
+Символ для UI.
+
+pro.pricing.amount
+Тип: number
+Пример: 990
+Назначение:
+Базовая цена до скидки.
+
+pro.pricing.period
+Тип: "month" | "year" | null
+Логика:
+- month/year -> для подписок
+- null       -> для lifetime
+
+pro.pricing.discountEnabled
+Тип: boolean
+Логика:
+- true  -> скидка включена
+- false -> скидка отключена
+
+pro.pricing.discountPercent
+Тип: number (0..99)
+Пример: 40
+Логика:
+Процент скидки от amount.
+
+Пример расчета:
+amount = 990, discountPercent = 40
+итог = 594
+
+Рекомендация:
+Всегда хранить amount как число, без символов валют.
+
+-------------------------------------------
+3. Раздел ads
+-------------------------------------------
 
 ads.enabledByDefault
 Тип: boolean
-Значение:
-true — реклама включена по умолчанию.
-false — реклама выключена по умолчанию.
+- true  -> реклама включена по умолчанию
+- false -> реклама выключена по умолчанию
 
 ads.defaultProvider
 Тип: "yandex" | "admob" | "mediation"
-Значение:
-какой провайдер выбрать при запуске.
-Сейчас используется напрямую в main.js.
+Назначение:
+Провайдер рекламы по умолчанию.
 
 ads.aggregator
 Тип: string
-Сейчас:
-декларативный параметр (резерв для native-слоя/роутинга).
-напрямую не используется.
+Назначение:
+Декларативный параметр для native-слоя/роутинга.
+(может не использоваться напрямую в web-части)
 
 ads.strategy
 Тип: string
 Примеры:
-"banner"
-"interstitial"
-"banner+interstitial"
-"off"
-Сейчас:
-декларативный параметр, напрямую не используется.
+- "banner"
+- "interstitial"
+- "banner+interstitial"
+- "off"
 
 ads.interstitialCooldownMs
 Тип: number (мс)
-Значение:
-минимальный интервал между interstitial.
-Сейчас используется напрямую.
+Пример: 300000 (5 минут)
+Назначение:
+Минимальный интервал между interstitial-показами.
 
-3. Раздел proBadges
+-------------------------------------------
+4. Раздел proBadges
+-------------------------------------------
 
-Определяет, где в UI рендерить кнопку Pro.
-Структура
-selector: CSS-селектор строки настройки.
-feature: feature-ключ, на который завязан paywall.
-Пример
-{ selector: "#setting-row-sound-theme", feature: "sound_themes" }
-Требования
-Элемент по selector должен существовать в DOM.
-В строке желательно иметь [data-pro-badge-slot] для точного размещения бейджа.
-Не добавлять вручную data-pro-feature кнопки в HTML, если включен JS-инжект.
+Массив правил для инжекта Pro-бейджей в настройки.
 
-4. Что реально применяется сейчас
+Структура элемента:
+{
+  selector: "#setting-row-...",
+  feature: "feature_key"
+}
 
-Используются:
+selector:
+- CSS-селектор строки, где показать бейдж
 
-pro.enabled
-pro.forcePurchased
-pro.mode
-pro.features
-ads.enabledByDefault
-ads.defaultProvider
-ads.interstitialCooldownMs
-proBadges
+feature:
+- ключ из pro.features
+- при клике по бейджу открывается paywall для этой фичи
 
-Пока не используются напрямую:
-ads.aggregator
-ads.strategy
+Важно:
+Желательно иметь в строке DOM-слот [data-pro-badge-slot].
 
+-------------------------------------------
 5. Готовые профили
+-------------------------------------------
 
-A) Полностью бесплатная версия
+A) Полностью free:
+pro.enabled = false
+pro.mode = "disabled"
+все pro.features = false
 
-pro: {
-  enabled: false,
-  forcePurchased: null,
-  mode: "disabled",
-  features: {
-    custom_colors: false,
-    accent_bg: false,
-    remove_ads: false,
-    sound_themes: false,
-    app_icon: false,
-  },
-},
-ads: {
-  enabledByDefault: true,
-  defaultProvider: "yandex",
-  aggregator: "mediation",
-  strategy: "banner+interstitial",
-  interstitialCooldownMs: 300000,
-},
+B) Подписка:
+pro.enabled = true
+pro.mode = "subscription"
+period = "month" или "year"
 
-B) Строгий Free + Pro
+C) Lifetime:
+pro.enabled = true
+pro.mode = "lifetime"
+period = null
 
-pro: {
-  enabled: true,
-  forcePurchased: null,
-  mode: "subscription",
-  features: {
-    custom_colors: true,
-    accent_bg: true,
-    remove_ads: true,
-    sound_themes: true,
-    app_icon: true,
-  },
-},
-C) QA (всегда Pro)
+-------------------------------------------
+6. Чек перед релизом
+-------------------------------------------
 
-pro: {
-  enabled: true,
-  forcePurchased: true,
-  mode: "subscription",
-  features: {
-    custom_colors: true,
-    accent_bg: true,
-    remove_ads: true,
-    sound_themes: true,
-    app_icon: true,
-  },
-},
-
-6. Частые проблемы
-
-Дубли Pro-кнопок
-Причина:
-в HTML есть ручные Pro-кнопки и одновременно включен proBadges инжект.
-Решение:
-оставить только JS-инжект из proBadges.
-
-Бейдж не появляется
-Причина:
-неверный selector или отсутствует строка в index.html.
-Решение:
-проверить селектор и id строки в Settings.
-
-Все пользователи внезапно Pro
-Причина:
-забыли forcePurchased: true после теста.
-Решение:
-вернуть forcePurchased: null.
-
-Pro не работает
-Причина:
-pro.enabled: false или mode: "disabled".
-Решение:
-включить pro.enabled: true, поставить mode subscription/lifetime.
-
-7. Правила перед релизом
-
-Перед production проверяйте:
-forcePurchased === null
-pro.enabled === true
-mode соответствует продукту
-features выставлены как в тарифах
-нет ручных Pro-кнопок в HTML
-ads.defaultProvider и interstitialCooldownMs корректны
-
-8. Быстрый QA чек
-
-Прелоадер скрывается.
-btn-buy-pro открывает paywall.
-Free пользователь получает paywall на gated-опции.
-Pro бейджи есть только в нужных строках.
-Нет дубликатов бейджей.
-Ads toggle работает с учетом remove_ads.
-Interstitial не чаще cooldown.
-Переключение языка обновляет тексты в paywall.
+- forcePurchased === null
+- pro.enabled корректен
+- pro.mode соответствует продукту
+- pricing заполнен корректно
+- discountPercent в диапазоне 0..99
+- нет дубликатов Pro-бейджей в UI
+- interstitialCooldownMs адекватен
 
 */
 
@@ -219,12 +197,22 @@ export const APP_MONETIZATION_CONFIG = {
     enabled: true,
     forcePurchased: null, // null | true | false
     mode: "lifetime", // subscription | lifetime | disabled
+
     features: {
       custom_colors: true,
       accent_bg: true,
       remove_ads: true,
       sound_themes: true,
       app_icon: true,
+    },
+
+    pricing: {
+      currency: "RUB", // RUB | USD | EUR ...
+      currencySymbol: "₽", // символ для UI
+      amount: 990, // базовая цена
+      period: null, // "month" | "year" | null (null для lifetime)
+      discountEnabled: true,
+      discountPercent: 40, // 0..99
     },
   },
 
