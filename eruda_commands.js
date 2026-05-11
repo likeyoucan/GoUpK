@@ -100,3 +100,8 @@
     console.error("[TEST] Failed to disable Pro:", e, e?.stack);
   }
 })();
+
+
+// Перезагрузка страницы
+
+localStorage.setItem("active-eruda","true"); location.reload();
