@@ -197,13 +197,18 @@ function renderProBadgesFromConfig() {
     const row = document.querySelector(selector);
     if (!row) return;
 
+    // Для accent/bg берем верхнюю строку секции, для остальных - сам row
     const titleRow =
-      row.querySelector(".flex.items-center.justify-between") || row;
+      row.querySelector(":scope > .flex.items-center.justify-between") || row;
 
+    if (!(titleRow instanceof HTMLElement)) return;
+
+    // ВАЖНО: только прямой левый label в строке
     const label =
-      titleRow.querySelector("[data-i18n]") ||
-      titleRow.querySelector("label") ||
-      titleRow.querySelector("span");
+      titleRow.querySelector(":scope > span[data-i18n]") ||
+      titleRow.querySelector(":scope > label[data-i18n]") ||
+      titleRow.querySelector(":scope > span.font-medium") ||
+      titleRow.querySelector(":scope > label.font-medium");
 
     if (!(label instanceof HTMLElement)) return;
 
@@ -229,7 +234,6 @@ function renderProBadgesFromConfig() {
     inlineWrap.appendChild(btn);
   });
 }
-
 function updateProStatusBadge() {
   const statusEl = $("pro-status-badge");
   if (!statusEl) return;
