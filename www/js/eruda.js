@@ -12,10 +12,10 @@
 
   const ERUDA_CORE = "https://cdn.jsdelivr.net/npm/eruda@3.4.3";
   const ERUDA_PLUGINS = [
-    "https://cdn.jsdelivr.net/npm/eruda-fps@1.0.2/eruda-fps.js",
-    "https://cdn.jsdelivr.net/npm/eruda-dom@2.0.1/eruda-dom.js",
-    "https://cdn.jsdelivr.net/npm/eruda-monitor@1.0.3/eruda-monitor.js",
-    "https://cdn.jsdelivr.net/npm/eruda-timing@1.0.1/eruda-timing.js",
+    "https://cdn.jsdelivr.net/npm/eruda-fps@1.0.2/eruda-fps.min.js",
+    "https://cdn.jsdelivr.net/npm/eruda-dom@3.0.0/eruda-dom.min.js",
+    "https://cdn.jsdelivr.net/npm/eruda-monitor@1.0.3/eruda-monitor.min.js",
+    "https://cdn.jsdelivr.net/npm/eruda-timing@1.0.1/eruda-timing.min.js",
   ];
 
   const LS = {
