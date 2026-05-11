@@ -44,9 +44,7 @@ export function initErudaTapToggle() {
       localStorage.setItem("active-eruda", isEnabled ? "false" : "true");
 
       notify(
-        isEnabled
-          ? "Debug mode disabled"
-          : "Debug mode enabled. Reloading..."
+        isEnabled ? "Debug mode disabled" : "Debug mode enabled. Reloading...",
       );
 
       setTimeout(() => {

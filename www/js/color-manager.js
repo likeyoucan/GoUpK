@@ -9,7 +9,7 @@ import {
   getLuminance,
   hexToRGB,
   getCssVariable,
-  normalizeHexColor
+  normalizeHexColor,
 } from "./utils.js?v=VERSION";
 import { t } from "./i18n.js?v=VERSION";
 import { sm } from "./sound.js?v=VERSION";
@@ -23,14 +23,14 @@ import {
   loadCustomColors,
   persistCustomColors,
   removeColorFromList,
-  buildBlocklist
+  buildBlocklist,
 } from "./color/color-data.js?v=VERSION";
 
 import {
   populateColorSection,
   addColorToDOM,
   updateAddButtonColor,
-  updateSelectionUI
+  updateSelectionUI,
 } from "./color/color-ui.js?v=VERSION";
 
 const normalize = (c) => normalizeColor(normalizeHexColor, c);
@@ -39,12 +39,12 @@ function showProMessage(feature = "custom_colors") {
   showToast(
     t("pro_required") === "pro_required"
       ? "Feature available in Pro"
-      : t("pro_required")
+      : t("pro_required"),
   );
   document.dispatchEvent(
     new CustomEvent(APP_EVENTS.PRO_PAYWALL_REQUESTED, {
-      detail: { feature }
-    })
+      detail: { feature },
+    }),
   );
 }
 
@@ -61,7 +61,7 @@ export const colorManager = {
     "#f97316",
     "#ef4444",
     "#6366f1",
-    "#e11d48"
+    "#e11d48",
   ],
   standardBgColors: [
     "default",
@@ -71,7 +71,7 @@ export const colorManager = {
     "#34d399",
     "#facc15",
     "#f87171",
-    "#2dd4bf"
+    "#2dd4bf",
   ],
 
   init() {
@@ -92,7 +92,9 @@ export const colorManager = {
     this._bindContainerEvents("bg-colors-container", "bg");
 
     const bindPicker = (type) => {
-      const picker = $(type === "accent" ? "customColorInput" : "customBgInput");
+      const picker = $(
+        type === "accent" ? "customColorInput" : "customBgInput",
+      );
       if (!picker) return;
 
       const blockIfNoPro = (e) => {
@@ -110,7 +112,7 @@ export const colorManager = {
       picker.addEventListener("mousedown", blockIfNoPro, { capture: true });
       picker.addEventListener("touchstart", blockIfNoPro, {
         capture: true,
-        passive: false
+        passive: false,
       });
       picker.addEventListener("click", blockIfNoPro, { capture: true });
 
@@ -119,8 +121,8 @@ export const colorManager = {
 
         document.dispatchEvent(
           new CustomEvent(APP_EVENTS.COLOR_SELECTED, {
-            detail: { type, color: e.target.value, fromPicker: true }
-          })
+            detail: { type, color: e.target.value, fromPicker: true },
+          }),
         );
       });
 
@@ -129,13 +131,15 @@ export const colorManager = {
 
         const pickerWrapper = picker.closest(".color-picker-wrapper");
         if (this.activeActionTarget === pickerWrapper) {
-          const actionBtn = pickerWrapper.querySelector('.color-action-btn[data-action="add"]');
+          const actionBtn = pickerWrapper.querySelector(
+            '.color-action-btn[data-action="add"]',
+          );
           if (actionBtn) {
             updateAddButtonColor({
               button: actionBtn,
               color: e.target.value,
               hexToRGB,
-              getLuminance
+              getLuminance,
             });
           }
         }
@@ -191,7 +195,10 @@ export const colorManager = {
       return;
     }
 
-    if (this.activeActionTarget && !this.activeActionTarget.contains(event.target)) {
+    if (
+      this.activeActionTarget &&
+      !this.activeActionTarget.contains(event.target)
+    ) {
       this._hideActionButton();
     }
 
@@ -211,8 +218,8 @@ export const colorManager = {
     const color = swatchWrapper.dataset.color;
     document.dispatchEvent(
       new CustomEvent(APP_EVENTS.COLOR_SELECTED, {
-        detail: { type, color, fromPicker: false }
-      })
+        detail: { type, color, fromPicker: false },
+      }),
     );
 
     if (isCustom) {
@@ -267,11 +274,15 @@ export const colorManager = {
   },
 
   addCustomColor(type) {
-    const allowed = appProManager.requirePro("custom_colors", () => showProMessage("custom_colors"));
+    const allowed = appProManager.requirePro("custom_colors", () =>
+      showProMessage("custom_colors"),
+    );
     if (!allowed) return;
 
     const isAccent = type === "accent";
-    const customColors = isAccent ? this.customAccentColors : this.customBgColors;
+    const customColors = isAccent
+      ? this.customAccentColors
+      : this.customBgColors;
 
     if (customColors.length >= MAX_CUSTOM_COLORS) {
       showToast(t(isAccent ? "accent_limit_msg" : "bg_limit_msg"));
@@ -287,7 +298,7 @@ export const colorManager = {
       standardBgColors: this.standardBgColors,
       customAccentColors: this.customAccentColors,
       customBgColors: this.customBgColors,
-      normalizeHexColor
+      normalizeHexColor,
     });
 
     if (blocklist.includes(newColor)) {
@@ -297,7 +308,9 @@ export const colorManager = {
     }
 
     const currentTheme = themeManager.getCurrentTheme();
-    const cssVarName = isAccent ? `--default-accent-${currentTheme}` : `--default-bg-${currentTheme}`;
+    const cssVarName = isAccent
+      ? `--default-accent-${currentTheme}`
+      : `--default-bg-${currentTheme}`;
     const activeDefaultColor = normalize(getCssVariable(cssVarName));
 
     if (newColor === activeDefaultColor) {
@@ -313,32 +326,42 @@ export const colorManager = {
     persistCustomColors({ safeSetLS }, type, customColors);
 
     addColorToDOM({
-      container: $(isAccent ? "accent-colors-container" : "bg-colors-container"),
+      container: $(
+        isAccent ? "accent-colors-container" : "bg-colors-container",
+      ),
       color: newColor,
       type,
-      t
+      t,
     });
 
     document.dispatchEvent(
       new CustomEvent(APP_EVENTS.COLOR_SELECTED, {
-        detail: { type, color: newColor, fromPicker: false }
-      })
+        detail: { type, color: newColor, fromPicker: false },
+      }),
     );
   },
 
   _deleteColor(color, type) {
-    const allowed = appProManager.requirePro("custom_colors", () => showProMessage("custom_colors"));
+    const allowed = appProManager.requirePro("custom_colors", () =>
+      showProMessage("custom_colors"),
+    );
     if (!allowed) return;
 
     sm.vibrate(40, "medium");
     this._hideActionButton();
 
     const isAccent = type === "accent";
-    const container = $(isAccent ? "accent-colors-container" : "bg-colors-container");
-    const wrapper = container?.querySelector(`.color-swatch-wrapper[data-color="${color}"]`);
+    const container = $(
+      isAccent ? "accent-colors-container" : "bg-colors-container",
+    );
+    const wrapper = container?.querySelector(
+      `.color-swatch-wrapper[data-color="${color}"]`,
+    );
     if (!wrapper) return;
 
-    document.dispatchEvent(new CustomEvent(APP_EVENTS.COLOR_DELETED, { detail: { type, color } }));
+    document.dispatchEvent(
+      new CustomEvent(APP_EVENTS.COLOR_DELETED, { detail: { type, color } }),
+    );
 
     let removed = false;
 
@@ -348,8 +371,14 @@ export const colorManager = {
 
       wrapper.remove();
 
-      const customColors = isAccent ? this.customAccentColors : this.customBgColors;
-      const didRemove = removeColorFromList({ normalizeHexColor }, customColors, color);
+      const customColors = isAccent
+        ? this.customAccentColors
+        : this.customBgColors;
+      const didRemove = removeColorFromList(
+        { normalizeHexColor },
+        customColors,
+        color,
+      );
       if (didRemove) {
         persistCustomColors({ safeSetLS }, type, customColors);
       }
@@ -362,19 +391,25 @@ export const colorManager = {
 
   populateColorSection(type) {
     const isAccent = type === "accent";
-    const container = $(isAccent ? "accent-colors-container" : "bg-colors-container");
+    const container = $(
+      isAccent ? "accent-colors-container" : "bg-colors-container",
+    );
 
     populateColorSection({
       container,
       type,
-      standardColors: isAccent ? this.standardAccentColors : this.standardBgColors,
+      standardColors: isAccent
+        ? this.standardAccentColors
+        : this.standardBgColors,
       customColors: isAccent ? this.customAccentColors : this.customBgColors,
-      t
+      t,
     });
   },
 
   updateSelectionUI(type, color, doScroll = true) {
-    const container = $(type === "accent" ? "accent-colors-container" : "bg-colors-container");
+    const container = $(
+      type === "accent" ? "accent-colors-container" : "bg-colors-container",
+    );
 
     updateSelectionUI({
       container,
@@ -386,7 +421,7 @@ export const colorManager = {
       getCssVariable,
       hexToRGB,
       getLuminance,
-      createSVGIcon
+      createSVGIcon,
     });
   },
 
@@ -397,13 +432,17 @@ export const colorManager = {
 
     if (accentPicker) {
       const resolvedAccent =
-        accentColor === "default" ? getCssVariable(`--default-accent-${currentTheme}`) : accentColor;
+        accentColor === "default"
+          ? getCssVariable(`--default-accent-${currentTheme}`)
+          : accentColor;
       accentPicker.value = normalizeHexColor(resolvedAccent);
     }
 
     if (bgPicker) {
       const resolvedBg =
-        bgColor === "default" ? getCssVariable(`--default-bg-${currentTheme}`) : bgColor;
+        bgColor === "default"
+          ? getCssVariable(`--default-bg-${currentTheme}`)
+          : bgColor;
       bgPicker.value = normalizeHexColor(resolvedBg);
     }
 
@@ -413,7 +452,9 @@ export const colorManager = {
   syncActiveAddButton() {
     if (!this.activeActionTarget) return;
 
-    const addButton = this.activeActionTarget.querySelector('.color-action-btn[data-action="add"]');
+    const addButton = this.activeActionTarget.querySelector(
+      '.color-action-btn[data-action="add"]',
+    );
     if (!addButton) return;
 
     const picker = this.activeActionTarget.querySelector('input[type="color"]');
@@ -422,8 +463,8 @@ export const colorManager = {
         button: addButton,
         color: picker.value,
         hexToRGB,
-        getLuminance
+        getLuminance,
       });
     }
-  }
+  },
 };

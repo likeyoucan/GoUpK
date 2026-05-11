@@ -1,6 +1,5 @@
 // Файл: www/js/eruda.js
 
-
 (function () {
   if (window.__erudaDockLoaded) return;
   window.__erudaDockLoaded = true;
@@ -16,7 +15,7 @@
     "https://cdn.jsdelivr.net/npm/eruda-fps@1.0.2/eruda-fps.js",
     "https://cdn.jsdelivr.net/npm/eruda-dom@2.0.1/eruda-dom.js",
     "https://cdn.jsdelivr.net/npm/eruda-monitor@1.0.3/eruda-monitor.js",
-    "https://cdn.jsdelivr.net/npm/eruda-timing@1.0.1/eruda-timing.js"
+    "https://cdn.jsdelivr.net/npm/eruda-timing@1.0.1/eruda-timing.js",
   ];
 
   const LS = {
@@ -26,7 +25,7 @@
     },
     set(key, value) {
       localStorage.setItem(key, String(value));
-    }
+    },
   };
 
   function onReady(cb) {
@@ -51,7 +50,8 @@
         const v = attrs[k];
         if (k === "style") Object.assign(n.style, v);
         else if (k === "text") n.textContent = v;
-        else if (k.startsWith("on") && typeof v === "function") n.addEventListener(k.slice(2), v);
+        else if (k.startsWith("on") && typeof v === "function")
+          n.addEventListener(k.slice(2), v);
         else n.setAttribute(k, v);
       });
     }
@@ -211,7 +211,11 @@
     hardReloadBtn.style.border = "none";
 
     const sizeLabel = el("div", { text: "Size: 45vh" }, controlsWrap);
-    const sizeInput = el("input", { type: "range", min: "20", max: "90", step: "1" }, controlsWrap);
+    const sizeInput = el(
+      "input",
+      { type: "range", min: "20", max: "90", step: "1" },
+      controlsWrap,
+    );
 
     const panel = el("div", { id: "__erudaPanel" }, document.body);
     const resize = el("div", { id: "__erudaResize" }, panel);
@@ -262,13 +266,13 @@
     [
       ["Console", () => window.eruda?.show?.("console")],
       ["Elements", () => window.eruda?.show?.("elements")],
-      ["Network", () => window.eruda?.show?.("network")]
+      ["Network", () => window.eruda?.show?.("network")],
     ].forEach(([name, fn]) => {
       const b = el("button", { text: name }, rowTabs);
       b.addEventListener("click", () => {
         try {
           fn();
-        } catch { }
+        } catch {}
       });
     });
 
@@ -318,10 +322,14 @@
       const dx = e.clientX - drag.x;
       const dy = e.clientY - drag.y;
 
-      if (panelPos === "bottom") sizeVh = clamp(drag.vh + (-dy / vh) * 100, 20, 90);
-      else if (panelPos === "top") sizeVh = clamp(drag.vh + (dy / vh) * 100, 20, 90);
-      else if (panelPos === "left") sizeVw = clamp(drag.vw + (dx / vw) * 100, 20, 90);
-      else if (panelPos === "right") sizeVw = clamp(drag.vw + (-dx / vw) * 100, 20, 90);
+      if (panelPos === "bottom")
+        sizeVh = clamp(drag.vh + (-dy / vh) * 100, 20, 90);
+      else if (panelPos === "top")
+        sizeVh = clamp(drag.vh + (dy / vh) * 100, 20, 90);
+      else if (panelPos === "left")
+        sizeVw = clamp(drag.vw + (dx / vw) * 100, 20, 90);
+      else if (panelPos === "right")
+        sizeVw = clamp(drag.vw + (-dx / vw) * 100, 20, 90);
 
       applyPanelGeometry();
     });
@@ -339,8 +347,9 @@
 
     function safeAddPlugin(objRefName) {
       try {
-        if (window[objRefName] && window.eruda?.add) window.eruda.add(window[objRefName]);
-      } catch { }
+        if (window[objRefName] && window.eruda?.add)
+          window.eruda.add(window[objRefName]);
+      } catch {}
     }
 
     async function openEruda() {
@@ -356,7 +365,7 @@
               container: mount,
               inline: true,
               useShadowDom: false,
-              autoScale: true
+              autoScale: true,
             });
           }
 
@@ -373,7 +382,7 @@
 
       try {
         window.eruda?.show?.();
-      } catch { }
+      } catch {}
     }
 
     function closeEruda() {
@@ -381,7 +390,7 @@
       panel.classList.remove("__open");
       try {
         window.eruda?.hide?.();
-      } catch { }
+      } catch {}
     }
 
     gear.addEventListener("click", async () => {

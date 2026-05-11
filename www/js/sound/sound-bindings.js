@@ -74,22 +74,31 @@ export function bindSoundControls(sm, { $, safeSetLS, CustomSelect, t }) {
     { value: "life", text: t("theme_life") },
   ];
 
-  sm.soundThemeSelect = new CustomSelect(
-    "soundThemeSelectContainer",
-    soundThemeOptions,
-    (newTheme) => {
-      if (newTheme !== "classic" && !appProManager.canUse("sound_themes")) {
-        notifySoundThemeProLocked(t);
-        sm.soundThemeSelect?.setValue(sm.theme || "classic", false);
-        return;
-      }
+  // Guard: container can be absent in some layouts/builds.
+  const soundThemeContainer = $("soundThemeSelectContainer");
+  if (soundThemeContainer) {
+    sm.soundThemeSelect = new CustomSelect(
+      "soundThemeSelectContainer",
+      soundThemeOptions,
+      (newTheme) => {
+        if (newTheme !== "classic" && !appProManager.canUse("sound_themes")) {
+          notifySoundThemeProLocked(t);
+          sm.soundThemeSelect?.setValue(sm.theme || "classic", false);
+          return;
+        }
 
-      sm.theme = newTheme;
-      safeSetLS(STORAGE_KEYS.APP_SOUND_THEME, sm.theme);
-      sm.play("click", { theme: newTheme });
-    },
-    sm.theme,
-  );
+        sm.theme = newTheme;
+        safeSetLS(STORAGE_KEYS.APP_SOUND_THEME, sm.theme);
+        sm.play("click", { theme: newTheme });
+      },
+      sm.theme,
+    );
+  } else {
+    console.warn(
+      "[sound] soundThemeSelectContainer not found, skip custom select init",
+    );
+    sm.soundThemeSelect = null;
+  }
 
   if (sm.theme !== "classic" && !appProManager.canUse("sound_themes")) {
     sm.theme = "classic";

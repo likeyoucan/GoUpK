@@ -3,115 +3,45 @@
 import { getCssVariable, hexToRGB, getLuminance } from "./utils.js?v=VERSION";
 import { APP_EVENTS } from "./constants/events.js?v=VERSION";
 
-const activeSelects = new Set();
+import {
+  registerSelect,
+  unregisterSelect,
+  closeAllSelectsExcept,
+  closeAllOpenSelects,
+  forEachActiveSelect,
+} from "./custom-select/registry.js?v=VERSION";
+import {
+  lockPageScroll,
+  unlockPageScroll,
+} from "./custom-select/scroll-lock.js?v=VERSION";
+import {
+  decidePlacement,
+  positionPanel,
+} from "./custom-select/positioning.js?v=VERSION";
+import {
+  createTrigger,
+  createPanel,
+  createOptionIcon,
+  appendOptionContent,
+} from "./custom-select/view.js?v=VERSION";
+
 const TRANSITION_DURATION = 200;
-const SELECT_MAX_VIEWPORT_K = 0.6;
-const SELECT_MIN_HEIGHT_PX = 120;
+let globalHandlersBound = false;
 
-let globalScrollBlockAttached = false;
-let openSelectCount = 0;
+function bindGlobalHandlersOnce() {
+  if (globalHandlersBound) return;
+  globalHandlersBound = true;
 
-const SCROLL_LOCK_CLASS_HTML = "cs-scroll-lock-html";
-const SCROLL_LOCK_CLASS_BODY = "cs-scroll-lock-body";
-
-function isNodeInsideOpenPanel(node) {
-  if (!(node instanceof Node)) return false;
-
-  for (const select of activeSelects) {
-    if (!select?.isOpen || !select?.optionsPanel) continue;
-    if (select.optionsPanel.contains(node)) return true;
-  }
-  return false;
-}
-
-function preventGlobalScrollEvent(e) {
-  if (isNodeInsideOpenPanel(e.target)) return;
-  e.preventDefault();
-  e.stopPropagation();
-}
-
-function preventGlobalScrollKeys(e) {
-  const blocked = [
-    "ArrowUp",
-    "ArrowDown",
-    "PageUp",
-    "PageDown",
-    "Home",
-    "End",
-    " ",
-  ];
-  if (!blocked.includes(e.key)) return;
-  if (isNodeInsideOpenPanel(e.target)) return;
-
-  e.preventDefault();
-  e.stopPropagation();
-}
-
-function attachGlobalScrollBlock() {
-  if (globalScrollBlockAttached) return;
-  globalScrollBlockAttached = true;
-
-  document.addEventListener("wheel", preventGlobalScrollEvent, {
-    passive: false,
-    capture: true,
+  document.addEventListener("click", () => {
+    closeAllOpenSelects();
   });
-  document.addEventListener("touchmove", preventGlobalScrollEvent, {
-    passive: false,
-    capture: true,
+
+  document.addEventListener(APP_EVENTS.ACCENT_COLOR_CHANGED, () => {
+    forEachActiveSelect((select) => {
+      const selectedEl = select.optionsPanel?.querySelector(".is-selected");
+      if (selectedEl) select.updateSelectedTextColor(selectedEl);
+    });
   });
-  document.addEventListener("keydown", preventGlobalScrollKeys, {
-    capture: true,
-  });
-}
-
-function detachGlobalScrollBlock() {
-  if (!globalScrollBlockAttached) return;
-  globalScrollBlockAttached = false;
-
-  document.removeEventListener("wheel", preventGlobalScrollEvent, true);
-  document.removeEventListener("touchmove", preventGlobalScrollEvent, true);
-  document.removeEventListener("keydown", preventGlobalScrollKeys, true);
-}
-
-function lockPageScroll() {
-  openSelectCount += 1;
-  if (openSelectCount > 1) return;
-
-  attachGlobalScrollBlock();
-  document.documentElement.classList.add(SCROLL_LOCK_CLASS_HTML);
-  document.body.classList.add(SCROLL_LOCK_CLASS_BODY);
-}
-
-function unlockPageScroll() {
-  if (openSelectCount <= 0) {
-    openSelectCount = 0;
-    return;
-  }
-
-  openSelectCount -= 1;
-  if (openSelectCount > 0) return;
-
-  detachGlobalScrollBlock();
-  document.documentElement.classList.remove(SCROLL_LOCK_CLASS_HTML);
-  document.body.classList.remove(SCROLL_LOCK_CLASS_BODY);
-}
-
-function ensureGlobalStyles() {
-  if (document.getElementById("__custom_select_global_styles__")) return;
-
-  const style = document.createElement("style");
-  style.id = "__custom_select_global_styles__";
-  style.textContent = `
-    html.${SCROLL_LOCK_CLASS_HTML},
-    body.${SCROLL_LOCK_CLASS_BODY} {
-      overscroll-behavior: none !important;
-      touch-action: none !important;
-    }
-    body.${SCROLL_LOCK_CLASS_BODY} {
-      overflow: hidden !important;
-    }
-  `;
-  document.head.appendChild(style);
 }
 
 export class CustomSelect {
@@ -120,32 +50,32 @@ export class CustomSelect {
     this.options = Array.isArray(options) ? options : [];
     this.onSelect = typeof onSelect === "function" ? onSelect : null;
     this.currentValue = initialValue;
-    this.focusedIndex = -1;
 
     this.isOpen = false;
+    this.focusedIndex = -1;
     this.isDestroyed = false;
-
-    this._portalRoot = document.getElementById("app") || document.body;
-    this._originalParent = null;
-    this._nextSibling = null;
-    this._placement = "bottom";
-    this._rafReposition = 0;
-    this._closeTimer = 0;
 
     this._instanceAbort = new AbortController();
     this._openAbort = null;
     this._resizeObserver = null;
+    this._rafReposition = 0;
+    this._closeTimer = 0;
 
-    this.valid = this.container instanceof HTMLElement;
-    if (!this.valid) {
+    this._placement = "bottom";
+    this._portalRoot = document.getElementById("app") || document.body;
+    this._originalParent = null;
+    this._nextSibling = null;
+
+    if (!(this.container instanceof HTMLElement)) {
       console.warn(`[CustomSelect] container not found: ${elementId}`);
       return;
     }
 
-    ensureGlobalStyles();
+    bindGlobalHandlersOnce();
     this.render();
     this.attachBaseListeners();
-    activeSelects.add(this);
+
+    registerSelect(this);
   }
 
   destroy() {
@@ -159,9 +89,7 @@ export class CustomSelect {
 
     this.close({ immediate: true });
 
-    if (this._instanceAbort) {
-      this._instanceAbort.abort();
-    }
+    this._instanceAbort.abort();
 
     if (this._openAbort) {
       this._openAbort.abort();
@@ -179,9 +107,9 @@ export class CustomSelect {
     }
 
     this._restorePanelToContainer();
-    activeSelects.delete(this);
+    unregisterSelect(this);
 
-    if (this.valid && this.container) {
+    if (this.container) {
       this.container.replaceChildren();
       this.container.classList.remove(
         "custom-select-container",
@@ -192,105 +120,20 @@ export class CustomSelect {
   }
 
   render() {
-    if (!this.valid) return;
     this.container.replaceChildren();
 
-    this.trigger = document.createElement("div");
-    this.trigger.className =
-      "custom-select-trigger app-surface rounded-lg border app-border shadow-sm flex items-center justify-between w-full py-1.5 pl-3 pr-2 cursor-pointer transition-colors";
-    this.trigger.setAttribute("role", "button");
-    this.trigger.setAttribute("tabindex", "0");
-    this.trigger.setAttribute("aria-haspopup", "listbox");
-    this.trigger.setAttribute("aria-expanded", "false");
+    const triggerParts = createTrigger();
+    this.trigger = triggerParts.trigger;
+    this.selectedValueEl = triggerParts.selectedValueEl;
+    this.arrow = triggerParts.arrow;
 
-    this.selectedValueEl = document.createElement("span");
-    this.selectedValueEl.className =
-      "custom-select-value text-sm font-bold inline-flex items-center gap-2 whitespace-nowrap";
-
-    const arrowSvg = document.createElementNS(
-      "http://www.w3.org/2000/svg",
-      "svg",
-    );
-    arrowSvg.setAttribute("focusable", "false");
-    arrowSvg.setAttribute("aria-hidden", "true");
-    arrowSvg.setAttribute("viewBox", "0 0 24 24");
-    arrowSvg.classList.add(
-      "w-4",
-      "h-4",
-      "app-text-sec",
-      "transition-transform",
-      "duration-300",
-    );
-
-    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-    path.setAttribute("stroke-linecap", "round");
-    path.setAttribute("stroke-linejoin", "round");
-    path.setAttribute("stroke-width", "2");
-    path.setAttribute("d", "M19 9l-7 7-7-7");
-    arrowSvg.appendChild(path);
-    this.arrow = arrowSvg;
-
-    this.trigger.append(this.selectedValueEl, this.arrow);
-
-    this.optionsPanel = document.createElement("div");
-    this.optionsPanel.className = "custom-select-options hidden";
-    this.optionsPanel.setAttribute("role", "listbox");
-    this.optionsPanel.setAttribute("tabindex", "-1");
+    this.optionsPanel = createPanel();
 
     this.container.classList.add("custom-select-container", "relative");
     this.container.append(this.trigger, this.optionsPanel);
 
     this.populateOptions();
     this.setValue(this.currentValue, false);
-  }
-
-  createOptionIcon(option) {
-    if (!option?.iconPaths || !Array.isArray(option.iconPaths)) return null;
-
-    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    svg.setAttribute("viewBox", "0 0 24 24");
-    svg.setAttribute("fill", "none");
-    svg.setAttribute("stroke", "currentColor");
-    svg.setAttribute("stroke-width", "2");
-    svg.setAttribute("stroke-linecap", "round");
-    svg.setAttribute("stroke-linejoin", "round");
-    svg.setAttribute("focusable", "false");
-    svg.setAttribute("aria-hidden", "true");
-    svg.classList.add("w-4", "h-4", "shrink-0");
-
-    option.iconPaths.forEach((d) => {
-      const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
-      p.setAttribute("d", d);
-      svg.appendChild(p);
-    });
-
-    return svg;
-  }
-
-  appendOptionContent(container, option) {
-    container.replaceChildren();
-
-    const icon = this.createOptionIcon(option);
-    const text = document.createElement("span");
-    text.className = "whitespace-nowrap";
-    text.textContent = option.text;
-
-    if (container === this.selectedValueEl) {
-      container.classList.add("inline-flex", "items-center", "gap-2");
-      if (icon) container.appendChild(icon);
-      container.appendChild(text);
-      return;
-    }
-
-    const row = document.createElement("div");
-    row.className = "flex items-center gap-2 w-full";
-    if (icon) row.appendChild(icon);
-    row.appendChild(text);
-    container.appendChild(row);
-  }
-
-  renderSelectedValue(option) {
-    this.appendOptionContent(this.selectedValueEl, option);
   }
 
   populateOptions() {
@@ -308,7 +151,7 @@ export class CustomSelect {
       optionEl.dataset.value = option.value;
       optionEl.dataset.index = String(index);
 
-      this.appendOptionContent(optionEl, option);
+      appendOptionContent(optionEl, option, createOptionIcon);
 
       if (option.value === this.currentValue) {
         optionEl.classList.add("is-selected");
@@ -322,6 +165,10 @@ export class CustomSelect {
     });
 
     this.optionsPanel.appendChild(fragment);
+  }
+
+  renderSelectedValue(option) {
+    appendOptionContent(this.selectedValueEl, option, createOptionIcon);
   }
 
   attachBaseListeners() {
@@ -414,6 +261,7 @@ export class CustomSelect {
       (e) => {
         const target = e.target.closest(".custom-select-option");
         if (!target) return;
+
         this.focusedIndex = Number(target.dataset.index);
         this.syncAriaActive();
         this.updateSelectedTextColor(target);
@@ -507,21 +355,8 @@ export class CustomSelect {
     }
 
     this.optionsPanel.style.position = "";
-
     this._originalParent = null;
     this._nextSibling = null;
-  }
-
-  decidePlacement() {
-    const rect = this.trigger.getBoundingClientRect();
-    const vh = window.innerHeight || document.documentElement.clientHeight || 0;
-    const gap = 8;
-
-    const spaceBelow = Math.max(0, vh - rect.bottom - gap - 8);
-    const spaceAbove = Math.max(0, rect.top - gap - 8);
-
-    this._placement =
-      spaceBelow >= 140 || spaceBelow >= spaceAbove ? "bottom" : "top";
   }
 
   scheduleReposition() {
@@ -530,65 +365,14 @@ export class CustomSelect {
 
     this._rafReposition = requestAnimationFrame(() => {
       this._rafReposition = 0;
-      this.decidePlacement();
-      this.positionPanel();
+      this._placement = decidePlacement(this.trigger);
+      positionPanel({
+        triggerEl: this.trigger,
+        panelEl: this.optionsPanel,
+        portalRoot: this._portalRoot,
+        placement: this._placement,
+      });
     });
-  }
-
-  positionPanel() {
-    if (!this.trigger || !this.optionsPanel) return;
-
-    const rect = this.trigger.getBoundingClientRect();
-    const portalRect = this._portalRoot.getBoundingClientRect();
-    const gap = 8;
-
-    const vw = window.innerWidth || document.documentElement.clientWidth || 0;
-    const vh = window.innerHeight || document.documentElement.clientHeight || 0;
-
-    const panelWidth = Math.max(120, Math.round(rect.width));
-    const maxPanelWidth = Math.max(120, vw - 16);
-    const width = Math.min(panelWidth, maxPanelWidth);
-
-    let left = Math.round(rect.left);
-    if (left + width > vw - 8) left = Math.max(8, vw - width - 8);
-    if (left < 8) left = 8;
-
-    const spaceBelow = Math.max(0, vh - rect.bottom - gap - 8);
-    const spaceAbove = Math.max(0, rect.top - gap - 8);
-    const viewportCap = Math.floor(vh * SELECT_MAX_VIEWPORT_K);
-    const availableSpace = this._placement === "top" ? spaceAbove : spaceBelow;
-
-    const maxHeight = Math.max(
-      SELECT_MIN_HEIGHT_PX,
-      Math.min(viewportCap, Math.floor(availableSpace)),
-    );
-
-    this.optionsPanel.style.maxHeight = `${maxHeight}px`;
-    this.optionsPanel.style.overflowY = "auto";
-    this.optionsPanel.style.overscrollBehavior = "contain";
-
-    let top;
-    if (this._placement === "top") {
-      const panelHeight = Math.min(
-        maxHeight,
-        this.optionsPanel.scrollHeight || maxHeight,
-      );
-      top = Math.round(rect.top - gap - panelHeight);
-      if (top < 8) top = 8;
-    } else {
-      top = Math.round(rect.bottom + gap);
-      const maxTop = vh - 8 - Math.min(maxHeight, 120);
-      if (top > maxTop) top = Math.max(8, maxTop);
-    }
-
-    const isFixedToBody = this._portalRoot === document.body;
-    const localLeft = isFixedToBody ? left : left - portalRect.left;
-    const localTop = isFixedToBody ? top : top - portalRect.top;
-
-    this.optionsPanel.style.left = `${localLeft}px`;
-    this.optionsPanel.style.top = `${localTop}px`;
-    this.optionsPanel.style.width = `${width}px`;
-    this.optionsPanel.style.zIndex = "1000";
   }
 
   toggle() {
@@ -596,7 +380,15 @@ export class CustomSelect {
   }
 
   open() {
-    if (!this.valid || this.isOpen || this.isDestroyed) return;
+    if (
+      this.isOpen ||
+      this.isDestroyed ||
+      !this.optionsPanel ||
+      !this.trigger
+    ) {
+      return;
+    }
+
     this.isOpen = true;
 
     if (this._closeTimer) {
@@ -604,9 +396,7 @@ export class CustomSelect {
       this._closeTimer = 0;
     }
 
-    activeSelects.forEach((s) => {
-      if (s !== this && s.isOpen) s.close();
-    });
+    closeAllSelectsExcept(this);
 
     this._openAbort = new AbortController();
     const openSignal = this._openAbort.signal;
@@ -614,31 +404,41 @@ export class CustomSelect {
     this._movePanelToPortal();
     this.optionsPanel.classList.remove("hidden");
 
-    this.decidePlacement();
-    this.positionPanel();
+    this._placement = decidePlacement(this.trigger);
+    positionPanel({
+      triggerEl: this.trigger,
+      panelEl: this.optionsPanel,
+      portalRoot: this._portalRoot,
+      placement: this._placement,
+    });
 
     lockPageScroll();
 
-    const onDocClick = (e) => {
-      const target = e.target;
-      if (
-        this.container?.contains(target) ||
-        this.optionsPanel?.contains(target)
-      ) {
-        return;
-      }
-      this.close();
-    };
-
-    document.addEventListener("click", onDocClick, {
-      capture: true,
-      signal: openSignal,
-    });
+    document.addEventListener(
+      "click",
+      (e) => {
+        const target = e.target;
+        if (
+          this.container?.contains(target) ||
+          this.optionsPanel?.contains(target)
+        ) {
+          return;
+        }
+        this.close();
+      },
+      { capture: true, signal: openSignal },
+    );
 
     requestAnimationFrame(() => {
       if (!this.isOpen) return;
 
-      this.positionPanel();
+      positionPanel({
+        triggerEl: this.trigger,
+        panelEl: this.optionsPanel,
+        portalRoot: this._portalRoot,
+        placement: this._placement,
+      });
+
       this.optionsPanel.classList.add("is-open");
       this.arrow.style.transform = "rotate(180deg)";
       this.trigger.setAttribute("aria-expanded", "true");
@@ -672,9 +472,11 @@ export class CustomSelect {
 
     if (this.optionsPanel) this.optionsPanel.classList.remove("is-open");
     if (this.arrow) this.arrow.style.transform = "";
-    if (this.trigger) this.trigger.setAttribute("aria-expanded", "false");
+    if (this.trigger) {
+      this.trigger.setAttribute("aria-expanded", "false");
+      this.trigger.removeAttribute("aria-activedescendant");
+    }
     if (this.container) this.container.classList.remove("is-open");
-    if (this.trigger) this.trigger.removeAttribute("aria-activedescendant");
 
     unlockPageScroll();
 
@@ -708,7 +510,7 @@ export class CustomSelect {
     const optionEls = this.optionsPanel?.querySelectorAll(
       ".custom-select-option",
     );
-    if (!optionEls || !optionEls.length) return;
+    if (!optionEls?.length) return;
 
     if (this.focusedIndex < 0) this.focusedIndex = 0;
     else {
@@ -739,10 +541,8 @@ export class CustomSelect {
   }
 
   setValue(value, triggerOnSelect = true) {
-    if (!this.valid || !this.optionsPanel) return;
-
     const selectedOption = this.options.find((opt) => opt.value === value);
-    if (!selectedOption) return;
+    if (!selectedOption || !this.optionsPanel) return;
 
     this.currentValue = value;
     this.renderSelectedValue(selectedOption);
@@ -752,12 +552,11 @@ export class CustomSelect {
       .forEach((el) => {
         const isSelected = el.dataset.value === value;
         el.classList.toggle("is-selected", isSelected);
-        el.setAttribute("aria-selected", isSelected.toString());
+        el.setAttribute("aria-selected", String(isSelected));
         if (isSelected) this.updateSelectedTextColor(el);
       });
 
-    const selectedIdx = this.options.findIndex((opt) => opt.value === value);
-    this.focusedIndex = selectedIdx;
+    this.focusedIndex = this.options.findIndex((opt) => opt.value === value);
     this.syncAriaActive();
 
     if (triggerOnSelect && this.onSelect) {
@@ -771,20 +570,6 @@ export class CustomSelect {
     const primaryColor = getCssVariable("--primary-color");
     const { r, g, b } = hexToRGB(primaryColor);
     const luminance = getLuminance(r, g, b);
-
     selectedEl.classList.toggle("needs-dark-text", luminance > 0.55);
   }
 }
-
-document.addEventListener("click", () => {
-  activeSelects.forEach((s) => {
-    if (s.isOpen) s.close();
-  });
-});
-
-document.addEventListener(APP_EVENTS.ACCENT_COLOR_CHANGED, () => {
-  activeSelects.forEach((s) => {
-    const selectedEl = s.optionsPanel?.querySelector(".is-selected");
-    if (selectedEl) s.updateSelectedTextColor(selectedEl);
-  });
-});

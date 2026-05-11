@@ -10,7 +10,7 @@ export const en = {
   audio_settings: "Audio",
   bg_color: "Background",
   bg_limit_msg: "Max 50 custom background colors",
-    buy_pro: "Buy Pro",
+  buy_pro: "Buy Pro",
   buy_lifetime: "Buy Pro",
   cancel_subscription: "Cancel Subscription",
   cancel: "Cancel",

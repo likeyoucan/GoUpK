@@ -40,21 +40,19 @@ export async function ensureNotificationPermission(FgService) {
 
   const status = await FgService.checkPermissions().catch(() => null);
   if (status?.display !== "granted") {
-    await FgService.requestPermissions().catch(() => { });
+    await FgService.requestPermissions().catch(() => {});
   }
 }
 
 export async function ensureNotificationChannel(FgService, channel) {
   if (!FgService?.createNotificationChannel) return;
 
-  await FgService
-    .createNotificationChannel({
-      id: channel.id,
-      name: channel.name,
-      description: channel.description,
-      importance: channel.importance,
-    })
-    .catch(() => { });
+  await FgService.createNotificationChannel({
+    id: channel.id,
+    name: channel.name,
+    description: channel.description,
+    importance: channel.importance,
+  }).catch(() => {});
 }
 
 export function rememberHandle(handlePromise) {
@@ -62,11 +60,11 @@ export function rememberHandle(handlePromise) {
     ?.then((h) => {
       if (h && typeof h.remove === "function") handles.push(h);
     })
-    .catch(() => { });
+    .catch(() => {});
 }
 
 export async function removeAllHandles() {
-  await Promise.all(handles.map((h) => h.remove().catch(() => { })));
+  await Promise.all(handles.map((h) => h.remove().catch(() => {})));
   handles = [];
 }
 
