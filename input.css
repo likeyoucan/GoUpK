@@ -690,7 +690,7 @@ html.dark .app-bg::before {
   .top_content {
     padding-block: 24px;
     grid-template-columns: 60%;
-    max-height: min(62.5dvw, 540px);
+    max-height: min(62.5dvw, 620px);
   }
 
   .mid_content {
