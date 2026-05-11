@@ -24,11 +24,9 @@ export function el(tag, attrs, parent) {
       const v = attrs[k];
       if (k === "style") Object.assign(n.style, v);
       else if (k === "text") n.textContent = v;
-      else if (k.startsWith("on") && typeof v === "function") {
+      else if (k.startsWith("on") && typeof v === "function")
         n.addEventListener(k.slice(2), v);
-      } else {
-        n.setAttribute(k, v);
-      }
+      else n.setAttribute(k, v);
     });
   }
   if (parent) parent.appendChild(n);
@@ -48,10 +46,23 @@ export function loadScriptOnce(src) {
     s.async = true;
     s.crossOrigin = "anonymous";
     s.referrerPolicy = "no-referrer";
-    s.onload = () => resolve();
+    s.onload = () => resolve(src);
     s.onerror = () => reject(new Error(`Failed to load: ${src}`));
     document.body.appendChild(s);
   });
 
   return scriptPromiseCache[src];
+}
+
+export async function loadScriptWithFallback(sources) {
+  let lastErr = null;
+  for (const src of sources) {
+    try {
+      await loadScriptOnce(src);
+      return src;
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  throw lastErr || new Error("All script sources failed");
 }
