@@ -7,6 +7,7 @@ import {
   releaseWakeLock,
   updateTitle,
   updateText,
+  bgWorker,
 } from "../utils.js?v=VERSION";
 import { store } from "../store.js?v=VERSION";
 import { APP_EVENTS } from "../constants/events.js?v=VERSION";
@@ -23,10 +24,12 @@ export function setupTabataCore(tb) {
     updateTitle,
     updateText,
     t,
+    bgWorker,
   });
 
   setupTabataBackgroundSync(tb, {
     APP_EVENTS,
     updateTitle,
+    bgWorker,
   });
 }

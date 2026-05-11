@@ -1,6 +1,14 @@
 // Файл: www/js/tabata/tabata-background-sync.js
 
-export function setupTabataBackgroundSync(tb, { APP_EVENTS, updateTitle }) {
+export function setupTabataBackgroundSync(
+  tb,
+  { APP_EVENTS, updateTitle, bgWorker },
+) {
+  const worker = bgWorker || {
+    postMessage: () => {},
+    addEventListener: () => {},
+  };
+
   tb.tick = (isBackground = false) => {
     if (tb.status === "STOPPED" || tb.paused || tb.completionHandled) return;
     if (tb.phaseClosing) return;
@@ -58,7 +66,7 @@ export function setupTabataBackgroundSync(tb, { APP_EVENTS, updateTitle }) {
       }
     });
 
-    tb.bgWorker.addEventListener("message", (e) => {
+    worker.addEventListener("message", (e) => {
       if (
         e.data?.type === "heartbeat" &&
         tb.status !== "STOPPED" &&

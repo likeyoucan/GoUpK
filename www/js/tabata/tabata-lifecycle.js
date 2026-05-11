@@ -9,7 +9,13 @@ export function setupTabataLifecycle(tb, deps) {
     updateTitle,
     updateText,
     t,
+    bgWorker,
   } = deps;
+
+  const worker = bgWorker || {
+    postMessage: () => {},
+    addEventListener: () => {},
+  };
 
   function startTimerContext() {
     requestWakeLock();
@@ -70,7 +76,7 @@ export function setupTabataLifecycle(tb, deps) {
     startTimerContext();
     tb.updatePhaseStyles();
 
-    tb.bgWorker.postMessage({ command: "start" });
+    worker.postMessage({ command: "start" });
     tb.tick();
   };
 
@@ -78,7 +84,7 @@ export function setupTabataLifecycle(tb, deps) {
     store.clearActiveTimer();
     tb.paused = true;
 
-    tb.bgWorker.postMessage({ command: "stop" });
+    worker.postMessage({ command: "stop" });
 
     if (tb.rAF) cancelAnimationFrame(tb.rAF);
     tb.rAF = null;
@@ -109,7 +115,7 @@ export function setupTabataLifecycle(tb, deps) {
     tb.lastRenderedPhaseStamp = -1;
 
     startTimerContext();
-    tb.bgWorker.postMessage({ command: "start" });
+    worker.postMessage({ command: "start" });
 
     tb.tick();
     tb.updatePhaseStyles();
@@ -125,7 +131,7 @@ export function setupTabataLifecycle(tb, deps) {
 
     if (tb.els.runningWorkoutName) updateText(tb.els.runningWorkoutName, "");
 
-    tb.bgWorker.postMessage({ command: "stop" });
+    worker.postMessage({ command: "stop" });
 
     if (tb.rAF) cancelAnimationFrame(tb.rAF);
     tb.rAF = null;
