@@ -185,8 +185,6 @@ function renderProBadgesFromConfig() {
     const row = document.querySelector(selector);
     if (!row) return;
 
-    // For accent/bg sections we need the internal title row.
-    // For sound/ads rows selector already points to the actual row.
     const titleRow =
       row.querySelector(".flex.items-center.justify-between") || row;
 
@@ -195,9 +193,11 @@ function renderProBadgesFromConfig() {
 
     if (!(right instanceof HTMLElement) || !right.classList.contains("flex")) {
       const wrap = document.createElement("div");
-      wrap.className = "flex items-center gap-2";
+      wrap.className = "flex items-center gap-2 ml-auto justify-end";
       titleRow.appendChild(wrap);
       right = wrap;
+    } else {
+      right.classList.add("ml-auto", "justify-end");
     }
 
     const btn = document.createElement("button");
@@ -207,7 +207,11 @@ function renderProBadgesFromConfig() {
     btn.dataset.proInjected = "1";
     btn.className = "pro-badge pro-animated-border active:scale-95";
 
-    right.prepend(btn);
+    if (feature === "remove_ads") {
+      right.prepend(btn);
+    } else {
+      right.append(btn);
+    }
   });
 }
 
@@ -218,7 +222,7 @@ function updateProStatusBadge() {
   const isPurchased = !!appProManager.purchased;
   const mode = appProManager.mode;
 
-  // Requested: plain text status, no highlighted pill.
+  // Plain text status, no pill highlight.
   statusEl.className = "text-xs font-bold app-text-sec";
 
   if (!isPurchased) {

@@ -2305,6 +2305,11 @@ html.dark .pro-status-active {
   color: var(--text-secondary);
 }
 
+#setting-row-sound-theme > .flex.items-center.justify-between > .flex {
+  margin-left: auto;
+  justify-content: flex-end;
+}
+
 /* Respect reduced motion */
 @media (prefers-reduced-motion: reduce) {
   .pro-animated-border {
