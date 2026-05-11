@@ -2139,6 +2139,7 @@ body.hide-nav-labels .nav-btn {
   --pro-muted-fg: #111827;
 }
 
+/* Animated gradient border with short pause */
 .pro-animated-border {
   position: relative;
   border: 1px solid transparent;
@@ -2178,6 +2179,7 @@ body.hide-nav-labels .nav-btn {
   }
 }
 
+/* Small Pro badge (right side of settings row) */
 .pro-badge {
   --pro-fill: var(--pro-bg-light);
   --pro-text: var(--pro-fg-light);
@@ -2189,8 +2191,8 @@ body.hide-nav-labels .nav-btn {
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--pro-text);
   line-height: 1;
+  color: var(--pro-text);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -2201,6 +2203,7 @@ html.dark .pro-badge {
   --pro-text: var(--pro-fg-dark);
 }
 
+/* Main CTA button */
 .pro-cta {
   min-height: 44px;
   border-radius: 0.75rem;
@@ -2228,13 +2231,24 @@ html.dark .pro-cta-buy {
   --pro-text: var(--pro-fg-dark);
 }
 
+/* Keep Pro fill stable in glass mode */
+:root.glass-effect .pro-cta-buy {
+  --pro-fill: var(--pro-bg-light);
+}
+
+:root.dark.glass-effect .pro-cta-buy {
+  --pro-fill: var(--pro-bg-dark);
+}
+
+/* Cancel subscription button: gray, no animation/border effects */
 .pro-cta-cancel {
-  background: #9ca3af !important;
-  color: #111827 !important;
-  border: 1px solid #9ca3af !important;
+  background: var(--pro-muted-bg) !important;
+  color: var(--pro-muted-fg) !important;
+  border: 1px solid var(--pro-muted-bg) !important;
   animation: none !important;
 }
 
+/* Pro status pill */
 .pro-status {
   border-radius: 999px;
   padding: 0.3rem 0.75rem;
@@ -2259,11 +2273,12 @@ html.dark .pro-status-active {
 }
 
 .pro-status-inactive {
-  background: #9ca3af;
-  color: #111827;
-  border: 1px solid #9ca3af;
+  background: var(--pro-muted-bg);
+  color: var(--pro-muted-fg);
+  border: 1px solid var(--pro-muted-bg);
 }
 
+/* Price block inside Pro paywall modal */
 #pro-paywall-price {
   border: 1px solid var(--border-color);
   border-radius: 0.85rem;
@@ -2290,6 +2305,7 @@ html.dark .pro-status-active {
   color: var(--text-secondary);
 }
 
+/* Respect reduced motion */
 @media (prefers-reduced-motion: reduce) {
   .pro-animated-border {
     animation: none !important;
