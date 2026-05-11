@@ -1,82 +1,138 @@
 // Файл: www/js/ui-settings/ui-settings-state.js
 
-import { safeGetLS, safeRemoveLS } from "../utils.js?v=VERSION";
+// Файл: www/js/ui-settings/ui-settings-apply.js
+
+import { $, safeSetLS } from "../utils.js?v=VERSION";
+import { t } from "../i18n.js?v=VERSION";
 import { STORAGE_KEYS } from "../constants/storage-keys.js?v=VERSION";
 
-export const UI_SETTINGS_KEYS = {
-  fontSize: STORAGE_KEYS.FONT_SIZE,
-  adaptiveBg: STORAGE_KEYS.APP_ADAPTIVE_BG,
-  vignette: STORAGE_KEYS.APP_VIGNETTE,
-  vignetteAlpha: STORAGE_KEYS.APP_VIGNETTE_ALPHA,
-  liquidGlass: STORAGE_KEYS.APP_LIQUID_GLASS,
-  hideNavLabels: STORAGE_KEYS.APP_HIDE_NAV_LABELS,
-  ringWidth: STORAGE_KEYS.APP_RING_WIDTH,
-  showMs: STORAGE_KEYS.APP_SHOW_MS,
-  showForegroundBanner: STORAGE_KEYS.APP_SHOW_FOREGROUND_BANNER,
-  swMinuteBeep: STORAGE_KEYS.APP_SW_MINUTE_BEEP,
+export function applyUiSettingsToControls(state) {
+  if ($("toggle-adaptive-bg"))
+    $("toggle-adaptive-bg").checked = state.isAdaptiveBg;
+  if ($("toggle-vignette")) $("toggle-vignette").checked = state.hasVignette;
+  if ($("toggle-glass")) $("toggle-glass").checked = state.isLiquidGlass;
+  if ($("toggle-nav-labels"))
+    $("toggle-nav-labels").checked = state.hideNavLabels;
+  if ($("toggle-ms")) $("toggle-ms").checked = state.showMs;
+  if ($("toggle-foreground-banner")) {
+    $("toggle-foreground-banner").checked = state.showForegroundBanner;
+  }
+  if ($("toggle-sw-minute-beep")) {
+    $("toggle-sw-minute-beep").checked = state.swMinuteBeep;
+  }
 
-  // Ads
-  adsEnabled: STORAGE_KEYS.APP_ADS_ENABLED,
-  adsProvider: STORAGE_KEYS.APP_ADS_PROVIDER,
-};
+  if ($("toggle-ads")) {
+    $("toggle-ads").checked = state.adsEnabled;
+  }
 
-export function createUiSettingsState() {
-  return {
-    showMs: true,
-    showForegroundBanner: true,
-    isAdaptiveBg: true,
-    hasVignette: false,
-    isLiquidGlass: false,
-    hideNavLabels: false,
-    vignetteAlpha: 0.2,
-    fontSize: 16,
-    ringWidth: 4,
-    swMinuteBeep: true,
+  if ($("fontSlider")) $("fontSlider").value = state.fontSize;
+  if ($("ringWidthSlider")) $("ringWidthSlider").value = state.ringWidth;
 
-    // Ads
-    adsEnabled: true,
-    adsProvider: "yandex",
-
-    lastSliderValues: {},
-
-    vignetteLevels: [0.1, 0.15, 0.2, 0.25, 0.3],
-    vignetteLabels: [
-      "vignette_min",
-      "vignette_low",
-      "vignette_medium",
-      "vignette_high",
-      "vignette_max",
-    ],
-    vibroLabels: [
-      "vibro_min",
-      "vibro_low",
-      "vibro_medium",
-      "vibro_high",
-      "vibro_max",
-    ],
-  };
+  if ($("vignetteSlider")) {
+    const closestVignetteIndex = state.vignetteLevels.reduce(
+      (prevIdx, curr, idx) =>
+        Math.abs(curr - state.vignetteAlpha) <
+        Math.abs(state.vignetteLevels[prevIdx] - state.vignetteAlpha)
+          ? idx
+          : prevIdx,
+      0,
+    );
+    $("vignetteSlider").value = closestVignetteIndex;
+  }
 }
 
-export function loadUiSettingsFromStorage(state) {
-  state.isAdaptiveBg = safeGetLS(UI_SETTINGS_KEYS.adaptiveBg) !== "false";
-  state.hasVignette = safeGetLS(UI_SETTINGS_KEYS.vignette) === "true";
-  state.isLiquidGlass = safeGetLS(UI_SETTINGS_KEYS.liquidGlass) === "true";
-  state.hideNavLabels = safeGetLS(UI_SETTINGS_KEYS.hideNavLabels) === "true";
-  state.showMs = safeGetLS(UI_SETTINGS_KEYS.showMs) !== "false";
-  state.showForegroundBanner =
-    safeGetLS(UI_SETTINGS_KEYS.showForegroundBanner) !== "false";
-  state.swMinuteBeep = safeGetLS(UI_SETTINGS_KEYS.swMinuteBeep) !== "false";
-
-  state.fontSize = Number(safeGetLS(UI_SETTINGS_KEYS.fontSize)) || 16;
-  state.ringWidth = Number(safeGetLS(UI_SETTINGS_KEYS.ringWidth)) || 4;
-  state.vignetteAlpha =
-    parseFloat(safeGetLS(UI_SETTINGS_KEYS.vignetteAlpha)) || 0.2;
-
-  // Ads
-  state.adsEnabled = safeGetLS(UI_SETTINGS_KEYS.adsEnabled) !== "false";
-  state.adsProvider = safeGetLS(UI_SETTINGS_KEYS.adsProvider) || "yandex";
+export function setFontSize(state, size) {
+  state.fontSize = size;
+  document.documentElement.style.setProperty("--font-scale", size / 16);
+  if ($("fontSizeDisplay")) $("fontSizeDisplay").textContent = `${size} px`;
 }
 
-export function resetUiSettingsStorage() {
-  Object.values(UI_SETTINGS_KEYS).forEach(safeRemoveLS);
+export function setRingWidth(state, width) {
+  state.ringWidth = width;
+  document.documentElement.style.setProperty("--ring-stroke-width", width);
+  if ($("ringWidthDisplay")) {
+    $("ringWidthDisplay").textContent = `${width.toFixed(1)} px`;
+  }
+}
+
+export function updateVignette(state) {
+  const bg = document.querySelector(".app-bg");
+  if (!bg) return;
+
+  const container = $("vignette-depth-container");
+  container?.classList.toggle("hidden", !state.hasVignette);
+  container?.classList.toggle("flex", state.hasVignette);
+
+  bg.classList.toggle("has-vignette", state.hasVignette);
+
+  if (state.hasVignette) {
+    document.documentElement.style.setProperty(
+      "--vignette-alpha",
+      state.vignetteAlpha * 0.4,
+    );
+  }
+}
+
+export function updateVibroSliderUI(isEnabled) {
+  const container = $("vibro-level-container");
+  container?.classList.toggle("hidden", !isEnabled);
+  container?.classList.toggle("flex", isEnabled);
+}
+
+export function updateGlass(state) {
+  document.documentElement.classList.toggle(
+    "glass-effect",
+    state.isLiquidGlass,
+  );
+}
+
+export function applyNavLabelsVisibility(state) {
+  document.body.classList.toggle("hide-nav-labels", state.hideNavLabels);
+}
+
+export function updateSliderLabel(sliderId, labelId, labelsArray) {
+  const slider = $(sliderId);
+  const label = $(labelId);
+  if (!slider || !label) return;
+
+  const val = parseInt(slider.value, 10);
+  const min = parseFloat(slider.min);
+  const max = parseFloat(slider.max);
+
+  label.textContent = t(labelsArray[val] || labelsArray[0]);
+
+  const rect = slider.getBoundingClientRect();
+  const trackWidth = rect.width;
+  if (!trackWidth) return;
+
+  const percent = max - min > 0 ? (val - min) / (max - min) : 0;
+
+  const cssThumb = getComputedStyle(document.documentElement)
+    .getPropertyValue("--tr-thumb-size")
+    .trim();
+  const thumb = Number.parseFloat(cssThumb) || 24;
+
+  const x = percent * trackWidth;
+  const leftPx = x + thumb / 2 - percent * thumb;
+
+  label.style.left = `${leftPx}px`;
+}
+
+export function syncSliderUIs(state) {
+  requestAnimationFrame(() => {
+    updateSliderLabel("vignetteSlider", "vignette-label", state.vignetteLabels);
+    updateSliderLabel("vibroSlider", "vibro-label", state.vibroLabels);
+  });
+}
+
+export function persistFontSize(size) {
+  safeSetLS(STORAGE_KEYS.FONT_SIZE, String(size));
+}
+
+export function persistRingWidth(width) {
+  safeSetLS(STORAGE_KEYS.APP_RING_WIDTH, String(width));
+}
+
+export function persistVignetteAlpha(alpha) {
+  safeSetLS(STORAGE_KEYS.APP_VIGNETTE_ALPHA, String(alpha));
 }

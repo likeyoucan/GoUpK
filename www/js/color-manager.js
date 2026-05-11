@@ -48,6 +48,99 @@ function showProMessage(feature = "custom_colors") {
   );
 }
 
+function captureRects(container) {
+  const map = new Map();
+  if (!container) return map;
+
+  container
+    .querySelectorAll(".color-swatch-wrapper, .color-picker-wrapper")
+    .forEach((el) => {
+      map.set(el, el.getBoundingClientRect());
+    });
+
+  return map;
+}
+
+function animateLayoutShift(container, beforeMap, duration = 260) {
+  if (!container) return;
+
+  container
+    .querySelectorAll(".color-swatch-wrapper, .color-picker-wrapper")
+    .forEach((el) => {
+      const before = beforeMap.get(el);
+      if (!before) return;
+
+      const after = el.getBoundingClientRect();
+      const dx = before.left - after.left;
+      const dy = before.top - after.top;
+
+      if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) return;
+
+      el.animate(
+        [
+          { transform: `translate(${dx}px, ${dy}px)` },
+          { transform: "translate(0, 0)" },
+        ],
+        {
+          duration,
+          easing: "cubic-bezier(0.22, 0.8, 0.18, 1)",
+        },
+      );
+    });
+}
+
+function animateNewSwatch(el) {
+  if (!el) return;
+
+  el.animate(
+    [
+      { opacity: 0, transform: "scale(0.86)" },
+      { opacity: 1, transform: "scale(1)" },
+    ],
+    {
+      duration: 260,
+      easing: "cubic-bezier(0.22, 0.8, 0.18, 1)",
+    },
+  );
+}
+
+function createRemovalGhost(sourceEl) {
+  if (!sourceEl) return;
+
+  const rect = sourceEl.getBoundingClientRect();
+  const ghost = sourceEl.cloneNode(true);
+
+  ghost.style.position = "fixed";
+  ghost.style.left = `${rect.left}px`;
+  ghost.style.top = `${rect.top}px`;
+  ghost.style.width = `${rect.width}px`;
+  ghost.style.height = `${rect.height}px`;
+  ghost.style.margin = "0";
+  ghost.style.pointerEvents = "none";
+  ghost.style.zIndex = "9999";
+
+  document.body.appendChild(ghost);
+
+  ghost
+    .animate(
+      [
+        { opacity: 1, transform: "scale(1)" },
+        { opacity: 0, transform: "scale(0.72)" },
+      ],
+      {
+        duration: 220,
+        easing: "cubic-bezier(0.4, 0, 0.2, 1)",
+      },
+    )
+    .addEventListener(
+      "finish",
+      () => {
+        ghost.remove();
+      },
+      { once: true },
+    );
+}
+
 export const colorManager = {
   customAccentColors: [],
   customBgColors: [],
@@ -92,9 +185,7 @@ export const colorManager = {
     this._bindContainerEvents("bg-colors-container", "bg");
 
     const bindPicker = (type) => {
-      const picker = $(
-        type === "accent" ? "customColorInput" : "customBgInput",
-      );
+      const picker = $(type === "accent" ? "customColorInput" : "customBgInput");
       if (!picker) return;
 
       const blockIfNoPro = (e) => {
@@ -154,7 +245,6 @@ export const colorManager = {
     const container = $(containerId);
     if (!container) return;
 
-    // Deletion via explicit action button only (no long-press/contextmenu).
     container.addEventListener("click", (e) => this._handleClick(e, type));
   },
 
@@ -280,9 +370,7 @@ export const colorManager = {
     if (!allowed) return;
 
     const isAccent = type === "accent";
-    const customColors = isAccent
-      ? this.customAccentColors
-      : this.customBgColors;
+    const customColors = isAccent ? this.customAccentColors : this.customBgColors;
 
     if (customColors.length >= MAX_CUSTOM_COLORS) {
       showToast(t(isAccent ? "accent_limit_msg" : "bg_limit_msg"));
@@ -319,6 +407,9 @@ export const colorManager = {
       return;
     }
 
+    const container = $(isAccent ? "accent-colors-container" : "bg-colors-container");
+    const before = captureRects(container);
+
     this._hideActionButton();
     sm.vibrate(40, "medium");
 
@@ -326,12 +417,19 @@ export const colorManager = {
     persistCustomColors({ safeSetLS }, type, customColors);
 
     addColorToDOM({
-      container: $(
-        isAccent ? "accent-colors-container" : "bg-colors-container",
-      ),
+      container,
       color: newColor,
       type,
       t,
+    });
+
+    const inserted = container?.querySelector(
+      `.color-swatch-wrapper[data-color="${newColor}"]`,
+    );
+
+    requestAnimationFrame(() => {
+      animateLayoutShift(container, before, 280);
+      animateNewSwatch(inserted);
     });
 
     document.dispatchEvent(
@@ -351,56 +449,40 @@ export const colorManager = {
     this._hideActionButton();
 
     const isAccent = type === "accent";
-    const container = $(
-      isAccent ? "accent-colors-container" : "bg-colors-container",
-    );
+    const container = $(isAccent ? "accent-colors-container" : "bg-colors-container");
     const wrapper = container?.querySelector(
       `.color-swatch-wrapper[data-color="${color}"]`,
     );
     if (!wrapper) return;
 
+    const before = captureRects(container);
+
     document.dispatchEvent(
       new CustomEvent(APP_EVENTS.COLOR_DELETED, { detail: { type, color } }),
     );
 
-    let removed = false;
+    createRemovalGhost(wrapper);
+    wrapper.remove();
 
-    const doRemove = () => {
-      if (removed) return;
-      removed = true;
+    const customColors = isAccent ? this.customAccentColors : this.customBgColors;
+    const didRemove = removeColorFromList({ normalizeHexColor }, customColors, color);
+    if (didRemove) {
+      persistCustomColors({ safeSetLS }, type, customColors);
+    }
 
-      wrapper.remove();
-
-      const customColors = isAccent
-        ? this.customAccentColors
-        : this.customBgColors;
-      const didRemove = removeColorFromList(
-        { normalizeHexColor },
-        customColors,
-        color,
-      );
-      if (didRemove) {
-        persistCustomColors({ safeSetLS }, type, customColors);
-      }
-    };
-
-    wrapper.classList.add("is-collapsing");
-    wrapper.addEventListener("transitionend", doRemove, { once: true });
-    setTimeout(doRemove, 600);
+    requestAnimationFrame(() => {
+      animateLayoutShift(container, before, 300);
+    });
   },
 
   populateColorSection(type) {
     const isAccent = type === "accent";
-    const container = $(
-      isAccent ? "accent-colors-container" : "bg-colors-container",
-    );
+    const container = $(isAccent ? "accent-colors-container" : "bg-colors-container");
 
     populateColorSection({
       container,
       type,
-      standardColors: isAccent
-        ? this.standardAccentColors
-        : this.standardBgColors,
+      standardColors: isAccent ? this.standardAccentColors : this.standardBgColors,
       customColors: isAccent ? this.customAccentColors : this.customBgColors,
       t,
     });

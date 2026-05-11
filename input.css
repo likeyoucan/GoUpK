@@ -1630,23 +1630,29 @@ body.hide-nav-labels .nav-btn {
 
 .thumb-label-container {
   position: absolute;
-  top: 100%;
+  top: calc(100% + 8px);
   left: 0;
   right: 0;
-  height: 1.25rem;
+  height: 1rem;
   pointer-events: none;
-  margin-top: -0.16rem;
+  margin-top: 0;
 }
 
 .thumb-label {
   position: absolute;
   transform: translateX(-50%);
   font-size: 10px;
+  line-height: 1;
   color: var(--primary-color);
-  font-weight: bold;
+  font-weight: 700;
   white-space: nowrap;
-  opacity: 0.7;
+  opacity: 0.8;
   transition: opacity 0.2s;
+}
+
+#vignette-depth-container .relative.w-40,
+#vibro-level-container .relative.w-40 {
+  padding-bottom: 1.25rem;
 }
 
 .tr-wrap.tr-dragging + .thumb-label-container > .thumb-label,
