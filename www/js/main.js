@@ -185,11 +185,19 @@ function renderProBadgesFromConfig() {
     const row = document.querySelector(selector);
     if (!row) return;
 
-    let right = row.lastElementChild;
+    // For accent/bg sections we need the internal title row.
+    // For sound/ads rows selector already points to the actual row.
+    const titleRow =
+      row.querySelector(".flex.items-center.justify-between") || row;
+
+    let right = titleRow.lastElementChild;
     if (!right) return;
 
-    if (!right.classList.contains("flex")) {
-      right.classList.add("flex", "items-center", "gap-2");
+    if (!(right instanceof HTMLElement) || !right.classList.contains("flex")) {
+      const wrap = document.createElement("div");
+      wrap.className = "flex items-center gap-2";
+      titleRow.appendChild(wrap);
+      right = wrap;
     }
 
     const btn = document.createElement("button");
@@ -210,15 +218,14 @@ function updateProStatusBadge() {
   const isPurchased = !!appProManager.purchased;
   const mode = appProManager.mode;
 
-  statusEl.className = "pro-status";
+  // Requested: plain text status, no highlighted pill.
+  statusEl.className = "text-xs font-bold app-text-sec";
 
   if (!isPurchased) {
-    statusEl.classList.add("pro-status-inactive");
     statusEl.textContent = tr("pro_status_free", "Free");
     return;
   }
 
-  statusEl.classList.add("pro-status-active", "pro-animated-border");
   if (mode === "lifetime") {
     statusEl.textContent = tr("pro_status_lifetime_active", "Pro version active");
   } else {

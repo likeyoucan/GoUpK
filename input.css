@@ -2188,8 +2188,8 @@ body.hide-nav-labels .nav-btn {
   padding: 0.15rem 0.5rem;
   border-radius: 0.5rem;
   font-size: 10px;
+  font-style: italic;
   font-weight: 800;
-  letter-spacing: 0.08em;
   text-transform: uppercase;
   line-height: 1;
   color: var(--pro-text);
