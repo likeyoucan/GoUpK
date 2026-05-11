@@ -218,7 +218,7 @@ export const APP_MONETIZATION_CONFIG = {
   pro: {
     enabled: true,
     forcePurchased: null, // null | true | false
-    mode: "subscription", // subscription | lifetime | disabled
+    mode: "lifetime", // subscription | lifetime | disabled
     features: {
       custom_colors: true,
       accent_bg: true,
