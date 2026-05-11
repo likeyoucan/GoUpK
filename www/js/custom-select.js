@@ -8,29 +8,30 @@ const TRANSITION_DURATION = 200;
 const SELECT_MAX_VIEWPORT_K = 0.6;
 const SELECT_MIN_HEIGHT_PX = 120;
 
-let scrollLockCount = 0;
 let globalScrollBlockAttached = false;
-let lockedScrollTargets = [];
+let openSelectCount = 0;
 
-function isInsideOpenSelectPanel(target) {
-  if (!(target instanceof Node)) return false;
+const SCROLL_LOCK_CLASS_HTML = "cs-scroll-lock-html";
+const SCROLL_LOCK_CLASS_BODY = "cs-scroll-lock-body";
+
+function isNodeInsideOpenPanel(node) {
+  if (!(node instanceof Node)) return false;
 
   for (const select of activeSelects) {
-    if (!select?.isOpening || !select?.optionsPanel) continue;
-    if (select.optionsPanel.contains(target)) return true;
+    if (!select?.isOpen || !select?.optionsPanel) continue;
+    if (select.optionsPanel.contains(node)) return true;
   }
-
   return false;
 }
 
 function preventGlobalScrollEvent(e) {
-  if (isInsideOpenSelectPanel(e.target)) return;
+  if (isNodeInsideOpenPanel(e.target)) return;
   e.preventDefault();
   e.stopPropagation();
 }
 
 function preventGlobalScrollKeys(e) {
-  const blockedKeys = [
+  const blocked = [
     "ArrowUp",
     "ArrowDown",
     "PageUp",
@@ -39,9 +40,8 @@ function preventGlobalScrollKeys(e) {
     "End",
     " ",
   ];
-
-  if (!blockedKeys.includes(e.key)) return;
-  if (isInsideOpenSelectPanel(e.target)) return;
+  if (!blocked.includes(e.key)) return;
+  if (isNodeInsideOpenPanel(e.target)) return;
 
   e.preventDefault();
   e.stopPropagation();
@@ -73,165 +73,99 @@ function detachGlobalScrollBlock() {
   document.removeEventListener("keydown", preventGlobalScrollKeys, true);
 }
 
-function collectScrollTargets() {
-  const set = new Set();
-
-  if (document.scrollingElement instanceof HTMLElement) {
-    set.add(document.scrollingElement);
-  }
-  if (document.documentElement instanceof HTMLElement)
-    set.add(document.documentElement);
-  if (document.body instanceof HTMLElement) set.add(document.body);
-
-  document
-    .querySelectorAll(
-      "#view-settings, .scroll-lock, .no-scrollbar, #sw-lapsContainer, #tb-workoutsList, #sw-sessionsList, #tb-modal-form",
-    )
-    .forEach((el) => {
-      if (el instanceof HTMLElement) set.add(el);
-    });
-
-  return [...set];
-}
-
-function disableScrollOnTargets() {
-  const targets = collectScrollTargets();
-
-  lockedScrollTargets = targets.map((el) => ({
-    el,
-    overflow: el.style.overflow,
-    overflowY: el.style.overflowY,
-    touchAction: el.style.touchAction,
-    overscrollBehavior: el.style.overscrollBehavior,
-    overscrollBehaviorY: el.style.overscrollBehaviorY,
-  }));
-
-  lockedScrollTargets.forEach(({ el }) => {
-    el.style.overflow = "hidden";
-    el.style.overflowY = "hidden";
-    el.style.touchAction = "none";
-    el.style.overscrollBehavior = "none";
-    el.style.overscrollBehaviorY = "none";
-  });
-}
-
-function restoreScrollOnTargets() {
-  lockedScrollTargets.forEach((row) => {
-    row.el.style.overflow = row.overflow;
-    row.el.style.overflowY = row.overflowY;
-    row.el.style.touchAction = row.touchAction;
-    row.el.style.overscrollBehavior = row.overscrollBehavior;
-    row.el.style.overscrollBehaviorY = row.overscrollBehaviorY;
-  });
-
-  lockedScrollTargets = [];
-}
-
 function lockPageScroll() {
-  scrollLockCount += 1;
-  if (scrollLockCount > 1) return;
+  openSelectCount += 1;
+  if (openSelectCount > 1) return;
 
   attachGlobalScrollBlock();
-  disableScrollOnTargets();
+  document.documentElement.classList.add(SCROLL_LOCK_CLASS_HTML);
+  document.body.classList.add(SCROLL_LOCK_CLASS_BODY);
 }
 
 function unlockPageScroll() {
-  if (scrollLockCount <= 0) {
-    scrollLockCount = 0;
+  if (openSelectCount <= 0) {
+    openSelectCount = 0;
     return;
   }
 
-  scrollLockCount -= 1;
-  if (scrollLockCount > 0) return;
+  openSelectCount -= 1;
+  if (openSelectCount > 0) return;
 
   detachGlobalScrollBlock();
-  restoreScrollOnTargets();
+  document.documentElement.classList.remove(SCROLL_LOCK_CLASS_HTML);
+  document.body.classList.remove(SCROLL_LOCK_CLASS_BODY);
+}
 
-  const html = document.documentElement;
-  const body = document.body;
-  const settings = document.getElementById("view-settings");
+function ensureGlobalStyles() {
+  if (document.getElementById("__custom_select_global_styles__")) return;
 
-  if (html) {
-    html.style.overscrollBehavior = "";
-    html.style.overflow = "";
-    html.style.touchAction = "";
-  }
-
-  if (body) {
-    body.style.overscrollBehavior = "";
-    body.style.overflow = "";
-    body.style.touchAction = "";
-    body.style.position = "";
-    body.style.top = "";
-    body.style.left = "";
-    body.style.right = "";
-    body.style.width = "";
-  }
-
-  if (settings) {
-    settings.style.overflow = "";
-    settings.style.overflowY = "";
-    settings.style.touchAction = "";
-    settings.style.overscrollBehavior = "";
-    settings.style.overscrollBehaviorY = "";
-  }
+  const style = document.createElement("style");
+  style.id = "__custom_select_global_styles__";
+  style.textContent = `
+    html.${SCROLL_LOCK_CLASS_HTML},
+    body.${SCROLL_LOCK_CLASS_BODY} {
+      overscroll-behavior: none !important;
+      touch-action: none !important;
+    }
+    body.${SCROLL_LOCK_CLASS_BODY} {
+      overflow: hidden !important;
+    }
+  `;
+  document.head.appendChild(style);
 }
 
 export class CustomSelect {
   constructor(elementId, options, onSelect, initialValue) {
     this.container = document.getElementById(elementId);
-    if (!this.container) return;
-
-    this.options = options;
-    this.onSelect = onSelect;
+    this.options = Array.isArray(options) ? options : [];
+    this.onSelect = typeof onSelect === "function" ? onSelect : null;
     this.currentValue = initialValue;
-    this.isOpening = false;
     this.focusedIndex = -1;
 
-    this._onViewportChange = null;
-    this._onOrientationChange = null;
-    this._onVisualViewportChange = null;
-    this._rafReposition = 0;
-    this._resizeObserver = null;
+    this.isOpen = false;
+    this.isDestroyed = false;
 
-    this._placement = "bottom";
+    this._portalRoot = document.getElementById("app") || document.body;
     this._originalParent = null;
     this._nextSibling = null;
-    this._didLockScroll = false;
-    this._portalRoot = document.getElementById("app") || document.body;
+    this._placement = "bottom";
+    this._rafReposition = 0;
+    this._closeTimer = 0;
 
+    this._instanceAbort = new AbortController();
+    this._openAbort = null;
+    this._resizeObserver = null;
+
+    this.valid = this.container instanceof HTMLElement;
+    if (!this.valid) {
+      console.warn(`[CustomSelect] container not found: ${elementId}`);
+      return;
+    }
+
+    ensureGlobalStyles();
     this.render();
-    this.attachEventListeners();
+    this.attachBaseListeners();
     activeSelects.add(this);
   }
 
   destroy() {
-    if (!this.container) return;
+    if (this.isDestroyed) return;
+    this.isDestroyed = true;
 
-    if (this._onViewportChange) {
-      window.removeEventListener("resize", this._onViewportChange);
-      window.removeEventListener("scroll", this._onViewportChange, true);
-      this._onViewportChange = null;
+    if (this._closeTimer) {
+      clearTimeout(this._closeTimer);
+      this._closeTimer = 0;
     }
 
-    if (this._onOrientationChange) {
-      window.removeEventListener(
-        "orientationchange",
-        this._onOrientationChange,
-      );
-      this._onOrientationChange = null;
+    this.close({ immediate: true });
+
+    if (this._instanceAbort) {
+      this._instanceAbort.abort();
     }
 
-    if (window.visualViewport && this._onVisualViewportChange) {
-      window.visualViewport.removeEventListener(
-        "resize",
-        this._onVisualViewportChange,
-      );
-      window.visualViewport.removeEventListener(
-        "scroll",
-        this._onVisualViewportChange,
-      );
-      this._onVisualViewportChange = null;
+    if (this._openAbort) {
+      this._openAbort.abort();
+      this._openAbort = null;
     }
 
     if (this._resizeObserver) {
@@ -244,23 +178,21 @@ export class CustomSelect {
       this._rafReposition = 0;
     }
 
-    if (this._didLockScroll) {
-      this._didLockScroll = false;
-      unlockPageScroll();
-    }
-
     this._restorePanelToContainer();
-
     activeSelects.delete(this);
-    this.container.replaceChildren();
-    this.container.classList.remove(
-      "custom-select-container",
-      "relative",
-      "is-open",
-    );
+
+    if (this.valid && this.container) {
+      this.container.replaceChildren();
+      this.container.classList.remove(
+        "custom-select-container",
+        "relative",
+        "is-open",
+      );
+    }
   }
 
   render() {
+    if (!this.valid) return;
     this.container.replaceChildren();
 
     this.trigger = document.createElement("div");
@@ -354,7 +286,6 @@ export class CustomSelect {
     row.className = "flex items-center gap-2 w-full";
     if (icon) row.appendChild(icon);
     row.appendChild(text);
-
     container.appendChild(row);
   }
 
@@ -363,6 +294,7 @@ export class CustomSelect {
   }
 
   populateOptions() {
+    if (!this.optionsPanel) return;
     this.optionsPanel.replaceChildren();
 
     const fragment = document.createDocumentFragment();
@@ -392,135 +324,154 @@ export class CustomSelect {
     this.optionsPanel.appendChild(fragment);
   }
 
-  attachEventListeners() {
-    this.trigger.addEventListener("click", (e) => {
-      e.stopPropagation();
-      this.toggle();
-    });
+  attachBaseListeners() {
+    const signal = this._instanceAbort.signal;
 
-    this.trigger.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
+    this.trigger.addEventListener(
+      "click",
+      (e) => {
+        e.stopPropagation();
         this.toggle();
-        return;
-      }
+      },
+      { signal },
+    );
 
-      if (e.key === "ArrowDown") {
-        e.preventDefault();
-        if (!this.isOpening) this.open();
-        this.moveFocus(1);
-        return;
-      }
+    this.trigger.addEventListener(
+      "keydown",
+      (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          this.toggle();
+          return;
+        }
 
-      if (e.key === "ArrowUp") {
-        e.preventDefault();
-        if (!this.isOpening) this.open();
-        this.moveFocus(-1);
-      }
-    });
+        if (e.key === "ArrowDown") {
+          e.preventDefault();
+          if (!this.isOpen) this.open();
+          this.moveFocus(1);
+          return;
+        }
 
-    this.optionsPanel.addEventListener("keydown", (e) => {
-      if (e.key === "ArrowDown") {
-        e.preventDefault();
-        this.moveFocus(1);
-        return;
-      }
+        if (e.key === "ArrowUp") {
+          e.preventDefault();
+          if (!this.isOpen) this.open();
+          this.moveFocus(-1);
+        }
+      },
+      { signal },
+    );
 
-      if (e.key === "ArrowUp") {
-        e.preventDefault();
-        this.moveFocus(-1);
-        return;
-      }
+    this.optionsPanel.addEventListener(
+      "keydown",
+      (e) => {
+        if (e.key === "ArrowDown") {
+          e.preventDefault();
+          this.moveFocus(1);
+          return;
+        }
 
-      if (e.key === "Enter") {
-        e.preventDefault();
-        const focused = this.getFocusedOptionEl();
-        if (focused) {
-          this.setValue(focused.dataset.value);
+        if (e.key === "ArrowUp") {
+          e.preventDefault();
+          this.moveFocus(-1);
+          return;
+        }
+
+        if (e.key === "Enter") {
+          e.preventDefault();
+          const focused = this.getFocusedOptionEl();
+          if (focused) {
+            this.setValue(focused.dataset.value);
+            this.close();
+            this.trigger.focus();
+          }
+          return;
+        }
+
+        if (e.key === "Escape") {
+          e.preventDefault();
           this.close();
           this.trigger.focus();
         }
-        return;
-      }
+      },
+      { signal },
+    );
 
-      if (e.key === "Escape") {
-        e.preventDefault();
-        this.close();
-        this.trigger.focus();
-      }
-    });
+    this.optionsPanel.addEventListener(
+      "click",
+      (e) => {
+        const target = e.target.closest(".custom-select-option");
+        if (!target) return;
 
-    this.optionsPanel.addEventListener("click", (e) => {
-      const target = e.target.closest(".custom-select-option");
-      if (target) {
         this.setValue(target.dataset.value);
         this.close();
         this.trigger.focus();
-      }
-    });
+      },
+      { signal },
+    );
 
-    this.optionsPanel.addEventListener("mouseover", (e) => {
-      const target = e.target.closest(".custom-select-option");
-      if (!target) return;
-      this.focusedIndex = Number(target.dataset.index);
-      this.syncAriaActive();
-      this.updateSelectedTextColor(target);
-    });
+    this.optionsPanel.addEventListener(
+      "mouseover",
+      (e) => {
+        const target = e.target.closest(".custom-select-option");
+        if (!target) return;
+        this.focusedIndex = Number(target.dataset.index);
+        this.syncAriaActive();
+        this.updateSelectedTextColor(target);
+      },
+      { signal },
+    );
 
-    this.optionsPanel.addEventListener("mouseout", (e) => {
-      const target = e.target.closest(".custom-select-option");
-      if (target) target.classList.remove("needs-dark-text");
-    });
+    this.optionsPanel.addEventListener(
+      "mouseout",
+      (e) => {
+        const target = e.target.closest(".custom-select-option");
+        if (target) target.classList.remove("needs-dark-text");
+      },
+      { signal },
+    );
 
-    this._onViewportChange = (ev) => {
-      if (!this.isOpening) return;
-
+    const viewportHandler = (ev) => {
+      if (!this.isOpen) return;
       const target = ev?.target;
       if (target instanceof Node && this.optionsPanel.contains(target)) return;
-
       this.scheduleReposition();
     };
 
-    window.addEventListener("resize", this._onViewportChange, {
+    window.addEventListener("resize", viewportHandler, {
       passive: true,
+      signal,
     });
-    window.addEventListener("scroll", this._onViewportChange, {
+    window.addEventListener("scroll", viewportHandler, {
       passive: true,
       capture: true,
+      signal,
     });
 
-    this._onOrientationChange = () => {
-      if (!this.isOpening) return;
-      requestAnimationFrame(() => this.scheduleReposition());
-      setTimeout(() => this.scheduleReposition(), 120);
-      setTimeout(() => this.scheduleReposition(), 320);
-    };
-
-    window.addEventListener("orientationchange", this._onOrientationChange, {
-      passive: true,
-    });
+    window.addEventListener(
+      "orientationchange",
+      () => {
+        if (!this.isOpen) return;
+        requestAnimationFrame(() => this.scheduleReposition());
+        setTimeout(() => this.scheduleReposition(), 120);
+        setTimeout(() => this.scheduleReposition(), 320);
+      },
+      { passive: true, signal },
+    );
 
     if (window.visualViewport) {
-      this._onVisualViewportChange = () => {
-        if (!this.isOpening) return;
-        this.scheduleReposition();
-      };
-
-      window.visualViewport.addEventListener(
-        "resize",
-        this._onVisualViewportChange,
-        { passive: true },
-      );
-      window.visualViewport.addEventListener(
-        "scroll",
-        this._onVisualViewportChange,
-        { passive: true },
-      );
+      window.visualViewport.addEventListener("resize", viewportHandler, {
+        passive: true,
+        signal,
+      });
+      window.visualViewport.addEventListener("scroll", viewportHandler, {
+        passive: true,
+        signal,
+      });
     }
 
     if ("ResizeObserver" in window && this._portalRoot instanceof HTMLElement) {
       this._resizeObserver = new ResizeObserver(() => {
-        if (!this.isOpening) return;
+        if (!this.isOpen) return;
         this.scheduleReposition();
       });
       this._resizeObserver.observe(this._portalRoot);
@@ -574,7 +525,7 @@ export class CustomSelect {
   }
 
   scheduleReposition() {
-    if (!this.isOpening) return;
+    if (!this.isOpen) return;
     if (this._rafReposition) cancelAnimationFrame(this._rafReposition);
 
     this._rafReposition = requestAnimationFrame(() => {
@@ -641,16 +592,24 @@ export class CustomSelect {
   }
 
   toggle() {
-    this.isOpening ? this.close() : this.open();
+    this.isOpen ? this.close() : this.open();
   }
 
   open() {
-    if (this.isOpening) return;
-    this.isOpening = true;
+    if (!this.valid || this.isOpen || this.isDestroyed) return;
+    this.isOpen = true;
+
+    if (this._closeTimer) {
+      clearTimeout(this._closeTimer);
+      this._closeTimer = 0;
+    }
 
     activeSelects.forEach((s) => {
-      if (s !== this && s.isOpening) s.close();
+      if (s !== this && s.isOpen) s.close();
     });
+
+    this._openAbort = new AbortController();
+    const openSignal = this._openAbort.signal;
 
     this._movePanelToPortal();
     this.optionsPanel.classList.remove("hidden");
@@ -658,12 +617,27 @@ export class CustomSelect {
     this.decidePlacement();
     this.positionPanel();
 
-    if (!this._didLockScroll) {
-      lockPageScroll();
-      this._didLockScroll = true;
-    }
+    lockPageScroll();
+
+    const onDocClick = (e) => {
+      const target = e.target;
+      if (
+        this.container?.contains(target) ||
+        this.optionsPanel?.contains(target)
+      ) {
+        return;
+      }
+      this.close();
+    };
+
+    document.addEventListener("click", onDocClick, {
+      capture: true,
+      signal: openSignal,
+    });
 
     requestAnimationFrame(() => {
+      if (!this.isOpen) return;
+
       this.positionPanel();
       this.optionsPanel.classList.add("is-open");
       this.arrow.style.transform = "rotate(180deg)";
@@ -681,46 +655,60 @@ export class CustomSelect {
     });
   }
 
-  close() {
-    if (!this.isOpening && !this._didLockScroll) return;
+  close({ immediate = false } = {}) {
+    if (!this.isOpen && !immediate) return;
 
-    this.isOpening = false;
-    this.optionsPanel.classList.remove("is-open");
-    this.arrow.style.transform = "";
-    this.trigger.setAttribute("aria-expanded", "false");
-    this.container.classList.remove("is-open");
-    this.trigger.removeAttribute("aria-activedescendant");
+    this.isOpen = false;
+
+    if (this._openAbort) {
+      this._openAbort.abort();
+      this._openAbort = null;
+    }
 
     if (this._rafReposition) {
       cancelAnimationFrame(this._rafReposition);
       this._rafReposition = 0;
     }
 
-    if (this._didLockScroll) {
-      this._didLockScroll = false;
-      unlockPageScroll();
+    if (this.optionsPanel) this.optionsPanel.classList.remove("is-open");
+    if (this.arrow) this.arrow.style.transform = "";
+    if (this.trigger) this.trigger.setAttribute("aria-expanded", "false");
+    if (this.container) this.container.classList.remove("is-open");
+    if (this.trigger) this.trigger.removeAttribute("aria-activedescendant");
+
+    unlockPageScroll();
+
+    const finalize = () => {
+      if (this.isOpen || !this.optionsPanel) return;
+
+      this.optionsPanel.classList.add("hidden");
+      this.optionsPanel.style.left = "";
+      this.optionsPanel.style.top = "";
+      this.optionsPanel.style.width = "";
+      this.optionsPanel.style.maxHeight = "";
+      this.optionsPanel.style.overflowY = "";
+      this.optionsPanel.style.overscrollBehavior = "";
+      this.optionsPanel.style.zIndex = "";
+      this._restorePanelToContainer();
+    };
+
+    if (immediate) {
+      finalize();
+      return;
     }
 
-    setTimeout(() => {
-      if (!this.isOpening) {
-        this.optionsPanel.classList.add("hidden");
-        this.optionsPanel.style.left = "";
-        this.optionsPanel.style.top = "";
-        this.optionsPanel.style.width = "";
-        this.optionsPanel.style.maxHeight = "";
-        this.optionsPanel.style.overflowY = "";
-        this.optionsPanel.style.overscrollBehavior = "";
-        this.optionsPanel.style.zIndex = "";
-        this._restorePanelToContainer();
-      }
+    if (this._closeTimer) clearTimeout(this._closeTimer);
+    this._closeTimer = setTimeout(() => {
+      this._closeTimer = 0;
+      finalize();
     }, TRANSITION_DURATION);
   }
 
   moveFocus(direction) {
-    const optionEls = this.optionsPanel.querySelectorAll(
+    const optionEls = this.optionsPanel?.querySelectorAll(
       ".custom-select-option",
     );
-    if (!optionEls.length) return;
+    if (!optionEls || !optionEls.length) return;
 
     if (this.focusedIndex < 0) this.focusedIndex = 0;
     else {
@@ -739,18 +727,20 @@ export class CustomSelect {
   }
 
   getFocusedOptionEl() {
-    return this.optionsPanel.querySelector(
+    return this.optionsPanel?.querySelector(
       `.custom-select-option[data-index="${this.focusedIndex}"]`,
     );
   }
 
   syncAriaActive() {
     const focused = this.getFocusedOptionEl();
-    if (!focused) return;
+    if (!focused || !this.trigger) return;
     this.trigger.setAttribute("aria-activedescendant", focused.id);
   }
 
   setValue(value, triggerOnSelect = true) {
+    if (!this.valid || !this.optionsPanel) return;
+
     const selectedOption = this.options.find((opt) => opt.value === value);
     if (!selectedOption) return;
 
@@ -770,7 +760,7 @@ export class CustomSelect {
     this.focusedIndex = selectedIdx;
     this.syncAriaActive();
 
-    if (triggerOnSelect && typeof this.onSelect === "function") {
+    if (triggerOnSelect && this.onSelect) {
       this.onSelect(value);
     }
   }
@@ -788,7 +778,7 @@ export class CustomSelect {
 
 document.addEventListener("click", () => {
   activeSelects.forEach((s) => {
-    if (s.isOpening) s.close();
+    if (s.isOpen) s.close();
   });
 });
 

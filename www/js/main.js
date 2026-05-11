@@ -47,6 +47,15 @@ function tr(key, fallback = "") {
   return v === key ? fallback || key : v;
 }
 
+function hasProUiNodes() {
+  return !!(
+    document.getElementById("view-settings") &&
+    document.getElementById("pro-status-badge") &&
+    document.getElementById("btn-buy-pro") &&
+    document.getElementById("pro-confirm-buy")
+  );
+}
+
 function renderBootError(error) {
   const msg = (error && (error.stack || error.message)) || String(error);
   console.error("[BOOT ERROR]", error);
@@ -66,9 +75,9 @@ function renderBootError(error) {
       <h2 class="text-lg font-bold">App Boot Failed</h2>
       <p>Application stopped before initialization. Check details below.</p>
       <pre class="whitespace-pre-wrap break-words bg-black/40 p-3 rounded-xl">${msg.replace(
-    /[<>&]/g,
-    (m) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" })[m],
-  )}</pre>
+        /[<>&]/g,
+        (m) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" })[m],
+      )}</pre>
       <button id="boot-reload-btn" class="px-4 py-2 rounded-lg bg-white text-black font-bold">Reload</button>
     </div>
   `;
@@ -175,7 +184,10 @@ function formatPriceWithPeriod(pricing) {
 }
 
 function renderProBadgesFromConfig() {
-  document
+  const settingsRoot = document.getElementById("view-settings");
+  if (!settingsRoot) return;
+
+  settingsRoot
     .querySelectorAll("[data-pro-injected='1']")
     .forEach((el) => el.remove());
 
@@ -189,7 +201,7 @@ function renderProBadgesFromConfig() {
       row.querySelector(".flex.items-center.justify-between") || row;
 
     const label =
-      titleRow.querySelector('[data-i18n]') ||
+      titleRow.querySelector("[data-i18n]") ||
       titleRow.querySelector("label") ||
       titleRow.querySelector("span");
 
@@ -203,7 +215,6 @@ function renderProBadgesFromConfig() {
       inlineWrap = document.createElement("span");
       inlineWrap.dataset.proInlineWrap = "1";
       inlineWrap.className = "pro-inline-wrap";
-
       label.replaceWith(inlineWrap);
       inlineWrap.appendChild(label);
     }
@@ -234,7 +245,10 @@ function updateProStatusBadge() {
   }
 
   if (mode === "lifetime") {
-    statusEl.textContent = tr("pro_status_lifetime_active", "Pro version active");
+    statusEl.textContent = tr(
+      "pro_status_lifetime_active",
+      "Pro version active",
+    );
   } else {
     statusEl.textContent = tr(
       "pro_status_subscription_active",
@@ -316,6 +330,7 @@ function renderProPurchaseUI() {
 
 function bindProUiSync() {
   const sync = () => {
+    if (!hasProUiNodes()) return;
     renderProBadgesFromConfig();
     updateProStatusBadge();
     renderProPurchaseUI();

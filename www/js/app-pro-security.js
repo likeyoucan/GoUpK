@@ -17,7 +17,29 @@ function ensureInstallId() {
   return installId;
 }
 
+// Fallback hash for webviews where crypto.subtle is not available.
+// This is weaker than SHA-256, but prevents crashes and keeps flow stable.
+function fallbackHashHex(text) {
+  let h1 = 0x811c9dc5;
+  let h2 = 0x01000193;
+
+  for (let i = 0; i < text.length; i += 1) {
+    const c = text.charCodeAt(i);
+    h1 ^= c;
+    h1 = Math.imul(h1, 16777619);
+    h2 ^= c;
+    h2 = Math.imul(h2, 2166136261);
+  }
+
+  const toHex = (n) => (n >>> 0).toString(16).padStart(8, "0");
+  return `${toHex(h1)}${toHex(h2)}${toHex(h1 ^ h2)}${toHex((h1 + h2) >>> 0)}`;
+}
+
 async function sha256Hex(text) {
+  if (!window.crypto || !crypto.subtle) {
+    return fallbackHashHex(text);
+  }
+
   const data = new TextEncoder().encode(text);
   const digest = await crypto.subtle.digest("SHA-256", data);
   const bytes = new Uint8Array(digest);

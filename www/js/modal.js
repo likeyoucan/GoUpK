@@ -18,10 +18,25 @@ class ModalManager {
 
     this._overlayClickHandler = null;
 
+    this._boundModalListeners = [];
+
     this.dragController = new BottomSheetDragController({
       getTopModal: () => this._getTopModal(),
       closeCurrent: () => this.closeCurrent(),
     });
+  }
+
+  _bind(el, event, fn, options) {
+    if (!el || !event || typeof fn !== "function") return;
+    el.addEventListener(event, fn, options);
+    this._boundModalListeners.push({ el, event, fn, options });
+  }
+
+  _removeBoundListeners() {
+    this._boundModalListeners.forEach(({ el, event, fn, options }) => {
+      el.removeEventListener(event, fn, options);
+    });
+    this._boundModalListeners = [];
   }
 
   init(config) {
@@ -58,21 +73,24 @@ class ModalManager {
       };
 
       modalEl.querySelectorAll("[data-modal-close]").forEach((btn) => {
-        btn.addEventListener("click", (e) => {
+        const onCloseClick = (e) => {
           e.stopPropagation();
           this.close(modalConfig.id);
-        });
+        };
+        this._bind(btn, "click", onCloseClick);
       });
 
       if (modalConfig.type === "alert") {
-        modalEl.addEventListener("click", () => {
+        const onBackdropClick = () => {
           if (this._getTopModalId() === modalConfig.id) {
             this.closeCurrent();
           }
-        });
+        };
+        this._bind(modalEl, "click", onBackdropClick);
 
         if (contentEl) {
-          contentEl.addEventListener("click", (e) => e.stopPropagation());
+          const onContentClick = (e) => e.stopPropagation();
+          this._bind(contentEl, "click", onContentClick);
         }
       }
 
@@ -92,6 +110,7 @@ class ModalManager {
 
     this._removeEscListener();
     this._detachOverlayClick();
+    this._removeBoundListeners();
     this.dragController.destroy();
 
     this.activeStack = [];
