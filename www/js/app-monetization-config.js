@@ -195,7 +195,7 @@ period = null
 export const APP_MONETIZATION_CONFIG = {
   pro: {
     enabled: true,
-    forcePurchased: null, // null | true | false
+    forcePurchased: false, // null | true | false
     mode: "lifetime", // subscription | lifetime | disabled
 
     features: {
