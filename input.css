@@ -2124,3 +2124,16 @@ body.hide-nav-labels .nav-btn {
   transform: translateZ(0);
   will-change: transform, opacity;
 }
+
+/* =========================================
+   ERUDA
+========================================= */
+
+#__erudaBar {
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+}
+
+#__erudaBar button {
+  font-weight: 600;
+}
