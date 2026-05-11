@@ -2179,6 +2179,13 @@ body.hide-nav-labels .nav-btn {
   }
 }
 
+/* Inline wrap: label + badge together */
+.pro-inline-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 /* Small Pro badge */
 .pro-badge {
   --pro-fill: var(--pro-bg-light);
@@ -2272,28 +2279,6 @@ html.dark .pro-cta-buy {
 #pro-paywall-price .pro-meta {
   font-size: 0.75rem;
   color: var(--text-secondary);
-}
-
-/* Hard alignment fix for injected Pro badges */
-#setting-row-accent > .flex.items-center.justify-between,
-#setting-row-bg > .flex.items-center.justify-between,
-#setting-row-sound-theme,
-#setting-row-ads {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-#setting-row-accent > .flex.items-center.justify-between > :last-child,
-#setting-row-bg > .flex.items-center.justify-between > :last-child,
-#setting-row-sound-theme > :last-child,
-#setting-row-ads > :last-child {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0.5rem;
-  min-width: max-content;
 }
 
 @media (prefers-reduced-motion: reduce) {

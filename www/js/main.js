@@ -185,35 +185,28 @@ function renderProBadgesFromConfig() {
     const row = document.querySelector(selector);
     if (!row) return;
 
-    // accent/bg: title row inside section
-    // sound/ads: selector points to row directly
+    // accent/bg: заголовочная строка внутри секции
+    // sound/ads: сама строка
     const titleRow =
       row.querySelector(".flex.items-center.justify-between") || row;
 
-    titleRow.classList.add("flex", "items-center", "justify-between");
+    // Ищем текст названия опции слева
+    const label =
+      titleRow.querySelector('[data-i18n]') ||
+      titleRow.querySelector("label") ||
+      titleRow.querySelector("span");
 
-    let right = titleRow.lastElementChild;
-    if (!(right instanceof HTMLElement)) return;
-
-    if (!right.classList.contains("flex")) {
-      const wrap = document.createElement("div");
-      wrap.className = "flex items-center gap-2 ml-auto justify-end";
-      titleRow.appendChild(wrap);
-      right = wrap;
-    } else {
-      right.classList.add("ml-auto", "justify-end", "items-center", "gap-2");
-    }
+    if (!label || !(label instanceof HTMLElement)) return;
 
     const btn = document.createElement("button");
     btn.type = "button";
     btn.textContent = tr("pro", "Pro");
     btn.dataset.proFeature = feature;
     btn.dataset.proInjected = "1";
-    btn.className = "pro-badge pro-animated-border active:scale-95";
+    btn.className = "pro-badge pro-animated-border pro-badge-inline active:scale-95";
 
-    // Ads badge must be before switch
-    if (feature === "remove_ads") right.prepend(btn);
-    else right.append(btn);
+    // Вставляем бейдж сразу после названия
+    label.insertAdjacentElement("afterend", btn);
   });
 }
 
