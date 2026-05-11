@@ -46,7 +46,7 @@ function getPricingState(config) {
 }
 
 function formatMoney(value, pricing, langManager) {
-  const locale = langManager.current === "ru" ? "ru-RU" : "en-US";
+  const locale = langManager?.current === "ru" ? "ru-RU" : "en-US";
   try {
     return new Intl.NumberFormat(locale, {
       style: "currency",
@@ -58,13 +58,16 @@ function formatMoney(value, pricing, langManager) {
   }
 }
 
-function formatPriceWithPeriod(pricing, t, Manager) {
+// FIX: langManager explicitly passed in params
+function formatPriceWithPeriod(pricing, t, langManager) {
   const base = formatMoney(pricing.current, pricing, langManager);
   if (!pricing.period) return base;
+
   const periodText =
     pricing.period === "month"
       ? tr(t, "pro_period_month", "/ month")
       : tr(t, "pro_period_year", "/ year");
+
   return `${base} ${periodText}`;
 }
 
@@ -75,7 +78,6 @@ function updateProStatusBadge(t, appProManager) {
   const isPurchased = !!appProManager.purchased;
   const mode = appProManager.mode;
 
-  // plain text as requested
   statusEl.className = "text-xs font-bold app-text-sec";
 
   if (!isPurchased) {
