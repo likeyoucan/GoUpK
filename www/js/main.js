@@ -132,7 +132,7 @@ function getPricingState() {
     Math.min(99, Number(p.discountPercent) || 0),
   );
   const currency = String(p.currency || "RUB");
-  const currencySymbol = String(p.currencySymbol || "RUB");
+  const currencySymbol = String(p.currencySymbol || "₽");
   const period = p.period === "month" || p.period === "year" ? p.period : null;
 
   const current = discountEnabled
@@ -185,28 +185,37 @@ function renderProBadgesFromConfig() {
     const row = document.querySelector(selector);
     if (!row) return;
 
-    // accent/bg: заголовочная строка внутри секции
-    // sound/ads: сама строка
     const titleRow =
       row.querySelector(".flex.items-center.justify-between") || row;
 
-    // Ищем текст названия опции слева
     const label =
       titleRow.querySelector('[data-i18n]') ||
       titleRow.querySelector("label") ||
       titleRow.querySelector("span");
 
-    if (!label || !(label instanceof HTMLElement)) return;
+    if (!(label instanceof HTMLElement)) return;
+
+    let inlineWrap = label.parentElement;
+    if (
+      !(inlineWrap instanceof HTMLElement) ||
+      inlineWrap.dataset.proInlineWrap !== "1"
+    ) {
+      inlineWrap = document.createElement("span");
+      inlineWrap.dataset.proInlineWrap = "1";
+      inlineWrap.className = "pro-inline-wrap";
+
+      label.replaceWith(inlineWrap);
+      inlineWrap.appendChild(label);
+    }
 
     const btn = document.createElement("button");
     btn.type = "button";
     btn.textContent = tr("pro", "Pro");
     btn.dataset.proFeature = feature;
     btn.dataset.proInjected = "1";
-    btn.className = "pro-badge pro-animated-border pro-badge-inline active:scale-95";
+    btn.className = "pro-badge pro-animated-border active:scale-95";
 
-    // Вставляем бейдж сразу после названия
-    label.insertAdjacentElement("afterend", btn);
+    inlineWrap.appendChild(btn);
   });
 }
 
@@ -217,7 +226,6 @@ function updateProStatusBadge() {
   const isPurchased = !!appProManager.purchased;
   const mode = appProManager.mode;
 
-  // Requested plain text, without highlighted pill
   statusEl.className = "text-xs font-bold app-text-sec";
 
   if (!isPurchased) {
