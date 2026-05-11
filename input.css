@@ -819,7 +819,7 @@ html.dark .app-bg::before {
 
   .top_content {
     grid-template-columns: 70%;
-    max-height: min(37.5dvw, 480px);
+    max-height: min(37.5dvw, 440px);
   }
 }
 

@@ -1,49 +1,13 @@
 // Файл: www/js/timer/timer-core.js
 
 import { APP_EVENTS } from "../constants/events.js?v=VERSION";
-
-const TIMER_ALARM_REQUEST_CODE = 1001;
-
-async function scheduleExactTimerAlarm(epochMs) {
-  const bridge = window.Capacitor?.Plugins?.TimerAlarmBridge;
-  if (!bridge?.scheduleExact)
-    return { scheduled: false, reason: "bridge_missing" };
-
-  try {
-    const res = await bridge.scheduleExact({
-      epochMs,
-      requestCode: TIMER_ALARM_REQUEST_CODE,
-    });
-
-    if (
-      res &&
-      res.scheduled === false &&
-      res.reason === "cannot_schedule_exact_alarm"
-    ) {
-      return res;
-    }
-
-    return res || { scheduled: true };
-  } catch (e) {
-    console.warn("[timer-alarm] schedule failed", e);
-    return { scheduled: false, reason: "schedule_failed" };
-  }
-}
-
-async function cancelExactTimerAlarm() {
-  const bridge = window.Capacitor?.Plugins?.TimerAlarmBridge;
-  if (!bridge?.cancel) return { canceled: false, reason: "bridge_missing" };
-
-  try {
-    const res = await bridge.cancel({ requestCode: TIMER_ALARM_REQUEST_CODE });
-    return res || { canceled: true };
-  } catch (e) {
-    console.warn("[timer-alarm] cancel failed", e);
-    return { canceled: false, reason: "cancel_failed" };
-  }
-}
+import { createTimerAlarmScheduler } from "./timer-alarm.js?v=VERSION";
 
 export function setupTimerCore(tm, { showToast, updateText }) {
+  const alarmScheduler =
+    tm.alarmScheduler || createTimerAlarmScheduler({ requestCode: 1001 });
+  tm.alarmScheduler = alarmScheduler;
+
   tm.getRemainingTime = () => {
     if (!tm.isRunning && !tm.isPaused && !tm.isFinished) return 0;
     return tm.timeRemainingMs;
@@ -69,7 +33,6 @@ export function setupTimerCore(tm, { showToast, updateText }) {
         tm.ringCtrl.setTarget(targetOffset);
       }
 
-      // Paint ~30fps for stable p95.
       const nowPerf = performance.now();
       if (nowPerf - (tm._lastUiPaintTs || 0) >= 33) {
         tm._lastUiPaintTs = nowPerf;
@@ -107,7 +70,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     else if (tm.els?.ring) tm.els.ring.style.strokeDashoffset = 0;
 
     tm.bgWorker.postMessage({ command: "reset" });
-    cancelExactTimerAlarm();
+    alarmScheduler.cancel();
 
     tm.store.clearActiveTimer();
     tm.stopUiLoop();
@@ -147,7 +110,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
 
       tm.bgWorker.postMessage({ command: "stop" });
       tm.stopUiLoop();
-      await cancelExactTimerAlarm();
+      await alarmScheduler.cancel();
       tm.releaseWakeLock();
       tm.updateTitle("");
       tm.updateUIState();
@@ -206,7 +169,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     tm.startUiLoop();
     tm.bgWorker.postMessage({ command: "start", time: duration });
 
-    const scheduled = await scheduleExactTimerAlarm(tm.targetEpochMs);
+    const scheduled = await alarmScheduler.schedule(tm.targetEpochMs);
     if (
       scheduled?.scheduled === false &&
       scheduled?.reason === "cannot_schedule_exact_alarm"
@@ -257,7 +220,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     tm.startUiLoop();
     tm.bgWorker.postMessage({ command: "start", time: duration });
 
-    const scheduled = await scheduleExactTimerAlarm(tm.targetEpochMs);
+    const scheduled = await alarmScheduler.schedule(tm.targetEpochMs);
     if (
       scheduled?.scheduled === false &&
       scheduled?.reason === "cannot_schedule_exact_alarm"
@@ -285,7 +248,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     tm.skipWorkerTickUntil = 0;
 
     tm.bgWorker.postMessage({ command: "reset" });
-    await cancelExactTimerAlarm();
+    await alarmScheduler.cancel();
     tm.stopUiLoop();
     tm.releaseWakeLock();
     tm.updateTitle("");
@@ -335,7 +298,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
         const predicted = Math.max(0, tm.targetEpochMs - nowEpoch);
         if (Math.abs(predicted - remaining) > 220) {
           tm.targetEpochMs = nowEpoch + remaining;
-          await scheduleExactTimerAlarm(tm.targetEpochMs);
+          await alarmScheduler.schedule(tm.targetEpochMs);
         }
       }
 
@@ -374,7 +337,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
       tm.updateAdjustButtons();
 
       tm.bgWorker.postMessage({ command: "adjust", time: adjustmentMs });
-      await scheduleExactTimerAlarm(tm.targetEpochMs);
+      await alarmScheduler.schedule(tm.targetEpochMs);
     });
 
     tm.els.adjustMinusBtn?.addEventListener("click", async () => {
@@ -408,7 +371,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
       tm.updateAdjustButtons();
 
       tm.bgWorker.postMessage({ command: "adjust", time: adjustmentMs });
-      await scheduleExactTimerAlarm(tm.targetEpochMs);
+      await alarmScheduler.schedule(tm.targetEpochMs);
     });
   };
 }
