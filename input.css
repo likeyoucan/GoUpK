@@ -800,8 +800,8 @@ html.dark .app-bg::before {
 
 @media (min-width: 1281px) and (orientation: landscape) {
   #app {
-    width: 760px;
-    max-width: 760px;
+    width: 960px;
+    max-width: 960px;
     height: 86dvh;
     max-height: 720px;
     border-radius: 2.5rem;
