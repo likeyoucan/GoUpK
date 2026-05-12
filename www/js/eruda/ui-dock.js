@@ -16,42 +16,38 @@ export function createErudaDock() {
   const gear = el("button", { id: "__erudaGear", text: "⚙" }, document.body);
   const bar = el("div", { id: "__erudaBar" }, document.body);
 
-  const header = el("div", null, bar);
-  header.style.display = "grid";
-  header.style.gridTemplateColumns = "1fr auto";
-  header.style.gap = "8px";
-  header.style.alignItems = "center";
+  const headerRow = el("div", null, bar);
+  headerRow.style.display = "grid";
+  headerRow.style.gridTemplateColumns = "1fr auto";
+  headerRow.style.gap = "8px";
+  headerRow.style.alignItems = "center";
 
-  const title = el("div", { text: "Eruda Panel" }, header);
-  title.style.fontWeight = "700";
+  const headerTitle = el("div", { text: "Eruda Panel" }, headerRow);
+  headerTitle.style.fontWeight = "700";
 
-  const compactBtn = el("button", { text: "Hide UI" }, header);
+  const toggleUiBtn = el("button", { text: "Hide UI" }, headerRow);
 
-  const controls = el("div", null, bar);
-  controls.style.display = "grid";
-  controls.style.gap = "8px";
+  const controlsWrap = el("div", null, bar);
+  controlsWrap.style.display = "grid";
+  controlsWrap.style.gap = "8px";
 
-  const rowPos = el("div", null, controls);
+  const rowPos = el("div", null, controlsWrap);
   rowPos.style.display = "grid";
   rowPos.style.gridTemplateColumns = "repeat(4, 1fr)";
   rowPos.style.gap = "6px";
 
-  const rowTabs = el("div", null, controls);
+  const rowTabs = el("div", null, controlsWrap);
   rowTabs.style.display = "grid";
   rowTabs.style.gridTemplateColumns = "repeat(3, 1fr)";
   rowTabs.style.gap = "6px";
 
-  const hardReloadBtn = el("button", { text: "Hard Reload" }, controls);
+  const hardReloadBtn = el("button", { text: "Hard Reload" }, controlsWrap);
   hardReloadBtn.style.background = "#ff3b30";
   hardReloadBtn.style.color = "#fff";
   hardReloadBtn.style.border = "none";
 
-  const sizeLabel = el("div", { text: "Size: 45vh" }, controls);
-  const sizeInput = el(
-    "input",
-    { type: "range", min: "20", max: "90", step: "1" },
-    controls,
-  );
+  const sizeLabel = el("div", { text: "Size: 45vh" }, controlsWrap);
+  const sizeInput = el("input", { type: "range", min: "20", max: "90", step: "1" }, controlsWrap);
 
   const panel = el("div", { id: "__erudaPanel" }, document.body);
   const resize = el("div", { id: "__erudaResize" }, panel);
@@ -59,9 +55,12 @@ export function createErudaDock() {
 
   let open = LS.get("eruda-open", "false") === "true";
   let compact = LS.get("eruda-ui-compact", "false") === "true";
+
   let panelPos = LS.get("eruda-panel-pos", "bottom");
   let sizeVh = Number(LS.get("eruda-panel-size-vh", "45"));
   let sizeVw = Number(LS.get("eruda-panel-size-vw", "55"));
+
+  let onToggleCb = null;
 
   function applyPanelGeometry() {
     panel.classList.remove("__top", "__bottom", "__left", "__right");
@@ -112,20 +111,20 @@ export function createErudaDock() {
 
   function renderCompact() {
     if (compact) {
-      controls.style.display = "none";
-      title.style.display = "none";
-      header.style.gridTemplateColumns = "1fr";
-      compactBtn.textContent = "Show UI";
+      controlsWrap.style.display = "none";
+      headerTitle.style.display = "none";
+      headerRow.style.gridTemplateColumns = "1fr";
+      toggleUiBtn.textContent = "Show UI";
     } else {
-      controls.style.display = "grid";
-      title.style.display = "";
-      header.style.gridTemplateColumns = "1fr auto";
-      compactBtn.textContent = "Hide UI";
+      controlsWrap.style.display = "grid";
+      headerTitle.style.display = "";
+      headerRow.style.gridTemplateColumns = "1fr auto";
+      toggleUiBtn.textContent = "Hide UI";
     }
     LS.set("eruda-ui-compact", compact);
   }
 
-  compactBtn.addEventListener("click", () => {
+  toggleUiBtn.addEventListener("click", () => {
     compact = !compact;
     renderCompact();
   });
@@ -184,8 +183,7 @@ export function createErudaDock() {
 
   gear.addEventListener("click", () => {
     open = !open;
-    if (open) openDock();
-    else closeDock();
+    if (onToggleCb) onToggleCb(open);
   });
 
   window.addEventListener("resize", applyPanelGeometry);
@@ -201,5 +199,8 @@ export function createErudaDock() {
     openDock,
     closeDock,
     isOpen: () => open,
+    onToggle(cb) {
+      onToggleCb = cb;
+    },
   };
 }

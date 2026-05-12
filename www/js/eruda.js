@@ -1,9 +1,12 @@
 // Файл: www/js/eruda.js
 
-// Файл: www/js/eruda.js
-(() => {
-  if (window.__erudaBootstrapLoaded) return;
-  window.__erudaBootstrapLoaded = true;
+import { onReady, injectStyle } from "./eruda/loader.js?v=VERSION";
+import { ensureErudaLoaded, safeAddPlugin } from "./eruda/plugins.js?v=VERSION";
+import { createErudaDock } from "./eruda/ui-dock.js?v=VERSION";
+
+(function () {
+  if (window.__erudaDockLoaded) return;
+  window.__erudaDockLoaded = true;
 
   const enabled =
     /(^|[?&])eruda=true(&|$)/.test(location.search) ||
@@ -11,68 +14,153 @@
 
   if (!enabled) return;
 
-  const CORE_URLS = [
-    "https://unpkg.com/eruda@3.4.3/eruda.js",
-    "https://cdn.jsdelivr.net/npm/eruda@3.4.3",
-  ];
+  const CSS = `
+#__erudaGear { z-index: 2147483647; }
+#__erudaBar { z-index: 2147483646; }
+#__erudaPanel { z-index: 2147483645; }
 
-  const FPS_URLS = [
-    "https://unpkg.com/eruda-fps/eruda-fps.min.js",
-    "https://cdn.jsdelivr.net/npm/eruda-fps/eruda-fps.min.js",
-  ];
+#__erudaGear {
+  position: fixed;
+  right: 12px;
+  bottom: 12px;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  border: 1px solid rgba(120,120,128,0.25);
+  background: rgba(255,255,255,0.92);
+  color: #111;
+  font-size: 22px;
+  line-height: 48px;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.14);
+}
 
-  function loadScript(src) {
-    return new Promise((resolve, reject) => {
-      const s = document.createElement("script");
-      s.src = src;
-      s.async = true;
-      s.onload = () => resolve(src);
-      s.onerror = () => reject(new Error(`Failed to load: ${src}`));
-      document.head.appendChild(s);
-    });
+#__erudaBar {
+  position: fixed;
+  right: 12px;
+  bottom: 70px;
+  display: none;
+  width: 300px;
+  padding: 10px;
+  gap: 8px;
+  border-radius: 16px;
+  border: 1px solid rgba(0,0,0,0.08);
+  background: rgba(255,255,255,0.94);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  font: 12px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+}
+#__erudaBar.__open { display: grid; }
+
+#__erudaBar button {
+  min-height: 32px;
+  border-radius: 10px;
+  border: 1px solid rgba(0,0,0,0.22);
+  background: #fff;
+  color: #111;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+#__erudaPanel {
+  position: fixed;
+  display: none;
+  background: transparent;
+  overflow: hidden;
+}
+#__erudaPanel.__open { display: block; }
+
+#__erudaPanel.__bottom { left: 0; right: 0; bottom: 0; top: auto; }
+#__erudaPanel.__top { left: 0; right: 0; top: 0; bottom: auto; }
+#__erudaPanel.__left { left: 0; top: 0; bottom: 0; right: auto; }
+#__erudaPanel.__right { right: 0; top: 0; bottom: 0; left: auto; }
+
+#__erudaMount { position: absolute; inset: 0; overflow: hidden; }
+
+#__erudaResize {
+  position: absolute;
+  background: rgba(0,0,0,0.15);
+  touch-action: none;
+  user-select: none;
+}
+#__erudaPanel.__bottom #__erudaResize { left: 0; right: 0; top: 0; height: 12px; cursor: ns-resize; }
+#__erudaPanel.__top #__erudaResize { left: 0; right: 0; bottom: 0; height: 12px; cursor: ns-resize; }
+#__erudaPanel.__left #__erudaResize { top: 0; bottom: 0; right: 0; width: 12px; cursor: ew-resize; }
+#__erudaPanel.__right #__erudaResize { top: 0; bottom: 0; left: 0; width: 12px; cursor: ew-resize; }
+
+@media (prefers-color-scheme: dark) {
+  #__erudaGear {
+    background: rgba(25,25,30,0.92);
+    color: #fff;
+    border-color: rgba(255,255,255,0.12);
   }
-
-  async function loadFromList(urls) {
-    let lastErr = null;
-    for (const url of urls) {
-      try {
-        await loadScript(url);
-        return url;
-      } catch (e) {
-        lastErr = e;
-      }
-    }
-    throw lastErr || new Error("All sources failed");
+  #__erudaBar {
+    background: rgba(25,25,30,0.94);
+    color: #eee;
+    border-color: rgba(255,255,255,0.12);
   }
+  #__erudaBar button {
+    background: #1f1f24;
+    color: #eee;
+    border-color: rgba(255,255,255,0.15);
+  }
+}
+`;
 
-  async function boot() {
-    try {
-      const loadedCore = await loadFromList(CORE_URLS);
-      console.log("[eruda] core loaded:", loadedCore);
+  onReady(async () => {
+    injectStyle(CSS);
 
-      if (!window.eruda?._isInit) {
-        window.eruda.init();
-      }
+    const dock = createErudaDock();
+    let inited = false;
 
-      try {
-        await loadFromList(FPS_URLS);
-        if (window.erudaFps && window.eruda?.add) {
-          window.eruda.add(window.erudaFps);
+    async function openEruda() {
+      dock.openDock();
+
+      if (!inited) {
+        try {
+          await ensureErudaLoaded();
+        } catch (e) {
+          console.warn("[eruda] core not loaded:", e?.message || e);
+          return;
         }
-      } catch (e) {
-        console.warn("[eruda] fps plugin skipped:", e?.message || e);
+
+        try {
+          if (!window.eruda?._isInit) {
+            window.eruda.init({
+              container: dock.mount,
+              inline: true,
+              useShadowDom: false,
+              autoScale: true,
+            });
+          }
+
+          safeAddPlugin("erudaFps");
+        } catch (err) {
+          console.warn("[eruda] init failed:", err);
+          return;
+        }
+
+        inited = true;
       }
 
-      window.eruda?.show?.();
-      console.log("[eruda] ready");
-    } catch (e) {
-      console.warn("[eruda] bootstrap failed:", e?.message || e);
+      try {
+        window.eruda?.show?.();
+      } catch {}
     }
-  }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", boot, { once: true });
-  } else {
-    boot();
-  }
+    function closeEruda() {
+      dock.closeDock();
+      try {
+        window.eruda?.hide?.();
+      } catch {}
+    }
+
+    dock.onToggle(async (isOpen) => {
+      if (isOpen) await openEruda();
+      else closeEruda();
+    });
+
+    if (dock.isOpen()) await openEruda();
+    else closeEruda();
+  });
 })();
