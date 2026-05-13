@@ -1764,6 +1764,12 @@ body.hide-nav-labels .nav-btn {
   outline: none !important;
 }
 
+.color-picker-wrapper,
+.color-picker-wrapper .color-action-btn,
+.color-picker-wrapper .color-action-btn svg {
+  transition-property: transform, opacity !important;
+}
+
 @layer utilities {
   .transition-ios {
     transition-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
