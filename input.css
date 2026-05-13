@@ -1758,6 +1758,12 @@ body.hide-nav-labels .nav-btn {
   border: none;
 }
 
+.color-picker-wrapper.picker-focus-suppressed,
+.color-picker-wrapper.picker-focus-suppressed:focus-within {
+  box-shadow: none !important;
+  outline: none !important;
+}
+
 @layer utilities {
   .transition-ios {
     transition-timing-function: cubic-bezier(0.32, 0.72, 0, 1);

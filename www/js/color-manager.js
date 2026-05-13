@@ -61,6 +61,46 @@ function captureRects(container) {
   return map;
 }
 
+function clearPickerFocusVisual(pickerWrapper, picker) {
+  if (!pickerWrapper) return;
+
+  const ringClasses = [
+    "ring-2",
+    "ring-[var(--primary-color)]",
+    "ring-offset-2",
+    "ring-offset-surface",
+  ];
+
+  const blurOnce = () => {
+    try {
+      if (picker && typeof picker.blur === "function") picker.blur();
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur?.();
+      }
+    } catch {}
+  };
+
+  blurOnce();
+  pickerWrapper.classList.remove(...ringClasses);
+  pickerWrapper.classList.add("picker-focus-suppressed");
+
+  requestAnimationFrame(() => {
+    blurOnce();
+    pickerWrapper.classList.remove(...ringClasses);
+  });
+
+  setTimeout(() => {
+    blurOnce();
+    pickerWrapper.classList.remove(...ringClasses);
+    pickerWrapper.classList.remove("picker-focus-suppressed");
+  }, 180);
+
+  setTimeout(() => {
+    blurOnce();
+    pickerWrapper.classList.remove(...ringClasses);
+  }, 450);
+}
+
 function animateLayoutShift(
   container,
   beforeMap,
@@ -452,20 +492,12 @@ export const colorManager = {
     );
     const pickerWrapper = picker?.closest(".color-picker-wrapper");
 
-    // Remove focus/ring before FLIP so highlight border does not animate with "+" button.
-    if (document.activeElement === picker) {
-      picker.blur();
-    }
-    pickerWrapper?.classList.remove(
-      "ring-2",
-      "ring-[var(--primary-color)]",
-      "ring-offset-2",
-      "ring-offset-surface",
-    );
+    clearPickerFocusVisual(pickerWrapper, picker);
 
     const before = captureRects(container);
 
     this._hideActionButton();
+    clearPickerFocusVisual(pickerWrapper, picker);
     sm.vibrate(40, "medium");
 
     customColors.push(newColor);
