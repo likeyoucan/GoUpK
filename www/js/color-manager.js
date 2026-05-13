@@ -61,7 +61,7 @@ function captureRects(container) {
   return map;
 }
 
-function animateLayoutShift(container, beforeMap, duration = 420) {
+function animateLayoutShift(container, beforeMap, duration = 380) {
   if (!container) return;
 
   container
@@ -83,7 +83,7 @@ function animateLayoutShift(container, beforeMap, duration = 420) {
         ],
         {
           duration,
-          easing: "cubic-bezier(0.22, 0.9, 0.3, 1)",
+          easing: "cubic-bezier(0.22, 0.88, 0.28, 1)",
         },
       );
     });
@@ -94,13 +94,13 @@ function animateNewSwatch(el) {
 
   el.animate(
     [
-      { opacity: 0, transform: "scale(0.93)" },
-      { opacity: 1, transform: "scale(1.02)", offset: 0.7 },
-      { opacity: 1, transform: "scale(1)" },
+      { opacity: 0, transform: "translateY(3px) scale(0.92)" },
+      { opacity: 1, transform: "translateY(-1px) scale(1.035)", offset: 0.68 },
+      { opacity: 1, transform: "translateY(0) scale(1)" },
     ],
     {
-      duration: 460,
-      easing: "cubic-bezier(0.22, 0.9, 0.3, 1)",
+      duration: 520,
+      easing: "cubic-bezier(0.22, 1, 0.36, 1)",
     },
   );
 }
@@ -114,7 +114,6 @@ function animateDeleteImpact(container) {
 
   const pickerRect = picker.getBoundingClientRect();
 
-  // Только 2 ближайших элемента, чтобы не грузить кадр.
   const impacted = swatches
     .map((el) => {
       const r = el.getBoundingClientRect();
@@ -127,13 +126,13 @@ function animateDeleteImpact(container) {
   picker.animate(
     [
       { transform: "translateX(0) scale(1)" },
-      { transform: "translateX(-9px) scale(0.99)", offset: 0.35 },
-      { transform: "translateX(2px) scale(1.005)", offset: 0.68 },
+      { transform: "translateX(-10px) scale(0.988)", offset: 0.34 },
+      { transform: "translateX(3px) scale(1.008)", offset: 0.7 },
       { transform: "translateX(0) scale(1)" },
     ],
     {
-      duration: 420,
-      easing: "cubic-bezier(0.22, 0.9, 0.3, 1)",
+      duration: 460,
+      easing: "cubic-bezier(0.22, 1, 0.36, 1)",
     },
   );
 
@@ -142,14 +141,14 @@ function animateDeleteImpact(container) {
     el.animate(
       [
         { transform: "scale(1)" },
-        { transform: "scale(0.965)", offset: 0.3 },
-        { transform: "scale(1.01)", offset: 0.65 },
+        { transform: "scale(0.962)", offset: 0.32 },
+        { transform: "scale(1.012)", offset: 0.7 },
         { transform: "scale(1)" },
       ],
       {
-        duration: 380,
-        delay: i * 12,
-        easing: "cubic-bezier(0.22, 0.9, 0.3, 1)",
+        duration: 420,
+        delay: i * 14,
+        easing: "cubic-bezier(0.22, 1, 0.36, 1)",
       },
     );
   });
@@ -500,51 +499,47 @@ export const colorManager = {
     );
   },
 
-  _deleteColor(color, type) {
-    const allowed = appProManager.requirePro("custom_colors", () =>
-      showProMessage("custom_colors"),
-    );
-    if (!allowed) return;
+ _deleteColor(color, type) {
+  const allowed = appProManager.requirePro("custom_colors", () =>
+    showProMessage("custom_colors"),
+  );
+  if (!allowed) return;
 
-    sm.vibrate(40, "medium");
-    this._hideActionButton();
+  sm.vibrate(40, "medium");
+  this._hideActionButton();
 
-    const isAccent = type === "accent";
-    const container = $(
-      isAccent ? "accent-colors-container" : "bg-colors-container",
-    );
-    const wrapper = container?.querySelector(
-      `.color-swatch-wrapper[data-color="${color}"]`,
-    );
-    if (!wrapper) return;
+  const isAccent = type === "accent";
+  const container = $(isAccent ? "accent-colors-container" : "bg-colors-container");
+  const wrapper = container?.querySelector(
+    `.color-swatch-wrapper[data-color="${color}"]`,
+  );
+  if (!wrapper) return;
 
-    const before = captureRects(container);
+  document.dispatchEvent(
+    new CustomEvent(APP_EVENTS.COLOR_DELETED, { detail: { type, color } }),
+  );
 
-    document.dispatchEvent(
-      new CustomEvent(APP_EVENTS.COLOR_DELETED, { detail: { type, color } }),
-    );
+  animateDeleteImpact(container);
 
-    animateDeleteImpact(container);
+  const customColors = isAccent ? this.customAccentColors : this.customBgColors;
+  const didRemove = removeColorFromList({ normalizeHexColor }, customColors, color);
+  if (didRemove) {
+    persistCustomColors({ safeSetLS }, type, customColors);
+  }
+
+  // Мягкое "схлопывание" карточки через существующий CSS .is-collapsing
+  wrapper.classList.add("is-collapsing");
+
+  let done = false;
+  const finalize = () => {
+    if (done) return;
+    done = true;
     wrapper.remove();
+  };
 
-    const customColors = isAccent
-      ? this.customAccentColors
-      : this.customBgColors;
-    const didRemove = removeColorFromList(
-      { normalizeHexColor },
-      customColors,
-      color,
-    );
-    if (didRemove) {
-      persistCustomColors({ safeSetLS }, type, customColors);
-    }
-
-    requestAnimationFrame(() => {
-      animateLayoutShift(container, before, 420);
-    });
-
-    Promise.allSettled([impactPromise, ghostPromise]);
-  },
+  wrapper.addEventListener("animationend", finalize, { once: true });
+  setTimeout(finalize, 320);
+}
 
   populateColorSection(type) {
     const isAccent = type === "accent";
