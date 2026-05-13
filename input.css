@@ -1857,16 +1857,17 @@ body.hide-nav-labels .nav-btn {
   padding-right: 0.5rem;
 }
 
-.range-value {
-  width: 3.25rem;
-  flex: 0 0 3.25rem;
-  line-height: 1;
-  opacity: 0.95;
+.range-field-half {
+  width: 50%;
+  flex: 0 0 50%;
 }
 
-#vignette-depth-container .thumb-label-container,
-#vibro-level-container .thumb-label-container {
-  display: none;
+.range-value {
+  width: 3.75rem;
+  flex: 0 0 3.75rem;
+  line-height: 1;
+  opacity: 0.95;
+  white-space: nowrap;
 }
 
 /* =========================================

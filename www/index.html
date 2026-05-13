@@ -889,7 +889,9 @@
                             data-i18n="vignette_depth"
                             >Intensity</label
                           >
-                          <div class="range-field relative flex-1 min-w-0">
+                          <div
+                            class="range-field range-field-half relative min-w-0"
+                          >
                             <input
                               type="range"
                               min="0"
@@ -898,6 +900,9 @@
                               step="1"
                               id="vignetteSlider"
                               class="w-full"
+                              data-range-value-id="vignette-value"
+                              data-range-mode="labels"
+                              data-range-labels="vignette_min,vignette_low,vignette_medium,vignette_high,vignette_max"
                             />
                             <div class="thumb-label-container">
                               <span id="vignette-label" class="thumb-label"
@@ -916,55 +921,69 @@
                   </div>
 
                   <div class="p-4">
-                    <div class="flex justify-between items-center mb-3">
+                    <div
+                      class="range-row flex w-full items-center justify-between gap-2"
+                    >
                       <label
                         for="fontSlider"
-                        class="font-medium app-text text-sm"
+                        class="font-medium app-text text-sm shrink-0"
                         data-i18n="font_size"
                         >Font Size</label
                       >
+                      <div class="range-field relative flex-1 min-w-0">
+                        <input
+                          type="range"
+                          min="12"
+                          max="24"
+                          value="16"
+                          step="1"
+                          id="fontSlider"
+                          aria-label="Font Size"
+                          class="w-full"
+                          data-range-value-id="fontSizeDisplay"
+                          data-range-mode="number"
+                          data-range-unit=" px"
+                        />
+                      </div>
                       <span
                         id="fontSizeDisplay"
-                        class="font-bold primary-text text-xs"
+                        class="range-value font-bold primary-text text-xs text-right"
                         >16 px</span
                       >
                     </div>
-                    <input
-                      type="range"
-                      min="12"
-                      max="24"
-                      value="16"
-                      step="1"
-                      id="fontSlider"
-                      aria-label="Font Size"
-                      class="w-full"
-                    />
                   </div>
 
                   <div class="p-4 border-t app-border">
-                    <div class="flex justify-between items-center mb-3">
+                    <div
+                      class="range-row flex w-full items-center justify-between gap-2"
+                    >
                       <label
                         for="ringWidthSlider"
-                        class="font-medium app-text text-sm"
+                        class="font-medium app-text text-sm shrink-0"
                         data-i18n="ring_width"
                         >Ring Thickness</label
                       >
+                      <div class="range-field relative flex-1 min-w-0">
+                        <input
+                          type="range"
+                          min="1"
+                          max="10"
+                          value="4"
+                          step="0.5"
+                          id="ringWidthSlider"
+                          aria-label="Ring Thickness"
+                          class="w-full"
+                          data-range-value-id="ringWidthDisplay"
+                          data-range-mode="number"
+                          data-range-unit=" px"
+                        />
+                      </div>
                       <span
                         id="ringWidthDisplay"
-                        class="font-bold primary-text text-xs"
+                        class="range-value font-bold primary-text text-xs text-right"
                         >4 px</span
                       >
                     </div>
-                    <input
-                      type="range"
-                      min="1"
-                      max="10"
-                      value="4"
-                      step="0.5"
-                      id="ringWidthSlider"
-                      aria-label="Ring Thickness"
-                      class="w-full"
-                    />
                   </div>
                 </div>
               </div>
@@ -1023,29 +1042,35 @@
                     </label>
                   </div>
 
-                  <div class="p-4 border-t app-border flex flex-col gap-3">
-                    <div class="flex items-center justify-between mb-1">
+                  <div class="p-4 border-t app-border">
+                    <div
+                      class="range-row flex w-full items-center justify-between gap-2"
+                    >
                       <label
                         for="volumeSlider"
-                        class="font-medium app-text text-sm"
+                        class="font-medium app-text text-sm shrink-0"
                         data-i18n="volume"
                         >Volume</label
                       >
+                      <div class="range-field relative flex-1 min-w-0">
+                        <input
+                          type="range"
+                          min="0"
+                          max="1"
+                          value="1"
+                          step="0.1"
+                          id="volumeSlider"
+                          class="w-full"
+                          data-range-value-id="volumeDisplay"
+                          data-range-mode="percent01"
+                        />
+                      </div>
                       <span
                         id="volumeDisplay"
-                        class="font-bold primary-text text-xs"
+                        class="range-value font-bold primary-text text-xs text-right"
                         >100%</span
                       >
                     </div>
-                    <input
-                      type="range"
-                      min="0"
-                      max="1"
-                      value="1"
-                      step="0.1"
-                      id="volumeSlider"
-                      class="w-full"
-                    />
                   </div>
 
                   <div
@@ -1095,7 +1120,9 @@
                           data-i18n="vibro_level"
                           >Level</label
                         >
-                        <div class="range-field relative flex-1 min-w-0">
+                        <div
+                          class="range-field range-field-half relative min-w-0"
+                        >
                           <input
                             type="range"
                             min="0"
@@ -1104,6 +1131,9 @@
                             step="1"
                             id="vibroSlider"
                             class="w-full"
+                            data-range-value-id="vibro-value"
+                            data-range-mode="labels"
+                            data-range-labels="vibro_min,vibro_low,vibro_medium,vibro_high,vibro_max"
                           />
                           <div class="thumb-label-container">
                             <span id="vibro-label" class="thumb-label"

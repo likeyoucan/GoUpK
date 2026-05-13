@@ -16,7 +16,8 @@ import {
   updateGlass,
   applyNavLabelsVisibility,
   updateSliderLabel,
-  updateRangeValueRight,
+  updateRangeValueByDataset,
+  syncAllRangeValuesRight,
   syncSliderUIs,
   persistFontSize,
   persistRingWidth,
@@ -96,20 +97,24 @@ export function bindUiSettingsEvents(state) {
     const val = Number(e.target.value);
     setFontSize(state, val);
     persistFontSize(val);
+    updateRangeValueByDataset(e.target);
   });
 
   $("fontSlider")?.addEventListener("input", (e) => {
     setFontSize(state, Number(e.target.value));
+    updateRangeValueByDataset(e.target);
   });
 
   $("ringWidthSlider")?.addEventListener("change", (e) => {
     const val = Number(e.target.value);
     setRingWidth(state, val);
     persistRingWidth(val);
+    updateRangeValueByDataset(e.target);
   });
 
   $("ringWidthSlider")?.addEventListener("input", (e) => {
     setRingWidth(state, Number(e.target.value));
+    updateRangeValueByDataset(e.target);
   });
 
   $("vignetteSlider")?.addEventListener("change", (e) => {
@@ -117,11 +122,7 @@ export function bindUiSettingsEvents(state) {
     state.vignetteAlpha = state.vignetteLevels[idx];
     updateVignette(state);
     updateSliderLabel("vignetteSlider", "vignette-label", state.vignetteLabels);
-    updateRangeValueRight(
-      "vignetteSlider",
-      "vignette-value",
-      state.vignetteLabels,
-    );
+    updateRangeValueByDataset(e.target);
     persistVignetteAlpha(state.vignetteAlpha);
   });
 
@@ -130,11 +131,7 @@ export function bindUiSettingsEvents(state) {
     state.vignetteAlpha = state.vignetteLevels[idx];
     updateVignette(state);
     updateSliderLabel("vignetteSlider", "vignette-label", state.vignetteLabels);
-    updateRangeValueRight(
-      "vignetteSlider",
-      "vignette-value",
-      state.vignetteLabels,
-    );
+    updateRangeValueByDataset(e.target);
   });
 
   $("vibroSlider")?.addEventListener("change", (e) => {
@@ -142,7 +139,7 @@ export function bindUiSettingsEvents(state) {
     const newLevel = levels[Number(e.target.value)] || 1;
     sm.vibroLevel = newLevel;
     updateSliderLabel("vibroSlider", "vibro-label", state.vibroLabels);
-    updateRangeValueRight("vibroSlider", "vibro-value", state.vibroLabels);
+    updateRangeValueByDataset(e.target);
     safeSetLS(STORAGE_KEYS.APP_VIBRO_LEVEL, newLevel);
     sm.vibrate(50, "strong");
   });
@@ -151,7 +148,20 @@ export function bindUiSettingsEvents(state) {
     const levels = [0.5, 0.75, 1, 1.5, 2];
     sm.vibroLevel = levels[Number(e.target.value)] || 1;
     updateSliderLabel("vibroSlider", "vibro-label", state.vibroLabels);
-    updateRangeValueRight("vibroSlider", "vibro-value", state.vibroLabels);
+    updateRangeValueByDataset(e.target);
+  });
+
+  // Universal support for future range sliders with data-range-* attributes.
+  document.addEventListener("input", (e) => {
+    const input = e.target;
+    if (!(input instanceof HTMLInputElement) || input.type !== "range") return;
+    updateRangeValueByDataset(input);
+  });
+
+  document.addEventListener("change", (e) => {
+    const input = e.target;
+    if (!(input instanceof HTMLInputElement) || input.type !== "range") return;
+    updateRangeValueByDataset(input);
   });
 
   const providerSelect = $("adsProvider");
@@ -163,4 +173,6 @@ export function bindUiSettingsEvents(state) {
       adsManager.setProvider(next);
     });
   }
+
+  syncAllRangeValuesRight();
 }

@@ -116,27 +116,72 @@ export function updateSliderLabel(sliderId, labelId, labelsArray) {
   label.style.left = `${leftPx}px`;
 }
 
+function parseLabels(raw) {
+  return String(raw || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+export function updateRangeValueByDataset(input) {
+  if (!input) return;
+
+  const valueId = input.dataset.rangeValueId;
+  if (!valueId) return;
+
+  const valueEl = $(valueId);
+  if (!valueEl) return;
+
+  const mode = input.dataset.rangeMode || "number";
+  const unit = input.dataset.rangeUnit || "";
+  const raw = Number(input.value);
+
+  if (mode === "labels") {
+    const labels = parseLabels(input.dataset.rangeLabels);
+    const idx = Number.isFinite(raw) ? Math.round(raw) : 0;
+    const key = labels[idx] || labels[0] || "";
+    valueEl.textContent = key ? t(key) : "";
+    return;
+  }
+
+  if (mode === "percent01") {
+    const pct = Math.round((Number.isFinite(raw) ? raw : 0) * 100);
+    valueEl.textContent = `${pct}%`;
+    return;
+  }
+
+  if (mode === "number") {
+    const num = Number.isFinite(raw) ? raw : 0;
+    valueEl.textContent = `${num}${unit}`;
+    return;
+  }
+
+  valueEl.textContent = `${input.value}${unit}`;
+}
+
+// Backward-compatible helper for current code paths.
 export function updateRangeValueRight(sliderId, valueId, labelsArray) {
   const slider = $(sliderId);
-  const valueEl = $(valueId);
-  if (!slider || !valueEl) return;
+  if (!slider) return;
 
-  const idx = Number(slider.value) || 0;
-  const key = labelsArray[idx] || labelsArray[0];
-  valueEl.textContent = t(key);
+  slider.dataset.rangeValueId = valueId;
+  slider.dataset.rangeMode = "labels";
+  slider.dataset.rangeLabels = (labelsArray || []).join(",");
+
+  updateRangeValueByDataset(slider);
+}
+
+export function syncAllRangeValuesRight(root = document) {
+  root
+    .querySelectorAll('input[type="range"][data-range-value-id]')
+    .forEach((input) => updateRangeValueByDataset(input));
 }
 
 export function syncSliderUIs(state) {
   requestAnimationFrame(() => {
     updateSliderLabel("vignetteSlider", "vignette-label", state.vignetteLabels);
     updateSliderLabel("vibroSlider", "vibro-label", state.vibroLabels);
-
-    updateRangeValueRight(
-      "vignetteSlider",
-      "vignette-value",
-      state.vignetteLabels,
-    );
-    updateRangeValueRight("vibroSlider", "vibro-value", state.vibroLabels);
+    syncAllRangeValuesRight();
   });
 }
 
