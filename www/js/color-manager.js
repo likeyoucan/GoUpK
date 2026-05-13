@@ -104,7 +104,7 @@ function clearPickerFocusVisual(pickerWrapper, picker) {
 function animateLayoutShift(
   container,
   beforeMap,
-  { duration = 360, springTarget = null } = {},
+  { duration = 320, springTarget = null } = {},
 ) {
   if (!container) return;
 
@@ -135,23 +135,35 @@ function animateLayoutShift(
     const found = moved.find((m) => m.el === springTarget);
     if (found) resolvedSpring = found.el;
   }
-  if (!resolvedSpring) {
-    resolvedSpring = moved[0].el;
-  }
+  if (!resolvedSpring) resolvedSpring = moved[0].el;
 
   moved.forEach(({ el, dx, dy }) => {
     if (el === resolvedSpring) {
+      const push = dx >= 0 ? -7 : 7;
+      const rebound = -push * 0.38;
+      const settle = push * 0.12;
+
       el.style.transformOrigin = "left center";
 
       el.animate(
         [
-          { transform: `translate(${dx}px, ${dy}px) scale(1, 1)` },
-          { transform: "translate(-6px, 0) scale(1.08, 0.92)", offset: 0.58 },
-          { transform: "translate(2px, 0) scale(0.95, 1.05)", offset: 0.82 },
-          { transform: "translate(0, 0) scale(1, 1)" },
+          { transform: `translate(${dx}px, ${dy}px) scale(1,1)` },
+          {
+            transform: `translate(${push}px, 0) scale(1.08, 0.92)`,
+            offset: 0.56,
+          },
+          {
+            transform: `translate(${rebound}px, 0) scale(0.96, 1.04)`,
+            offset: 0.8,
+          },
+          {
+            transform: `translate(${settle}px, 0) scale(1.01, 0.99)`,
+            offset: 0.92,
+          },
+          { transform: "translate(0,0) scale(1,1)" },
         ],
         {
-          duration: 520,
+          duration: 540,
           easing: "cubic-bezier(0.22, 1, 0.36, 1)",
         },
       );
@@ -161,12 +173,12 @@ function animateLayoutShift(
     el.animate(
       [
         { transform: `translate(${dx}px, ${dy}px) scale(1,1)` },
-        { transform: "translate(-1.6px, 0) scale(1.02, 0.98)", offset: 0.7 },
-        { transform: "translate(0, 0) scale(1,1)" },
+        { transform: "translate(-1.2px, 0) scale(1.01, 0.99)", offset: 0.72 },
+        { transform: "translate(0,0) scale(1,1)" },
       ],
       {
         duration,
-        easing: "cubic-bezier(0.22, 0.96, 0.24, 1)",
+        easing: "cubic-bezier(0.22, 0.92, 0.28, 1)",
       },
     );
   });
@@ -175,27 +187,17 @@ function animateLayoutShift(
 function animateNewSwatch(el) {
   if (!el) return;
 
-  el.style.transformOrigin = "center bottom";
+  el.style.transformOrigin = "center center";
 
   el.animate(
     [
-      { opacity: 0, transform: "translateY(6px) scale(0.86, 1.16)" },
-      {
-        opacity: 1,
-        transform: "translateY(-2px) scale(1.08, 0.92)",
-        offset: 0.42,
-      },
-      {
-        opacity: 1,
-        transform: "translateY(1px) scale(0.97, 1.03)",
-        offset: 0.72,
-      },
-      { opacity: 1, transform: "translateY(0) scale(1.01, 0.99)", offset: 0.9 },
-      { opacity: 1, transform: "translateY(0) scale(1, 1)" },
+      { opacity: 0, transform: "translateY(4px) scale(0.94)" },
+      { opacity: 1, transform: "translateY(-1px) scale(1.03)", offset: 0.62 },
+      { opacity: 1, transform: "translateY(0) scale(1)" },
     ],
     {
-      duration: 620,
-      easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+      duration: 430,
+      easing: "cubic-bezier(0.22, 0.95, 0.25, 1)",
     },
   );
 }
