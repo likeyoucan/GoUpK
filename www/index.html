@@ -880,14 +880,16 @@
                         id="vignette-depth-container"
                         class="hidden flex-col gap-1 transition-opacity duration-300"
                       >
-                        <div class="flex w-full items-center justify-between">
+                        <div
+                          class="range-row flex w-full items-center justify-between gap-2"
+                        >
                           <label
                             for="vignetteSlider"
-                            class="text-xs app-text-sec"
+                            class="text-xs app-text-sec shrink-0"
                             data-i18n="vignette_depth"
                             >Intensity</label
                           >
-                          <div class="relative w-40">
+                          <div class="range-field relative flex-1 min-w-0">
                             <input
                               type="range"
                               min="0"
@@ -903,6 +905,11 @@
                               >
                             </div>
                           </div>
+                          <span
+                            id="vignette-value"
+                            class="range-value text-xs font-bold primary-text text-right uppercase"
+                            >mid</span
+                          >
                         </div>
                       </div>
                     </div>
@@ -1079,14 +1086,16 @@
                       id="vibro-level-container"
                       class="hidden flex-col gap-1 transition-opacity duration-300"
                     >
-                      <div class="flex w-full items-center justify-between">
+                      <div
+                        class="range-row flex w-full items-center justify-between gap-2"
+                      >
                         <label
                           for="vibroSlider"
-                          class="text-xs app-text-sec"
+                          class="text-xs app-text-sec shrink-0"
                           data-i18n="vibro_level"
                           >Level</label
                         >
-                        <div class="relative w-40">
+                        <div class="range-field relative flex-1 min-w-0">
                           <input
                             type="range"
                             min="0"
@@ -1102,6 +1111,11 @@
                             >
                           </div>
                         </div>
+                        <span
+                          id="vibro-value"
+                          class="range-value text-xs font-bold primary-text text-right uppercase"
+                          >mid</span
+                        >
                       </div>
                     </div>
                   </div>

@@ -1,7 +1,5 @@
 // Файл: www/js/ui-settings/ui-settings-apply.js
 
-// Файл: www/js/ui-settings/ui-settings-apply.js
-
 import { $, safeSetLS } from "../utils.js?v=VERSION";
 import { t } from "../i18n.js?v=VERSION";
 import { STORAGE_KEYS } from "../constants/storage-keys.js?v=VERSION";
@@ -118,10 +116,27 @@ export function updateSliderLabel(sliderId, labelId, labelsArray) {
   label.style.left = `${leftPx}px`;
 }
 
+export function updateRangeValueRight(sliderId, valueId, labelsArray) {
+  const slider = $(sliderId);
+  const valueEl = $(valueId);
+  if (!slider || !valueEl) return;
+
+  const idx = Number(slider.value) || 0;
+  const key = labelsArray[idx] || labelsArray[0];
+  valueEl.textContent = t(key);
+}
+
 export function syncSliderUIs(state) {
   requestAnimationFrame(() => {
     updateSliderLabel("vignetteSlider", "vignette-label", state.vignetteLabels);
     updateSliderLabel("vibroSlider", "vibro-label", state.vibroLabels);
+
+    updateRangeValueRight(
+      "vignetteSlider",
+      "vignette-value",
+      state.vignetteLabels,
+    );
+    updateRangeValueRight("vibroSlider", "vibro-value", state.vibroLabels);
   });
 }
 

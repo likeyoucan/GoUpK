@@ -1853,6 +1853,22 @@ body.hide-nav-labels .nav-btn {
   pointer-events: none;
 }
 
+.range-row .range-field {
+  padding-right: 0.5rem;
+}
+
+.range-value {
+  width: 3.25rem;
+  flex: 0 0 3.25rem;
+  line-height: 1;
+  opacity: 0.95;
+}
+
+#vignette-depth-container .thumb-label-container,
+#vibro-level-container .thumb-label-container {
+  display: none;
+}
+
 /* =========================================
    24. CUSTOM SELECT (ВЫПАДАЮЩИЕ СПИСКИ)
 ========================================= */

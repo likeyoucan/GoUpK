@@ -16,6 +16,7 @@ import {
   updateGlass,
   applyNavLabelsVisibility,
   updateSliderLabel,
+  updateRangeValueRight,
   syncSliderUIs,
   persistFontSize,
   persistRingWidth,
@@ -69,17 +70,14 @@ export function bindUiSettingsEvents(state) {
       safeSetLS(STORAGE_KEYS.APP_SW_MINUTE_BEEP, val);
     },
 
-    // Ads toggle with App Pro guard:
     "toggle-ads": (val) => {
       state.adsEnabled = val;
 
-      // remove_ads is Pro-gated by your App Pro config.
       const allowed = appProManager.requirePro("remove_ads", () => {
         showToast(t("disable_ads_pro"));
       });
 
       if (!allowed) {
-        // force back to true for free users
         state.adsEnabled = true;
         if ($("toggle-ads")) $("toggle-ads").checked = true;
       }
@@ -119,6 +117,11 @@ export function bindUiSettingsEvents(state) {
     state.vignetteAlpha = state.vignetteLevels[idx];
     updateVignette(state);
     updateSliderLabel("vignetteSlider", "vignette-label", state.vignetteLabels);
+    updateRangeValueRight(
+      "vignetteSlider",
+      "vignette-value",
+      state.vignetteLabels,
+    );
     persistVignetteAlpha(state.vignetteAlpha);
   });
 
@@ -127,6 +130,11 @@ export function bindUiSettingsEvents(state) {
     state.vignetteAlpha = state.vignetteLevels[idx];
     updateVignette(state);
     updateSliderLabel("vignetteSlider", "vignette-label", state.vignetteLabels);
+    updateRangeValueRight(
+      "vignetteSlider",
+      "vignette-value",
+      state.vignetteLabels,
+    );
   });
 
   $("vibroSlider")?.addEventListener("change", (e) => {
@@ -134,6 +142,7 @@ export function bindUiSettingsEvents(state) {
     const newLevel = levels[Number(e.target.value)] || 1;
     sm.vibroLevel = newLevel;
     updateSliderLabel("vibroSlider", "vibro-label", state.vibroLabels);
+    updateRangeValueRight("vibroSlider", "vibro-value", state.vibroLabels);
     safeSetLS(STORAGE_KEYS.APP_VIBRO_LEVEL, newLevel);
     sm.vibrate(50, "strong");
   });
@@ -142,9 +151,9 @@ export function bindUiSettingsEvents(state) {
     const levels = [0.5, 0.75, 1, 1.5, 2];
     sm.vibroLevel = levels[Number(e.target.value)] || 1;
     updateSliderLabel("vibroSlider", "vibro-label", state.vibroLabels);
+    updateRangeValueRight("vibroSlider", "vibro-value", state.vibroLabels);
   });
 
-  // Optional provider selector if you add a native/custom select in index.html:
   const providerSelect = $("adsProvider");
   if (providerSelect) {
     providerSelect.addEventListener("change", (e) => {
