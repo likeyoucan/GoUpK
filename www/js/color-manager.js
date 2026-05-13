@@ -61,7 +61,7 @@ function captureRects(container) {
   return map;
 }
 
-function animateLayoutShift(container, beforeMap, duration = 520) {
+function animateLayoutShift(container, beforeMap, duration = 640) {
   if (!container) return;
 
   container
@@ -99,14 +99,73 @@ function animateNewSwatch(el) {
       { opacity: 1, transform: "scale(1)" },
     ],
     {
-      duration: 520,
+      duration: 560,
       easing: "cubic-bezier(0.22, 0.95, 0.25, 1)",
     },
   );
 }
 
+function animateDeleteImpact(container) {
+  if (!container) return Promise.resolve();
+
+  const picker = container.querySelector(".color-picker-wrapper");
+  const swatches = [...container.querySelectorAll(".color-swatch-wrapper")];
+
+  if (!picker || swatches.length === 0) return Promise.resolve();
+
+  const pickerRect = picker.getBoundingClientRect();
+
+  const impacted = swatches
+    .map((el) => {
+      const r = el.getBoundingClientRect();
+      const dist = Math.abs(pickerRect.left - r.right);
+      return { el, dist };
+    })
+    .sort((a, b) => a.dist - b.dist)
+    .slice(0, 4);
+
+  const animations = [];
+
+  animations.push(
+    picker.animate(
+      [
+        { transform: "translateX(0) scale(1)" },
+        { transform: "translateX(-14px) scale(0.985)", offset: 0.34 },
+        { transform: "translateX(4px) scale(1.01)", offset: 0.68 },
+        { transform: "translateX(0) scale(1)" },
+      ],
+      {
+        duration: 620,
+        easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+      },
+    ).finished,
+  );
+
+  impacted.forEach(({ el }, i) => {
+    el.style.transformOrigin = "right center";
+
+    animations.push(
+      el.animate(
+        [
+          { transform: "scale(1)" },
+          { transform: "scale(0.94)", offset: 0.28 },
+          { transform: "scale(1.018)", offset: 0.66 },
+          { transform: "scale(1)" },
+        ],
+        {
+          duration: 560,
+          delay: i * 18,
+          easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+        },
+      ).finished,
+    );
+  });
+
+  return Promise.allSettled(animations);
+}
+
 function createRemovalGhost(sourceEl) {
-  if (!sourceEl) return;
+  if (!sourceEl) return Promise.resolve();
 
   const rect = sourceEl.getBoundingClientRect();
   const ghost = sourceEl.cloneNode(true);
@@ -122,26 +181,28 @@ function createRemovalGhost(sourceEl) {
 
   document.body.appendChild(ghost);
 
-  ghost
+  return ghost
     .animate(
       [
-        { opacity: 1, transform: "scale(1)" },
-        { opacity: 1, transform: "scale(1.015)", offset: 0.45 },
-        { opacity: 0.65, transform: "scale(0.96)", offset: 0.8 },
-        { opacity: 0, transform: "scale(0.9)" },
+        { opacity: 1, transform: "translateX(0) scale(1)" },
+        {
+          opacity: 1,
+          transform: "translateX(-4px) scale(0.985)",
+          offset: 0.35,
+        },
+        {
+          opacity: 0.7,
+          transform: "translateX(2px) scale(0.96)",
+          offset: 0.72,
+        },
+        { opacity: 0, transform: "translateX(0) scale(0.92)" },
       ],
       {
-        duration: 420,
-        easing: "cubic-bezier(0.22, 0.9, 0.3, 1)",
+        duration: 500,
+        easing: "cubic-bezier(0.22, 0.95, 0.25, 1)",
       },
     )
-    .addEventListener(
-      "finish",
-      () => {
-        ghost.remove();
-      },
-      { once: true },
-    );
+    .finished.finally(() => ghost.remove());
 }
 
 export const colorManager = {
@@ -437,7 +498,7 @@ export const colorManager = {
     );
 
     requestAnimationFrame(() => {
-      animateLayoutShift(container, before, 420);
+      animateLayoutShift(container, before, 620);
       animateNewSwatch(inserted);
     });
 
@@ -472,7 +533,9 @@ export const colorManager = {
       new CustomEvent(APP_EVENTS.COLOR_DELETED, { detail: { type, color } }),
     );
 
-    createRemovalGhost(wrapper);
+    const impactPromise = animateDeleteImpact(container);
+    const ghostPromise = createRemovalGhost(wrapper);
+
     wrapper.remove();
 
     const customColors = isAccent
@@ -487,9 +550,13 @@ export const colorManager = {
       persistCustomColors({ safeSetLS }, type, customColors);
     }
 
-    requestAnimationFrame(() => {
-      animateLayoutShift(container, before, 420);
-    });
+    setTimeout(() => {
+      requestAnimationFrame(() => {
+        animateLayoutShift(container, before, 640);
+      });
+    }, 110);
+
+    Promise.allSettled([impactPromise, ghostPromise]);
   },
 
   populateColorSection(type) {
