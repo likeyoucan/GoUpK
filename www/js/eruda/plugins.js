@@ -3,15 +3,10 @@
 import { loadScriptOnce } from "./loader.js?v=VERSION";
 
 // CSP-safe local paths resolved relative to this module:
-const ERUDA_CORE_LOCAL = new URL(
-  "../vendor/eruda/eruda.min.js",
-  import.meta.url,
-).href;
+const ERUDA_CORE_LOCAL = new URL("./vendor/eruda.min.js", import.meta.url).href;
 
-const ERUDA_FPS_LOCAL = new URL(
-  "../vendor/eruda/eruda-fps.min.js",
-  import.meta.url,
-).href;
+const ERUDA_FPS_LOCAL = new URL("./vendor/eruda-fps-min.js", import.meta.url)
+  .href;
 
 export async function ensureErudaLoaded() {
   // Core must exist

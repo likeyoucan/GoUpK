@@ -61,6 +61,7 @@ export const ru = {
   no_laps: "Нет записей",
   pro_status_subscription_active: "Подписка активна",
   pro_status_lifetime_active: "Pro-версия активна",
+  pro_already_active: "PRO уже активен"
   pro_period_month: "/ мес",
   pro_period_year: "/ год",
   pro_price_from: "Стоимость",

@@ -1,6 +1,5 @@
 // Файл: www/js/tabata/tabata-render.js
 
-// Файл: www/js/tabata/tabata-render.js
 import { updateText, updateTitle, formatTime } from "../utils.js?v=VERSION";
 import { t } from "../i18n.js?v=VERSION";
 import { sm } from "../sound.js?v=VERSION";

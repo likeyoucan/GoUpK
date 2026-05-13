@@ -6,7 +6,9 @@ function getBridge() {
   return window.Capacitor?.Plugins?.TimerAlarmBridge || null;
 }
 
-export function createTimerAlarmScheduler({ requestCode = DEFAULT_REQUEST_CODE } = {}) {
+export function createTimerAlarmScheduler({
+  requestCode = DEFAULT_REQUEST_CODE,
+} = {}) {
   return {
     async schedule(epochMs) {
       const bridge = getBridge();

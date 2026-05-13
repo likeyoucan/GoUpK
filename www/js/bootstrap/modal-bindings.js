@@ -22,6 +22,11 @@ export function bindModalActions({
     setTimeout(() => showToast(t("settings_reset_success")), 450);
   };
 
+  const getProAlreadyActiveText = () => {
+    const text = t("pro_already_active");
+    return text && text !== "pro_already_active" ? text : "PRO уже активен";
+  };
+
   const handlers = [];
 
   const bind = (id, event, fn) => {
@@ -107,7 +112,11 @@ export function bindModalActions({
     e.preventDefault();
 
     const feature = btn.getAttribute("data-pro-feature") || "pro_feature";
-    if (appProManager.canUse(feature)) return;
+
+    if (appProManager.canUse(feature)) {
+      showToast(getProAlreadyActiveText());
+      return;
+    }
 
     document.dispatchEvent(
       new CustomEvent(APP_EVENTS.PRO_PAYWALL_REQUESTED, {

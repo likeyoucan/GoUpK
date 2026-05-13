@@ -2,42 +2,101 @@
 
 const SELECT_MAX_VIEWPORT_K = 0.6;
 const SELECT_MIN_HEIGHT_PX = 120;
+const EDGE_GAP = 8;
 
-export function decidePlacement(triggerEl) {
-  const rect = triggerEl.getBoundingClientRect();
+function getViewportSize() {
+  const vw = window.innerWidth || document.documentElement.clientWidth || 0;
   const vh = window.innerHeight || document.documentElement.clientHeight || 0;
-  const gap = 8;
+  return { vw, vh };
+}
 
-  const spaceBelow = Math.max(0, vh - rect.bottom - gap - 8);
-  const spaceAbove = Math.max(0, rect.top - gap - 8);
+function getRootRect(portalRoot) {
+  const { vw, vh } = getViewportSize();
 
-  return spaceBelow >= 140 || spaceBelow >= spaceAbove ? "bottom" : "top";
+  if (
+    !portalRoot ||
+    portalRoot === document.body ||
+    portalRoot === document.documentElement ||
+    !(portalRoot instanceof HTMLElement)
+  ) {
+    return {
+      left: 0,
+      top: 0,
+      right: vw,
+      bottom: vh,
+      width: vw,
+      height: vh,
+      isViewport: true,
+    };
+  }
+
+  const rect = portalRoot.getBoundingClientRect();
+  return {
+    left: rect.left,
+    top: rect.top,
+    right: rect.right,
+    bottom: rect.bottom,
+    width: rect.width,
+    height: rect.height,
+    isViewport: false,
+  };
+}
+
+export function decidePlacement(triggerEl, portalRoot = document.body) {
+  const rect = triggerEl.getBoundingClientRect();
+  const rootRect = getRootRect(portalRoot);
+  const gap = EDGE_GAP;
+
+  const spaceBelow = Math.max(
+    0,
+    rootRect.bottom - rect.bottom - gap - EDGE_GAP,
+  );
+  const spaceAbove = Math.max(0, rect.top - rootRect.top - gap - EDGE_GAP);
+
+  // Prefer opening down only when there is enough visible space inside current app/root.
+  if (spaceBelow >= 140) return "bottom";
+  if (spaceAbove >= 140) return "top";
+
+  return spaceBelow >= spaceAbove ? "bottom" : "top";
 }
 
 export function positionPanel({ triggerEl, panelEl, portalRoot, placement }) {
   const rect = triggerEl.getBoundingClientRect();
-  const portalRect = portalRoot.getBoundingClientRect();
-  const gap = 8;
+  const rootRect = getRootRect(portalRoot);
+  const gap = EDGE_GAP;
 
-  const vw = window.innerWidth || document.documentElement.clientWidth || 0;
-  const vh = window.innerHeight || document.documentElement.clientHeight || 0;
+  const { vw, vh } = getViewportSize();
 
+  // Keep panel width aligned with trigger but constrained by root bounds.
   const panelWidth = Math.max(120, Math.round(rect.width));
-  const maxPanelWidth = Math.max(120, vw - 16);
+  const maxPanelWidth = Math.max(
+    120,
+    Math.floor(rootRect.width - EDGE_GAP * 2),
+  );
   const width = Math.min(panelWidth, maxPanelWidth);
 
   let left = Math.round(rect.left);
-  if (left + width > vw - 8) left = Math.max(8, vw - width - 8);
-  if (left < 8) left = 8;
+  const minLeft = Math.round(rootRect.left + EDGE_GAP);
+  const maxLeft = Math.round(rootRect.right - EDGE_GAP - width);
+  left = Math.max(minLeft, Math.min(left, maxLeft));
 
-  const spaceBelow = Math.max(0, vh - rect.bottom - gap - 8);
-  const spaceAbove = Math.max(0, rect.top - gap - 8);
+  const spaceBelow = Math.max(
+    0,
+    rootRect.bottom - rect.bottom - gap - EDGE_GAP,
+  );
+  const spaceAbove = Math.max(0, rect.top - rootRect.top - gap - EDGE_GAP);
+
+  const rootHeightCap = Math.floor(rootRect.height * SELECT_MAX_VIEWPORT_K);
   const viewportCap = Math.floor(vh * SELECT_MAX_VIEWPORT_K);
-  const availableSpace = placement === "top" ? spaceAbove : spaceBelow;
+  const cap = Math.max(56, Math.min(rootHeightCap, viewportCap));
 
+  const availableSpace = placement === "top" ? spaceAbove : spaceBelow;
   const maxHeight = Math.max(
-    SELECT_MIN_HEIGHT_PX,
-    Math.min(viewportCap, Math.floor(availableSpace)),
+    56,
+    Math.min(
+      cap,
+      Math.max(0, Math.floor(availableSpace || SELECT_MIN_HEIGHT_PX)),
+    ),
   );
 
   panelEl.style.maxHeight = `${maxHeight}px`;
@@ -48,19 +107,28 @@ export function positionPanel({ triggerEl, panelEl, portalRoot, placement }) {
   if (placement === "top") {
     const panelHeight = Math.min(maxHeight, panelEl.scrollHeight || maxHeight);
     top = Math.round(rect.top - gap - panelHeight);
-    if (top < 8) top = 8;
+    const minTop = Math.round(rootRect.top + EDGE_GAP);
+    if (top < minTop) top = minTop;
   } else {
     top = Math.round(rect.bottom + gap);
-    const maxTop = vh - 8 - Math.min(maxHeight, 120);
-    if (top > maxTop) top = Math.max(8, maxTop);
+    const minTop = Math.round(rootRect.top + EDGE_GAP);
+    const maxTop = Math.round(
+      rootRect.bottom - EDGE_GAP - Math.min(maxHeight, 120),
+    );
+    top = Math.max(minTop, Math.min(top, maxTop));
   }
 
-  const isFixedToBody = portalRoot === document.body;
-  const localLeft = isFixedToBody ? left : left - portalRect.left;
-  const localTop = isFixedToBody ? top : top - portalRect.top;
+  const isFixedToBody =
+    !portalRoot ||
+    portalRoot === document.body ||
+    portalRoot === document.documentElement ||
+    !(portalRoot instanceof HTMLElement);
 
-  panelEl.style.left = `${localLeft}px`;
-  panelEl.style.top = `${localTop}px`;
-  panelEl.style.width = `${width}px`;
+  const localLeft = isFixedToBody ? left : left - rootRect.left;
+  const localTop = isFixedToBody ? top : top - rootRect.top;
+
+  panelEl.style.left = `${Math.round(localLeft)}px`;
+  panelEl.style.top = `${Math.round(localTop)}px`;
+  panelEl.style.width = `${Math.round(width)}px`;
   panelEl.style.zIndex = "1000";
 }

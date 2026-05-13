@@ -185,7 +185,9 @@ export const colorManager = {
     this._bindContainerEvents("bg-colors-container", "bg");
 
     const bindPicker = (type) => {
-      const picker = $(type === "accent" ? "customColorInput" : "customBgInput");
+      const picker = $(
+        type === "accent" ? "customColorInput" : "customBgInput",
+      );
       if (!picker) return;
 
       const blockIfNoPro = (e) => {
@@ -370,7 +372,9 @@ export const colorManager = {
     if (!allowed) return;
 
     const isAccent = type === "accent";
-    const customColors = isAccent ? this.customAccentColors : this.customBgColors;
+    const customColors = isAccent
+      ? this.customAccentColors
+      : this.customBgColors;
 
     if (customColors.length >= MAX_CUSTOM_COLORS) {
       showToast(t(isAccent ? "accent_limit_msg" : "bg_limit_msg"));
@@ -407,7 +411,9 @@ export const colorManager = {
       return;
     }
 
-    const container = $(isAccent ? "accent-colors-container" : "bg-colors-container");
+    const container = $(
+      isAccent ? "accent-colors-container" : "bg-colors-container",
+    );
     const before = captureRects(container);
 
     this._hideActionButton();
@@ -449,7 +455,9 @@ export const colorManager = {
     this._hideActionButton();
 
     const isAccent = type === "accent";
-    const container = $(isAccent ? "accent-colors-container" : "bg-colors-container");
+    const container = $(
+      isAccent ? "accent-colors-container" : "bg-colors-container",
+    );
     const wrapper = container?.querySelector(
       `.color-swatch-wrapper[data-color="${color}"]`,
     );
@@ -464,8 +472,14 @@ export const colorManager = {
     createRemovalGhost(wrapper);
     wrapper.remove();
 
-    const customColors = isAccent ? this.customAccentColors : this.customBgColors;
-    const didRemove = removeColorFromList({ normalizeHexColor }, customColors, color);
+    const customColors = isAccent
+      ? this.customAccentColors
+      : this.customBgColors;
+    const didRemove = removeColorFromList(
+      { normalizeHexColor },
+      customColors,
+      color,
+    );
     if (didRemove) {
       persistCustomColors({ safeSetLS }, type, customColors);
     }
@@ -477,12 +491,16 @@ export const colorManager = {
 
   populateColorSection(type) {
     const isAccent = type === "accent";
-    const container = $(isAccent ? "accent-colors-container" : "bg-colors-container");
+    const container = $(
+      isAccent ? "accent-colors-container" : "bg-colors-container",
+    );
 
     populateColorSection({
       container,
       type,
-      standardColors: isAccent ? this.standardAccentColors : this.standardBgColors,
+      standardColors: isAccent
+        ? this.standardAccentColors
+        : this.standardBgColors,
       customColors: isAccent ? this.customAccentColors : this.customBgColors,
       t,
     });

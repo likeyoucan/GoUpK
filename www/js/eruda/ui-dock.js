@@ -47,7 +47,11 @@ export function createErudaDock() {
   hardReloadBtn.style.border = "none";
 
   const sizeLabel = el("div", { text: "Size: 45vh" }, controlsWrap);
-  const sizeInput = el("input", { type: "range", min: "20", max: "90", step: "1" }, controlsWrap);
+  const sizeInput = el(
+    "input",
+    { type: "range", min: "20", max: "90", step: "1" },
+    controlsWrap,
+  );
 
   const panel = el("div", { id: "__erudaPanel" }, document.body);
   const resize = el("div", { id: "__erudaResize" }, panel);
@@ -155,10 +159,14 @@ export function createErudaDock() {
     const dx = e.clientX - drag.x;
     const dy = e.clientY - drag.y;
 
-    if (panelPos === "bottom") sizeVh = clamp(drag.vh + (-dy / vh) * 100, 20, 90);
-    else if (panelPos === "top") sizeVh = clamp(drag.vh + (dy / vh) * 100, 20, 90);
-    else if (panelPos === "left") sizeVw = clamp(drag.vw + (dx / vw) * 100, 20, 90);
-    else if (panelPos === "right") sizeVw = clamp(drag.vw + (-dx / vw) * 100, 20, 90);
+    if (panelPos === "bottom")
+      sizeVh = clamp(drag.vh + (-dy / vh) * 100, 20, 90);
+    else if (panelPos === "top")
+      sizeVh = clamp(drag.vh + (dy / vh) * 100, 20, 90);
+    else if (panelPos === "left")
+      sizeVw = clamp(drag.vw + (dx / vw) * 100, 20, 90);
+    else if (panelPos === "right")
+      sizeVw = clamp(drag.vw + (-dx / vw) * 100, 20, 90);
 
     applyPanelGeometry();
   });
