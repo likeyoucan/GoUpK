@@ -81,15 +81,24 @@ function animateLayoutShift(
       if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) return;
 
       if (springTarget && el === springTarget) {
+        el.style.transformOrigin = "left center";
+
         el.animate(
           [
-            { transform: `translate(${dx}px, ${dy}px)` },
-            { transform: "translate(-6px, 0)", offset: 0.58 },
-            { transform: "translate(2px, 0)", offset: 0.82 },
-            { transform: "translate(0, 0)" },
+            { transform: `translate(${dx}px, ${dy}px) scale(1, 1)` },
+            { transform: "translate(-7px, 0) scale(1.08, 0.92)", offset: 0.5 },
+            {
+              transform: "translate(2.5px, 0) scale(0.95, 1.05)",
+              offset: 0.76,
+            },
+            {
+              transform: "translate(-0.8px, 0) scale(1.02, 0.98)",
+              offset: 0.9,
+            },
+            { transform: "translate(0, 0) scale(1, 1)" },
           ],
           {
-            duration: 500,
+            duration: 560,
             easing: "cubic-bezier(0.22, 1, 0.36, 1)",
           },
         );
@@ -98,10 +107,9 @@ function animateLayoutShift(
 
       el.animate(
         [
-          { transform: `translate(${dx}px, ${dy}px)` },
-          { transform: "translate(-2px, 0)", offset: 0.66 },
-          { transform: "translate(0.8px, 0)", offset: 0.86 },
-          { transform: "translate(0, 0)" },
+          { transform: `translate(${dx}px, ${dy}px) scale(1,1)` },
+          { transform: "translate(-1.6px, 0) scale(1.02, 0.98)", offset: 0.7 },
+          { transform: "translate(0, 0) scale(1,1)" },
         ],
         {
           duration,
@@ -114,14 +122,26 @@ function animateLayoutShift(
 function animateNewSwatch(el) {
   if (!el) return;
 
+  el.style.transformOrigin = "center bottom";
+
   el.animate(
     [
-      { opacity: 0, transform: "translateY(3px) scale(0.92)" },
-      { opacity: 1, transform: "translateY(-1px) scale(1.035)", offset: 0.68 },
-      { opacity: 1, transform: "translateY(0) scale(1)" },
+      { opacity: 0, transform: "translateY(6px) scale(0.86, 1.16)" },
+      {
+        opacity: 1,
+        transform: "translateY(-2px) scale(1.08, 0.92)",
+        offset: 0.42,
+      },
+      {
+        opacity: 1,
+        transform: "translateY(1px) scale(0.97, 1.03)",
+        offset: 0.72,
+      },
+      { opacity: 1, transform: "translateY(0) scale(1.01, 0.99)", offset: 0.9 },
+      { opacity: 1, transform: "translateY(0) scale(1, 1)" },
     ],
     {
-      duration: 520,
+      duration: 620,
       easing: "cubic-bezier(0.22, 1, 0.36, 1)",
     },
   );
