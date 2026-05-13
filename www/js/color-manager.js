@@ -64,7 +64,7 @@ function captureRects(container) {
 function animateLayoutShift(
   container,
   beforeMap,
-  { duration = 320, springTarget = null } = {},
+  { duration = 300, springTarget = null } = {},
 ) {
   if (!container) return;
 
@@ -81,15 +81,16 @@ function animateLayoutShift(
       if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) return;
 
       if (springTarget && el === springTarget) {
+        // Jelly spring for element that moved into deleted slot.
         el.animate(
           [
             { transform: `translate(${dx}px, ${dy}px)` },
-            { transform: "translate(-3px, 0)", offset: 0.62 },
-            { transform: "translate(1px, 0)", offset: 0.82 },
+            { transform: "translate(-4px, 0)", offset: 0.58 },
+            { transform: "translate(1.5px, 0)", offset: 0.82 },
             { transform: "translate(0, 0)" },
           ],
           {
-            duration: 420,
+            duration: 430,
             easing: "cubic-bezier(0.22, 1, 0.36, 1)",
           },
         );
@@ -125,21 +126,37 @@ function animateNewSwatch(el) {
   );
 }
 
-function animateDeleteSwatch(wrapper) {
-  if (!wrapper) return Promise.resolve();
+function animateDeleteGhost(sourceEl) {
+  if (!sourceEl) return Promise.resolve();
 
-  return wrapper.animate(
-    [
-      { opacity: 1, transform: "scale(1)" },
-      { opacity: 0.95, transform: "scale(0.97)", offset: 0.45 },
-      { opacity: 0, transform: "scale(0.9)" },
-    ],
-    {
-      duration: 220,
-      easing: "cubic-bezier(0.22, 0.9, 0.3, 1)",
-      fill: "forwards",
-    },
-  ).finished;
+  const rect = sourceEl.getBoundingClientRect();
+  const ghost = sourceEl.cloneNode(true);
+
+  ghost.style.position = "fixed";
+  ghost.style.left = `${rect.left}px`;
+  ghost.style.top = `${rect.top}px`;
+  ghost.style.width = `${rect.width}px`;
+  ghost.style.height = `${rect.height}px`;
+  ghost.style.margin = "0";
+  ghost.style.pointerEvents = "none";
+  ghost.style.zIndex = "9999";
+
+  document.body.appendChild(ghost);
+
+  return ghost
+    .animate(
+      [
+        { opacity: 1, transform: "scale(1)" },
+        { opacity: 0.95, transform: "scale(0.97)", offset: 0.45 },
+        { opacity: 0, transform: "scale(0.9)" },
+      ],
+      {
+        duration: 220,
+        easing: "cubic-bezier(0.22, 0.9, 0.3, 1)",
+        fill: "forwards",
+      },
+    )
+    .finished.finally(() => ghost.remove());
 }
 
 export const colorManager = {
@@ -489,18 +506,16 @@ export const colorManager = {
       persistCustomColors({ safeSetLS }, type, customColors);
     }
 
-    animateDeleteSwatch(wrapper)
-      .catch(() => {})
-      .finally(() => {
-        wrapper.remove();
+    // Make visual ghost first, then remove real node from flow immediately.
+    animateDeleteGhost(wrapper).catch(() => {});
+    wrapper.remove();
 
-        requestAnimationFrame(() => {
-          animateLayoutShift(container, before, {
-            duration: 300,
-            springTarget: follower,
-          });
-        });
+    requestAnimationFrame(() => {
+      animateLayoutShift(container, before, {
+        duration: 300,
+        springTarget: follower,
       });
+    });
   },
 
   populateColorSection(type) {
