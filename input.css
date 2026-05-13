@@ -1909,7 +1909,7 @@ body.hide-nav-labels .nav-btn {
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
-  column-gap: 0.5rem;
+  column-gap: 1rem;
   width: 100%;
 }
 
