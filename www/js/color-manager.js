@@ -154,47 +154,6 @@ function animateDeleteImpact(container) {
   });
 }
 
-function createRemovalGhost(sourceEl) {
-  if (!sourceEl) return Promise.resolve();
-
-  const rect = sourceEl.getBoundingClientRect();
-  const ghost = sourceEl.cloneNode(true);
-
-  ghost.style.position = "fixed";
-  ghost.style.left = `${rect.left}px`;
-  ghost.style.top = `${rect.top}px`;
-  ghost.style.width = `${rect.width}px`;
-  ghost.style.height = `${rect.height}px`;
-  ghost.style.margin = "0";
-  ghost.style.pointerEvents = "none";
-  ghost.style.zIndex = "9999";
-
-  document.body.appendChild(ghost);
-
-  return ghost
-    .animate(
-      [
-        { opacity: 1, transform: "translateX(0) scale(1)" },
-        {
-          opacity: 1,
-          transform: "translateX(-4px) scale(0.985)",
-          offset: 0.35,
-        },
-        {
-          opacity: 0.7,
-          transform: "translateX(2px) scale(0.96)",
-          offset: 0.72,
-        },
-        { opacity: 0, transform: "translateX(0) scale(0.92)" },
-      ],
-      {
-        duration: 500,
-        easing: "cubic-bezier(0.22, 0.95, 0.25, 1)",
-      },
-    )
-    .finished.finally(() => ghost.remove());
-}
-
 export const colorManager = {
   customAccentColors: [],
   customBgColors: [],
@@ -488,7 +447,7 @@ export const colorManager = {
     );
 
     requestAnimationFrame(() => {
-      animateLayoutShift(container, before, 620);
+      animateLayoutShift(container, before, 420);
       animateNewSwatch(inserted);
     });
 
@@ -499,47 +458,54 @@ export const colorManager = {
     );
   },
 
- _deleteColor(color, type) {
-  const allowed = appProManager.requirePro("custom_colors", () =>
-    showProMessage("custom_colors"),
-  );
-  if (!allowed) return;
+  _deleteColor(color, type) {
+    const allowed = appProManager.requirePro("custom_colors", () =>
+      showProMessage("custom_colors"),
+    );
+    if (!allowed) return;
 
-  sm.vibrate(40, "medium");
-  this._hideActionButton();
+    sm.vibrate(40, "medium");
+    this._hideActionButton();
 
-  const isAccent = type === "accent";
-  const container = $(isAccent ? "accent-colors-container" : "bg-colors-container");
-  const wrapper = container?.querySelector(
-    `.color-swatch-wrapper[data-color="${color}"]`,
-  );
-  if (!wrapper) return;
+    const isAccent = type === "accent";
+    const container = $(
+      isAccent ? "accent-colors-container" : "bg-colors-container",
+    );
+    const wrapper = container?.querySelector(
+      `.color-swatch-wrapper[data-color="${color}"]`,
+    );
+    if (!wrapper) return;
 
-  document.dispatchEvent(
-    new CustomEvent(APP_EVENTS.COLOR_DELETED, { detail: { type, color } }),
-  );
+    document.dispatchEvent(
+      new CustomEvent(APP_EVENTS.COLOR_DELETED, { detail: { type, color } }),
+    );
 
-  animateDeleteImpact(container);
+    animateDeleteImpact(container);
 
-  const customColors = isAccent ? this.customAccentColors : this.customBgColors;
-  const didRemove = removeColorFromList({ normalizeHexColor }, customColors, color);
-  if (didRemove) {
-    persistCustomColors({ safeSetLS }, type, customColors);
-  }
+    const customColors = isAccent
+      ? this.customAccentColors
+      : this.customBgColors;
+    const didRemove = removeColorFromList(
+      { normalizeHexColor },
+      customColors,
+      color,
+    );
+    if (didRemove) {
+      persistCustomColors({ safeSetLS }, type, customColors);
+    }
 
-  // Мягкое "схлопывание" карточки через существующий CSS .is-collapsing
-  wrapper.classList.add("is-collapsing");
+    wrapper.classList.add("is-collapsing");
 
-  let done = false;
-  const finalize = () => {
-    if (done) return;
-    done = true;
-    wrapper.remove();
-  };
+    let done = false;
+    const finalize = () => {
+      if (done) return;
+      done = true;
+      wrapper.remove();
+    };
 
-  wrapper.addEventListener("animationend", finalize, { once: true });
-  setTimeout(finalize, 320);
-}
+    wrapper.addEventListener("animationend", finalize, { once: true });
+    setTimeout(finalize, 320);
+  },
 
   populateColorSection(type) {
     const isAccent = type === "accent";
