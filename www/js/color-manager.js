@@ -104,14 +104,12 @@ function clearPickerFocusVisual(pickerWrapper, picker) {
 function animateLayoutShift(
   container,
   beforeMap,
-  { duration = 320, springTarget = null } = {},
+  { duration = 220, springTarget = null } = {},
 ) {
   if (!container) return;
 
   const nodes = [
-    ...container.querySelectorAll(
-      ".color-swatch-wrapper, .color-picker-wrapper",
-    ),
+    ...container.querySelectorAll(".color-swatch-wrapper, .color-picker-wrapper"),
   ];
 
   const moved = nodes
@@ -139,31 +137,18 @@ function animateLayoutShift(
 
   moved.forEach(({ el, dx, dy }) => {
     if (el === resolvedSpring) {
-      const push = dx >= 0 ? -5 : 5;
-      const rebound = -push * 0.36;
-      const settle = push * 0.1;
-
-      el.style.transformOrigin = "left center";
+      const push = dx >= 0 ? -2 : 2;
+      const rebound = -push * 0.35;
 
       el.animate(
         [
-          { transform: `translate(${dx}px, ${dy}px) scale(1,1)` },
-          {
-            transform: `translate(${push}px, 0) scale(1.05, 0.95)`,
-            offset: 0.6,
-          },
-          {
-            transform: `translate(${rebound}px, 0) scale(0.97, 1.03)`,
-            offset: 0.84,
-          },
-          {
-            transform: `translate(${settle}px, 0) scale(1.01, 0.99)`,
-            offset: 0.94,
-          },
-          { transform: "translate(0,0) scale(1,1)" },
+          { transform: `translate(${dx}px, ${dy}px)` },
+          { transform: `translate(${push}px, 0)`, offset: 0.7 },
+          { transform: `translate(${rebound}px, 0)`, offset: 0.9 },
+          { transform: "translate(0, 0)" },
         ],
         {
-          duration: 500,
+          duration: 300,
           easing: "cubic-bezier(0.22, 1, 0.36, 1)",
         },
       );
@@ -173,7 +158,7 @@ function animateLayoutShift(
     el.animate(
       [
         { transform: `translate(${dx}px, ${dy}px)` },
-        { transform: "translate(0,0)" },
+        { transform: "translate(0, 0)" },
       ],
       {
         duration,
@@ -186,17 +171,14 @@ function animateLayoutShift(
 function animateNewSwatch(el) {
   if (!el) return;
 
-  el.style.transformOrigin = "center center";
-
   el.animate(
     [
-      { opacity: 0, transform: "translateY(5px) scale(0.95)" },
-      { opacity: 1, transform: "translateY(-1px) scale(1.025)", offset: 0.64 },
-      { opacity: 1, transform: "translateY(0) scale(1)" },
+      { opacity: 0, transform: "translateY(3px)" },
+      { opacity: 1, transform: "translateY(0)" },
     ],
     {
-      duration: 500,
-      easing: "cubic-bezier(0.22, 0.95, 0.25, 1)",
+      duration: 280,
+      easing: "cubic-bezier(0.22, 0.9, 0.3, 1)",
     },
   );
 }
@@ -207,12 +189,11 @@ function animateDeleteSwatch(wrapper) {
   return wrapper.animate(
     [
       { opacity: 1, transform: "scale(1)" },
-      { opacity: 0.94, transform: "scale(0.97)", offset: 0.58 },
-      { opacity: 0, transform: "scale(0.9)" },
+      { opacity: 0, transform: "scale(0.94)" },
     ],
     {
-      duration: 300,
-      easing: "cubic-bezier(0.22, 0.92, 0.28, 1)",
+      duration: 180,
+      easing: "cubic-bezier(0.22, 0.9, 0.3, 1)",
       fill: "forwards",
     },
   ).finished;
