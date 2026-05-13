@@ -1,7 +1,6 @@
 // Файл: www/js/custom-select/positioning.js
 
 const SELECT_MAX_VIEWPORT_K = 0.6;
-const SELECT_MIN_HEIGHT_PX = 120;
 const EDGE_GAP = 8;
 
 function getViewportSize() {
@@ -42,7 +41,11 @@ function getRootRect(portalRoot) {
   };
 }
 
-export function decidePlacement(triggerEl, portalRoot = document.body) {
+export function decidePlacement(
+  triggerEl,
+  panelEl,
+  portalRoot = document.body,
+) {
   const rect = triggerEl.getBoundingClientRect();
   const rootRect = getRootRect(portalRoot);
   const gap = EDGE_GAP;
@@ -53,9 +56,13 @@ export function decidePlacement(triggerEl, portalRoot = document.body) {
   );
   const spaceAbove = Math.max(0, rect.top - rootRect.top - gap - EDGE_GAP);
 
-  // Prefer opening down only when there is enough visible space inside current app/root.
-  if (spaceBelow >= 140) return "bottom";
-  if (spaceAbove >= 140) return "top";
+  const desiredHeight = Math.min(
+    panelEl?.scrollHeight || 240,
+    Math.floor(rootRect.height * SELECT_MAX_VIEWPORT_K),
+  );
+
+  if (spaceBelow >= desiredHeight) return "bottom";
+  if (spaceAbove >= desiredHeight) return "top";
 
   return spaceBelow >= spaceAbove ? "bottom" : "top";
 }
@@ -65,9 +72,8 @@ export function positionPanel({ triggerEl, panelEl, portalRoot, placement }) {
   const rootRect = getRootRect(portalRoot);
   const gap = EDGE_GAP;
 
-  const { vw, vh } = getViewportSize();
+  const { vw } = getViewportSize();
 
-  // Keep panel width aligned with trigger but constrained by root bounds.
   const panelWidth = Math.max(120, Math.round(rect.width));
   const maxPanelWidth = Math.max(
     120,
@@ -86,18 +92,8 @@ export function positionPanel({ triggerEl, panelEl, portalRoot, placement }) {
   );
   const spaceAbove = Math.max(0, rect.top - rootRect.top - gap - EDGE_GAP);
 
-  const rootHeightCap = Math.floor(rootRect.height * SELECT_MAX_VIEWPORT_K);
-  const viewportCap = Math.floor(vh * SELECT_MAX_VIEWPORT_K);
-  const cap = Math.max(56, Math.min(rootHeightCap, viewportCap));
-
   const availableSpace = placement === "top" ? spaceAbove : spaceBelow;
-  const maxHeight = Math.max(
-    56,
-    Math.min(
-      cap,
-      Math.max(0, Math.floor(availableSpace || SELECT_MIN_HEIGHT_PX)),
-    ),
-  );
+  const maxHeight = Math.max(40, Math.floor(availableSpace));
 
   panelEl.style.maxHeight = `${maxHeight}px`;
   panelEl.style.overflowY = "auto";
@@ -131,4 +127,13 @@ export function positionPanel({ triggerEl, panelEl, portalRoot, placement }) {
   panelEl.style.top = `${Math.round(localTop)}px`;
   panelEl.style.width = `${Math.round(width)}px`;
   panelEl.style.zIndex = "1000";
+
+  // Safety: keep panel fully visible in viewport horizontally even when root is wide/off-center.
+  const panelRight = Math.round(left + width);
+  if (panelRight > vw - EDGE_GAP && isFixedToBody) {
+    panelEl.style.left = `${Math.max(
+      EDGE_GAP,
+      Math.round(vw - EDGE_GAP - width),
+    )}px`;
+  }
 }

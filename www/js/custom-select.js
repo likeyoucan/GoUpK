@@ -365,7 +365,11 @@ export class CustomSelect {
 
     this._rafReposition = requestAnimationFrame(() => {
       this._rafReposition = 0;
-      this._placement = decidePlacement(this.trigger);
+      this._placement = decidePlacement(
+        this.trigger,
+        this.optionsPanel,
+        this._portalRoot,
+      );
       positionPanel({
         triggerEl: this.trigger,
         panelEl: this.optionsPanel,
@@ -404,7 +408,11 @@ export class CustomSelect {
     this._movePanelToPortal();
     this.optionsPanel.classList.remove("hidden");
 
-    this._placement = decidePlacement(this.trigger);
+    this._placement = decidePlacement(
+      this.trigger,
+      this.optionsPanel,
+      this._portalRoot,
+    );
     positionPanel({
       triggerEl: this.trigger,
       panelEl: this.optionsPanel,
