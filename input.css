@@ -789,7 +789,7 @@ html.dark .app-bg::before {
 ============================================================= */
 
 @media (min-width: 375px) and (orientation: portrait) {
-  .top_content{
+  .top_content {
     padding-block: 16px;
   }
 }
@@ -1858,8 +1858,14 @@ body.hide-nav-labels .nav-btn {
 }
 
 .range-field-half {
-  width: 50%;
-  flex: 0 0 50%;
+  width: 30%;
+  flex: 0 0 30%;
+}
+
+.range-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .range-value {
@@ -1868,6 +1874,29 @@ body.hide-nav-labels .nav-btn {
   line-height: 1;
   opacity: 0.95;
   white-space: nowrap;
+  text-align: right;
+}
+
+/* Спец-режим для половинных слайдеров: вся правая группа прижата вправо */
+.range-row-half {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  column-gap: 0.5rem;
+  width: 100%;
+}
+
+.range-row-half .range-field-half {
+  justify-self: end;
+}
+
+.range-row-half .range-value {
+  justify-self: end;
+}
+
+#vignette-depth-container .thumb-label-container,
+#vibro-level-container .thumb-label-container {
+  display: none;
 }
 
 /* =========================================
