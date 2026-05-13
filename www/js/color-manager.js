@@ -104,7 +104,7 @@ function clearPickerFocusVisual(pickerWrapper, picker) {
 function animateLayoutShift(
   container,
   beforeMap,
-  { duration = 380, springTarget = null } = {},
+  { duration = 340, springTarget = null } = {},
 ) {
   if (!container) return;
 
@@ -170,15 +170,15 @@ function animateLayoutShift(
       return;
     }
 
+    // For non-target moved elements keep it simple to reduce jank.
     el.animate(
       [
-        { transform: `translate(${dx}px, ${dy}px) scale(1,1)` },
-        { transform: "translate(-0.9px, 0) scale(1.01, 0.99)", offset: 0.74 },
-        { transform: "translate(0,0) scale(1,1)" },
+        { transform: `translate(${dx}px, ${dy}px)` },
+        { transform: "translate(0, 0)" },
       ],
       {
         duration,
-        easing: "cubic-bezier(0.22, 0.94, 0.26, 1)",
+        easing: "cubic-bezier(0.22, 0.9, 0.3, 1)",
       },
     );
   });
@@ -192,7 +192,7 @@ function animateNewSwatch(el) {
   el.animate(
     [
       { opacity: 0, transform: "translateY(3px) scale(0.95)" },
-      { opacity: 1, transform: "translateY(-1px) scale(1.02)", offset: 0.65 },
+      { opacity: 1, transform: "translateY(-1px) scale(1.03)", offset: 0.62 },
       { opacity: 1, transform: "translateY(0) scale(1)" },
     ],
     {
@@ -413,15 +413,16 @@ export const colorManager = {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.dataset.action = action;
-    btn.className = isAdd
-      ? "color-action-btn w-full h-full inset-0 m-auto flex items-center justify-center rounded-full shadow-lg focus:outline-none custom-focus active:scale-90 transition-transform"
-      : "color-action-btn flex items-center justify-center rounded-full shadow-lg focus:outline-none custom-focus active:scale-90 transition-transform";
 
     if (isAdd) {
+      btn.className =
+        "color-action-btn w-full h-full inset-0 m-auto flex items-center justify-center rounded-full shadow-lg focus:outline-none custom-focus active:scale-90 transition-all";
       btn.setAttribute("aria-label", t("add_color"));
       updateAddButtonColor({ button: btn, color, hexToRGB, getLuminance });
       btn.append(createSVGIcon("M12 4.5v15m7.5-7.5h-15", ["w-5", "h-5"]));
     } else {
+      btn.className =
+        "color-action-btn flex items-center justify-center rounded-full shadow-lg focus:outline-none custom-focus active:scale-90 transition-transform";
       btn.setAttribute("aria-label", `${t("delete")} ${color}`);
       btn.classList.add("bg-red-500", "text-white");
       btn.dataset.color = color;
@@ -495,6 +496,7 @@ export const colorManager = {
     const pickerWrapper = picker?.closest(".color-picker-wrapper");
 
     clearPickerFocusVisual(pickerWrapper, picker);
+    pickerWrapper?.classList.add("picker-commit-lock");
 
     const before = captureRects(container);
 
@@ -517,8 +519,12 @@ export const colorManager = {
     );
 
     requestAnimationFrame(() => {
-      animateLayoutShift(container, before, { duration: 360 });
+      animateLayoutShift(container, before, { duration: 340 });
       animateNewSwatch(inserted);
+
+      setTimeout(() => {
+        pickerWrapper?.classList.remove("picker-commit-lock");
+      }, 420);
     });
 
     document.dispatchEvent(
