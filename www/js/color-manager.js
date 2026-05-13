@@ -61,7 +61,11 @@ function captureRects(container) {
   return map;
 }
 
-function animateLayoutShift(container, beforeMap, duration = 340) {
+function animateLayoutShift(
+  container,
+  beforeMap,
+  { duration = 320, springTarget = null } = {},
+) {
   if (!container) return;
 
   container
@@ -75,6 +79,22 @@ function animateLayoutShift(container, beforeMap, duration = 340) {
       const dy = before.top - after.top;
 
       if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) return;
+
+      if (springTarget && el === springTarget) {
+        el.animate(
+          [
+            { transform: `translate(${dx}px, ${dy}px)` },
+            { transform: "translate(-3px, 0)", offset: 0.62 },
+            { transform: "translate(1px, 0)", offset: 0.82 },
+            { transform: "translate(0, 0)" },
+          ],
+          {
+            duration: 420,
+            easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+          },
+        );
+        return;
+      }
 
       el.animate(
         [
@@ -105,80 +125,19 @@ function animateNewSwatch(el) {
   );
 }
 
-function animateDeleteImpact(container) {
-  if (!container) return Promise.resolve();
-
-  const picker = container.querySelector(".color-picker-wrapper");
-  const swatches = [...container.querySelectorAll(".color-swatch-wrapper")];
-  if (!picker || swatches.length === 0) return Promise.resolve();
-
-  const pickerRect = picker.getBoundingClientRect();
-
-  const impacted = swatches
-    .map((el) => {
-      const r = el.getBoundingClientRect();
-      const dist = Math.abs(pickerRect.left - r.right);
-      return { el, dist };
-    })
-    .sort((a, b) => a.dist - b.dist)
-    .slice(0, 3);
-
-  const animations = [];
-
-  animations.push(
-    picker.animate(
-      [
-        { transform: "translateX(0) scale(1)" },
-        { transform: "translateX(-6px) scale(0.992)", offset: 0.34 },
-        { transform: "translateX(2px) scale(1.006)", offset: 0.72 },
-        { transform: "translateX(0) scale(1)" },
-      ],
-      {
-        duration: 420,
-        easing: "cubic-bezier(0.22, 1, 0.36, 1)",
-      },
-    ).finished,
-  );
-
-  impacted.forEach(({ el }, i) => {
-    el.style.transformOrigin = "right center";
-    animations.push(
-      el.animate(
-        [
-          { transform: "translateX(0) scale(1)" },
-          { transform: "translateX(-3px) scale(0.965)", offset: 0.33 },
-          { transform: "translateX(1px) scale(1.012)", offset: 0.72 },
-          { transform: "translateX(0) scale(1)" },
-        ],
-        {
-          duration: 390,
-          delay: i * 12,
-          easing: "cubic-bezier(0.22, 1, 0.36, 1)",
-        },
-      ).finished,
-    );
-  });
-
-  return Promise.allSettled(animations);
-}
-
 function animateDeleteSwatch(wrapper) {
   if (!wrapper) return Promise.resolve();
 
   return wrapper.animate(
     [
-      { opacity: 1, transform: "translateY(0) scale(1)" },
-      { opacity: 1, transform: "translateY(0) scale(0.97)", offset: 0.36 },
-      {
-        opacity: 0.85,
-        transform: "translateY(-1px) scale(1.01)",
-        offset: 0.62,
-      },
-      { opacity: 0, transform: "translateY(2px) scale(0.9)" },
+      { opacity: 1, transform: "scale(1)" },
+      { opacity: 0.95, transform: "scale(0.97)", offset: 0.45 },
+      { opacity: 0, transform: "scale(0.9)" },
     ],
     {
-      duration: 300,
+      duration: 220,
       easing: "cubic-bezier(0.22, 0.9, 0.3, 1)",
+      fill: "forwards",
     },
   ).finished;
 }
@@ -476,7 +435,7 @@ export const colorManager = {
     );
 
     requestAnimationFrame(() => {
-      animateLayoutShift(container, before, 340);
+      animateLayoutShift(container, before, { duration: 320 });
       animateNewSwatch(inserted);
     });
 
@@ -493,7 +452,7 @@ export const colorManager = {
     );
     if (!allowed) return;
 
-    sm.vibrate(40, "medium");
+    sm.vibrate(35, "medium");
     this._hideActionButton();
 
     const isAccent = type === "accent";
@@ -504,6 +463,13 @@ export const colorManager = {
       `.color-swatch-wrapper[data-color="${color}"]`,
     );
     if (!wrapper) return;
+
+    const swatchesBefore = [
+      ...container.querySelectorAll(".color-swatch-wrapper"),
+    ];
+    const removedIdx = swatchesBefore.indexOf(wrapper);
+    const follower =
+      removedIdx >= 0 ? swatchesBefore[removedIdx + 1] || null : null;
 
     const before = captureRects(container);
 
@@ -523,15 +489,18 @@ export const colorManager = {
       persistCustomColors({ safeSetLS }, type, customColors);
     }
 
-    const impactAnim = animateDeleteImpact(container);
-    const deleteAnim = animateDeleteSwatch(wrapper);
+    animateDeleteSwatch(wrapper)
+      .catch(() => {})
+      .finally(() => {
+        wrapper.remove();
 
-    Promise.allSettled([impactAnim, deleteAnim]).finally(() => {
-      wrapper.remove();
-      requestAnimationFrame(() => {
-        animateLayoutShift(container, before, 340);
+        requestAnimationFrame(() => {
+          animateLayoutShift(container, before, {
+            duration: 300,
+            springTarget: follower,
+          });
+        });
       });
-    });
   },
 
   populateColorSection(type) {
