@@ -2232,7 +2232,7 @@ body.hide-nav-labels .nav-btn {
 /* Animated gradient border with short pause */
 .pro-animated-border {
   position: relative;
-  border: 1px solid transparent;
+  border: 2px solid transparent;
   background:
     linear-gradient(var(--pro-fill), var(--pro-fill)) padding-box,
     linear-gradient(
