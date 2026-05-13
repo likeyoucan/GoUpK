@@ -74,7 +74,6 @@ function animateLayoutShift(
     ),
   ];
 
-  // Сначала собираем только реально сдвинутые элементы.
   const moved = nodes
     .map((el) => {
       const before = beforeMap.get(el);
@@ -91,7 +90,6 @@ function animateLayoutShift(
 
   if (!moved.length) return;
 
-  // Если переданный springTarget не сдвинулся, берем первый реально сдвинутый.
   let resolvedSpring = null;
   if (springTarget) {
     const found = moved.find((m) => m.el === springTarget);
@@ -122,9 +120,9 @@ function animateLayoutShift(
 
     el.animate(
       [
-        { transform: `translate(${dx}px, ${dy}px) scale(1, 1)` },
+        { transform: `translate(${dx}px, ${dy}px) scale(1,1)` },
         { transform: "translate(-1.6px, 0) scale(1.02, 0.98)", offset: 0.7 },
-        { transform: "translate(0, 0) scale(1, 1)" },
+        { transform: "translate(0, 0) scale(1,1)" },
       ],
       {
         duration,
@@ -452,6 +450,19 @@ export const colorManager = {
     const container = $(
       isAccent ? "accent-colors-container" : "bg-colors-container",
     );
+    const pickerWrapper = picker?.closest(".color-picker-wrapper");
+
+    // Remove focus/ring before FLIP so highlight border does not animate with "+" button.
+    if (document.activeElement === picker) {
+      picker.blur();
+    }
+    pickerWrapper?.classList.remove(
+      "ring-2",
+      "ring-[var(--primary-color)]",
+      "ring-offset-2",
+      "ring-offset-surface",
+    );
+
     const before = captureRects(container);
 
     this._hideActionButton();
