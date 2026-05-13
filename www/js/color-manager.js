@@ -61,7 +61,7 @@ function captureRects(container) {
   return map;
 }
 
-function animateLayoutShift(container, beforeMap, duration = 260) {
+function animateLayoutShift(container, beforeMap, duration = 420) {
   if (!container) return;
 
   container
@@ -83,7 +83,7 @@ function animateLayoutShift(container, beforeMap, duration = 260) {
         ],
         {
           duration,
-          easing: "cubic-bezier(0.22, 0.8, 0.18, 1)",
+          easing: "cubic-bezier(0.22, 1, 0.36, 1)",
         },
       );
     });
@@ -94,12 +94,13 @@ function animateNewSwatch(el) {
 
   el.animate(
     [
-      { opacity: 0, transform: "scale(0.86)" },
+      { opacity: 0, transform: "scale(0.82)" },
+      { opacity: 1, transform: "scale(1.08)", offset: 0.62 },
       { opacity: 1, transform: "scale(1)" },
     ],
     {
-      duration: 260,
-      easing: "cubic-bezier(0.22, 0.8, 0.18, 1)",
+      duration: 420,
+      easing: "cubic-bezier(0.22, 1, 0.36, 1)",
     },
   );
 }
@@ -125,11 +126,12 @@ function createRemovalGhost(sourceEl) {
     .animate(
       [
         { opacity: 1, transform: "scale(1)" },
-        { opacity: 0, transform: "scale(0.72)" },
+        { opacity: 1, transform: "scale(1.06)", offset: 0.35 },
+        { opacity: 0, transform: "scale(0.78)" },
       ],
       {
-        duration: 220,
-        easing: "cubic-bezier(0.4, 0, 0.2, 1)",
+        duration: 320,
+        easing: "cubic-bezier(0.22, 1, 0.36, 1)",
       },
     )
     .addEventListener(
@@ -434,7 +436,7 @@ export const colorManager = {
     );
 
     requestAnimationFrame(() => {
-      animateLayoutShift(container, before, 280);
+      animateLayoutShift(container, before, 420);
       animateNewSwatch(inserted);
     });
 
@@ -485,7 +487,7 @@ export const colorManager = {
     }
 
     requestAnimationFrame(() => {
-      animateLayoutShift(container, before, 300);
+      animateLayoutShift(container, before, 420);
     });
   },
 

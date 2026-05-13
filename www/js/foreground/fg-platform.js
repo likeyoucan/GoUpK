@@ -3,6 +3,14 @@
 let pluginsRef = null;
 let handles = [];
 
+function debugLog(...args) {
+  try {
+    if (localStorage.getItem("fg-debug") === "true") {
+      console.log("[fg-platform]", ...args);
+    }
+  } catch {}
+}
+
 export function isNative() {
   return !!(window.Capacitor && window.Capacitor.isNativePlatform());
 }
@@ -11,12 +19,23 @@ export function getPlugins() {
   if (pluginsRef) return pluginsRef;
   if (!isNative()) return null;
 
-  const { App } = window.Capacitor.Plugins || {};
-  const FgService =
-    window.Capacitor.Plugins?.ForegroundService ||
-    window.Capacitor.Plugins?.CapacitorAndroidForegroundService;
+  const allPlugins = window.Capacitor?.Plugins || {};
+  const { App } = allPlugins;
 
-  if (!App || !FgService) return null;
+  // Important: plugin key may differ across versions/builds.
+  const FgService =
+    allPlugins.ForegroundService ||
+    allPlugins.AndroidForegroundService ||
+    allPlugins.CapacitorAndroidForegroundService;
+
+  if (!App || !FgService) {
+    debugLog("plugins missing", {
+      hasApp: !!App,
+      hasFgService: !!FgService,
+      pluginKeys: Object.keys(allPlugins),
+    });
+    return null;
+  }
 
   const start =
     FgService.startForegroundService?.bind(FgService) ??
@@ -32,6 +51,12 @@ export function getPlugins() {
     FgService.stop?.bind(FgService);
 
   pluginsRef = { App, FgService, start, update, stop };
+  debugLog("plugins resolved", {
+    start: !!start,
+    update: !!update,
+    stop: !!stop,
+  });
+
   return pluginsRef;
 }
 

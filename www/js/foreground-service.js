@@ -56,6 +56,14 @@ const listeners = {
   foregroundSettingChanged: null,
 };
 
+function fgDebug(...args) {
+  try {
+    if (localStorage.getItem("fg-debug") === "true") {
+      console.log("[fg]", ...args);
+    }
+  } catch {}
+}
+
 function buildSignature(state, payload) {
   return [
     state.mode,
@@ -72,9 +80,13 @@ async function stopForeground() {
   const plugins = getPlugins();
   if (!plugins || !isForegroundShown) return;
 
-  await plugins.stop?.().catch(() => {});
+  await plugins.stop?.().catch((err) => {
+    console.warn("[fg] stop failed", err);
+  });
+
   isForegroundShown = false;
   lastSignature = "";
+  fgDebug("foreground stopped");
 }
 
 export async function syncNotification() {
@@ -82,6 +94,7 @@ export async function syncNotification() {
   if (!plugins || appIsActive) return;
 
   if (!uiSettingsManager.showForegroundBanner) {
+    fgDebug("skip sync: banner disabled");
     await stopForeground();
     return;
   }
@@ -94,6 +107,7 @@ export async function syncNotification() {
   });
 
   if (!state) {
+    fgDebug("skip sync: no active foreground state");
     await stopForeground();
     return;
   }
@@ -123,14 +137,27 @@ export async function syncNotification() {
     buttons: [{ id: ACTION_TOGGLE, title: payload.buttonTitle }],
   };
 
+  fgDebug("sync notification", {
+    shown: isForegroundShown,
+    mode: state.mode,
+    running: state.running,
+    title: options.title,
+    body: options.body,
+  });
+
   if (!isForegroundShown) {
-    await plugins.start?.(options).catch(() => {});
+    await plugins.start?.(options).catch((err) => {
+      console.warn("[fg] start failed", err);
+    });
     isForegroundShown = true;
     return;
   }
 
-  await plugins.update?.(options).catch(async () => {
-    await plugins.start?.(options).catch(() => {});
+  await plugins.update?.(options).catch(async (err) => {
+    console.warn("[fg] update failed, fallback to start", err);
+    await plugins.start?.(options).catch((startErr) => {
+      console.warn("[fg] fallback start failed", startErr);
+    });
     isForegroundShown = true;
   });
 }
@@ -138,12 +165,14 @@ export async function syncNotification() {
 function startPolling() {
   if (poller) return;
   poller = setInterval(syncNotification, POLL_MS);
+  fgDebug("polling started");
 }
 
 function stopPolling() {
   if (!poller) return;
   clearInterval(poller);
   poller = null;
+  fgDebug("polling stopped");
 }
 
 async function handleNotificationToggle() {
@@ -154,6 +183,8 @@ async function handleNotificationToggle() {
     activeView: navigation.activeView,
   });
   if (!state) return;
+
+  fgDebug("button toggle", state);
 
   if (state.mode === "stopwatch") sw.toggle();
   else if (state.mode === "timer") tm.toggle();
@@ -227,8 +258,15 @@ export async function initForegroundService() {
   if (isInitialized) return;
   if (!isNative()) return;
 
+  fgDebug("init start", { native: true });
+
   const plugins = getPlugins();
-  if (!plugins || !plugins.start || !plugins.stop) return;
+  fgDebug("plugins resolved", !!plugins);
+
+  if (!plugins || !plugins.start || !plugins.stop) {
+    console.warn("[fg] Foreground service plugin not available");
+    return;
+  }
 
   isInitialized = true;
   appIsActive = true;
@@ -240,6 +278,7 @@ export async function initForegroundService() {
 
   listeners.appState = async ({ isActive }) => {
     appIsActive = isActive;
+    fgDebug("appStateChange", { isActive });
 
     if (!isActive) {
       sm.unlock();
@@ -258,9 +297,11 @@ export async function initForegroundService() {
     plugins.App.addListener?.("appStateChange", listeners.appState),
   );
 
+  // Keep for Android plugin implementations that emit buttonClicked.
   rememberHandle(
     plugins.FgService.addListener?.("buttonClicked", async ({ buttonId }) => {
-      if (buttonId !== ACTION_TOGGLE) return;
+      const id = Number(buttonId);
+      if (id !== ACTION_TOGGLE) return;
       await handleNotificationToggle();
     }),
   );
@@ -286,4 +327,5 @@ export async function destroyForegroundService() {
 
   isInitialized = false;
   appIsActive = true;
+  fgDebug("destroyed");
 }
