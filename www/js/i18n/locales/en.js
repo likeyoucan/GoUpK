@@ -60,7 +60,7 @@ export const en = {
   no_laps: "No laps recorded",
   pro_status_subscription_active: "Subscription active",
   pro_status_lifetime_active: "Pro version active",
-  pro_already_active: "PRO is already active"
+  pro_already_active: "PRO is already active",
   pro_period_month: "/ month",
   pro_period_year: "/ year",
   pro_price_from: "Price",
