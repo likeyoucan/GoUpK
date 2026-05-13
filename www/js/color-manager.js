@@ -104,7 +104,7 @@ function clearPickerFocusVisual(pickerWrapper, picker) {
 function animateLayoutShift(
   container,
   beforeMap,
-  { duration = 320, springTarget = null } = {},
+  { duration = 380, springTarget = null } = {},
 ) {
   if (!container) return;
 
@@ -139,9 +139,9 @@ function animateLayoutShift(
 
   moved.forEach(({ el, dx, dy }) => {
     if (el === resolvedSpring) {
-      const push = dx >= 0 ? -7 : 7;
-      const rebound = -push * 0.38;
-      const settle = push * 0.12;
+      const push = dx >= 0 ? -5.5 : 5.5;
+      const rebound = -push * 0.34;
+      const settle = push * 0.1;
 
       el.style.transformOrigin = "left center";
 
@@ -149,21 +149,21 @@ function animateLayoutShift(
         [
           { transform: `translate(${dx}px, ${dy}px) scale(1,1)` },
           {
-            transform: `translate(${push}px, 0) scale(1.08, 0.92)`,
-            offset: 0.56,
+            transform: `translate(${push}px, 0) scale(1.05, 0.95)`,
+            offset: 0.58,
           },
           {
-            transform: `translate(${rebound}px, 0) scale(0.96, 1.04)`,
-            offset: 0.8,
+            transform: `translate(${rebound}px, 0) scale(0.97, 1.03)`,
+            offset: 0.82,
           },
           {
             transform: `translate(${settle}px, 0) scale(1.01, 0.99)`,
-            offset: 0.92,
+            offset: 0.93,
           },
           { transform: "translate(0,0) scale(1,1)" },
         ],
         {
-          duration: 540,
+          duration: 620,
           easing: "cubic-bezier(0.22, 1, 0.36, 1)",
         },
       );
@@ -173,12 +173,12 @@ function animateLayoutShift(
     el.animate(
       [
         { transform: `translate(${dx}px, ${dy}px) scale(1,1)` },
-        { transform: "translate(-1.2px, 0) scale(1.01, 0.99)", offset: 0.72 },
+        { transform: "translate(-0.9px, 0) scale(1.01, 0.99)", offset: 0.74 },
         { transform: "translate(0,0) scale(1,1)" },
       ],
       {
         duration,
-        easing: "cubic-bezier(0.22, 0.92, 0.28, 1)",
+        easing: "cubic-bezier(0.22, 0.94, 0.26, 1)",
       },
     );
   });
@@ -191,12 +191,12 @@ function animateNewSwatch(el) {
 
   el.animate(
     [
-      { opacity: 0, transform: "translateY(4px) scale(0.94)" },
-      { opacity: 1, transform: "translateY(-1px) scale(1.03)", offset: 0.62 },
+      { opacity: 0, transform: "translateY(3px) scale(0.95)" },
+      { opacity: 1, transform: "translateY(-1px) scale(1.02)", offset: 0.65 },
       { opacity: 1, transform: "translateY(0) scale(1)" },
     ],
     {
-      duration: 430,
+      duration: 520,
       easing: "cubic-bezier(0.22, 0.95, 0.25, 1)",
     },
   );
@@ -208,12 +208,12 @@ function animateDeleteSwatch(wrapper) {
   return wrapper.animate(
     [
       { opacity: 1, transform: "scale(1)" },
-      { opacity: 0.9, transform: "scale(0.96)", offset: 0.55 },
-      { opacity: 0, transform: "scale(0.88)" },
+      { opacity: 0.94, transform: "scale(0.97)", offset: 0.6 },
+      { opacity: 0, transform: "scale(0.9)" },
     ],
     {
-      duration: 260,
-      easing: "cubic-bezier(0.22, 0.9, 0.3, 1)",
+      duration: 320,
+      easing: "cubic-bezier(0.22, 0.92, 0.28, 1)",
       fill: "forwards",
     },
   ).finished;
