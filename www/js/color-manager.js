@@ -64,7 +64,7 @@ function captureRects(container) {
 function animateLayoutShift(
   container,
   beforeMap,
-  { duration = 300, springTarget = null } = {},
+  { duration = 360, springTarget = null } = {},
 ) {
   if (!container) return;
 
@@ -81,16 +81,15 @@ function animateLayoutShift(
       if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) return;
 
       if (springTarget && el === springTarget) {
-        // Jelly spring for element that moved into deleted slot.
         el.animate(
           [
             { transform: `translate(${dx}px, ${dy}px)` },
-            { transform: "translate(-4px, 0)", offset: 0.58 },
-            { transform: "translate(1.5px, 0)", offset: 0.82 },
+            { transform: "translate(-6px, 0)", offset: 0.58 },
+            { transform: "translate(2px, 0)", offset: 0.82 },
             { transform: "translate(0, 0)" },
           ],
           {
-            duration: 430,
+            duration: 500,
             easing: "cubic-bezier(0.22, 1, 0.36, 1)",
           },
         );
@@ -100,11 +99,13 @@ function animateLayoutShift(
       el.animate(
         [
           { transform: `translate(${dx}px, ${dy}px)` },
+          { transform: "translate(-2px, 0)", offset: 0.66 },
+          { transform: "translate(0.8px, 0)", offset: 0.86 },
           { transform: "translate(0, 0)" },
         ],
         {
           duration,
-          easing: "cubic-bezier(0.22, 0.88, 0.28, 1)",
+          easing: "cubic-bezier(0.22, 0.96, 0.24, 1)",
         },
       );
     });
@@ -126,37 +127,21 @@ function animateNewSwatch(el) {
   );
 }
 
-function animateDeleteGhost(sourceEl) {
-  if (!sourceEl) return Promise.resolve();
+function animateDeleteSwatch(wrapper) {
+  if (!wrapper) return Promise.resolve();
 
-  const rect = sourceEl.getBoundingClientRect();
-  const ghost = sourceEl.cloneNode(true);
-
-  ghost.style.position = "fixed";
-  ghost.style.left = `${rect.left}px`;
-  ghost.style.top = `${rect.top}px`;
-  ghost.style.width = `${rect.width}px`;
-  ghost.style.height = `${rect.height}px`;
-  ghost.style.margin = "0";
-  ghost.style.pointerEvents = "none";
-  ghost.style.zIndex = "9999";
-
-  document.body.appendChild(ghost);
-
-  return ghost
-    .animate(
-      [
-        { opacity: 1, transform: "scale(1)" },
-        { opacity: 0.95, transform: "scale(0.97)", offset: 0.45 },
-        { opacity: 0, transform: "scale(0.9)" },
-      ],
-      {
-        duration: 220,
-        easing: "cubic-bezier(0.22, 0.9, 0.3, 1)",
-        fill: "forwards",
-      },
-    )
-    .finished.finally(() => ghost.remove());
+  return wrapper.animate(
+    [
+      { opacity: 1, transform: "scale(1)" },
+      { opacity: 0.9, transform: "scale(0.96)", offset: 0.55 },
+      { opacity: 0, transform: "scale(0.88)" },
+    ],
+    {
+      duration: 260,
+      easing: "cubic-bezier(0.22, 0.9, 0.3, 1)",
+      fill: "forwards",
+    },
+  ).finished;
 }
 
 export const colorManager = {
@@ -452,7 +437,7 @@ export const colorManager = {
     );
 
     requestAnimationFrame(() => {
-      animateLayoutShift(container, before, { duration: 320 });
+      animateLayoutShift(container, before, { duration: 360 });
       animateNewSwatch(inserted);
     });
 
@@ -488,8 +473,6 @@ export const colorManager = {
     const follower =
       removedIdx >= 0 ? swatchesBefore[removedIdx + 1] || null : null;
 
-    const before = captureRects(container);
-
     document.dispatchEvent(
       new CustomEvent(APP_EVENTS.COLOR_DELETED, { detail: { type, color } }),
     );
@@ -506,16 +489,20 @@ export const colorManager = {
       persistCustomColors({ safeSetLS }, type, customColors);
     }
 
-    // Make visual ghost first, then remove real node from flow immediately.
-    animateDeleteGhost(wrapper).catch(() => {});
-    wrapper.remove();
+    animateDeleteSwatch(wrapper)
+      .catch(() => {})
+      .finally(() => {
+        const before = captureRects(container);
 
-    requestAnimationFrame(() => {
-      animateLayoutShift(container, before, {
-        duration: 300,
-        springTarget: follower,
+        wrapper.remove();
+
+        requestAnimationFrame(() => {
+          animateLayoutShift(container, before, {
+            duration: 380,
+            springTarget: follower,
+          });
+        });
       });
-    });
   },
 
   populateColorSection(type) {
