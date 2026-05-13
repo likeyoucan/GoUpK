@@ -68,55 +68,70 @@ function animateLayoutShift(
 ) {
   if (!container) return;
 
-  container
-    .querySelectorAll(".color-swatch-wrapper, .color-picker-wrapper")
-    .forEach((el) => {
+  const nodes = [
+    ...container.querySelectorAll(
+      ".color-swatch-wrapper, .color-picker-wrapper",
+    ),
+  ];
+
+  // Сначала собираем только реально сдвинутые элементы.
+  const moved = nodes
+    .map((el) => {
       const before = beforeMap.get(el);
-      if (!before) return;
+      if (!before) return null;
 
       const after = el.getBoundingClientRect();
       const dx = before.left - after.left;
       const dy = before.top - after.top;
 
-      if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) return;
+      if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) return null;
+      return { el, dx, dy };
+    })
+    .filter(Boolean);
 
-      if (springTarget && el === springTarget) {
-        el.style.transformOrigin = "left center";
+  if (!moved.length) return;
 
-        el.animate(
-          [
-            { transform: `translate(${dx}px, ${dy}px) scale(1, 1)` },
-            { transform: "translate(-7px, 0) scale(1.08, 0.92)", offset: 0.5 },
-            {
-              transform: "translate(2.5px, 0) scale(0.95, 1.05)",
-              offset: 0.76,
-            },
-            {
-              transform: "translate(-0.8px, 0) scale(1.02, 0.98)",
-              offset: 0.9,
-            },
-            { transform: "translate(0, 0) scale(1, 1)" },
-          ],
-          {
-            duration: 560,
-            easing: "cubic-bezier(0.22, 1, 0.36, 1)",
-          },
-        );
-        return;
-      }
+  // Если переданный springTarget не сдвинулся, берем первый реально сдвинутый.
+  let resolvedSpring = null;
+  if (springTarget) {
+    const found = moved.find((m) => m.el === springTarget);
+    if (found) resolvedSpring = found.el;
+  }
+  if (!resolvedSpring) {
+    resolvedSpring = moved[0].el;
+  }
+
+  moved.forEach(({ el, dx, dy }) => {
+    if (el === resolvedSpring) {
+      el.style.transformOrigin = "left center";
 
       el.animate(
         [
-          { transform: `translate(${dx}px, ${dy}px) scale(1,1)` },
-          { transform: "translate(-1.6px, 0) scale(1.02, 0.98)", offset: 0.7 },
-          { transform: "translate(0, 0) scale(1,1)" },
+          { transform: `translate(${dx}px, ${dy}px) scale(1, 1)` },
+          { transform: "translate(-6px, 0) scale(1.08, 0.92)", offset: 0.58 },
+          { transform: "translate(2px, 0) scale(0.95, 1.05)", offset: 0.82 },
+          { transform: "translate(0, 0) scale(1, 1)" },
         ],
         {
-          duration,
-          easing: "cubic-bezier(0.22, 0.96, 0.24, 1)",
+          duration: 520,
+          easing: "cubic-bezier(0.22, 1, 0.36, 1)",
         },
       );
-    });
+      return;
+    }
+
+    el.animate(
+      [
+        { transform: `translate(${dx}px, ${dy}px) scale(1, 1)` },
+        { transform: "translate(-1.6px, 0) scale(1.02, 0.98)", offset: 0.7 },
+        { transform: "translate(0, 0) scale(1, 1)" },
+      ],
+      {
+        duration,
+        easing: "cubic-bezier(0.22, 0.96, 0.24, 1)",
+      },
+    );
+  });
 }
 
 function animateNewSwatch(el) {
@@ -491,7 +506,11 @@ export const colorManager = {
     ];
     const removedIdx = swatchesBefore.indexOf(wrapper);
     const follower =
-      removedIdx >= 0 ? swatchesBefore[removedIdx + 1] || null : null;
+      removedIdx >= 0
+        ? swatchesBefore[removedIdx + 1] ||
+          swatchesBefore[removedIdx - 1] ||
+          null
+        : null;
 
     document.dispatchEvent(
       new CustomEvent(APP_EVENTS.COLOR_DELETED, { detail: { type, color } }),
