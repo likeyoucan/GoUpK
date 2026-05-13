@@ -61,7 +61,7 @@ function captureRects(container) {
   return map;
 }
 
-function animateLayoutShift(container, beforeMap, duration = 420) {
+function animateLayoutShift(container, beforeMap, duration = 520) {
   if (!container) return;
 
   container
@@ -83,7 +83,7 @@ function animateLayoutShift(container, beforeMap, duration = 420) {
         ],
         {
           duration,
-          easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+          easing: "cubic-bezier(0.22, 0.95, 0.25, 1)",
         },
       );
     });
@@ -94,13 +94,13 @@ function animateNewSwatch(el) {
 
   el.animate(
     [
-      { opacity: 0, transform: "scale(0.82)" },
-      { opacity: 1, transform: "scale(1.08)", offset: 0.62 },
+      { opacity: 0, transform: "scale(0.9)" },
+      { opacity: 1, transform: "scale(1.03)", offset: 0.72 },
       { opacity: 1, transform: "scale(1)" },
     ],
     {
-      duration: 420,
-      easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+      duration: 520,
+      easing: "cubic-bezier(0.22, 0.95, 0.25, 1)",
     },
   );
 }
@@ -126,12 +126,13 @@ function createRemovalGhost(sourceEl) {
     .animate(
       [
         { opacity: 1, transform: "scale(1)" },
-        { opacity: 1, transform: "scale(1.06)", offset: 0.35 },
-        { opacity: 0, transform: "scale(0.78)" },
+        { opacity: 1, transform: "scale(1.015)", offset: 0.45 },
+        { opacity: 0.65, transform: "scale(0.96)", offset: 0.8 },
+        { opacity: 0, transform: "scale(0.9)" },
       ],
       {
-        duration: 320,
-        easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+        duration: 420,
+        easing: "cubic-bezier(0.22, 0.9, 0.3, 1)",
       },
     )
     .addEventListener(
