@@ -61,7 +61,7 @@ function captureRects(container) {
   return map;
 }
 
-function animateLayoutShift(container, beforeMap, duration = 380) {
+function animateLayoutShift(container, beforeMap, duration = 340) {
   if (!container) return;
 
   container
@@ -79,7 +79,7 @@ function animateLayoutShift(container, beforeMap, duration = 380) {
       el.animate(
         [
           { transform: `translate(${dx}px, ${dy}px)` },
-          { transform: "translate(0,0)" },
+          { transform: "translate(0, 0)" },
         ],
         {
           duration,
@@ -106,11 +106,11 @@ function animateNewSwatch(el) {
 }
 
 function animateDeleteImpact(container) {
-  if (!container) return;
+  if (!container) return Promise.resolve();
 
   const picker = container.querySelector(".color-picker-wrapper");
   const swatches = [...container.querySelectorAll(".color-swatch-wrapper")];
-  if (!picker || swatches.length === 0) return;
+  if (!picker || swatches.length === 0) return Promise.resolve();
 
   const pickerRect = picker.getBoundingClientRect();
 
@@ -121,37 +121,66 @@ function animateDeleteImpact(container) {
       return { el, dist };
     })
     .sort((a, b) => a.dist - b.dist)
-    .slice(0, 2);
+    .slice(0, 3);
 
-  picker.animate(
-    [
-      { transform: "translateX(0) scale(1)" },
-      { transform: "translateX(-10px) scale(0.988)", offset: 0.34 },
-      { transform: "translateX(3px) scale(1.008)", offset: 0.7 },
-      { transform: "translateX(0) scale(1)" },
-    ],
-    {
-      duration: 460,
-      easing: "cubic-bezier(0.22, 1, 0.36, 1)",
-    },
+  const animations = [];
+
+  animations.push(
+    picker.animate(
+      [
+        { transform: "translateX(0) scale(1)" },
+        { transform: "translateX(-6px) scale(0.992)", offset: 0.34 },
+        { transform: "translateX(2px) scale(1.006)", offset: 0.72 },
+        { transform: "translateX(0) scale(1)" },
+      ],
+      {
+        duration: 420,
+        easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+      },
+    ).finished,
   );
 
   impacted.forEach(({ el }, i) => {
     el.style.transformOrigin = "right center";
-    el.animate(
-      [
-        { transform: "scale(1)" },
-        { transform: "scale(0.962)", offset: 0.32 },
-        { transform: "scale(1.012)", offset: 0.7 },
-        { transform: "scale(1)" },
-      ],
-      {
-        duration: 420,
-        delay: i * 14,
-        easing: "cubic-bezier(0.22, 1, 0.36, 1)",
-      },
+    animations.push(
+      el.animate(
+        [
+          { transform: "translateX(0) scale(1)" },
+          { transform: "translateX(-3px) scale(0.965)", offset: 0.33 },
+          { transform: "translateX(1px) scale(1.012)", offset: 0.72 },
+          { transform: "translateX(0) scale(1)" },
+        ],
+        {
+          duration: 390,
+          delay: i * 12,
+          easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+        },
+      ).finished,
     );
   });
+
+  return Promise.allSettled(animations);
+}
+
+function animateDeleteSwatch(wrapper) {
+  if (!wrapper) return Promise.resolve();
+
+  return wrapper.animate(
+    [
+      { opacity: 1, transform: "translateY(0) scale(1)" },
+      { opacity: 1, transform: "translateY(0) scale(0.97)", offset: 0.36 },
+      {
+        opacity: 0.85,
+        transform: "translateY(-1px) scale(1.01)",
+        offset: 0.62,
+      },
+      { opacity: 0, transform: "translateY(2px) scale(0.9)" },
+    ],
+    {
+      duration: 300,
+      easing: "cubic-bezier(0.22, 0.9, 0.3, 1)",
+    },
+  ).finished;
 }
 
 export const colorManager = {
@@ -447,7 +476,7 @@ export const colorManager = {
     );
 
     requestAnimationFrame(() => {
-      animateLayoutShift(container, before, 420);
+      animateLayoutShift(container, before, 340);
       animateNewSwatch(inserted);
     });
 
@@ -476,11 +505,11 @@ export const colorManager = {
     );
     if (!wrapper) return;
 
+    const before = captureRects(container);
+
     document.dispatchEvent(
       new CustomEvent(APP_EVENTS.COLOR_DELETED, { detail: { type, color } }),
     );
-
-    animateDeleteImpact(container);
 
     const customColors = isAccent
       ? this.customAccentColors
@@ -494,17 +523,15 @@ export const colorManager = {
       persistCustomColors({ safeSetLS }, type, customColors);
     }
 
-    wrapper.classList.add("is-collapsing");
+    const impactAnim = animateDeleteImpact(container);
+    const deleteAnim = animateDeleteSwatch(wrapper);
 
-    let done = false;
-    const finalize = () => {
-      if (done) return;
-      done = true;
+    Promise.allSettled([impactAnim, deleteAnim]).finally(() => {
       wrapper.remove();
-    };
-
-    wrapper.addEventListener("animationend", finalize, { once: true });
-    setTimeout(finalize, 320);
+      requestAnimationFrame(() => {
+        animateLayoutShift(container, before, 340);
+      });
+    });
   },
 
   populateColorSection(type) {
