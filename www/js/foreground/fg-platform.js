@@ -1,3 +1,5 @@
+// Файл: www/js/foreground/fg-platform.js
+
 let pluginsRef = null;
 let handles = [];
 
@@ -9,10 +11,6 @@ function debugLog(...args) {
   } catch {}
 }
 
-export function isNative() {
-  return !!(window.Capacitor && window.Capacitor.isNativePlatform());
-}
-
 function hasGrantedValue(statusObj) {
   if (!statusObj || typeof statusObj !== "object") return false;
 
@@ -21,22 +19,26 @@ function hasGrantedValue(statusObj) {
   );
 }
 
+export function isNative() {
+  return !!(window.Capacitor && window.Capacitor.isNativePlatform());
+}
+
 export function getPlugins() {
   if (pluginsRef) return pluginsRef;
   if (!isNative()) return null;
 
   const allPlugins = window.Capacitor?.Plugins || {};
-  const { App } = allPlugins;
+  const App = allPlugins.App || null;
 
+  // Important: plugin key may differ across versions/builds.
   const FgService =
     allPlugins.ForegroundService ||
     allPlugins.AndroidForegroundService ||
     allPlugins.CapacitorAndroidForegroundService;
 
-  if (!App || !FgService) {
-    debugLog("plugins missing", {
+  if (!FgService) {
+    debugLog("fg plugin missing", {
       hasApp: !!App,
-      hasFgService: !!FgService,
       pluginKeys: Object.keys(allPlugins),
     });
     return null;
@@ -56,8 +58,8 @@ export function getPlugins() {
     FgService.stop?.bind(FgService);
 
   pluginsRef = { App, FgService, start, update, stop };
-
   debugLog("plugins resolved", {
+    hasApp: !!App,
     start: !!start,
     update: !!update,
     stop: !!stop,
@@ -77,7 +79,6 @@ export async function ensureNotificationPermission(FgService) {
     debugLog(
       "permission API unavailable on plugin, continue without explicit request",
     );
-    // На части реализаций Android это может быть нормой.
     return true;
   }
 
@@ -133,7 +134,9 @@ export async function ensureNotificationChannel(FgService, channel) {
 export function rememberHandle(handlePromise) {
   handlePromise
     ?.then((h) => {
-      if (h && typeof h.remove === "function") handles.push(h);
+      if (h && typeof h.remove === "function") {
+        handles.push(h);
+      }
     })
     .catch((err) => {
       console.warn("[fg-platform] listener handle rejected", err);

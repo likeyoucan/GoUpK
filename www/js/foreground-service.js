@@ -32,13 +32,17 @@ import {
 
 const FG_ID = 101;
 const ACTION_TOGGLE = 1;
-const POLL_MS = 500;
+const ACTION_STOP = 2;
+const POLL_MS = 120;
+
+// Use a NEW channel id to avoid inherited sound behavior from old channel settings.
 const CHANNEL = {
-  id: "stopwatch_channel",
+  id: "stopwatch_channel_silent_v2",
   name: "Stopwatch Pro",
   description: "Background stopwatch, timer and tabata controls",
-  importance: 3,
+  importance: 2, // LOW => silent tray banner behavior
 };
+
 const SMALL_ICON = "ic_stat_name";
 
 let isInitialized = false;
@@ -76,7 +80,6 @@ function buildSignature(state, payload) {
     state.metaKey || "",
     payload.title,
     payload.body,
-    payload.buttonTitle,
     uiSettingsManager.showMs ? "ms1" : "ms0",
   ].join("|");
 }
@@ -113,6 +116,55 @@ async function stopForeground() {
   isForegroundShown = false;
   lastSignature = "";
   fgDebug("foreground stopped");
+}
+
+async function handleNotificationToggle() {
+  const state = getForegroundState({
+    sw,
+    tm,
+    tb,
+    activeView: navigation.activeView,
+  });
+  if (!state) return;
+
+  fgDebug("button toggle", state);
+
+  if (state.mode === "stopwatch") {
+    sw.toggle();
+  } else if (state.mode === "timer") {
+    await tm.toggle();
+  } else if (state.mode === "tabata") {
+    tb.toggle();
+  }
+
+  setTimeout(() => {
+    syncNotification();
+  }, 80);
+}
+
+async function handleNotificationStop() {
+  const state = getForegroundState({
+    sw,
+    tm,
+    tb,
+    activeView: navigation.activeView,
+  });
+  if (!state) return;
+
+  fgDebug("button stop", state);
+
+  if (state.mode === "stopwatch") {
+    if (sw.isRunning) sw.toggle();
+    if (sw.elapsedTime > 0) sw.recordLapOrReset();
+  } else if (state.mode === "timer") {
+    await tm.reset(true);
+  } else if (state.mode === "tabata") {
+    tb.stop();
+  }
+
+  setTimeout(() => {
+    syncNotification();
+  }, 80);
 }
 
 export async function syncNotification() {
@@ -163,6 +215,9 @@ export async function syncNotification() {
 
   lastSignature = signature;
 
+  const toggleTitle = state.running ? t("pause") : t("play");
+  const stopTitle = t("stop");
+
   const options = {
     id: FG_ID,
     title: payload.title,
@@ -170,7 +225,11 @@ export async function syncNotification() {
     smallIcon: SMALL_ICON,
     notificationChannelId: CHANNEL.id,
     silent: true,
-    buttons: [{ id: ACTION_TOGGLE, title: payload.buttonTitle }],
+    serviceType: "specialUse",
+    buttons: [
+      { id: ACTION_TOGGLE, title: toggleTitle },
+      { id: ACTION_STOP, title: stopTitle },
+    ],
   };
 
   fgDebug("sync notification", {
@@ -219,26 +278,6 @@ function stopPolling() {
   clearInterval(poller);
   poller = null;
   fgDebug("polling stopped");
-}
-
-async function handleNotificationToggle() {
-  const state = getForegroundState({
-    sw,
-    tm,
-    tb,
-    activeView: navigation.activeView,
-  });
-  if (!state) return;
-
-  fgDebug("button toggle", state);
-
-  if (state.mode === "stopwatch") sw.toggle();
-  else if (state.mode === "timer") tm.toggle();
-  else if (state.mode === "tabata") tb.toggle();
-
-  setTimeout(() => {
-    syncNotification();
-  }, 80);
 }
 
 function bindDocumentEvents() {
@@ -317,6 +356,11 @@ export async function initForegroundService() {
   isInitialized = true;
   appIsActive = true;
 
+  // Remove old noisy channel if present.
+  await plugins.FgService?.deleteNotificationChannel?.({
+    id: "stopwatch_channel",
+  }).catch(() => {});
+
   const permissionOk = await ensurePermissionIfNeeded(true);
   const channelOk = await ensureNotificationChannel(plugins.FgService, CHANNEL);
   fgDebug("init checks", { permissionOk, channelOk, hasApp: !!plugins.App });
@@ -374,8 +418,13 @@ export async function initForegroundService() {
   rememberHandle(
     plugins.FgService.addListener?.("buttonClicked", async ({ buttonId }) => {
       const id = Number(buttonId);
-      if (id !== ACTION_TOGGLE) return;
-      await handleNotificationToggle();
+      if (id === ACTION_TOGGLE) {
+        await handleNotificationToggle();
+        return;
+      }
+      if (id === ACTION_STOP) {
+        await handleNotificationStop();
+      }
     }),
   );
 
