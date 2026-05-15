@@ -1,3 +1,5 @@
+// Файл: www/js/foreground-service.js
+
 import {
   $,
   formatTime,
@@ -45,13 +47,13 @@ let poller = null;
 let lastSignature = "";
 let isForegroundShown = false;
 
-// Кеш результата permission, чтобы не дергать API слишком часто
 let permissionGranted = null;
 let permissionCheckedAt = 0;
 const PERMISSION_CHECK_TTL_MS = 15000;
 
 const listeners = {
   appState: null,
+  appVisibility: null,
   activeTimerChanged: null,
   timerStarted: null,
   msChanged: null,
@@ -150,8 +152,7 @@ export async function syncNotification() {
   const signature = buildSignature(state, payload);
   if (signature === lastSignature) return;
 
-  // Проверяем permission перед первым start.
-  // Если уже показываем нотификацию, не блокируем update.
+  // Before first show, ensure notification permission.
   if (!isForegroundShown) {
     const granted = await ensurePermissionIfNeeded(false);
     if (!granted) {
@@ -195,6 +196,7 @@ export async function syncNotification() {
 
   await plugins.update?.(options).catch(async (err) => {
     console.warn("[fg] update failed, fallback to start", err);
+
     try {
       const res = await plugins.start?.(options);
       fgDebug("fallback start result", res);
@@ -317,34 +319,57 @@ export async function initForegroundService() {
 
   const permissionOk = await ensurePermissionIfNeeded(true);
   const channelOk = await ensureNotificationChannel(plugins.FgService, CHANNEL);
-
-  fgDebug("init checks", { permissionOk, channelOk });
+  fgDebug("init checks", { permissionOk, channelOk, hasApp: !!plugins.App });
 
   bindDocumentEvents();
 
-  listeners.appState = async ({ isActive }) => {
-    appIsActive = isActive;
-    fgDebug("appStateChange", { isActive });
+  if (plugins.App?.addListener) {
+    listeners.appState = async ({ isActive }) => {
+      appIsActive = isActive;
+      fgDebug("appStateChange", { isActive });
 
-    if (!isActive) {
-      sm.unlock();
-      requestWakeLock();
+      if (!isActive) {
+        sm.unlock();
+        requestWakeLock();
+        await ensurePermissionIfNeeded(true);
+        await syncNotification();
+        startPolling();
+        return;
+      }
 
-      // На переходе в background форс-перепроверка permission
-      await ensurePermissionIfNeeded(true);
-      await syncNotification();
-      startPolling();
-      return;
-    }
+      stopPolling();
+      await stopForeground();
+      releaseWakeLock();
+    };
 
-    stopPolling();
-    await stopForeground();
-    releaseWakeLock();
-  };
+    rememberHandle(
+      plugins.App.addListener("appStateChange", listeners.appState),
+    );
+  } else {
+    // Fallback for builds without @capacitor/app plugin
+    fgDebug("App plugin missing, fallback to visibilitychange");
 
-  rememberHandle(
-    plugins.App.addListener?.("appStateChange", listeners.appState),
-  );
+    listeners.appVisibility = async () => {
+      const isActive = document.visibilityState === "visible";
+      appIsActive = isActive;
+      fgDebug("visibilitychange", { isActive });
+
+      if (!isActive) {
+        sm.unlock();
+        requestWakeLock();
+        await ensurePermissionIfNeeded(true);
+        await syncNotification();
+        startPolling();
+        return;
+      }
+
+      stopPolling();
+      await stopForeground();
+      releaseWakeLock();
+    };
+
+    document.addEventListener("visibilitychange", listeners.appVisibility);
+  }
 
   rememberHandle(
     plugins.FgService.addListener?.("buttonClicked", async ({ buttonId }) => {
@@ -369,6 +394,11 @@ export async function destroyForegroundService() {
   stopPolling();
   unbindDocumentEvents();
   await stopForeground();
+
+  if (listeners.appVisibility) {
+    document.removeEventListener("visibilitychange", listeners.appVisibility);
+    listeners.appVisibility = null;
+  }
 
   await removeAllHandles();
   resetPlatformCache();

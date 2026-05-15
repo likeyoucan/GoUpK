@@ -9,7 +9,7 @@ concurrency:
 
 on:
   push:
-    branches: ["main"]
+    branches: ["main", "an_3"]
   workflow_dispatch:
 
 jobs:
@@ -34,6 +34,9 @@ jobs:
 
       - name: 📦 Установка зависимостей
         run: npm install
+
+      - name: ➕ Установка @capacitor/app (CI)
+        run: npm i @capacitor/app
 
       - name: 🎨 Сборка стилей Tailwind CSS v4
         run: npm run build:css
