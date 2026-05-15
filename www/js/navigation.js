@@ -91,7 +91,7 @@ export const navigation = {
     const isSwipe = source === "swipe";
     const dirForward = toIdx > fromIdx;
 
-    const duration = isSwipe ? 360 : 260;
+    const duration = isSwipe ? 220 : 320;
     const easing = "cubic-bezier(0.32, 0.72, 0, 1)";
 
     snapshot.style.transition = `transform ${duration}ms ${easing}, opacity ${duration}ms ${easing}`;
