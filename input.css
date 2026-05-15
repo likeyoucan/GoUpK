@@ -2461,3 +2461,83 @@ html.dark .pro-cta-buy {
   min-height: var(--control-h);
   gap: var(--space-3); /* 12 */
 }
+
+.view-top-half {
+  container-type: size;
+}
+
+.top_content {
+  --top-pad: var(--space-4); /* фиксированный верх/низ */
+  --title-rail: 48px;
+  --action-rail: 52px;
+  --ring-gap: var(--space-3);
+
+  height: 100%;
+  width: 100%;
+  max-width: 100%;
+  padding-block: var(--top-pad);
+  display: grid;
+  grid-template-rows: var(--title-rail) minmax(0, 1fr) var(--action-rail);
+  gap: var(--ring-gap);
+  justify-items: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.timer-circle-wrap {
+  --ring-available: calc(
+    100% - var(--top-pad) * 0 - var(--ring-gap) * 0
+  );
+  --ring-size: clamp(180px, var(--ring-available), 680px);
+
+  width: min(100%, var(--ring-size));
+  height: min(100%, var(--ring-size));
+  aspect-ratio: 1 / 1;
+  margin: 0 auto;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  container-type: size;
+  container-name: timer-ring;
+}
+
+.view-top-half {
+  container-type: size;
+}
+
+.top_content {
+  --top-pad: var(--space-4); /* фиксированный верх/низ */
+  --title-rail: 48px;
+  --action-rail: 52px;
+  --ring-gap: var(--space-3);
+
+  height: 100%;
+  width: 100%;
+  max-width: 100%;
+  padding-block: var(--top-pad);
+  display: grid;
+  grid-template-rows: var(--title-rail) minmax(0, 1fr) var(--action-rail);
+  gap: var(--ring-gap);
+  justify-items: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.timer-circle-wrap {
+  --ring-available: calc(
+    100% - var(--top-pad) * 0 - var(--ring-gap) * 0
+  );
+  --ring-size: clamp(180px, var(--ring-available), 680px);
+
+  width: min(100%, var(--ring-size));
+  height: min(100%, var(--ring-size));
+  aspect-ratio: 1 / 1;
+  margin: 0 auto;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  container-type: size;
+  container-name: timer-ring;
+}

@@ -1,5 +1,3 @@
-// Файл: www/js/foreground-service.js
-
 import {
   $,
   formatTime,
@@ -47,6 +45,11 @@ let poller = null;
 let lastSignature = "";
 let isForegroundShown = false;
 
+// Кеш результата permission, чтобы не дергать API слишком часто
+let permissionGranted = null;
+let permissionCheckedAt = 0;
+const PERMISSION_CHECK_TTL_MS = 15000;
+
 const listeners = {
   appState: null,
   activeTimerChanged: null,
@@ -76,6 +79,27 @@ function buildSignature(state, payload) {
   ].join("|");
 }
 
+async function ensurePermissionIfNeeded(force = false) {
+  const plugins = getPlugins();
+  if (!plugins) return false;
+
+  const now = Date.now();
+  if (
+    !force &&
+    permissionGranted !== null &&
+    now - permissionCheckedAt < PERMISSION_CHECK_TTL_MS
+  ) {
+    return permissionGranted;
+  }
+
+  const granted = await ensureNotificationPermission(plugins.FgService);
+  permissionGranted = !!granted;
+  permissionCheckedAt = now;
+
+  fgDebug("permission state", { granted: permissionGranted, force });
+  return permissionGranted;
+}
+
 async function stopForeground() {
   const plugins = getPlugins();
   if (!plugins || !isForegroundShown) return;
@@ -94,7 +118,7 @@ export async function syncNotification() {
   if (!plugins || appIsActive) return;
 
   if (!uiSettingsManager.showForegroundBanner) {
-    fgDebug("skip sync: banner disabled");
+    fgDebug("skip sync: banner disabled in app settings");
     await stopForeground();
     return;
   }
@@ -125,6 +149,17 @@ export async function syncNotification() {
 
   const signature = buildSignature(state, payload);
   if (signature === lastSignature) return;
+
+  // Проверяем permission перед первым start.
+  // Если уже показываем нотификацию, не блокируем update.
+  if (!isForegroundShown) {
+    const granted = await ensurePermissionIfNeeded(false);
+    if (!granted) {
+      fgDebug("skip sync: notifications permission not granted");
+      return;
+    }
+  }
+
   lastSignature = signature;
 
   const options = {
@@ -146,19 +181,28 @@ export async function syncNotification() {
   });
 
   if (!isForegroundShown) {
-    await plugins.start?.(options).catch((err) => {
+    try {
+      const res = await plugins.start?.(options);
+      fgDebug("start result", res);
+      isForegroundShown = true;
+      return;
+    } catch (err) {
       console.warn("[fg] start failed", err);
-    });
-    isForegroundShown = true;
-    return;
+      isForegroundShown = false;
+      return;
+    }
   }
 
   await plugins.update?.(options).catch(async (err) => {
     console.warn("[fg] update failed, fallback to start", err);
-    await plugins.start?.(options).catch((startErr) => {
+    try {
+      const res = await plugins.start?.(options);
+      fgDebug("fallback start result", res);
+      isForegroundShown = true;
+    } catch (startErr) {
       console.warn("[fg] fallback start failed", startErr);
-    });
-    isForegroundShown = true;
+      isForegroundShown = false;
+    }
   });
 }
 
@@ -271,8 +315,10 @@ export async function initForegroundService() {
   isInitialized = true;
   appIsActive = true;
 
-  await ensureNotificationPermission(plugins.FgService);
-  await ensureNotificationChannel(plugins.FgService, CHANNEL);
+  const permissionOk = await ensurePermissionIfNeeded(true);
+  const channelOk = await ensureNotificationChannel(plugins.FgService, CHANNEL);
+
+  fgDebug("init checks", { permissionOk, channelOk });
 
   bindDocumentEvents();
 
@@ -283,6 +329,9 @@ export async function initForegroundService() {
     if (!isActive) {
       sm.unlock();
       requestWakeLock();
+
+      // На переходе в background форс-перепроверка permission
+      await ensurePermissionIfNeeded(true);
       await syncNotification();
       startPolling();
       return;
@@ -297,7 +346,6 @@ export async function initForegroundService() {
     plugins.App.addListener?.("appStateChange", listeners.appState),
   );
 
-  // Keep for Android plugin implementations that emit buttonClicked.
   rememberHandle(
     plugins.FgService.addListener?.("buttonClicked", async ({ buttonId }) => {
       const id = Number(buttonId);
@@ -324,6 +372,9 @@ export async function destroyForegroundService() {
 
   await removeAllHandles();
   resetPlatformCache();
+
+  permissionGranted = null;
+  permissionCheckedAt = 0;
 
   isInitialized = false;
   appIsActive = true;
