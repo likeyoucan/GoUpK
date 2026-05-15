@@ -67,6 +67,24 @@
   --tr-track-bg: var(--border-color);
   --tr-fill-color: var(--primary-color);
   --tr-thumb-color: var(--surface-color);
+
+  /* 4px rhythm system */
+  --u: 4px;
+  --space-1: calc(var(--u) * 1); /* 4 */
+  --space-2: calc(var(--u) * 2); /* 8 */
+  --space-3: calc(var(--u) * 3); /* 12 */
+  --space-4: calc(var(--u) * 4); /* 16 */
+  --space-5: calc(var(--u) * 5); /* 20 */
+  --space-6: calc(var(--u) * 6); /* 24 */
+  --control-h: calc(var(--u) * 11); /* 44 */
+
+  /* Motion system */
+  --ease-standard: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-emphasized: cubic-bezier(0.22, 0.9, 0.3, 1);
+  --dur-micro: 140ms;
+  --dur-short: 220ms;
+  --dur-medium: 320ms;
+  --dur-long: 420ms;
 }
 
 :root.dark {
@@ -167,8 +185,8 @@ body {
   visibility: visible;
   pointer-events: auto;
   transition:
-    opacity 0.28s ease,
-    visibility 0.28s ease;
+    opacity 0.28s var(--ease-standard),
+    visibility 0.28s var(--ease-standard);
 }
 
 #app-preloader.is-hidden {
@@ -226,10 +244,11 @@ body {
 button {
   appearance: none;
   transition:
-    background-color 0.3s,
-    border-color 0.3s,
-    box-shadow 0.3s,
-    color 0.3s;
+    background-color var(--dur-short) ease,
+    border-color var(--dur-short) ease,
+    box-shadow var(--dur-short) ease,
+    color var(--dur-short) ease,
+    transform var(--dur-micro) var(--ease-standard);
   touch-action: manipulation;
 }
 
@@ -276,7 +295,7 @@ button {
 
 .app-bg {
   background-color: var(--bg-color);
-  transition: background-color 0.3s;
+  transition: background-color var(--dur-short) ease;
   position: relative;
   z-index: 0;
 }
@@ -294,8 +313,8 @@ button {
   border-radius: inherit;
   opacity: 0;
   transition:
-    opacity 400ms cubic-bezier(0.32, 0.72, 0, 1),
-    box-shadow 300ms ease-in-out;
+    opacity var(--dur-long) var(--ease-standard),
+    box-shadow var(--dur-medium) ease-in-out;
 }
 
 html.dark .app-bg::before {
@@ -319,17 +338,22 @@ html.dark .app-bg::before {
   display: flex;
   justify-content: center;
   align-items: center;
+  container-type: size;
 }
 
 .top_content {
-  aspect-ratio: 1 / 1;
-  padding-block: 32px;
-  gap: 12px;
+  --top-pad: var(--space-4);
+  --title-rail: 48px;
+  --action-rail: 52px;
+  --ring-gap: var(--space-3);
+
   height: 100%;
-  max-height: min(150vw, 980px);
+  width: 100%;
+  max-width: 100%;
+  padding-block: var(--top-pad);
+  gap: var(--ring-gap);
   display: grid;
-  grid-template-rows: 1fr minmax(0, 65dvh) 1fr;
-  grid-template-columns: 80%;
+  grid-template-rows: var(--title-rail) minmax(0, 1fr) var(--action-rail);
   justify-content: center;
   align-items: center;
   justify-items: center;
@@ -359,8 +383,8 @@ html.dark .app-bg::before {
   overflow: hidden;
   padding-top: calc(var(--handler-size) + 10px);
   transition:
-    opacity 0.18s ease,
-    filter 0.18s ease;
+    opacity 0.18s var(--ease-standard),
+    filter 0.18s var(--ease-standard);
 }
 
 #tb-runningControls {
@@ -391,9 +415,9 @@ html.dark .app-bg::before {
   background: color-mix(in srgb, var(--text-color) 26%, transparent);
   opacity: 0.4;
   transition:
-    opacity 0.16s ease,
-    background-color 0.16s ease,
-    transform 0.16s ease;
+    opacity var(--dur-short) var(--ease-standard),
+    background-color var(--dur-short) var(--ease-standard),
+    transform var(--dur-short) var(--ease-standard);
 }
 
 .resizer_handler::after {
@@ -596,6 +620,13 @@ html.dark .app-bg::before {
     top: 0;
     bottom: auto;
   }
+
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
+    .top_content {
+    --top-pad: 12px;
+    --title-rail: 40px;
+    --action-rail: 48px;
+  }
 }
 
 /* ===== progressive collapse FX (blur + opacity to 0) ===== */
@@ -645,9 +676,9 @@ html.dark .app-bg::before {
 :is(#view-stopwatch, #view-timer, #view-tabata).split-animating
   .view-bottom-half {
   transition:
-    flex-basis var(--split-snap-duration) cubic-bezier(0.22, 0.8, 0.18, 1),
-    min-height var(--split-snap-duration) cubic-bezier(0.22, 0.8, 0.18, 1),
-    min-width var(--split-snap-duration) cubic-bezier(0.22, 0.8, 0.18, 1) !important;
+    flex-basis var(--split-snap-duration) var(--ease-standard),
+    min-height var(--split-snap-duration) var(--ease-standard),
+    min-width var(--split-snap-duration) var(--ease-standard) !important;
 }
 
 :is(#view-stopwatch, #view-timer, #view-tabata).split-live .view-top-half,
@@ -679,7 +710,35 @@ html.dark .app-bg::before {
   }
 
   .view-top-half {
-    border-right: 1px solid var(--border-color);
+    position: relative;
+    border-right: none;
+  }
+
+  .view-top-half::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 1px;
+    height: 100%;
+    background: var(--border-color);
+    opacity: 1;
+    pointer-events: none;
+    transition:
+      opacity var(--dur-short) var(--ease-standard),
+      background-color var(--dur-short) ease;
+  }
+
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-top-hidden
+    .view-top-half::after,
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
+    .view-top-half::after {
+    opacity: 0;
+  }
+
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-live
+    .view-top-half::after {
+    opacity: calc(1 - max(var(--collapse-top-k), var(--collapse-bottom-k)));
   }
 
   .view-bottom-half {
@@ -688,14 +747,15 @@ html.dark .app-bg::before {
   }
 
   .top_content {
-    padding-block: 24px;
-    grid-template-columns: 60%;
+    --top-pad: var(--space-4);
+    --title-rail: 44px;
+    --action-rail: 52px;
     max-height: min(62.5dvw, 620px);
   }
 
   .mid_content {
-    padding-block: 24px;
-    padding-top: 24px;
+    padding-block: var(--space-6);
+    padding-top: var(--space-6);
     padding-inline: 0;
   }
 
@@ -790,7 +850,7 @@ html.dark .app-bg::before {
 
 @media (min-width: 375px) and (orientation: portrait) {
   .top_content {
-    padding-block: 16px;
+    --top-pad: var(--space-4);
   }
 }
 
@@ -818,21 +878,19 @@ html.dark .app-bg::before {
   }
 
   .top_content {
-    grid-template-columns: 70%;
     max-height: min(37.5dvw, 500px);
   }
 }
 
 /* =========================================
-   6. КРУЖОК ТАЙМЕРА (UX REFACTORED)
+   6. КРУЖОК ТАЙМЕРА
 ========================================= */
 .timer-circle-wrap {
-  width: 100%;
-  max-width: 100%;
+  --ring-size: clamp(180px, 100%, 680px);
+  width: min(100%, var(--ring-size));
+  height: min(100%, var(--ring-size));
   aspect-ratio: 1 / 1;
   margin: 0 auto;
-  height: 100%;
-  max-height: 100dvh;
   display: flex;
   position: relative;
   align-items: center;
@@ -849,8 +907,9 @@ html.dark .app-bg::before {
   max-inline-size: 90%;
   text-overflow: clip;
   transition:
-    font-size 220ms cubic-bezier(0.32, 0.72, 0, 1),
-    color 300ms ease;
+    font-size var(--dur-short) var(--ease-standard),
+    color var(--dur-short) ease,
+    transform var(--dur-short) var(--ease-standard);
   font-style: normal;
   font-variant-numeric: tabular-nums;
 }
@@ -922,6 +981,27 @@ html.dark .app-bg::before {
     padding-top: 1.5rem;
     min-height: auto;
   }
+}
+
+/* 4px rhythm normalization for settings blocks */
+#view-settings .app-surface > div {
+  min-height: var(--control-h);
+}
+
+#view-settings .app-surface .p-4 {
+  padding: var(--space-4) !important;
+}
+
+#view-settings .app-surface .gap-2 {
+  gap: var(--space-2) !important;
+}
+
+#view-settings .app-surface .gap-3 {
+  gap: var(--space-3) !important;
+}
+
+#view-settings .app-surface .gap-4 {
+  gap: var(--space-4) !important;
 }
 
 /* =========================================
@@ -1020,26 +1100,25 @@ html.dark .app-bg::before {
     font-size: clamp(2.2rem, min(28cqi, 28cqb), 3.7rem);
   }
 }
-
 /* =========================================
    14. УТИЛИТЫ
 ========================================= */
 .app-surface {
   background-color: var(--surface-color);
   transition:
-    background-color 0.3s,
-    box-shadow 0.3s,
-    border-color 0.3s;
+    background-color var(--dur-short) ease,
+    box-shadow var(--dur-short) ease,
+    border-color var(--dur-short) ease;
 }
 
 .app-text {
   color: var(--text-color);
-  transition: color 0.3s;
+  transition: color var(--dur-short) ease;
 }
 
 .app-text-sec {
   color: var(--text-secondary);
-  transition: color 0.3s;
+  transition: color var(--dur-short) ease;
 }
 
 .accent-dimmed {
@@ -1048,27 +1127,27 @@ html.dark .app-bg::before {
 
 .primary-text {
   color: var(--primary-color);
-  transition: color 0.3s;
+  transition: color var(--dur-short) ease;
 }
 
 .app-border {
   border-color: var(--border-color);
-  transition: border-color 0.3s;
+  transition: border-color var(--dur-short) ease;
 }
 
 .primary-bg {
   background-color: var(--primary-color);
-  transition: background-color 0.3s;
+  transition: background-color var(--dur-short) ease;
 }
 
 .primary-stroke {
   stroke: var(--primary-color);
-  transition: stroke 0.3s;
+  transition: stroke var(--dur-short) ease;
 }
 
 .default-accent-btn {
   background-color: var(--default-accent-light);
-  transition: background-color 0.3s;
+  transition: background-color var(--dur-short) ease;
 }
 .dark .default-accent-btn {
   background-color: var(--default-accent-dark);
@@ -1076,7 +1155,7 @@ html.dark .app-bg::before {
 
 .default-bg-btn {
   background-color: var(--default-bg-light);
-  transition: background-color 0.3s;
+  transition: background-color var(--dur-short) ease;
 }
 .dark .default-bg-btn {
   background-color: var(--default-bg-dark);
@@ -1184,7 +1263,7 @@ input[type="number"] {
   background-color: var(--border-color);
   border-radius: 9999px;
   position: relative;
-  transition: background-color 0.3s ease;
+  transition: background-color var(--dur-short) ease;
 }
 
 .custom-toggle::after {
@@ -1197,7 +1276,7 @@ input[type="number"] {
   background-color: #ffffff;
   border-radius: 50%;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform var(--dur-short) var(--ease-standard);
 }
 
 input:checked + .custom-toggle {
@@ -1258,7 +1337,7 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
   cursor: ns-resize;
   user-select: none;
   border-bottom-color: rgba(128, 128, 128, 0.3);
-  transition: border-color 0.3s;
+  transition: border-color var(--dur-short) ease;
 }
 
 .timer-input:focus {
@@ -1564,24 +1643,24 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
 }
 
 html.js-nav-forward::view-transition-old(root) {
-  animation: 420ms cubic-bezier(0.32, 0.72, 0, 1) both slide-out-to-left;
+  animation: 420ms var(--ease-standard) both slide-out-to-left;
 }
 html.js-nav-forward::view-transition-new(root) {
-  animation: 420ms cubic-bezier(0.32, 0.72, 0, 1) both slide-in-from-right;
+  animation: 420ms var(--ease-standard) both slide-in-from-right;
 }
 
 html.js-nav-backward::view-transition-old(root) {
-  animation: 420ms cubic-bezier(0.32, 0.72, 0, 1) both slide-out-to-right;
+  animation: 420ms var(--ease-standard) both slide-out-to-right;
 }
 html.js-nav-backward::view-transition-new(root) {
-  animation: 420ms cubic-bezier(0.32, 0.72, 0, 1) both slide-in-from-left;
+  animation: 420ms var(--ease-standard) both slide-in-from-left;
 }
 
 html.js-nav-tap::view-transition-old(root) {
-  animation: 280ms cubic-bezier(0.32, 0.72, 0, 1) both tap-old-fade;
+  animation: 280ms var(--ease-standard) both tap-old-fade;
 }
 html.js-nav-tap::view-transition-new(root) {
-  animation: 320ms cubic-bezier(0.32, 0.72, 0, 1) both tap-new-fade;
+  animation: 320ms var(--ease-standard) both tap-new-fade;
 }
 
 /* =========================================
@@ -1647,7 +1726,7 @@ body.hide-nav-labels .nav-btn {
   font-weight: 700;
   white-space: nowrap;
   opacity: 0.8;
-  transition: opacity 0.2s;
+  transition: opacity var(--dur-short) ease;
 }
 
 #vignette-depth-container .relative.w-40,
@@ -1660,22 +1739,6 @@ body.hide-nav-labels .nav-btn {
 .tr-wrap:focus-within + .thumb-label-container > .thumb-label {
   opacity: 1;
 }
-
-/* @media (hover: hover) and (pointer: fine) and (min-width: 768px) {
-  button:not(:disabled),
-  a[href],
-  [role="button"],
-  .nav-btn,
-  .tb-workout-row,
-  .sw-session-header,
-  .custom-select-trigger,
-  .custom-select-option,
-  .resizer_handler,
-  #sw-modal-handler,
-  #tb-modal-handler {
-    cursor: pointer;
-  }
-} */
 
 /* =========================================
    20. СТИЛИ И АНИМАЦИИ ДЛЯ УПРАВЛЕНИЯ ЦВЕТАМИ
@@ -1706,11 +1769,11 @@ body.hide-nav-labels .nav-btn {
   position: relative;
   flex-shrink: 0;
   transition:
-    max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-    margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-    margin-right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    max-width var(--dur-medium) var(--ease-standard),
+    margin-left var(--dur-medium) var(--ease-standard),
+    margin-right var(--dur-medium) var(--ease-standard);
   max-width: 2.25rem;
-  animation: fadeInScale 0.3s cubic-bezier(0.4, 0, 0.2, 1) both;
+  animation: fadeInScale var(--dur-medium) var(--ease-standard) both;
 }
 
 #accent-colors-container,
@@ -1727,14 +1790,14 @@ body.hide-nav-labels .nav-btn {
   max-width: 0 !important;
   margin-left: 0 !important;
   margin-right: 0 !important;
-  animation: fadeOutScale 0.25s cubic-bezier(0.4, 0, 0.2, 1) both;
+  animation: fadeOutScale 0.25s var(--ease-standard) both;
   pointer-events: none;
 }
 
 .color-action-btn {
   position: absolute;
   z-index: 30;
-  animation: fadeInScale 0.2s cubic-bezier(0.4, 0, 0.2, 1) both;
+  animation: fadeInScale 0.2s var(--ease-standard) both;
 }
 
 .color-action-btn[data-action="delete"] {
@@ -1746,12 +1809,12 @@ body.hide-nav-labels .nav-btn {
 }
 
 .color-action-btn.is-hiding {
-  animation: fadeOutScale 0.2s cubic-bezier(0.4, 0, 0.2, 1) both;
+  animation: fadeOutScale 0.2s var(--ease-standard) both;
 }
 
 .color-picker-wrapper {
   flex-shrink: 0;
-  animation: fadeInScale 0.3s 0.1s cubic-bezier(0.4, 0, 0.2, 1) both;
+  animation: fadeInScale 0.3s 0.1s var(--ease-standard) both;
 }
 
 .color-picker-wrapper:has(.color-action-btn[data-action="add"]) {
@@ -1767,614 +1830,19 @@ body.hide-nav-labels .nav-btn {
 /* Add-color button: smooth color change when user picks color */
 .color-action-btn[data-action="add"] {
   transition:
-    transform 160ms cubic-bezier(0.22, 0.9, 0.3, 1),
+    transform 160ms var(--ease-emphasized),
     background-color 180ms ease,
     color 180ms ease !important;
 }
 
 /* During add commit (layout shift) disable color tween to avoid strange flashing */
 .color-picker-wrapper.picker-commit-lock .color-action-btn[data-action="add"] {
-  transition: transform 160ms cubic-bezier(0.22, 0.9, 0.3, 1) !important;
-}
-
-/* Keep focus ring suppressed while native color input closes/re-focuses */
-.color-picker-wrapper.picker-focus-suppressed,
-.color-picker-wrapper.picker-focus-suppressed:focus-within {
-  box-shadow: none !important;
-  outline: none !important;
+  transition: transform 160ms var(--ease-emphasized) !important;
 }
 
 @layer utilities {
   .transition-ios {
-    transition-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
-  }
-}
-
-/* =========================================
-   21. АНИМАЦИЯ НИЖНЕГО МЕНЮ (iOS стиль)
-========================================= */
-.nav-btn > div {
-  transition:
-    transform 0.25s cubic-bezier(0.32, 0.72, 0, 1),
-    color 0.3s;
-}
-
-#app.is-view-transitioning .nav-btn {
-  pointer-events: none;
-}
-
-#app.is-view-transitioning #viewsContainer > div {
-  transition: none !important;
-}
-
-.nav-btn svg {
-  vector-effect: non-scaling-stroke;
-}
-
-@media (hover: hover) {
-  .nav-btn:hover > div:not(.primary-text) {
-    transform: scale(1.08);
-  }
-  .nav-btn:hover > div:not(.primary-text),
-  .nav-btn:hover > span:not(.primary-text) {
-    color: var(--primary-color);
-  }
-}
-
-/* =========================================
-   22. АДАПТИВНЫЕ ЦВЕТА UI
-========================================= */
-.secondary-accent-text {
-  color: var(--secondary-accent-color);
-  transition: color 0.3s;
-}
-
-.secondary-accent-stroke {
-  stroke: var(--secondary-accent-color);
-  transition: stroke 0.3s;
-}
-
-.bg-alert {
-  background-color: var(--alert-color);
-  color: var(--alert-color-fg);
-  transition: background-color 0.3s;
-}
-
-.bg-alert:hover {
-  filter: brightness(95%);
-}
-
-.text-alert {
-  color: var(--alert-color);
-  transition: color 0.3s;
-}
-
-.is-reset {
-  background-color: var(--alert-color) !important;
-  color: var(--alert-color-fg) !important;
-  box-shadow:
-    0 4px 10px rgba(0, 0, 0, 0.12),
-    0 1px 2px rgba(0, 0, 0, 0.08) !important;
-}
-
-.is-reset:hover {
-  filter: brightness(95%);
-}
-
-/* =========================================
-   23. TOUCH-RANGE СТИЛИЗАЦИЯ
-========================================= */
-.tr-thumb {
-  border: 2px solid var(--primary-color);
-  box-sizing: border-box;
-}
-
-.tr-wrap:focus-within .tr-thumb,
-.tr-wrap.tr-focused .tr-thumb {
-  box-shadow: 0 0 0 4px var(--primary-color);
-}
-
-.p-4.is-disabled {
-  opacity: 0.5;
-  pointer-events: none;
-}
-
-.range-row .range-field {
-  padding-right: 0.5rem;
-}
-
-.range-field-half {
-  width: 100%;
-  flex: 0 0 1;
-}
-
-.range-row {
-  display: flex;
-  align-items: center;
-  align-content: center;
-  gap: 1rem;
-}
-
-.range-value {
-  width: 3rem;
-  flex: 0 0 2rem;
-  line-height: 1;
-  opacity: 0.95;
-  white-space: nowrap;
-  text-align: right;
-}
-
-/* Спец-режим для половинных слайдеров: вся правая группа прижата вправо */
-.range-row-half {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
-  column-gap: 1;
-  width: 100%;
-}
-
-.range-row-half .range-field-half {
-  justify-self: end;
-}
-
-.range-row-half .range-value {
-  justify-self: end;
-}
-
-#vignette-depth-container .thumb-label-container,
-#vibro-level-container .thumb-label-container {
-  display: none;
-}
-
-/* =========================================
-   24. CUSTOM SELECT (ВЫПАДАЮЩИЕ СПИСКИ)
-========================================= */
-.custom-select-container {
-  overflow: visible;
-}
-
-.custom-select-container.is-open .custom-select-trigger {
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 2px
-    color-mix(in srgb, var(--primary-color) 40%, transparent);
-}
-
-.custom-select-options {
-  position: fixed;
-  z-index: 1000;
-  background-color: var(--surface-color);
-  border: 1px solid var(--border-color);
-  border-radius: 0.75rem;
-  box-shadow:
-    0 10px 25px -5px rgb(0 0 0 / 0.1),
-    0 8px 10px -6px rgb(0 0 0 / 0.1);
-
-  max-height: 60dvh;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch;
-
-  opacity: 0;
-  transform: scale(0.95) translateY(-10px);
-  transform-origin: top center;
-  pointer-events: none;
-  background-clip: padding-box;
-  transition:
-    opacity 0.2s cubic-bezier(0.32, 0.72, 0, 1),
-    transform 0.2s cubic-bezier(0.32, 0.72, 0, 1);
-}
-
-.custom-select-options.is-open {
-  opacity: 1;
-  transform: scale(1) translateY(0);
-  pointer-events: auto;
-}
-
-.custom-select-option {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 0.75rem 1rem;
-  cursor: pointer;
-  font-size: 0.875rem;
-  color: var(--text-color);
-  transition:
-    background-color 0.15s,
-    color 0.15s;
-  user-select: none;
-}
-
-/* внутренний ряд (иконка + текст) заполняет всю ширину */
-.custom-select-option > div {
-  width: 100%;
-}
-
-.custom-select-option svg {
-  flex: 0 0 auto;
-}
-
-/* Базовый selected (без glass) */
-.custom-select-option.is-selected {
-  background-color: var(--primary-color);
-  color: #ffffff;
-  font-weight: 700;
-}
-
-/* Glass: selected с прозрачностью от primary */
-:root.glass-effect .custom-select-option.is-selected {
-  background-color: color-mix(in srgb, var(--primary-color) 80%, transparent);
-  backdrop-filter: blur(8px) saturate(160%);
-}
-
-/* Если нужен более темный текст для светлых акцентов */
-:root.glass-effect .custom-select-option.is-selected.needs-dark-text {
-  color: #1f2937;
-}
-
-@media (hover: hover) {
-  .custom-select-option:hover:not(.is-selected) {
-    background-color: color-mix(in srgb, var(--primary-color) 50%, transparent);
-  }
-}
-
-.custom-select-option.is-selected.needs-dark-text {
-  color: #1f2937;
-}
-
-:root.glass-effect .custom-select-trigger {
-  background-color: color-mix(in srgb, var(--surface-color) 50%, transparent);
-  backdrop-filter: blur(12px) saturate(150%);
-}
-
-:root.glass-effect .custom-select-options {
-  background-color: color-mix(in srgb, var(--surface-color) 80%, transparent);
-  backdrop-filter: blur(10px) saturate(180%);
-  border: 1px solid color-mix(in srgb, var(--border-color) 45%, transparent);
-}
-
-:root.dark.glass-effect .custom-select-options {
-  background-color: color-mix(in srgb, var(--surface-color) 90%, transparent);
-}
-
-/* Strong glass override for custom select dropdown */
-:root.glass-effect .custom-select-options {
-  background-color: color-mix(
-    in srgb,
-    var(--surface-color) 38%,
-    transparent
-  ) !important;
-  border-color: color-mix(
-    in srgb,
-    var(--border-color) 55%,
-    transparent
-  ) !important;
-  -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
-  backdrop-filter: blur(16px) saturate(180%) !important;
-  box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.45),
-    0 10px 28px rgba(0, 0, 0, 0.16) !important;
-}
-
-:root.dark.glass-effect .custom-select-options {
-  background-color: color-mix(
-    in srgb,
-    var(--surface-color) 26%,
-    transparent
-  ) !important;
-  border-color: color-mix(
-    in srgb,
-    var(--border-color) 60%,
-    transparent
-  ) !important;
-  -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
-  backdrop-filter: blur(16px) saturate(180%) !important;
-  box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.08),
-    0 12px 30px rgba(0, 0, 0, 0.38) !important;
-}
-
-/* Theme mode select: icon + label alignment */
-#themeModeSelectContainer .custom-select-trigger {
-  min-height: 38px;
-}
-
-#themeModeSelectContainer .custom-select-value {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-weight: 700;
-  letter-spacing: 0.01em;
-  white-space: nowrap;
-  line-height: 1;
-}
-
-#themeModeSelectContainer .custom-select-value svg {
-  width: 16px;
-  height: 16px;
-  flex: 0 0 16px;
-}
-
-#themeModeSelectContainer .custom-select-option > div {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  line-height: 1;
-}
-
-#themeModeSelectContainer .custom-select-option svg {
-  width: 16px;
-  height: 16px;
-  flex: 0 0 16px;
-}
-
-#themeModeSelectContainer .custom-select-option span {
-  white-space: nowrap;
-}
-
-/* =========================================
-   25. ОПТИМИЗАЦИЯ ПРОИЗВОДИТЕЛЬНОСТИ АНИМАЦИЙ
-========================================= */
-#tb-modal,
-#sw-sessions-modal {
-  will-change: transform;
-}
-
-#reset-modal-content,
-#sw-clear-modal-content,
-#sw-name-modal-content,
-#sw-share-mode-content,
-#legal-modal-content,
-#pro-subscribe-modal-content,
-#toast {
-  will-change: transform, opacity;
-}
-
-.nav-btn > div,
-.custom-select-options,
-.custom-toggle::after,
-#sw-lapFlash {
-  will-change: auto;
-}
-
-#sw-lapsContainer,
-#tb-workoutsList,
-#sw-sessionsList {
-  contain: layout paint style;
-}
-
-#app-ad-slot {
-  margin: auto;
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: calc(var(--nav-height) + var(--safe-bottom) + 4px);
-  z-index: 140;
-  pointer-events: auto;
-}
-
-/* =========================================
-   26. ADAPTIVE GLASS QUALITY
-========================================= */
-:root.glass-lite.glass-effect body #tb-modal,
-:root.glass-lite.glass-effect body #sw-sessions-modal {
-  backdrop-filter: blur(8px) saturate(120%);
-}
-
-:root.glass-lite.glass-effect body nav {
-  backdrop-filter: blur(5px) saturate(120%);
-}
-
-:root.glass-lite.glass-effect body #reset-modal-content,
-:root.glass-lite.glass-effect body #sw-clear-modal-content,
-:root.glass-lite.glass-effect body #sw-name-modal-content,
-:root.glass-lite.glass-effect body #sw-share-mode-content,
-:root.glass-lite.glass-effect body #legal-modal-content,
-:root.glass-lite.glass-effect body #pro-subscribe-modal-content {
-  backdrop-filter: blur(12px) saturate(135%);
-}
-
-:root.glass-lite.glass-effect
-  body
-  .app-surface:not(button):not(.select-wrapper),
-:root.glass-lite.glass-effect body #toast {
-  backdrop-filter: blur(8px) saturate(120%);
-}
-
-:root.glass-lite.glass-effect body .lap-row,
-:root.glass-lite.glass-effect body .tb-workout-row,
-:root.glass-lite.glass-effect body .sw-session-header,
-:root.glass-lite.glass-effect body [id^="sw-details-"] > div:last-child {
-  backdrop-filter: none !important;
-}
-
-/* =========================================
-   27. NAV SNAPSHOT TRANSITIONS (STABLE)
-========================================= */
-#viewsContainer {
-  position: relative;
-  overflow: hidden;
-  isolation: isolate;
-}
-
-#app.is-view-transitioning .nav-btn {
-  pointer-events: none;
-}
-
-#app.is-view-transitioning #viewsContainer > div,
-#app.is-view-transitioning .timer-display,
-#app.is-view-transitioning .progress-ring__circle {
-  transition: none !important;
-}
-
-.nav-snapshot-layer {
-  position: absolute;
-  z-index: 40;
-  pointer-events: none;
-  overflow: hidden;
-  backface-visibility: hidden;
-  transform: translateZ(0);
-  will-change: transform, opacity;
-}
-
-/* =========================================
-   28. PRO UI (BADGES / CTA / STATUS)
-========================================= */
-
-:root {
-  --pro-bg-light: #0f172a;
-  --pro-fg-light: #f8fafc;
-  --pro-bg-dark: #f3f4f6;
-  --pro-fg-dark: #111827;
-
-  --pro-muted-bg: #9ca3af;
-  --pro-muted-fg: #111827;
-}
-
-/* Animated gradient border with short pause */
-.pro-animated-border {
-  position: relative;
-  border: 2px solid transparent;
-  background:
-    linear-gradient(var(--pro-fill), var(--pro-fill)) padding-box,
-    linear-gradient(
-        120deg,
-        color-mix(in srgb, var(--primary-color) 25%, transparent) 0%,
-        color-mix(in srgb, var(--primary-color) 85%, #ffffff) 30%,
-        color-mix(in srgb, var(--primary-color) 45%, transparent) 55%,
-        color-mix(in srgb, var(--primary-color) 95%, #ffffff) 80%,
-        color-mix(in srgb, var(--primary-color) 30%, transparent) 100%
-      )
-      border-box;
-  background-size:
-    100% 100%,
-    240% 240%;
-  animation: pro-border-shimmer 3.4s linear infinite;
-}
-
-@keyframes pro-border-shimmer {
-  0%,
-  18% {
-    background-position:
-      0 0,
-      0% 50%;
-  }
-  68% {
-    background-position:
-      0 0,
-      100% 50%;
-  }
-  100% {
-    background-position:
-      0 0,
-      100% 50%;
-  }
-}
-
-/* Inline wrap: label + badge together */
-.pro-inline-wrap {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-/* Small Pro badge */
-.pro-badge {
-  --pro-fill: var(--pro-bg-light);
-  --pro-text: var(--pro-fg-light);
-
-  min-height: 24px;
-  padding: 0.15rem 0.5rem;
-  border-radius: 0.5rem;
-  font-size: 10px;
-  font-style: italic;
-  font-weight: 800;
-  /* letter-spacing: 0.08em; */
-  text-transform: uppercase;
-  line-height: 1;
-  color: var(--pro-text);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  white-space: nowrap;
-}
-
-html.dark .pro-badge {
-  --pro-fill: var(--pro-bg-dark);
-  --pro-text: var(--pro-fg-dark);
-}
-
-/* Main CTA */
-.pro-cta {
-  min-height: 44px;
-  border-radius: 0.75rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  transition: transform 0.2s ease;
-}
-
-.pro-cta .pro-cta-price {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  opacity: 0.95;
-}
-
-.pro-cta-buy {
-  --pro-fill: var(--pro-bg-light);
-  --pro-text: var(--pro-fg-light);
-  color: var(--pro-text);
-}
-
-html.dark .pro-cta-buy {
-  --pro-fill: var(--pro-bg-dark);
-  --pro-text: var(--pro-fg-dark);
-}
-
-:root.glass-effect .pro-cta-buy {
-  --pro-fill: var(--pro-bg-light);
-}
-
-:root.dark.glass-effect .pro-cta-buy {
-  --pro-fill: var(--pro-bg-dark);
-}
-
-.pro-cta-cancel {
-  background: var(--pro-muted-bg) !important;
-  color: var(--pro-muted-fg) !important;
-  border: 2px solid var(--pro-muted-bg) !important;
-  animation: none !important;
-}
-
-/* Price block in paywall modal */
-#pro-paywall-price {
-  border: 2px solid var(--border-color);
-  border-radius: 0.85rem;
-  padding: 0.65rem 0.75rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-}
-
-#pro-paywall-price .pro-current {
-  font-size: 1rem;
-  font-weight: 800;
-  color: var(--text-color);
-}
-
-#pro-paywall-price .pro-old {
-  font-size: 0.8rem;
-  text-decoration: line-through;
-  color: var(--text-secondary);
-}
-
-#pro-paywall-price .pro-meta {
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .pro-animated-border {
-    animation: none !important;
+    transition-timing-function: var(--ease-standard);
   }
 }
 
