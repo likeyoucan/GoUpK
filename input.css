@@ -67,6 +67,24 @@
   --tr-track-bg: var(--border-color);
   --tr-fill-color: var(--primary-color);
   --tr-thumb-color: var(--surface-color);
+
+  /* 4px rhythm system */
+  --u: 4px;
+  --space-1: calc(var(--u) * 1); /* 4 */
+  --space-2: calc(var(--u) * 2); /* 8 */
+  --space-3: calc(var(--u) * 3); /* 12 */
+  --space-4: calc(var(--u) * 4); /* 16 */
+  --space-5: calc(var(--u) * 5); /* 20 */
+  --space-6: calc(var(--u) * 6); /* 24 */
+  --control-h: calc(var(--u) * 11); /* 44 */
+
+  /* Motion system */
+  --ease-standard: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-emphasized: cubic-bezier(0.22, 0.9, 0.3, 1);
+  --dur-micro: 140ms;
+  --dur-short: 220ms;
+  --dur-medium: 320ms;
+  --dur-long: 420ms;
 }
 
 :root.dark {
@@ -167,8 +185,8 @@ body {
   visibility: visible;
   pointer-events: auto;
   transition:
-    opacity 0.28s ease,
-    visibility 0.28s ease;
+    opacity 0.28s var(--ease-standard),
+    visibility 0.28s var(--ease-standard);
 }
 
 #app-preloader.is-hidden {
@@ -226,10 +244,11 @@ body {
 button {
   appearance: none;
   transition:
-    background-color 0.3s,
-    border-color 0.3s,
-    box-shadow 0.3s,
-    color 0.3s;
+    background-color var(--dur-short) ease,
+    border-color var(--dur-short) ease,
+    box-shadow var(--dur-short) ease,
+    color var(--dur-short) ease,
+    transform var(--dur-micro) var(--ease-standard);
   touch-action: manipulation;
 }
 
@@ -276,7 +295,7 @@ button {
 
 .app-bg {
   background-color: var(--bg-color);
-  transition: background-color 0.3s;
+  transition: background-color var(--dur-short) ease;
   position: relative;
   z-index: 0;
 }
@@ -294,8 +313,8 @@ button {
   border-radius: inherit;
   opacity: 0;
   transition:
-    opacity 400ms cubic-bezier(0.32, 0.72, 0, 1),
-    box-shadow 300ms ease-in-out;
+    opacity var(--dur-long) var(--ease-standard),
+    box-shadow var(--dur-medium) ease-in-out;
 }
 
 html.dark .app-bg::before {
@@ -319,17 +338,22 @@ html.dark .app-bg::before {
   display: flex;
   justify-content: center;
   align-items: center;
+  container-type: size;
 }
 
 .top_content {
-  aspect-ratio: 1 / 1;
-  padding-block: 32px;
-  gap: 12px;
+  --top-pad: var(--space-4);
+  --title-rail: 48px;
+  --action-rail: 52px;
+  --ring-gap: var(--space-3);
+
   height: 100%;
-  max-height: min(150vw, 980px);
+  width: 100%;
+  max-width: 100%;
+  padding-block: var(--top-pad);
+  gap: var(--ring-gap);
   display: grid;
-  grid-template-rows: 1fr minmax(0, 65dvh) 1fr;
-  grid-template-columns: 80%;
+  grid-template-rows: var(--title-rail) minmax(0, 1fr) var(--action-rail);
   justify-content: center;
   align-items: center;
   justify-items: center;
@@ -359,8 +383,8 @@ html.dark .app-bg::before {
   overflow: hidden;
   padding-top: calc(var(--handler-size) + 10px);
   transition:
-    opacity 0.18s ease,
-    filter 0.18s ease;
+    opacity 0.18s var(--ease-standard),
+    filter 0.18s var(--ease-standard);
 }
 
 #tb-runningControls {
@@ -391,9 +415,9 @@ html.dark .app-bg::before {
   background: color-mix(in srgb, var(--text-color) 26%, transparent);
   opacity: 0.4;
   transition:
-    opacity 0.16s ease,
-    background-color 0.16s ease,
-    transform 0.16s ease;
+    opacity var(--dur-short) var(--ease-standard),
+    background-color var(--dur-short) var(--ease-standard),
+    transform var(--dur-short) var(--ease-standard);
 }
 
 .resizer_handler::after {
@@ -596,6 +620,12 @@ html.dark .app-bg::before {
     top: 0;
     bottom: auto;
   }
+
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden .top_content {
+    --top-pad: 12px;
+    --title-rail: 40px;
+    --action-rail: 48px;
+  }
 }
 
 /* ===== progressive collapse FX (blur + opacity to 0) ===== */
@@ -645,9 +675,9 @@ html.dark .app-bg::before {
 :is(#view-stopwatch, #view-timer, #view-tabata).split-animating
   .view-bottom-half {
   transition:
-    flex-basis var(--split-snap-duration) cubic-bezier(0.22, 0.8, 0.18, 1),
-    min-height var(--split-snap-duration) cubic-bezier(0.22, 0.8, 0.18, 1),
-    min-width var(--split-snap-duration) cubic-bezier(0.22, 0.8, 0.18, 1) !important;
+    flex-basis var(--split-snap-duration) var(--ease-standard),
+    min-height var(--split-snap-duration) var(--ease-standard),
+    min-width var(--split-snap-duration) var(--ease-standard) !important;
 }
 
 :is(#view-stopwatch, #view-timer, #view-tabata).split-live .view-top-half,
@@ -679,8 +709,8 @@ html.dark .app-bg::before {
   }
 
   .view-top-half {
-    border-right: none;
     position: relative;
+    border-right: none;
   }
 
   .view-top-half::after {
@@ -694,21 +724,16 @@ html.dark .app-bg::before {
     opacity: 1;
     pointer-events: none;
     transition:
-      opacity 220ms cubic-bezier(0.32, 0.72, 0, 1),
-      background-color 220ms ease;
+      opacity var(--dur-short) var(--ease-standard),
+      background-color var(--dur-short) ease;
   }
 
-  /* Когда одна половина раскрыта на весь экран — разделитель исчезает */
-  :is(#view-stopwatch, #view-timer, #view-tabata).split-top-hidden
-    .view-top-half::after,
-  :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
-    .view-top-half::after {
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-top-hidden .view-top-half::after,
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden .view-top-half::after {
     opacity: 0;
   }
 
-  /* Во время drag можно слегка ослаблять линию */
-  :is(#view-stopwatch, #view-timer, #view-tabata).split-live
-    .view-top-half::after {
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-live .view-top-half::after {
     opacity: calc(1 - max(var(--collapse-top-k), var(--collapse-bottom-k)));
   }
 
@@ -718,14 +743,15 @@ html.dark .app-bg::before {
   }
 
   .top_content {
-    padding-block: 24px;
-    grid-template-columns: 60%;
+    --top-pad: var(--space-4);
+    --title-rail: 44px;
+    --action-rail: 52px;
     max-height: min(62.5dvw, 620px);
   }
 
   .mid_content {
-    padding-block: 24px;
-    padding-top: 24px;
+    padding-block: var(--space-6);
+    padding-top: var(--space-6);
     padding-inline: 0;
   }
 
@@ -820,7 +846,7 @@ html.dark .app-bg::before {
 
 @media (min-width: 375px) and (orientation: portrait) {
   .top_content {
-    padding-block: 16px;
+    --top-pad: var(--space-4);
   }
 }
 
@@ -848,21 +874,19 @@ html.dark .app-bg::before {
   }
 
   .top_content {
-    grid-template-columns: 70%;
     max-height: min(37.5dvw, 500px);
   }
 }
 
 /* =========================================
-   6. КРУЖОК ТАЙМЕРА (UX REFACTORED)
+   6. КРУЖОК ТАЙМЕРА
 ========================================= */
 .timer-circle-wrap {
-  width: 100%;
-  max-width: 100%;
+  --ring-size: clamp(180px, 100%, 680px);
+  width: min(100%, var(--ring-size));
+  height: min(100%, var(--ring-size));
   aspect-ratio: 1 / 1;
   margin: 0 auto;
-  height: 100%;
-  max-height: 100dvh;
   display: flex;
   position: relative;
   align-items: center;
@@ -879,8 +903,9 @@ html.dark .app-bg::before {
   max-inline-size: 90%;
   text-overflow: clip;
   transition:
-    font-size 220ms cubic-bezier(0.32, 0.72, 0, 1),
-    color 300ms ease;
+    font-size var(--dur-short) var(--ease-standard),
+    color var(--dur-short) ease,
+    transform var(--dur-short) var(--ease-standard);
   font-style: normal;
   font-variant-numeric: tabular-nums;
 }
@@ -952,6 +977,27 @@ html.dark .app-bg::before {
     padding-top: 1.5rem;
     min-height: auto;
   }
+}
+
+/* 4px rhythm normalization for settings blocks */
+#view-settings .app-surface > div {
+  min-height: var(--control-h);
+}
+
+#view-settings .app-surface .p-4 {
+  padding: var(--space-4) !important;
+}
+
+#view-settings .app-surface .gap-2 {
+  gap: var(--space-2) !important;
+}
+
+#view-settings .app-surface .gap-3 {
+  gap: var(--space-3) !important;
+}
+
+#view-settings .app-surface .gap-4 {
+  gap: var(--space-4) !important;
 }
 
 /* =========================================
@@ -1057,19 +1103,19 @@ html.dark .app-bg::before {
 .app-surface {
   background-color: var(--surface-color);
   transition:
-    background-color 0.3s,
-    box-shadow 0.3s,
-    border-color 0.3s;
+    background-color var(--dur-short) ease,
+    box-shadow var(--dur-short) ease,
+    border-color var(--dur-short) ease;
 }
 
 .app-text {
   color: var(--text-color);
-  transition: color 0.3s;
+  transition: color var(--dur-short) ease;
 }
 
 .app-text-sec {
   color: var(--text-secondary);
-  transition: color 0.3s;
+  transition: color var(--dur-short) ease;
 }
 
 .accent-dimmed {
@@ -1078,27 +1124,27 @@ html.dark .app-bg::before {
 
 .primary-text {
   color: var(--primary-color);
-  transition: color 0.3s;
+  transition: color var(--dur-short) ease;
 }
 
 .app-border {
   border-color: var(--border-color);
-  transition: border-color 0.3s;
+  transition: border-color var(--dur-short) ease;
 }
 
 .primary-bg {
   background-color: var(--primary-color);
-  transition: background-color 0.3s;
+  transition: background-color var(--dur-short) ease;
 }
 
 .primary-stroke {
   stroke: var(--primary-color);
-  transition: stroke 0.3s;
+  transition: stroke var(--dur-short) ease;
 }
 
 .default-accent-btn {
   background-color: var(--default-accent-light);
-  transition: background-color 0.3s;
+  transition: background-color var(--dur-short) ease;
 }
 .dark .default-accent-btn {
   background-color: var(--default-accent-dark);
@@ -1106,7 +1152,7 @@ html.dark .app-bg::before {
 
 .default-bg-btn {
   background-color: var(--default-bg-light);
-  transition: background-color 0.3s;
+  transition: background-color var(--dur-short) ease;
 }
 .dark .default-bg-btn {
   background-color: var(--default-bg-dark);
@@ -1214,7 +1260,7 @@ input[type="number"] {
   background-color: var(--border-color);
   border-radius: 9999px;
   position: relative;
-  transition: background-color 0.3s ease;
+  transition: background-color var(--dur-short) ease;
 }
 
 .custom-toggle::after {
@@ -1227,7 +1273,7 @@ input[type="number"] {
   background-color: #ffffff;
   border-radius: 50%;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform var(--dur-short) var(--ease-standard);
 }
 
 input:checked + .custom-toggle {
@@ -1288,7 +1334,7 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
   cursor: ns-resize;
   user-select: none;
   border-bottom-color: rgba(128, 128, 128, 0.3);
-  transition: border-color 0.3s;
+  transition: border-color var(--dur-short) ease;
 }
 
 .timer-input:focus {
@@ -1594,24 +1640,24 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
 }
 
 html.js-nav-forward::view-transition-old(root) {
-  animation: 420ms cubic-bezier(0.32, 0.72, 0, 1) both slide-out-to-left;
+  animation: 420ms var(--ease-standard) both slide-out-to-left;
 }
 html.js-nav-forward::view-transition-new(root) {
-  animation: 420ms cubic-bezier(0.32, 0.72, 0, 1) both slide-in-from-right;
+  animation: 420ms var(--ease-standard) both slide-in-from-right;
 }
 
 html.js-nav-backward::view-transition-old(root) {
-  animation: 420ms cubic-bezier(0.32, 0.72, 0, 1) both slide-out-to-right;
+  animation: 420ms var(--ease-standard) both slide-out-to-right;
 }
 html.js-nav-backward::view-transition-new(root) {
-  animation: 420ms cubic-bezier(0.32, 0.72, 0, 1) both slide-in-from-left;
+  animation: 420ms var(--ease-standard) both slide-in-from-left;
 }
 
 html.js-nav-tap::view-transition-old(root) {
-  animation: 280ms cubic-bezier(0.32, 0.72, 0, 1) both tap-old-fade;
+  animation: 280ms var(--ease-standard) both tap-old-fade;
 }
 html.js-nav-tap::view-transition-new(root) {
-  animation: 320ms cubic-bezier(0.32, 0.72, 0, 1) both tap-new-fade;
+  animation: 320ms var(--ease-standard) both tap-new-fade;
 }
 
 /* =========================================
@@ -1677,7 +1723,7 @@ body.hide-nav-labels .nav-btn {
   font-weight: 700;
   white-space: nowrap;
   opacity: 0.8;
-  transition: opacity 0.2s;
+  transition: opacity var(--dur-short) ease;
 }
 
 #vignette-depth-container .relative.w-40,
@@ -1690,22 +1736,6 @@ body.hide-nav-labels .nav-btn {
 .tr-wrap:focus-within + .thumb-label-container > .thumb-label {
   opacity: 1;
 }
-
-/* @media (hover: hover) and (pointer: fine) and (min-width: 768px) {
-  button:not(:disabled),
-  a[href],
-  [role="button"],
-  .nav-btn,
-  .tb-workout-row,
-  .sw-session-header,
-  .custom-select-trigger,
-  .custom-select-option,
-  .resizer_handler,
-  #sw-modal-handler,
-  #tb-modal-handler {
-    cursor: pointer;
-  }
-} */
 
 /* =========================================
    20. СТИЛИ И АНИМАЦИИ ДЛЯ УПРАВЛЕНИЯ ЦВЕТАМИ
@@ -1736,11 +1766,11 @@ body.hide-nav-labels .nav-btn {
   position: relative;
   flex-shrink: 0;
   transition:
-    max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-    margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-    margin-right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    max-width var(--dur-medium) var(--ease-standard),
+    margin-left var(--dur-medium) var(--ease-standard),
+    margin-right var(--dur-medium) var(--ease-standard);
   max-width: 2.25rem;
-  animation: fadeInScale 0.3s cubic-bezier(0.4, 0, 0.2, 1) both;
+  animation: fadeInScale var(--dur-medium) var(--ease-standard) both;
 }
 
 #accent-colors-container,
@@ -1757,14 +1787,14 @@ body.hide-nav-labels .nav-btn {
   max-width: 0 !important;
   margin-left: 0 !important;
   margin-right: 0 !important;
-  animation: fadeOutScale 0.25s cubic-bezier(0.4, 0, 0.2, 1) both;
+  animation: fadeOutScale 0.25s var(--ease-standard) both;
   pointer-events: none;
 }
 
 .color-action-btn {
   position: absolute;
   z-index: 30;
-  animation: fadeInScale 0.2s cubic-bezier(0.4, 0, 0.2, 1) both;
+  animation: fadeInScale 0.2s var(--ease-standard) both;
 }
 
 .color-action-btn[data-action="delete"] {
@@ -1776,12 +1806,12 @@ body.hide-nav-labels .nav-btn {
 }
 
 .color-action-btn.is-hiding {
-  animation: fadeOutScale 0.2s cubic-bezier(0.4, 0, 0.2, 1) both;
+  animation: fadeOutScale 0.2s var(--ease-standard) both;
 }
 
 .color-picker-wrapper {
   flex-shrink: 0;
-  animation: fadeInScale 0.3s 0.1s cubic-bezier(0.4, 0, 0.2, 1) both;
+  animation: fadeInScale 0.3s 0.1s var(--ease-standard) both;
 }
 
 .color-picker-wrapper:has(.color-action-btn[data-action="add"]) {
@@ -1797,19 +1827,19 @@ body.hide-nav-labels .nav-btn {
 /* Add-color button: smooth color change when user picks color */
 .color-action-btn[data-action="add"] {
   transition:
-    transform 160ms cubic-bezier(0.22, 0.9, 0.3, 1),
+    transform 160ms var(--ease-emphasized),
     background-color 180ms ease,
     color 180ms ease !important;
 }
 
 /* During add commit (layout shift) disable color tween to avoid strange flashing */
 .color-picker-wrapper.picker-commit-lock .color-action-btn[data-action="add"] {
-  transition: transform 160ms cubic-bezier(0.22, 0.9, 0.3, 1) !important;
+  transition: transform 160ms var(--ease-emphasized) !important;
 }
 
 @layer utilities {
   .transition-ios {
-    transition-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
+    transition-timing-function: var(--ease-standard);
   }
 }
 
@@ -1818,8 +1848,8 @@ body.hide-nav-labels .nav-btn {
 ========================================= */
 .nav-btn > div {
   transition:
-    transform 0.25s cubic-bezier(0.32, 0.72, 0, 1),
-    color 0.3s;
+    transform var(--dur-short) var(--ease-standard),
+    color var(--dur-short) ease;
 }
 
 #app.is-view-transitioning .nav-btn {
@@ -1849,18 +1879,18 @@ body.hide-nav-labels .nav-btn {
 ========================================= */
 .secondary-accent-text {
   color: var(--secondary-accent-color);
-  transition: color 0.3s;
+  transition: color var(--dur-short) ease;
 }
 
 .secondary-accent-stroke {
   stroke: var(--secondary-accent-color);
-  transition: stroke 0.3s;
+  transition: stroke var(--dur-short) ease;
 }
 
 .bg-alert {
   background-color: var(--alert-color);
   color: var(--alert-color-fg);
-  transition: background-color 0.3s;
+  transition: background-color var(--dur-short) ease;
 }
 
 .bg-alert:hover {
@@ -1869,7 +1899,7 @@ body.hide-nav-labels .nav-btn {
 
 .text-alert {
   color: var(--alert-color);
-  transition: color 0.3s;
+  transition: color var(--dur-short) ease;
 }
 
 .is-reset {
@@ -1906,10 +1936,6 @@ body.hide-nav-labels .nav-btn {
   padding-right: 0.5rem;
 }
 
-.range-row .range-field {
-  padding-right: 0.5rem;
-}
-
 .range-field-half {
   width: 100%;
   min-width: 0;
@@ -1920,8 +1946,8 @@ body.hide-nav-labels .nav-btn {
   display: flex;
   align-items: center;
   align-content: center;
-  gap: 0.75rem; /* 12px */
-  min-height: 2.75rem; /* 44px tap-friendly */
+  gap: var(--space-3); /* 12px */
+  min-height: var(--control-h);
 }
 
 .range-value {
@@ -1936,15 +1962,10 @@ body.hide-nav-labels .nav-btn {
 /* Половинные слайдеры: правая группа = ~50% ширины строки */
 .range-row-half {
   display: grid;
-  grid-template-columns: auto minmax(calc(18% - 3.25rem), 150px) 3.25rem;
+  grid-template-columns: minmax(88px, 1fr) minmax(0, calc(50% - 3.25rem)) 3.25rem;
   align-items: center;
-  column-gap: 0.75rem;
-  justify-content: end;
+  column-gap: var(--space-3);
   width: 100%;
-}
-
-.range-row-half > label {
-  padding-right: 1rem;
 }
 
 .range-row-half .range-field-half {
@@ -1959,6 +1980,11 @@ body.hide-nav-labels .nav-btn {
 #vignette-depth-container .thumb-label-container,
 #vibro-level-container .thumb-label-container {
   display: none;
+}
+
+#vignette-depth-container,
+#vibro-level-container {
+  padding-top: var(--space-2);
 }
 
 /* =========================================
@@ -1995,8 +2021,8 @@ body.hide-nav-labels .nav-btn {
   pointer-events: none;
   background-clip: padding-box;
   transition:
-    opacity 0.2s cubic-bezier(0.32, 0.72, 0, 1),
-    transform 0.2s cubic-bezier(0.32, 0.72, 0, 1);
+    opacity var(--dur-short) var(--ease-standard),
+    transform var(--dur-short) var(--ease-standard);
 }
 
 .custom-select-options.is-open {
@@ -2264,7 +2290,7 @@ body.hide-nav-labels .nav-btn {
   --pro-muted-fg: #111827;
 }
 
-/* Animated gradient border with short pause */
+/* Animated gradient border with soft pace */
 .pro-animated-border {
   --pro-fill: var(--surface-color);
   position: relative;
@@ -2272,14 +2298,13 @@ body.hide-nav-labels .nav-btn {
   background:
     linear-gradient(var(--pro-fill), var(--pro-fill)) padding-box,
     linear-gradient(
-        120deg,
-        color-mix(in srgb, var(--primary-color) 20%, transparent) 0%,
-        color-mix(in srgb, var(--primary-color) 92%, #ffffff) 35%,
-        color-mix(in srgb, var(--primary-color) 35%, transparent) 60%,
-        color-mix(in srgb, var(--primary-color) 95%, #ffffff) 82%,
-        color-mix(in srgb, var(--primary-color) 25%, transparent) 100%
-      )
-      border-box;
+      120deg,
+      color-mix(in srgb, var(--primary-color) 20%, transparent) 0%,
+      color-mix(in srgb, var(--primary-color) 92%, #ffffff) 35%,
+      color-mix(in srgb, var(--primary-color) 35%, transparent) 60%,
+      color-mix(in srgb, var(--primary-color) 95%, #ffffff) 82%,
+      color-mix(in srgb, var(--primary-color) 25%, transparent) 100%
+    ) border-box;
   background-size:
     100% 100%,
     260% 100%;
@@ -2288,7 +2313,7 @@ body.hide-nav-labels .nav-btn {
     0 0,
     0% 50%;
   will-change: background-position;
-  animation: pro-border-shimmer 3.2s cubic-bezier(0.32, 0.72, 0, 1) infinite;
+  animation: pro-border-shimmer 3.2s var(--ease-standard) infinite;
 }
 
 @keyframes pro-border-shimmer {
@@ -2328,7 +2353,6 @@ body.hide-nav-labels .nav-btn {
   font-size: 10px;
   font-style: italic;
   font-weight: 800;
-  /* letter-spacing: 0.08em; */
   text-transform: uppercase;
   line-height: 1;
   color: var(--pro-text);
@@ -2350,7 +2374,7 @@ html.dark .pro-badge {
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  transition: transform 0.2s ease;
+  transition: transform var(--dur-short) var(--ease-standard);
 }
 
 .pro-cta .pro-cta-price {
@@ -2430,48 +2454,4 @@ html.dark .pro-cta-buy {
 
 #__erudaBar button {
   font-weight: 600;
-}
-
-/* =========================================
-   MOTION SYSTEM
-========================================= */
-
-:root {
-  --ease-standard: cubic-bezier(0.32, 0.72, 0, 1);
-  --ease-emphasized: cubic-bezier(0.22, 0.9, 0.3, 1);
-
-  --dur-micro: 140ms;
-  --dur-short: 220ms;
-  --dur-medium: 320ms;
-  --dur-long: 420ms;
-}
-
-.nav-btn > div,
-.nav-btn > span,
-.custom-toggle,
-.custom-toggle::after,
-.timer-display,
-.pro-animated-border,
-.custom-select-options,
-#toast {
-  transition-timing-function: var(--ease-standard);
-}
-
-.timer-display {
-  transition-duration: var(--dur-short);
-}
-
-.custom-select-options {
-  transition-duration: var(--dur-short);
-}
-
-#toast {
-  transition-duration: var(--dur-medium);
-}
-
-.resizer_handler::before {
-  transition:
-    opacity var(--dur-short) var(--ease-standard),
-    transform var(--dur-short) var(--ease-standard),
-    background-color var(--dur-short) ease;
 }
