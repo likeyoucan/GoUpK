@@ -1913,9 +1913,10 @@ body.hide-nav-labels .nav-btn {
 /* Половинные слайдеры: правая группа = ~50% ширины строки */
 .range-row-half {
   display: grid;
-  grid-template-columns: minmax(88px, 1fr) minmax(0, calc(50% - 3.25rem)) 3.25rem;
+  grid-template-columns: auto minmax(calc(30% - 3.25rem), 180px) 3.25rem;
   align-items: center;
-  column-gap: 0.75rem;
+  column-gap: 2rem;
+  justify-content: end;
   width: 100%;
 }
 
