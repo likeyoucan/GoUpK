@@ -33,14 +33,16 @@ import {
 const FG_ID = 101;
 const ACTION_TOGGLE = 1;
 const ACTION_STOP = 2;
-const POLL_MS = 120;
 
-// Use a NEW channel id to avoid inherited sound behavior from old channel settings.
+// More stable for Android notification actions; prevents button flicker.
+const POLL_MS = 700;
+
+// NEW channel id to avoid inherited sound settings from old channel.
 const CHANNEL = {
   id: "stopwatch_channel_silent_v2",
   name: "Stopwatch Pro",
   description: "Background stopwatch, timer and tabata controls",
-  importance: 2, // LOW => silent tray banner behavior
+  importance: 2, // LOW: silent tray behavior
 };
 
 const SMALL_ICON = "ic_stat_name";
@@ -74,13 +76,14 @@ function fgDebug(...args) {
 }
 
 function buildSignature(state, payload) {
+  // Signature should be stable and coarse-grained enough
+  // to avoid ultra-frequent updateForegroundService calls.
   return [
     state.mode,
     state.running ? "1" : "0",
     state.metaKey || "",
     payload.title,
     payload.body,
-    uiSettingsManager.showMs ? "ms1" : "ms0",
   ].join("|");
 }
 
@@ -215,8 +218,9 @@ export async function syncNotification() {
 
   lastSignature = signature;
 
-  const toggleTitle = state.running ? t("pause") : t("play");
-  const stopTitle = t("stop");
+  // Text icons: most plugins support only title/id for action buttons.
+  const toggleTitle = state.running ? "⏸" : "▶";
+  const stopTitle = "■";
 
   const options = {
     id: FG_ID,
