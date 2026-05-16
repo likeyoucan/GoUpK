@@ -1908,9 +1908,13 @@ body.hide-nav-labels .nav-btn {
   display: grid;
   grid-template-columns: auto minmax(calc(30% - 3.25rem), 180px) 3.25rem;
   align-items: center;
-  column-gap: 2rem;
+  column-gap: 0.75rem;
   justify-content: end;
   width: 100%;
+}
+
+.range-row-half > label{
+  padding-right: 2rem;
 }
 
 .range-row-half .range-field-half {
