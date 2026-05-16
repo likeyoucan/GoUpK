@@ -679,7 +679,37 @@ html.dark .app-bg::before {
   }
 
   .view-top-half {
-    border-right: 1px solid var(--border-color);
+    border-right: none;
+    position: relative;
+  }
+
+  .view-top-half::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 1px;
+    height: 100%;
+    background: var(--border-color);
+    opacity: 1;
+    pointer-events: none;
+    transition:
+      opacity 220ms cubic-bezier(0.32, 0.72, 0, 1),
+      background-color 220ms ease;
+  }
+
+  /* Когда одна половина раскрыта на весь экран — разделитель исчезает */
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-top-hidden
+    .view-top-half::after,
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
+    .view-top-half::after {
+    opacity: 0;
+  }
+
+  /* Во время drag можно слегка ослаблять линию */
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-live
+    .view-top-half::after {
+    opacity: calc(1 - max(var(--collapse-top-k), var(--collapse-bottom-k)));
   }
 
   .view-bottom-half {
@@ -1913,7 +1943,7 @@ body.hide-nav-labels .nav-btn {
   width: 100%;
 }
 
-.range-row-half > label{
+.range-row-half > label {
   padding-right: 1rem;
 }
 
@@ -2242,13 +2272,14 @@ body.hide-nav-labels .nav-btn {
   background:
     linear-gradient(var(--pro-fill), var(--pro-fill)) padding-box,
     linear-gradient(
-      120deg,
-      color-mix(in srgb, var(--primary-color) 20%, transparent) 0%,
-      color-mix(in srgb, var(--primary-color) 92%, #ffffff) 35%,
-      color-mix(in srgb, var(--primary-color) 35%, transparent) 60%,
-      color-mix(in srgb, var(--primary-color) 95%, #ffffff) 82%,
-      color-mix(in srgb, var(--primary-color) 25%, transparent) 100%
-    ) border-box;
+        120deg,
+        color-mix(in srgb, var(--primary-color) 20%, transparent) 0%,
+        color-mix(in srgb, var(--primary-color) 92%, #ffffff) 35%,
+        color-mix(in srgb, var(--primary-color) 35%, transparent) 60%,
+        color-mix(in srgb, var(--primary-color) 95%, #ffffff) 82%,
+        color-mix(in srgb, var(--primary-color) 25%, transparent) 100%
+      )
+      border-box;
   background-size:
     100% 100%,
     260% 100%;
@@ -2261,7 +2292,8 @@ body.hide-nav-labels .nav-btn {
 }
 
 @keyframes pro-border-shimmer {
-  0%, 22% {
+  0%,
+  22% {
     background-position:
       0 0,
       0% 50%;
