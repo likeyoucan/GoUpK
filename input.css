@@ -1107,19 +1107,19 @@ html.dark .app-bg::before {
 .app-surface {
   background-color: var(--surface-color);
   transition:
-    background-color 0.3s,
-    box-shadow 0.3s,
-    border-color 0.3s;
+    background-color var(--dur-short) ease,
+    box-shadow var(--dur-short) ease,
+    border-color var(--dur-short) ease;
 }
 
 .app-text {
   color: var(--text-color);
-  transition: color 0.3s;
+  transition: color var(--dur-short) ease;
 }
 
 .app-text-sec {
   color: var(--text-secondary);
-  transition: color 0.3s;
+  transition: color var(--dur-short) ease;
 }
 
 .accent-dimmed {
@@ -1128,27 +1128,27 @@ html.dark .app-bg::before {
 
 .primary-text {
   color: var(--primary-color);
-  transition: color 0.3s;
+  transition: color var(--dur-short) ease;
 }
 
 .app-border {
   border-color: var(--border-color);
-  transition: border-color 0.3s;
+  transition: border-color var(--dur-short) ease;
 }
 
 .primary-bg {
   background-color: var(--primary-color);
-  transition: background-color 0.3s;
+  transition: background-color var(--dur-short) ease;
 }
 
 .primary-stroke {
   stroke: var(--primary-color);
-  transition: stroke 0.3s;
+  transition: stroke var(--dur-short) ease;
 }
 
 .default-accent-btn {
   background-color: var(--default-accent-light);
-  transition: background-color 0.3s;
+  transition: background-color var(--dur-short) ease;
 }
 .dark .default-accent-btn {
   background-color: var(--default-accent-dark);
@@ -1156,7 +1156,7 @@ html.dark .app-bg::before {
 
 .default-bg-btn {
   background-color: var(--default-bg-light);
-  transition: background-color 0.3s;
+  transition: background-color var(--dur-short) ease;
 }
 .dark .default-bg-btn {
   background-color: var(--default-bg-dark);
@@ -1264,7 +1264,7 @@ input[type="number"] {
   background-color: var(--border-color);
   border-radius: 9999px;
   position: relative;
-  transition: background-color 0.3s ease;
+  transition: background-color var(--dur-short) ease;
 }
 
 .custom-toggle::after {
@@ -1277,7 +1277,7 @@ input[type="number"] {
   background-color: #ffffff;
   border-radius: 50%;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform var(--dur-short) var(--ease-standard);
 }
 
 input:checked + .custom-toggle {
@@ -1338,7 +1338,7 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
   cursor: ns-resize;
   user-select: none;
   border-bottom-color: rgba(128, 128, 128, 0.3);
-  transition: border-color 0.3s;
+  transition: border-color var(--dur-short) ease;
 }
 
 .timer-input:focus {
@@ -1644,24 +1644,24 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
 }
 
 html.js-nav-forward::view-transition-old(root) {
-  animation: 420ms cubic-bezier(0.32, 0.72, 0, 1) both slide-out-to-left;
+  animation: 420ms var(--ease-standard) both slide-out-to-left;
 }
 html.js-nav-forward::view-transition-new(root) {
-  animation: 420ms cubic-bezier(0.32, 0.72, 0, 1) both slide-in-from-right;
+  animation: 420ms var(--ease-standard) both slide-in-from-right;
 }
 
 html.js-nav-backward::view-transition-old(root) {
-  animation: 420ms cubic-bezier(0.32, 0.72, 0, 1) both slide-out-to-right;
+  animation: 420ms var(--ease-standard) both slide-out-to-right;
 }
 html.js-nav-backward::view-transition-new(root) {
-  animation: 420ms cubic-bezier(0.32, 0.72, 0, 1) both slide-in-from-left;
+  animation: 420ms var(--ease-standard) both slide-in-from-left;
 }
 
 html.js-nav-tap::view-transition-old(root) {
-  animation: 280ms cubic-bezier(0.32, 0.72, 0, 1) both tap-old-fade;
+  animation: 280ms var(--ease-standard) both tap-old-fade;
 }
 html.js-nav-tap::view-transition-new(root) {
-  animation: 320ms cubic-bezier(0.32, 0.72, 0, 1) both tap-new-fade;
+  animation: 320ms var(--ease-standard) both tap-new-fade;
 }
 
 /* =========================================
@@ -1727,7 +1727,7 @@ body.hide-nav-labels .nav-btn {
   font-weight: 700;
   white-space: nowrap;
   opacity: 0.8;
-  transition: opacity 0.2s;
+  transition: opacity var(--dur-short) ease;
 }
 
 #vignette-depth-container .relative.w-40,
@@ -1740,22 +1740,6 @@ body.hide-nav-labels .nav-btn {
 .tr-wrap:focus-within + .thumb-label-container > .thumb-label {
   opacity: 1;
 }
-
-/* @media (hover: hover) and (pointer: fine) and (min-width: 768px) {
-  button:not(:disabled),
-  a[href],
-  [role="button"],
-  .nav-btn,
-  .tb-workout-row,
-  .sw-session-header,
-  .custom-select-trigger,
-  .custom-select-option,
-  .resizer_handler,
-  #sw-modal-handler,
-  #tb-modal-handler {
-    cursor: pointer;
-  }
-} */
 
 /* =========================================
    20. СТИЛИ И АНИМАЦИИ ДЛЯ УПРАВЛЕНИЯ ЦВЕТАМИ
@@ -1786,11 +1770,11 @@ body.hide-nav-labels .nav-btn {
   position: relative;
   flex-shrink: 0;
   transition:
-    max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-    margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-    margin-right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    max-width var(--dur-medium) var(--ease-standard),
+    margin-left var(--dur-medium) var(--ease-standard),
+    margin-right var(--dur-medium) var(--ease-standard);
   max-width: 2.25rem;
-  animation: fadeInScale 0.3s cubic-bezier(0.4, 0, 0.2, 1) both;
+  animation: fadeInScale var(--dur-medium) var(--ease-standard) both;
 }
 
 #accent-colors-container,
@@ -1807,14 +1791,14 @@ body.hide-nav-labels .nav-btn {
   max-width: 0 !important;
   margin-left: 0 !important;
   margin-right: 0 !important;
-  animation: fadeOutScale 0.25s cubic-bezier(0.4, 0, 0.2, 1) both;
+  animation: fadeOutScale 0.25s var(--ease-standard) both;
   pointer-events: none;
 }
 
 .color-action-btn {
   position: absolute;
   z-index: 30;
-  animation: fadeInScale 0.2s cubic-bezier(0.4, 0, 0.2, 1) both;
+  animation: fadeInScale 0.2s var(--ease-standard) both;
 }
 
 .color-action-btn[data-action="delete"] {
@@ -1826,12 +1810,12 @@ body.hide-nav-labels .nav-btn {
 }
 
 .color-action-btn.is-hiding {
-  animation: fadeOutScale 0.2s cubic-bezier(0.4, 0, 0.2, 1) both;
+  animation: fadeOutScale 0.2s var(--ease-standard) both;
 }
 
 .color-picker-wrapper {
   flex-shrink: 0;
-  animation: fadeInScale 0.3s 0.1s cubic-bezier(0.4, 0, 0.2, 1) both;
+  animation: fadeInScale 0.3s 0.1s var(--ease-standard) both;
 }
 
 .color-picker-wrapper:has(.color-action-btn[data-action="add"]) {
@@ -1847,19 +1831,19 @@ body.hide-nav-labels .nav-btn {
 /* Add-color button: smooth color change when user picks color */
 .color-action-btn[data-action="add"] {
   transition:
-    transform 160ms cubic-bezier(0.22, 0.9, 0.3, 1),
+    transform 160ms var(--ease-emphasized),
     background-color 180ms ease,
     color 180ms ease !important;
 }
 
 /* During add commit (layout shift) disable color tween to avoid strange flashing */
 .color-picker-wrapper.picker-commit-lock .color-action-btn[data-action="add"] {
-  transition: transform 160ms cubic-bezier(0.22, 0.9, 0.3, 1) !important;
+  transition: transform 160ms var(--ease-emphasized) !important;
 }
 
 @layer utilities {
   .transition-ios {
-    transition-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
+    transition-timing-function: var(--ease-standard);
   }
 }
 
