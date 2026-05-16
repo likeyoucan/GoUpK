@@ -1962,7 +1962,7 @@ body.hide-nav-labels .nav-btn {
 /* Половинные слайдеры: правая группа = ~30% ширины строки */
 .range-row-half {
   display: grid;
-  grid-template-columns: auto minmax(30%, 120px) 3.25rem;
+  grid-template-columns: auto minmax(20%, 120px) 3.25rem;
   align-items: center;
   column-gap: var(--space-3);
   justify-content: end;
