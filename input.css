@@ -2431,3 +2431,47 @@ html.dark .pro-cta-buy {
 #__erudaBar button {
   font-weight: 600;
 }
+
+/* =========================================
+   MOTION SYSTEM
+========================================= */
+
+:root {
+  --ease-standard: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-emphasized: cubic-bezier(0.22, 0.9, 0.3, 1);
+
+  --dur-micro: 140ms;
+  --dur-short: 220ms;
+  --dur-medium: 320ms;
+  --dur-long: 420ms;
+}
+
+.nav-btn > div,
+.nav-btn > span,
+.custom-toggle,
+.custom-toggle::after,
+.timer-display,
+.pro-animated-border,
+.custom-select-options,
+#toast {
+  transition-timing-function: var(--ease-standard);
+}
+
+.timer-display {
+  transition-duration: var(--dur-short);
+}
+
+.custom-select-options {
+  transition-duration: var(--dur-short);
+}
+
+#toast {
+  transition-duration: var(--dur-medium);
+}
+
+.resizer_handler::before {
+  transition:
+    opacity var(--dur-short) var(--ease-standard),
+    transform var(--dur-short) var(--ease-standard),
+    background-color var(--dur-short) ease;
+}
