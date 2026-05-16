@@ -1959,12 +1959,13 @@ body.hide-nav-labels .nav-btn {
   text-align: right;
 }
 
-/* Половинные слайдеры: правая группа = ~50% ширины строки */
+/* Половинные слайдеры: правая группа = ~30% ширины строки */
 .range-row-half {
   display: grid;
-  grid-template-columns: minmax(88px, 1fr) minmax(0, calc(50% - 3.25rem)) 3.25rem;
+  grid-template-columns: auto minmax(30%, 120px) 3.25rem;
   align-items: center;
   column-gap: var(--space-3);
+  justify-content: end;
   width: 100%;
 }
 
@@ -1972,6 +1973,10 @@ body.hide-nav-labels .nav-btn {
   justify-self: end;
   width: 100%;
 }
+
+.range-row-half > label{
+  padding-right: 1rem;
+} 
 
 .range-row-half .range-value {
   justify-self: end;
