@@ -765,7 +765,8 @@
   /* Better control contrast on extreme accents/backgrounds */
   body.force-light-text .custom-toggle {
     background-color: rgb(255 255 255 / 0.48);
-    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.56);
+    border: 1px solid rgb(0 0 0 / 0.42);
+    box-shadow: none;
   }
 
   body.force-light-text input:checked + .custom-toggle {
@@ -779,9 +780,9 @@
 
   body.force-dark-text .custom-toggle {
     background-color: rgb(17 24 39 / 0.24);
-    box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.18);
+    border: 1px solid rgb(255 255 255 / 0.62);
+    box-shadow: none;
   }
-
   body.force-dark-text input:checked + .custom-toggle {
     background-color: color-mix(in srgb, var(--primary-color) 78%, #111827 22%);
   }
@@ -1616,8 +1617,9 @@
   }
 
   html.dark .custom-toggle {
-    background-color: color-mix(in srgb, #ffffff 30%, transparent);
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, #ffffff 40%, transparent);
+    background-color: color-mix(in srgb, #ffffff 24%, transparent);
+    border: 1px solid rgb(255 255 255 / 0.72);
+    box-shadow: none;
   }
 
   .custom-toggle::after {
