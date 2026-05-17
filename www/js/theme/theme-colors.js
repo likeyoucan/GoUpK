@@ -9,14 +9,81 @@ export function getPairedRestColor(hue) {
   return "#3b82f6";
 }
 
+// Держим danger в красной зоне, не уводим в светло-оранжевый.
 export function getPairedAlertColor(hue, luminance) {
-  if (luminance < 10) return "hsl(0, 90%, 60%)";
-  if (hue >= 335 || hue < 20) return "hsl(35, 100%, 58%)";
-  return "hsl(0, 90%, 60%)";
+  if (luminance > 88) return "hsl(0 82% 48%)";
+  if (hue >= 20 && hue < 80) return "hsl(0 84% 52%)";
+  return "hsl(0 90% 60%)";
 }
 
-export function getAlertFgByLuminance(luminance) {
-  return luminance > 72 ? "#111827" : "#ffffff";
+function parseHsl(hslString) {
+  const nums = String(hslString).match(/-?\d+(\.\d+)?/g) || [];
+  const h = Number(nums[0] || 0);
+  const s = Number(nums[1] || 0);
+  const l = Number(nums[2] || 0);
+  return { h, s, l };
+}
+
+function hslToRgb(h, s, l) {
+  const hh = ((h % 360) + 360) % 360;
+  const ss = Math.max(0, Math.min(100, s)) / 100;
+  const ll = Math.max(0, Math.min(100, l)) / 100;
+
+  const c = (1 - Math.abs(2 * ll - 1)) * ss;
+  const x = c * (1 - Math.abs(((hh / 60) % 2) - 1));
+  const m = ll - c / 2;
+
+  let r1 = 0;
+  let g1 = 0;
+  let b1 = 0;
+
+  if (hh < 60) {
+    r1 = c; g1 = x; b1 = 0;
+  } else if (hh < 120) {
+    r1 = x; g1 = c; b1 = 0;
+  } else if (hh < 180) {
+    r1 = 0; g1 = c; b1 = x;
+  } else if (hh < 240) {
+    r1 = 0; g1 = x; b1 = c;
+  } else if (hh < 300) {
+    r1 = x; g1 = 0; b1 = c;
+  } else {
+    r1 = c; g1 = 0; b1 = x;
+  }
+
+  return {
+    r: Math.round((r1 + m) * 255),
+    g: Math.round((g1 + m) * 255),
+    b: Math.round((b1 + m) * 255),
+  };
+}
+
+function relativeLuminance(r, g, b) {
+  const norm = [r, g, b].map((v) => {
+    const x = v / 255;
+    return x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4;
+  });
+  return norm[0] * 0.2126 + norm[1] * 0.7152 + norm[2] * 0.0722;
+}
+
+function contrastRatio(l1, l2) {
+  const hi = Math.max(l1, l2);
+  const lo = Math.min(l1, l2);
+  return (hi + 0.05) / (lo + 0.05);
+}
+
+function pickReadableTextForHsl(hslString) {
+  const { h, s, l } = parseHsl(hslString);
+  const { r, g, b } = hslToRgb(h, s, l);
+  const bgLum = relativeLuminance(r, g, b);
+
+  const whiteLum = 1;
+  const darkLum = relativeLuminance(17, 24, 39); // #111827
+
+  const cWhite = contrastRatio(bgLum, whiteLum);
+  const cDark = contrastRatio(bgLum, darkLum);
+
+  return cDark >= cWhite ? "#111827" : "#ffffff";
 }
 
 function isRedLikeHue(h) {
@@ -28,18 +95,22 @@ export function applyAccentVars({ hex, rootEl, hexToHSL }) {
     rootEl.style.removeProperty("--primary-color");
     rootEl.style.removeProperty("--accent-h");
     rootEl.style.setProperty("--secondary-accent-color", "#3b82f6");
-    rootEl.style.setProperty("--alert-color", "hsl(0, 90%, 60%)");
-    rootEl.style.setProperty("--alert-color-fg", "#ffffff");
+
+    const alert = "hsl(0 90% 60%)";
+    rootEl.style.setProperty("--alert-color", alert);
+    rootEl.style.setProperty("--alert-color-fg", pickReadableTextForHsl(alert));
     return;
   }
 
   rootEl.style.setProperty("--primary-color", hex);
-
   const { h, l } = hexToHSL(hex);
   rootEl.style.setProperty("--accent-h", h);
+
   rootEl.style.setProperty("--secondary-accent-color", getPairedRestColor(h));
-  rootEl.style.setProperty("--alert-color", getPairedAlertColor(h, l));
-  rootEl.style.setProperty("--alert-color-fg", getAlertFgByLuminance(l));
+
+  const alert = getPairedAlertColor(h, l);
+  rootEl.style.setProperty("--alert-color", alert);
+  rootEl.style.setProperty("--alert-color-fg", pickReadableTextForHsl(alert));
 }
 
 export function applyBgTheme({
@@ -51,8 +122,8 @@ export function applyBgTheme({
 }) {
   const root = document.documentElement;
   const isDark = root.classList.contains("dark");
-
   document.body.classList.remove("force-light-text", "force-dark-text");
+
   root.classList.toggle("no-adaptive", !uiSettingsManager.isAdaptiveBg);
 
   if (hex === "default") {
@@ -65,7 +136,6 @@ export function applyBgTheme({
   const { r, g, b } = hexToRGB(hex);
   const { h, s, l } = hexToHSL(hex);
 
-  // Флаг для адаптации красных action-кнопок и текста
   root.classList.toggle("bg-red-zone", isRedLikeHue(h) && s > 32);
 
   if (!uiSettingsManager.isAdaptiveBg) {

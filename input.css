@@ -343,31 +343,55 @@
     transition: color var(--dur-short) ease;
   }
 
-  .btn-alert-soft {
-    color: var(--alert-color);
-  }
-  .btn-alert-soft:hover {
-    background-color: color-mix(in srgb, var(--alert-color) 12%, transparent);
-  }
-  .btn-alert-soft:active {
-    background-color: color-mix(in srgb, var(--alert-color) 18%, transparent);
+  .bg-alert {
+    background-color: var(--alert-color);
+    color: var(--alert-color-fg);
+    transition:
+      background-color var(--dur-short) ease,
+      color var(--dur-short) ease;
   }
 
-  /* Если фон красный, уводим alert-элементы в контрастный “glass-danger” */
-  .bg-red-zone .bg-alert {
-    background-color: color-mix(
-      in srgb,
-      var(--alert-color) 42%,
-      var(--surface-color)
-    );
-    color: var(--text-color);
-    border: 1px solid
-      color-mix(in srgb, var(--alert-color) 48%, var(--text-color));
+  .text-alert {
+    color: color-mix(in srgb, var(--alert-color) 78%, var(--text-color));
+    transition: color var(--dur-short) ease;
+  }
+
+  .btn-alert-soft {
+    color: color-mix(in srgb, var(--alert-color) 78%, var(--text-color));
+  }
+
+  .btn-alert-soft:hover {
+    background-color: color-mix(in srgb, var(--alert-color) 14%, transparent);
+  }
+
+  .btn-alert-soft:active {
+    background-color: color-mix(in srgb, var(--alert-color) 22%, transparent);
   }
 
   .bg-red-zone .text-alert,
   .bg-red-zone .btn-alert-soft {
-    color: color-mix(in srgb, var(--alert-color) 65%, var(--text-color));
+    color: color-mix(in srgb, var(--alert-color) 60%, var(--text-color));
+  }
+
+  .sw-delete-btn {
+    color: color-mix(
+      in srgb,
+      var(--alert-color) 85%,
+      var(--text-color)
+    ) !important;
+    background-color: color-mix(
+      in srgb,
+      var(--alert-color) 14%,
+      transparent
+    ) !important;
+  }
+
+  .sw-delete-btn:hover {
+    background-color: color-mix(
+      in srgb,
+      var(--alert-color) 22%,
+      transparent
+    ) !important;
   }
 
   .app-btn {
@@ -1561,12 +1585,12 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
 .glass-effect #tm-resetBtn.is-reset,
 .glass-effect #sw-lapBtn.is-reset,
 .glass-effect .is-reset {
-  background: rgb(239 68 68 / 0.85);
+  background: color-mix(in srgb, var(--alert-color) 86%, transparent);
   backdrop-filter: blur(16px) saturate(150%);
   box-shadow:
-    inset 0 1px 2px rgb(255 255 255 / 0.4),
-    0 4px 15px rgb(239 68 68 / 0.4);
-  color: #fff;
+    inset 0 1px 2px rgba(255, 255, 255, 0.28),
+    0 4px 15px color-mix(in srgb, var(--alert-color) 40%, transparent);
+  color: var(--alert-color-fg);
 }
 
 .glass-effect #sw-saveBtn {
