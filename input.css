@@ -342,14 +342,9 @@
   }
 
   .primary-text {
-    color: color-mix(in srgb, var(--primary-color) 78%, #0f172a 22%);
+    color: var(--primary-color);
     transition: color var(--dur-short) ease;
   }
-
-  html.dark .primary-text {
-    color: var(--primary-color);
-  }
-
   .primary-bg {
     background-color: var(--primary-color);
     transition: background-color var(--dur-short) ease;
@@ -1528,17 +1523,18 @@
   }
 
   #sw-lapsContainer .lap-row:first-child {
-    background-color: color-mix(in srgb, var(--primary-color) 10%, #ffffff 90%);
-    border-color: color-mix(
-      in srgb,
-      var(--primary-color) 28%,
-      var(--border-color)
-    );
+    background-color: color-mix(in srgb, var(--text-color) 8%, transparent);
+    border-color: color-mix(in srgb, var(--text-color) 18%, transparent);
   }
 
   html.dark #sw-lapsContainer .lap-row {
-    background-color: color-mix(in srgb, #ffffff 4.5%, transparent);
-    border-color: color-mix(in srgb, #ffffff 14%, transparent);
+    background-color: color-mix(in srgb, #ffffff 6%, transparent);
+    border-color: color-mix(in srgb, #ffffff 18%, transparent);
+  }
+
+  html.dark #sw-lapsContainer .lap-row:first-child {
+    background-color: color-mix(in srgb, #ffffff 10%, transparent);
+    border-color: color-mix(in srgb, #ffffff 26%, transparent);
   }
 
   #toast {
@@ -1622,18 +1618,16 @@
     box-shadow: none;
   }
 
-  .custom-toggle::after {
+  custom-toggle::after {
     content: "";
     position: absolute;
-    top: 2px;
-    left: 2px;
+    top: 1px;
+    left: 1px;
     width: 20px;
     height: 20px;
     background-color: #ffffff;
     border-radius: 50%;
-    box-shadow:
-      0 1px 3px rgb(0 0 0 / 0.26),
-      inset 0 0 0 1px rgb(0 0 0 / 0.06);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.26);
     transition: transform var(--dur-short) var(--ease-standard);
   }
 
