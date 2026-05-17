@@ -2216,6 +2216,47 @@
       0 12px 30px rgb(0 0 0 / 0.38);
   }
 
+  /* Neutral readability for custom select on light/dark/extreme backgrounds */
+  .custom-select-trigger {
+    color: color-mix(in srgb, var(--text-color) 94%, transparent);
+  }
+
+  .custom-select-trigger .custom-select-value {
+    color: color-mix(in srgb, var(--text-color) 92%, transparent);
+  }
+
+  .custom-select-trigger .app-text-sec {
+    color: color-mix(in srgb, var(--text-color) 62%, transparent) !important;
+  }
+
+  .custom-select-option {
+    color: color-mix(in srgb, var(--text-color) 92%, transparent);
+  }
+
+  .custom-select-option:not(.is-selected):hover {
+    color: color-mix(in srgb, var(--text-color) 98%, transparent);
+  }
+
+  body.force-light-text .custom-select-trigger,
+  body.force-light-text .custom-select-trigger .custom-select-value,
+  body.force-light-text .custom-select-option {
+    color: rgb(255 255 255 / 0.92) !important;
+  }
+
+  body.force-light-text .custom-select-trigger .app-text-sec {
+    color: rgb(255 255 255 / 0.72) !important;
+  }
+
+  body.force-dark-text .custom-select-trigger,
+  body.force-dark-text .custom-select-trigger .custom-select-value,
+  body.force-dark-text .custom-select-option {
+    color: rgb(17 24 39 / 0.92) !important;
+  }
+
+  body.force-dark-text .custom-select-trigger .app-text-sec {
+    color: rgb(17 24 39 / 0.64) !important;
+  }
+
   @media (hover: hover) {
     .custom-select-option:hover:not(.is-selected) {
       background-color: color-mix(
@@ -2649,6 +2690,47 @@
   .sw-share-btn:active,
   .sw-rename-btn:active {
     transform: scale(0.96);
+  }
+
+  /* Neutral contrast boost for captions and nav on extreme backgrounds */
+  .section-caption {
+    color: color-mix(in srgb, var(--text-color) 72%, transparent);
+  }
+
+  .nav-btn > div,
+  .nav-btn > span {
+    color: color-mix(in srgb, var(--text-color) 66%, transparent);
+  }
+
+  .nav-btn .primary-text {
+    color: var(--primary-color) !important;
+  }
+
+  body.force-light-text .section-caption {
+    color: rgb(255 255 255 / 0.8);
+  }
+
+  body.force-light-text .nav-btn > div,
+  body.force-light-text .nav-btn > span {
+    color: rgb(255 255 255 / 0.76);
+  }
+
+  body.force-dark-text .section-caption {
+    color: rgb(17 24 39 / 0.76);
+  }
+
+  body.force-dark-text .nav-btn > div,
+  body.force-dark-text .nav-btn > span {
+    color: rgb(17 24 39 / 0.72);
+  }
+
+  /* Keep active nav clearly readable */
+  body.force-light-text .nav-btn .primary-text {
+    color: color-mix(in srgb, var(--primary-color) 80%, #ffffff 20%) !important;
+  }
+
+  body.force-dark-text .nav-btn .primary-text {
+    color: color-mix(in srgb, var(--primary-color) 82%, #111827 18%) !important;
   }
 
   /* ACCESSIBILITY + REDUCED MOTION */
