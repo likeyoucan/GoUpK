@@ -96,6 +96,7 @@ export const ru = {
   share_failed: "Не удалось поделиться",
   share_file_failed: "Не удалось поделиться файлом",
   share_file_saved: "CSV файл загружен",
+  share_mode_hint: "Выберите способ, как поделиться этой сессией.",
   show_foreground_banner: "Показывать баннер в шторке",
   show_ms: "Показывать миллисекунды",
   sort_by: "Сортировка:",

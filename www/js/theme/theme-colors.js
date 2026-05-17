@@ -1,5 +1,3 @@
-// Файл: www/js/theme/theme-colors.js
-
 export function getPairedRestColor(hue) {
   if (hue >= 75 && hue < 185) return "#3b82f6";
   if (hue >= 185 && hue < 250) return "#22c55e";
@@ -15,21 +13,27 @@ export function getPairedAlertColor(hue, luminance) {
   return "hsl(0, 90%, 60%)";
 }
 
+export function getAlertFgByLuminance(luminance) {
+  return luminance > 72 ? "#111827" : "#ffffff";
+}
+
 export function applyAccentVars({ hex, rootEl, hexToHSL }) {
   if (hex === "default") {
     rootEl.style.removeProperty("--primary-color");
     rootEl.style.removeProperty("--accent-h");
     rootEl.style.setProperty("--secondary-accent-color", "#3b82f6");
     rootEl.style.setProperty("--alert-color", "hsl(0, 90%, 60%)");
+    rootEl.style.setProperty("--alert-color-fg", "#ffffff");
     return;
   }
 
   rootEl.style.setProperty("--primary-color", hex);
+
   const { h, l } = hexToHSL(hex);
   rootEl.style.setProperty("--accent-h", h);
-
   rootEl.style.setProperty("--secondary-accent-color", getPairedRestColor(h));
   rootEl.style.setProperty("--alert-color", getPairedAlertColor(h, l));
+  rootEl.style.setProperty("--alert-color-fg", getAlertFgByLuminance(l));
 }
 
 export function applyBgTheme({
@@ -41,8 +45,8 @@ export function applyBgTheme({
 }) {
   const root = document.documentElement;
   const isDark = root.classList.contains("dark");
-  document.body.classList.remove("force-light-text", "force-dark-text");
 
+  document.body.classList.remove("force-light-text", "force-dark-text");
   root.classList.toggle("no-adaptive", !uiSettingsManager.isAdaptiveBg);
 
   if (hex === "default") {

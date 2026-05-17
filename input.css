@@ -24,85 +24,92 @@
 }
 
 @layer theme {
-  :root {
-    color-scheme: light dark;
+ :root {
+  color-scheme: light dark;
 
-    --default-accent-light: #22c55e;
-    --default-bg-light: #f3f4f6;
-    --primary-color: var(--default-accent-light);
-    --bg-color: var(--default-bg-light);
+  --default-accent-light: #22c55e;
+  --default-bg-light: #f3f4f6;
+  --default-accent-dark: #4ade80;
+  --default-bg-dark: #000000;
 
-    --accent-h: 142;
-    --surface-color: #ffffff;
-    --text-color: #1f2937;
-    --text-secondary: color-mix(
-      in srgb,
-      var(--text-color) 65%,
-      var(--primary-color)
-    );
-    --border-color: color-mix(in srgb, var(--text-color) 15%, transparent);
-    --dashed-border-color: color-mix(in srgb, var(--text-color) 20%, transparent);
+  --primary-color: var(--default-accent-light);
+  --bg-color: var(--default-bg-light);
 
-    --vignette-alpha: 0.15;
-    --font-scale: 1;
-    --ring-stroke-width: 4;
+  --accent-h: 142;
+  --surface-color: #ffffff;
+  --text-color: #1f2937;
+  --text-secondary: color-mix(
+    in srgb,
+    var(--text-color) 65%,
+    var(--primary-color)
+  );
+  --border-color: color-mix(in srgb, var(--text-color) 15%, transparent);
+  --dashed-border-color: color-mix(in srgb, var(--text-color) 20%, transparent);
 
-    --safe-top: env(safe-area-inset-top, 0px);
-    --safe-bottom: env(safe-area-inset-bottom, 0px);
-    --safe-left: env(safe-area-inset-left, 0px);
-    --safe-right: env(safe-area-inset-right, 0px);
+  --secondary-accent-color: #3b82f6;
+  --alert-color: hsl(0 90% 60%);
+  --alert-color-fg: #ffffff;
 
-    --nav-height: 5rem;
-    --nav-total: calc(var(--nav-height) + var(--safe-bottom));
+  --vignette-alpha: 0.15;
+  --font-scale: 1;
+  --ring-stroke-width: 4;
 
-    --split: 65%;
-    --split-snap-duration: 260ms;
-    --handler-size: clamp(14px, 2.2dvh, 22px);
-    --collapse-top-k: 0;
-    --collapse-bottom-k: 0;
-    --title-gap: clamp(8px, 1.5vmin, 20px);
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
 
-    --secondary-accent-color: #3b82f6;
-    --alert-color: hsl(0 90% 60%);
-    --alert-color-fg: #ffffff;
+  --nav-height: 5rem;
+  --nav-total: calc(var(--nav-height) + var(--safe-bottom));
 
-    --tr-track-height: 4px;
-    --tr-thumb-size: 24px;
-    --tr-track-bg: var(--border-color);
-    --tr-fill-color: var(--primary-color);
-    --tr-thumb-color: var(--surface-color);
+  --split: 65%;
+  --split-snap-duration: 260ms;
+  --handler-size: clamp(14px, 2.2dvh, 22px);
+  --collapse-top-k: 0;
+  --collapse-bottom-k: 0;
+  --title-gap: clamp(8px, 1.5vmin, 20px);
 
-    --u: 4px;
-    --space-1: calc(var(--u) * 1);
-    --space-2: calc(var(--u) * 2);
-    --space-3: calc(var(--u) * 3);
-    --space-4: calc(var(--u) * 4);
-    --space-5: calc(var(--u) * 5);
-    --space-6: calc(var(--u) * 6);
-    --control-h: calc(var(--u) * 11);
+  --tr-track-height: 4px;
+  --tr-thumb-size: 24px;
+  --tr-track-bg: var(--border-color);
+  --tr-fill-color: var(--primary-color);
+  --tr-thumb-color: var(--surface-color);
 
-    --ease-standard: cubic-bezier(0.32, 0.72, 0, 1);
-    --ease-emphasized: cubic-bezier(0.22, 0.9, 0.3, 1);
-    --dur-micro: 140ms;
-    --dur-short: 220ms;
-    --dur-medium: 320ms;
-    --dur-long: 420ms;
-  }
+  --u: 4px;
+  --space-1: calc(var(--u) * 1);
+  --space-2: calc(var(--u) * 2);
+  --space-3: calc(var(--u) * 3);
+  --space-4: calc(var(--u) * 4);
+  --space-5: calc(var(--u) * 5);
+  --space-6: calc(var(--u) * 6);
+  --control-h: calc(var(--u) * 11);
 
-  :root.dark {
-    --default-accent-dark: #4ade80;
-    --default-bg-dark: #000000;
-    --primary-color: var(--default-accent-dark);
-    --bg-color: var(--default-bg-dark);
-    --surface-color: #1c1c1e;
-    --text-color: #f9fafb;
-    --text-secondary: color-mix(
-      in srgb,
-      var(--text-color) 70%,
-      var(--primary-color)
-    );
-    --border-color: color-mix(in srgb, var(--text-color) 12%, transparent);
-    --dashed-border-color: color-mix(in srgb, var(--text-color) 30%, transparent);
+  --ease-standard: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-emphasized: cubic-bezier(0.22, 0.9, 0.3, 1);
+  --dur-micro: 140ms;
+  --dur-short: 220ms;
+  --dur-medium: 320ms;
+  --dur-long: 420ms;
+}
+
+:root.dark {
+  --primary-color: var(--default-accent-dark);
+  --bg-color: var(--default-bg-dark);
+
+  --surface-color: #1c1c1e;
+  --text-color: #f9fafb;
+  --text-secondary: color-mix(
+    in srgb,
+    var(--text-color) 70%,
+    var(--primary-color)
+  );
+  --border-color: color-mix(in srgb, var(--text-color) 12%, transparent);
+  --dashed-border-color: color-mix(in srgb, var(--text-color) 30%, transparent);
+
+  --secondary-accent-color: #60a5fa;
+  --alert-color: hsl(0 90% 60%);
+  --alert-color-fg: #ffffff;
+}
   }
 
   body.force-light-text {
@@ -275,6 +282,61 @@
     stroke: var(--primary-color);
     transition: stroke var(--dur-short) ease;
   }
+
+  .default-accent-btn {
+  background-color: var(--default-accent-light);
+  transition: background-color var(--dur-short) ease;
+}
+
+.dark .default-accent-btn {
+  background-color: var(--default-accent-dark);
+}
+
+.default-bg-btn {
+  background-color: var(--default-bg-light);
+  transition: background-color var(--dur-short) ease;
+}
+
+.dark .default-bg-btn {
+  background-color: var(--default-bg-dark);
+}
+
+  .secondary-accent-text {
+  color: var(--secondary-accent-color);
+  transition: color var(--dur-short) ease;
+}
+
+.secondary-accent-stroke {
+  stroke: var(--secondary-accent-color);
+  transition: stroke var(--dur-short) ease;
+}
+
+.bg-alert {
+  background-color: var(--alert-color);
+  color: var(--alert-color-fg);
+  transition: background-color var(--dur-short) ease;
+}
+
+.bg-alert:hover {
+  filter: brightness(95%);
+}
+
+.text-alert {
+  color: var(--alert-color);
+  transition: color var(--dur-short) ease;
+}
+
+.btn-alert-soft {
+  color: var(--alert-color);
+}
+
+.btn-alert-soft:hover {
+  background-color: color-mix(in srgb, var(--alert-color) 12%, transparent);
+}
+
+.btn-alert-soft:active {
+  background-color: color-mix(in srgb, var(--alert-color) 18%, transparent);
+}
 
   .app-btn {
     min-height: 44px;
@@ -702,8 +764,7 @@ html.dark .app-bg::before {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  max-height: 0;
-  overflow: hidden;
+  transform: translateY(10px);
 }
 
 :is(
@@ -758,8 +819,7 @@ html.dark .app-bg::before {
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
-    max-height: 0;
-    overflow: hidden;
+    transform: translateY(10px);
   }
 
   :is(
@@ -812,7 +872,8 @@ html.dark .app-bg::before {
     bottom: auto;
   }
 
-  :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden .top_content {
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
+    .top_content {
     --top-pad: 12px;
     --title-rail: 40px;
     --action-rail: 48px;
@@ -913,12 +974,15 @@ html.dark .app-bg::before {
       background-color var(--dur-short) ease;
   }
 
-  :is(#view-stopwatch, #view-timer, #view-tabata).split-top-hidden .view-top-half::after,
-  :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden .view-top-half::after {
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-top-hidden
+    .view-top-half::after,
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
+    .view-top-half::after {
     opacity: 0;
   }
 
-  :is(#view-stopwatch, #view-timer, #view-tabata).split-live .view-top-half::after {
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-live
+    .view-top-half::after {
     opacity: calc(1 - max(var(--collapse-top-k), var(--collapse-bottom-k)));
   }
 
@@ -1097,7 +1161,9 @@ html.dark .app-bg::before {
   text-align: center;
 }
 
-#sw-statusText {
+#sw-statusText,
+#tm-statusText,
+#tb-statusText {
   position: absolute;
   inset: 0 0 72px 0;
   width: 100%;
@@ -1109,7 +1175,9 @@ html.dark .app-bg::before {
   margin: auto;
 }
 
-#sw-statusText.hidden {
+#sw-statusText.hidden,
+#tm-statusText.hidden,
+#tb-statusText.hidden {
   display: none;
 }
 
@@ -2036,13 +2104,14 @@ html.js-nav-tap::view-transition-new(root) {
   background:
     linear-gradient(var(--pro-fill), var(--pro-fill)) padding-box,
     linear-gradient(
-      120deg,
-      color-mix(in srgb, var(--primary-color) 20%, transparent) 0%,
-      color-mix(in srgb, var(--primary-color) 92%, #ffffff) 35%,
-      color-mix(in srgb, var(--primary-color) 35%, transparent) 60%,
-      color-mix(in srgb, var(--primary-color) 95%, #ffffff) 82%,
-      color-mix(in srgb, var(--primary-color) 25%, transparent) 100%
-    ) border-box;
+        120deg,
+        color-mix(in srgb, var(--primary-color) 20%, transparent) 0%,
+        color-mix(in srgb, var(--primary-color) 92%, #ffffff) 35%,
+        color-mix(in srgb, var(--primary-color) 35%, transparent) 60%,
+        color-mix(in srgb, var(--primary-color) 95%, #ffffff) 82%,
+        color-mix(in srgb, var(--primary-color) 25%, transparent) 100%
+      )
+      border-box;
   background-size:
     100% 100%,
     260% 100%;
