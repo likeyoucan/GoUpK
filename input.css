@@ -432,7 +432,6 @@
   #sw-lapBtn.is-reset:hover,
   .is-reset:hover {
     background-color: var(--alert-btn-bg-hover) !important;
-    transform: translateY(-1px);
   }
 
   #sw-clear-confirm:active,
