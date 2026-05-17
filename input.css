@@ -132,13 +132,13 @@
 
     --alert-text-color: hsl(0 90% 78%);
 
-    --alert-btn-bg: hsl(357 68% 56%);
-    --alert-btn-bg-hover: hsl(357 70% 60%);
-    --alert-btn-bg-active: hsl(357 66% 50%);
-    --alert-btn-border: hsl(357 90% 88% / 0.34);
+    --alert-btn-bg: hsl(357 72% 58%);
+    --alert-btn-bg-hover: hsl(357 74% 62%);
+    --alert-btn-bg-active: hsl(357 68% 53%);
+    --alert-btn-border: hsl(357 88% 88% / 0.26);
     --alert-btn-fg: #fffafa;
     --alert-btn-shadow:
-      0 10px 22px rgb(0 0 0 / 0.34), 0 2px 6px rgb(0 0 0 / 0.24);
+      0 9px 20px rgb(0 0 0 / 0.34), 0 2px 6px rgb(0 0 0 / 0.24);
 
     --danger-shadow:
       0 6px 14px color-mix(in srgb, var(--alert-color) 26%, transparent),
@@ -1538,6 +1538,10 @@
     margin-bottom: var(--safe-bottom);
   }
 
+  #btn-open-legal-inline:hover {
+    opacity: 0.92;
+  }
+
   @media (orientation: landscape) and (max-width: 767px) {
     #viewsContainer > div:not(#view-settings) {
       flex-direction: row;
@@ -1685,6 +1689,45 @@
 
   .animate-shake {
     animation: shake 0.3s ease-in-out;
+  }
+
+  html.dark #tm-restartBtn,
+  html.dark #tm-adjust-minus,
+  html.dark #tm-adjust-plus {
+    background-color: color-mix(
+      in srgb,
+      var(--surface-color) 82%,
+      #ffffff 18%
+    ) !important;
+    border: 1px solid color-mix(in srgb, #ffffff 14%, transparent) !important;
+    color: color-mix(in srgb, #ffffff 92%, transparent) !important;
+    box-shadow:
+      inset 0 1px 1px rgb(255 255 255 / 0.08),
+      0 4px 12px rgb(0 0 0 / 0.26) !important;
+  }
+
+  html.dark #tm-restartBtn:hover,
+  html.dark #tm-adjust-minus:hover,
+  html.dark #tm-adjust-plus:hover {
+    background-color: color-mix(
+      in srgb,
+      var(--surface-color) 74%,
+      #ffffff 26%
+    ) !important;
+    border-color: color-mix(in srgb, #ffffff 22%, transparent) !important;
+  }
+
+  html.dark #sw-lapBtn:not(.is-reset) {
+    background-color: color-mix(
+      in srgb,
+      var(--surface-color) 84%,
+      #ffffff 16%
+    ) !important;
+    border: 1px solid color-mix(in srgb, #ffffff 12%, transparent) !important;
+    color: color-mix(in srgb, #ffffff 92%, transparent) !important;
+    box-shadow:
+      inset 0 1px 1px rgb(255 255 255 / 0.07),
+      0 3px 10px rgb(0 0 0 / 0.24) !important;
   }
 
   /* LIQUID GLASS (unified selectors) */
@@ -2732,6 +2775,37 @@
 
   body.force-dark-text .nav-btn .primary-text {
     color: color-mix(in srgb, var(--primary-color) 82%, #111827 18%) !important;
+  }
+
+  /* Dark nav readability */
+  html.dark nav .nav-btn > div:not(.primary-text),
+  html.dark nav .nav-btn > span:not(.primary-text) {
+    color: color-mix(in srgb, #ffffff 68%, transparent) !important;
+    opacity: 0.92;
+  }
+
+  html.dark nav .nav-btn .primary-text {
+    color: color-mix(in srgb, var(--primary-color) 88%, #ffffff 12%) !important;
+    opacity: 1;
+  }
+
+  html.dark nav {
+    border-top-color: color-mix(in srgb, #ffffff 10%, transparent) !important;
+  }
+
+  html.dark nav .nav-btn:hover > div:not(.primary-text),
+  html.dark nav .nav-btn:hover > span:not(.primary-text) {
+    color: color-mix(in srgb, #ffffff 82%, transparent) !important;
+  }
+
+  body.force-light-text nav .nav-btn > div:not(.primary-text),
+  body.force-light-text nav .nav-btn > span:not(.primary-text) {
+    color: rgb(255 255 255 / 0.78) !important;
+  }
+
+  body.force-dark-text nav .nav-btn > div:not(.primary-text),
+  body.force-dark-text nav .nav-btn > span:not(.primary-text) {
+    color: rgb(17 24 39 / 0.74) !important;
   }
 
   /* ACCESSIBILITY + REDUCED MOTION */
