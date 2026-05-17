@@ -338,6 +338,15 @@
     filter: brightness(95%);
   }
 
+  #sw-clear-confirm,
+  #reset-confirm,
+  #tb-stopBtn,
+  #tm-resetBtn.is-reset,
+  #sw-lapBtn.is-reset,
+  .is-reset {
+    color: var(--alert-color-fg) !important;
+  }
+
   .text-alert {
     color: var(--alert-color);
     transition: color var(--dur-short) ease;
@@ -371,6 +380,17 @@
   .bg-red-zone .text-alert,
   .bg-red-zone .btn-alert-soft {
     color: color-mix(in srgb, var(--alert-color) 60%, var(--text-color));
+  }
+
+  .bg-red-zone .bg-alert,
+  .bg-red-zone .is-reset {
+    background-color: color-mix(
+      in srgb,
+      var(--alert-color) 72%,
+      var(--surface-color)
+    );
+    border: 1px solid
+      color-mix(in srgb, var(--alert-color) 55%, var(--text-color));
   }
 
   .sw-delete-btn {
