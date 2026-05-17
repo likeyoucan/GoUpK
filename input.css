@@ -1878,6 +1878,10 @@ html.js-nav-tap::view-transition-new(root) {
   min-height: var(--control-h);
 }
 
+.range-row > label {
+  padding-right: 1rem;
+}
+
 .range-value {
   width: 3.25rem;
   flex: 0 0 3.25rem;
@@ -1899,10 +1903,6 @@ html.js-nav-tap::view-transition-new(root) {
 .range-row-half .range-field-half {
   justify-self: end;
   width: 100%;
-}
-
-.range-row-half > label {
-  padding-right: 1rem;
 }
 
 .range-row-half .range-value {
