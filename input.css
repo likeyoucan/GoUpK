@@ -760,8 +760,8 @@
 
   /* Better control contrast on extreme accents/backgrounds */
   body.force-light-text .custom-toggle {
-    background-color: rgb(255 255 255 / 0.32);
-    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.34);
+    background-color: rgb(255 255 255 / 0.46);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.52);
   }
 
   body.force-light-text input:checked + .custom-toggle {
@@ -1589,12 +1589,17 @@
   .custom-toggle {
     width: 44px;
     height: 24px;
-    background-color: color-mix(in srgb, var(--text-color) 16%, transparent);
+    background-color: color-mix(in srgb, var(--text-color) 24%, transparent);
     border-radius: 9999px;
     position: relative;
     transition: background-color var(--dur-short) ease;
     box-shadow: inset 0 0 0 1px
-      color-mix(in srgb, var(--text-color) 10%, transparent);
+      color-mix(in srgb, var(--text-color) 20%, transparent);
+  }
+
+  html.dark .custom-toggle {
+    background-color: color-mix(in srgb, #ffffff 30%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, #ffffff 38%, transparent);
   }
 
   .custom-toggle::after {
@@ -2675,23 +2680,16 @@
   }
 
   .color-btn {
-    border-color: color-mix(
-      in srgb,
-      var(--text-color) 26%,
-      transparent
-    ) !important;
+    border: 1px solid color-mix(in srgb, var(--text-color) 42%, transparent) !important;
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--surface-color) 78%, transparent) inset,
+      0 0 0 1px color-mix(in srgb, var(--text-color) 18%, transparent) !important;
   }
 
-  html.dark .color-btn {
-    border-color: color-mix(in srgb, #ffffff 28%, transparent) !important;
-  }
-
-  body.force-light-text .color-btn {
-    border-color: rgb(255 255 255 / 0.38) !important;
-  }
-
+  html.dark .color-btn,
+  body.force-light-text .color-btn,
   body.force-dark-text .color-btn {
-    border-color: rgb(17 24 39 / 0.28) !important;
+    border-color: inherit !important;
   }
 
   .tb-del-btn {
