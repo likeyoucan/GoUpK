@@ -1,3 +1,5 @@
+// Файл: www/js/theme/theme-colors.js
+
 export function getPairedRestColor(hue) {
   if (hue >= 75 && hue < 185) return "#3b82f6";
   if (hue >= 185 && hue < 250) return "#22c55e";
@@ -15,6 +17,10 @@ export function getPairedAlertColor(hue, luminance) {
 
 export function getAlertFgByLuminance(luminance) {
   return luminance > 72 ? "#111827" : "#ffffff";
+}
+
+function isRedLikeHue(h) {
+  return h >= 345 || h <= 15;
 }
 
 export function applyAccentVars({ hex, rootEl, hexToHSL }) {
@@ -52,11 +58,15 @@ export function applyBgTheme({
   if (hex === "default") {
     root.style.removeProperty("--bg-color");
     root.style.removeProperty("--surface-color");
+    root.classList.remove("bg-red-zone");
     return;
   }
 
   const { r, g, b } = hexToRGB(hex);
   const { h, s, l } = hexToHSL(hex);
+
+  // Флаг для адаптации красных action-кнопок и текста
+  root.classList.toggle("bg-red-zone", isRedLikeHue(h) && s > 32);
 
   if (!uiSettingsManager.isAdaptiveBg) {
     root.style.setProperty("--bg-color", hex);

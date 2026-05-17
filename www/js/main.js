@@ -30,6 +30,7 @@ import { APP_MONETIZATION_CONFIG } from "./app-monetization-config.js?v=VERSION"
 import { initProUi } from "./pro-ui.js?v=VERSION";
 
 const ERUDA_CDN_MARKER = "cdn.jsdelivr.net/npm/eruda";
+const OPTIONAL_RESOURCE_MARKERS = [ERUDA_CDN_MARKER, "/js/eruda.js"];
 
 function isErudaNoiseFromErrorEvent(event) {
   const src = String(event?.filename || "");
@@ -40,6 +41,25 @@ function isErudaNoiseFromErrorEvent(event) {
 function isErudaNoiseFromRejection(event) {
   const reasonText = String(event?.reason?.stack || event?.reason || "");
   return reasonText.includes(ERUDA_CDN_MARKER);
+}
+
+function isOptionalResourceUrl(url) {
+  const normalized = String(url || "");
+  return OPTIONAL_RESOURCE_MARKERS.some((marker) =>
+    normalized.includes(marker),
+  );
+}
+
+function escapeHtml(raw) {
+  return String(raw || "").replace(
+    /[<>&]/g,
+    (m) =>
+      ({
+        "<": "&lt;",
+        ">": "&gt;",
+        "&": "&amp;",
+      })[m] || m,
+  );
 }
 
 function renderBootError(error) {
@@ -60,10 +80,7 @@ function renderBootError(error) {
     <div class="max-w-3xl mx-auto space-y-3">
       <h2 class="text-lg font-bold">App Boot Failed</h2>
       <p>Application stopped before initialization. Check details below.</p>
-      <pre class="whitespace-pre-wrap break-words bg-black/40 p-3 rounded-xl">${msg.replace(
-        /[<>&]/g,
-        (m) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" })[m],
-      )}</pre>
+      <pre class="whitespace-pre-wrap break-words bg-black/40 p-3 rounded-xl">${escapeHtml(msg)}</pre>
       <button id="boot-reload-btn" class="px-4 py-2 rounded-lg bg-white text-black font-bold">Reload</button>
     </div>
   `;
@@ -118,7 +135,12 @@ async function applyMonetizationConfig() {
   adsManager.setEnabled(APP_MONETIZATION_CONFIG.ads.enabledByDefault);
 }
 
+let bootStarted = false;
+
 async function bootstrap() {
+  if (bootStarted) return;
+  bootStarted = true;
+
   initializeApp({
     applyPerformanceProfile,
     initRingSvg,
@@ -185,15 +207,46 @@ async function bootstrap() {
   });
 }
 
+// Runtime JS errors (logic)
 window.addEventListener("error", (e) => {
   if (isErudaNoiseFromErrorEvent(e)) return;
   console.error("[GLOBAL ERROR]", e.error || e.message);
 });
 
+// Runtime promise rejections
 window.addEventListener("unhandledrejection", (e) => {
   if (isErudaNoiseFromRejection(e)) return;
   console.error("[UNHANDLED PROMISE]", e.reason);
 });
+
+// Resource loading errors (scripts/styles/img), incl. 503
+window.addEventListener(
+  "error",
+  (e) => {
+    const target = e.target;
+    if (
+      target instanceof HTMLScriptElement ||
+      target instanceof HTMLLinkElement ||
+      target instanceof HTMLImageElement
+    ) {
+      const url =
+        target.src ||
+        target.href ||
+        target.currentSrc ||
+        target.getAttribute("src") ||
+        target.getAttribute("href") ||
+        "";
+
+      if (isOptionalResourceUrl(url)) {
+        console.warn("[RESOURCE OPTIONAL FAILED]", url);
+        return;
+      }
+
+      console.error("[RESOURCE LOAD ERROR]", url || target);
+    }
+  },
+  true,
+);
 
 document.addEventListener("DOMContentLoaded", async () => {
   try {

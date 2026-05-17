@@ -94,6 +94,12 @@
     --dur-short: 220ms;
     --dur-medium: 320ms;
     --dur-long: 420ms;
+
+    --ring-meta-color: color-mix(
+      in srgb,
+      var(--text-color) 72%,
+      var(--primary-color)
+    );
   }
 
   :root.dark {
@@ -117,6 +123,12 @@
     --secondary-accent-color: #60a5fa;
     --alert-color: hsl(0 90% 60%);
     --alert-color-fg: #ffffff;
+
+    --ring-meta-color: color-mix(
+      in srgb,
+      var(--text-color) 78%,
+      var(--primary-color)
+    );
   }
 
   body.force-light-text {
@@ -285,27 +297,25 @@
     transition: background-color var(--dur-short) ease;
   }
 
-  .default-accent-btn {
-  background-color: var(--default-accent-light);
-  transition: background-color var(--dur-short) ease;
-}
-
-.dark .default-accent-btn {
-  background-color: var(--default-accent-dark);
-}
-
-.default-bg-btn {
-  background-color: var(--default-bg-light);
-  transition: background-color var(--dur-short) ease;
-}
-
-.dark .default-bg-btn {
-  background-color: var(--default-bg-dark);
-}
-
   .primary-stroke {
     stroke: var(--primary-color);
     transition: stroke var(--dur-short) ease;
+  }
+
+  .default-accent-btn {
+    background-color: var(--default-accent-light);
+    transition: background-color var(--dur-short) ease;
+  }
+  .dark .default-accent-btn {
+    background-color: var(--default-accent-dark);
+  }
+
+  .default-bg-btn {
+    background-color: var(--default-bg-light);
+    transition: background-color var(--dur-short) ease;
+  }
+  .dark .default-bg-btn {
+    background-color: var(--default-bg-dark);
   }
 
   .secondary-accent-text {
@@ -334,16 +344,31 @@
   }
 
   .btn-alert-soft {
-  color: var(--alert-color);
-}
+    color: var(--alert-color);
+  }
+  .btn-alert-soft:hover {
+    background-color: color-mix(in srgb, var(--alert-color) 12%, transparent);
+  }
+  .btn-alert-soft:active {
+    background-color: color-mix(in srgb, var(--alert-color) 18%, transparent);
+  }
 
-.btn-alert-soft:hover {
-  background-color: color-mix(in srgb, var(--alert-color) 12%, transparent);
-}
+  /* Если фон красный, уводим alert-элементы в контрастный “glass-danger” */
+  .bg-red-zone .bg-alert {
+    background-color: color-mix(
+      in srgb,
+      var(--alert-color) 42%,
+      var(--surface-color)
+    );
+    color: var(--text-color);
+    border: 1px solid
+      color-mix(in srgb, var(--alert-color) 48%, var(--text-color));
+  }
 
-.btn-alert-soft:active {
-  background-color: color-mix(in srgb, var(--alert-color) 18%, transparent);
-}
+  .bg-red-zone .text-alert,
+  .bg-red-zone .btn-alert-soft {
+    color: color-mix(in srgb, var(--alert-color) 65%, var(--text-color));
+  }
 
   .app-btn {
     min-height: 44px;
@@ -1199,6 +1224,22 @@ html.dark .app-bg::before {
   inset: 72px 0 0 0;
   width: 100%;
   height: 32px;
+}
+
+#sw-statusText,
+#tm-statusText,
+#tb-statusText,
+#sw-extendedDisplay {
+  color: var(--ring-meta-color) !important;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 0.18);
+}
+
+/* Для очень светлых тем без dark класса */
+body.force-dark-text #sw-statusText,
+body.force-dark-text #tm-statusText,
+body.force-dark-text #tb-statusText,
+body.force-dark-text #sw-extendedDisplay {
+  text-shadow: 0 1px 0 rgb(255 255 255 / 0.2);
 }
 
 @container timer-ring (max-width: 260px) {
