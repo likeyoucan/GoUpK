@@ -60,14 +60,13 @@
 
     --alert-text-color: hsl(0 60% 28%);
 
-    --alert-btn-bg: hsl(358 92% 60%);
-    --alert-btn-bg-hover: hsl(358 90% 57%);
-    --alert-btn-bg-active: hsl(358 88% 54%);
-    --alert-btn-border: hsl(358 78% 50% / 0.42);
-    --alert-btn-fg: #ffffff;
+    --alert-btn-bg: hsl(357 62% 48%);
+    --alert-btn-bg-hover: hsl(357 60% 52%);
+    --alert-btn-bg-active: hsl(357 64% 44%);
+    --alert-btn-border: hsl(357 82% 74% / 0.38);
+    --alert-btn-fg: #fff8f8;
     --alert-btn-shadow:
-      0 6px 14px color-mix(in srgb, hsl(358 92% 52%) 26%, transparent),
-      0 2px 4px rgb(0 0 0 / 0.18);
+      0 6px 14px rgb(0 0 0 / 0.34), 0 1px 3px rgb(0 0 0 / 0.24);
 
     --danger-shadow:
       0 4px 10px color-mix(in srgb, var(--alert-color) 20%, transparent),
@@ -145,14 +144,13 @@
 
     --alert-text-color: hsl(0 90% 78%);
 
-    --alert-btn-bg: hsl(358 86% 58%);
-    --alert-btn-bg-hover: hsl(358 84% 62%);
-    --alert-btn-bg-active: hsl(358 80% 54%);
-    --alert-btn-border: hsl(358 100% 86% / 0.28);
-    --alert-btn-fg: #fff7f7;
+    --alert-btn-bg: hsl(357 62% 48%);
+    --alert-btn-bg-hover: hsl(357 60% 52%);
+    --alert-btn-bg-active: hsl(357 64% 44%);
+    --alert-btn-border: hsl(357 82% 74% / 0.38);
+    --alert-btn-fg: #fff8f8;
     --alert-btn-shadow:
-      0 8px 18px color-mix(in srgb, hsl(358 86% 52%) 34%, transparent),
-      0 2px 6px rgb(0 0 0 / 0.34);
+      0 6px 14px rgb(0 0 0 / 0.34), 0 1px 3px rgb(0 0 0 / 0.24);
 
     --danger-shadow:
       0 6px 14px color-mix(in srgb, var(--alert-color) 26%, transparent),
@@ -166,10 +164,10 @@
   }
 
   .bg-red-zone {
-    --alert-btn-bg: hsl(0 96% 66%);
-    --alert-btn-bg-hover: hsl(0 98% 70%);
-    --alert-btn-bg-active: hsl(0 92% 62%);
-    --alert-btn-border: hsl(0 100% 92% / 0.4);
+    --alert-btn-bg: hsl(356 64% 50%);
+    --alert-btn-bg-hover: hsl(356 62% 54%);
+    --alert-btn-bg-active: hsl(356 66% 46%);
+    --alert-btn-border: hsl(0 100% 92% / 0.5);
   }
 
   body.force-light-text {
@@ -355,6 +353,37 @@
   .primary-stroke {
     stroke: var(--primary-color);
     transition: stroke var(--dur-short) ease;
+  }
+
+  .settings-action-btn {
+    min-height: 44px;
+    border-radius: 0.75rem;
+    border: 1px solid var(--border-color);
+    background-color: color-mix(in srgb, var(--text-color) 6%, transparent);
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.06);
+    transition:
+      background-color var(--dur-short) ease,
+      border-color var(--dur-short) ease,
+      box-shadow var(--dur-short) ease,
+      transform var(--dur-micro) var(--ease-standard);
+  }
+
+  .settings-action-btn:hover {
+    background-color: color-mix(in srgb, var(--text-color) 10%, transparent);
+  }
+
+  .settings-action-btn:active {
+    transform: scale(0.98);
+  }
+
+  html.dark .settings-action-btn {
+    background-color: color-mix(in srgb, #ffffff 9%, transparent);
+    border-color: color-mix(in srgb, #ffffff 16%, transparent);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.35);
+  }
+
+  html.dark .settings-action-btn:hover {
+    background-color: color-mix(in srgb, #ffffff 13%, transparent);
   }
 
   .default-accent-btn {
@@ -1706,8 +1735,8 @@
     backdrop-filter: blur(14px) saturate(150%);
     border: 1px solid color-mix(in srgb, var(--alert-color) 50%, #ffffff 30%);
     box-shadow:
-      inset 0 1px 1px rgb(255 255 255 / 0.22),
-      0 6px 14px color-mix(in srgb, var(--alert-color) 30%, transparent);
+      inset 0 1px 1px rgb(255 255 255 / 0.2),
+      0 6px 12px rgb(0 0 0 / 0.2);
     color: var(--alert-color-fg);
   }
 
@@ -1721,7 +1750,7 @@
     border: 1px solid color-mix(in srgb, var(--alert-color) 58%, #ffffff 10%);
     box-shadow:
       inset 0 1px 1px rgb(255 255 255 / 0.12),
-      0 8px 18px color-mix(in srgb, var(--alert-color) 34%, transparent);
+      0 8px 16px rgb(0 0 0 / 0.38);
   }
 
   .glass-effect #sw-saveBtn {
