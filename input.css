@@ -1559,21 +1559,6 @@
     outline-offset: 2px;
   }
 
-  html.dark .custom-toggle {
-    background-color: color-mix(in srgb, #ffffff 14%, #000 86%);
-    border-color: color-mix(in srgb, #ffffff 24%, transparent);
-  }
-
-  html.dark input:checked + .custom-toggle {
-    background-color: color-mix(in srgb, var(--primary-color) 72%, #000 28%);
-    border-color: color-mix(in srgb, var(--primary-color) 42%, #fff 16%);
-  }
-
-  input[type="checkbox"]:focus-visible + .custom-toggle {
-    outline: 2px solid var(--primary-color);
-    outline-offset: 2px;
-  }
-
   .timer-input {
     font-size: calc(2rem * var(--font-scale, 1));
     touch-action: none;
