@@ -60,13 +60,13 @@
 
     --alert-text-color: hsl(0 60% 28%);
 
-    --alert-btn-bg: hsl(357 68% 44%);
-    --alert-btn-bg-hover: hsl(357 66% 47%);
-    --alert-btn-bg-active: hsl(357 70% 40%);
-    --alert-btn-border: hsl(357 82% 74% / 0.38);
-    --alert-btn-fg: #fff8f8;
+    --alert-btn-bg: hsl(357 70% 52%);
+    --alert-btn-bg-hover: hsl(357 72% 56%);
+    --alert-btn-bg-active: hsl(357 68% 47%);
+    --alert-btn-border: hsl(357 85% 86% / 0.44);
+    --alert-btn-fg: #fffafa;
     --alert-btn-shadow:
-      0 6px 14px rgb(0 0 0 / 0.34), 0 1px 3px rgb(0 0 0 / 0.24);
+      0 8px 18px rgb(0 0 0 / 0.2), 0 2px 5px rgb(0 0 0 / 0.14);
 
     --danger-shadow:
       0 4px 10px color-mix(in srgb, var(--alert-color) 20%, transparent),
@@ -144,13 +144,13 @@
 
     --alert-text-color: hsl(0 90% 78%);
 
-    --alert-btn-bg: hsl(357 68% 44%);
-    --alert-btn-bg-hover: hsl(357 66% 47%);
-    --alert-btn-bg-active: hsl(357 70% 40%);
-    --alert-btn-border: hsl(357 82% 74% / 0.38);
-    --alert-btn-fg: #fff8f8;
+    --alert-btn-bg: hsl(357 68% 56%);
+    --alert-btn-bg-hover: hsl(357 70% 60%);
+    --alert-btn-bg-active: hsl(357 66% 50%);
+    --alert-btn-border: hsl(357 90% 88% / 0.34);
+    --alert-btn-fg: #fffafa;
     --alert-btn-shadow:
-      0 6px 14px rgb(0 0 0 / 0.34), 0 1px 3px rgb(0 0 0 / 0.24);
+      0 10px 22px rgb(0 0 0 / 0.34), 0 2px 6px rgb(0 0 0 / 0.24);
 
     --danger-shadow:
       0 6px 14px color-mix(in srgb, var(--alert-color) 26%, transparent),
@@ -358,9 +358,9 @@
   .settings-action-btn {
     min-height: 44px;
     border-radius: 0.75rem;
-    border: 1px solid var(--border-color);
-    background-color: color-mix(in srgb, var(--text-color) 6%, transparent);
-    box-shadow: 0 1px 2px rgb(0 0 0 / 0.06);
+    border: 1px solid color-mix(in srgb, var(--border-color) 76%, transparent);
+    background-color: color-mix(in srgb, var(--text-color) 4%, transparent);
+    box-shadow: 0 1px 1px rgb(0 0 0 / 0.03);
     transition:
       background-color var(--dur-short) ease,
       border-color var(--dur-short) ease,
@@ -369,21 +369,22 @@
   }
 
   .settings-action-btn:hover {
-    background-color: color-mix(in srgb, var(--text-color) 10%, transparent);
+    background-color: color-mix(in srgb, var(--text-color) 7%, transparent);
+    border-color: color-mix(in srgb, var(--border-color) 90%, transparent);
   }
 
   .settings-action-btn:active {
-    transform: scale(0.98);
+    transform: scale(0.985);
   }
 
   html.dark .settings-action-btn {
-    background-color: color-mix(in srgb, #ffffff 9%, transparent);
-    border-color: color-mix(in srgb, #ffffff 16%, transparent);
-    box-shadow: 0 1px 3px rgb(0 0 0 / 0.35);
+    background-color: color-mix(in srgb, #ffffff 6%, transparent);
+    border-color: color-mix(in srgb, #ffffff 12%, transparent);
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.25);
   }
 
   html.dark .settings-action-btn:hover {
-    background-color: color-mix(in srgb, #ffffff 13%, transparent);
+    background-color: color-mix(in srgb, #ffffff 9%, transparent);
   }
 
   .default-accent-btn {
@@ -676,7 +677,6 @@
 ========================================= */
 
 @layer overrides {
-  
   /* PRELOADER */
   #app-preloader {
     position: fixed;
@@ -770,6 +770,82 @@
 
   .app-bg.has-vignette::before {
     opacity: 1;
+  }
+
+  /* Better control contrast on extreme accents/backgrounds */
+  body.force-light-text .custom-toggle {
+    background-color: rgb(255 255 255 / 0.32);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.34);
+  }
+
+  body.force-light-text input:checked + .custom-toggle {
+    background-color: color-mix(in srgb, var(--primary-color) 82%, #ffffff 18%);
+  }
+
+  body.force-light-text .custom-toggle::after {
+    background-color: #ffffff;
+    box-shadow: 0 1px 4px rgb(0 0 0 / 0.34);
+  }
+
+  body.force-dark-text .custom-toggle {
+    background-color: rgb(17 24 39 / 0.24);
+    box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.18);
+  }
+
+  body.force-dark-text input:checked + .custom-toggle {
+    background-color: color-mix(in srgb, var(--primary-color) 78%, #111827 22%);
+  }
+
+  body.force-dark-text .custom-toggle::after {
+    background-color: #f8fafc;
+    box-shadow: 0 1px 4px rgb(0 0 0 / 0.24);
+  }
+
+  body.force-light-text .tr-track,
+  body.force-light-text input[type="range"] {
+    filter: contrast(1.08);
+  }
+
+  body.force-dark-text .tr-track,
+  body.force-dark-text input[type="range"] {
+    filter: contrast(1.1);
+  }
+
+  body.force-light-text .timer-input {
+    border-bottom-color: rgb(255 255 255 / 0.36);
+  }
+
+  body.force-dark-text .timer-input {
+    border-bottom-color: rgb(17 24 39 / 0.36);
+  }
+
+  #btn-buy-pro {
+    border: 1px solid color-mix(in srgb, var(--primary-color) 26%, transparent);
+    box-shadow:
+      0 8px 18px color-mix(in srgb, var(--primary-color) 18%, transparent),
+      0 2px 6px rgb(0 0 0 / 0.12);
+  }
+
+  #btn-buy-pro.pro-cta-buy,
+  #pro-confirm-buy.pro-cta-buy {
+    --pro-fill: color-mix(
+      in srgb,
+      var(--pro-bg-light) 88%,
+      var(--primary-color) 12%
+    );
+    --pro-text: var(--pro-fg-light);
+    border-radius: 0.68rem;
+    letter-spacing: 0.045em;
+  }
+
+  html.dark #btn-buy-pro.pro-cta-buy,
+  html.dark #pro-confirm-buy.pro-cta-buy {
+    --pro-fill: color-mix(
+      in srgb,
+      var(--pro-bg-dark) 88%,
+      var(--primary-color) 12%
+    );
+    --pro-text: var(--pro-fg-dark);
   }
 
   /* SPLIT LAYOUT + HANDLER */
@@ -1710,38 +1786,42 @@
     color: #fff;
   }
 
-  .glass-effect #sw-clear-confirm,
-  .glass-effect #reset-confirm,
-  .glass-effect #tb-stopBtn,
-  .glass-effect #tm-resetBtn.is-reset,
-  .glass-effect #sw-lapBtn.is-reset,
-  .glass-effect .is-reset {
-    background: color-mix(
-      in srgb,
-      var(--alert-color) 72%,
-      var(--surface-color)
-    );
-    -webkit-backdrop-filter: blur(14px) saturate(150%);
-    backdrop-filter: blur(14px) saturate(150%);
-    border: 1px solid color-mix(in srgb, var(--alert-color) 50%, #ffffff 30%);
-    box-shadow:
-      inset 0 1px 1px rgb(255 255 255 / 0.2),
-      0 6px 12px rgb(0 0 0 / 0.2);
-    color: var(--alert-color-fg);
-  }
+.glass-effect #sw-clear-confirm,
+.glass-effect #reset-confirm,
+.glass-effect #tb-stopBtn,
+.glass-effect #tm-resetBtn.is-reset,
+.glass-effect #sw-lapBtn.is-reset,
+.glass-effect .is-reset {
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--alert-btn-bg) 78%, #ffffff 22%),
+    color-mix(in srgb, var(--alert-btn-bg-active) 88%, #ffffff 12%)
+  );
+  -webkit-backdrop-filter: blur(16px) saturate(165%);
+  backdrop-filter: blur(16px) saturate(165%);
+  border: 1px solid color-mix(in srgb, var(--alert-btn-border) 86%, #ffffff 14%);
+  box-shadow:
+    inset 0 1px 2px rgb(255 255 255 / 0.26),
+    0 8px 18px rgb(0 0 0 / 0.18);
+  color: var(--alert-color-fg);
+}
 
-  .dark.glass-effect #sw-clear-confirm,
-  .dark.glass-effect #reset-confirm,
-  .dark.glass-effect #tb-stopBtn,
-  .dark.glass-effect #tm-resetBtn.is-reset,
-  .dark.glass-effect #sw-lapBtn.is-reset,
-  .dark.glass-effect .is-reset {
-    background: color-mix(in srgb, var(--alert-color) 62%, #1b0d0f);
-    border: 1px solid color-mix(in srgb, var(--alert-color) 58%, #ffffff 10%);
-    box-shadow:
-      inset 0 1px 1px rgb(255 255 255 / 0.12),
-      0 8px 16px rgb(0 0 0 / 0.38);
-  }
+.dark.glass-effect #sw-clear-confirm,
+.dark.glass-effect #reset-confirm,
+.dark.glass-effect #tb-stopBtn,
+.dark.glass-effect #tm-resetBtn.is-reset,
+.dark.glass-effect #sw-lapBtn.is-reset,
+.dark.glass-effect .is-reset {
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--alert-btn-bg) 76%, #2a1013 24%),
+    color-mix(in srgb, var(--alert-btn-bg-active) 86%, #1b0d0f 14%)
+  );
+  border: 1px solid color-mix(in srgb, var(--alert-btn-border) 80%, #ffffff 20%);
+  box-shadow:
+    inset 0 1px 1px rgb(255 255 255 / 0.14),
+    0 10px 20px rgb(0 0 0 / 0.36);
+}
 
   .glass-effect #sw-saveBtn {
     background: transparent;
@@ -2371,19 +2451,20 @@
 
   .pro-inline-wrap {
     display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
+    align-items: flex-start;
+    gap: 0.38rem;
   }
 
   .pro-badge {
     --pro-fill: var(--pro-bg-light);
     --pro-text: var(--pro-fg-light);
-    min-height: 24px;
-    padding: 0.15rem 0.5rem;
-    border-radius: 0.5rem;
-    font-size: 10px;
+    min-height: 18px;
+    padding: 0.08rem 0.38rem;
+    border-radius: 0.45rem;
+    font-size: 9px;
     font-style: italic;
     font-weight: 800;
+    letter-spacing: 0.02em;
     text-transform: uppercase;
     line-height: 1;
     color: var(--pro-text);
@@ -2391,6 +2472,7 @@
     align-items: center;
     justify-content: center;
     white-space: nowrap;
+    transform: translateY(-0.26em);
   }
 
   html.dark .pro-badge {
