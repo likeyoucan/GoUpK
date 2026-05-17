@@ -355,17 +355,16 @@
     transition: stroke var(--dur-short) ease;
   }
 
-  #sw-clear-confirm,
-  #reset-confirm,
-  #tb-stopBtn,
-  #tm-resetBtn.is-reset,
-  #sw-lapBtn.is-reset,
-  .is-reset {
-    color: var(--alert-color-fg) !important;
-    box-shadow: var(--danger-shadow) !important;
-    border: 1px solid
-      color-mix(in srgb, var(--alert-color) 62%, var(--text-color));
-  }
+#sw-clear-confirm,
+#reset-confirm,
+#tb-stopBtn,
+#tm-resetBtn.is-reset,
+#sw-lapBtn.is-reset,
+.is-reset {
+  color: var(--alert-color-fg) !important;
+  box-shadow: var(--danger-shadow) !important;
+  border: 1px solid transparent;
+}
 
   #tb-stopBtn {
     min-height: clamp(52px, 6.2vh, 62px);
