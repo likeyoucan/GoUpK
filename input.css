@@ -490,7 +490,6 @@
     color: color-mix(in srgb, var(--alert-text-color) 86%, var(--text-color));
   }
 
-
   .sw-delete-btn {
     color: color-mix(
       in srgb,
@@ -678,6 +677,7 @@
 ========================================= */
 
 @layer overrides {
+  
   /* PRELOADER */
   #app-preloader {
     position: fixed;
@@ -1526,8 +1526,8 @@
   }
 
   .custom-toggle {
-    width: 44px;
-    height: 24px;
+    width: 46px;
+    height: 26px;
     background-color: var(--border-color);
     border-radius: 9999px;
     position: relative;
@@ -1553,6 +1553,21 @@
 
   input:checked + .custom-toggle::after {
     transform: translateX(20px);
+  }
+
+  input[type="checkbox"]:focus-visible + .custom-toggle {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+  }
+
+  html.dark .custom-toggle {
+    background-color: color-mix(in srgb, #ffffff 14%, #000 86%);
+    border-color: color-mix(in srgb, #ffffff 24%, transparent);
+  }
+
+  html.dark input:checked + .custom-toggle {
+    background-color: color-mix(in srgb, var(--primary-color) 72%, #000 28%);
+    border-color: color-mix(in srgb, var(--primary-color) 42%, #fff 16%);
   }
 
   input[type="checkbox"]:focus-visible + .custom-toggle {
@@ -1614,6 +1629,7 @@
   .animate-shake {
     animation: shake 0.3s ease-in-out;
   }
+
   /* LIQUID GLASS (unified selectors) */
   .glass-effect #bottom-sheet-overlay {
     background-color: rgb(255 255 255 / 0.4);
