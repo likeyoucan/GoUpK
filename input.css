@@ -60,6 +60,15 @@
 
     --alert-text-color: hsl(0 60% 28%);
 
+    --alert-btn-bg: hsl(358 92% 60%);
+    --alert-btn-bg-hover: hsl(358 90% 57%);
+    --alert-btn-bg-active: hsl(358 88% 54%);
+    --alert-btn-border: hsl(358 78% 50% / 0.42);
+    --alert-btn-fg: #ffffff;
+    --alert-btn-shadow:
+      0 6px 14px color-mix(in srgb, hsl(358 92% 52%) 26%, transparent),
+      0 2px 4px rgb(0 0 0 / 0.18);
+
     --danger-shadow:
       0 4px 10px color-mix(in srgb, var(--alert-color) 20%, transparent),
       0 1px 2px rgb(0 0 0 / 0.14);
@@ -116,11 +125,6 @@
     --primary-color: var(--default-accent-dark);
     --bg-color: var(--default-bg-dark);
 
-    --alert-text-color: hsl(0 90% 78%);
-    --danger-shadow:
-      0 6px 14px color-mix(in srgb, var(--alert-color) 26%, transparent),
-      0 2px 4px rgb(0 0 0 / 0.32);
-
     --surface-color: #1c1c1e;
     --text-color: #f9fafb;
     --text-secondary: color-mix(
@@ -139,6 +143,21 @@
     --alert-color: hsl(0 90% 60%);
     --alert-color-fg: #ffffff;
 
+    --alert-text-color: hsl(0 90% 78%);
+
+    --alert-btn-bg: hsl(358 86% 58%);
+    --alert-btn-bg-hover: hsl(358 84% 62%);
+    --alert-btn-bg-active: hsl(358 80% 54%);
+    --alert-btn-border: hsl(358 100% 86% / 0.28);
+    --alert-btn-fg: #fff7f7;
+    --alert-btn-shadow:
+      0 8px 18px color-mix(in srgb, hsl(358 86% 52%) 34%, transparent),
+      0 2px 6px rgb(0 0 0 / 0.34);
+
+    --danger-shadow:
+      0 6px 14px color-mix(in srgb, var(--alert-color) 26%, transparent),
+      0 2px 4px rgb(0 0 0 / 0.32);
+
     --ring-meta-color: color-mix(
       in srgb,
       var(--text-color) 62%,
@@ -146,13 +165,22 @@
     );
   }
 
+  .bg-red-zone {
+    --alert-btn-bg: hsl(0 96% 66%);
+    --alert-btn-bg-hover: hsl(0 98% 70%);
+    --alert-btn-bg-active: hsl(0 92% 62%);
+    --alert-btn-border: hsl(0 100% 92% / 0.4);
+  }
+
   body.force-light-text {
+    --ring-meta-color: color-mix(in srgb, #ecfff6 78%, var(--primary-color));
     --text-color: #ffffff;
     --text-secondary: color-mix(in srgb, #ffffff 70%, var(--primary-color));
     --border-color: rgb(255 255 255 / 0.15);
   }
 
   body.force-dark-text {
+    --ring-meta-color: color-mix(in srgb, #1f2937 64%, var(--primary-color));
     --text-color: #111827;
     --text-secondary: color-mix(in srgb, #111827 70%, var(--primary-color));
     --border-color: rgb(0 0 0 / 0.1);
@@ -355,20 +383,17 @@
     transition: stroke var(--dur-short) ease;
   }
 
-#sw-clear-confirm,
-#reset-confirm,
-#tb-stopBtn,
-#tm-resetBtn.is-reset,
-#sw-lapBtn.is-reset,
-.is-reset {
-  color: var(--alert-color-fg) !important;
-  box-shadow: var(--danger-shadow) !important;
-  border: 1px solid transparent;
-}
-
-  #tb-stopBtn {
-    min-height: clamp(52px, 6.2vh, 62px);
-    border-radius: clamp(14px, 2.2vh, 20px);
+  #sw-clear-confirm,
+  #reset-confirm,
+  #tb-stopBtn,
+  #tm-resetBtn.is-reset,
+  #sw-lapBtn.is-reset,
+  .is-reset {
+    background-color: var(--alert-btn-bg) !important;
+    color: var(--alert-btn-fg) !important;
+    border: 1px solid var(--alert-btn-border) !important;
+    box-shadow: var(--alert-btn-shadow) !important;
+    text-shadow: 0 1px 0 rgb(0 0 0 / 0.14);
   }
 
   #sw-clear-confirm:hover,
@@ -377,7 +402,7 @@
   #tm-resetBtn.is-reset:hover,
   #sw-lapBtn.is-reset:hover,
   .is-reset:hover {
-    filter: brightness(0.97);
+    background-color: var(--alert-btn-bg-hover) !important;
     transform: translateY(-1px);
   }
 
@@ -387,8 +412,8 @@
   #tm-resetBtn.is-reset:active,
   #sw-lapBtn.is-reset:active,
   .is-reset:active {
-    filter: brightness(0.95);
-    transform: translateY(0) scale(0.97);
+    background-color: var(--alert-btn-bg-active) !important;
+    transform: translateY(0) scale(0.98);
   }
 
   .bg-alert {
@@ -403,8 +428,20 @@
   }
 
   .text-alert {
-    color: var(--alert-text-color);
+    color: color-mix(in srgb, var(--alert-color) 88%, #6a0f16);
     transition: color var(--dur-short) ease;
+  }
+
+  html.dark .text-alert {
+    color: color-mix(in srgb, #ff9ea4 78%, #ffffff 22%);
+  }
+
+  body.force-light-text .text-alert {
+    color: #ffd1d6;
+  }
+
+  body.force-dark-text .text-alert {
+    color: #7a161d;
   }
 
   .btn-alert-soft {
@@ -544,11 +581,11 @@
 
 @layer states {
   .is-reset {
-    background-color: var(--alert-color) !important;
-    color: var(--alert-color-fg) !important;
-    box-shadow: var(--danger-shadow) !important;
+    background-color: var(--alert-btn-bg) !important;
+    color: var(--alert-btn-fg) !important;
+    border: 1px solid var(--alert-btn-border) !important;
+    box-shadow: var(--alert-btn-shadow) !important;
   }
-
   .is-reset:hover {
     filter: brightness(95%);
   }
