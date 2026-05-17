@@ -56,13 +56,13 @@
 
     --alert-text-color: hsl(0 60% 28%);
 
-    --alert-btn-bg: hsl(357 70% 52%);
-    --alert-btn-bg-hover: hsl(357 72% 56%);
-    --alert-btn-bg-active: hsl(357 68% 47%);
-    --alert-btn-border: hsl(357 85% 86% / 0.42);
-    --alert-btn-fg: #fffafa;
+    --alert-btn-bg: hsl(357 94% 56%);
+    --alert-btn-bg-hover: hsl(357 96% 60%);
+    --alert-btn-bg-active: hsl(357 88% 51%);
+    --alert-btn-border: hsl(357 98% 90% / 0.18);
+    --alert-btn-fg: #ffffff;
     --alert-btn-shadow:
-      0 8px 18px rgb(0 0 0 / 0.2), 0 2px 5px rgb(0 0 0 / 0.14);
+      0 6px 14px rgb(0 0 0 / 0.16), 0 2px 6px rgb(0 0 0 / 0.1);
 
     --danger-shadow:
       0 4px 10px color-mix(in srgb, var(--alert-color) 20%, transparent),
@@ -407,7 +407,13 @@
     color: var(--alert-btn-fg) !important;
     border: 1px solid var(--alert-btn-border) !important;
     box-shadow: var(--alert-btn-shadow) !important;
-    text-shadow: 0 1px 0 rgb(0 0 0 / 0.14);
+    text-shadow: none;
+    background-image: linear-gradient(
+      to bottom,
+      color-mix(in srgb, #ffffff 10%, transparent),
+      transparent 38%
+    );
+    background-clip: padding-box;
   }
 
   #sw-clear-confirm:hover,
@@ -427,6 +433,9 @@
   .is-reset:active {
     background-color: var(--alert-btn-bg-active) !important;
     transform: translateY(0) scale(0.98);
+    box-shadow:
+      0 4px 10px rgb(0 0 0 / 0.14),
+      0 1px 3px rgb(0 0 0 / 0.1) !important;
   }
 
   .bg-alert {
@@ -1780,18 +1789,10 @@
   .glass-effect #tm-resetBtn.is-reset,
   .glass-effect #sw-lapBtn.is-reset,
   .glass-effect .is-reset {
-    background: linear-gradient(
-      160deg,
-      color-mix(in srgb, var(--alert-btn-bg) 78%, #ffffff 22%),
-      color-mix(in srgb, var(--alert-btn-bg-active) 88%, #ffffff 12%)
-    );
-    backdrop-filter: blur(16px) saturate(165%);
-    border: 1px solid
-      color-mix(in srgb, var(--alert-btn-border) 86%, #ffffff 14%);
+    border: 1px solid rgb(255 255 255 / 0.18);
     box-shadow:
-      inset 0 1px 2px rgb(255 255 255 / 0.24),
-      0 8px 18px rgb(0 0 0 / 0.18);
-    color: var(--alert-color-fg);
+      inset 0 1px 1px rgb(255 255 255 / 0.2),
+      0 6px 14px rgb(0 0 0 / 0.18);
   }
 
   .dark.glass-effect #sw-clear-confirm,
