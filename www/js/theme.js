@@ -193,7 +193,7 @@ export const themeManager = {
     this.currentBg = safeGetLS(STORAGE_KEYS.THEME_BG_COLOR) || "default";
     this.currentMode = safeGetLS(STORAGE_KEYS.THEME_MODE) || "system";
 
-    if (!appProManager.canUse("accent_bg")) {
+    if (appProManager.initialized && !appProManager.canUse("accent_bg")) {
       if (this.currentAccent !== "default" || this.currentBg !== "default") {
         this.currentAccent = "default";
         this.currentBg = "default";
