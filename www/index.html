@@ -30,8 +30,6 @@
 "
     /> -->
 
-    <!-- для проверки  -->
-
     <meta
       http-equiv="Permissions-Policy"
       content="camera=(), microphone=(), geolocation=(), payment=()"
@@ -79,7 +77,6 @@
     <title>Stopwatch Pro</title>
 
     <script src="./js/js-check.js?v=VERSION"></script>
-
     <script type="module" src="./js/eruda.js?v=VERSION"></script>
 
     <link rel="stylesheet" href="js-check.css?v=VERSION" />
@@ -90,6 +87,7 @@
     class="preload flex items-center justify-center h-[100dvh] w-full overflow-hidden bg-surface text-base select-none"
   >
     <div id="sr-only-announce" aria-live="polite" class="sr-only"></div>
+
     <div
       id="app-preloader"
       class="fixed inset-0 flex items-center justify-center"
@@ -140,9 +138,7 @@
         class="app-bg absolute inset-0 flex flex-col w-full h-full z-0 transition-colors duration-300"
       >
         <main class="flex-1 relative overflow-hidden z-10" id="viewsContainer">
-          <!-- ═══════════════════════════════════════════
-           STOPWATCH VIEW
-      ═══════════════════════════════════════════ -->
+          <!-- STOPWATCH VIEW -->
           <div
             id="view-stopwatch"
             class="absolute inset-0 flex flex-col transition-opacity duration-300 z-10"
@@ -159,6 +155,7 @@
                     Stopwatch
                   </h2>
                 </div>
+
                 <div class="timer-circle-wrap" data-ring="sw">
                   <button
                     type="button"
@@ -170,6 +167,7 @@
                       id="sw-lapFlash"
                       class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[100cqmin] max-w-full max-h-full mx-auto aspect-square rounded-full primary-bg opacity-0 pointer-events-none"
                     ></div>
+
                     <span
                       id="sw-statusText"
                       aria-live="assertive"
@@ -177,18 +175,21 @@
                       class="hidden text-sm font-bold tracking-widest uppercase mb-1 app-text-sec relative z-10"
                       >PAUSE</span
                     >
+
                     <span
                       id="sw-mainDisplay"
                       aria-hidden="true"
                       class="font-mono font-bold tracking-tighter tabular-nums primary-text timer-display is-go relative z-10 select-none"
                       >GO</span
                     >
+
                     <span
                       id="sw-extendedDisplay"
                       class="hidden font-bold app-text-sec text-sm mt-1 relative z-10"
                     ></span>
                   </button>
                 </div>
+
                 <div
                   class="flex justify-center items-center w-full h-full min-h-10 max-h-30"
                 >
@@ -196,7 +197,7 @@
                     type="button"
                     id="sw-lapBtn"
                     data-i18n="lap"
-                    class="hidden app-surface app-text w-32 min-h-[44px] rounded-full text-lg font-bold shadow-sm active:scale-95 transition-transform focus:outline-none"
+                    class="hidden app-btn app-surface app-text w-32 text-lg shadow-sm"
                   >
                     Lap
                   </button>
@@ -206,6 +207,7 @@
 
             <div class="view-bottom-half">
               <div class="resizer_handler"></div>
+
               <div class="mid_content">
                 <div
                   class="w-full flex-1 flex flex-col min-h-0 border-t app-border pt-2 px-2 sm:px-4"
@@ -214,16 +216,17 @@
                     class="flex justify-between items-center mb-1 px-2 shrink-0"
                   >
                     <h3
-                      class="text-xs font-bold app-text-sec uppercase tracking-wider"
+                      class="section-caption text-xs font-bold app-text-sec uppercase tracking-wider"
                       data-i18n="laps_history"
                     >
                       Laps History
                     </h3>
+
                     <div class="flex items-center gap-1">
                       <button
                         type="button"
                         id="sw-saveBtn"
-                        class="hidden flex items-center justify-center min-w-[44px] min-h-[44px] app-text-sec hover:primary-text transition-colors focus:outline-none custom-focus rounded-lg"
+                        class="hidden app-icon-btn app-text-sec hover:primary-text transition-colors focus:outline-none custom-focus"
                         aria-label="Save Session"
                       >
                         <svg
@@ -242,10 +245,11 @@
                           ></path>
                         </svg>
                       </button>
+
                       <button
                         type="button"
                         id="sw-shareBtn"
-                        class="hidden flex items-center justify-center min-w-[44px] min-h-[44px] app-text-sec hover:primary-text transition-colors focus:outline-none custom-focus rounded-lg"
+                        class="hidden app-icon-btn app-text-sec hover:primary-text transition-colors focus:outline-none custom-focus"
                         aria-label="Share Session"
                       >
                         <svg
@@ -264,10 +268,11 @@
                           ></path>
                         </svg>
                       </button>
+
                       <button
                         type="button"
                         id="sw-openResultsBtn"
-                        class="flex items-center justify-center min-w-[44px] min-h-[44px] app-text-sec hover:primary-text transition-colors focus:outline-none custom-focus rounded-lg"
+                        class="app-icon-btn app-text-sec hover:primary-text transition-colors focus:outline-none custom-focus"
                         aria-label="Saved Results"
                       >
                         <svg
@@ -313,7 +318,7 @@
                   </div>
 
                   <div
-                    class="scroll-list flex-1 overflow-y-auto scroll-lock no-scrollbar px-1 select-none"
+                    class="scroll-panel scroll-list flex-1 overflow-y-auto scroll-lock no-scrollbar px-1 select-none"
                     id="sw-lapsContainer"
                   >
                     <div
@@ -328,9 +333,7 @@
             </div>
           </div>
 
-          <!-- ═══════════════════════════════════════════
-           TIMER VIEW
-      ═══════════════════════════════════════════ -->
+          <!-- TIMER VIEW -->
           <div
             id="view-timer"
             inert
@@ -349,6 +352,7 @@
                     Countdown
                   </h2>
                 </div>
+
                 <div class="timer-circle-wrap" data-ring="tm">
                   <button
                     type="button"
@@ -371,6 +375,7 @@
                     >
                   </button>
                 </div>
+
                 <div
                   class="flex justify-center items-center w-full h-full min-h-10 max-h-30"
                 >
@@ -382,7 +387,7 @@
                       type="button"
                       id="tm-resetBtn"
                       data-i18n="reset"
-                      class="is-reset w-32 min-h-[44px] rounded-full text-lg font-bold shadow-sm active:scale-95 transition-transform focus:outline-none custom-focus"
+                      class="is-reset app-btn w-32 text-lg shadow-sm custom-focus"
                     >
                       Reset
                     </button>
@@ -479,7 +484,6 @@
                   <div
                     class="flex items-center h-24 md:h-30 justify-center gap-4"
                   >
-                    <!-- Кнопка МИНУС -->
                     <button
                       type="button"
                       id="tm-adjust-minus"
@@ -505,7 +509,6 @@
                       ></span>
                     </button>
 
-                    <!-- Кнопка ПЛЮС -->
                     <button
                       type="button"
                       id="tm-adjust-plus"
@@ -541,7 +544,7 @@
                     type="button"
                     id="tm-restartBtn"
                     data-i18n="restart"
-                    class="app-surface app-text w-32 min-h-[44px] rounded-full text-lg font-bold shadow-sm active:scale-95 transition-transform focus:outline-none custom-focus"
+                    class="app-btn app-surface app-text w-32 text-lg shadow-sm custom-focus"
                   >
                     Restart
                   </button>
@@ -549,10 +552,7 @@
               </div>
             </div>
           </div>
-
-          <!-- ═══════════════════════════════════════════
-           TABATA VIEW
-      ═══════════════════════════════════════════ -->
+                    <!-- TABATA VIEW -->
           <div
             id="view-tabata"
             inert
@@ -571,6 +571,7 @@
                     Tabata Interval
                   </h2>
                 </div>
+
                 <div class="timer-circle-wrap" data-ring="tb">
                   <button
                     type="button"
@@ -592,6 +593,7 @@
                     >
                   </button>
                 </div>
+
                 <div
                   class="flex justify-center items-center w-full h-full min-h-10 max-h-30"
                 ></div>
@@ -600,6 +602,7 @@
 
             <div class="view-bottom-half">
               <div class="resizer_handler"></div>
+
               <div class="mid_content">
                 <div
                   id="tb-list-section"
@@ -620,11 +623,12 @@
                         >20s / 10s • 8 Rounds</span
                       >
                     </div>
+
                     <div
                       class="flex justify-between items-center mb-2 px-4 sm:px-6 shrink-0"
                     >
                       <h3
-                        class="text-xs font-bold app-text-sec uppercase tracking-wider"
+                        class="section-caption text-xs font-bold app-text-sec uppercase tracking-wider"
                         data-i18n="my_workouts"
                       >
                         My Workouts
@@ -632,18 +636,19 @@
                       <button
                         type="button"
                         id="tb-openModalBtn"
-                        class="min-h-[44px] text-sm font-bold primary-text uppercase tracking-wider px-2 py-1 active:scale-95 transition-transform focus:outline-none custom-focus rounded-lg"
+                        class="app-btn min-h-[44px] text-sm font-bold primary-text uppercase tracking-wider px-2 py-1 active:scale-95 transition-transform focus:outline-none custom-focus rounded-lg"
                         data-i18n="create_new"
                       >
                         + New
                       </button>
                     </div>
                   </div>
+
                   <div
                     class="flex-1 flex flex-col min-h-0 border-t app-border pt-3 px-2 sm:px-4"
                   >
                     <div
-                      class="scroll-list flex-1 overflow-y-auto scroll-lock no-scrollbar px-1 select-none"
+                      class="scroll-panel scroll-list flex-1 overflow-y-auto scroll-lock no-scrollbar px-1 select-none"
                       id="tb-workoutsList"
                     ></div>
                   </div>
@@ -680,7 +685,7 @@
                     type="button"
                     id="tb-stopBtn"
                     data-i18n="stop"
-                    class="w-80 bg-alert min-h-[56px] rounded-2xl font-bold shadow-lg active:scale-95 transition-transform focus:outline-none custom-focus"
+                    class="app-btn w-80 bg-alert min-h-[56px] rounded-2xl font-bold shadow-lg active:scale-95 transition-transform focus:outline-none custom-focus"
                   >
                     STOP
                   </button>
@@ -689,14 +694,12 @@
             </div>
           </div>
 
-          <!-- ═══════════════════════════════════════════
-           SETTINGS VIEW
-      ═══════════════════════════════════════════ -->
+          <!-- SETTINGS VIEW -->
           <div
             id="view-settings"
             inert
             aria-hidden="true"
-            class="absolute inset-0 flex flex-col overflow-y-auto scroll-lock no-scrollbar opacity-0 pointer-events-none transition-opacity duration-300"
+            class="absolute inset-0 flex flex-col overflow-y-auto scroll-lock no-scrollbar opacity-0 pointer-events-none transition-opacity duration-300 scroll-panel"
           >
             <div class="shrink-0 flex items-center justify-center mb-2 mt-6">
               <h2
@@ -715,7 +718,7 @@
             >
               <div>
                 <h3
-                  class="text-xs font-bold app-text-sec uppercase tracking-wider mb-3 ml-2"
+                  class="section-caption text-xs font-bold app-text-sec uppercase tracking-wider mb-3 ml-2"
                   data-i18n="appearance"
                 >
                   Appearance
@@ -725,7 +728,7 @@
                   class="app-surface rounded-2xl overflow-hidden shadow-sm border app-border"
                 >
                   <div
-                    class="p-4 flex items-center justify-between border-b app-border"
+                    class="p-4 flex items-center justify-between border-b app-border settings-row"
                   >
                     <span class="font-medium app-text text-sm" data-i18n="theme"
                       >Theme</span
@@ -744,6 +747,7 @@
                         >Accent Color</span
                       >
                     </div>
+
                     <div
                       id="accent-colors-container"
                       class="flex items-center gap-4 overflow-x-auto no-scrollbar py-2 px-2 -mx-2"
@@ -784,6 +788,7 @@
                         >Background Color</span
                       >
                     </div>
+
                     <div
                       id="bg-colors-container"
                       class="flex items-center gap-4 overflow-x-auto no-scrollbar py-2 px-2 -mx-2"
@@ -817,7 +822,7 @@
                   </div>
 
                   <div class="p-4 border-b app-border flex flex-col gap-4">
-                    <div class="flex items-center justify-between">
+                    <div class="flex items-center justify-between settings-row">
                       <label
                         for="toggle-adaptive-bg"
                         class="font-medium app-text text-sm cursor-pointer"
@@ -837,7 +842,7 @@
                       </label>
                     </div>
 
-                    <div class="flex items-center justify-between">
+                    <div class="flex items-center justify-between settings-row">
                       <label
                         for="toggle-glass"
                         class="font-medium app-text text-sm cursor-pointer"
@@ -858,7 +863,7 @@
                     </div>
 
                     <div class="flex flex-col gap-3">
-                      <div class="flex items-center justify-between">
+                      <div class="flex items-center justify-between settings-row">
                         <label
                           for="toggle-vignette"
                           class="font-medium app-text text-sm cursor-pointer"
@@ -882,9 +887,7 @@
                         id="vignette-depth-container"
                         class="hidden flex-col gap-1 transition-opacity duration-300"
                       >
-                        <div
-                          class="range-row range-row-half"
-                        >
+                        <div class="range-row range-row-half">
                           <label
                             for="vignetteSlider"
                             class="text-xs app-text-sec shrink-0"
@@ -922,7 +925,7 @@
                     </div>
                   </div>
 
-                  <div class="p-4">
+                  <div class="p-4 settings-row">
                     <div
                       class="range-row flex w-full items-center justify-between gap-2"
                     >
@@ -955,7 +958,7 @@
                     </div>
                   </div>
 
-                  <div class="p-4 border-t app-border">
+                  <div class="p-4 border-t app-border settings-row">
                     <div
                       class="range-row flex w-full items-center justify-between gap-2"
                     >
@@ -989,10 +992,9 @@
                   </div>
                 </div>
               </div>
-
-              <div>
+                            <div>
                 <h3
-                  class="text-xs font-bold app-text-sec uppercase tracking-wider mb-3 ml-2 mt-6"
+                  class="section-caption text-xs font-bold app-text-sec uppercase tracking-wider mb-3 ml-2 mt-6"
                   data-i18n="audio_settings"
                 >
                   Audio
@@ -1002,7 +1004,7 @@
                   class="app-surface rounded-2xl overflow-hidden shadow-sm border app-border"
                 >
                   <div
-                    class="flex items-center justify-between p-4 border-t app-border"
+                    class="flex items-center justify-between p-4 border-t app-border settings-row"
                   >
                     <label
                       for="toggle-sound"
@@ -1023,7 +1025,7 @@
                   </div>
 
                   <div
-                    class="flex items-center justify-between p-4 border-t app-border"
+                    class="flex items-center justify-between p-4 border-t app-border settings-row"
                   >
                     <label
                       for="toggle-sw-minute-beep"
@@ -1044,7 +1046,7 @@
                     </label>
                   </div>
 
-                  <div class="p-4 border-t app-border">
+                  <div class="p-4 border-t app-border settings-row">
                     <div
                       class="range-row flex w-full items-center justify-between gap-2"
                     >
@@ -1077,7 +1079,7 @@
 
                   <div
                     id="setting-row-sound-theme"
-                    class="flex items-center justify-between p-4 border-t app-border"
+                    class="flex items-center justify-between p-4 border-t app-border settings-row"
                   >
                     <span
                       class="font-medium app-text text-sm"
@@ -1090,7 +1092,7 @@
                   </div>
 
                   <div class="p-4 border-t app-border flex flex-col gap-3">
-                    <div class="flex items-center justify-between">
+                    <div class="flex items-center justify-between settings-row">
                       <label
                         for="toggle-vibro"
                         class="font-medium app-text text-sm cursor-pointer"
@@ -1113,9 +1115,7 @@
                       id="vibro-level-container"
                       class="hidden flex-col gap-1 transition-opacity duration-300"
                     >
-                      <div
-                        class="range-row range-row-half"
-                      >
+                      <div class="range-row range-row-half">
                         <label
                           for="vibroSlider"
                           class="text-xs app-text-sec shrink-0"
@@ -1154,7 +1154,7 @@
                 </div>
 
                 <h3
-                  class="text-xs font-bold app-text-sec uppercase tracking-wider mb-3 ml-2 mt-6"
+                  class="section-caption text-xs font-bold app-text-sec uppercase tracking-wider mb-3 ml-2 mt-6"
                   data-i18n="interface"
                 >
                   General
@@ -1163,7 +1163,7 @@
                 <div
                   class="app-surface rounded-2xl overflow-hidden shadow-sm border app-border"
                 >
-                  <div class="flex items-center justify-between p-4">
+                  <div class="flex items-center justify-between p-4 settings-row">
                     <label
                       for="langSelect"
                       class="font-medium app-text text-sm"
@@ -1174,7 +1174,7 @@
                   </div>
 
                   <div
-                    class="flex items-center justify-between p-4 border-t app-border"
+                    class="flex items-center justify-between p-4 border-t app-border settings-row"
                   >
                     <label
                       for="toggle-ms"
@@ -1191,7 +1191,7 @@
                   </div>
 
                   <div
-                    class="flex items-center justify-between p-4 border-t app-border"
+                    class="flex items-center justify-between p-4 border-t app-border settings-row"
                   >
                     <label
                       for="toggle-foreground-banner"
@@ -1213,7 +1213,7 @@
                   </div>
 
                   <div
-                    class="flex items-center justify-between p-4 border-t app-border"
+                    class="flex items-center justify-between p-4 border-t app-border settings-row"
                   >
                     <label
                       for="toggle-nav-labels"
@@ -1236,7 +1236,7 @@
 
                   <div
                     id="setting-row-ads"
-                    class="flex items-center justify-between p-4 border-t app-border"
+                    class="flex items-center justify-between p-4 border-t app-border settings-row"
                   >
                     <label
                       for="toggle-ads"
@@ -1260,7 +1260,7 @@
                 </div>
 
                 <h3
-                  class="text-xs font-bold app-text-sec uppercase tracking-wider mb-3 ml-2 mt-6"
+                  class="section-caption text-xs font-bold app-text-sec uppercase tracking-wider mb-3 ml-2 mt-6"
                   data-i18n="pro_settings"
                 >
                   Pro
@@ -1269,7 +1269,7 @@
                 <div
                   class="app-surface rounded-2xl overflow-hidden shadow-sm border app-border"
                 >
-                  <div class="flex items-center justify-between p-4">
+                  <div class="flex items-center justify-between p-4 settings-row">
                     <span
                       class="font-medium app-text text-sm"
                       data-i18n="pro_status"
@@ -1292,7 +1292,7 @@
                     <button
                       type="button"
                       id="btn-buy-pro"
-                      class="min-h-[48px] primary-bg text-white font-bold text-xs tracking-widest uppercase active:scale-95 transition-transform focus:outline-none flex items-center justify-center gap-2 rounded-lg"
+                      class="app-btn min-h-[48px] primary-bg text-white font-bold text-xs tracking-widest uppercase flex items-center justify-center gap-2 rounded-lg"
                       data-i18n="buy_subscription"
                     >
                       Buy Subscription
@@ -1300,7 +1300,7 @@
 
                     <a
                       href="mailto:support@yourdomain.com?subject=Stopwatch Pro Feedback"
-                      class="min-h-[44px] app-text font-bold text-xs tracking-widest uppercase active:scale-95 transition-transform focus:outline-none flex items-center justify-center gap-2 rounded-lg bg-black/5 dark:bg-white/5"
+                      class="app-btn min-h-[44px] app-text font-bold text-xs tracking-widest uppercase flex items-center justify-center gap-2 rounded-lg bg-black/5 dark:bg-white/5"
                     >
                       <svg
                         focusable="false"
@@ -1323,7 +1323,7 @@
                     <button
                       type="button"
                       id="btn-open-reset"
-                      class="min-h-[44px] text-alert font-bold text-xs tracking-widest uppercase active:scale-95 transition-transform focus:outline-none flex items-center justify-center gap-2 rounded-lg bg-black/5 dark:bg-white/5"
+                      class="app-btn min-h-[44px] text-alert font-bold text-xs tracking-widest uppercase flex items-center justify-center gap-2 rounded-lg bg-black/5 dark:bg-white/5"
                       data-i18n="reset_settings"
                     >
                       Reset to Defaults
@@ -1353,17 +1353,15 @@
                     <span>[Твое Имя]</span>
                   </div>
 
-                  <!-- Privacy как текстовая ссылка внизу -->
                   <button
                     type="button"
                     id="btn-open-legal-inline"
-                    class="mt-3 text-[10px] font-bold tracking-wider uppercase app-text-sec underline underline-offset-2 active:scale-95 transition-transform"
+                    class="app-btn mt-3 text-[10px] font-bold tracking-wider uppercase app-text-sec underline underline-offset-2"
                     data-i18n="privacy_policy"
                   >
                     Privacy Policy
                   </button>
 
-                  <!-- Отдельная зона жеста отладки -->
                   <div
                     id="debug-eruda-hitbox"
                     class="mt-3 px-3 py-1 rounded-md text-[10px] app-text-sec/70"
@@ -1377,16 +1375,14 @@
           </div>
         </main>
 
-        <!-- Слот баннера -->
+        <!-- Ads slot -->
         <div
           id="app-ad-slot"
           class="hidden w-full app-surface border-t app-border px-2 py-1 text-center select-none"
           aria-label="Advertisement"
         ></div>
 
-        <!-- ═══════════════════════════════════════════
-         BOTTOM NAVIGATION
-    ═══════════════════════════════════════════ -->
+        <!-- BOTTOM NAVIGATION -->
         <nav
           class="absolute bottom-0 w-full flex justify-between md:justify-around items-center px-6 app-surface z-30 border-t app-border app-nav-safe"
         >
@@ -1518,10 +1514,7 @@
           </button>
         </nav>
       </div>
-
-      <!-- ═══════════════════════════════════════════
-         МОДАЛЬНЫЕ ОКНА (BOTTOM SHEETS)
-    ═══════════════════════════════════════════ -->
+            <!-- MODAL CONTAINER -->
       <div id="modal-container" class="absolute inset-0 z-50">
         <!-- Stopwatch: Saved Results -->
         <div
@@ -1529,6 +1522,7 @@
           class="absolute inset-0 z-[99] bg-[#0009] backdrop-blur-[8px] transition-opacity duration-300 opacity-0 pointer-events-none"
           aria-hidden="true"
         ></div>
+
         <div
           id="sw-sessions-modal"
           role="dialog"
@@ -1536,7 +1530,7 @@
           aria-labelledby="sw-sessions-title"
           inert
           aria-hidden="true"
-          class="hidden absolute bottom-0 left-0 w-full h-[85dvh] sm:h-[85%] z-[100] app-surface border-t sm:border app-border shadow-[0_-8px_30px_rgba(0,0,0,0.15)] rounded-t-[2rem] flex-col px-6 pb-6 pt-10 transition-transform duration-[400ms] transition-ios"
+          class="hidden absolute bottom-0 left-0 w-full h-[85dvh] sm:h-[85%] z-[100] app-surface border-t sm:border app-border shadow-[0_-8px_30px_rgba(0,0,0,0.15)] rounded-t-[2rem] flex-col px-6 pb-6 pt-10 transition-transform duration-[400ms] transition-ios app-sheet"
         >
           <div
             id="sw-modal-handler"
@@ -1547,6 +1541,7 @@
               class="w-12 h-1.5 bg-gray-500/30 rounded-full mx-auto mt-4 pointer-events-none"
             ></div>
           </div>
+
           <div
             class="flex justify-between items-center mb-6 shrink-0 mt-2 sm:mt-0"
           >
@@ -1561,7 +1556,7 @@
               type="button"
               id="sw-closeResultsBtn"
               aria-label="Close Results"
-              class="app-text-sec hover:app-text transition-colors focus:outline-none active:scale-90 custom-focus rounded-lg flex items-center justify-center min-w-[44px] min-h-[44px] -mr-2"
+              class="app-icon-btn app-text-sec hover:app-text transition-colors focus:outline-none active:scale-90 custom-focus -mr-2"
               data-modal-close
             >
               <svg
@@ -1581,22 +1576,23 @@
               </svg>
             </button>
           </div>
+
           <div class="mb-4 shrink-0 flex items-center justify-between">
             <button
               type="button"
               id="sw-clearAllBtn"
-              class="text-xs font-bold text-alert uppercase tracking-wider p-2 -ml-2 active:scale-95 transition-transform focus:outline-none custom-focus rounded-lg min-h-[44px]"
+              class="app-btn text-xs font-bold text-alert uppercase tracking-wider p-2 -ml-2"
               data-i18n="clear_all"
             >
               Clear All
             </button>
-            <!-- Обертка, которая сдвигается вправо благодаря ml-auto -->
             <div id="sw-sort-wrapper">
               <div id="swSortSelectContainer" class="w-40"></div>
             </div>
           </div>
+
           <div
-            class="flex-1 overflow-y-auto scroll-lock no-scrollbar pb-10 space-y-3 selectable-data px-1"
+            class="scroll-panel flex-1 overflow-y-auto scroll-lock no-scrollbar pb-10 space-y-3 selectable-data px-1"
             id="sw-sessionsList"
           ></div>
         </div>
@@ -1609,7 +1605,7 @@
           aria-labelledby="tb-modal-title"
           inert
           aria-hidden="true"
-          class="hidden absolute bottom-0 left-0 w-full h-[85dvh] sm:h-[85%] z-[100] app-surface border-t sm:border app-border shadow-[0_-8px_30px_rgba(0,0,0,0.15)] rounded-t-[2rem] flex-col px-6 pb-6 pt-10 transition-transform duration-[400ms] transition-ios"
+          class="hidden absolute bottom-0 left-0 w-full h-[85dvh] sm:h-[85%] z-[100] app-surface border-t sm:border app-border shadow-[0_-8px_30px_rgba(0,0,0,0.15)] rounded-t-[2rem] flex-col px-6 pb-6 pt-10 transition-transform duration-[400ms] transition-ios app-sheet"
         >
           <div
             id="tb-modal-handler"
@@ -1620,6 +1616,7 @@
               class="w-12 h-1.5 bg-gray-500/30 rounded-full mx-auto mt-4 pointer-events-none"
             ></div>
           </div>
+
           <div
             class="flex justify-between items-center mb-8 shrink-0 mt-2 sm:mt-0"
           >
@@ -1634,7 +1631,7 @@
               type="button"
               id="tb-closeModalBtn"
               aria-label="Close"
-              class="app-text-sec hover:app-text transition-colors focus:outline-none active:scale-90 custom-focus rounded-lg flex items-center justify-center min-w-[44px] min-h-[44px] -mr-2"
+              class="app-icon-btn app-text-sec hover:app-text transition-colors focus:outline-none active:scale-90 custom-focus -mr-2"
               data-modal-close
             >
               <svg
@@ -1654,9 +1651,10 @@
               </svg>
             </button>
           </div>
+
           <form
             id="tb-modal-form"
-            class="space-y-6 overflow-y-auto scroll-lock flex-1 no-scrollbar pb-10 px-1"
+            class="space-y-6 overflow-y-auto scroll-lock flex-1 no-scrollbar pb-10 px-1 scroll-panel"
           >
             <div class="flex flex-col">
               <label
@@ -1682,6 +1680,7 @@
                 >Name already exists</span
               >
             </div>
+
             <div class="flex justify-between items-center">
               <label for="tb-edit-work">
                 <span class="block text-lg font-bold app-text" data-i18n="work"
@@ -1745,6 +1744,7 @@
                 </button>
               </div>
             </div>
+
             <div class="flex justify-between items-center">
               <label for="tb-edit-rest">
                 <span class="block text-lg font-bold app-text" data-i18n="rest"
@@ -1808,6 +1808,7 @@
                 </button>
               </div>
             </div>
+
             <div class="flex justify-between items-center">
               <label for="tb-edit-rounds">
                 <span
@@ -1875,10 +1876,11 @@
                 </button>
               </div>
             </div>
+
             <button
               type="submit"
               id="tb-saveModalBtn"
-              class="w-full primary-bg text-white min-h-[56px] rounded-2xl font-bold text-lg shadow-lg active:scale-95 transition-transform mt-8 focus:outline-none custom-focus"
+              class="app-btn w-full primary-bg text-white min-h-[56px] rounded-2xl font-bold text-lg shadow-lg mt-8 focus:outline-none custom-focus"
               data-i18n="save"
             >
               Save
@@ -1894,12 +1896,12 @@
           aria-labelledby="sw-clear-title"
           inert
           aria-hidden="true"
-          class="hidden absolute inset-0 z-[110] items-center justify-center p-6 transition-opacity duration-300 opacity-0"
+          class="hidden absolute inset-0 z-[110] items-center justify-center p-6 transition-opacity duration-300 opacity-0 app-modal-overlay"
           data-modal-close
         >
           <div
             id="sw-clear-modal-content"
-            class="app-surface w-full max-w-sm rounded-3xl p-6 shadow-2xl border app-border flex flex-col gap-4 transform transition-all duration-300 opacity-0 scale-95"
+            class="app-surface w-full max-w-sm rounded-3xl p-6 shadow-2xl border app-border flex flex-col gap-4 transform transition-all duration-300 opacity-0 scale-95 app-modal-content"
           >
             <h3
               id="sw-clear-title"
@@ -1918,7 +1920,7 @@
               <button
                 type="button"
                 id="sw-clear-cancel"
-                class="min-h-[44px] px-5 py-2 rounded-xl font-bold app-text-sec active:scale-95 transition-transform focus:outline-none custom-focus"
+                class="app-btn px-5 py-2 rounded-xl font-bold app-text-sec"
                 data-i18n="cancel"
                 data-modal-close
               >
@@ -1927,7 +1929,7 @@
               <button
                 type="button"
                 id="sw-clear-confirm"
-                class="min-h-[44px] px-5 py-2 rounded-xl font-bold text-white bg-alert shadow-lg active:scale-95 transition-transform focus:outline-none custom-focus"
+                class="app-btn px-5 py-2 rounded-xl font-bold text-white bg-alert shadow-lg"
                 data-i18n="delete"
               >
                 Delete
@@ -1943,12 +1945,12 @@
           aria-modal="true"
           inert
           aria-hidden="true"
-          class="hidden absolute inset-0 z-[110] items-center justify-center p-6 transition-opacity duration-300 opacity-0"
+          class="hidden absolute inset-0 z-[110] items-center justify-center p-6 transition-opacity duration-300 opacity-0 app-modal-overlay"
           data-modal-close
         >
           <form
             id="sw-name-modal-content"
-            class="app-surface w-full max-w-sm rounded-3xl p-6 shadow-2xl border app-border flex flex-col gap-4 transform transition-all duration-300 opacity-0 scale-95"
+            class="app-surface w-full max-w-sm rounded-3xl p-6 shadow-2xl border app-border flex flex-col gap-4 transform transition-all duration-300 opacity-0 scale-95 app-modal-content"
           >
             <h3
               id="sw-name-title"
@@ -1980,7 +1982,7 @@
               <button
                 type="button"
                 id="sw-name-cancel"
-                class="min-h-[44px] px-5 py-2 rounded-xl font-bold app-text-sec active:scale-95 transition-transform focus:outline-none custom-focus"
+                class="app-btn px-5 py-2 rounded-xl font-bold app-text-sec"
                 data-modal-close
                 data-i18n="cancel"
               >
@@ -1989,7 +1991,7 @@
               <button
                 type="submit"
                 id="sw-name-confirm"
-                class="min-h-[44px] px-5 py-2 rounded-xl font-bold text-white primary-bg shadow-lg active:scale-95 transition-transform focus:outline-none custom-focus"
+                class="app-btn px-5 py-2 rounded-xl font-bold text-white primary-bg shadow-lg"
                 data-i18n="save"
               >
                 Save
@@ -2006,12 +2008,12 @@
           aria-labelledby="reset-modal-title"
           inert
           aria-hidden="true"
-          class="hidden absolute inset-0 z-[110] items-center justify-center p-6 transition-opacity duration-300 opacity-0"
+          class="hidden absolute inset-0 z-[110] items-center justify-center p-6 transition-opacity duration-300 opacity-0 app-modal-overlay"
           data-modal-close
         >
           <div
             id="reset-modal-content"
-            class="app-surface w-full max-w-sm rounded-3xl p-6 shadow-2xl border app-border flex flex-col gap-4 transform transition-all duration-300 opacity-0 scale-95"
+            class="app-surface w-full max-w-sm rounded-3xl p-6 shadow-2xl border app-border flex flex-col gap-4 transform transition-all duration-300 opacity-0 scale-95 app-modal-content"
           >
             <h3
               id="reset-modal-title"
@@ -2030,7 +2032,7 @@
               <button
                 type="button"
                 id="reset-cancel"
-                class="min-h-[44px] px-5 py-2 rounded-xl font-bold app-text-sec active:scale-95 transition-transform focus:outline-none custom-focus"
+                class="app-btn px-5 py-2 rounded-xl font-bold app-text-sec"
                 data-modal-close
                 data-i18n="cancel"
               >
@@ -2039,7 +2041,7 @@
               <button
                 type="button"
                 id="reset-confirm"
-                class="min-h-[44px] px-5 py-2 rounded-xl font-bold text-white bg-alert shadow-lg active:scale-95 transition-transform focus:outline-none custom-focus"
+                class="app-btn px-5 py-2 rounded-xl font-bold text-white bg-alert shadow-lg"
                 data-i18n="reset"
               >
                 Reset
@@ -2047,8 +2049,7 @@
             </div>
           </div>
         </div>
-
-        <!-- Stopwatch: Share Mode -->
+                <!-- Stopwatch: Share Mode -->
         <div
           id="sw-share-mode-modal"
           role="dialog"
@@ -2056,12 +2057,12 @@
           aria-labelledby="sw-share-mode-title"
           inert
           aria-hidden="true"
-          class="hidden absolute inset-0 z-[110] items-center justify-center p-6 transition-opacity duration-300 opacity-0"
+          class="hidden absolute inset-0 z-[110] items-center justify-center p-6 transition-opacity duration-300 opacity-0 app-modal-overlay"
           data-modal-close
         >
           <div
             id="sw-share-mode-content"
-            class="app-surface w-full max-w-sm rounded-3xl p-6 shadow-2xl border app-border flex flex-col gap-3 transform transition-all duration-300 opacity-0 scale-95"
+            class="app-surface w-full max-w-sm rounded-3xl p-6 shadow-2xl border app-border flex flex-col gap-3 transform transition-all duration-300 opacity-0 scale-95 app-modal-content"
           >
             <h3
               id="sw-share-mode-title"
@@ -2078,7 +2079,7 @@
             <button
               type="button"
               id="sw-share-text-btn"
-              class="min-h-[48px] w-full px-4 py-3 rounded-xl font-bold app-text app-surface border app-border active:scale-95 transition-transform"
+              class="app-btn min-h-[48px] w-full px-4 py-3 rounded-xl font-bold app-text app-surface border app-border"
               data-i18n="share_as_text"
             >
               Share as Text
@@ -2087,7 +2088,7 @@
             <button
               type="button"
               id="sw-share-csv-btn"
-              class="min-h-[48px] w-full px-4 py-3 rounded-xl font-bold app-text app-surface border app-border active:scale-95 transition-transform"
+              class="app-btn min-h-[48px] w-full px-4 py-3 rounded-xl font-bold app-text app-surface border app-border"
               data-i18n="share_as_file"
             >
               Share as File
@@ -2095,7 +2096,7 @@
 
             <button
               type="button"
-              class="min-h-[44px] w-full px-4 py-2 rounded-xl font-bold app-text-sec active:scale-95 transition-transform"
+              class="app-btn min-h-[44px] w-full px-4 py-2 rounded-xl font-bold app-text-sec"
               data-modal-close
               data-i18n="cancel"
             >
@@ -2103,6 +2104,7 @@
             </button>
           </div>
         </div>
+
         <!-- App Pro: Subscribe Modal -->
         <div
           id="pro-subscribe-modal"
@@ -2111,12 +2113,12 @@
           aria-labelledby="pro-subscribe-title"
           inert
           aria-hidden="true"
-          class="hidden absolute inset-0 z-[110] items-center justify-center p-6 transition-opacity duration-300 opacity-0"
+          class="hidden absolute inset-0 z-[110] items-center justify-center p-6 transition-opacity duration-300 opacity-0 app-modal-overlay"
           data-modal-close
         >
           <div
             id="pro-subscribe-modal-content"
-            class="app-surface w-full max-w-sm rounded-3xl p-6 shadow-2xl border app-border flex flex-col gap-4 transform transition-all duration-300 opacity-0 scale-95"
+            class="app-surface w-full max-w-sm rounded-3xl p-6 shadow-2xl border app-border flex flex-col gap-4 transform transition-all duration-300 opacity-0 scale-95 app-modal-content"
           >
             <h3
               id="pro-subscribe-title"
@@ -2148,7 +2150,7 @@
             <button
               type="button"
               id="pro-confirm-buy"
-              class="min-h-[44px] px-5 py-2 rounded-xl font-bold text-white primary-bg shadow-lg active:scale-95 transition-transform focus:outline-none custom-focus"
+              class="app-btn min-h-[44px] px-5 py-2 rounded-xl font-bold text-white primary-bg shadow-lg focus:outline-none custom-focus"
               data-i18n="buy_subscription"
             >
               Buy Subscription
@@ -2157,13 +2159,14 @@
             <button
               type="button"
               id="pro-cancel-buy"
-              class="min-h-[44px] px-5 py-2 rounded-xl font-bold app-text-sec active:scale-95 transition-transform focus:outline-none custom-focus"
+              class="app-btn min-h-[44px] px-5 py-2 rounded-xl font-bold app-text-sec focus:outline-none custom-focus"
               data-i18n="cancel"
             >
               Cancel
             </button>
           </div>
         </div>
+
         <!-- App: legal Modal -->
         <div
           id="legal-modal"
@@ -2172,12 +2175,12 @@
           aria-labelledby="legal-modal-title"
           inert
           aria-hidden="true"
-          class="hidden absolute inset-0 z-[110] items-center justify-center p-6 transition-opacity duration-300 opacity-0"
+          class="hidden absolute inset-0 z-[110] items-center justify-center p-6 transition-opacity duration-300 opacity-0 app-modal-overlay"
           data-modal-close
         >
           <div
             id="legal-modal-content"
-            class="app-surface w-full max-w-sm rounded-3xl p-6 shadow-2xl border app-border flex flex-col gap-3 transform transition-all duration-300 opacity-0 scale-95"
+            class="app-surface w-full max-w-sm rounded-3xl p-6 shadow-2xl border app-border flex flex-col gap-3 transform transition-all duration-300 opacity-0 scale-95 app-modal-content"
           >
             <h3
               id="legal-modal-title"
@@ -2191,7 +2194,7 @@
               href="https://yourdomain.com/privacy"
               target="_blank"
               rel="noopener noreferrer"
-              class="min-h-[48px] w-full px-4 py-3 rounded-xl font-bold app-text app-surface border app-border active:scale-95 transition-transform flex items-center justify-center"
+              class="app-btn min-h-[48px] w-full px-4 py-3 rounded-xl font-bold app-text app-surface border app-border flex items-center justify-center"
               data-i18n="privacy_policy"
             >
               Privacy Policy
@@ -2201,7 +2204,7 @@
               href="https://yourdomain.com/terms"
               target="_blank"
               rel="noopener noreferrer"
-              class="min-h-[48px] w-full px-4 py-3 rounded-xl font-bold app-text app-surface border app-border active:scale-95 transition-transform flex items-center justify-center"
+              class="app-btn min-h-[48px] w-full px-4 py-3 rounded-xl font-bold app-text app-surface border app-border flex items-center justify-center"
               data-i18n="terms_conditions"
             >
               Terms & Conditions
@@ -2211,7 +2214,7 @@
               href="https://yourdomain.com/purchase-terms"
               target="_blank"
               rel="noopener noreferrer"
-              class="min-h-[48px] w-full px-4 py-3 rounded-xl font-bold app-text app-surface border app-border active:scale-95 transition-transform flex items-center justify-center"
+              class="app-btn min-h-[48px] w-full px-4 py-3 rounded-xl font-bold app-text app-surface border app-border flex items-center justify-center"
               data-i18n="purchase_terms"
             >
               Purchase Terms
@@ -2219,7 +2222,7 @@
 
             <button
               type="button"
-              class="min-h-[44px] w-full px-4 py-2 rounded-xl font-bold app-text-sec active:scale-95 transition-transform"
+              class="app-btn min-h-[44px] w-full px-4 py-2 rounded-xl font-bold app-text-sec"
               data-modal-close
               data-i18n="cancel"
             >
@@ -2230,7 +2233,7 @@
       </div>
     </div>
 
-    <!-- Шаблон для строки с результатами круга секундомера -->
+    <!-- Templates -->
     <template id="sw-lap-row-template">
       <div
         class="flex justify-between items-center py-2 border-b border-gray-500/10 last:border-0 px-2"
@@ -2252,7 +2255,6 @@
       </div>
     </template>
 
-    <!-- Шаблон для строки с результатами секундомера -->
     <template id="sw-session-template">
       <div
         class="app-surface border app-border rounded-xl overflow-hidden transition-all mb-3"
@@ -2291,6 +2293,7 @@
             </svg>
           </div>
         </div>
+
         <div
           class="hidden bg-black/5 dark:bg-black/20 border-t app-border p-4"
           data-template-id="details"
@@ -2316,16 +2319,13 @@
             ></button>
           </div>
           <div
-            class="max-h-48 overflow-y-auto no-scrollbar bg-black/5 dark:bg-white/5 rounded-lg p-2 border app-border"
+            class="max-h-48 overflow-y-auto no-scrollbar bg-black/5 dark:bg-white/5 rounded-lg p-2 border app-border scroll-panel"
             data-template="lapsContainer"
-          >
-            <!-- Сюда будут вставляться круги -->
-          </div>
+          ></div>
         </div>
       </div>
     </template>
 
-    <!-- Шаблон для строки с тренировкой Табата -->
     <template id="tb-workout-template">
       <div
         class="tb-workout-row p-4 rounded-xl flex justify-between items-center transition-all cursor-pointer mb-2 focus:outline-none"
@@ -2390,7 +2390,6 @@
       JavaScript для работы секундомера.
     </div>
 
-    <!-- <script type="module" src="scripts.js?v=VERSION"></script> -->
     <script type="module" src="./js/main.js?v=VERSION"></script>
   </body>
 </html>

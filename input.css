@@ -1,6 +1,9 @@
 @import "tailwindcss";
 @source "./www";
 
+/* Unified cascade architecture */
+@layer theme, base, layout, components, states, utilities, overrides;
+
 @theme {
   --text-xs: calc(0.75rem * var(--font-scale, 1));
   --text-xs--line-height: 1.2;
@@ -20,156 +23,415 @@
   --text-5xl--line-height: 1;
 }
 
-/* =========================================
-   1. ПЕРЕМЕННЫЕ И ТЕМЫ
-========================================= */
-:root {
-  color-scheme: light dark;
-  --default-accent-light: #22c55e;
-  --default-bg-light: #f3f4f6;
-  --primary-color: var(--default-accent-light);
-  --bg-color: var(--default-bg-light);
-  --accent-h: 142;
-  --surface-color: #ffffff;
-  --text-color: #1f2937;
-  --text-secondary: color-mix(
-    in srgb,
-    var(--text-color) 65%,
-    var(--primary-color)
-  );
-  --border-color: color-mix(in srgb, var(--text-color) 15%, transparent);
-  --dashed-border-color: color-mix(in srgb, var(--text-color) 20%, transparent);
-  --vignette-alpha: 0.15;
-  --font-scale: 1;
-  --ring-stroke-width: 4;
+@layer theme {
+  :root {
+    color-scheme: light dark;
 
-  --safe-top: env(safe-area-inset-top, 0px);
-  --safe-bottom: env(safe-area-inset-bottom, 0px);
-  --safe-left: env(safe-area-inset-left, 0px);
-  --safe-right: env(safe-area-inset-right, 0px);
+    --default-accent-light: #22c55e;
+    --default-bg-light: #f3f4f6;
+    --primary-color: var(--default-accent-light);
+    --bg-color: var(--default-bg-light);
 
-  --nav-height: 5rem;
-  --nav-total: calc(var(--nav-height) + var(--safe-bottom));
+    --accent-h: 142;
+    --surface-color: #ffffff;
+    --text-color: #1f2937;
+    --text-secondary: color-mix(
+      in srgb,
+      var(--text-color) 65%,
+      var(--primary-color)
+    );
+    --border-color: color-mix(in srgb, var(--text-color) 15%, transparent);
+    --dashed-border-color: color-mix(in srgb, var(--text-color) 20%, transparent);
 
-  --split: 65%;
-  --split-snap-duration: 260ms;
-  --handler-size: clamp(14px, 2.2dvh, 22px);
-  --collapse-top-k: 0;
-  --collapse-bottom-k: 0;
-  --title-gap: clamp(8px, 1.5vmin, 20px);
+    --vignette-alpha: 0.15;
+    --font-scale: 1;
+    --ring-stroke-width: 4;
 
-  --secondary-accent-color: #3b82f6;
-  --alert-color: hsl(0 90% 60%);
-  --alert-color-fg: #ffffff;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
 
-  --tr-track-height: 4px;
-  --tr-thumb-size: 24px;
-  --tr-track-bg: var(--border-color);
-  --tr-fill-color: var(--primary-color);
-  --tr-thumb-color: var(--surface-color);
+    --nav-height: 5rem;
+    --nav-total: calc(var(--nav-height) + var(--safe-bottom));
 
-  /* 4px rhythm system */
-  --u: 4px;
-  --space-1: calc(var(--u) * 1); /* 4 */
-  --space-2: calc(var(--u) * 2); /* 8 */
-  --space-3: calc(var(--u) * 3); /* 12 */
-  --space-4: calc(var(--u) * 4); /* 16 */
-  --space-5: calc(var(--u) * 5); /* 20 */
-  --space-6: calc(var(--u) * 6); /* 24 */
-  --control-h: calc(var(--u) * 11); /* 44 */
+    --split: 65%;
+    --split-snap-duration: 260ms;
+    --handler-size: clamp(14px, 2.2dvh, 22px);
+    --collapse-top-k: 0;
+    --collapse-bottom-k: 0;
+    --title-gap: clamp(8px, 1.5vmin, 20px);
 
-  /* Motion system */
-  --ease-standard: cubic-bezier(0.32, 0.72, 0, 1);
-  --ease-emphasized: cubic-bezier(0.22, 0.9, 0.3, 1);
-  --dur-micro: 140ms;
-  --dur-short: 220ms;
-  --dur-medium: 320ms;
-  --dur-long: 420ms;
+    --secondary-accent-color: #3b82f6;
+    --alert-color: hsl(0 90% 60%);
+    --alert-color-fg: #ffffff;
+
+    --tr-track-height: 4px;
+    --tr-thumb-size: 24px;
+    --tr-track-bg: var(--border-color);
+    --tr-fill-color: var(--primary-color);
+    --tr-thumb-color: var(--surface-color);
+
+    --u: 4px;
+    --space-1: calc(var(--u) * 1);
+    --space-2: calc(var(--u) * 2);
+    --space-3: calc(var(--u) * 3);
+    --space-4: calc(var(--u) * 4);
+    --space-5: calc(var(--u) * 5);
+    --space-6: calc(var(--u) * 6);
+    --control-h: calc(var(--u) * 11);
+
+    --ease-standard: cubic-bezier(0.32, 0.72, 0, 1);
+    --ease-emphasized: cubic-bezier(0.22, 0.9, 0.3, 1);
+    --dur-micro: 140ms;
+    --dur-short: 220ms;
+    --dur-medium: 320ms;
+    --dur-long: 420ms;
+  }
+
+  :root.dark {
+    --default-accent-dark: #4ade80;
+    --default-bg-dark: #000000;
+    --primary-color: var(--default-accent-dark);
+    --bg-color: var(--default-bg-dark);
+    --surface-color: #1c1c1e;
+    --text-color: #f9fafb;
+    --text-secondary: color-mix(
+      in srgb,
+      var(--text-color) 70%,
+      var(--primary-color)
+    );
+    --border-color: color-mix(in srgb, var(--text-color) 12%, transparent);
+    --dashed-border-color: color-mix(in srgb, var(--text-color) 30%, transparent);
+  }
+
+  body.force-light-text {
+    --text-color: #ffffff;
+    --text-secondary: color-mix(in srgb, #ffffff 70%, var(--primary-color));
+    --border-color: rgb(255 255 255 / 0.15);
+  }
+
+  body.force-dark-text {
+    --text-color: #111827;
+    --text-secondary: color-mix(in srgb, #111827 70%, var(--primary-color));
+    --border-color: rgb(0 0 0 / 0.1);
+  }
 }
 
-:root.dark {
-  --default-accent-dark: #4ade80;
-  --default-bg-dark: #000000;
-  --primary-color: var(--default-accent-dark);
-  --bg-color: var(--default-bg-dark);
-  --surface-color: #1c1c1e;
-  --text-color: #f9fafb;
-  --text-secondary: color-mix(
-    in srgb,
-    var(--text-color) 70%,
-    var(--primary-color)
-  );
-  --border-color: color-mix(in srgb, var(--text-color) 12%, transparent);
-  --dashed-border-color: color-mix(in srgb, var(--text-color) 30%, transparent);
+@layer base {
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html {
+    font-size: 16px;
+    color-scheme: light;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
+  body {
+    height: 100dvh;
+    background-color: var(--surface-color, #000);
+    color: var(--text-color);
+    font-family:
+      system-ui,
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      Roboto,
+      Helvetica,
+      Arial,
+      sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    overscroll-behavior: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    touch-action: manipulation;
+  }
+
+  button {
+    appearance: none;
+    transition:
+      background-color var(--dur-short) ease,
+      border-color var(--dur-short) ease,
+      box-shadow var(--dur-short) ease,
+      color var(--dur-short) ease,
+      transform var(--dur-micro) var(--ease-standard);
+    touch-action: manipulation;
+  }
+
+  :where(input[type="text"], input[type="number"]) {
+    user-select: text;
+    font-size: max(16px, 1em);
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
 }
 
-body.force-light-text {
-  --text-color: #ffffff;
-  --text-secondary: color-mix(in srgb, #ffffff 70%, var(--primary-color));
-  --border-color: rgba(255, 255, 255, 0.15);
+@layer layout {
+  .preload * {
+    transition: none !important;
+  }
+
+  body.is-updating-theme,
+  body.is-updating-theme .app-bg,
+  body.is-updating-theme .app-surface {
+    transition-duration: 0s !important;
+    background-color: transparent !important;
+  }
+
+  #app {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    height: 100dvh;
+    width: 100%;
+    max-width: 100%;
+    border-radius: 0;
+    padding-top: var(--safe-top);
+    padding-bottom: var(--safe-bottom);
+    padding-left: var(--safe-left);
+    padding-right: var(--safe-right);
+    background-color: var(--bg-color);
+  }
+
+  .app-bg {
+    background-color: var(--bg-color);
+    transition: background-color var(--dur-short) ease;
+    position: relative;
+    z-index: 0;
+  }
+
+  #modal-container {
+    position: absolute;
+    inset: 0;
+    z-index: 50;
+    pointer-events: none;
+  }
+
+  #modal-container > * {
+    pointer-events: none;
+  }
+
+  #modal-container.active > * {
+    pointer-events: auto;
+  }
 }
 
-body.force-dark-text {
-  --text-color: #111827;
-  --text-secondary: color-mix(in srgb, #111827 70%, var(--primary-color));
-  --border-color: rgba(0, 0, 0, 0.1);
+@layer components {
+  .app-surface {
+    background-color: var(--surface-color);
+    transition:
+      background-color var(--dur-short) ease,
+      box-shadow var(--dur-short) ease,
+      border-color var(--dur-short) ease;
+  }
+
+  .app-text {
+    color: var(--text-color);
+    transition: color var(--dur-short) ease;
+  }
+
+  .app-text-sec {
+    color: var(--text-secondary);
+    transition: color var(--dur-short) ease;
+  }
+
+  .app-border {
+    border-color: var(--border-color);
+    transition: border-color var(--dur-short) ease;
+  }
+
+  .primary-text {
+    color: var(--primary-color);
+    transition: color var(--dur-short) ease;
+  }
+
+  .primary-bg {
+    background-color: var(--primary-color);
+    transition: background-color var(--dur-short) ease;
+  }
+
+  .primary-stroke {
+    stroke: var(--primary-color);
+    transition: stroke var(--dur-short) ease;
+  }
+
+  .app-btn {
+    min-height: 44px;
+    border-radius: 0.75rem;
+    font-weight: 700;
+    transition: transform var(--dur-micro) var(--ease-standard);
+  }
+
+  .app-btn:active {
+    transform: scale(0.95);
+  }
+
+  .app-btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px var(--primary-color);
+  }
+
+  .app-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    border-radius: 0.5rem;
+  }
+
+  .section-caption {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+  }
+
+  .settings-row {
+    min-height: var(--control-h);
+  }
+
+  .scroll-panel {
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+  }
+
+  .custom-focus:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px var(--primary-color);
+  }
+
+  .primary-focus-border:focus {
+    border-color: var(--primary-color);
+  }
+
+  .app-sheet {
+    background-color: var(--surface-color);
+    border-color: var(--border-color);
+  }
+
+  .app-modal-overlay {
+    backdrop-filter: blur(8px);
+    background-color: rgb(0 0 0 / 0.6);
+  }
+
+  .app-modal-content {
+    background-color: var(--surface-color);
+    border: 1px solid var(--border-color);
+  }
+
+  .app-nav-safe {
+    padding-bottom: calc(var(--safe-bottom) + 0.5rem);
+    height: calc(var(--nav-height) + var(--safe-bottom));
+  }
+
+  @media (min-width: 768px) {
+    .app-nav-safe {
+      padding-bottom: 0.5rem;
+      height: var(--nav-height);
+      border-bottom-left-radius: inherit;
+      border-bottom-right-radius: inherit;
+      overflow: hidden;
+    }
+  }
 }
 
-html {
-  font-size: 16px;
-  color-scheme: light;
+@layer states {
+  .is-reset {
+    background-color: var(--alert-color) !important;
+    color: var(--alert-color-fg) !important;
+    box-shadow:
+      0 4px 10px rgb(0 0 0 / 0.12),
+      0 1px 2px rgb(0 0 0 / 0.08) !important;
+  }
+
+  .is-reset:hover {
+    filter: brightness(95%);
+  }
+
+  body.hide-nav-labels .nav-btn span {
+    display: none;
+  }
+
+  body.hide-nav-labels .nav-btn {
+    justify-content: center;
+    gap: 0;
+  }
+
+  .glass-effect .app-modal-overlay {
+    background-color: rgb(255 255 255 / 0.3);
+    backdrop-filter: blur(10px);
+  }
+
+  .dark.glass-effect .app-modal-overlay {
+    background-color: rgb(0 0 0 / 0.6);
+  }
+
+  .glass-effect .app-modal-content {
+    background-color: color-mix(in srgb, var(--surface-color) 70%, transparent);
+    backdrop-filter: blur(24px) saturate(150%);
+    box-shadow:
+      inset 0 1px 1px rgb(255 255 255 / 0.7),
+      0 20px 40px rgb(0 0 0 / 0.15);
+    border: none;
+  }
+
+  .dark.glass-effect .app-modal-content {
+    background-color: color-mix(in srgb, var(--surface-color) 50%, transparent);
+    box-shadow:
+      inset 0 1px 1px rgb(255 255 255 / 0.08),
+      0 20px 40px rgb(0 0 0 / 0.5);
+  }
 }
 
-html.dark {
-  color-scheme: dark;
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .scroll-lock {
+    overscroll-behavior-y: contain;
+  }
+
+  .transition-ios {
+    transition-timing-function: var(--ease-standard);
+  }
+
+  .selectable-data,
+  .selectable-data * {
+    user-select: text;
+  }
 }
 
-/* =========================================
-   2. БАЗОВЫЕ НАСТРОЙКИ
-========================================= */
-* {
-  -webkit-tap-highlight-color: transparent;
-}
-
-.preload * {
-  transition: none !important;
-}
-
-body.is-updating-theme,
-body.is-updating-theme .app-bg,
-body.is-updating-theme .app-surface {
-  transition-duration: 0s !important;
-  background-color: transparent !important;
-}
-
-body {
-  height: 100dvh;
-  background-color: var(--surface-color, #000);
-  color: var(--text-color);
-  font-family:
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    Roboto,
-    Helvetica,
-    Arial,
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  overscroll-behavior: none;
-  user-select: none;
-  -webkit-touch-callout: none;
-  touch-action: manipulation;
-}
-
-/* =========================================
-   PRELOADER OVERLAY
-========================================= */
+/* PRELOADER */
 #app-preloader {
   position: fixed;
   inset: 0;
@@ -234,75 +496,13 @@ body {
     opacity: 1;
   }
 }
-
 @media (prefers-reduced-motion: reduce) {
   #app-preloader-icon {
     animation: none;
   }
 }
 
-button {
-  appearance: none;
-  transition:
-    background-color var(--dur-short) ease,
-    border-color var(--dur-short) ease,
-    box-shadow var(--dur-short) ease,
-    color var(--dur-short) ease,
-    transform var(--dur-micro) var(--ease-standard);
-  touch-action: manipulation;
-}
-
-:where(input[type="text"], input[type="number"]) {
-  user-select: text;
-  font-size: max(16px, 1em);
-}
-
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border-width: 0;
-}
-
-.selectable-data,
-.selectable-data * {
-  user-select: text;
-}
-
-/* =========================================
-   3. КОНТЕЙНЕР ПРИЛОЖЕНИЯ (#app)
-========================================= */
-#app {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  height: 100dvh;
-  width: 100%;
-  max-width: 100%;
-  border-radius: 0;
-  padding-top: var(--safe-top);
-  padding-bottom: var(--safe-bottom);
-  padding-left: var(--safe-left);
-  padding-right: var(--safe-right);
-  background-color: var(--bg-color);
-}
-
-.app-bg {
-  background-color: var(--bg-color);
-  transition: background-color var(--dur-short) ease;
-  position: relative;
-  z-index: 0;
-}
-
-/* =========================================
-   4. ВИНЬЕТКА
-========================================= */
+/* VIGNETTE */
 .app-bg::before {
   content: "";
   position: absolute;
@@ -326,9 +526,7 @@ html.dark .app-bg::before {
   opacity: 1;
 }
 
-/* =========================================
-   5. SPLIT LAYOUT + HANDLER
-========================================= */
+/* SPLIT LAYOUT + HANDLER */
 .view-top-half {
   flex-basis: var(--split);
   flex-shrink: 0;
@@ -446,8 +644,6 @@ html.dark .app-bg::before {
   cursor: grabbing;
 }
 
-/* ===== split states ===== */
-
 :is(#view-stopwatch, #view-timer, #view-tabata).split-middle .view-top-half {
   flex-basis: var(--split);
 }
@@ -462,7 +658,6 @@ html.dark .app-bg::before {
   min-height: 0;
 }
 
-/* top hidden */
 :is(#view-stopwatch, #view-timer, #view-tabata).split-top-hidden
   .view-top-half {
   flex-basis: 0.12%;
@@ -478,7 +673,6 @@ html.dark .app-bg::before {
   overflow: visible;
 }
 
-/* bottom hidden (default fallback; overridden for mobile portrait below) */
 :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
   .view-top-half {
   flex: 1 1 auto;
@@ -512,7 +706,6 @@ html.dark .app-bg::before {
   overflow: hidden;
 }
 
-/* while animating to bottom (fallback) */
 :is(
     #view-stopwatch,
     #view-timer,
@@ -535,8 +728,6 @@ html.dark .app-bg::before {
   bottom: auto;
 }
 
-/* MOBILE PORTRAIT:
-   bottom area = nav + handler, top = 100% - nav - handler */
 @media (max-width: 767px) and (orientation: portrait) {
   :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
     .view-top-half {
@@ -628,8 +819,6 @@ html.dark .app-bg::before {
   }
 }
 
-/* ===== progressive collapse FX (blur + opacity to 0) ===== */
-
 .view-top-half .top_content {
   opacity: calc(1 - var(--collapse-top-k));
   filter: blur(calc(var(--collapse-top-k) * 2.2px));
@@ -663,8 +852,6 @@ html.dark .app-bg::before {
   filter: blur(2.4px);
 }
 
-/* ===== runtime interaction phases ===== */
-
 :is(#view-stopwatch, #view-timer, #view-tabata).split-live .view-top-half,
 :is(#view-stopwatch, #view-timer, #view-tabata).split-live .view-bottom-half,
 :is(#view-stopwatch, #view-timer, #view-tabata).split-live .mid_content {
@@ -688,9 +875,7 @@ html.dark .app-bg::before {
   will-change: flex-basis;
 }
 
-/* =========================================
-   АДАПТИВНОСТЬ ДЛЯ ДВУХКОЛОНОЧНОГО МАКЕТА
-========================================= */
+/* landscape tablet/desktop */
 @media (min-width: 768px) and (orientation: landscape) {
   :root {
     --split: 50%;
@@ -840,19 +1025,11 @@ html.dark .app-bg::before {
   }
 }
 
-/* =============================================================
-   АДАПТИВНОСТЬ ДЛЯ ДВУХКОЛОНОЧНОГО МАКЕТА ДЛЯ МАЛЫХ ЭКРАНОВ
-============================================================= */
-
 @media (min-width: 375px) and (orientation: portrait) {
   .top_content {
     --top-pad: var(--space-4);
   }
 }
-
-/* ===============================================================
-   АДАПТИВНОСТЬ ДЛЯ ДВУХКОЛОНОЧНОГО МАКЕТА ДЛЯ БОЛЬШИХ ЭКРАНОВ
-=============================================================== */
 
 @media (min-width: 1281px) and (orientation: landscape) {
   #app {
@@ -862,8 +1039,8 @@ html.dark .app-bg::before {
     max-height: 720px;
     border-radius: 2.5rem;
     box-shadow:
-      0 0 0 1px rgba(255, 255, 255, 0.08),
-      0 10px 30px rgba(17, 17, 17, 0.3);
+      0 0 0 1px rgb(255 255 255 / 0.08),
+      0 10px 30px rgb(17 17 17 / 0.3);
     padding: 0;
   }
 
@@ -878,9 +1055,7 @@ html.dark .app-bg::before {
   }
 }
 
-/* =========================================
-   6. КРУЖОК ТАЙМЕРА
-========================================= */
+/* TIMER RING */
 .timer-circle-wrap {
   --ring-size: clamp(180px, 100%, 680px);
   width: min(100%, var(--ring-size));
@@ -916,10 +1091,9 @@ html.dark .app-bg::before {
   padding-right: 0.04em;
 }
 
-/* Stopwatch: keep main time width stable */
 #sw-mainDisplay {
   display: inline-block;
-  min-inline-size: 8ch; /* HH:MM:SS.cc */
+  min-inline-size: 8ch;
   text-align: center;
 }
 
@@ -939,7 +1113,6 @@ html.dark .app-bg::before {
   display: none;
 }
 
-/* Stopwatch: reserve line for days/hours label */
 #sw-extendedDisplay {
   display: flex;
   justify-content: center;
@@ -963,9 +1136,22 @@ html.dark .app-bg::before {
   }
 }
 
-/* =========================================
-   7. НАСТРОЙКИ — спец. отступ сверху
-========================================= */
+@media (max-height: 700px) and (orientation: portrait) {
+  .timer-input {
+    width: 3rem;
+    height: 3rem;
+  }
+
+  .timer-display {
+    font-size: clamp(1.5rem, min(19cqi, 19cqb), 2.2rem);
+  }
+
+  .timer-display.is-go {
+    font-size: clamp(2.2rem, min(28cqi, 28cqb), 3.7rem);
+  }
+}
+
+/* SETTINGS + SCROLL CONTAINERS */
 #view-settings > div:first-child {
   padding-top: calc(var(--safe-top) + 0.5rem);
   height: auto;
@@ -979,7 +1165,6 @@ html.dark .app-bg::before {
   }
 }
 
-/* 4px rhythm normalization for settings blocks */
 #view-settings .app-surface > div {
   min-height: var(--control-h);
 }
@@ -1000,55 +1185,13 @@ html.dark .app-bg::before {
   gap: var(--space-4) !important;
 }
 
-/* =========================================
-   8. НАВИГАЦИОННАЯ ПАНЕЛЬ (НИЖНЯЯ)
-========================================= */
-.app-nav-safe {
-  padding-bottom: calc(var(--safe-bottom) + 0.5rem);
-  height: calc(var(--nav-height) + var(--safe-bottom));
-}
-
-@media (min-width: 768px) {
-  .app-nav-safe {
-    padding-bottom: 0.5rem;
-    height: var(--nav-height);
-    border-bottom-left-radius: inherit;
-    border-bottom-right-radius: inherit;
-    overflow: hidden;
-  }
-}
-
-/* =========================================
-   9. ОТСТУПЫ СКРОЛЛ-КОНТЕЙНЕРОВ ОТ НАВИГАЦИИ
-========================================= */
 #sw-lapsContainer,
 #tb-workoutsList {
   padding-bottom: var(--nav-height);
 }
 
-/* =========================================
-   10. TOAST УВЕДОМЛЕНИЕ
-========================================= */
 #toast {
   top: calc(var(--safe-top) + 1rem);
-}
-
-/* =========================================
-   11. МОДАЛЬНЫЕ ОКНА (BOTTOM SHEETS)
-========================================= */
-#modal-container {
-  position: absolute;
-  inset: 0;
-  z-index: 50;
-  pointer-events: none;
-}
-
-#modal-container > * {
-  pointer-events: none;
-}
-
-#modal-container.active > * {
-  pointer-events: auto;
 }
 
 #tb-saveModalBtn,
@@ -1056,9 +1199,6 @@ html.dark .app-bg::before {
   margin-bottom: var(--safe-bottom);
 }
 
-/* =========================================
-   12. LANDSCAPE НА ТЕЛЕФОНЕ
-========================================= */
 @media (orientation: landscape) and (max-width: 767px) {
   #viewsContainer > div:not(#view-settings) {
     flex-direction: row;
@@ -1079,121 +1219,6 @@ html.dark .app-bg::before {
   }
 }
 
-/* =========================================
-   13. МАЛЫЕ ЭКРАНЫ В ПОРТРЕТЕ
-========================================= */
-@media (max-height: 700px) and (orientation: portrait) {
-  .timer-input {
-    width: 3rem;
-    height: 3rem;
-  }
-
-  .timer-display {
-    font-size: clamp(1.5rem, min(19cqi, 19cqb), 2.2rem);
-  }
-
-  .timer-display.is-go {
-    font-size: clamp(2.2rem, min(28cqi, 28cqb), 3.7rem);
-  }
-}
-
-/* =========================================
-   14. УТИЛИТЫ
-========================================= */
-.app-surface {
-  background-color: var(--surface-color);
-  transition:
-    background-color var(--dur-short) ease,
-    box-shadow var(--dur-short) ease,
-    border-color var(--dur-short) ease;
-}
-
-.app-text {
-  color: var(--text-color);
-  transition: color var(--dur-short) ease;
-}
-
-.app-text-sec {
-  color: var(--text-secondary);
-  transition: color var(--dur-short) ease;
-}
-
-.accent-dimmed {
-  color: color-mix(in srgb, var(--primary-color) 45%, var(--text-color));
-}
-
-.primary-text {
-  color: var(--primary-color);
-  transition: color var(--dur-short) ease;
-}
-
-.app-border {
-  border-color: var(--border-color);
-  transition: border-color var(--dur-short) ease;
-}
-
-.primary-bg {
-  background-color: var(--primary-color);
-  transition: background-color var(--dur-short) ease;
-}
-
-.primary-stroke {
-  stroke: var(--primary-color);
-  transition: stroke var(--dur-short) ease;
-}
-
-.default-accent-btn {
-  background-color: var(--default-accent-light);
-  transition: background-color var(--dur-short) ease;
-}
-.dark .default-accent-btn {
-  background-color: var(--default-accent-dark);
-}
-
-.default-bg-btn {
-  background-color: var(--default-bg-light);
-  transition: background-color var(--dur-short) ease;
-}
-.dark .default-bg-btn {
-  background-color: var(--default-bg-dark);
-}
-
-.custom-focus:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 4px var(--primary-color);
-}
-
-.primary-focus-border:focus {
-  border-color: var(--primary-color);
-}
-
-.progress-ring__circle {
-  transition: stroke-dashoffset 0.1s linear;
-  transform: rotate(-90deg);
-  transform-origin: 50% 50%;
-}
-
-/* Stopwatch ring updates every frame from JS, transition can create jitter */
-#sw-progressRing.progress-ring__circle,
-#tm-progressRing.progress-ring__circle,
-#tb-progressRing.progress-ring__circle {
-  transition: none;
-}
-
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
-}
-
-.scroll-lock {
-  overscroll-behavior-y: contain;
-}
-
 #sw-lapsContainer,
 #tb-workoutsList,
 #view-settings,
@@ -1203,32 +1228,7 @@ html.dark .app-bg::before {
   touch-action: pan-y;
 }
 
-/* =========================================
-   15. МОДАЛЬНЫЕ ОКНА — АЛЕРТЫ
-========================================= */
-#reset-modal,
-#sw-clear-modal,
-#sw-name-modal,
-#sw-share-mode-modal,
-#legal-modal,
-#pro-subscribe-modal {
-  backdrop-filter: blur(8px);
-  background-color: rgba(0, 0, 0, 0.6);
-}
-
-#reset-modal-content,
-#sw-clear-modal-content,
-#sw-name-modal-content,
-#sw-share-mode-content,
-#legal-modal-content,
-#pro-subscribe-modal-content {
-  background-color: var(--surface-color);
-  border: 1px solid var(--border-color);
-}
-
-/* =========================================
-   16. КАСТОМИЗАЦИЯ ЭЛЕМЕНТОВ УПРАВЛЕНИЯ
-========================================= */
+/* COMMON CONTROLS */
 .select-wrapper {
   min-width: 120px;
 }
@@ -1272,7 +1272,7 @@ input[type="number"] {
   height: 20px;
   background-color: #ffffff;
   border-radius: 50%;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.3);
   transition: transform var(--dur-short) var(--ease-standard);
 }
 
@@ -1289,12 +1289,31 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
   outline-offset: 2px;
 }
 
+.timer-input {
+  font-size: calc(2rem * var(--font-scale, 1));
+  touch-action: none;
+  cursor: ns-resize;
+  user-select: none;
+  border-bottom-color: rgb(128 128 128 / 0.3);
+  transition: border-color var(--dur-short) ease;
+}
+
+.timer-input:focus {
+  user-select: text;
+  border-bottom-color: var(--primary-color);
+}
+
+.timer-input::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.5;
+}
+
+/* FEEDBACK ANIMATIONS */
 @keyframes flashCircle {
   0% {
     opacity: 0.4;
     transform: scale(0.98);
   }
-
   100% {
     opacity: 0;
     transform: scale(1);
@@ -1310,15 +1329,12 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
   100% {
     transform: translateX(0);
   }
-
   25% {
     transform: translateX(-4px);
   }
-
   50% {
     transform: translateX(4px);
   }
-
   75% {
     transform: translateX(-4px);
   }
@@ -1327,248 +1343,179 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
 .animate-shake {
   animation: shake 0.3s ease-in-out;
 }
-
-.timer-input {
-  font-size: calc(2rem * var(--font-scale, 1));
-  touch-action: none;
-  cursor: ns-resize;
-  user-select: none;
-  border-bottom-color: rgba(128, 128, 128, 0.3);
-  transition: border-color var(--dur-short) ease;
-}
-
-.timer-input:focus {
-  user-select: text;
-  border-bottom-color: var(--primary-color);
-}
-
-.timer-input::placeholder {
-  color: var(--text-secondary);
-  opacity: 0.5;
-}
-
-/* =========================================
-   17. ЭФФЕКТ ЖИДКОГО СТЕКЛА (LIQUID GLASS)
-========================================= */
-:root.glass-effect body #bottom-sheet-overlay {
-  background-color: rgba(255, 255, 255, 0.4);
+/* LIQUID GLASS (unified selectors) */
+.glass-effect #bottom-sheet-overlay {
+  background-color: rgb(255 255 255 / 0.4);
   backdrop-filter: blur(2px);
 }
 
-:root.dark.glass-effect body #bottom-sheet-overlay {
-  background-color: rgba(0, 0, 0, 0.5);
+.dark.glass-effect #bottom-sheet-overlay {
+  background-color: rgb(0 0 0 / 0.5);
   backdrop-filter: blur(2px);
 }
 
-:root.glass-effect body #tb-modal,
-:root.glass-effect body #sw-sessions-modal {
-  background-color: rgba(255, 255, 255, 0.4);
+.glass-effect #tb-modal,
+.glass-effect #sw-sessions-modal {
+  background-color: rgb(255 255 255 / 0.4);
   backdrop-filter: blur(18px) saturate(150%);
 }
 
-:root.dark.glass-effect body #tb-modal,
-:root.dark.glass-effect body #sw-sessions-modal {
-  background-color: rgba(0, 0, 0, 0.5);
+.dark.glass-effect #tb-modal,
+.dark.glass-effect #sw-sessions-modal {
+  background-color: rgb(0 0 0 / 0.5);
 }
 
-:root.glass-effect body #reset-modal-content,
-:root.glass-effect body #sw-clear-modal-content,
-:root.glass-effect body #sw-name-modal-content,
-:root.glass-effect body #sw-share-mode-content,
-:root.glass-effect body #legal-modal-content,
-:root.glass-effect body #pro-subscribe-modal-content {
-  background-color: color-mix(in srgb, var(--surface-color) 70%, transparent);
-  backdrop-filter: blur(24px) saturate(150%);
-  box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.7),
-    0 20px 40px rgba(0, 0, 0, 0.15);
-  border: none;
-}
-
-:root.dark.glass-effect body #reset-modal-content,
-:root.dark.glass-effect body #sw-clear-modal-content,
-:root.dark.glass-effect body #sw-name-modal-content,
-:root.dark.glass-effect body #sw-share-mode-content,
-:root.dark.glass-effect body #legal-modal-content,
-:root.dark.glass-effect body #pro-subscribe-modal-content {
-  background-color: color-mix(in srgb, var(--surface-color) 50%, transparent);
-  box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.08),
-    0 20px 40px rgba(0, 0, 0, 0.5);
-}
-
-:root.glass-effect body nav {
+.glass-effect nav {
   background: linear-gradient(
     to top,
     color-mix(in srgb, var(--surface-color) 30%, transparent),
     color-mix(in srgb, var(--surface-color) 2%, transparent)
   );
   backdrop-filter: blur(12px) saturate(150%);
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  border-top: 1px solid rgb(255 255 255 / 0.2);
   box-shadow: none;
 }
 
-:root.dark.glass-effect body nav {
+.dark.glass-effect nav {
   background: linear-gradient(
     to top,
     color-mix(in srgb, var(--surface-color) 25%, transparent),
     color-mix(in srgb, var(--surface-color) 0%, transparent)
   );
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-top: 1px solid rgb(255 255 255 / 0.05);
 }
 
-:root.glass-effect body .select-wrapper.app-surface {
-  background-color: rgba(255, 255, 255, 0.15);
+.glass-effect .select-wrapper.app-surface {
+  background-color: rgb(255 255 255 / 0.15);
   backdrop-filter: blur(12px) saturate(150%);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.4);
+  border: 1px solid rgb(255 255 255 / 0.3);
+  box-shadow: inset 0 1px 2px rgb(255 255 255 / 0.4);
   color: var(--text-color);
 }
 
-:root.dark.glass-effect body .select-wrapper.app-surface {
-  background-color: rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05);
+.dark.glass-effect .select-wrapper.app-surface {
+  background-color: rgb(0 0 0 / 0.2);
+  border: 1px solid rgb(255 255 255 / 0.08);
+  box-shadow: inset 0 1px 1px rgb(255 255 255 / 0.05);
 }
 
-:root.glass-effect body button.app-surface {
+.glass-effect button.app-surface {
   background: color-mix(in srgb, var(--surface-color) 35%, transparent);
   backdrop-filter: blur(16px) saturate(150%);
   box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.4),
-    0 4px 12px rgba(0, 0, 0, 0.05);
+    inset 0 1px 1px rgb(255 255 255 / 0.4),
+    0 4px 12px rgb(0 0 0 / 0.05);
 }
 
-:root.dark.glass-effect body button.app-surface {
+.dark.glass-effect button.app-surface {
   background: color-mix(in srgb, var(--surface-color) 20%, transparent);
   box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.05),
-    0 4px 12px rgba(0, 0, 0, 0.2);
+    inset 0 1px 1px rgb(255 255 255 / 0.05),
+    0 4px 12px rgb(0 0 0 / 0.2);
 }
 
-:root.glass-effect body button#sw-lapBtn:not(.is-reset) {
+.glass-effect button#sw-lapBtn:not(.is-reset) {
   background: color-mix(in srgb, var(--surface-color) 60%, transparent);
   backdrop-filter: blur(16px) saturate(150%);
   box-shadow:
-    inset 0 1px 2px rgba(255, 255, 255, 0.6),
-    0 4px 12px rgba(0, 0, 0, 0.08);
+    inset 0 1px 2px rgb(255 255 255 / 0.6),
+    0 4px 12px rgb(0 0 0 / 0.08);
 }
 
-:root.dark.glass-effect body button#sw-lapBtn:not(.is-reset) {
+.dark.glass-effect button#sw-lapBtn:not(.is-reset) {
   background: color-mix(in srgb, var(--surface-color) 40%, transparent);
   box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.1),
-    0 4px 12px rgba(0, 0, 0, 0.3);
+    inset 0 1px 1px rgb(255 255 255 / 0.1),
+    0 4px 12px rgb(0 0 0 / 0.3);
 }
 
-:root.glass-effect body #sw-name-confirm,
-:root.glass-effect body #tb-saveModalBtn {
+.glass-effect #sw-name-confirm,
+.glass-effect #tb-saveModalBtn {
   background: color-mix(in srgb, var(--primary-color) 70%, transparent);
   backdrop-filter: blur(16px) saturate(150%);
   box-shadow:
-    inset 0 1px 2px rgba(255, 255, 255, 0.3),
+    inset 0 1px 2px rgb(255 255 255 / 0.3),
     0 4px 12px color-mix(in srgb, var(--primary-color) 30%, transparent);
   color: #fff;
 }
 
-:root.glass-effect body #sw-clear-confirm,
-:root.glass-effect body #reset-confirm,
-:root.glass-effect body #tb-stopBtn,
-:root.glass-effect body #tm-resetBtn.is-reset,
-:root.glass-effect body #sw-lapBtn.is-reset,
-:root.glass-effect body .is-reset {
-  background: rgba(239, 68, 68, 0.85);
+.glass-effect #sw-clear-confirm,
+.glass-effect #reset-confirm,
+.glass-effect #tb-stopBtn,
+.glass-effect #tm-resetBtn.is-reset,
+.glass-effect #sw-lapBtn.is-reset,
+.glass-effect .is-reset {
+  background: rgb(239 68 68 / 0.85);
   backdrop-filter: blur(16px) saturate(150%);
   box-shadow:
-    inset 0 1px 2px rgba(255, 255, 255, 0.4),
-    0 4px 15px rgba(239, 68, 68, 0.4);
+    inset 0 1px 2px rgb(255 255 255 / 0.4),
+    0 4px 15px rgb(239 68 68 / 0.4);
   color: #fff;
 }
 
-:root.glass-effect body #sw-saveBtn {
+.glass-effect #sw-saveBtn {
   background: transparent;
   box-shadow: none;
   border: none;
 }
 
-:root.glass-effect body .app-surface:not(button):not(.select-wrapper),
-:root.glass-effect body #toast {
+.glass-effect .app-surface:not(button):not(.select-wrapper),
+.glass-effect #toast {
   background-color: color-mix(in srgb, var(--surface-color) 50%, transparent);
   backdrop-filter: blur(12px) saturate(150%);
   box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.5),
-    0 8px 32px rgba(0, 0, 0, 0.05);
+    inset 0 1px 1px rgb(255 255 255 / 0.5),
+    0 8px 32px rgb(0 0 0 / 0.05);
 }
 
-:root.dark.glass-effect body .app-surface:not(button):not(.select-wrapper),
-:root.dark.glass-effect body #toast {
+.dark.glass-effect .app-surface:not(button):not(.select-wrapper),
+.dark.glass-effect #toast {
   background-color: color-mix(in srgb, var(--surface-color) 30%, transparent);
   box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.05),
-    0 8px 32px rgba(0, 0, 0, 0.3);
+    inset 0 1px 1px rgb(255 255 255 / 0.05),
+    0 8px 32px rgb(0 0 0 / 0.3);
 }
 
-:root.glass-effect body #reset-modal,
-:root.glass-effect body #sw-clear-modal,
-:root.glass-effect body #sw-name-modal,
-:root.glass-effect body #sw-share-mode-modal,
-:root.glass-effect body #legal-modal,
-:root.glass-effect body #pro-subscribe-modal {
-  background-color: rgba(255, 255, 255, 0.3);
-  backdrop-filter: blur(10px);
-}
-
-:root.dark.glass-effect body #reset-modal,
-:root.dark.glass-effect body #sw-clear-modal,
-:root.dark.glass-effect body #sw-name-modal,
-:root.dark.glass-effect body #sw-share-mode-modal,
-:root.dark.glass-effect body #legal-modal,
-:root.dark.glass-effect body #pro-subscribe-modal {
-  background-color: rgba(0, 0, 0, 0.6);
-}
-
-:root.glass-effect body .lap-row:first-child {
-  background-color: rgba(0, 0, 0, 0.08);
+.glass-effect .lap-row:first-child {
+  background-color: rgb(0 0 0 / 0.08);
   box-shadow: none;
 }
 
-:root.dark.glass-effect body .lap-row:first-child {
-  background-color: rgba(255, 255, 255, 0.1);
+.dark.glass-effect .lap-row:first-child {
+  background-color: rgb(255 255 255 / 0.1);
   box-shadow: none;
 }
 
-:root.glass-effect body .lap-row,
-:root.glass-effect body .tb-workout-row,
-:root.glass-effect body .sw-session-header,
-:root.glass-effect body [id^="sw-details-"] > div:last-child {
+.glass-effect .lap-row,
+.glass-effect .tb-workout-row,
+.glass-effect .sw-session-header,
+.glass-effect [id^="sw-details-"] > div:last-child {
   background-color: color-mix(in srgb, var(--surface-color) 58%, transparent);
   box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.12),
-    0 1px 2px rgba(0, 0, 0, 0.06);
+    inset 0 1px 1px rgb(255 255 255 / 0.12),
+    0 1px 2px rgb(0 0 0 / 0.06);
 }
 
-:root.dark.glass-effect body .lap-row,
-:root.dark.glass-effect body .tb-workout-row,
-:root.dark.glass-effect body .sw-session-header,
-:root.dark.glass-effect body [id^="sw-details-"] > div:last-child {
+.dark.glass-effect .lap-row,
+.dark.glass-effect .tb-workout-row,
+.dark.glass-effect .sw-session-header,
+.dark.glass-effect [id^="sw-details-"] > div:last-child {
   background-color: color-mix(in srgb, var(--surface-color) 15%, transparent);
   box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.05),
-    0 2px 4px rgba(0, 0, 0, 0.2);
+    inset 0 1px 1px rgb(255 255 255 / 0.05),
+    0 2px 4px rgb(0 0 0 / 0.2);
 }
 
-:root.glass-effect .app-text,
-:root.glass-effect .timer-display {
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+.glass-effect .app-text,
+.glass-effect .timer-display {
+  text-shadow: 0 1px 2px rgb(0 0 0 / 0.1);
 }
 
-:root.dark.glass-effect .app-text {
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+.dark.glass-effect .app-text {
+  text-shadow: 0 2px 4px rgb(0 0 0 / 0.3);
 }
 
-/* =========================================
-   18. АНИМАЦИИ ПЕРЕХОДОВ (VIEW TRANSITIONS)
-========================================= */
+/* VIEW TRANSITIONS */
 @keyframes slide-in-from-right {
   from {
     transform: translateX(18%);
@@ -1579,7 +1526,6 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
     opacity: 1;
   }
 }
-
 @keyframes slide-out-to-left {
   from {
     transform: translateX(0);
@@ -1590,7 +1536,6 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
     opacity: 0.95;
   }
 }
-
 @keyframes slide-in-from-left {
   from {
     transform: translateX(-18%);
@@ -1601,7 +1546,6 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
     opacity: 1;
   }
 }
-
 @keyframes slide-out-to-right {
   from {
     transform: translateX(0);
@@ -1612,7 +1556,6 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
     opacity: 0.95;
   }
 }
-
 @keyframes tap-old-fade {
   from {
     opacity: 1;
@@ -1625,7 +1568,6 @@ input[type="checkbox"]:focus-visible + .custom-toggle {
     filter: blur(0.5px);
   }
 }
-
 @keyframes tap-new-fade {
   from {
     opacity: 0;
@@ -1645,14 +1587,12 @@ html.js-nav-forward::view-transition-old(root) {
 html.js-nav-forward::view-transition-new(root) {
   animation: 420ms var(--ease-standard) both slide-in-from-right;
 }
-
 html.js-nav-backward::view-transition-old(root) {
   animation: 420ms var(--ease-standard) both slide-out-to-right;
 }
 html.js-nav-backward::view-transition-new(root) {
   animation: 420ms var(--ease-standard) both slide-in-from-left;
 }
-
 html.js-nav-tap::view-transition-old(root) {
   animation: 280ms var(--ease-standard) both tap-old-fade;
 }
@@ -1660,50 +1600,58 @@ html.js-nav-tap::view-transition-new(root) {
   animation: 320ms var(--ease-standard) both tap-new-fade;
 }
 
-/* =========================================
-   19. ФИКСЫ И ДОСТУПНОСТЬ
-========================================= */
-#btn-open-reset {
-  cursor: pointer;
+/* NAV + SNAPSHOT */
+.nav-btn > div {
+  transition:
+    transform var(--dur-short) var(--ease-standard),
+    color var(--dur-short) ease;
 }
 
-button:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-  transform: none;
+#app.is-view-transitioning .nav-btn {
+  pointer-events: none;
 }
 
-select option {
-  background-color: var(--surface-color);
-  color: var(--text-color);
+#app.is-view-transitioning #viewsContainer > div {
+  transition: none !important;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *,
-  ::before,
-  ::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
+.nav-btn svg {
+  vector-effect: non-scaling-stroke;
+}
+
+@media (hover: hover) {
+  .nav-btn:hover > div:not(.primary-text) {
+    transform: scale(1.08);
   }
-
-  ::view-transition-group(*),
-  ::view-transition-old(*),
-  ::view-transition-new(*) {
-    animation: none !important;
+  .nav-btn:hover > div:not(.primary-text),
+  .nav-btn:hover > span:not(.primary-text) {
+    color: var(--primary-color);
   }
 }
 
-body.hide-nav-labels .nav-btn span {
-  display: none;
+#viewsContainer {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
 }
 
-body.hide-nav-labels .nav-btn {
-  justify-content: center;
-  gap: 0;
+#app.is-view-transitioning #viewsContainer > div,
+#app.is-view-transitioning .timer-display,
+#app.is-view-transitioning .progress-ring__circle {
+  transition: none !important;
 }
 
+.nav-snapshot-layer {
+  position: absolute;
+  z-index: 40;
+  pointer-events: none;
+  overflow: hidden;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  will-change: transform, opacity;
+}
+
+/* RANGE / TOUCH RANGE SUPPORT */
 .thumb-label-container {
   position: absolute;
   top: calc(100% + 8px);
@@ -1737,9 +1685,219 @@ body.hide-nav-labels .nav-btn {
   opacity: 1;
 }
 
-/* =========================================
-   20. СТИЛИ И АНИМАЦИИ ДЛЯ УПРАВЛЕНИЯ ЦВЕТАМИ
-========================================= */
+.tr-thumb {
+  border: 2px solid var(--primary-color);
+  box-sizing: border-box;
+}
+
+.tr-wrap:focus-within .tr-thumb,
+.tr-wrap.tr-focused .tr-thumb {
+  box-shadow: 0 0 0 4px var(--primary-color);
+}
+
+.p-4.is-disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.range-row .range-field {
+  padding-right: 0.5rem;
+}
+
+.range-field-half {
+  width: 100%;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.range-row {
+  display: flex;
+  align-items: center;
+  align-content: center;
+  gap: var(--space-3);
+  min-height: var(--control-h);
+}
+
+.range-value {
+  width: 3.25rem;
+  flex: 0 0 3.25rem;
+  line-height: 1;
+  opacity: 0.95;
+  white-space: nowrap;
+  text-align: right;
+}
+
+.range-row-half {
+  display: grid;
+  grid-template-columns: auto minmax(20%, 120px) 3.25rem;
+  align-items: center;
+  column-gap: var(--space-3);
+  justify-content: end;
+  width: 100%;
+}
+
+.range-row-half .range-field-half {
+  justify-self: end;
+  width: 100%;
+}
+
+.range-row-half > label {
+  padding-right: 1rem;
+}
+
+.range-row-half .range-value {
+  justify-self: end;
+}
+
+#vignette-depth-container .thumb-label-container,
+#vibro-level-container .thumb-label-container {
+  display: none;
+}
+
+#vignette-depth-container,
+#vibro-level-container {
+  padding-top: var(--space-2);
+}
+
+/* CUSTOM SELECT (deduplicated) */
+.custom-select-container {
+  overflow: visible;
+}
+
+.custom-select-container.is-open .custom-select-trigger {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px
+    color-mix(in srgb, var(--primary-color) 40%, transparent);
+}
+
+.custom-select-trigger {
+  min-height: 38px;
+}
+
+.custom-select-options {
+  position: fixed;
+  z-index: 1000;
+  background-color: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  box-shadow:
+    0 10px 25px -5px rgb(0 0 0 / 0.1),
+    0 8px 10px -6px rgb(0 0 0 / 0.1);
+  max-height: 60dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  opacity: 0;
+  transform: scale(0.95) translateY(-10px);
+  transform-origin: top center;
+  pointer-events: none;
+  background-clip: padding-box;
+  transition:
+    opacity var(--dur-short) var(--ease-standard),
+    transform var(--dur-short) var(--ease-standard);
+}
+
+.custom-select-options.is-open {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  pointer-events: auto;
+}
+
+.custom-select-option {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: var(--text-color);
+  transition:
+    background-color 0.15s,
+    color 0.15s;
+  user-select: none;
+}
+
+.custom-select-option > div {
+  width: 100%;
+}
+
+.custom-select-option svg {
+  flex: 0 0 auto;
+}
+
+.custom-select-option.is-selected {
+  background-color: var(--primary-color);
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.custom-select-option.is-selected.needs-dark-text {
+  color: #1f2937;
+}
+
+.glass-effect .custom-select-trigger {
+  background-color: color-mix(in srgb, var(--surface-color) 50%, transparent);
+  backdrop-filter: blur(12px) saturate(150%);
+}
+
+.glass-effect .custom-select-options {
+  background-color: color-mix(in srgb, var(--surface-color) 38%, transparent);
+  border-color: color-mix(in srgb, var(--border-color) 55%, transparent);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  backdrop-filter: blur(16px) saturate(180%);
+  box-shadow:
+    inset 0 1px 1px rgb(255 255 255 / 0.45),
+    0 10px 28px rgb(0 0 0 / 0.16);
+}
+
+.dark.glass-effect .custom-select-options {
+  background-color: color-mix(in srgb, var(--surface-color) 26%, transparent);
+  border-color: color-mix(in srgb, var(--border-color) 60%, transparent);
+  box-shadow:
+    inset 0 1px 1px rgb(255 255 255 / 0.08),
+    0 12px 30px rgb(0 0 0 / 0.38);
+}
+
+@media (hover: hover) {
+  .custom-select-option:hover:not(.is-selected) {
+    background-color: color-mix(in srgb, var(--primary-color) 50%, transparent);
+  }
+}
+
+/* Theme mode select visuals */
+#themeModeSelectContainer .custom-select-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+#themeModeSelectContainer .custom-select-value svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+}
+
+#themeModeSelectContainer .custom-select-option > div {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  line-height: 1;
+}
+
+#themeModeSelectContainer .custom-select-option svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+}
+
+#themeModeSelectContainer .custom-select-option span {
+  white-space: nowrap;
+}
+
+/* COLOR SWATCH UI */
 @keyframes fadeInScale {
   from {
     opacity: 0;
@@ -1824,7 +1982,6 @@ body.hide-nav-labels .nav-btn {
   outline: none !important;
 }
 
-/* Add-color button: smooth color change when user picks color */
 .color-action-btn[data-action="add"] {
   transition:
     transform 160ms var(--ease-emphasized),
@@ -1832,470 +1989,46 @@ body.hide-nav-labels .nav-btn {
     color 180ms ease !important;
 }
 
-/* During add commit (layout shift) disable color tween to avoid strange flashing */
 .color-picker-wrapper.picker-commit-lock .color-action-btn[data-action="add"] {
   transition: transform 160ms var(--ease-emphasized) !important;
 }
 
-@layer utilities {
-  .transition-ios {
-    transition-timing-function: var(--ease-standard);
-  }
-}
-
-/* =========================================
-   21. АНИМАЦИЯ НИЖНЕГО МЕНЮ (iOS стиль)
-========================================= */
-.nav-btn > div {
-  transition:
-    transform var(--dur-short) var(--ease-standard),
-    color var(--dur-short) ease;
-}
-
-#app.is-view-transitioning .nav-btn {
-  pointer-events: none;
-}
-
-#app.is-view-transitioning #viewsContainer > div {
-  transition: none !important;
-}
-
-.nav-btn svg {
-  vector-effect: non-scaling-stroke;
-}
-
-@media (hover: hover) {
-  .nav-btn:hover > div:not(.primary-text) {
-    transform: scale(1.08);
-  }
-  .nav-btn:hover > div:not(.primary-text),
-  .nav-btn:hover > span:not(.primary-text) {
-    color: var(--primary-color);
-  }
-}
-
-/* =========================================
-   22. АДАПТИВНЫЕ ЦВЕТА UI
-========================================= */
-.secondary-accent-text {
-  color: var(--secondary-accent-color);
-  transition: color var(--dur-short) ease;
-}
-
-.secondary-accent-stroke {
-  stroke: var(--secondary-accent-color);
-  transition: stroke var(--dur-short) ease;
-}
-
-.bg-alert {
-  background-color: var(--alert-color);
-  color: var(--alert-color-fg);
-  transition: background-color var(--dur-short) ease;
-}
-
-.bg-alert:hover {
-  filter: brightness(95%);
-}
-
-.text-alert {
-  color: var(--alert-color);
-  transition: color var(--dur-short) ease;
-}
-
-.is-reset {
-  background-color: var(--alert-color) !important;
-  color: var(--alert-color-fg) !important;
-  box-shadow:
-    0 4px 10px rgba(0, 0, 0, 0.12),
-    0 1px 2px rgba(0, 0, 0, 0.08) !important;
-}
-
-.is-reset:hover {
-  filter: brightness(95%);
-}
-
-/* =========================================
-   23. TOUCH-RANGE СТИЛИЗАЦИЯ
-========================================= */
-.tr-thumb {
-  border: 2px solid var(--primary-color);
-  box-sizing: border-box;
-}
-
-.tr-wrap:focus-within .tr-thumb,
-.tr-wrap.tr-focused .tr-thumb {
-  box-shadow: 0 0 0 4px var(--primary-color);
-}
-
-.p-4.is-disabled {
-  opacity: 0.5;
-  pointer-events: none;
-}
-
-.range-row .range-field {
-  padding-right: 0.5rem;
-}
-
-.range-field-half {
-  width: 100%;
-  min-width: 0;
-  flex: 1 1 auto;
-}
-
-.range-row {
-  display: flex;
-  align-items: center;
-  align-content: center;
-  gap: var(--space-3); /* 12px */
-  min-height: var(--control-h);
-}
-
-.range-value {
-  width: 3.25rem;
-  flex: 0 0 3.25rem;
-  line-height: 1;
-  opacity: 0.95;
-  white-space: nowrap;
-  text-align: right;
-}
-
-/* Половинные слайдеры: правая группа = ~30% ширины строки */
-.range-row-half {
-  display: grid;
-  grid-template-columns: auto minmax(20%, 120px) 3.25rem;
-  align-items: center;
-  column-gap: var(--space-3);
-  justify-content: end;
-  width: 100%;
-}
-
-.range-row-half .range-field-half {
-  justify-self: end;
-  width: 100%;
-}
-
-.range-row-half > label{
-  padding-right: 1rem;
-} 
-
-.range-row-half .range-value {
-  justify-self: end;
-}
-
-#vignette-depth-container .thumb-label-container,
-#vibro-level-container .thumb-label-container {
-  display: none;
-}
-
-#vignette-depth-container,
-#vibro-level-container {
-  padding-top: var(--space-2);
-}
-
-/* =========================================
-   24. CUSTOM SELECT (ВЫПАДАЮЩИЕ СПИСКИ)
-========================================= */
-.custom-select-container {
-  overflow: visible;
-}
-
-.custom-select-container.is-open .custom-select-trigger {
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 2px
-    color-mix(in srgb, var(--primary-color) 40%, transparent);
-}
-
-.custom-select-options {
-  position: fixed;
-  z-index: 1000;
-  background-color: var(--surface-color);
-  border: 1px solid var(--border-color);
-  border-radius: 0.75rem;
-  box-shadow:
-    0 10px 25px -5px rgb(0 0 0 / 0.1),
-    0 8px 10px -6px rgb(0 0 0 / 0.1);
-
-  max-height: 60dvh;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch;
-
-  opacity: 0;
-  transform: scale(0.95) translateY(-10px);
-  transform-origin: top center;
-  pointer-events: none;
-  background-clip: padding-box;
-  transition:
-    opacity var(--dur-short) var(--ease-standard),
-    transform var(--dur-short) var(--ease-standard);
-}
-
-.custom-select-options.is-open {
-  opacity: 1;
-  transform: scale(1) translateY(0);
-  pointer-events: auto;
-}
-
-.custom-select-option {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 0.75rem 1rem;
-  cursor: pointer;
-  font-size: 0.875rem;
-  color: var(--text-color);
-  transition:
-    background-color 0.15s,
-    color 0.15s;
-  user-select: none;
-}
-
-/* внутренний ряд (иконка + текст) заполняет всю ширину */
-.custom-select-option > div {
-  width: 100%;
-}
-
-.custom-select-option svg {
-  flex: 0 0 auto;
-}
-
-/* Базовый selected (без glass) */
-.custom-select-option.is-selected {
-  background-color: var(--primary-color);
-  color: #ffffff;
-  font-weight: 700;
-}
-
-/* Glass: selected с прозрачностью от primary */
-:root.glass-effect .custom-select-option.is-selected {
-  background-color: color-mix(in srgb, var(--primary-color) 80%, transparent);
-  backdrop-filter: blur(8px) saturate(160%);
-}
-
-/* Если нужен более темный текст для светлых акцентов */
-:root.glass-effect .custom-select-option.is-selected.needs-dark-text {
-  color: #1f2937;
-}
-
-@media (hover: hover) {
-  .custom-select-option:hover:not(.is-selected) {
-    background-color: color-mix(in srgb, var(--primary-color) 50%, transparent);
-  }
-}
-
-.custom-select-option.is-selected.needs-dark-text {
-  color: #1f2937;
-}
-
-:root.glass-effect .custom-select-trigger {
-  background-color: color-mix(in srgb, var(--surface-color) 50%, transparent);
-  backdrop-filter: blur(12px) saturate(150%);
-}
-
-:root.glass-effect .custom-select-options {
-  background-color: color-mix(in srgb, var(--surface-color) 80%, transparent);
-  backdrop-filter: blur(10px) saturate(180%);
-  border: 1px solid color-mix(in srgb, var(--border-color) 45%, transparent);
-}
-
-:root.dark.glass-effect .custom-select-options {
-  background-color: color-mix(in srgb, var(--surface-color) 90%, transparent);
-}
-
-/* Strong glass override for custom select dropdown */
-:root.glass-effect .custom-select-options {
-  background-color: color-mix(
-    in srgb,
-    var(--surface-color) 38%,
-    transparent
-  ) !important;
-  border-color: color-mix(
-    in srgb,
-    var(--border-color) 55%,
-    transparent
-  ) !important;
-  -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
-  backdrop-filter: blur(16px) saturate(180%) !important;
-  box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.45),
-    0 10px 28px rgba(0, 0, 0, 0.16) !important;
-}
-
-:root.dark.glass-effect .custom-select-options {
-  background-color: color-mix(
-    in srgb,
-    var(--surface-color) 26%,
-    transparent
-  ) !important;
-  border-color: color-mix(
-    in srgb,
-    var(--border-color) 60%,
-    transparent
-  ) !important;
-  -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
-  backdrop-filter: blur(16px) saturate(180%) !important;
-  box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.08),
-    0 12px 30px rgba(0, 0, 0, 0.38) !important;
-}
-
-/* Theme mode select: icon + label alignment */
-#themeModeSelectContainer .custom-select-trigger {
-  min-height: 38px;
-}
-
-#themeModeSelectContainer .custom-select-value {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-weight: 700;
-  letter-spacing: 0.01em;
-  white-space: nowrap;
-  line-height: 1;
-}
-
-#themeModeSelectContainer .custom-select-value svg {
-  width: 16px;
-  height: 16px;
-  flex: 0 0 16px;
-}
-
-#themeModeSelectContainer .custom-select-option > div {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  line-height: 1;
-}
-
-#themeModeSelectContainer .custom-select-option svg {
-  width: 16px;
-  height: 16px;
-  flex: 0 0 16px;
-}
-
-#themeModeSelectContainer .custom-select-option span {
-  white-space: nowrap;
-}
-
-/* =========================================
-   25. ОПТИМИЗАЦИЯ ПРОИЗВОДИТЕЛЬНОСТИ АНИМАЦИЙ
-========================================= */
-#tb-modal,
-#sw-sessions-modal {
-  will-change: transform;
-}
-
-#reset-modal-content,
-#sw-clear-modal-content,
-#sw-name-modal-content,
-#sw-share-mode-content,
-#legal-modal-content,
-#pro-subscribe-modal-content,
-#toast {
-  will-change: transform, opacity;
-}
-
-.nav-btn > div,
-.custom-select-options,
-.custom-toggle::after,
-#sw-lapFlash {
-  will-change: auto;
-}
-
-#sw-lapsContainer,
-#tb-workoutsList,
-#sw-sessionsList {
-  contain: layout paint style;
-}
-
-#app-ad-slot {
-  margin: auto;
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: calc(var(--nav-height) + var(--safe-bottom) + 4px);
-  z-index: 140;
-  pointer-events: auto;
-}
-
-/* =========================================
-   26. ADAPTIVE GLASS QUALITY
-========================================= */
-:root.glass-lite.glass-effect body #tb-modal,
-:root.glass-lite.glass-effect body #sw-sessions-modal {
+/* ADAPTIVE GLASS QUALITY */
+.glass-lite.glass-effect #tb-modal,
+.glass-lite.glass-effect #sw-sessions-modal {
   backdrop-filter: blur(8px) saturate(120%);
 }
 
-:root.glass-lite.glass-effect body nav {
+.glass-lite.glass-effect nav {
   backdrop-filter: blur(5px) saturate(120%);
 }
 
-:root.glass-lite.glass-effect body #reset-modal-content,
-:root.glass-lite.glass-effect body #sw-clear-modal-content,
-:root.glass-lite.glass-effect body #sw-name-modal-content,
-:root.glass-lite.glass-effect body #sw-share-mode-content,
-:root.glass-lite.glass-effect body #legal-modal-content,
-:root.glass-lite.glass-effect body #pro-subscribe-modal-content {
+.glass-lite.glass-effect .app-modal-content {
   backdrop-filter: blur(12px) saturate(135%);
 }
 
-:root.glass-lite.glass-effect
-  body
-  .app-surface:not(button):not(.select-wrapper),
-:root.glass-lite.glass-effect body #toast {
+.glass-lite.glass-effect .app-surface:not(button):not(.select-wrapper),
+.glass-lite.glass-effect #toast {
   backdrop-filter: blur(8px) saturate(120%);
 }
 
-:root.glass-lite.glass-effect body .lap-row,
-:root.glass-lite.glass-effect body .tb-workout-row,
-:root.glass-lite.glass-effect body .sw-session-header,
-:root.glass-lite.glass-effect body [id^="sw-details-"] > div:last-child {
+.glass-lite.glass-effect .lap-row,
+.glass-lite.glass-effect .tb-workout-row,
+.glass-lite.glass-effect .sw-session-header,
+.glass-lite.glass-effect [id^="sw-details-"] > div:last-child {
   backdrop-filter: none !important;
 }
 
-/* =========================================
-   27. NAV SNAPSHOT TRANSITIONS (STABLE)
-========================================= */
-#viewsContainer {
-  position: relative;
-  overflow: hidden;
-  isolation: isolate;
-}
-
-#app.is-view-transitioning .nav-btn {
-  pointer-events: none;
-}
-
-#app.is-view-transitioning #viewsContainer > div,
-#app.is-view-transitioning .timer-display,
-#app.is-view-transitioning .progress-ring__circle {
-  transition: none !important;
-}
-
-.nav-snapshot-layer {
-  position: absolute;
-  z-index: 40;
-  pointer-events: none;
-  overflow: hidden;
-  backface-visibility: hidden;
-  transform: translateZ(0);
-  will-change: transform, opacity;
-}
-
-/* =========================================
-   28. PRO UI (BADGES / CTA / STATUS)
-========================================= */
-
+/* PRO UI */
 :root {
   --pro-bg-light: #0f172a;
   --pro-fg-light: #f8fafc;
   --pro-bg-dark: #f3f4f6;
   --pro-fg-dark: #111827;
-
   --pro-muted-bg: #9ca3af;
   --pro-muted-fg: #111827;
 }
 
-/* Animated gradient border with soft pace */
 .pro-animated-border {
   --pro-fill: var(--surface-color);
   position: relative;
@@ -2340,18 +2073,15 @@ body.hide-nav-labels .nav-btn {
   }
 }
 
-/* Inline wrap: label + badge together */
 .pro-inline-wrap {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
 }
 
-/* Small Pro badge */
 .pro-badge {
   --pro-fill: var(--pro-bg-light);
   --pro-text: var(--pro-fg-light);
-
   min-height: 24px;
   padding: 0.15rem 0.5rem;
   border-radius: 0.5rem;
@@ -2372,7 +2102,6 @@ html.dark .pro-badge {
   --pro-text: var(--pro-fg-dark);
 }
 
-/* Main CTA */
 .pro-cta {
   min-height: 44px;
   border-radius: 0.75rem;
@@ -2400,11 +2129,11 @@ html.dark .pro-cta-buy {
   --pro-text: var(--pro-fg-dark);
 }
 
-:root.glass-effect .pro-cta-buy {
+.glass-effect .pro-cta-buy {
   --pro-fill: var(--pro-bg-light);
 }
 
-:root.dark.glass-effect .pro-cta-buy {
+.dark.glass-effect .pro-cta-buy {
   --pro-fill: var(--pro-bg-dark);
 }
 
@@ -2415,7 +2144,6 @@ html.dark .pro-cta-buy {
   animation: none !important;
 }
 
-/* Price block in paywall modal */
 #pro-paywall-price {
   border: 2px solid var(--border-color);
   border-radius: 0.85rem;
@@ -2442,16 +2170,95 @@ html.dark .pro-cta-buy {
   color: var(--text-secondary);
 }
 
+/* PERFORMANCE HELPERS */
+.progress-ring__circle {
+  transition: stroke-dashoffset 0.1s linear;
+  transform: rotate(-90deg);
+  transform-origin: 50% 50%;
+}
+
+#sw-progressRing.progress-ring__circle,
+#tm-progressRing.progress-ring__circle,
+#tb-progressRing.progress-ring__circle {
+  transition: none;
+}
+
+#tb-modal,
+#sw-sessions-modal {
+  will-change: transform;
+}
+
+#reset-modal-content,
+#sw-clear-modal-content,
+#sw-name-modal-content,
+#sw-share-mode-content,
+#legal-modal-content,
+#pro-subscribe-modal-content,
+#toast {
+  will-change: transform, opacity;
+}
+
+.nav-btn > div,
+.custom-select-options,
+.custom-toggle::after,
+#sw-lapFlash {
+  will-change: auto;
+}
+
+#sw-lapsContainer,
+#tb-workoutsList,
+#sw-sessionsList {
+  contain: layout paint style;
+}
+
+#app-ad-slot {
+  margin: auto;
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--nav-height) + var(--safe-bottom) + 4px);
+  z-index: 140;
+  pointer-events: auto;
+}
+
+/* ACCESSIBILITY + REDUCED MOTION */
+#btn-open-reset {
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  transform: none;
+}
+
+select option {
+  background-color: var(--surface-color);
+  color: var(--text-color);
+}
+
 @media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+
   .pro-animated-border {
     animation: none !important;
   }
 }
 
-/* =========================================
-   ERUDA
-========================================= */
-
+/* ERUDA */
 #__erudaBar {
   backdrop-filter: blur(10px);
   border-radius: 16px;
