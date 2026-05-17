@@ -101,7 +101,9 @@
   }
 })();
 
+
 // Проверка цветов
+
 
 (() => {
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -115,25 +117,42 @@
     bodyClass: body.className || "",
   };
 
-  const targets = [
-    { sel: "#sw-mainDisplay", name: "SW Main" },
-    { sel: "#tm-mainDisplay", name: "TM Main" },
-    { sel: "#tb-mainTimer", name: "TB Main" },
-    { sel: "#sw-statusText", name: "SW Pause Label" },
-    { sel: "#tm-statusText", name: "TM Pause Label" },
-    { sel: "#tb-statusText", name: "TB Pause Label" },
-    { sel: "#sw-clear-confirm", name: "Clear Confirm" },
-    { sel: "#reset-confirm", name: "Reset Confirm" },
-    { sel: "#tb-stopBtn", name: "Stop Btn" },
-    { sel: "#tm-resetBtn", name: "Timer Reset Btn" },
-    { sel: "#sw-lapBtn", name: "Lap/Reset Btn" },
-    { sel: ".text-alert", name: "Alert Text" },
-    { sel: ".sw-delete-btn", name: "Delete Btn" },
-    { sel: ".custom-toggle", name: "Toggle Track" },
-    { sel: "input:checked + .custom-toggle", name: "Toggle Track Checked" },
+  // Text targets with semantic contrast kinds
+  const textTargets = [
+    { sel: "#sw-mainDisplay", name: "SW Main", kind: "largeText" },
+    { sel: "#tm-mainDisplay", name: "TM Main", kind: "largeText" },
+    { sel: "#tb-mainTimer", name: "TB Main", kind: "largeText" },
+
+    { sel: "#sw-statusText", name: "SW Pause Label", kind: "uiText" },
+    { sel: "#tm-statusText", name: "TM Pause Label", kind: "uiText" },
+    { sel: "#tb-statusText", name: "TB Pause Label", kind: "uiText" },
+
+    { sel: "#sw-clear-confirm", name: "Clear Confirm", kind: "largeText" },
+    { sel: "#reset-confirm", name: "Reset Confirm", kind: "largeText" },
+    { sel: "#tb-stopBtn", name: "Stop Btn", kind: "largeText" },
+    { sel: "#tm-resetBtn", name: "Timer Reset Btn", kind: "largeText" },
+    { sel: "#sw-lapBtn", name: "Lap/Reset Btn", kind: "largeText" },
+
+    { sel: ".text-alert", name: "Alert Text", kind: "uiText" },
+    { sel: ".sw-delete-btn", name: "Delete Btn", kind: "uiText" },
+    { sel: ".sw-share-btn", name: "Share Btn", kind: "uiText" },
+    { sel: ".sw-rename-btn", name: "Rename Btn", kind: "uiText" },
   ];
 
-  // robust parser for rgb/rgba + color(srgb ...)
+  // Non-text UI targets (track/thumb/borders/etc.)
+  const uiTargets = [
+    { sel: ".custom-toggle", name: "Toggle Track", kind: "nonTextUI" },
+    { sel: ".custom-toggle::after", name: "Toggle Thumb", kind: "nonTextUI", pseudo: "::after" },
+    { sel: ".color-btn", name: "Color Swatch Border", kind: "nonTextUI" },
+    { sel: ".app-border", name: "Generic Border", kind: "nonTextUI" },
+  ];
+
+  const thresholdByKind = {
+    uiText: 4.5,
+    largeText: 3.0,
+    nonTextUI: 3.0,
+  };
+
   function parseColor(str) {
     if (!str) return null;
     const s = String(str).trim();
@@ -146,8 +165,10 @@
       if ([r, g, b, a].every(Number.isFinite)) return { r, g, b, a };
     }
 
-    // color(srgb r g b / a)
-    m = s.match(/^color\(srgb\s+([0-9.]+)\s+([0-9.]+)\s+([0-9.]+)(?:\s*\/\s*([0-9.]+))?\)$/i);
+    // color(srgb ...)
+    m = s.match(
+      /^color\(srgb\s+([0-9.]+)\s+([0-9.]+)\s+([0-9.]+)(?:\s*\/\s*([0-9.]+))?\)$/i,
+    );
     if (m) {
       const r = Math.round(Number(m[1]) * 255);
       const g = Math.round(Number(m[2]) * 255);
@@ -156,7 +177,7 @@
       if ([r, g, b, a].every(Number.isFinite)) return { r, g, b, a };
     }
 
-    // fallback via hidden element computed rgb
+    // fallback normalize via temp node
     const tmp = document.createElement("span");
     tmp.style.position = "fixed";
     tmp.style.left = "-9999px";
@@ -197,7 +218,10 @@
     }
 
     if (acc.a < 0.999) {
-      const bodyBg = parseColor(getComputedStyle(document.body).backgroundColor) || { r: 255, g: 255, b: 255, a: 1 };
+      const bodyBg =
+        parseColor(getComputedStyle(document.body).backgroundColor) || {
+          r: 255, g: 255, b: 255, a: 1,
+        };
       acc = blend(bodyBg, acc);
     }
 
@@ -218,24 +242,105 @@
     return (L1 + 0.05) / (L2 + 0.05);
   }
 
-  function auditVariant(name) {
+  function uniqElements(nodeList) {
+    return [...new Set([...nodeList])];
+  }
+
+  function safeText(el) {
+    return (el.textContent || "").trim().slice(0, 24);
+  }
+
+  function readStyleColor(el, property, pseudo = null) {
+    const cs = getComputedStyle(el, pseudo);
+    return parseColor(cs.getPropertyValue(property));
+  }
+
+  function auditTextVariant(variantName) {
     const rows = [];
-    targets.forEach((t) => {
-      document.querySelectorAll(t.sel).forEach((el) => {
-        const fg = parseColor(getComputedStyle(el).color);
+
+    textTargets.forEach((t) => {
+      const elements = uniqElements(document.querySelectorAll(t.sel));
+      elements.forEach((el) => {
+        const fg = readStyleColor(el, "color");
         const bg = getEffectiveBg(el);
         if (!fg || !bg) return;
+
         const c = contrast(lum(fg), lum(bg));
+        const threshold = thresholdByKind[t.kind] || 4.5;
+
         rows.push({
-          variant: name,
+          variant: variantName,
+          type: "text",
+          kind: t.kind,
           target: t.name,
           selector: t.sel,
-          text: (el.textContent || "").trim().slice(0, 24),
+          text: safeText(el),
           contrast: Number(c.toFixed(2)),
-          passAA: c >= 4.5
+          threshold,
+          passAA: c >= threshold,
         });
       });
     });
+
+    return rows;
+  }
+
+  function auditUiVariant(variantName) {
+    const rows = [];
+
+    uiTargets.forEach((t) => {
+      const elements = uniqElements(document.querySelectorAll(t.sel));
+      elements.forEach((el) => {
+        // For non-text UI:
+        // 1) compare border (or bg) against effective background
+        // 2) for toggle thumb compare pseudo bg against track bg
+        const threshold = thresholdByKind[t.kind] || 3;
+
+        if (t.pseudo) {
+          const fg = readStyleColor(el, "background-color", t.pseudo);
+          const track = readStyleColor(el, "background-color");
+          if (!fg || !track) return;
+
+          const c = contrast(lum(fg), lum(track));
+          rows.push({
+            variant: variantName,
+            type: "ui",
+            kind: t.kind,
+            target: t.name,
+            selector: t.sel + t.pseudo,
+            text: "",
+            contrast: Number(c.toFixed(2)),
+            threshold,
+            passAA: c >= threshold,
+          });
+          return;
+        }
+
+        const border = readStyleColor(el, "border-top-color") || readStyleColor(el, "border-color");
+        const bg = getEffectiveBg(el);
+
+        // if border is transparent/none fallback to bg-vs-parent-bg
+        let fg = border;
+        if (!fg || fg.a === 0) {
+          fg = readStyleColor(el, "background-color");
+        }
+        if (!fg || !bg) return;
+
+        const c = contrast(lum(fg), lum(bg));
+        rows.push({
+          variant: variantName,
+          type: "ui",
+          kind: t.kind,
+          target: t.name,
+          selector: t.sel,
+          text: "",
+          contrast: Number(c.toFixed(2)),
+          threshold,
+          passAA: c >= threshold,
+        });
+      });
+    });
+
     return rows;
   }
 
@@ -264,26 +369,45 @@
 
   async function run() {
     const all = [];
+
     for (const v of variants) {
       applyVariant(v);
       await sleep(450);
-      const rows = auditVariant(v.name);
+
+      const textRows = auditTextVariant(v.name);
+      const uiRows = auditUiVariant(v.name);
+      const rows = [...textRows, ...uiRows];
+
       all.push(...rows);
+
       console.group(`[color-audit] ${v.name}`);
       console.table(rows);
       console.groupEnd();
     }
 
     const failed = all.filter((r) => !r.passAA);
-    console.log("[color-audit] total rows:", all.length, "failed:", failed.length);
-    if (failed.length) console.table(failed);
+    const failedText = failed.filter((r) => r.type === "text");
+    const failedUi = failed.filter((r) => r.type === "ui");
+
+    console.log(
+      "[color-audit] total:", all.length,
+      "failed:", failed.length,
+      "| text failed:", failedText.length,
+      "| ui failed:", failedUi.length,
+    );
+
+    if (failed.length) {
+      console.group("[color-audit] FAILED (all)");
+      console.table(failed);
+      console.groupEnd();
+    }
 
     // restore
     root.setAttribute("style", original.rootStyle);
     body.className = original.bodyClass;
     root.classList.toggle("dark", original.dark);
 
-    return { all, failed };
+    return { all, failed, failedText, failedUi };
   }
 
   window.__colorAudit = { run };
