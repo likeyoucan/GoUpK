@@ -70,7 +70,7 @@ export const ru = {
   pause: "ПАУЗА",
   play: "Плей",
   rds: "Рнд",
-  rename: "Переим.",
+  rename: "Переименовать",
   remaining: "Осталось",
   reset: "Сброс",
   reset_confirm_msg: "Вы уверены? Ваши тренировки не будут удалены.",
