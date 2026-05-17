@@ -228,6 +228,23 @@
     font-size: max(16px, 1em);
   }
 
+  button,
+  [role="button"],
+  .app-btn,
+  .app-icon-btn,
+  .settings-action-btn,
+  .color-btn,
+  .custom-select-trigger,
+  .custom-select-option,
+  #btn-open-legal-inline {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  .p-4.is-disabled button {
+    cursor: not-allowed;
+  }
+
   .sr-only {
     position: absolute;
     width: 1px;
@@ -1730,34 +1747,6 @@
       0 3px 10px rgb(0 0 0 / 0.24) !important;
   }
 
-  html.dark #sw-lapBtn:not(.is-reset),
-  html.dark #tm-restartBtn,
-  html.dark #tm-adjust-minus,
-  html.dark #tm-adjust-plus {
-    background-color: color-mix(
-      in srgb,
-      var(--surface-color) 90%,
-      #ffffff 10%
-    ) !important;
-    border: 1px solid color-mix(in srgb, #ffffff 9%, transparent) !important;
-    color: color-mix(in srgb, #ffffff 90%, transparent) !important;
-    box-shadow:
-      inset 0 1px 1px rgb(255 255 255 / 0.05),
-      0 3px 10px rgb(0 0 0 / 0.24) !important;
-  }
-
-  html.dark #sw-lapBtn:not(.is-reset):hover,
-  html.dark #tm-restartBtn:hover,
-  html.dark #tm-adjust-minus:hover,
-  html.dark #tm-adjust-plus:hover {
-    background-color: color-mix(
-      in srgb,
-      var(--surface-color) 86%,
-      #ffffff 14%
-    ) !important;
-    border-color: color-mix(in srgb, #ffffff 13%, transparent) !important;
-  }
-
   /* LIQUID GLASS (unified selectors) */
   .glass-effect #bottom-sheet-overlay {
     background-color: rgb(255 255 255 / 0.4);
@@ -2881,6 +2870,51 @@
 
     .pro-animated-border {
       animation: none !important;
+    }
+  }
+
+  @media (hover: hover) {
+    .settings-action-btn:hover {
+      background-color: color-mix(in srgb, var(--text-color) 6%, transparent);
+      border-color: color-mix(in srgb, var(--border-color) 85%, transparent);
+    }
+
+    #sw-clear-confirm:hover,
+    #reset-confirm:hover,
+    #tb-stopBtn:hover,
+    #tm-resetBtn.is-reset:hover,
+    #sw-lapBtn.is-reset:hover,
+    .is-reset:hover {
+      background-color: var(--alert-btn-bg-hover) !important;
+    }
+
+    .tb-del-btn:hover {
+      opacity: 1;
+      background-color: color-mix(in srgb, var(--alert-color) 18%, transparent);
+    }
+
+    .sw-share-btn:hover {
+      background-color: color-mix(in srgb, #10b981 18%, transparent);
+    }
+
+    .sw-rename-btn:hover {
+      background-color: color-mix(in srgb, #3b82f6 18%, transparent);
+    }
+
+    #btn-open-legal-inline:hover {
+      opacity: 0.92;
+    }
+  }
+
+  @media (hover: none) {
+    .settings-action-btn:hover,
+    .tb-del-btn:hover,
+    .sw-share-btn:hover,
+    .sw-rename-btn:hover,
+    #btn-open-legal-inline:hover {
+      background-color: inherit;
+      opacity: inherit;
+      border-color: inherit;
     }
   }
 
