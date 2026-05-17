@@ -2167,11 +2167,6 @@
     display: none;
   }
 
-  #vignette-depth-container,
-  #vibro-level-container {
-    padding-top: var(--space-2);
-  }
-
   /* CUSTOM SELECT (deduplicated) */
   .custom-select-container {
     overflow: visible;
