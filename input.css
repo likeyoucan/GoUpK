@@ -1525,8 +1525,8 @@
   }
 
   .custom-toggle {
-    width: 46px;
-    height: 26px;
+    width: 44px;
+    height: 24px;
     background-color: var(--border-color);
     border-radius: 9999px;
     position: relative;
