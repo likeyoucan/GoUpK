@@ -141,13 +141,6 @@ async function bootstrap() {
   if (bootStarted) return;
   bootStarted = true;
 
-  initErudaTapToggle();
-
-  store.reconcileActiveTimer({ sw, tm, tb });
-  await reconcileNativeTimerAlarm();
-
-  await appProManager.init();
-
   initializeApp({
     applyPerformanceProfile,
     initRingSvg,
@@ -162,6 +155,12 @@ async function bootstrap() {
     modalManager,
   });
 
+  initErudaTapToggle();
+
+  store.reconcileActiveTimer({ sw, tm, tb });
+  await reconcileNativeTimerAlarm();
+
+  await appProManager.init();
   await applyMonetizationConfig();
 
   adsManager.reconcileActiveTimerState({ sw, tm, tb });
