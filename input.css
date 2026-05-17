@@ -2681,10 +2681,22 @@
   }
 
   .color-btn {
-    border: 1px solid color-mix(in srgb, var(--text-color) 46%, transparent) !important;
-    box-shadow:
-      inset 0 0 0 1px color-mix(in srgb, var(--surface-color) 76%, transparent),
-      0 0 0 1px color-mix(in srgb, var(--text-color) 22%, transparent) !important;
+    border: 1px solid color-mix(in srgb, var(--text-color) 28%, transparent) !important;
+    box-shadow: none !important;
+  }
+
+  .color-swatch-wrapper.ring-2 .color-btn,
+  .color-picker-wrapper.ring-2 .color-btn {
+    border-color: transparent !important;
+  }
+
+  .ring-offset-surface {
+    --tw-ring-offset-color: var(--surface-color) !important;
+  }
+
+  .injected-checkmark {
+    pointer-events: none;
+    filter: drop-shadow(0 1px 1px rgb(0 0 0 / 0.22));
   }
 
   .tb-del-btn {
