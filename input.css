@@ -54,6 +54,12 @@
     --alert-color: hsl(0 90% 60%);
     --alert-color-fg: #ffffff;
 
+    --alert-text-color: hsl(0 68% 36%);
+    --danger-shadow:
+      0 clamp(6px, 1.1vh, 10px) clamp(14px, 2.4vh, 24px)
+        color-mix(in srgb, var(--alert-color) 30%, transparent),
+      0 2px 6px rgb(0 0 0 / 0.16);
+
     --vignette-alpha: 0.15;
     --font-scale: 1;
     --ring-stroke-width: 4;
@@ -97,7 +103,7 @@
 
     --ring-meta-color: color-mix(
       in srgb,
-      var(--text-color) 72%,
+      var(--text-color) 56%,
       var(--primary-color)
     );
   }
@@ -105,6 +111,12 @@
   :root.dark {
     --primary-color: var(--default-accent-dark);
     --bg-color: var(--default-bg-dark);
+
+    --alert-text-color: hsl(0 92% 72%);
+    --danger-shadow:
+      0 clamp(7px, 1.2vh, 12px) clamp(16px, 2.8vh, 28px)
+        color-mix(in srgb, var(--alert-color) 42%, transparent),
+      0 3px 8px rgb(0 0 0 / 0.34);
 
     --surface-color: #1c1c1e;
     --text-color: #f9fafb;
@@ -126,7 +138,7 @@
 
     --ring-meta-color: color-mix(
       in srgb,
-      var(--text-color) 78%,
+      var(--text-color) 62%,
       var(--primary-color)
     );
   }
@@ -328,54 +340,70 @@
     transition: stroke var(--dur-short) ease;
   }
 
-  .bg-alert {
-    background-color: var(--alert-color);
-    color: var(--alert-color-fg);
-    transition: background-color var(--dur-short) ease;
-  }
-
-  .bg-alert:hover {
-    filter: brightness(95%);
-  }
-
   #sw-clear-confirm,
-  #reset-confirm,
-  #tb-stopBtn,
-  #tm-resetBtn.is-reset,
-  #sw-lapBtn.is-reset,
-  .is-reset {
-    color: var(--alert-color-fg) !important;
-  }
+#reset-confirm,
+#tb-stopBtn,
+#tm-resetBtn.is-reset,
+#sw-lapBtn.is-reset,
+.is-reset {
+  color: var(--alert-color-fg) !important;
+  box-shadow: var(--danger-shadow) !important;
+  border: 1px solid
+    color-mix(in srgb, var(--alert-color) 62%, var(--text-color));
+}
 
-  .text-alert {
-    color: var(--alert-color);
-    transition: color var(--dur-short) ease;
-  }
+#tb-stopBtn {
+  min-height: clamp(52px, 6.2vh, 62px);
+  border-radius: clamp(14px, 2.2vh, 20px);
+}
 
-  .bg-alert {
-    background-color: var(--alert-color);
-    color: var(--alert-color-fg);
-    transition:
-      background-color var(--dur-short) ease,
-      color var(--dur-short) ease;
-  }
+#sw-clear-confirm:hover,
+#reset-confirm:hover,
+#tb-stopBtn:hover,
+#tm-resetBtn.is-reset:hover,
+#sw-lapBtn.is-reset:hover,
+.is-reset:hover {
+  filter: brightness(0.97);
+  transform: translateY(-1px);
+}
 
-  .text-alert {
-    color: color-mix(in srgb, var(--alert-color) 78%, var(--text-color));
-    transition: color var(--dur-short) ease;
-  }
+#sw-clear-confirm:active,
+#reset-confirm:active,
+#tb-stopBtn:active,
+#tm-resetBtn.is-reset:active,
+#sw-lapBtn.is-reset:active,
+.is-reset:active {
+  filter: brightness(0.95);
+  transform: translateY(0) scale(0.97);
+}
 
-  .btn-alert-soft {
-    color: color-mix(in srgb, var(--alert-color) 78%, var(--text-color));
-  }
+.bg-alert {
+  background-color: var(--alert-color);
+  color: var(--alert-color-fg);
+  box-shadow: var(--danger-shadow);
+  transition:
+    background-color var(--dur-short) ease,
+    color var(--dur-short) ease,
+    box-shadow var(--dur-short) ease,
+    transform var(--dur-micro) var(--ease-standard);
+}
 
-  .btn-alert-soft:hover {
-    background-color: color-mix(in srgb, var(--alert-color) 14%, transparent);
-  }
+.text-alert {
+  color: var(--alert-text-color);
+  transition: color var(--dur-short) ease;
+}
 
-  .btn-alert-soft:active {
-    background-color: color-mix(in srgb, var(--alert-color) 22%, transparent);
-  }
+.btn-alert-soft {
+  color: var(--alert-text-color);
+}
+
+.btn-alert-soft:hover {
+  background-color: color-mix(in srgb, var(--alert-color) 14%, transparent);
+}
+
+.btn-alert-soft:active {
+  background-color: color-mix(in srgb, var(--alert-color) 22%, transparent);
+}
 
   .bg-red-zone .text-alert,
   .bg-red-zone .btn-alert-soft {
@@ -1275,15 +1303,14 @@ html.dark .app-bg::before {
 #tb-statusText,
 #sw-extendedDisplay {
   color: var(--ring-meta-color) !important;
-  text-shadow: 0 1px 2px rgb(0 0 0 / 0.18);
+  text-shadow: none;
 }
 
-/* Для очень светлых тем без dark класса */
-body.force-dark-text #sw-statusText,
-body.force-dark-text #tm-statusText,
-body.force-dark-text #tb-statusText,
-body.force-dark-text #sw-extendedDisplay {
-  text-shadow: 0 1px 0 rgb(255 255 255 / 0.2);
+html.dark #sw-statusText,
+html.dark #tm-statusText,
+html.dark #tb-statusText,
+html.dark #sw-extendedDisplay {
+  text-shadow: 0 1px 2px rgb(0 0 0 / 0.28);
 }
 
 @container timer-ring (max-width: 260px) {

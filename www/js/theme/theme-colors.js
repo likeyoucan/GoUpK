@@ -38,17 +38,29 @@ function hslToRgb(h, s, l) {
   let b1 = 0;
 
   if (hh < 60) {
-    r1 = c; g1 = x; b1 = 0;
+    r1 = c;
+    g1 = x;
+    b1 = 0;
   } else if (hh < 120) {
-    r1 = x; g1 = c; b1 = 0;
+    r1 = x;
+    g1 = c;
+    b1 = 0;
   } else if (hh < 180) {
-    r1 = 0; g1 = c; b1 = x;
+    r1 = 0;
+    g1 = c;
+    b1 = x;
   } else if (hh < 240) {
-    r1 = 0; g1 = x; b1 = c;
+    r1 = 0;
+    g1 = x;
+    b1 = c;
   } else if (hh < 300) {
-    r1 = x; g1 = 0; b1 = c;
+    r1 = x;
+    g1 = 0;
+    b1 = c;
   } else {
-    r1 = c; g1 = 0; b1 = x;
+    r1 = c;
+    g1 = 0;
+    b1 = x;
   }
 
   return {

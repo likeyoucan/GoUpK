@@ -1,9 +1,8 @@
 // Файл: www/js/worker.js
 
 let intervalId = null;
-let remainingTime = 0;
-let lastTickTime = 0;
 let mode = "idle"; // idle | countdown | heartbeat
+let endEpochMs = 0;
 
 function stopInterval() {
   if (intervalId) {
@@ -12,21 +11,19 @@ function stopInterval() {
   }
 }
 
+function getRemainingMs() {
+  return Math.max(0, endEpochMs - Date.now());
+}
+
 function countdownTick() {
   if (mode !== "countdown") return;
 
-  const now = performance.now();
-  const elapsed = now - lastTickTime;
-  lastTickTime = now;
-  remainingTime -= elapsed;
+  const remaining = getRemainingMs();
+  self.postMessage({ type: "tick", time: remaining });
 
-  if (remainingTime <= 0) {
-    remainingTime = 0;
-    self.postMessage({ type: "tick", time: 0 });
+  if (remaining <= 0) {
     stopInterval();
     mode = "idle";
-  } else {
-    self.postMessage({ type: "tick", time: remainingTime });
   }
 }
 
@@ -37,12 +34,16 @@ function heartbeatTick() {
 
 function startCountdown(time) {
   stopInterval();
-  mode = "countdown";
-  remainingTime = Math.max(0, Number(time) || 0);
-  lastTickTime = performance.now();
 
-  self.postMessage({ type: "tick", time: remainingTime });
-  intervalId = setInterval(countdownTick, 100);
+  const duration = Math.max(0, Number(time) || 0);
+  endEpochMs = Date.now() + duration;
+  mode = "countdown";
+
+  // Мгновенный первый тик
+  self.postMessage({ type: "tick", time: getRemainingMs() });
+
+  // 250ms достаточно для плавности и меньше риска throttle-боли в фоне
+  intervalId = setInterval(countdownTick, 250);
 }
 
 function startHeartbeat() {
@@ -72,15 +73,15 @@ self.onmessage = function (e) {
 
     case "reset":
       stopInterval();
-      remainingTime = 0;
+      endEpochMs = 0;
       mode = "idle";
       break;
 
     case "adjust":
       if (mode === "countdown") {
-        remainingTime += Number(time) || 0;
-        if (remainingTime < 0) remainingTime = 0;
-        self.postMessage({ type: "tick", time: remainingTime });
+        endEpochMs += Number(time) || 0;
+        if (endEpochMs < Date.now()) endEpochMs = Date.now();
+        self.postMessage({ type: "tick", time: getRemainingMs() });
       }
       break;
   }
