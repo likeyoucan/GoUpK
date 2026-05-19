@@ -2476,18 +2476,6 @@
     cursor: grabbing;
   }
 
-  #app-footer-meta {
-    padding-top: 1.25rem !important;
-    padding-bottom: calc(0.5rem + var(--safe-bottom)) !important;
-  }
-
-  #btn-open-legal-inline {
-    margin-top: 0.35rem !important;
-    font-size: 10px !important;
-    letter-spacing: 0 !important;
-    text-transform: none !important;
-  }
-
   #setting-row-accent,
   #setting-row-bg,
   .color-swatch-wrapper,
