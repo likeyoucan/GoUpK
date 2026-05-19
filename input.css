@@ -1384,7 +1384,7 @@
 
   /* TIMER RING */
   .timer-circle-wrap {
-    --ring-size: clamp(168px, 92%, 620px);
+    --ring-size: clamp(168px, 100%, 620px);
     width: min(100%, var(--ring-size));
     height: min(100%, var(--ring-size));
     aspect-ratio: 1 / 1;
