@@ -166,10 +166,8 @@ export const adsManager = {
   },
 
 shouldShowAds() {
-  // Показываем рекламу строго по настройке enabled.
-  // Pro только дает право выключать рекламу, но не принудительно скрывает ее.
   return !!this.enabled;
-}
+}?
 
   shouldShowBanner() {
     if (!this.shouldShowAds()) return false;
