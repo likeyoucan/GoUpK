@@ -32,9 +32,7 @@
     color-scheme: light dark;
 
     --default-accent-light: #3399ff;
-    --default-bg-light: #f5f5f7;
-    /* --default-accent-light: #22c55e;
-    --default-bg-light: #f3f4f6; */
+    --default-bg-light: #fcfdff;
     --default-accent-dark: #4ade80;
     --default-bg-dark: #000000;
 
@@ -113,15 +111,24 @@
 
     --ring-meta-color: color-mix(in srgb, var(--text-color) 68%, transparent);
 
-    --pro-badge-bg-light: #1a1a1a;
-    --pro-badge-fg-light: #f5f7fa; /* мягкий белый под #1a1a1a */
+    --phi: 1.618;
+    --phi-inv: 0.618;
 
-    --pro-badge-bg-dark: #f7f8fa; /* почти белый для dark-темы */
+    --pro-bg-light: #0f172a;
+    --pro-fg-light: #f8fafc;
+    --pro-bg-dark: #f3f4f6;
+    --pro-fg-dark: #111827;
+    --pro-muted-bg: #9ca3af;
+    --pro-muted-fg: #111827;
+
+    --pro-badge-bg-light: #1a1a1a;
+    --pro-badge-fg-light: #f5f7fa;
+    --pro-badge-bg-dark: #f7f8fa;
     --pro-badge-fg-dark: #111827;
 
-    --pro-badge-y: 3px; /* базовая вертикаль */
-    --pro-badge-x: calc(var(--pro-badge-y) * var(--phi)); /* golden ratio */
-    --pro-badge-r: calc(var(--pro-badge-y) * 2); /* 6px при y=3 */
+    --pro-badge-y: 3px;
+    --pro-badge-x: calc(var(--pro-badge-y) * var(--phi));
+    --pro-badge-r: calc(var(--pro-badge-y) * 2);
   }
 
   :root.dark {
@@ -845,10 +852,6 @@
     --pro-text: var(--pro-fg-dark);
   }
 
-  #btn-buy-pro.pro-cta-buy {
-    font-weight: 700;
-  }
-
   /* SPLIT LAYOUT + HANDLER */
   .view-top-half {
     flex-basis: var(--split);
@@ -1383,8 +1386,9 @@
   }
 
   /* TIMER RING */
+
   .timer-circle-wrap {
-    --ring-size: clamp(168px, 100%, 620px);
+    --ring-size: clamp(188px, 96%, 680px);
     width: min(100%, var(--ring-size));
     height: min(100%, var(--ring-size));
     aspect-ratio: 1 / 1;
@@ -1395,11 +1399,11 @@
     justify-content: center;
     container-type: size;
     container-name: timer-ring;
-    overflow: hidden;
+    overflow: visible;
   }
 
   .timer-display {
-    font-size: clamp(1.9rem, min(21cqi, 21cqb), 2.4rem);
+    font-size: clamp(2rem, min(22cqi, 22cqb), 2.7rem);
     line-height: 0.95;
     letter-spacing: -0.04em;
     white-space: nowrap;
@@ -1414,7 +1418,7 @@
   }
 
   .timer-display.is-go {
-    font-size: clamp(2.6rem, min(31cqi, 31cqb), 5rem);
+    font-size: clamp(2.9rem, min(33cqi, 33cqb), 5.3rem);
     font-style: italic;
     padding-right: 0.04em;
   }
@@ -1475,11 +1479,11 @@
 
   @container timer-ring (max-width: 260px) {
     .timer-display {
-      font-size: clamp(1.55rem, min(18cqi, 18cqb), 2.35rem);
+      font-size: clamp(1.75rem, min(19cqi, 19cqb), 2.4rem);
     }
 
     .timer-display.is-go {
-      font-size: clamp(2.2rem, min(26cqi, 26cqb), 3.7rem);
+      font-size: clamp(2.45rem, min(28cqi, 28cqb), 3.95rem);
     }
   }
 
@@ -2414,6 +2418,17 @@
     touch-action: auto;
   }
 
+  #view-settings .app-surface {
+  overflow: visible;
+}
+
+#accent-colors-container,
+#bg-colors-container {
+  height: calc(3rem + 1.5rem);
+  padding-top: 0.9rem;
+  padding-bottom: 0.6rem;
+  overflow-
+
   .color-swatch-wrapper.is-collapsing {
     max-width: 0 !important;
     margin-left: 0 !important;
@@ -2494,14 +2509,6 @@
   }
 
   /* PRO UI */
-  :root {
-    --pro-bg-light: #0f172a;
-    --pro-fg-light: #f8fafc;
-    --pro-bg-dark: #f3f4f6;
-    --pro-fg-dark: #111827;
-    --pro-muted-bg: #9ca3af;
-    --pro-muted-fg: #111827;
-  }
 
   .pro-animated-border {
     border: 1px solid color-mix(in srgb, var(--border-color) 78%, transparent);
@@ -2539,26 +2546,25 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: calc(8px + var(--pro-badge-y) * 2);
-
+    min-height: calc(9px + var(--pro-badge-y) * 2);
     padding: var(--pro-badge-y) var(--pro-badge-x);
     border-radius: var(--pro-badge-r);
 
-    font-size: 8px;
-    font-style: italic;
-    font-weight: 600;
+    font-size: 9px;
+    font-style: normal;
+    font-weight: 700;
     text-transform: uppercase;
     line-height: 1;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.025em;
     white-space: nowrap;
     vertical-align: middle;
 
     color: var(--pro-badge-fg-light);
     background-color: var(--pro-badge-bg-light);
     border: 1px solid
-      color-mix(in srgb, var(--pro-badge-fg-light) 24%, transparent);
+      color-mix(in srgb, var(--pro-badge-fg-light) 22%, transparent);
 
-    transform: translateY(-0.2em);
+    transform: translateY(-0.12em);
     cursor: pointer;
     user-select: none;
     transition:
@@ -2601,18 +2607,18 @@
   .pro-cta {
     min-height: 44px;
     border-radius: 0.75rem;
-    font-weight: 700;
-    font-size: clamp(0.9rem, calc(0.56rem + 0.34vw), 1rem);
-    letter-spacing: 0.03em;
+    font-weight: 600;
+    font-size: clamp(0.86rem, calc(0.52rem + 0.26vw), 0.96rem);
+    letter-spacing: 0.02em;
     text-transform: uppercase;
     transition: transform var(--dur-short) var(--ease-standard);
   }
 
   .pro-cta .pro-cta-price {
-    font-size: clamp(0.72rem, calc(0.45rem + 0.2vw), 0.8rem);
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    opacity: 0.92;
+    font-size: clamp(0.7rem, calc(0.44rem + 0.16vw), 0.78rem);
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    opacity: 0.9;
   }
 
   .pro-cta-buy {
