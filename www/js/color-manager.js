@@ -245,7 +245,38 @@ export const colorManager = {
     this.loadColors();
     this.populateColorSection("accent");
     this.populateColorSection("bg");
+
+    this._bindDesktopHorizontalScroll($("accent-colors-container"));
+    this._bindDesktopHorizontalScroll($("bg-colors-container"));
+
     this._bindEvents();
+  },
+
+  _bindDesktopHorizontalScroll(container) {
+    if (!container) return;
+    if (container.dataset.wheelXBound === "1") return;
+    container.dataset.wheelXBound = "1";
+
+    container.addEventListener(
+      "wheel",
+      (e) => {
+        const canScrollX = container.scrollWidth > container.clientWidth;
+        if (!canScrollX) return;
+
+        const mostlyVerticalWheel = Math.abs(e.deltaY) >= Math.abs(e.deltaX);
+        const delta = mostlyVerticalWheel ? e.deltaY : e.deltaX;
+        if (!delta) return;
+
+        const prevLeft = container.scrollLeft;
+        container.scrollLeft += delta;
+
+        // Prevent page scroll only when horizontal scroll was actually applied.
+        if (container.scrollLeft !== prevLeft) {
+          e.preventDefault();
+        }
+      },
+      { passive: false },
+    );
   },
 
   loadColors() {
