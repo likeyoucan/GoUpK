@@ -2421,6 +2421,7 @@
       margin-right var(--dur-medium) var(--ease-standard);
     max-width: 2.9rem;
     animation: fadeInScale var(--dur-medium) var(--ease-standard) both;
+    overflow: visible;
   }
 
   #accent-colors-container,
@@ -2428,16 +2429,20 @@
     display: flex;
     align-items: center;
     gap: 1rem;
+
     overflow-x: auto;
     overflow-y: visible;
+
     padding-top: 0.9rem;
     padding-bottom: 0.9rem;
-    padding-left: 0.25rem;
-    padding-right: 0.25rem;
-    margin-left: -0.25rem;
-    margin-right: -0.25rem;
+    padding-left: 0.6rem;
+    padding-right: 0.6rem;
+    margin-left: 0;
+    margin-right: 0;
+
     min-height: 3.9rem;
     height: auto;
+
     overscroll-behavior-x: contain;
     overscroll-behavior-y: auto;
     touch-action: auto;
@@ -2450,10 +2455,6 @@
   #setting-row-accent,
   #setting-row-bg {
     overflow: visible;
-  }
-
-  #view-settings .app-surface.overflow-hidden {
-    overflow: visible !important;
   }
 
   .color-swatch-wrapper.is-collapsing {
@@ -2485,6 +2486,7 @@
   .color-picker-wrapper {
     flex-shrink: 0;
     animation: fadeInScale 0.3s 0.1s var(--ease-standard) both;
+    overflow: visible;
   }
 
   .color-picker-wrapper:has(.color-action-btn[data-action="add"]) {
@@ -2753,8 +2755,8 @@
   /* Desktop-only hover for color swatches */
   @media (hover: hover) and (pointer: fine) {
     .color-btn:hover {
-      transform: scale(1.12);
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22) !important;
+      transform: scale(1.08);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18) !important;
     }
   }
 

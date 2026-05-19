@@ -165,11 +165,11 @@ export const adsManager = {
     safeSetLS(STORAGE_KEYS.APP_ADS_INTERSTITIAL_COOLDOWN_MS, String(value));
   },
 
-  shouldShowAds() {
-    if (!this.enabled) return false;
-    if (appProManager.canUse("remove_ads")) return false;
-    return true;
-  },
+shouldShowAds() {
+  // Показываем рекламу строго по настройке enabled.
+  // Pro только дает право выключать рекламу, но не принудительно скрывает ее.
+  return !!this.enabled;
+}
 
   shouldShowBanner() {
     if (!this.shouldShowAds()) return false;
