@@ -103,16 +103,16 @@ function isRedLikeHue(h) {
 }
 
 export function applyAccentVars({ hex, rootEl, hexToHSL }) {
- if (hex === "default") {
-  rootEl.style.removeProperty("--primary-color");
-  rootEl.style.removeProperty("--accent-h");
-  rootEl.style.setProperty("--secondary-accent-color", "#8b5cf6"); // было #3b82f6
+  if (hex === "default") {
+    rootEl.style.removeProperty("--primary-color");
+    rootEl.style.removeProperty("--accent-h");
+    rootEl.style.setProperty("--secondary-accent-color", "#8b5cf6"); // было #3b82f6
 
-  const alert = "hsl(0 90% 60%)";
-  rootEl.style.setProperty("--alert-color", alert);
-  rootEl.style.setProperty("--alert-color-fg", pickReadableTextForHsl(alert));
-  return;
-}
+    const alert = "hsl(0 90% 60%)";
+    rootEl.style.setProperty("--alert-color", alert);
+    rootEl.style.setProperty("--alert-color-fg", pickReadableTextForHsl(alert));
+    return;
+  }
 
   rootEl.style.setProperty("--primary-color", hex);
   const { h, l } = hexToHSL(hex);
@@ -152,7 +152,8 @@ export function applyBgTheme({
 
   if (!uiSettingsManager.isAdaptiveBg) {
     // При выключенных adaptive colors: определяем light/dark по выбранному bg.
-    const shouldUseDarkTheme = luminance < 0.48;
+    const shouldUseDarkTheme = luminance < 0.42 && l < 62;
+
     root.classList.toggle("dark", shouldUseDarkTheme);
     root.style.colorScheme = shouldUseDarkTheme ? "dark" : "light";
 
@@ -160,12 +161,13 @@ export function applyBgTheme({
     root.style.setProperty(
       "--surface-color",
       `color-mix(in srgb, ${hex}, ${
-        shouldUseDarkTheme ? "white 10%" : l > 90 ? "black 5%" : "white 25%"
+        shouldUseDarkTheme ? "white 10%" : l > 88 ? "black 4%" : "white 22%"
       })`,
     );
 
-    document.body.classList.toggle("force-light-text", luminance < 0.48);
-    document.body.classList.toggle("force-dark-text", luminance >= 0.48);
+    // force-* для контраста UI-текста/иконок на экстремальных фонах
+    document.body.classList.toggle("force-light-text", shouldUseDarkTheme);
+    document.body.classList.toggle("force-dark-text", !shouldUseDarkTheme);
     return;
   }
 
