@@ -2405,15 +2405,29 @@
       max-width var(--dur-medium) var(--ease-standard),
       margin-left var(--dur-medium) var(--ease-standard),
       margin-right var(--dur-medium) var(--ease-standard);
-    max-width: 2.25rem;
+    max-width: 2.9rem;
     animation: fadeInScale var(--dur-medium) var(--ease-standard) both;
   }
 
   #accent-colors-container,
   #bg-colors-container {
-    padding-top: 1rem;
-    height: calc(3rem + 1rem);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+
+    overflow-x: auto;
     overflow-y: visible;
+
+    padding-top: 0.9rem;
+    padding-bottom: 0.9rem;
+    padding-left: 0.25rem;
+    padding-right: 0.25rem;
+    margin-left: -0.25rem;
+    margin-right: -0.25rem;
+
+    min-height: 3.9rem;
+    height: auto;
+
     overscroll-behavior-x: contain;
     overscroll-behavior-y: auto;
     touch-action: auto;
@@ -2421,14 +2435,6 @@
 
   #view-settings .app-surface {
     overflow: visible;
-  }
-
-  #accent-colors-container,
-  #bg-colors-container {
-    height: calc(3rem + 1.5rem);
-    padding-top: 0.9rem;
-    padding-bottom: 0.6rem;
-    overflow-y: visible;
   }
 
   .color-swatch-wrapper.is-collapsing {
@@ -2519,25 +2525,6 @@
     box-shadow: 0 1px 2px rgb(0 0 0 / 0.06);
   }
 
-  @keyframes pro-border-shimmer {
-    0%,
-    22% {
-      background-position:
-        0 0,
-        0% 50%;
-    }
-    72% {
-      background-position:
-        0 0,
-        100% 50%;
-    }
-    100% {
-      background-position:
-        0 0,
-        100% 50%;
-    }
-  }
-
   .pro-inline-wrap {
     display: inline-flex;
     align-items: flex-start;
@@ -2548,29 +2535,29 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: calc(9px + var(--pro-badge-y) * 2);
-    padding: var(--pro-badge-y) var(--pro-badge-x);
+    min-height: calc(10px + var(--pro-badge-y) * 2);
+    padding: var(--pro-badge-y) calc(var(--pro-badge-x) + 1px);
     border-radius: var(--pro-badge-r);
 
-    font-size: 9px;
+    font-size: 10px;
     font-style: normal;
-    font-weight: 700;
+    font-weight: 800;
     text-transform: uppercase;
     line-height: 1;
-    letter-spacing: 0.025em;
+    letter-spacing: 0.04em;
     white-space: nowrap;
     vertical-align: middle;
 
     color: var(--pro-badge-fg-light);
     background-color: var(--pro-badge-bg-light);
     border: 1px solid
-      color-mix(in srgb, var(--pro-badge-fg-light) 22%, transparent);
+      color-mix(in srgb, var(--pro-badge-fg-light) 28%, transparent);
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.18);
 
-    transform: translateY(-0.12em);
+    transform: translateY(-0.08em);
     cursor: pointer;
     user-select: none;
     transition:
-      transform var(--dur-short) var(--ease-standard),
       box-shadow var(--dur-short) ease,
       background-color var(--dur-short) ease,
       color var(--dur-short) ease,
@@ -2601,8 +2588,7 @@
 
   @media (hover: hover) and (pointer: fine) {
     .pro-badge:hover {
-      transform: translateY(-0.2em) scale(1.06);
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.24);
     }
   }
 
