@@ -85,6 +85,11 @@ export function bindUiSettingsEvents(state) {
 
       safeSetLS(STORAGE_KEYS.APP_ADS_ENABLED, state.adsEnabled);
       adsManager.setEnabled(state.adsEnabled);
+
+      if (appProManager.purchased) {
+        showToast(state.adsEnabled ? t("ads_enabled") : t("ads_disabled"));
+      }
+
       document.dispatchEvent(new CustomEvent(APP_EVENTS.ADS_SETTINGS_CHANGED));
     },
   };
