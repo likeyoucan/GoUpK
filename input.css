@@ -842,9 +842,9 @@
 
   #btn-buy-pro {
     border: 1px solid color-mix(in srgb, var(--primary-color) 30%, transparent);
-    box-shadow:
-      0 3px 10px color-mix(in srgb, var(--primary-color) 16%, transparent),
-      0 1px 2px rgb(0 0 0 / 0.1);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.14); /* без цветного свечения */
+    background-image: none;
+    filter: none;
   }
 
   #btn-buy-pro.pro-cta-buy,
@@ -2471,7 +2471,6 @@
     cursor: grab;
   }
 
-
   #accent-colors-container.is-dragging-x *,
   #bg-colors-container.is-dragging-x * {
     cursor: grabbing !important;
@@ -2688,15 +2687,18 @@
     border: 1px solid
       color-mix(
         in srgb,
-        var(--pro-cta-color, var(--primary-color)) 52%,
+        var(--pro-cta-color, var(--primary-color)) 44%,
         transparent
       );
-    box-shadow: 0 3px 10px
-      color-mix(
-        in srgb,
-        var(--pro-cta-color, var(--primary-color)) 18%,
-        transparent
-      );
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.12); /* нейтральная мягкая тень */
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    #btn-buy-pro:hover,
+    #pro-confirm-buy:hover {
+      box-shadow: 0 2px 6px rgb(0 0 0 / 0.16);
+      filter: none;
+    }
   }
 
   html.dark .pro-cta-buy {
