@@ -103,16 +103,16 @@ function isRedLikeHue(h) {
 }
 
 export function applyAccentVars({ hex, rootEl, hexToHSL }) {
-  if (hex === "default") {
-    rootEl.style.removeProperty("--primary-color");
-    rootEl.style.removeProperty("--accent-h");
-    rootEl.style.setProperty("--secondary-accent-color", "#3b82f6");
+ if (hex === "default") {
+  rootEl.style.removeProperty("--primary-color");
+  rootEl.style.removeProperty("--accent-h");
+  rootEl.style.setProperty("--secondary-accent-color", "#8b5cf6"); // было #3b82f6
 
-    const alert = "hsl(0 90% 60%)";
-    rootEl.style.setProperty("--alert-color", alert);
-    rootEl.style.setProperty("--alert-color-fg", pickReadableTextForHsl(alert));
-    return;
-  }
+  const alert = "hsl(0 90% 60%)";
+  rootEl.style.setProperty("--alert-color", alert);
+  rootEl.style.setProperty("--alert-color-fg", pickReadableTextForHsl(alert));
+  return;
+}
 
   rootEl.style.setProperty("--primary-color", hex);
   const { h, l } = hexToHSL(hex);
