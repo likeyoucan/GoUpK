@@ -1,3 +1,5 @@
+// Файл: www/js/foreground/fg-state.js
+
 export function getForegroundState({ sw, tm, tb, activeView }) {
   const canResumeStopwatch = !sw.isRunning && sw.elapsedTime > 0;
   const canResumeTimer = tm.isPaused && tm.getRemainingTime() > 0;
