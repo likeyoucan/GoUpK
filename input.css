@@ -33,6 +33,8 @@
 
     --default-accent-light: #3399ff;
     --default-bg-light: #fcfdff;
+    /* --default-accent-light: #22c55e;
+    --default-bg-light: #f3f4f6; */
     --default-accent-dark: #4ade80;
     --default-bg-dark: #000000;
 
@@ -1386,7 +1388,6 @@
   }
 
   /* TIMER RING */
-
   .timer-circle-wrap {
     --ring-size: clamp(188px, 96%, 680px);
     width: min(100%, var(--ring-size));
@@ -2419,15 +2420,16 @@
   }
 
   #view-settings .app-surface {
-  overflow: visible;
-}
+    overflow: visible;
+  }
 
-#accent-colors-container,
-#bg-colors-container {
-  height: calc(3rem + 1.5rem);
-  padding-top: 0.9rem;
-  padding-bottom: 0.6rem;
-  overflow-
+  #accent-colors-container,
+  #bg-colors-container {
+    height: calc(3rem + 1.5rem);
+    padding-top: 0.9rem;
+    padding-bottom: 0.6rem;
+    overflow-y: visible;
+  }
 
   .color-swatch-wrapper.is-collapsing {
     max-width: 0 !important;
