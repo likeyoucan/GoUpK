@@ -807,6 +807,20 @@
     box-shadow: 0 1px 4px rgb(0 0 0 / 0.24);
   }
 
+  body.force-light-text .secondary-accent-text {
+    color: color-mix(in srgb, #93c5fd 88%, #ffffff 12%) !important;
+  }
+  body.force-light-text .secondary-accent-stroke {
+    stroke: color-mix(in srgb, #93c5fd 88%, #ffffff 12%) !important;
+  }
+
+  body.force-dark-text .secondary-accent-text {
+    color: color-mix(in srgb, #2563eb 84%, #111827 16%) !important;
+  }
+  body.force-dark-text .secondary-accent-stroke {
+    stroke: color-mix(in srgb, #2563eb 84%, #111827 16%) !important;
+  }
+
   body.force-light-text .tr-track,
   body.force-light-text input[type="range"] {
     filter: contrast(1.08);
@@ -2414,26 +2428,27 @@
     display: flex;
     align-items: center;
     gap: 1rem;
-
     overflow-x: auto;
     overflow-y: visible;
-
     padding-top: 0.9rem;
     padding-bottom: 0.9rem;
     padding-left: 0.25rem;
     padding-right: 0.25rem;
     margin-left: -0.25rem;
     margin-right: -0.25rem;
-
     min-height: 3.9rem;
     height: auto;
-
     overscroll-behavior-x: contain;
     overscroll-behavior-y: auto;
     touch-action: auto;
   }
 
   #view-settings .app-surface {
+    overflow: visible;
+  }
+
+  #setting-row-accent,
+  #setting-row-bg {
     overflow: visible;
   }
 
@@ -2535,30 +2550,25 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: calc(10px + var(--pro-badge-y) * 2);
-    padding: var(--pro-badge-y) calc(var(--pro-badge-x) + 1px);
-    border-radius: var(--pro-badge-r);
-
-    font-size: 10px;
+    min-height: 14px;
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-size: 8px;
     font-style: normal;
-    font-weight: 800;
+    font-weight: 600;
     text-transform: uppercase;
     line-height: 1;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.02em;
     white-space: nowrap;
     vertical-align: middle;
-
     color: var(--pro-badge-fg-light);
     background-color: var(--pro-badge-bg-light);
     border: 1px solid
-      color-mix(in srgb, var(--pro-badge-fg-light) 28%, transparent);
-    box-shadow: 0 1px 2px rgb(0 0 0 / 0.18);
-
-    transform: translateY(-0.08em);
+      color-mix(in srgb, var(--pro-badge-fg-light) 18%, transparent);
+    transform: none;
     cursor: pointer;
     user-select: none;
     transition:
-      box-shadow var(--dur-short) ease,
       background-color var(--dur-short) ease,
       color var(--dur-short) ease,
       border-color var(--dur-short) ease;
@@ -2588,7 +2598,8 @@
 
   @media (hover: hover) and (pointer: fine) {
     .pro-badge:hover {
-      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.24);
+      box-shadow: none;
+      filter: brightness(1.04);
     }
   }
 
@@ -2610,14 +2621,25 @@
   }
 
   .pro-cta-buy {
-    --pro-fill: var(--pro-bg-light);
-    --pro-text: var(--pro-fg-light);
-    color: var(--pro-text);
+    background-color: color-mix(in srgb, var(--primary-color) 88%, #ffffff 12%);
+    color: #ffffff;
+    border: 1px solid color-mix(in srgb, var(--primary-color) 56%, transparent);
+    box-shadow: none;
   }
 
   html.dark .pro-cta-buy {
-    --pro-fill: var(--pro-bg-dark);
-    --pro-text: var(--pro-fg-dark);
+    background-color: color-mix(in srgb, var(--primary-color) 78%, #ffffff 22%);
+    color: #0f172a;
+  }
+
+  body.force-light-text .pro-cta-buy {
+    background-color: color-mix(in srgb, var(--primary-color) 70%, #ffffff 30%);
+    color: #111827;
+  }
+
+  body.force-dark-text .pro-cta-buy {
+    background-color: color-mix(in srgb, var(--primary-color) 88%, #111827 12%);
+    color: #ffffff;
   }
 
   .glass-effect .pro-cta-buy {
@@ -2717,12 +2739,11 @@
     box-shadow: none !important;
   }
 
-  /* Active swatch outline */
   .color-swatch-wrapper.ring-2 .color-btn,
   .color-picker-wrapper.ring-2 .color-btn {
     box-shadow:
-      0 0 0 3px #fff,
-      0 0 0 5px currentColor !important;
+      0 0 0 2px var(--surface-color),
+      0 0 0 4px var(--primary-color) !important;
   }
 
   /* Desktop-only hover for color swatches */
