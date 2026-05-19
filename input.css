@@ -1383,7 +1383,7 @@
   }
 
   .timer-display {
-    font-size: clamp(2.05rem, min(22.5cqi, 22.5cqb), 2.65rem);
+    font-size: clamp(1.9rem, min(21cqi, 21cqb), 2.4rem);
     line-height: 0.95;
     letter-spacing: -0.04em;
     white-space: nowrap;
@@ -1398,7 +1398,7 @@
   }
 
   .timer-display.is-go {
-    font-size: clamp(2.85rem, min(33cqi, 33cqb), 5.35rem);
+    font-size: clamp(2.6rem, min(31cqi, 31cqb), 5rem);
     font-style: italic;
     padding-right: 0.04em;
   }
