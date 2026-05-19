@@ -8,6 +8,8 @@ export const en = {
   add_color: "Add color",
   appearance: "Appearance",
   audio_settings: "Audio",
+  ads_enabled: "Ads enabled",
+  ads_disabled: "Ads disabled",
   bg_color: "Background",
   bg_limit_msg: "Max 50 custom background colors",
   buy_pro: "Buy Pro",

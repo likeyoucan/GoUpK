@@ -8,6 +8,8 @@ export const ru = {
   add_color: "Добавить цвет",
   appearance: "Внешний вид",
   audio_settings: "Звук",
+  ads_enabled: "Реклама включена",
+ads_disabled: "Реклама выключена",
   bg_color: "Цвет фона",
   bg_limit_msg: "Максимум 50 своих цветов фона",
   buy_pro: "Купить Pro",
