@@ -271,7 +271,6 @@
   body.is-updating-theme .app-bg,
   body.is-updating-theme .app-surface {
     transition-duration: 0s !important;
-    background-color: transparent !important;
   }
 
   #app {
@@ -1602,12 +1601,18 @@
 
   .custom-toggle {
     width: 44px;
+    min-width: 44px;
+    max-width: 44px;
     height: 24px;
+    min-height: 24px;
+    max-height: 24px;
+    flex: 0 0 44px;
     box-sizing: border-box;
+    display: inline-block;
     border-radius: 9999px;
     position: relative;
-    border: 1px solid color-mix(in srgb, var(--text-color) 26%, transparent);
-    background-color: color-mix(in srgb, var(--text-color) 22%, transparent);
+    border: 1px solid color-mix(in srgb, var(--border-color) 86%, transparent);
+    background-color: var(--bg-color);
     transition:
       background-color var(--dur-short) ease,
       border-color var(--dur-short) ease;
@@ -1634,7 +1639,7 @@
   }
 
   input:checked + .custom-toggle {
-    background-color: color-mix(in srgb, var(--primary-color) 82%, #ffffff 18%);
+    background-color: var(--primary-color);
   }
 
   input:checked + .custom-toggle::after {
@@ -2483,29 +2488,10 @@
   }
 
   .pro-animated-border {
-    --pro-fill: var(--surface-color);
-    position: relative;
-    border: 2px solid transparent;
-    background:
-      linear-gradient(var(--pro-fill), var(--pro-fill)) padding-box,
-      linear-gradient(
-          120deg,
-          color-mix(in srgb, var(--primary-color) 20%, transparent) 0%,
-          color-mix(in srgb, var(--primary-color) 92%, #ffffff) 35%,
-          color-mix(in srgb, var(--primary-color) 35%, transparent) 60%,
-          color-mix(in srgb, var(--primary-color) 95%, #ffffff) 82%,
-          color-mix(in srgb, var(--primary-color) 25%, transparent) 100%
-        )
-        border-box;
-    background-size:
-      100% 100%,
-      260% 100%;
-    background-repeat: no-repeat;
-    background-position:
-      0 0,
-      0% 50%;
-    will-change: background-position;
-    animation: pro-border-shimmer 3.2s var(--ease-standard) infinite;
+    border: 1px solid color-mix(in srgb, var(--border-color) 78%, transparent);
+    background-color: color-mix(in srgb, var(--text-color) 4%, transparent);
+    animation: none !important;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.06);
   }
 
   @keyframes pro-border-shimmer {
@@ -2534,23 +2520,19 @@
   }
 
   .pro-badge {
-    --pro-fill: var(--pro-bg-light);
-    --pro-text: var(--pro-fg-light);
     min-height: 18px;
-    padding: 0.08rem 0.38rem;
+    padding: 0.08rem 0.42rem;
     border-radius: 0.45rem;
     font-size: 9px;
-    font-style: italic;
+    font-style: normal;
     font-weight: 800;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.03em;
     text-transform: uppercase;
     line-height: 1;
-    color: var(--pro-text);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    white-space: nowrap;
-    transform: translateY(-0.26em);
+    color: var(--text-secondary);
+    background-color: color-mix(in srgb, var(--text-color) 7%, transparent);
+    border: 1px solid color-mix(in srgb, var(--border-color) 82%, transparent);
+    transform: translateY(-0.2em);
   }
 
   html.dark .pro-badge {

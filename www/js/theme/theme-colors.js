@@ -133,7 +133,6 @@ export function applyBgTheme({
   getLuminance,
 }) {
   const root = document.documentElement;
-  const isDark = root.classList.contains("dark");
   document.body.classList.remove("force-light-text", "force-dark-text");
 
   root.classList.toggle("no-adaptive", !uiSettingsManager.isAdaptiveBg);
@@ -147,23 +146,32 @@ export function applyBgTheme({
 
   const { r, g, b } = hexToRGB(hex);
   const { h, s, l } = hexToHSL(hex);
+  const luminance = getLuminance(r, g, b);
 
   root.classList.toggle("bg-red-zone", isRedLikeHue(h) && s > 32);
 
   if (!uiSettingsManager.isAdaptiveBg) {
+    // При выключенных adaptive colors: определяем light/dark по выбранному bg.
+    const shouldUseDarkTheme = luminance < 0.48;
+    root.classList.toggle("dark", shouldUseDarkTheme);
+    root.style.colorScheme = shouldUseDarkTheme ? "dark" : "light";
+
     root.style.setProperty("--bg-color", hex);
     root.style.setProperty(
       "--surface-color",
-      `color-mix(in srgb, ${hex}, ${isDark ? "white 10%" : l > 90 ? "black 5%" : "white 25%"})`,
+      `color-mix(in srgb, ${hex}, ${
+        shouldUseDarkTheme ? "white 10%" : l > 90 ? "black 5%" : "white 25%"
+      })`,
     );
 
-    const luminance = getLuminance(r, g, b);
     document.body.classList.toggle("force-light-text", luminance < 0.48);
     document.body.classList.toggle("force-dark-text", luminance >= 0.48);
     return;
   }
 
+  const isDark = root.classList.contains("dark");
   const sat = isDark ? Math.min(s, 40) : Math.max(s, 20);
+
   root.style.setProperty("--bg-color", `hsl(${h} ${sat}% ${isDark ? 8 : 94}%)`);
   root.style.setProperty(
     "--surface-color",

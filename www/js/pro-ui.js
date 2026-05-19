@@ -155,7 +155,7 @@ function renderProPurchaseUI(config, t, langManager, appProManager) {
     buyBtn.textContent = tr(t, "cancel_subscription", "Cancel Subscription");
   } else {
     buyBtn.classList.remove("hidden", "pro-cta-cancel");
-    buyBtn.classList.add("pro-cta", "pro-cta-buy", "pro-animated-border");
+    buyBtn.classList.add("pro-cta", "pro-cta-buy");
     buyBtn.dataset.proAction = "open-paywall";
 
     const label = isLifetime
@@ -169,7 +169,7 @@ function renderProPurchaseUI(config, t, langManager, appProManager) {
   }
 
   confirmBtn.classList.remove("pro-cta-cancel");
-  confirmBtn.classList.add("pro-cta", "pro-cta-buy", "pro-animated-border");
+  confirmBtn.classList.add("pro-cta", "pro-cta-buy");
   confirmBtn.textContent = isLifetime
     ? tr(t, "buy_pro", "Buy Pro")
     : tr(t, "buy_subscription", "Buy Subscription");

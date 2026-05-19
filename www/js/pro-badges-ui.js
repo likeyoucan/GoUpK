@@ -92,7 +92,7 @@ export function renderProBadgesFromConfig(config, t) {
     btn.textContent = tr(t, "pro", "Pro");
     btn.dataset.proFeature = feature;
     btn.dataset.proInjected = "1";
-    btn.className = "pro-badge pro-animated-border active:scale-95";
+    btn.className = "pro-badge active:scale-95";
 
     inlineWrap.appendChild(btn);
   });

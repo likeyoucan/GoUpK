@@ -107,6 +107,17 @@ export const themeManager = {
     this.themeModeSelect.setValue(this.currentMode, false);
   },
 
+  _applyMetaThemeColor() {
+    const root = document.documentElement;
+    const cssBg = getComputedStyle(root).getPropertyValue("--bg-color").trim();
+    const fallback = root.classList.contains("dark") ? "#000000" : "#f3f4f6";
+    const color = cssBg || fallback;
+
+    document.querySelectorAll('meta[name="theme-color"]').forEach((meta) => {
+      meta.setAttribute("content", color);
+    });
+  },
+
   init() {
     uiSettingsManager.init();
     colorManager.init();
@@ -128,7 +139,7 @@ export const themeManager = {
 
     document.addEventListener(APP_EVENTS.ADAPTIVE_BG_CHANGED, () => {
       document.body.classList.add("is-updating-theme");
-      this.applyBgTheme(this.currentBg);
+      this.setMode(this.currentMode, false);
       requestAnimationFrame(() =>
         document.body.classList.remove("is-updating-theme"),
       );
@@ -252,6 +263,8 @@ export const themeManager = {
     colorManager.updateSelectionUI("accent", this.currentAccent, false);
     colorManager.updateSelectionUI("bg", this.currentBg, false);
 
+    this._applyMetaThemeColor();
+
     if (useTransition) {
       requestAnimationFrame(() =>
         document.body.classList.remove("is-updating-theme"),
@@ -343,6 +356,8 @@ export const themeManager = {
       hexToHSL,
       getLuminance,
     });
+
+    this._applyMetaThemeColor();
   },
 
   syncSliderUIs() {
