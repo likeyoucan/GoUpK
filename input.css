@@ -2520,19 +2520,24 @@
   }
 
   .pro-badge {
-    min-height: 18px;
-    padding: 0.08rem 0.42rem;
-    border-radius: 0.45rem;
-    font-size: 9px;
-    font-style: normal;
-    font-weight: 800;
-    letter-spacing: 0.03em;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3px 4.9px;
+    border-radius: 6px;
+    font-size: 8px;
+    font-style: italic;
+    font-weight: 600;
     text-transform: uppercase;
     line-height: 1;
+    white-space: nowrap;
+    vertical-align: middle;
     color: var(--text-secondary);
     background-color: color-mix(in srgb, var(--text-color) 7%, transparent);
     border: 1px solid color-mix(in srgb, var(--border-color) 82%, transparent);
     transform: translateY(-0.2em);
+    cursor: pointer;
+    user-select: none;
   }
 
   html.dark .pro-badge {
