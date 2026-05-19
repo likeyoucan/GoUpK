@@ -2433,19 +2433,26 @@
     overflow-x: auto;
     overflow-y: visible;
 
-    padding-top: 0.9rem;
-    padding-bottom: 0.9rem;
-    padding-left: 0.6rem;
-    padding-right: 0.6rem;
+    padding-top: 0.8rem;
+    padding-bottom: 0.8rem;
+    padding-left: 0.2rem;
+    padding-right: 0.35rem;
     margin-left: 0;
     margin-right: 0;
 
-    min-height: 3.9rem;
+    min-height: 3.7rem;
     height: auto;
 
     overscroll-behavior-x: contain;
     overscroll-behavior-y: auto;
     touch-action: auto;
+    scroll-padding-left: 0.4rem;
+    scroll-padding-right: 0.6rem;
+  }
+
+  .color-swatch-wrapper,
+  .color-picker-wrapper {
+    overflow: visible;
   }
 
   #view-settings .app-surface {
@@ -2552,33 +2559,38 @@
     gap: 0.38rem;
   }
 
-  .pro-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 14px;
-    padding: 2px 4px;
-    border-radius: 4px;
-    font-size: 8px;
-    font-style: italic;
-    font-weight: 600;
-    text-transform: uppercase;
-    line-height: 1;
-    letter-spacing: 0.02em;
-    white-space: nowrap;
-    vertical-align: middle;
-    color: var(--pro-badge-fg-light);
-    background-color: var(--pro-badge-bg-light);
-    border: 1px solid
-      color-mix(in srgb, var(--pro-badge-fg-light) 18%, transparent);
-    transform: none;
-    cursor: pointer;
-    user-select: none;
-    transition:
-      background-color var(--dur-short) ease,
-      color var(--dur-short) ease,
-      border-color var(--dur-short) ease;
-  }
+.pro-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 14px;
+  padding: 2px 4px;
+  border-radius: 4px;
+
+  font-size: 8px;
+  font-style: italic;
+  font-weight: 600;
+  text-transform: uppercase;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  vertical-align: middle;
+
+  color: color-mix(in srgb, var(--pro-badge-fg-light) 96%, #ffffff 4%);
+  background-color: var(--pro-badge-bg-light);
+  border: 1px solid color-mix(in srgb, var(--pro-badge-fg-light) 20%, transparent);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.18);
+
+  transform: none;
+  cursor: pointer;
+  user-select: none;
+  transition:
+    background-color var(--dur-short) ease,
+    color var(--dur-short) ease,
+    border-color var(--dur-short) ease,
+    box-shadow var(--dur-short) ease,
+    filter var(--dur-short) ease;
+}
 
   html.dark .pro-badge {
     color: var(--pro-badge-fg-dark);
@@ -2602,12 +2614,12 @@
     border-color: color-mix(in srgb, var(--pro-badge-fg-dark) 18%, transparent);
   }
 
-  @media (hover: hover) and (pointer: fine) {
-    .pro-badge:hover {
-      box-shadow: none;
-      filter: brightness(1.04);
-    }
+@media (hover: hover) and (pointer: fine) {
+  .pro-badge:hover {
+    filter: brightness(1.06);
+    box-shadow: 0 2px 6px rgb(0 0 0 / 0.22);
   }
+}
 
   .pro-cta {
     min-height: 44px;
@@ -2749,7 +2761,8 @@
   .color-picker-wrapper.ring-2 .color-btn {
     box-shadow:
       0 0 0 2px var(--surface-color),
-      0 0 0 4px var(--primary-color) !important;
+      0 0 0 4px var(--primary-color),
+      0 2px 7px rgb(0 0 0 / 0.16) !important;
   }
 
   /* Desktop-only hover for color swatches */
@@ -2757,6 +2770,13 @@
     .color-btn:hover {
       transform: scale(1.08);
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18) !important;
+    }
+    .color-swatch-wrapper.ring-2 .color-btn:hover,
+    .color-picker-wrapper.ring-2 .color-btn:hover {
+      box-shadow:
+        0 0 0 2px var(--surface-color),
+        0 0 0 4px var(--primary-color),
+        0 5px 14px rgb(0 0 0 / 0.22) !important;
     }
   }
 
