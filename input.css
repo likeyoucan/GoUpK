@@ -2471,9 +2471,22 @@
     cursor: grab;
   }
 
-  #accent-colors-container.is-dragging-x,
-  #bg-colors-container.is-dragging-x {
-    cursor: grabbing;
+
+  #accent-colors-container.is-dragging-x *,
+  #bg-colors-container.is-dragging-x * {
+    cursor: grabbing !important;
+  }
+
+  /* Во время drag отключаем попадание в кружки/кнопки, чтобы не было pointer-hover */
+  #accent-colors-container.is-dragging-x .color-btn,
+  #bg-colors-container.is-dragging-x .color-btn,
+  #accent-colors-container.is-dragging-x .color-action-btn,
+  #bg-colors-container.is-dragging-x .color-action-btn,
+  #accent-colors-container.is-dragging-x
+    .color-picker-wrapper
+    input[type="color"],
+  #bg-colors-container.is-dragging-x .color-picker-wrapper input[type="color"] {
+    pointer-events: none;
   }
 
   #setting-row-accent,

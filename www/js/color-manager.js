@@ -271,6 +271,7 @@ export const colorManager = {
         const prevLeft = container.scrollLeft;
         container.scrollLeft += delta;
 
+        // Prevent page scroll only when horizontal movement actually happened
         if (container.scrollLeft !== prevLeft) {
           e.preventDefault();
         }
@@ -286,18 +287,24 @@ export const colorManager = {
 
     const onMove = (e) => {
       if (!isDown) return;
+
       const dx = e.clientX - startX;
       if (Math.abs(dx) > 2) moved = true;
+
       container.scrollLeft = startLeft - dx;
     };
 
     const onUp = () => {
       if (!isDown) return;
+
       isDown = false;
       container.classList.remove("is-dragging-x");
+      document.body.classList.remove("is-color-dragging");
+
       window.removeEventListener("mousemove", onMove);
       window.removeEventListener("mouseup", onUp);
       window.removeEventListener("mouseleave", onUp);
+      window.removeEventListener("blur", onUp);
     };
 
     container.addEventListener("mousedown", (e) => {
@@ -312,13 +319,18 @@ export const colorManager = {
       startLeft = container.scrollLeft;
 
       container.classList.add("is-dragging-x");
+      document.body.classList.add("is-color-dragging");
 
       window.addEventListener("mousemove", onMove);
       window.addEventListener("mouseup", onUp);
       window.addEventListener("mouseleave", onUp);
+      window.addEventListener("blur", onUp);
+
+      // Prevent text selection while drag starts
+      e.preventDefault();
     });
 
-    // Prevent accidental click on color after drag
+    // Prevent accidental click on swatch after drag
     container.addEventListener(
       "click",
       (e) => {
