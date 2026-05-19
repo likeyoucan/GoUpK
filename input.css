@@ -2452,6 +2452,10 @@
     overflow: visible;
   }
 
+  #view-settings .app-surface.overflow-hidden {
+    overflow: visible !important;
+  }
+
   .color-swatch-wrapper.is-collapsing {
     max-width: 0 !important;
     margin-left: 0 !important;
