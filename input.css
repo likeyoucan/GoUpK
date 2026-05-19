@@ -168,12 +168,12 @@
     --ring-meta-color: color-mix(in srgb, var(--text-color) 78%, transparent);
   }
 
-  .bg-red-zone {
-    --alert-btn-bg: hsl(356 64% 50%);
-    --alert-btn-bg-hover: hsl(356 62% 54%);
-    --alert-btn-bg-active: hsl(356 66% 46%);
-    --alert-btn-border: hsl(0 100% 92% / 0.5);
-  }
+.bg-red-zone {
+  --alert-btn-bg: hsl(18 92% 54%);
+  --alert-btn-bg-hover: hsl(20 94% 58%);
+  --alert-btn-bg-active: hsl(16 90% 49%);
+  --alert-btn-border: hsl(34 100% 92% / 0.42);
+}
 
   body.force-light-text {
     --ring-meta-color: rgb(255 255 255 / 0.78);
@@ -2618,12 +2618,12 @@
     border-color: color-mix(in srgb, var(--pro-badge-fg-dark) 18%, transparent);
   }
 
-  @media (hover: hover) and (pointer: fine) {
-    .pro-badge:hover {
-      filter: brightness(1.06);
-      box-shadow: 0 2px 6px rgb(0 0 0 / 0.22);
-    }
+@media (hover: hover) and (pointer: fine) {
+  .color-btn:hover {
+    transform: scale(1.07);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.18) !important;
   }
+}
 
   .pro-cta {
     min-height: 44px;

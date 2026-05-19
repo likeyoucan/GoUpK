@@ -106,7 +106,7 @@ export function applyAccentVars({ hex, rootEl, hexToHSL }) {
   if (hex === "default") {
     rootEl.style.removeProperty("--primary-color");
     rootEl.style.removeProperty("--accent-h");
-    rootEl.style.setProperty("--secondary-accent-color", "#8b5cf6"); // было #3b82f6
+    rootEl.style.setProperty("--secondary-accent-color", "#7c3aed");
 
     const alert = "hsl(0 90% 60%)";
     rootEl.style.setProperty("--alert-color", alert);
