@@ -112,6 +112,16 @@
     --dur-long: 420ms;
 
     --ring-meta-color: color-mix(in srgb, var(--text-color) 68%, transparent);
+
+    --pro-badge-bg-light: #1a1a1a;
+    --pro-badge-fg-light: #f5f7fa; /* мягкий белый под #1a1a1a */
+
+    --pro-badge-bg-dark: #f7f8fa; /* почти белый для dark-темы */
+    --pro-badge-fg-dark: #111827;
+
+    --pro-badge-y: 3px; /* базовая вертикаль */
+    --pro-badge-x: calc(var(--pro-badge-y) * var(--phi)); /* golden ratio */
+    --pro-badge-r: calc(var(--pro-badge-y) * 2); /* 6px при y=3 */
   }
 
   :root.dark {
@@ -2525,26 +2535,63 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 3px 4.9px;
-    border-radius: 6px;
+    min-height: calc(8px + var(--pro-badge-y) * 2);
+
+    padding: var(--pro-badge-y) var(--pro-badge-x);
+    border-radius: var(--pro-badge-r);
+
     font-size: 8px;
     font-style: italic;
     font-weight: 600;
     text-transform: uppercase;
     line-height: 1;
+    letter-spacing: 0.02em;
     white-space: nowrap;
     vertical-align: middle;
-    color: var(--text-secondary);
-    background-color: color-mix(in srgb, var(--text-color) 7%, transparent);
-    border: 1px solid color-mix(in srgb, var(--border-color) 82%, transparent);
+
+    color: var(--pro-badge-fg-light);
+    background-color: var(--pro-badge-bg-light);
+    border: 1px solid
+      color-mix(in srgb, var(--pro-badge-fg-light) 24%, transparent);
+
     transform: translateY(-0.2em);
     cursor: pointer;
     user-select: none;
+    transition:
+      transform var(--dur-short) var(--ease-standard),
+      box-shadow var(--dur-short) ease,
+      background-color var(--dur-short) ease,
+      color var(--dur-short) ease,
+      border-color var(--dur-short) ease;
   }
 
   html.dark .pro-badge {
-    --pro-fill: var(--pro-bg-dark);
-    --pro-text: var(--pro-fg-dark);
+    color: var(--pro-badge-fg-dark);
+    background-color: var(--pro-badge-bg-dark);
+    border-color: color-mix(in srgb, var(--pro-badge-fg-dark) 18%, transparent);
+  }
+
+  body.force-light-text .pro-badge {
+    color: var(--pro-badge-fg-light);
+    background-color: var(--pro-badge-bg-light);
+    border-color: color-mix(
+      in srgb,
+      var(--pro-badge-fg-light) 24%,
+      transparent
+    );
+  }
+
+  body.force-dark-text .pro-badge {
+    color: var(--pro-badge-fg-dark);
+    background-color: var(--pro-badge-bg-dark);
+    border-color: color-mix(in srgb, var(--pro-badge-fg-dark) 18%, transparent);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .pro-badge:hover {
+      transform: translateY(-0.2em) scale(1.06);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+    }
   }
 
   .pro-cta {
