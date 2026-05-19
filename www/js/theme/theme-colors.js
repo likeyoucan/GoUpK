@@ -9,7 +9,7 @@ export function getPairedRestColor(hue) {
   return "#3b82f6";
 }
 
-// Keep danger in red-orange safe zone on vivid backgrounds.
+// Keep danger in warm red-orange zone on vivid/red backgrounds.
 export function getPairedAlertColor(hue, luminance) {
   if (luminance > 88) return "hsl(16 84% 50%)";
   if (hue >= 20 && hue < 80) return "hsl(18 88% 54%)";
@@ -107,9 +107,11 @@ export function applyAccentVars({ hex, rootEl, hexToHSL }) {
     rootEl.style.removeProperty("--primary-color");
     rootEl.style.removeProperty("--accent-h");
 
-    // For default accent: keep clear WORK vs REST contrast in Tabata.
-    // WORK -> default primary (blue), REST -> green.
-    rootEl.style.setProperty("--secondary-accent-color", "#22c55e");
+    // Default accent:
+    // - Tabata REST should be distinct from WORK
+    // - Pro CTA should use soft green highlight
+    rootEl.style.setProperty("--secondary-accent-color", "#34d399");
+    rootEl.style.setProperty("--pro-cta-color", "#34d399");
 
     const alert = "hsl(20 92% 54%)";
     rootEl.style.setProperty("--alert-color", alert);
@@ -122,6 +124,7 @@ export function applyAccentVars({ hex, rootEl, hexToHSL }) {
   rootEl.style.setProperty("--accent-h", h);
 
   rootEl.style.setProperty("--secondary-accent-color", getPairedRestColor(h));
+  rootEl.style.setProperty("--pro-cta-color", hex);
 
   const alert = getPairedAlertColor(h, l);
   rootEl.style.setProperty("--alert-color", alert);
@@ -154,9 +157,9 @@ export function applyBgTheme({
   root.classList.toggle("bg-red-zone", isRedLikeHue(h) && s > 32);
 
   if (!uiSettingsManager.isAdaptiveBg) {
-    // Important: do not switch .dark here.
-    // Theme mode should control default theme swatches.
-    // Here we only adapt readability helpers.
+    // Important:
+    // Do not toggle .dark here.
+    // Theme mode controls default swatches; background adaptation only adjusts readability.
     const shouldUseDarkText = luminance >= 0.52;
 
     root.style.setProperty("--bg-color", hex);

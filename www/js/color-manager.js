@@ -257,6 +257,7 @@ export const colorManager = {
     if (container.dataset.wheelXBound === "1") return;
     container.dataset.wheelXBound = "1";
 
+    // Wheel -> horizontal scroll only when overflow exists
     container.addEventListener(
       "wheel",
       (e) => {
@@ -270,12 +271,63 @@ export const colorManager = {
         const prevLeft = container.scrollLeft;
         container.scrollLeft += delta;
 
-        // Prevent page scroll only when horizontal scroll was actually applied.
         if (container.scrollLeft !== prevLeft) {
           e.preventDefault();
         }
       },
       { passive: false },
+    );
+
+    // Drag with left mouse button (desktop)
+    let isDown = false;
+    let moved = false;
+    let startX = 0;
+    let startLeft = 0;
+
+    const onMove = (e) => {
+      if (!isDown) return;
+      const dx = e.clientX - startX;
+      if (Math.abs(dx) > 2) moved = true;
+      container.scrollLeft = startLeft - dx;
+    };
+
+    const onUp = () => {
+      if (!isDown) return;
+      isDown = false;
+      container.classList.remove("is-dragging-x");
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+      window.removeEventListener("mouseleave", onUp);
+    };
+
+    container.addEventListener("mousedown", (e) => {
+      if (e.button !== 0) return;
+
+      const canScrollX = container.scrollWidth > container.clientWidth;
+      if (!canScrollX) return;
+
+      isDown = true;
+      moved = false;
+      startX = e.clientX;
+      startLeft = container.scrollLeft;
+
+      container.classList.add("is-dragging-x");
+
+      window.addEventListener("mousemove", onMove);
+      window.addEventListener("mouseup", onUp);
+      window.addEventListener("mouseleave", onUp);
+    });
+
+    // Prevent accidental click on color after drag
+    container.addEventListener(
+      "click",
+      (e) => {
+        if (!moved) return;
+        e.preventDefault();
+        e.stopPropagation();
+        moved = false;
+      },
+      true,
     );
   },
 
