@@ -165,9 +165,9 @@ export const adsManager = {
     safeSetLS(STORAGE_KEYS.APP_ADS_INTERSTITIAL_COOLDOWN_MS, String(value));
   },
 
-shouldShowAds() {
-  return !!this.enabled;
-}?
+  shouldShowAds() {
+    return !!this.enabled;
+  },
 
   shouldShowBanner() {
     if (!this.shouldShowAds()) return false;
