@@ -95,9 +95,6 @@
     --tr-fill-color: var(--primary-color);
     --tr-thumb-color: var(--surface-color);
 
-    --phi: 1.618;
-    --phi-inv: 0.618;
-
     --u: 4px;
     --space-1: calc(var(--u) * 1);
     --space-2: calc(var(--u) * 2);
@@ -115,16 +112,6 @@
     --dur-long: 420ms;
 
     --ring-meta-color: color-mix(in srgb, var(--text-color) 68%, transparent);
-
-    --pro-badge-bg-light: #1a1a1a;
-    --pro-badge-fg-light: #f5f7fa; /* мягкий белый под #1a1a1a */
-
-    --pro-badge-bg-dark: #f7f8fa; /* почти белый для dark-темы */
-    --pro-badge-fg-dark: #111827;
-
-    --pro-badge-y: 3px; /* базовая вертикаль */
-    --pro-badge-x: calc(var(--pro-badge-y) * var(--phi)); /* golden ratio */
-    --pro-badge-r: calc(var(--pro-badge-y) * 2); /* 6px при y=3 */
   }
 
   :root.dark {
@@ -848,10 +835,6 @@
     --pro-text: var(--pro-fg-dark);
   }
 
-  #btn-buy-pro.pro-cta-buy {
-    font-weight: 700;
-  }
-
   /* SPLIT LAYOUT + HANDLER */
   .view-top-half {
     flex-basis: var(--split);
@@ -1387,7 +1370,7 @@
 
   /* TIMER RING */
   .timer-circle-wrap {
-    --ring-size: clamp(170px, calc(62vmin * var(--phi-inv)), 610px);
+    --ring-size: clamp(168px, 92%, 620px);
     width: min(100%, var(--ring-size));
     height: min(100%, var(--ring-size));
     aspect-ratio: 1 / 1;
@@ -1402,7 +1385,7 @@
   }
 
   .timer-display {
-    font-size: clamp(2rem, calc(12.4cqi * var(--phi-inv)), 2.8rem);
+    font-size: clamp(1.9rem, min(21cqi, 21cqb), 2.4rem);
     line-height: 0.95;
     letter-spacing: -0.04em;
     white-space: nowrap;
@@ -1417,7 +1400,7 @@
   }
 
   .timer-display.is-go {
-    font-size: clamp(3.24rem, calc(20cqi * var(--phi-inv)), 5.2rem);
+    font-size: clamp(2.6rem, min(31cqi, 31cqb), 5rem);
     font-style: italic;
     padding-right: 0.04em;
   }
@@ -1478,11 +1461,11 @@
 
   @container timer-ring (max-width: 260px) {
     .timer-display {
-      font-size: clamp(1.7rem, calc(10.8cqi * var(--phi-inv)), 2.35rem);
+      font-size: clamp(1.55rem, min(18cqi, 18cqb), 2.35rem);
     }
 
     .timer-display.is-go {
-      font-size: clamp(2.75rem, calc(16.8cqi * var(--phi-inv)), 3.9rem);
+      font-size: clamp(2.2rem, min(26cqi, 26cqb), 3.7rem);
     }
   }
 
@@ -2542,75 +2525,42 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: calc(8px + var(--pro-badge-y) * 2);
-
-    padding: var(--pro-badge-y) var(--pro-badge-x);
-    border-radius: var(--pro-badge-r);
-
+    padding: 3px 4.9px;
+    border-radius: 6px;
     font-size: 8px;
     font-style: italic;
     font-weight: 600;
     text-transform: uppercase;
     line-height: 1;
-    letter-spacing: 0.02em;
     white-space: nowrap;
     vertical-align: middle;
-
-    color: var(--pro-badge-fg-light);
-    background-color: var(--pro-badge-bg-light);
-    border: 1px solid
-      color-mix(in srgb, var(--pro-badge-fg-light) 24%, transparent);
-
+    color: var(--text-secondary);
+    background-color: color-mix(in srgb, var(--text-color) 7%, transparent);
+    border: 1px solid color-mix(in srgb, var(--border-color) 82%, transparent);
     transform: translateY(-0.2em);
     cursor: pointer;
     user-select: none;
-    transition:
-      transform var(--dur-short) var(--ease-standard),
-      box-shadow var(--dur-short) ease,
-      background-color var(--dur-short) ease,
-      color var(--dur-short) ease,
-      border-color var(--dur-short) ease;
   }
 
-  /* Dark theme: светлый бейдж */
   html.dark .pro-badge {
-    color: var(--pro-badge-fg-dark);
-    background-color: var(--pro-badge-bg-dark);
-    border-color: color-mix(in srgb, var(--pro-badge-fg-dark) 18%, transparent);
-  }
-
-  /* Если adaptive off и фон экстремальный — подстраиваемся явно */
-  body.force-light-text .pro-badge {
-    color: var(--pro-badge-fg-light);
-    background-color: var(--pro-badge-bg-light);
-    border-color: color-mix(
-      in srgb,
-      var(--pro-badge-fg-light) 24%,
-      transparent
-    );
-  }
-
-  body.force-dark-text .pro-badge {
-    color: var(--pro-badge-fg-dark);
-    background-color: var(--pro-badge-bg-dark);
-    border-color: color-mix(in srgb, var(--pro-badge-fg-dark) 18%, transparent);
+    --pro-fill: var(--pro-bg-dark);
+    --pro-text: var(--pro-fg-dark);
   }
 
   .pro-cta {
     min-height: 44px;
     border-radius: 0.75rem;
-    font-weight: 700;
-    font-size: clamp(0.9rem, calc(0.56rem + 0.34vw), 1rem);
-    letter-spacing: 0.03em;
+    font-weight: 800;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
     transition: transform var(--dur-short) var(--ease-standard);
   }
 
   .pro-cta .pro-cta-price {
-    font-size: clamp(0.72rem, calc(0.45rem + 0.2vw), 0.8rem);
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    opacity: 0.92;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    opacity: 0.95;
   }
 
   .pro-cta-buy {
@@ -2734,10 +2684,6 @@
     .color-btn:hover {
       transform: scale(1.12);
       box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22) !important;
-    }
-    .pro-badge:hover {
-      transform: translateY(-0.2em) scale(1.06);
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
     }
   }
 
