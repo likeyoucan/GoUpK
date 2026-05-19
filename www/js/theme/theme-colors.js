@@ -9,11 +9,11 @@ export function getPairedRestColor(hue) {
   return "#3b82f6";
 }
 
-// Держим danger в красной зоне, не уводим в светло-оранжевый.
+// Keep danger in red-orange safe zone on vivid backgrounds.
 export function getPairedAlertColor(hue, luminance) {
-  if (luminance > 88) return "hsl(0 82% 48%)";
-  if (hue >= 20 && hue < 80) return "hsl(0 84% 52%)";
-  return "hsl(0 90% 60%)";
+  if (luminance > 88) return "hsl(16 84% 50%)";
+  if (hue >= 20 && hue < 80) return "hsl(18 88% 54%)";
+  return "hsl(20 92% 54%)";
 }
 
 function parseHsl(hslString) {
@@ -106,9 +106,12 @@ export function applyAccentVars({ hex, rootEl, hexToHSL }) {
   if (hex === "default") {
     rootEl.style.removeProperty("--primary-color");
     rootEl.style.removeProperty("--accent-h");
-    rootEl.style.setProperty("--secondary-accent-color", "#7c3aed");
 
-    const alert = "hsl(0 90% 60%)";
+    // For default accent: keep clear WORK vs REST contrast in Tabata.
+    // WORK -> default primary (blue), REST -> green.
+    rootEl.style.setProperty("--secondary-accent-color", "#22c55e");
+
+    const alert = "hsl(20 92% 54%)";
     rootEl.style.setProperty("--alert-color", alert);
     rootEl.style.setProperty("--alert-color-fg", pickReadableTextForHsl(alert));
     return;
@@ -151,23 +154,21 @@ export function applyBgTheme({
   root.classList.toggle("bg-red-zone", isRedLikeHue(h) && s > 32);
 
   if (!uiSettingsManager.isAdaptiveBg) {
-    // При выключенных adaptive colors: определяем light/dark по выбранному bg.
-    const shouldUseDarkTheme = luminance < 0.42 && l < 62;
-
-    root.classList.toggle("dark", shouldUseDarkTheme);
-    root.style.colorScheme = shouldUseDarkTheme ? "dark" : "light";
+    // Important: do not switch .dark here.
+    // Theme mode should control default theme swatches.
+    // Here we only adapt readability helpers.
+    const shouldUseDarkText = luminance >= 0.52;
 
     root.style.setProperty("--bg-color", hex);
     root.style.setProperty(
       "--surface-color",
       `color-mix(in srgb, ${hex}, ${
-        shouldUseDarkTheme ? "white 10%" : l > 88 ? "black 4%" : "white 22%"
+        shouldUseDarkText ? (l > 88 ? "black 4%" : "white 22%") : "white 10%"
       })`,
     );
 
-    // force-* для контраста UI-текста/иконок на экстремальных фонах
-    document.body.classList.toggle("force-light-text", shouldUseDarkTheme);
-    document.body.classList.toggle("force-dark-text", !shouldUseDarkTheme);
+    document.body.classList.toggle("force-light-text", !shouldUseDarkText);
+    document.body.classList.toggle("force-dark-text", shouldUseDarkText);
     return;
   }
 

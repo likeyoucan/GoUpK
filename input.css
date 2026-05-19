@@ -168,12 +168,13 @@
     --ring-meta-color: color-mix(in srgb, var(--text-color) 78%, transparent);
   }
 
-.bg-red-zone {
-  --alert-btn-bg: hsl(18 92% 54%);
-  --alert-btn-bg-hover: hsl(20 94% 58%);
-  --alert-btn-bg-active: hsl(16 90% 49%);
-  --alert-btn-border: hsl(34 100% 92% / 0.42);
-}
+  .bg-red-zone {
+    --alert-color: hsl(20 92% 54%);
+    --alert-btn-bg: hsl(20 92% 54%);
+    --alert-btn-bg-hover: hsl(22 94% 58%);
+    --alert-btn-bg-active: hsl(18 90% 49%);
+    --alert-btn-border: hsl(34 100% 92% / 0.42);
+  }
 
   body.force-light-text {
     --ring-meta-color: rgb(255 255 255 / 0.78);
@@ -1895,6 +1896,22 @@
       0 10px 20px rgb(0 0 0 / 0.36);
   }
 
+  .bg-red-zone #sw-clear-confirm,
+  .bg-red-zone #reset-confirm,
+  .bg-red-zone #tb-stopBtn,
+  .bg-red-zone #tm-resetBtn.is-reset,
+  .bg-red-zone #sw-lapBtn.is-reset,
+  .bg-red-zone .is-reset {
+    background: linear-gradient(
+      160deg,
+      hsl(20 92% 58%),
+      hsl(16 88% 50%)
+    ) !important;
+    border: 1px solid hsl(34 95% 88% / 0.35) !important;
+    color: #fffaf2 !important;
+    background-image: none !important;
+  }
+
   html.dark #sw-clear-confirm,
   html.dark #reset-confirm,
   html.dark #tb-stopBtn,
@@ -2618,12 +2635,12 @@
     border-color: color-mix(in srgb, var(--pro-badge-fg-dark) 18%, transparent);
   }
 
-@media (hover: hover) and (pointer: fine) {
-  .color-btn:hover {
-    transform: scale(1.07);
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.18) !important;
+  @media (hover: hover) and (pointer: fine) {
+    .color-btn:hover {
+      transform: scale(1.07);
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.18) !important;
+    }
   }
-}
 
   .pro-cta {
     min-height: 44px;
