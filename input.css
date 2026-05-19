@@ -845,6 +845,10 @@
     --pro-text: var(--pro-fg-dark);
   }
 
+  #btn-buy-pro.pro-cta-buy {
+    font-weight: 700;
+  }
+
   /* SPLIT LAYOUT + HANDLER */
   .view-top-half {
     flex-basis: var(--split);
@@ -2597,17 +2601,18 @@
   .pro-cta {
     min-height: 44px;
     border-radius: 0.75rem;
-    font-weight: 800;
-    letter-spacing: 0.06em;
+    font-weight: 700;
+    font-size: clamp(0.9rem, calc(0.56rem + 0.34vw), 1rem);
+    letter-spacing: 0.03em;
     text-transform: uppercase;
     transition: transform var(--dur-short) var(--ease-standard);
   }
 
   .pro-cta .pro-cta-price {
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    opacity: 0.95;
+    font-size: clamp(0.72rem, calc(0.45rem + 0.2vw), 0.8rem);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    opacity: 0.92;
   }
 
   .pro-cta-buy {
