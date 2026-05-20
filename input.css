@@ -1448,6 +1448,11 @@
     font-variant-numeric: tabular-nums;
   }
 
+  #sw-mainDisplay {
+    transform-origin: center center;
+    will-change: transform;
+  }
+
   .timer-display.is-go {
     font-size: clamp(2.9rem, min(33cqi, 33cqb), 5.3rem);
     font-style: italic;
@@ -1586,6 +1591,32 @@
   html.dark.no-adaptive #sw-lapsContainer .lap-row:first-child {
     background-color: color-mix(in srgb, #ffffff 13%, transparent);
     border-color: color-mix(in srgb, #ffffff 30%, transparent);
+  }
+
+  .lap-row.is-latest {
+    background-color: color-mix(in srgb, var(--primary-color) 7%, transparent);
+    border-color: color-mix(
+      in srgb,
+      var(--primary-color) 24%,
+      var(--border-color)
+    );
+  }
+
+  .lap-row .split-time.split-time-latest {
+    color: color-mix(in srgb, var(--primary-color) 78%, var(--text-color));
+  }
+
+  html.dark .lap-row.is-latest {
+    background-color: color-mix(in srgb, var(--primary-color) 14%, transparent);
+    border-color: color-mix(
+      in srgb,
+      var(--primary-color) 34%,
+      var(--border-color)
+    );
+  }
+
+  html.dark .lap-row .split-time.split-time-latest {
+    color: color-mix(in srgb, var(--primary-color) 90%, #ffffff 10%);
   }
 
   #toast {
@@ -2637,22 +2668,22 @@
     letter-spacing: 0.03em;
     white-space: nowrap;
 
-    color: #ffffff;
-    background: color-mix(in srgb, var(--primary-color) 84%, #0f172a 16%);
-    border: 1px solid color-mix(in srgb, var(--primary-color) 52%, transparent);
+    color: var(--pro-fg-light);
+    background-color: var(--pro-bg-light);
+    border: 1px solid color-mix(in srgb, var(--pro-fg-light) 22%, transparent);
     box-shadow: 0 1px 3px rgb(0 0 0 / 0.16);
     text-shadow: none;
     transition:
       background-color var(--dur-short) ease,
+      color var(--dur-short) ease,
       border-color var(--dur-short) ease,
-      box-shadow var(--dur-short) ease,
-      transform var(--dur-short) var(--ease-standard);
+      box-shadow var(--dur-short) ease;
   }
 
   html.dark .pro-badge {
-    color: #0f172a;
-    background: color-mix(in srgb, var(--primary-color) 58%, #ffffff 42%);
-    border-color: color-mix(in srgb, #ffffff 24%, transparent);
+    color: var(--pro-fg-dark);
+    background-color: var(--pro-bg-dark);
+    border-color: color-mix(in srgb, var(--pro-fg-dark) 18%, transparent);
   }
 
   .pro-cta {
@@ -2801,8 +2832,10 @@
 
   #setting-row-accent .color-btn,
   #setting-row-bg .color-btn {
-    border: 1px solid color-mix(in srgb, var(--text-color) 28%, transparent);
-    box-shadow: none;
+    transition:
+      transform 280ms cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 280ms cubic-bezier(0.22, 1, 0.36, 1),
+      filter 280ms cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   #setting-row-accent .color-swatch-wrapper.ring-2 .color-btn,
@@ -2818,10 +2851,11 @@
   @media (hover: hover) and (pointer: fine) {
     #setting-row-accent .color-btn:hover,
     #setting-row-bg .color-btn:hover {
-      transform: scale(1.075);
+      transform: translateY(-1px) scale(1.085);
       box-shadow:
-        0 3px 10px rgb(0 0 0 / 0.13),
+        0 4px 12px rgb(0 0 0 / 0.14),
         0 1px 2px rgb(255 255 255 / 0.22) inset;
+      filter: saturate(1.02);
     }
 
     #setting-row-accent .color-swatch-wrapper.ring-2 .color-btn:hover,
@@ -2831,7 +2865,7 @@
       box-shadow:
         0 0 0 2px var(--surface-color),
         0 0 0 4px var(--primary-color),
-        0 4px 12px rgb(0 0 0 / 0.16);
+        0 5px 14px rgb(0 0 0 / 0.18);
     }
   }
 

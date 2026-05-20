@@ -31,6 +31,24 @@ function formatStopwatchExtended(ms) {
   return "";
 }
 
+// Keep text inside the ring without changing font-size.
+// If content width is bigger than available width, compress only by X scale.
+function fitStopwatchDisplay(el) {
+  if (!el) return;
+
+  el.style.transform = "scaleX(1)";
+
+  const available = el.clientWidth || el.parentElement?.clientWidth || 0;
+  const needed = el.scrollWidth || 0;
+
+  if (!available || !needed) return;
+  if (needed <= available) return;
+
+  const ratio = available / needed;
+  const clamped = Math.max(0.9, Math.min(1, ratio));
+  el.style.transform = `scaleX(${clamped.toFixed(3)})`;
+}
+
 export function setupStopwatchRender(sw) {
   sw.createLapElement = (lap, isLatest = false) => {
     const lapTemplate = $("sw-lap-row-template");
@@ -52,8 +70,6 @@ export function setupStopwatchRender(sw) {
     );
     div.classList.remove("py-2", "border-gray-500/10", "px-2");
 
-    if (isLatest) div.classList.add("bg-black/5", "dark:bg-white/5");
-
     const shouldForceHours = sw.elapsedTime >= 3600000;
 
     div.querySelector('[data-template="lap-index"]').textContent =
@@ -74,8 +90,8 @@ export function setupStopwatchRender(sw) {
     splitTimeEl.classList.add("split-time");
 
     if (isLatest) {
-      splitTimeEl.classList.remove("app-text");
-      splitTimeEl.classList.add("primary-text");
+      div.classList.add("is-latest");
+      splitTimeEl.classList.add("split-time-latest");
     }
 
     return div;
@@ -273,6 +289,7 @@ export function setupStopwatchRender(sw) {
     const mainDisplayStr = formatStopwatchMain(sw.elapsedTime, { showMs });
 
     updateText(sw.els.display, mainDisplayStr);
+    fitStopwatchDisplay(sw.els.display);
 
     if (sw.els.extendedDisplay) {
       const extStr = formatStopwatchExtended(sw.elapsedTime);
