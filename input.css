@@ -1403,138 +1403,137 @@
     }
   }
 
-/* TIMER RING */
-.timer-circle-wrap {
-  --ring-size: clamp(188px, 96%, 680px);
-  --ring-safe-gap: clamp(10px, 3.2cqi, 18px);
-
-  width: min(100%, var(--ring-size));
-  height: min(100%, var(--ring-size));
-  aspect-ratio: 1 / 1;
-  margin: 0 auto;
-  display: flex;
-  position: relative;
-  align-items: center;
-  justify-content: center;
-  container-type: size;
-  container-name: timer-ring;
-  overflow: hidden;
-}
-
-#sw-startStopBtn,
-#tm-circleBtn,
-#tb-startBtn {
-  max-inline-size: 100%;
-  max-block-size: 100%;
-  padding-inline: var(--ring-safe-gap);
-  padding-block: var(--ring-safe-gap);
-  box-sizing: border-box;
-}
-
-.timer-display {
-  display: block;
-  font-size: clamp(2rem, min(22cqi, 22cqb), 2.7rem);
-  line-height: 0.95;
-  letter-spacing: -0.04em;
-  white-space: nowrap;
-  max-inline-size: 100%;
-  overflow: hidden;
-  text-overflow: clip;
-  text-align: center;
-  transition:
-    font-size var(--dur-short) var(--ease-standard),
-    color var(--dur-short) ease,
-    transform var(--dur-short) var(--ease-standard);
-  font-style: normal;
-  font-variant-numeric: tabular-nums;
-}
-
-.timer-display.is-go {
-  font-size: clamp(2.9rem, min(33cqi, 33cqb), 5.3rem);
-  font-style: italic;
-  padding-right: 0.04em;
-}
-
-#sw-mainDisplay,
-#tm-mainDisplay,
-#tb-mainTimer {
-  display: inline-block;
-  min-inline-size: 8ch;
-  text-align: center;
-}
-
-#sw-statusText,
-#tm-statusText,
-#tb-statusText {
-  position: absolute;
-  inset: 0 0 72px 0;
-  width: 100%;
-  height: 48px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  margin: auto;
-}
-
-#sw-statusText.hidden,
-#tm-statusText.hidden,
-#tb-statusText.hidden {
-  display: none;
-}
-
-#sw-extendedDisplay {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 1.25em;
-  text-align: center;
-  margin: auto;
-  position: absolute;
-  inset: 72px 0 0 0;
-  width: 100%;
-  height: 32px;
-}
-
-#sw-statusText,
-#tm-statusText,
-#tb-statusText,
-#sw-extendedDisplay {
-  color: var(--ring-meta-color) !important;
-  text-shadow: none;
-}
-
-html.dark #sw-statusText,
-html.dark #tm-statusText,
-html.dark #tb-statusText,
-html.dark #sw-extendedDisplay {
-  text-shadow: 0 1px 2px rgb(0 0 0 / 0.28);
-}
-
-@container timer-ring (max-width: 260px) {
-  .timer-display {
-    font-size: clamp(1.75rem, min(19cqi, 19cqb), 2.4rem);
+  /* TIMER RING */
+  .timer-circle-wrap {
+    --ring-safe-gap: clamp(10px, 3.2cqi, 18px);
+    --ring-size: clamp(188px, 96%, 680px);
+    width: min(100%, var(--ring-size));
+    height: min(100%, var(--ring-size));
+    aspect-ratio: 1 / 1;
+    margin: 0 auto;
+    display: flex;
+    position: relative;
+    align-items: center;
+    justify-content: center;
+    container-type: size;
+    container-name: timer-ring;
+    overflow: hidden;
   }
 
-  .timer-display.is-go {
-    font-size: clamp(2.45rem, min(28cqi, 28cqb), 3.95rem);
-  }
-}
-
-@media (max-height: 700px) and (orientation: portrait) {
-  .timer-input {
-    width: 3rem;
-    height: 3rem;
+  #sw-startStopBtn,
+  #tm-circleBtn,
+  #tb-startBtn {
+    max-inline-size: 100%;
+    max-block-size: 100%;
+    padding-inline: var(--ring-safe-gap);
+    padding-block: var(--ring-safe-gap);
+    box-sizing: border-box;
   }
 
   .timer-display {
-    font-size: clamp(1.5rem, min(19cqi, 19cqb), 2.2rem);
+    display: block;
+    font-size: clamp(2rem, min(22cqi, 22cqb), 2.7rem);
+    line-height: 0.95;
+    letter-spacing: -0.04em;
+    white-space: nowrap;
+    max-inline-size: 100%;
+    overflow: hidden;
+    text-overflow: clip;
+    text-align: center;
+    transition:
+      font-size var(--dur-short) var(--ease-standard),
+      color var(--dur-short) ease,
+      transform var(--dur-short) var(--ease-standard);
+    font-style: normal;
+    font-variant-numeric: tabular-nums;
   }
 
   .timer-display.is-go {
-    font-size: clamp(2.2rem, min(28cqi, 28cqb), 3.7rem);
+    font-size: clamp(2.9rem, min(33cqi, 33cqb), 5.3rem);
+    font-style: italic;
+    padding-right: 0.04em;
   }
-}
+
+  #sw-mainDisplay,
+  #tm-mainDisplay,
+  #tb-mainTimer {
+    display: inline-block;
+    min-inline-size: 8ch;
+    text-align: center;
+  }
+
+  #sw-statusText,
+  #tm-statusText,
+  #tb-statusText {
+    position: absolute;
+    inset: 0 0 72px 0;
+    width: 100%;
+    height: 48px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    margin: auto;
+  }
+
+  #sw-statusText.hidden,
+  #tm-statusText.hidden,
+  #tb-statusText.hidden {
+    display: none;
+  }
+
+  #sw-extendedDisplay {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 1.25em;
+    text-align: center;
+    margin: auto;
+    position: absolute;
+    inset: 72px 0 0 0;
+    width: 100%;
+    height: 32px;
+  }
+
+  #sw-statusText,
+  #tm-statusText,
+  #tb-statusText,
+  #sw-extendedDisplay {
+    color: var(--ring-meta-color) !important;
+    text-shadow: none;
+  }
+
+  html.dark #sw-statusText,
+  html.dark #tm-statusText,
+  html.dark #tb-statusText,
+  html.dark #sw-extendedDisplay {
+    text-shadow: 0 1px 2px rgb(0 0 0 / 0.28);
+  }
+
+  @container timer-ring (max-width: 260px) {
+    .timer-display {
+      font-size: clamp(1.75rem, min(19cqi, 19cqb), 2.4rem);
+    }
+
+    .timer-display.is-go {
+      font-size: clamp(2.45rem, min(28cqi, 28cqb), 3.95rem);
+    }
+  }
+
+  @media (max-height: 700px) and (orientation: portrait) {
+    .timer-input {
+      width: 3rem;
+      height: 3rem;
+    }
+
+    .timer-display {
+      font-size: clamp(1.5rem, min(19cqi, 19cqb), 2.2rem);
+    }
+
+    .timer-display.is-go {
+      font-size: clamp(2.2rem, min(28cqi, 28cqb), 3.7rem);
+    }
+  }
 
   /* SETTINGS + SCROLL CONTAINERS */
   #view-settings > div:first-child {

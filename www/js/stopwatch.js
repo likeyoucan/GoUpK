@@ -167,7 +167,7 @@ const stopwatchModule = {
 
       requestWakeLock();
       bgWorker.postMessage({ command: "start" });
-      this.tick();
+      requestAnimationFrame(() => this.tick());
 
       this.els.status.classList.add("hidden");
       this.els.display.classList.remove("is-go");
@@ -247,10 +247,9 @@ const stopwatchModule = {
       } else {
         const prevLatest = this.els.lapsContainer.firstElementChild;
         if (prevLatest) {
-          prevLatest.classList.remove("bg-black/5", "dark:bg-white/5");
+          prevLatest.classList.remove("is-latest");
           const splitTimeEl = prevLatest.querySelector(".split-time");
-          splitTimeEl?.classList.remove("primary-text");
-          splitTimeEl?.classList.add("app-text");
+          splitTimeEl?.classList.remove("split-time-latest");
         }
       }
 

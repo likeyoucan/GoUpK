@@ -77,7 +77,7 @@ export function setupTabataLifecycle(tb, deps) {
     tb.updatePhaseStyles();
 
     worker.postMessage({ command: "start" });
-    tb.tick();
+    requestAnimationFrame(() => tb.tick());
   };
 
   tb.pause = () => {
@@ -117,8 +117,8 @@ export function setupTabataLifecycle(tb, deps) {
     startTimerContext();
     worker.postMessage({ command: "start" });
 
-    tb.tick();
     tb.updatePhaseStyles();
+    requestAnimationFrame(() => tb.tick());
   };
 
   tb.stop = ({ resetRing = true, silent = false } = {}) => {

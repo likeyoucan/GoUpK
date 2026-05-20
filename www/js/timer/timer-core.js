@@ -155,18 +155,22 @@ export function setupTimerCore(tm, { showToast, updateText }) {
 
     tm.requestWakeLock();
     tm.updateUIState();
-    tm.updateDisplay(duration);
-    tm.updateAdjustButtons();
 
-    if (tm.ringCtrl && tm.totalDuration > 0) {
-      const progress = Math.max(
-        0,
-        Math.min(1, duration / Math.max(1, tm.totalDuration)),
-      );
-      tm.ringCtrl.snap(tm.ringLength * progress);
-    }
+    requestAnimationFrame(() => {
+      tm.updateDisplay(duration);
+      tm.updateAdjustButtons();
 
-    tm.startUiLoop();
+      if (tm.ringCtrl && tm.totalDuration > 0) {
+        const progress = Math.max(
+          0,
+          Math.min(1, duration / Math.max(1, tm.totalDuration)),
+        );
+        tm.ringCtrl.snap(tm.ringLength * progress);
+      }
+
+      tm.startUiLoop();
+    });
+
     tm.bgWorker.postMessage({ command: "start", time: duration });
 
     const scheduled = await alarmScheduler.schedule(tm.targetEpochMs);
@@ -212,12 +216,16 @@ export function setupTimerCore(tm, { showToast, updateText }) {
 
     tm.requestWakeLock();
     tm.updateUIState();
-    tm.updateDisplay(duration);
-    tm.updateAdjustButtons();
 
-    if (tm.ringCtrl) tm.ringCtrl.snap(tm.ringLength);
+    requestAnimationFrame(() => {
+      tm.updateDisplay(duration);
+      tm.updateAdjustButtons();
 
-    tm.startUiLoop();
+      if (tm.ringCtrl) tm.ringCtrl.snap(tm.ringLength);
+
+      tm.startUiLoop();
+    });
+
     tm.bgWorker.postMessage({ command: "start", time: duration });
 
     const scheduled = await alarmScheduler.schedule(tm.targetEpochMs);
