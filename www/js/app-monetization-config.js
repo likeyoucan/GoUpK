@@ -1,5 +1,3 @@
-// Файл: www/js/app-monetization-config.js
-
 /*
 
 ===========================================
@@ -11,6 +9,7 @@ APP MONETIZATION CONFIG - СПРАВОЧНИК
 2) Рекламой
 3) Pro-бейджами в настройках
 4) Ценообразованием для кнопки/модалки покупки
+5) Поведением рекламы при покупке Pro
 
 -------------------------------------------
 1. Раздел pro
@@ -38,6 +37,19 @@ pro.mode
 - subscription -> подписка
 - lifetime     -> разовая покупка Pro
 - disabled     -> Pro-гейтинг отключен
+
+pro.onPurchaseAdsBehavior
+Тип: "auto_disable" | "manual"
+Логика:
+- auto_disable -> после успешной покупки Pro реклама
+                   автоматически выключается (APP_ADS_ENABLED = false),
+                   переключатель Ads в настройках переводится в OFF
+- manual       -> состояние рекламы не меняется при покупке,
+                   пользователь управляет переключателем Ads вручную
+
+Рекомендация:
+- Для lifetime-продукта обычно "auto_disable"
+- Для подписки с рекламной моделью "manual"
 
 pro.features
 Тип: Record<string, boolean>
@@ -112,6 +124,12 @@ ads.enabledByDefault
 - true  -> реклама включена по умолчанию
 - false -> реклама выключена по умолчанию
 
+Важно:
+Это значение используется ТОЛЬКО при первом запуске
+приложения, когда в localStorage ещё нет
+APP_ADS_ENABLED. При последующих запусках
+adsManager.init() читает сохраненное состояние.
+
 ads.defaultProvider
 Тип: "yandex" | "admob" | "mediation"
 Назначение:
@@ -136,6 +154,18 @@ ads.interstitialCooldownMs
 Пример: 300000 (5 минут)
 Назначение:
 Минимальный интервал между interstitial-показами.
+
+ads.bannerPosition
+Тип: "top" | "bottom"
+Значение:
+- top    -> баннер отображается над основным контентом
+             (под safe-area, перед main)
+- bottom -> баннер отображается над навигацией
+             (как было в предыдущей версии)
+
+Важно:
+Позиция должна быть согласована с CSS-позиционированием
+#app-ad-slot в input.css.
 
 -------------------------------------------
 4. Раздел proBadges
@@ -166,29 +196,76 @@ feature:
 A) Полностью free:
 pro.enabled = false
 pro.mode = "disabled"
+pro.onPurchaseAdsBehavior = "manual"
 все pro.features = false
 
-B) Подписка:
+B) Подписка с рекламой:
 pro.enabled = true
 pro.mode = "subscription"
+pro.onPurchaseAdsBehavior = "manual"
 period = "month" или "year"
 
-C) Lifetime:
+C) Подписка без рекламы после покупки:
+pro.enabled = true
+pro.mode = "subscription"
+pro.onPurchaseAdsBehavior = "auto_disable"
+period = "month" или "year"
+
+D) Lifetime без рекламы:
 pro.enabled = true
 pro.mode = "lifetime"
+pro.onPurchaseAdsBehavior = "auto_disable"
+period = null
+
+E) Lifetime с ручным управлением рекламой:
+pro.enabled = true
+pro.mode = "lifetime"
+pro.onPurchaseAdsBehavior = "manual"
 period = null
 
 -------------------------------------------
-6. Чек перед релизом
+6. Взаимодействие с другими модулями
 -------------------------------------------
 
-- forcePurchased === null
+main.js
+- Читает конфиг через APP_CONFIG.monetization
+- Вызывает applyMonetizationConfig() при старте
+- Слушает PRO_STATUS_CHANGED для onPurchaseAdsBehavior
+
+ads.js
+- adsManager.init() читает persisted state из localStorage
+- НЕ вызывает setEnabled(enabledByDefault) каждый раз
+- Provider и cooldown применяются из конфига
+
+app-pro.js
+- appProManager получает mode и features из конфига
+- purchase()/revoke() генерируют PRO_STATUS_CHANGED
+- Конфиг НЕ хранит purchased-состояние (это localStorage)
+
+pro-ui.js
+- Читает pricing для отображения цен
+- Читает proBadges для инжекта бейджей
+
+app-config.js
+- Единая точка входа: реэкспортирует этот конфиг
+  как APP_CONFIG.monetization
+
+-------------------------------------------
+7. Чек перед релизом
+-------------------------------------------
+
+- forcePurchased === null (не true/false)
 - pro.enabled корректен
 - pro.mode соответствует продукту
+- pro.onPurchaseAdsBehavior задан и соответствует
+  продуктовой логике
 - pricing заполнен корректно
 - discountPercent в диапазоне 0..99
+- ads.bannerPosition согласован с layout и CSS
 - нет дубликатов Pro-бейджей в UI
 - interstitialCooldownMs адекватен
+- enabledByDefault не перезатирает пользовательский выбор
+  при повторных запусках
 
 */
 
@@ -197,10 +274,6 @@ export const APP_MONETIZATION_CONFIG = {
     enabled: true,
     forcePurchased: false, // null | true | false
     mode: "lifetime", // subscription | lifetime | disabled
-
-    // New: behavior of ads right after successful Pro purchase
-    // auto_disable -> ads off automatically
-    // manual -> keep current ads state, user toggles manually
     onPurchaseAdsBehavior: "manual", // "auto_disable" | "manual"
 
     features: {
@@ -213,7 +286,7 @@ export const APP_MONETIZATION_CONFIG = {
 
     pricing: {
       currency: "RUB",
-      currencySymbol: "RUB",
+      currencySymbol: "₽",
       amount: 990,
       period: null, // "month" | "year" | null
       discountEnabled: true,
@@ -227,7 +300,7 @@ export const APP_MONETIZATION_CONFIG = {
     aggregator: "mediation",
     strategy: "banner+interstitial",
     interstitialCooldownMs: 5 * 60 * 1000,
-    bannerPosition: "top",
+    bannerPosition: "top", // "top" | "bottom"
   },
 
   proBadges: [
