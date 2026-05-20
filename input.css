@@ -2676,13 +2676,18 @@
     letter-spacing: 0.03em;
     white-space: nowrap;
 
-    color: var(--pro-badge-fg, #ffffff);
     background-color: var(
       --pro-badge-bg,
       color-mix(in srgb, var(--secondary-accent-color) 78%, #1f2937 22%)
     );
+    color: var(--pro-badge-fg, #ffffff);
+
     border: 1px solid
-      color-mix(in srgb, var(--secondary-accent-color) 58%, transparent);
+      var(
+        --pro-badge-border,
+        color-mix(in srgb, var(--pro-badge-bg, #34d399) 68%, #0f172a 32%)
+      );
+
     box-shadow: 0 1px 3px rgb(0 0 0 / 0.14);
     text-shadow: none;
     transition:
@@ -2693,12 +2698,12 @@
   }
 
   html.dark .pro-badge {
-    color: var(--pro-badge-fg, #0f172a);
-    background-color: var(
-      --pro-badge-bg,
-      color-mix(in srgb, var(--secondary-accent-color) 62%, #ffffff 38%)
+    color: var(--pro-badge-fg, #ffffff);
+    border-color: var(
+      --pro-badge-border,
+      color-mix(in srgb, var(--pro-badge-bg, #34d399) 74%, #ffffff 26%)
     );
-    border-color: color-mix(in srgb, #ffffff 22%, transparent);
+    box-shadow: 0 1px 4px rgb(0 0 0 / 0.26);
   }
 
   .pro-cta {
@@ -2838,14 +2843,24 @@
   #app-ad-slot {
     position: fixed;
     top: calc(var(--safe-top) + 8px);
-    left: 8px;
-    right: 8px;
-    bottom: auto;
-    margin: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(96vw, 960px);
     z-index: 140;
     pointer-events: auto;
+  }
+
+  #app-ad-slot > .ad-placeholder {
+    min-height: 44px;
     border-radius: 12px;
-    backdrop-filter: blur(8px);
+    border: 1px solid var(--border-color);
+    background: color-mix(in srgb, var(--surface-color) 92%, transparent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: var(--text-secondary);
+    backdrop-filter: blur(6px);
   }
 
   #app-ad-slot > div {

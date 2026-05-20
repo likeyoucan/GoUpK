@@ -40,6 +40,13 @@ function dispatch(name, detail = {}) {
   document.dispatchEvent(new CustomEvent(name, { detail }));
 }
 
+function createWebPlaceholder(provider) {
+  const wrap = document.createElement("div");
+  wrap.className = "ad-placeholder";
+  wrap.textContent = `Ad banner placeholder (${provider})`;
+  return wrap;
+}
+
 export const adsManager = {
   enabled: true,
   provider: DEFAULT_PROVIDER,
@@ -190,7 +197,7 @@ export const adsManager = {
 
     if (!visible) {
       slot.classList.add("hidden");
-      slot.innerHTML = "";
+      slot.replaceChildren();
       this.bannerMounted = false;
 
       if (isNative()) {
@@ -205,14 +212,11 @@ export const adsManager = {
 
     slot.classList.remove("hidden");
     this.bannerMounted = true;
+    slot.replaceChildren();
 
     if (!isNative()) {
       // Web placeholder for github pages/dev.
-      slot.innerHTML = `
-        <div class="w-full text-center text-[10px] app-text-sec py-2 border-t app-border">
-          Ad banner placeholder (${this.provider})
-        </div>
-      `;
+      slot.appendChild(createWebPlaceholder(this.provider));
     } else {
       getAdsPlugin()
         ?.showBanner?.({

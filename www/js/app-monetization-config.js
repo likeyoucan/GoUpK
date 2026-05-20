@@ -3,7 +3,7 @@
 /*
 
 ===========================================
-APP MONETIZATION CONFIG - СПРАВОЧНИК
+APP MONETIZATION CONFIG - ОБНОВЛЕННАЯ ИНСТРУКЦИЯ
 ===========================================
 
 Этот файл управляет:
@@ -18,34 +18,27 @@ APP MONETIZATION CONFIG - СПРАВОЧНИК
 
 pro.enabled
 Тип: boolean
-Значение:
 - true  -> Pro логика включена
 - false -> Pro ограничения отключены, приложение работает как free
 
 pro.forcePurchased
 Тип: null | true | false
-Значение:
 - null  -> обычный режим, берется реальное состояние
-- true  -> принудительно включить Pro (для QA)
-- false -> принудительно выключить Pro (для QA)
-
-Важно:
-Это тестовый переключатель. Для production обычно: null.
+- true  -> принудительно включить Pro (QA)
+- false -> принудительно выключить Pro (QA)
 
 pro.mode
 Тип: "subscription" | "lifetime" | "disabled"
-Логика:
 - subscription -> подписка
 - lifetime     -> разовая покупка Pro
 - disabled     -> Pro-гейтинг отключен
 
 pro.features
 Тип: Record<string, boolean>
-Логика:
 - true  -> фича платная (нужен Pro)
 - false -> фича бесплатная
 
-Поддерживаемые ключи:
+Ключи:
 - custom_colors
 - accent_bg
 - remove_ads
@@ -63,45 +56,25 @@ pro.features
 pro.pricing.currency
 Тип: string
 Пример: "RUB", "USD", "EUR"
-Назначение:
-Код валюты (можно использовать в форматтерах).
 
 pro.pricing.currencySymbol
 Тип: string
 Пример: "₽", "$", "€"
-Назначение:
-Символ для UI.
 
 pro.pricing.amount
 Тип: number
-Пример: 990
-Назначение:
-Базовая цена до скидки.
+Базовая цена до скидки
 
 pro.pricing.period
 Тип: "month" | "year" | null
-Логика:
 - month/year -> для подписок
 - null       -> для lifetime
 
 pro.pricing.discountEnabled
 Тип: boolean
-Логика:
-- true  -> скидка включена
-- false -> скидка отключена
 
 pro.pricing.discountPercent
 Тип: number (0..99)
-Пример: 40
-Логика:
-Процент скидки от amount.
-
-Пример расчета:
-amount = 990, discountPercent = 40
-итог = 594
-
-Рекомендация:
-Всегда хранить amount как число, без символов валют.
 
 -------------------------------------------
 3. Раздел ads
@@ -109,33 +82,31 @@ amount = 990, discountPercent = 40
 
 ads.enabledByDefault
 Тип: boolean
-- true  -> реклама включена по умолчанию
-- false -> реклама выключена по умолчанию
+Назначение:
+Состояние рекламы по умолчанию только для первого запуска
+(когда в storage еще нет APP_ADS_ENABLED).
+
+ads.autoDisableOnProPurchase
+Тип: boolean
+Назначение:
+Автоматически выключать рекламу при покупке Pro.
+- true  -> после покупки Pro реклама выключается автоматически
+- false -> реклама остается включенной, пользователь выключает вручную
 
 ads.defaultProvider
 Тип: "yandex" | "admob" | "mediation"
-Назначение:
-Провайдер рекламы по умолчанию.
 
 ads.aggregator
 Тип: string
-Назначение:
-Декларативный параметр для native-слоя/роутинга.
-(может не использоваться напрямую в web-части)
+Декларативный параметр для native-слоя/роутинга
 
 ads.strategy
 Тип: string
-Примеры:
-- "banner"
-- "interstitial"
-- "banner+interstitial"
-- "off"
+Примеры: "banner", "interstitial", "banner+interstitial", "off"
 
 ads.interstitialCooldownMs
 Тип: number (мс)
-Пример: 300000 (5 минут)
-Назначение:
-Минимальный интервал между interstitial-показами.
+Минимальный интервал между interstitial-показами
 
 -------------------------------------------
 4. Раздел proBadges
@@ -156,27 +127,24 @@ feature:
 - ключ из pro.features
 - при клике по бейджу открывается paywall для этой фичи
 
-Важно:
-Желательно иметь в строке DOM-слот [data-pro-badge-slot].
-
 -------------------------------------------
-5. Готовые профили
+5. Профили
 -------------------------------------------
 
-A) Полностью free:
-pro.enabled = false
-pro.mode = "disabled"
-все pro.features = false
+Полностью free:
+- pro.enabled = false
+- pro.mode = "disabled"
+- все pro.features = false
 
-B) Подписка:
-pro.enabled = true
-pro.mode = "subscription"
-period = "month" или "year"
+Подписка:
+- pro.enabled = true
+- pro.mode = "subscription"
+- period = "month" или "year"
 
-C) Lifetime:
-pro.enabled = true
-pro.mode = "lifetime"
-period = null
+Lifetime:
+- pro.enabled = true
+- pro.mode = "lifetime"
+- period = null
 
 -------------------------------------------
 6. Чек перед релизом
@@ -189,6 +157,7 @@ period = null
 - discountPercent в диапазоне 0..99
 - нет дубликатов Pro-бейджей в UI
 - interstitialCooldownMs адекватен
+- autoDisableOnProPurchase соответствует вашей продуктовой логике
 
 */
 
@@ -218,13 +187,13 @@ export const APP_MONETIZATION_CONFIG = {
 
   ads: {
     enabledByDefault: true,
+    autoDisableOnProPurchase: true,
     defaultProvider: "yandex", // yandex | admob | mediation
     aggregator: "mediation",
     strategy: "banner+interstitial",
     interstitialCooldownMs: 5 * 60 * 1000,
   },
 
-  // Один бейдж на строку настройки
   proBadges: [
     { selector: "#setting-row-accent", feature: "accent_bg" },
     { selector: "#setting-row-bg", feature: "accent_bg" },

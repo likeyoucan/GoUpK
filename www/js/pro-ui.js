@@ -58,7 +58,6 @@ function formatMoney(value, pricing, langManager) {
   }
 }
 
-// FIX: langManager explicitly passed in params
 function formatPriceWithPeriod(pricing, t, langManager) {
   const base = formatMoney(pricing.current, pricing, langManager);
   if (!pricing.period) return base;
@@ -100,6 +99,13 @@ function updateProStatusBadge(t, appProManager) {
   }
 }
 
+function makeLine(tag, className, text) {
+  const el = document.createElement(tag);
+  el.className = className;
+  el.textContent = text;
+  return el;
+}
+
 function renderPaywallPrice(config, t, langManager) {
   const box = document.getElementById("pro-paywall-price");
   if (!box) return;
@@ -108,28 +114,46 @@ function renderPaywallPrice(config, t, langManager) {
   const label = tr(t, "pro_price_from", "Price");
   const currentText = formatPriceWithPeriod(pricing, t, langManager);
 
-  if (!pricing.hasDiscount) {
-    box.innerHTML = `
-      <span class="pro-meta">${label}</span>
-      <span class="pro-current">${currentText}</span>
-    `;
-    return;
+  const nodes = [
+    makeLine("span", "pro-meta", label),
+    makeLine("span", "pro-current", currentText),
+  ];
+
+  if (pricing.hasDiscount) {
+    const oldText = formatMoney(pricing.amount, pricing, langManager);
+    const saveText = formatMoney(
+      pricing.amount - pricing.current,
+      pricing,
+      langManager,
+    );
+
+    nodes.push(
+      makeLine("span", "pro-old", oldText),
+      makeLine(
+        "span",
+        "pro-meta",
+        `${tr(t, "pro_discount", "Discount")}: -${pricing.discountPercent}%`,
+      ),
+      makeLine(
+        "span",
+        "pro-meta",
+        `${tr(t, "pro_you_save", "You save")}: ${saveText}`,
+      ),
+    );
   }
 
-  const oldText = formatMoney(pricing.amount, pricing, langManager);
-  const saveText = formatMoney(
-    pricing.amount - pricing.current,
-    pricing,
-    langManager,
-  );
+  box.replaceChildren(...nodes);
+}
 
-  box.innerHTML = `
-    <span class="pro-meta">${label}</span>
-    <span class="pro-current">${currentText}</span>
-    <span class="pro-old">${oldText}</span>
-    <span class="pro-meta">${tr(t, "pro_discount", "Discount")}: -${pricing.discountPercent}%</span>
-    <span class="pro-meta">${tr(t, "pro_you_save", "You save")}: ${saveText}</span>
-  `;
+function setBuyButtonLabel(buyBtn, label, priceText) {
+  const titleSpan = document.createElement("span");
+  titleSpan.textContent = label;
+
+  const priceSpan = document.createElement("span");
+  priceSpan.className = "pro-cta-price";
+  priceSpan.textContent = priceText;
+
+  buyBtn.replaceChildren(titleSpan, priceSpan);
 }
 
 function renderProPurchaseUI(config, t, langManager, appProManager) {
@@ -162,10 +186,11 @@ function renderProPurchaseUI(config, t, langManager, appProManager) {
       ? tr(t, "buy_pro", "Buy Pro")
       : tr(t, "buy_subscription", "Buy Subscription");
 
-    buyBtn.innerHTML = `
-      <span>${label}</span>
-      <span class="pro-cta-price">${formatPriceWithPeriod(pricing, t, langManager)}</span>
-    `;
+    setBuyButtonLabel(
+      buyBtn,
+      label,
+      formatPriceWithPeriod(pricing, t, langManager),
+    );
   }
 
   confirmBtn.classList.remove("pro-cta-cancel");

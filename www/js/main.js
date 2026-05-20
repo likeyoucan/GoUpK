@@ -1,6 +1,6 @@
 // Файл: www/js/main.js
 
-import { showToast } from "./utils.js?v=VERSION";
+import { showToast, safeGetLS, safeSetLS } from "./utils.js?v=VERSION";
 import { langManager, t } from "./i18n.js?v=VERSION";
 import { themeManager } from "./theme.js?v=VERSION";
 import { navigation } from "./navigation.js?v=VERSION";
@@ -28,9 +28,12 @@ import { adsManager } from "./ads.js?v=VERSION";
 import { store } from "./store.js?v=VERSION";
 import { APP_MONETIZATION_CONFIG } from "./app-monetization-config.js?v=VERSION";
 import { initProUi } from "./pro-ui.js?v=VERSION";
+import { APP_EVENTS } from "./constants/events.js?v=VERSION";
+import { STORAGE_KEYS } from "./constants/storage-keys.js?v=VERSION";
 
 const ERUDA_CDN_MARKER = "cdn.jsdelivr.net/npm/eruda";
 const OPTIONAL_RESOURCE_MARKERS = [ERUDA_CDN_MARKER, "/js/eruda.js"];
+const ADS_AUTO_DISABLE_MARKER = "app_ads_auto_disabled_after_pro";
 
 function isErudaNoiseFromErrorEvent(event) {
   const src = String(event?.filename || "");
@@ -50,16 +53,11 @@ function isOptionalResourceUrl(url) {
   );
 }
 
-function escapeHtml(raw) {
-  return String(raw || "").replace(
-    /[<>&]/g,
-    (m) =>
-      ({
-        "<": "&lt;",
-        ">": "&gt;",
-        "&": "&amp;",
-      })[m] || m,
-  );
+function createTextEl(tag, className, text) {
+  const el = document.createElement(tag);
+  if (className) el.className = className;
+  if (text != null) el.textContent = String(text);
+  return el;
 }
 
 function renderBootError(error) {
@@ -76,18 +74,33 @@ function renderBootError(error) {
   panel.id = "boot-error-panel";
   panel.className =
     "fixed inset-0 z-[300] bg-black/80 text-white p-4 overflow-auto text-xs font-mono";
-  panel.innerHTML = `
-    <div class="max-w-3xl mx-auto space-y-3">
-      <h2 class="text-lg font-bold">App Boot Failed</h2>
-      <p>Application stopped before initialization. Check details below.</p>
-      <pre class="whitespace-pre-wrap break-words bg-black/40 p-3 rounded-xl">${escapeHtml(msg)}</pre>
-      <button id="boot-reload-btn" class="px-4 py-2 rounded-lg bg-white text-black font-bold">Reload</button>
-    </div>
-  `;
-  document.body.appendChild(panel);
 
-  const reloadBtn = document.getElementById("boot-reload-btn");
-  reloadBtn?.addEventListener("click", () => location.reload());
+  const wrap = document.createElement("div");
+  wrap.className = "max-w-3xl mx-auto space-y-3";
+
+  const title = createTextEl("h2", "text-lg font-bold", "App Boot Failed");
+  const desc = createTextEl(
+    "p",
+    "",
+    "Application stopped before initialization. Check details below.",
+  );
+  const pre = createTextEl(
+    "pre",
+    "whitespace-pre-wrap break-words bg-black/40 p-3 rounded-xl",
+    msg,
+  );
+
+  const reloadBtn = createTextEl(
+    "button",
+    "px-4 py-2 rounded-lg bg-white text-black font-bold",
+    "Reload",
+  );
+  reloadBtn.id = "boot-reload-btn";
+  reloadBtn.addEventListener("click", () => location.reload());
+
+  wrap.append(title, desc, pre, reloadBtn);
+  panel.appendChild(wrap);
+  document.body.appendChild(panel);
 }
 
 async function reconcileNativeTimerAlarm() {
@@ -132,7 +145,43 @@ async function applyMonetizationConfig() {
   adsManager.setInterstitialCooldown(
     APP_MONETIZATION_CONFIG.ads.interstitialCooldownMs,
   );
-  adsManager.setEnabled(APP_MONETIZATION_CONFIG.ads.enabledByDefault);
+
+  const storedAdsEnabled = safeGetLS(STORAGE_KEYS.APP_ADS_ENABLED);
+  if (storedAdsEnabled === null) {
+    adsManager.setEnabled(APP_MONETIZATION_CONFIG.ads.enabledByDefault);
+  } else {
+    adsManager.setEnabled(storedAdsEnabled !== "false");
+  }
+}
+
+function syncAdsToggleUi(checked) {
+  const toggleAds = document.getElementById("toggle-ads");
+  if (toggleAds) toggleAds.checked = !!checked;
+}
+
+function shouldAutoDisableAdsOnPro() {
+  return !!APP_MONETIZATION_CONFIG.ads?.autoDisableOnProPurchase;
+}
+
+function maybeAutoDisableAdsForPro(isPurchased) {
+  if (!isPurchased) return;
+  if (!shouldAutoDisableAdsOnPro()) return;
+
+  const marker = safeGetLS(ADS_AUTO_DISABLE_MARKER) === "true";
+  if (marker) return;
+
+  adsManager.setEnabled(false);
+  syncAdsToggleUi(false);
+  safeSetLS(ADS_AUTO_DISABLE_MARKER, "true");
+}
+
+function bindProAdsAutomation() {
+  document.addEventListener(APP_EVENTS.PRO_STATUS_CHANGED, (e) => {
+    const purchased = !!e?.detail?.purchased;
+    maybeAutoDisableAdsForPro(purchased);
+  });
+
+  maybeAutoDisableAdsForPro(!!appProManager.purchased);
 }
 
 let bootStarted = false;
@@ -162,6 +211,7 @@ async function bootstrap() {
     modalManager,
   });
 
+  bindProAdsAutomation();
   await applyMonetizationConfig();
 
   adsManager.reconcileActiveTimerState({ sw, tm, tb });
