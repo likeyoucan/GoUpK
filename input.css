@@ -79,7 +79,7 @@
     --safe-left: env(safe-area-inset-left, 0px);
     --safe-right: env(safe-area-inset-right, 0px);
 
-    --nav-height: 5rem;
+    --nav-height: calc(var(--u) * 16);
     --nav-total: calc(var(--nav-height) + var(--safe-bottom));
 
     --split: 65%;
@@ -561,7 +561,7 @@
   }
 
   .settings-row {
-    min-height: var(--control-h);
+    min-height: calc(var(--u) * 11);
   }
 
   .scroll-panel {
@@ -1406,7 +1406,7 @@
   /* TIMER RING */
   .timer-circle-wrap {
     --ring-safe-gap: clamp(10px, 3.2cqi, 18px);
-    --ring-size: clamp(188px, 96%, 680px);
+    --ring-size: clamp(233px, 62vmin, 377px);
     width: min(100%, var(--ring-size));
     height: min(100%, var(--ring-size));
     aspect-ratio: 1 / 1;
