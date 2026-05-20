@@ -90,7 +90,7 @@ export const APP_CONFIG = {
   monetization: APP_MONETIZATION_CONFIG,
 
   design: {
-    gridUnit: 4,
+    gridUnit: 8,
     proDefaultAccent: "#34d399",
     bannerPosition: APP_MONETIZATION_CONFIG.ads.bannerPosition || "top",
   },
