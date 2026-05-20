@@ -130,6 +130,13 @@
       <span id="toast-msg" class="font-bold text-sm tracking-wide"></span>
     </div>
 
+    <!-- Ads slot -->
+    <div
+      id="app-ad-slot"
+      class="hidden w-full app-surface border-t app-border px-2 py-1 text-center select-none"
+      aria-label="Advertisement"
+    ></div>
+
     <div
       id="app"
       class="relative overflow-hidden flex flex-col bg-black transition-shadow duration-300"
@@ -710,12 +717,7 @@
               </h2>
             </div>
 
-            <div
-              class="space-y-6 px-4 pt-1"
-              style="
-                padding-bottom: calc(7rem + env(safe-area-inset-bottom, 0px));
-              "
-            >
+            <div class="space-y-6 px-4 pt-1 settings-scroll-safe">
               <div>
                 <h3
                   class="section-caption text-xs font-bold app-text-sec uppercase tracking-wider mb-3 ml-2"
@@ -1380,13 +1382,6 @@
             </div>
           </div>
         </main>
-
-        <!-- Ads slot -->
-        <div
-          id="app-ad-slot"
-          class="hidden w-full app-surface border-t app-border px-2 py-1 text-center select-none"
-          aria-label="Advertisement"
-        ></div>
 
         <!-- BOTTOM NAVIGATION -->
         <nav

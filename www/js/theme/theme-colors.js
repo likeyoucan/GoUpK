@@ -107,11 +107,20 @@ export function applyAccentVars({ hex, rootEl, hexToHSL }) {
     rootEl.style.removeProperty("--primary-color");
     rootEl.style.removeProperty("--accent-h");
 
-    // Default accent:
-    // - Tabata REST should be distinct from WORK
-    // - Pro CTA should use soft green highlight
-    rootEl.style.setProperty("--secondary-accent-color", "#34d399");
+    const isDark = rootEl.classList.contains("dark");
+
+    // В дефолтной теме (где primary в dark = зеленый) REST должен быть контрастным.
+    rootEl.style.setProperty(
+      "--secondary-accent-color",
+      isDark ? "#60a5fa" : "#3b82f6",
+    );
+
+    // Pro CTA по умолчанию оставляем мягко-зеленым.
     rootEl.style.setProperty("--pro-cta-color", "#34d399");
+
+    // Pro badge: зеленый только для дефолтного акцента.
+    rootEl.style.setProperty("--pro-badge-bg", "#34d399");
+    rootEl.style.setProperty("--pro-badge-fg", "#052e16");
 
     const alert = "hsl(20 92% 54%)";
     rootEl.style.setProperty("--alert-color", alert);
@@ -123,8 +132,14 @@ export function applyAccentVars({ hex, rootEl, hexToHSL }) {
   const { h, l } = hexToHSL(hex);
   rootEl.style.setProperty("--accent-h", h);
 
+  // Для кастомных акцентов остается текущая адаптивность.
   rootEl.style.setProperty("--secondary-accent-color", getPairedRestColor(h));
   rootEl.style.setProperty("--pro-cta-color", hex);
+
+  // Сбрасываем дефолтные фиксированные цвета бейджа,
+  // чтобы снова работала адаптивная схема из CSS.
+  rootEl.style.removeProperty("--pro-badge-bg");
+  rootEl.style.removeProperty("--pro-badge-fg");
 
   const alert = getPairedAlertColor(h, l);
   rootEl.style.setProperty("--alert-color", alert);

@@ -507,24 +507,12 @@
   }
 
   .sw-delete-btn {
-    color: color-mix(
-      in srgb,
-      var(--alert-color) 85%,
-      var(--text-color)
-    ) !important;
-    background-color: color-mix(
-      in srgb,
-      var(--alert-color) 14%,
-      transparent
-    ) !important;
+    color: color-mix(in srgb, var(--alert-color) 85%, var(--text-color));
+    background-color: color-mix(in srgb, var(--alert-color) 14%, transparent);
   }
 
   .sw-delete-btn:hover {
-    background-color: color-mix(
-      in srgb,
-      var(--alert-color) 22%,
-      transparent
-    ) !important;
+    background-color: color-mix(in srgb, var(--alert-color) 22%, transparent);
   }
 
   .app-btn {
@@ -1554,6 +1542,10 @@
     }
   }
 
+  .settings-scroll-safe {
+    padding-bottom: calc(7rem + env(safe-area-inset-bottom, 0px));
+  }
+
   #view-settings .app-surface > div {
     min-height: var(--control-h);
   }
@@ -1591,32 +1583,6 @@
   html.dark.no-adaptive #sw-lapsContainer .lap-row:first-child {
     background-color: color-mix(in srgb, #ffffff 13%, transparent);
     border-color: color-mix(in srgb, #ffffff 30%, transparent);
-  }
-
-  .lap-row.is-latest {
-    background-color: color-mix(in srgb, var(--primary-color) 7%, transparent);
-    border-color: color-mix(
-      in srgb,
-      var(--primary-color) 24%,
-      var(--border-color)
-    );
-  }
-
-  .lap-row .split-time.split-time-latest {
-    color: color-mix(in srgb, var(--primary-color) 78%, var(--text-color));
-  }
-
-  html.dark .lap-row.is-latest {
-    background-color: color-mix(in srgb, var(--primary-color) 14%, transparent);
-    border-color: color-mix(
-      in srgb,
-      var(--primary-color) 34%,
-      var(--border-color)
-    );
-  }
-
-  html.dark .lap-row .split-time.split-time-latest {
-    color: color-mix(in srgb, var(--primary-color) 90%, #ffffff 10%);
   }
 
   .lap-row.is-latest {
@@ -2710,11 +2676,10 @@
     letter-spacing: 0.03em;
     white-space: nowrap;
 
-    color: #ffffff;
-    background-color: color-mix(
-      in srgb,
-      var(--secondary-accent-color) 78%,
-      #1f2937 22%
+    color: var(--pro-badge-fg, #ffffff);
+    background-color: var(
+      --pro-badge-bg,
+      color-mix(in srgb, var(--secondary-accent-color) 78%, #1f2937 22%)
     );
     border: 1px solid
       color-mix(in srgb, var(--secondary-accent-color) 58%, transparent);
@@ -2728,11 +2693,10 @@
   }
 
   html.dark .pro-badge {
-    color: #0f172a;
-    background-color: color-mix(
-      in srgb,
-      var(--secondary-accent-color) 62%,
-      #ffffff 38%
+    color: var(--pro-badge-fg, #0f172a);
+    background-color: var(
+      --pro-badge-bg,
+      color-mix(in srgb, var(--secondary-accent-color) 62%, #ffffff 38%)
     );
     border-color: color-mix(in srgb, #ffffff 22%, transparent);
   }
@@ -2872,13 +2836,31 @@
   }
 
   #app-ad-slot {
-    margin: auto;
     position: fixed;
-    left: 0;
-    right: 0;
-    bottom: calc(var(--nav-height) + var(--safe-bottom) + 4px);
+    top: calc(var(--safe-top) + 8px);
+    left: 8px;
+    right: 8px;
+    bottom: auto;
+    margin: 0;
     z-index: 140;
     pointer-events: auto;
+    border-radius: 12px;
+    backdrop-filter: blur(8px);
+  }
+
+  #app-ad-slot > div {
+    min-height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  @media (max-height: 520px) and (orientation: landscape) {
+    #app-ad-slot {
+      top: calc(var(--safe-top) + 4px);
+      left: 6px;
+      right: 6px;
+    }
   }
 
   #setting-row-accent .color-btn,
@@ -2935,14 +2917,9 @@
   }
 
   .tb-del-btn {
-    color: color-mix(
-      in srgb,
-      var(--alert-color) 78%,
-      var(--text-color)
-    ) !important;
+    color: color-mix(in srgb, var(--alert-color) 78%, var(--text-color));
     opacity: 0.72;
   }
-
   .bg-red-zone .tb-del-btn {
     color: #ffd9dc !important;
   }
