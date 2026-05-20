@@ -32,7 +32,7 @@ function formatStopwatchExtended(ms) {
 }
 
 // Keep text inside the ring without changing font-size.
-// If content width is bigger than available width, compress only by X scale.
+// If content is wider than available width, compress only by X scale.
 function fitStopwatchDisplay(el) {
   if (!el) return;
 
@@ -40,7 +40,6 @@ function fitStopwatchDisplay(el) {
 
   const available = el.clientWidth || el.parentElement?.clientWidth || 0;
   const needed = el.scrollWidth || 0;
-
   if (!available || !needed) return;
   if (needed <= available) return;
 

@@ -128,9 +128,9 @@
     --pro-badge-bg-dark: #f7f8fa;
     --pro-badge-fg-dark: #111827;
 
-    --pro-badge-y: 3px;
-    --pro-badge-x: calc(var(--pro-badge-y) * var(--phi));
-    --pro-badge-r: calc(var(--pro-badge-y) * 2);
+    --pro-badge-y: 4px;
+    --pro-badge-x: 8px;
+    --pro-badge-r: 8px;
   }
 
   :root.dark {
@@ -1619,6 +1619,32 @@
     color: color-mix(in srgb, var(--primary-color) 90%, #ffffff 10%);
   }
 
+  .lap-row.is-latest {
+    background-color: color-mix(in srgb, var(--primary-color) 7%, transparent);
+    border-color: color-mix(
+      in srgb,
+      var(--primary-color) 24%,
+      var(--border-color)
+    );
+  }
+
+  .lap-row .split-time.split-time-latest {
+    color: color-mix(in srgb, var(--primary-color) 78%, var(--text-color));
+  }
+
+  html.dark .lap-row.is-latest {
+    background-color: color-mix(in srgb, var(--primary-color) 14%, transparent);
+    border-color: color-mix(
+      in srgb,
+      var(--primary-color) 34%,
+      var(--border-color)
+    );
+  }
+
+  html.dark .lap-row .split-time.split-time-latest {
+    color: color-mix(in srgb, var(--primary-color) 90%, #ffffff 10%);
+  }
+
   #toast {
     top: calc(var(--safe-top) + 1rem);
   }
@@ -1661,6 +1687,22 @@
     touch-action: pan-y;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-y: contain;
+  }
+
+  .sw-session-details {
+    background-color: color-mix(in srgb, var(--text-color) 4%, transparent);
+  }
+
+  .sw-session-laps {
+    background-color: color-mix(in srgb, var(--text-color) 5%, transparent);
+  }
+
+  html.dark .sw-session-details {
+    background-color: color-mix(in srgb, #ffffff 8%, transparent);
+  }
+
+  html.dark .sw-session-laps {
+    background-color: color-mix(in srgb, #ffffff 10%, transparent);
   }
 
   /* COMMON CONTROLS */
@@ -2653,38 +2695,47 @@
     gap: 0.38rem;
   }
 
-.pro-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 16px;
-  padding: 2px 6px;
-  border-radius: 6px;
-  font-size: 9px;
-  font-style: italic;
-  font-weight: 700;
-  text-transform: uppercase;
-  line-height: 1;
-  letter-spacing: 0.03em;
-  white-space: nowrap;
+  .pro-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 16px;
+    padding: 2px 6px;
+    border-radius: 6px;
+    font-size: 9px;
+    font-style: italic;
+    font-weight: 700;
+    text-transform: uppercase;
+    line-height: 1;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
 
-  color: #ffffff;
-  background-color: color-mix(in srgb, var(--secondary-accent-color) 78%, #1f2937 22%);
-  border: 1px solid color-mix(in srgb, var(--secondary-accent-color) 58%, transparent);
-  box-shadow: 0 1px 3px rgb(0 0 0 / 0.14);
-  text-shadow: none;
-  transition:
-    background-color var(--dur-short) ease,
-    color var(--dur-short) ease,
-    border-color var(--dur-short) ease,
-    box-shadow var(--dur-short) ease;
-}
+    color: #ffffff;
+    background-color: color-mix(
+      in srgb,
+      var(--secondary-accent-color) 78%,
+      #1f2937 22%
+    );
+    border: 1px solid
+      color-mix(in srgb, var(--secondary-accent-color) 58%, transparent);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.14);
+    text-shadow: none;
+    transition:
+      background-color var(--dur-short) ease,
+      color var(--dur-short) ease,
+      border-color var(--dur-short) ease,
+      box-shadow var(--dur-short) ease;
+  }
 
-html.dark .pro-badge {
-  color: #0f172a;
-  background-color: color-mix(in srgb, var(--secondary-accent-color) 62%, #ffffff 38%);
-  border-color: color-mix(in srgb, #ffffff 22%, transparent);
-}
+  html.dark .pro-badge {
+    color: #0f172a;
+    background-color: color-mix(
+      in srgb,
+      var(--secondary-accent-color) 62%,
+      #ffffff 38%
+    );
+    border-color: color-mix(in srgb, #ffffff 22%, transparent);
+  }
 
   .pro-cta {
     min-height: 44px;
