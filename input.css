@@ -1417,7 +1417,7 @@
     justify-content: center;
     container-type: size;
     container-name: timer-ring;
-    overflow: hidden;
+    overflow: visible;
   }
 
   #sw-startStopBtn,
