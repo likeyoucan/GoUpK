@@ -2845,36 +2845,45 @@
     top: calc(var(--safe-top) + 8px);
     left: 50%;
     transform: translateX(-50%);
-    width: min(96vw, 960px);
+    width: min(96vw, 720px);
     z-index: 140;
     pointer-events: auto;
   }
 
+  #app-ad-slot.hidden {
+    display: none;
+  }
+
   #app-ad-slot > .ad-placeholder {
-    min-height: 44px;
-    border-radius: 12px;
-    border: 1px solid var(--border-color);
-    background: color-mix(in srgb, var(--surface-color) 92%, transparent);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 11px;
+    min-height: 36px;
+    padding: 0 12px;
+    border-radius: 10px;
+    border: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
+    background-color: color-mix(in srgb, var(--surface-color) 94%, transparent);
     color: var(--text-secondary);
-    backdrop-filter: blur(6px);
-  }
-
-  #app-ad-slot > div {
-    min-height: 34px;
+    font-size: 11px;
+    line-height: 1;
     display: flex;
     align-items: center;
     justify-content: center;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.06);
+    backdrop-filter: blur(4px);
   }
 
-  @media (max-height: 520px) and (orientation: landscape) {
+  html.dark #app-ad-slot > .ad-placeholder {
+    border-color: color-mix(in srgb, #ffffff 16%, transparent);
+    background-color: color-mix(in srgb, var(--surface-color) 82%, transparent);
+    color: color-mix(in srgb, #ffffff 68%, transparent);
+  }
+
+  @media (max-width: 420px) {
     #app-ad-slot {
-      top: calc(var(--safe-top) + 4px);
-      left: 6px;
-      right: 6px;
+      width: calc(100vw - 12px);
+    }
+
+    #app-ad-slot > .ad-placeholder {
+      min-height: 34px;
+      font-size: 10px;
     }
   }
 
