@@ -1531,6 +1531,21 @@
     }
   }
 
+  @media (max-height: 700px) and (orientation: portrait) {
+    .timer-input {
+      width: 3rem;
+      height: 3rem;
+    }
+
+    .timer-display {
+      font-size: clamp(1.5rem, min(19cqi, 19cqb), 2.2rem);
+    }
+
+    .timer-display.is-go {
+      font-size: clamp(2.2rem, min(28cqi, 28cqb), 3.7rem);
+    }
+  }
+
   /* SETTINGS + SCROLL CONTAINERS */
   #view-settings > div:first-child {
     padding-top: calc(var(--safe-top) + 0.5rem);
