@@ -137,6 +137,13 @@
       <div
         class="app-bg absolute inset-0 flex flex-col w-full h-full z-0 transition-colors duration-300"
       >
+        <!-- Ads slot -->
+        <div
+          id="app-ad-slot"
+          class="hidden w-full px-2 pt-2 pb-1 select-none"
+          aria-label="Advertisement"
+        ></div>
+
         <main class="flex-1 relative overflow-hidden z-10" id="viewsContainer">
           <!-- STOPWATCH VIEW -->
           <div
@@ -711,7 +718,7 @@
             </div>
 
             <div
-              class="space-y-6 px-4 pt-1"
+              class="space-y-6 px-4 pt-1 settings-safe-pad"
               style="
                 padding-bottom: calc(7rem + env(safe-area-inset-bottom, 0px));
               "
@@ -1380,13 +1387,6 @@
             </div>
           </div>
         </main>
-
-        <!-- Ads slot -->
-        <div
-          id="app-ad-slot"
-          class="hidden w-full app-surface border-t app-border px-2 py-1 text-center select-none"
-          aria-label="Advertisement"
-        ></div>
 
         <!-- BOTTOM NAVIGATION -->
         <nav

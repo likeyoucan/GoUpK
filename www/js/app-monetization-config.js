@@ -198,6 +198,11 @@ export const APP_MONETIZATION_CONFIG = {
     forcePurchased: false, // null | true | false
     mode: "lifetime", // subscription | lifetime | disabled
 
+    // New: behavior of ads right after successful Pro purchase
+    // auto_disable -> ads off automatically
+    // manual -> keep current ads state, user toggles manually
+    onPurchaseAdsBehavior: "manual", // "auto_disable" | "manual"
+
     features: {
       custom_colors: true,
       accent_bg: true,
@@ -207,12 +212,12 @@ export const APP_MONETIZATION_CONFIG = {
     },
 
     pricing: {
-      currency: "RUB", // RUB | USD | EUR ...
-      currencySymbol: "₽", // символ для UI
-      amount: 990, // базовая цена
-      period: null, // "month" | "year" | null (null для lifetime)
+      currency: "RUB",
+      currencySymbol: "RUB",
+      amount: 990,
+      period: null, // "month" | "year" | null
       discountEnabled: true,
-      discountPercent: 40, // 0..99
+      discountPercent: 40,
     },
   },
 
@@ -222,9 +227,9 @@ export const APP_MONETIZATION_CONFIG = {
     aggregator: "mediation",
     strategy: "banner+interstitial",
     interstitialCooldownMs: 5 * 60 * 1000,
+    bannerPosition: "top",
   },
 
-  // Один бейдж на строку настройки
   proBadges: [
     { selector: "#setting-row-accent", feature: "accent_bg" },
     { selector: "#setting-row-bg", feature: "accent_bg" },

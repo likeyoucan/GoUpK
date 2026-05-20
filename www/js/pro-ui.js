@@ -1,5 +1,7 @@
 // Файл: www/js/pro-ui.js
 
+// Файл: www/js/pro-ui.js
+
 import { APP_EVENTS } from "./constants/events.js?v=VERSION";
 import { renderProBadgesFromConfig } from "./pro-badges-ui.js?v=VERSION";
 
@@ -58,7 +60,6 @@ function formatMoney(value, pricing, langManager) {
   }
 }
 
-// FIX: langManager explicitly passed in params
 function formatPriceWithPeriod(pricing, t, langManager) {
   const base = formatMoney(pricing.current, pricing, langManager);
   if (!pricing.period) return base;
@@ -69,6 +70,18 @@ function formatPriceWithPeriod(pricing, t, langManager) {
       : tr(t, "pro_period_year", "/ year");
 
   return `${base} ${periodText}`;
+}
+
+function clearNode(node) {
+  if (!node) return;
+  while (node.firstChild) node.removeChild(node.firstChild);
+}
+
+function createTextSpan(className, text) {
+  const span = document.createElement("span");
+  if (className) span.className = className;
+  span.textContent = text;
+  return span;
 }
 
 function updateProStatusBadge(t, appProManager) {
@@ -108,11 +121,11 @@ function renderPaywallPrice(config, t, langManager) {
   const label = tr(t, "pro_price_from", "Price");
   const currentText = formatPriceWithPeriod(pricing, t, langManager);
 
+  clearNode(box);
+
   if (!pricing.hasDiscount) {
-    box.innerHTML = `
-      <span class="pro-meta">${label}</span>
-      <span class="pro-current">${currentText}</span>
-    `;
+    box.appendChild(createTextSpan("pro-meta", label));
+    box.appendChild(createTextSpan("pro-current", currentText));
     return;
   }
 
@@ -123,13 +136,27 @@ function renderPaywallPrice(config, t, langManager) {
     langManager,
   );
 
-  box.innerHTML = `
-    <span class="pro-meta">${label}</span>
-    <span class="pro-current">${currentText}</span>
-    <span class="pro-old">${oldText}</span>
-    <span class="pro-meta">${tr(t, "pro_discount", "Discount")}: -${pricing.discountPercent}%</span>
-    <span class="pro-meta">${tr(t, "pro_you_save", "You save")}: ${saveText}</span>
-  `;
+  box.appendChild(createTextSpan("pro-meta", label));
+  box.appendChild(createTextSpan("pro-current", currentText));
+  box.appendChild(createTextSpan("pro-old", oldText));
+  box.appendChild(
+    createTextSpan(
+      "pro-meta",
+      `${tr(t, "pro_discount", "Discount")}: -${pricing.discountPercent}%`,
+    ),
+  );
+  box.appendChild(
+    createTextSpan(
+      "pro-meta",
+      `${tr(t, "pro_you_save", "You save")}: ${saveText}`,
+    ),
+  );
+}
+
+function renderBuyButtonLabel(btn, label, priceText) {
+  clearNode(btn);
+  btn.appendChild(createTextSpan("", label));
+  btn.appendChild(createTextSpan("pro-cta-price", priceText));
 }
 
 function renderProPurchaseUI(config, t, langManager, appProManager) {
@@ -162,10 +189,11 @@ function renderProPurchaseUI(config, t, langManager, appProManager) {
       ? tr(t, "buy_pro", "Buy Pro")
       : tr(t, "buy_subscription", "Buy Subscription");
 
-    buyBtn.innerHTML = `
-      <span>${label}</span>
-      <span class="pro-cta-price">${formatPriceWithPeriod(pricing, t, langManager)}</span>
-    `;
+    renderBuyButtonLabel(
+      buyBtn,
+      label,
+      formatPriceWithPeriod(pricing, t, langManager),
+    );
   }
 
   confirmBtn.classList.remove("pro-cta-cancel");

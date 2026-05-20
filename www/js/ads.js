@@ -16,8 +16,6 @@ function isNative() {
 }
 
 function getAdsPlugin() {
-  // Optional native bridge plugin:
-  // window.Capacitor.Plugins.AdsBridge
   return window.Capacitor?.Plugins?.AdsBridge || null;
 }
 
@@ -40,6 +38,33 @@ function dispatch(name, detail = {}) {
   document.dispatchEvent(new CustomEvent(name, { detail }));
 }
 
+function createWebBannerNode(provider) {
+  const wrap = document.createElement("div");
+  wrap.className = "app-ad-banner";
+
+  const left = document.createElement("div");
+
+  const meta = document.createElement("div");
+  meta.className = "app-ad-banner__meta";
+  meta.textContent = "Sponsored";
+
+  const title = document.createElement("div");
+  title.className = "app-ad-banner__title";
+  title.textContent = `Focus Booster (${provider})`;
+
+  left.append(meta, title);
+
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className =
+    "app-btn min-h-[36px] px-3 rounded-lg font-bold text-xs primary-bg text-white";
+  btn.setAttribute("aria-label", "Open sponsored content");
+  btn.textContent = "Open";
+
+  wrap.append(left, btn);
+  return wrap;
+}
+
 export const adsManager = {
   enabled: true,
   provider: DEFAULT_PROVIDER,
@@ -51,13 +76,11 @@ export const adsManager = {
     const active = store.getActiveTimer?.();
     if (!active) return null;
 
-    // Defensive cleanup for corrupted values.
     if (!KNOWN_TIMER_IDS.has(active)) {
       store.clearActiveTimer?.();
       return null;
     }
 
-    // Optional deep check with runtime modules.
     if (runtime) {
       const hasRunningStopwatch = !!runtime?.sw?.isRunning;
       const hasRunningTimer = !!runtime?.tm?.isRunning;
@@ -117,7 +140,6 @@ export const adsManager = {
   },
 
   bindLifecycleMonetization() {
-    // Interstitial after timer/tabata completion (guarded by cooldown and active timer state)
     document.addEventListener(APP_EVENTS.TIMER_COMPLETED, () => {
       this.showInterstitialIfAllowed("timer_complete");
     });
@@ -128,7 +150,6 @@ export const adsManager = {
   },
 
   setEnabled(next) {
-    // remove_ads is a Pro feature.
     const canDisableAds = appProManager.canUse("remove_ads");
     const finalValue = canDisableAds ? !!next : true;
 
@@ -171,11 +192,8 @@ export const adsManager = {
 
   shouldShowBanner() {
     if (!this.shouldShowAds()) return false;
-
-    // Don't show banner while an active timer/stopwatch/tabata session is running.
     const active = this.reconcileActiveTimerState();
     if (active) return false;
-
     return true;
   },
 
@@ -190,7 +208,7 @@ export const adsManager = {
 
     if (!visible) {
       slot.classList.add("hidden");
-      slot.innerHTML = "";
+      slot.replaceChildren();
       this.bannerMounted = false;
 
       if (isNative()) {
@@ -207,16 +225,12 @@ export const adsManager = {
     this.bannerMounted = true;
 
     if (!isNative()) {
-      // Web placeholder for github pages/dev.
-      slot.innerHTML = `
-        <div class="w-full text-center text-[10px] app-text-sec py-2 border-t app-border">
-          Ad banner placeholder (${this.provider})
-        </div>
-      `;
+      slot.replaceChildren(createWebBannerNode(this.provider));
     } else {
+      slot.replaceChildren();
       getAdsPlugin()
         ?.showBanner?.({
-          placement: "main_bottom_banner",
+          placement: "main_top_banner",
           provider: this.provider,
         })
         .catch(() => {});
@@ -228,7 +242,6 @@ export const adsManager = {
   canShowInterstitial() {
     if (!this.shouldShowAds()) return false;
 
-    // Never show interstitial while timer is active.
     const active = this.reconcileActiveTimerState();
     if (active) return false;
 

@@ -26,8 +26,9 @@ import { initErudaTapToggle } from "./debug-eruda-toggle.js?v=VERSION";
 import { appProManager } from "./app-pro.js?v=VERSION";
 import { adsManager } from "./ads.js?v=VERSION";
 import { store } from "./store.js?v=VERSION";
-import { APP_MONETIZATION_CONFIG } from "./app-monetization-config.js?v=VERSION";
+import { APP_CONFIG } from "./app-config.js?v=VERSION";
 import { initProUi } from "./pro-ui.js?v=VERSION";
+import { APP_EVENTS } from "./constants/events.js?v=VERSION";
 
 const ERUDA_CDN_MARKER = "cdn.jsdelivr.net/npm/eruda";
 const OPTIONAL_RESOURCE_MARKERS = [ERUDA_CDN_MARKER, "/js/eruda.js"];
@@ -50,18 +51,6 @@ function isOptionalResourceUrl(url) {
   );
 }
 
-function escapeHtml(raw) {
-  return String(raw || "").replace(
-    /[<>&]/g,
-    (m) =>
-      ({
-        "<": "&lt;",
-        ">": "&gt;",
-        "&": "&amp;",
-      })[m] || m,
-  );
-}
-
 function renderBootError(error) {
   const msg = (error && (error.stack || error.message)) || String(error);
   console.error("[BOOT ERROR]", error);
@@ -76,18 +65,31 @@ function renderBootError(error) {
   panel.id = "boot-error-panel";
   panel.className =
     "fixed inset-0 z-[300] bg-black/80 text-white p-4 overflow-auto text-xs font-mono";
-  panel.innerHTML = `
-    <div class="max-w-3xl mx-auto space-y-3">
-      <h2 class="text-lg font-bold">App Boot Failed</h2>
-      <p>Application stopped before initialization. Check details below.</p>
-      <pre class="whitespace-pre-wrap break-words bg-black/40 p-3 rounded-xl">${escapeHtml(msg)}</pre>
-      <button id="boot-reload-btn" class="px-4 py-2 rounded-lg bg-white text-black font-bold">Reload</button>
-    </div>
-  `;
-  document.body.appendChild(panel);
 
-  const reloadBtn = document.getElementById("boot-reload-btn");
-  reloadBtn?.addEventListener("click", () => location.reload());
+  const wrap = document.createElement("div");
+  wrap.className = "max-w-3xl mx-auto space-y-3";
+
+  const title = document.createElement("h2");
+  title.className = "text-lg font-bold";
+  title.textContent = "App Boot Failed";
+
+  const text = document.createElement("p");
+  text.textContent =
+    "Application stopped before initialization. Check details below.";
+
+  const pre = document.createElement("pre");
+  pre.className = "whitespace-pre-wrap break-words bg-black/40 p-3 rounded-xl";
+  pre.textContent = msg;
+
+  const btn = document.createElement("button");
+  btn.id = "boot-reload-btn";
+  btn.className = "px-4 py-2 rounded-lg bg-white text-black font-bold";
+  btn.textContent = "Reload";
+  btn.addEventListener("click", () => location.reload());
+
+  wrap.append(title, text, pre, btn);
+  panel.appendChild(wrap);
+  document.body.appendChild(panel);
 }
 
 async function reconcileNativeTimerAlarm() {
@@ -111,28 +113,44 @@ async function reconcileNativeTimerAlarm() {
 }
 
 async function applyMonetizationConfig() {
-  if (!APP_MONETIZATION_CONFIG.pro.enabled) {
+  const monetization = APP_CONFIG.monetization;
+
+  if (!monetization.pro.enabled) {
     await appProManager.setMode("disabled");
   } else {
-    await appProManager.setMode(APP_MONETIZATION_CONFIG.pro.mode);
+    await appProManager.setMode(monetization.pro.mode);
 
-    const entries = Object.entries(APP_MONETIZATION_CONFIG.pro.features || {});
+    const entries = Object.entries(monetization.pro.features || {});
     for (const [featureKey, isGated] of entries) {
       await appProManager.setFeatureGate(featureKey, !!isGated);
     }
 
-    if (APP_MONETIZATION_CONFIG.pro.forcePurchased === true) {
+    if (monetization.pro.forcePurchased === true) {
       await appProManager.purchase();
-    } else if (APP_MONETIZATION_CONFIG.pro.forcePurchased === false) {
+    } else if (monetization.pro.forcePurchased === false) {
       await appProManager.revoke();
     }
   }
 
-  adsManager.setProvider(APP_MONETIZATION_CONFIG.ads.defaultProvider);
-  adsManager.setInterstitialCooldown(
-    APP_MONETIZATION_CONFIG.ads.interstitialCooldownMs,
-  );
-  adsManager.setEnabled(APP_MONETIZATION_CONFIG.ads.enabledByDefault);
+  adsManager.setProvider(monetization.ads.defaultProvider);
+  adsManager.setInterstitialCooldown(monetization.ads.interstitialCooldownMs);
+
+  // Important: do not force setEnabled on every boot.
+  // adsManager.init() restores persisted APP_ADS_ENABLED from storage.
+}
+
+function bindPostPurchaseAdsBehavior() {
+  document.addEventListener(APP_EVENTS.PRO_STATUS_CHANGED, (e) => {
+    const purchased = !!e.detail?.purchased;
+    if (!purchased) return;
+
+    const behavior =
+      APP_CONFIG?.monetization?.pro?.onPurchaseAdsBehavior || "manual";
+
+    if (behavior === "auto_disable") {
+      adsManager.setEnabled(false);
+    }
+  });
 }
 
 let bootStarted = false;
@@ -168,6 +186,7 @@ async function bootstrap() {
   adsManager.init();
   adsManager.bindAutoRefresh();
   adsManager.bindLifecycleMonetization();
+  bindPostPurchaseAdsBehavior();
 
   bindAppLifecycle({
     preload,
@@ -195,7 +214,7 @@ async function bootstrap() {
     t,
     langManager,
     appProManager,
-    config: APP_MONETIZATION_CONFIG,
+    config: APP_CONFIG.monetization,
     showToast,
   });
 
@@ -208,19 +227,16 @@ async function bootstrap() {
   });
 }
 
-// Runtime JS errors (logic)
 window.addEventListener("error", (e) => {
   if (isErudaNoiseFromErrorEvent(e)) return;
   console.error("[GLOBAL ERROR]", e.error || e.message);
 });
 
-// Runtime promise rejections
 window.addEventListener("unhandledrejection", (e) => {
   if (isErudaNoiseFromRejection(e)) return;
   console.error("[UNHANDLED PROMISE]", e.reason);
 });
 
-// Resource loading errors (scripts/styles/img), incl. 503
 window.addEventListener(
   "error",
   (e) => {
