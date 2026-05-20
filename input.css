@@ -2685,10 +2685,10 @@
     border: 1px solid
       var(
         --pro-badge-border,
-        color-mix(in srgb, var(--pro-badge-bg, #34d399) 68%, #0f172a 32%)
+        color-mix(in srgb, var(--pro-badge-bg, #34d399) 84%, #000000 16%)
       );
 
-    box-shadow: 0 1px 3px rgb(0 0 0 / 0.14);
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.12);
     text-shadow: none;
     transition:
       background-color var(--dur-short) ease,
@@ -2701,9 +2701,9 @@
     color: var(--pro-badge-fg, #ffffff);
     border-color: var(
       --pro-badge-border,
-      color-mix(in srgb, var(--pro-badge-bg, #34d399) 74%, #ffffff 26%)
+      color-mix(in srgb, var(--pro-badge-bg, #34d399) 86%, #ffffff 14%)
     );
-    box-shadow: 0 1px 4px rgb(0 0 0 / 0.26);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.22);
   }
 
   .pro-cta {
@@ -2880,10 +2880,22 @@
 
   #setting-row-accent .color-btn,
   #setting-row-bg .color-btn {
+    border-color: color-mix(in srgb, var(--text-color) 18%, transparent);
     transition:
       transform 280ms cubic-bezier(0.22, 1, 0.36, 1),
       box-shadow 280ms cubic-bezier(0.22, 1, 0.36, 1),
       filter 280ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  html.dark #setting-row-accent .color-btn,
+  html.dark #setting-row-bg .color-btn {
+    border-color: color-mix(in srgb, #ffffff 24%, transparent);
+  }
+
+  #setting-row-accent .color-btn[data-dark-color="1"],
+  #setting-row-bg .color-btn[data-dark-color="1"] {
+    border-color: rgb(255 255 255 / 0.46);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.14);
   }
 
   #setting-row-accent .color-swatch-wrapper.ring-2 .color-btn,

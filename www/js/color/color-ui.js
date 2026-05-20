@@ -1,5 +1,37 @@
 // Файл: www/js/color/color-ui.js
 
+function hexToRgbSafe(hex) {
+  const h = String(hex || "").trim();
+  if (!h.startsWith("#")) return null;
+
+  if (h.length === 4) {
+    return {
+      r: parseInt(h[1] + h[1], 16),
+      g: parseInt(h[2] + h[2], 16),
+      b: parseInt(h[3] + h[3], 16),
+    };
+  }
+
+  if (h.length === 7) {
+    return {
+      r: parseInt(h.slice(1, 3), 16),
+      g: parseInt(h.slice(3, 5), 16),
+      b: parseInt(h.slice(5, 7), 16),
+    };
+  }
+
+  return null;
+}
+
+function relativeLumFromRgb({ r, g, b }) {
+  const a = [r, g, b].map((v) => {
+    const x = v / 255;
+    return x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4;
+  });
+
+  return a[0] * 0.2126 + a[1] * 0.7152 + a[2] * 0.0722;
+}
+
 export function createColorSwatch({ color, isCustom, type, t }) {
   const wrapper = document.createElement("div");
   wrapper.className = "color-swatch-wrapper relative rounded-full";
@@ -9,7 +41,7 @@ export function createColorSwatch({ color, isCustom, type, t }) {
   const button = document.createElement("button");
   button.type = "button";
   button.className =
-    "color-btn w-9 h-9 flex items-center justify-center rounded-full shrink-0 transition-transform active:scale-90 border border-black/20 dark:border-white/20 focus:outline-none custom-focus";
+    "color-btn w-9 h-9 flex items-center justify-center rounded-full shrink-0 transition-transform active:scale-90 border focus:outline-none custom-focus";
   button.setAttribute(
     "aria-label",
     color === "default" ? t("default_color") : color,
@@ -20,6 +52,14 @@ export function createColorSwatch({ color, isCustom, type, t }) {
     else button.classList.add("default-bg-btn");
   } else {
     button.style.backgroundColor = color;
+
+    const rgb = hexToRgbSafe(color);
+    if (rgb) {
+      const lum = relativeLumFromRgb(rgb);
+      if (lum < 0.22) {
+        button.dataset.darkColor = "1";
+      }
+    }
   }
 
   wrapper.append(button);

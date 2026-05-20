@@ -95,18 +95,23 @@ function applyProBadgeAdaptiveColors(badgeEl) {
   const rgb = parseRgbString(bgColor);
   if (!rgb) return;
 
-  const isDark = document.documentElement.classList.contains("dark");
+  const isDarkTheme = document.documentElement.classList.contains("dark");
   const lum = relativeLuminance(rgb);
 
-  // Текст:
-  // - dark: всегда белый
-  // - light: адаптивный под фон
-  const fg = isDark ? "#ffffff" : lum > 0.58 ? "#052e16" : "#ffffff";
+  const fg = isDarkTheme ? "#ffffff" : lum > 0.58 ? "#052e16" : "#ffffff";
 
-  // Рамка: адаптивная от цвета самого бейджа.
-  const borderRgb = isDark
-    ? blendRgb(rgb, { r: 255, g: 255, b: 255 }, 0.28)
-    : blendRgb(rgb, { r: 15, g: 23, b: 42 }, 0.24);
+  let borderRgb;
+  if (lum < 0.14) {
+    borderRgb = blendRgb(rgb, { r: 255, g: 255, b: 255 }, 0.34);
+  } else if (lum < 0.3) {
+    borderRgb = blendRgb(rgb, { r: 255, g: 255, b: 255 }, 0.22);
+  } else if (lum > 0.78) {
+    borderRgb = blendRgb(rgb, { r: 15, g: 23, b: 42 }, 0.18);
+  } else {
+    borderRgb = isDarkTheme
+      ? blendRgb(rgb, { r: 255, g: 255, b: 255 }, 0.14)
+      : blendRgb(rgb, { r: 15, g: 23, b: 42 }, 0.12);
+  }
 
   badgeEl.style.setProperty("--pro-badge-fg", fg);
   badgeEl.style.setProperty("--pro-badge-border", rgbToCss(borderRgb));
@@ -178,8 +183,6 @@ export function renderProBadgesFromConfig(config, t) {
     btn.className = "pro-badge active:scale-95";
 
     inlineWrap.appendChild(btn);
-
-    // Применяем адаптивные цвета после вставки в DOM.
     requestAnimationFrame(() => applyProBadgeAdaptiveColors(btn));
   });
 
