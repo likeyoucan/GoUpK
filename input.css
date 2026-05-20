@@ -2840,8 +2840,8 @@
   @media (hover: hover) and (pointer: fine) {
     #setting-row-accent .color-btn:hover,
     #setting-row-bg .color-btn:hover {
-      transform: scale(1.08);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+      transform: scale(1.06);
+      box-shadow: 0 2px 8px rgb(0 0 0 / 0.14);
     }
 
     #setting-row-accent .color-swatch-wrapper.ring-2 .color-btn:hover,
@@ -2851,7 +2851,7 @@
       box-shadow:
         0 0 0 2px var(--surface-color),
         0 0 0 4px var(--primary-color),
-        0 5px 14px rgb(0 0 0 / 0.22);
+        0 3px 10px rgb(0 0 0 / 0.16);
     }
   }
 
