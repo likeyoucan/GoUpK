@@ -567,6 +567,7 @@
   .scroll-panel {
     overflow-y: auto;
     overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
   }
 
   .custom-focus:focus-visible {
@@ -1415,16 +1416,26 @@
     justify-content: center;
     container-type: size;
     container-name: timer-ring;
-    overflow: visible;
+    overflow: hidden;
+  }
+
+  #sw-startStopBtn,
+  #tm-circleBtn,
+  #tb-startBtn {
+    max-inline-size: 100%;
+    max-block-size: 100%;
   }
 
   .timer-display {
+    display: block;
     font-size: clamp(2rem, min(22cqi, 22cqb), 2.7rem);
     line-height: 0.95;
     letter-spacing: -0.04em;
     white-space: nowrap;
-    max-inline-size: 90%;
+    max-inline-size: calc(100% - 24px);
+    overflow: hidden;
     text-overflow: clip;
+    text-align: center;
     transition:
       font-size var(--dur-short) var(--ease-standard),
       color var(--dur-short) ease,
@@ -1439,7 +1450,9 @@
     padding-right: 0.04em;
   }
 
-  #sw-mainDisplay {
+  #sw-mainDisplay,
+  #tm-mainDisplay,
+  #tb-mainTimer {
     display: inline-block;
     min-inline-size: 8ch;
     text-align: center;
@@ -1607,6 +1620,12 @@
   #tb-modal-form {
     scrollbar-gutter: stable;
     touch-action: pan-y;
+  }
+
+  #sw-sessionsList [data-template="lapsContainer"] {
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
   }
 
   /* COMMON CONTROLS */
@@ -2600,45 +2619,46 @@
   }
 
   .pro-badge {
+    --pro-fill: color-mix(
+      in srgb,
+      var(--pro-bg-light) 88%,
+      var(--primary-color) 12%
+    );
+    --pro-text: var(--pro-fg-light);
+
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 14px;
-    padding: 2px 4px;
-    border-radius: 4px;
-
-    font-size: 8px;
+    min-height: 16px;
+    padding: 2px 6px;
+    border-radius: 6px;
+    font-size: 9px;
     font-style: italic;
-    font-weight: 600;
+    font-weight: 700;
     text-transform: uppercase;
     line-height: 1;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.03em;
     white-space: nowrap;
-    vertical-align: middle;
 
-    color: #f8fafc;
-    text-shadow: 0 1px 1px rgb(0 0 0 / 0.22);
-    background-color: var(--pro-badge-bg-light);
-    border: 1px solid
-      color-mix(in srgb, var(--pro-badge-fg-light) 20%, transparent);
-    box-shadow: 0 1px 2px rgb(0 0 0 / 0.18);
-
-    transform: none;
-    cursor: pointer;
-    user-select: none;
+    color: var(--pro-text);
+    background-color: var(--pro-fill);
+    border: 1px solid color-mix(in srgb, var(--pro-text) 22%, transparent);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.2);
+    text-shadow: none;
     transition:
       background-color var(--dur-short) ease,
       color var(--dur-short) ease,
       border-color var(--dur-short) ease,
-      box-shadow var(--dur-short) ease,
-      filter var(--dur-short) ease;
+      box-shadow var(--dur-short) ease;
   }
 
   html.dark .pro-badge {
-    color: #111827;
-    background-color: var(--pro-badge-bg-dark);
-    border-color: color-mix(in srgb, var(--pro-badge-fg-dark) 18%, transparent);
-    text-shadow: none;
+    --pro-fill: color-mix(
+      in srgb,
+      var(--pro-bg-dark) 88%,
+      var(--primary-color) 12%
+    );
+    --pro-text: var(--pro-fg-dark);
   }
 
   body.force-light-text .pro-badge {
@@ -2655,13 +2675,6 @@
     color: var(--pro-badge-fg-dark);
     background-color: var(--pro-badge-bg-dark);
     border-color: color-mix(in srgb, var(--pro-badge-fg-dark) 18%, transparent);
-  }
-
-  @media (hover: hover) and (pointer: fine) {
-    .color-btn:hover {
-      transform: scale(1.07);
-      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.18) !important;
-    }
   }
 
   .pro-cta {
@@ -2824,15 +2837,16 @@
   /* Desktop-only hover for color swatches */
   @media (hover: hover) and (pointer: fine) {
     .color-btn:hover {
-      transform: scale(1.08);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18) !important;
+      transform: scale(1.06);
+      box-shadow: 0 2px 8px rgb(0 0 0 / 0.14) !important;
     }
+
     .color-swatch-wrapper.ring-2 .color-btn:hover,
     .color-picker-wrapper.ring-2 .color-btn:hover {
       box-shadow:
         0 0 0 2px var(--surface-color),
         0 0 0 4px var(--primary-color),
-        0 5px 14px rgb(0 0 0 / 0.22) !important;
+        0 3px 10px rgb(0 0 0 / 0.16) !important;
     }
   }
 
