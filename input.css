@@ -2867,6 +2867,13 @@
   #tb-modal,
   #sw-sessions-modal {
     will-change: transform;
+    touch-action: none;
+  }
+
+  #sw-modal-handler,
+  #tb-modal-handler {
+    touch-action: none;
+    overscroll-behavior: contain;
   }
 
   #reset-modal-content,
