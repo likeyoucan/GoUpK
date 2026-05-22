@@ -1671,6 +1671,21 @@
     background-color: color-mix(in srgb, #ffffff 10%, transparent);
   }
 
+  /* Saved results: Light + Glass */
+  html:not(.dark).glass-effect .sw-session-details {
+    background-color: color-mix(in srgb, #e5e7eb 20%, transparent);
+  }
+
+  html:not(.dark).glass-effect .sw-session-laps {
+    background-color: color-mix(in srgb, #e5e7eb 26%, transparent);
+    border-color: color-mix(in srgb, var(--text-color) 10%, transparent);
+  }
+
+  /* Строки кругов в сохраненной сессии чуть контрастнее контейнера */
+  html:not(.dark).glass-effect .sw-session-laps > div {
+    background-color: color-mix(in srgb, #f3f4f6 42%, transparent);
+  }
+
   /* COMMON CONTROLS */
   .select-wrapper {
     min-width: 120px;
@@ -2036,6 +2051,32 @@
     box-shadow:
       inset 0 1px 1px rgb(255 255 255 / 0.05),
       0 2px 4px rgb(0 0 0 / 0.2);
+  }
+
+  /* Light + Glass: общий слой кругов */
+  html:not(.dark).glass-effect .lap-row {
+    background-color: color-mix(in srgb, var(--surface-color) 72%, transparent);
+    border-color: color-mix(in srgb, var(--text-color) 12%, transparent);
+    box-shadow:
+      inset 0 1px 1px rgb(255 255 255 / 0.38),
+      0 1px 3px rgb(0 0 0 / 0.05);
+  }
+
+  /* Light + Glass: последний круг (is-latest) мягко, но читаемо */
+  html:not(.dark).glass-effect .lap-row.is-latest {
+    background-color: color-mix(in srgb, var(--primary-color) 10%, #ffffff 90%);
+    border-color: color-mix(
+      in srgb,
+      var(--primary-color) 30%,
+      var(--border-color)
+    );
+    box-shadow:
+      inset 0 1px 1px rgb(255 255 255 / 0.5),
+      0 2px 6px rgb(0 0 0 / 0.07);
+  }
+
+  html:not(.dark).glass-effect .lap-row .split-time.split-time-latest {
+    color: color-mix(in srgb, var(--primary-color) 82%, var(--text-color));
   }
 
   .glass-effect .app-text,
