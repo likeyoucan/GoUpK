@@ -1647,12 +1647,14 @@
   #tb-modal-form {
     scrollbar-gutter: stable;
     touch-action: pan-y;
+    overflow-y: auto;
   }
 
   #sw-sessionsList [data-template="lapsContainer"] {
     touch-action: pan-y;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-y: contain;
+    overflow-y: auto;
   }
 
   .sw-session-details {
@@ -2871,7 +2873,7 @@
 
   #sw-modal-handler,
   #tb-modal-handler {
-    touch-action: none;
+    touch-action: pan-y;
     overscroll-behavior: contain;
   }
 
