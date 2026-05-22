@@ -225,7 +225,6 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     display: flex;
-    flex-direction: column; /* <--- ДОБАВИТЬ ЭТО */
     align-items: center;
     justify-content: center;
     overflow: hidden;
@@ -301,11 +300,7 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    
-
-        height: 100%;     /* <--- БЫЛО 100dvh, СТАЛО 100% */
-    flex: 1 1 auto;   /* <--- ДОБАВИТЬ ЭТО */
-    min-height: 0;    /* <--- ДОБАВИТЬ ЭТО */
+    height: 100dvh;
     width: 100%;
     max-width: 100%;
     border-radius: 0;
@@ -2906,36 +2901,17 @@
   }
 
   #app-ad-slot {
+    position: fixed;
+    top: calc(var(--safe-top) + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(96vw, 720px);
+    z-index: 140;
     pointer-events: auto;
-    margin: 0 auto;
-    transition: opacity 0.3s ease;
   }
 
-  /* ДЛЯ БОЛЬШИХ ЭКРАНОВ (ПК и широкие планшеты) */
-  @media (min-width: 1281px) and (orientation: landscape) {
-    #app-ad-slot {
-      position: fixed; /* Вырываем из потока, чтобы не мешала центрировать #app */
-      top: 16px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: calc(100% - 32px);
-      max-width: 720px;
-      border-bottom: none;
-      border: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
-      border-radius: 12px;
-      z-index: 200;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-    }
-
-    /* Добавляем эффект стекла для рекламы на десктопе, если включена тема */
-    .glass-effect #app-ad-slot {
-      backdrop-filter: blur(12px) saturate(150%);
-      background-color: color-mix(
-        in srgb,
-        var(--surface-color) 60%,
-        transparent
-      );
-    }
+  #app-ad-slot.hidden {
+    display: none;
   }
 
   #app-ad-slot > .ad-placeholder {
