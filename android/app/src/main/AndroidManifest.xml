@@ -1,3 +1,4 @@
+<!-- Файл: android/app/src/main/AndroidManifest.xml -->
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
@@ -40,18 +41,21 @@
             </intent-filter>
         </activity>
 
-        <!-- Capawesome Foreground Service -->
+        <!-- Custom foreground notification actions -->
         <receiver
-            android:name="io.capawesome.capacitorjs.plugins.foregroundservice.NotificationActionBroadcastReceiver"
+            android:name=".ForegroundActionReceiver"
+            android:enabled="true"
             android:exported="false" />
 
+        <!-- Custom foreground service -->
         <service
-            android:name="io.capawesome.capacitorjs.plugins.foregroundservice.AndroidForegroundService"
+            android:name=".AppForegroundService"
+            android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="specialUse">
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="User-started timer/stopwatch/tabata session with ongoing notification and play/stop controls" />
+                android:value="User-started timer/stopwatch/tabata session with ongoing notification and controls" />
         </service>
 
         <!-- Alarm receiver for exact timer completion -->

@@ -9,7 +9,7 @@ concurrency:
 
 on:
   push:
-    branches: ["main", "an_11"]
+    branches: ["main", "an_12"]
   workflow_dispatch:
 
 permissions:

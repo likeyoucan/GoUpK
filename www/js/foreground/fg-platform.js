@@ -30,8 +30,11 @@ export function getPlugins() {
   const allPlugins = window.Capacitor?.Plugins || {};
   const App = allPlugins.App || null;
 
-  // Important: plugin key may differ across versions/builds.
+  // Priority:
+  // 1) Custom native plugin (Variant B)
+  // 2) Capawesome plugin fallbacks (legacy compatibility)
   const FgService =
+    allPlugins.CustomForegroundService ||
     allPlugins.ForegroundService ||
     allPlugins.AndroidForegroundService ||
     allPlugins.CapacitorAndroidForegroundService;
