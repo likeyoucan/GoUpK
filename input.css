@@ -2023,12 +2023,12 @@
       0 8px 32px rgb(0 0 0 / 0.3);
   }
 
-  .glass-effect .lap-row:first-child {
+  .glass-effect .lap-row:first-child:not(.is-latest) {
     background-color: rgb(0 0 0 / 0.08);
     box-shadow: none;
   }
 
-  .dark.glass-effect .lap-row:first-child {
+  .dark.glass-effect .lap-row:first-child:not(.is-latest) {
     background-color: rgb(255 255 255 / 0.1);
     box-shadow: none;
   }
@@ -2599,11 +2599,6 @@
   }
 
   #view-settings .app-surface {
-    overflow: visible;
-  }
-
-  #setting-row-accent,
-  #setting-row-bg {
     overflow: visible;
   }
 
