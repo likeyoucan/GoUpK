@@ -1653,7 +1653,7 @@
   #sw-sessionsList [data-template="lapsContainer"] {
     touch-action: pan-y;
     -webkit-overflow-scrolling: touch;
-    overscroll-behavior-y: contain;
+    overscroll-behavior-y: auto;
     overflow-y: auto;
   }
 
