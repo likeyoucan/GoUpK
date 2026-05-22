@@ -1681,6 +1681,22 @@
     border-color: color-mix(in srgb, var(--text-color) 10%, transparent);
   }
 
+  /* Saved results: inner rounding for rows */
+  html:not(.dark).glass-effect .sw-session-laps > div {
+    border-radius: 0.6rem;
+  }
+
+  html:not(.dark).glass-effect .sw-session-laps > div + div {
+    margin-top: 0.3rem;
+  }
+
+  html.dark.glass-effect .sw-session-laps > div {
+    border-radius: 0.6rem;
+  }
+  html.dark.glass-effect .sw-session-laps > div + div {
+    margin-top: 0.3rem;
+  }
+
   /* Строки кругов в сохраненной сессии чуть контрастнее контейнера */
   html:not(.dark).glass-effect .sw-session-laps > div {
     background-color: color-mix(in srgb, #f3f4f6 42%, transparent);
