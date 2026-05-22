@@ -2901,12 +2901,6 @@
   }
 
   #app-ad-slot {
-    position: fixed;
-    top: calc(var(--safe-top) + 8px);
-    left: 50%;
-    transform: translateX(-50%);
-    width: min(96vw, 720px);
-    z-index: 140;
     pointer-events: auto;
   }
 
