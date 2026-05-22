@@ -2867,7 +2867,6 @@
   #tb-modal,
   #sw-sessions-modal {
     will-change: transform;
-    touch-action: none;
   }
 
   #sw-modal-handler,
