@@ -274,6 +274,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
 
     updateText(tm.els.display, "GO");
     tm.els.display?.classList.add("is-go");
+    if (tm.els.display) tm.els.display.style.transform = "";
   };
 
   tm.bindCoreEvents = () => {

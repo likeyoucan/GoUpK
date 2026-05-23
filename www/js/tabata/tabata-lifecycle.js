@@ -156,6 +156,7 @@ export function setupTabataLifecycle(tb, deps) {
 
     updateText(tb.els.timer, "GO");
     tb.els.timer.classList.add("is-go");
+    tb.els.timer.style.transform = "";
 
     if (resetRing) {
       tb.ringCtrl?.snap(tb.ringLength);

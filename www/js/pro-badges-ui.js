@@ -90,38 +90,7 @@ function rgbToCss({ r, g, b }) {
 
 function applyProBadgeAdaptiveColors(badgeEl) {
   if (!(badgeEl instanceof HTMLElement)) return;
-
-  const root = document.documentElement;
-  const accent = getComputedStyle(root)
-    .getPropertyValue("--primary-color")
-    .trim();
-
-  // Фон бейджа зависит от текущего акцента.
-  badgeEl.style.setProperty(
-    "--pro-badge-bg",
-    `color-mix(in srgb, ${accent} 72%, #111827 28%)`,
-  );
-
-  const bgColor = getComputedStyle(badgeEl).backgroundColor;
-  const rgb = parseRgbString(bgColor);
-  if (!rgb) return;
-
-  const lum = relativeLuminance(rgb);
-
-  // Контрастный текст без отдельной dark/light ветки
-  const fg = lum > 0.56 ? "#111827" : "#ffffff";
-
-  let borderRgb;
-  if (lum < 0.16) {
-    borderRgb = blendRgb(rgb, { r: 255, g: 255, b: 255 }, 0.3);
-  } else if (lum > 0.78) {
-    borderRgb = blendRgb(rgb, { r: 15, g: 23, b: 42 }, 0.22);
-  } else {
-    borderRgb = blendRgb(rgb, { r: 15, g: 23, b: 42 }, 0.12);
-  }
-
-  badgeEl.style.setProperty("--pro-badge-fg", fg);
-  badgeEl.style.setProperty("--pro-badge-border", rgbToCss(borderRgb));
+  // Цвета фона/рамки/анимация теперь полностью в CSS через --primary-color.
 }
 
 function refreshInjectedBadges() {
