@@ -15,6 +15,8 @@ export const STORAGE_KEYS = {
   TB_WORKOUTS: "tb_workouts",
   TB_SELECTED_ID: "tb_selected_id",
 
+  APP_ICON_NAME: "app_icon_name",
+
   APP_SOUND: "app_sound",
   APP_VIBRO: "app_vibro",
   APP_VIBRO_LEVEL: "app_vibro_level",

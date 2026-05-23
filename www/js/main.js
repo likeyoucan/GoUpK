@@ -30,6 +30,7 @@ import { APP_MONETIZATION_CONFIG } from "./app-monetization-config.js?v=VERSION"
 import { initProUi } from "./pro-ui.js?v=VERSION";
 import { APP_EVENTS } from "./constants/events.js?v=VERSION";
 import { STORAGE_KEYS } from "./constants/storage-keys.js?v=VERSION";
+import { initAppIconSelector } from "./app-icon-selector.js?v=VERSION";
 
 const ERUDA_CDN_MARKER = "cdn.jsdelivr.net/npm/eruda";
 const OPTIONAL_RESOURCE_MARKERS = [ERUDA_CDN_MARKER, "/js/eruda.js"];
@@ -247,6 +248,11 @@ async function bootstrap() {
     appProManager,
     config: APP_MONETIZATION_CONFIG,
     showToast,
+  });
+
+  initAppIconSelector({
+    t,
+    appProManager,
   });
 
   document.addEventListener("visibilitychange", () => {

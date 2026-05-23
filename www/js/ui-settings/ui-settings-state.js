@@ -6,6 +6,7 @@ import { STORAGE_KEYS } from "../constants/storage-keys.js?v=VERSION";
 export const UI_SETTINGS_KEYS = {
   fontSize: STORAGE_KEYS.FONT_SIZE,
   adaptiveBg: STORAGE_KEYS.APP_ADAPTIVE_BG,
+  appIcon: STORAGE_KEYS.APP_ICON_NAME,
   vignette: STORAGE_KEYS.APP_VIGNETTE,
   vignetteAlpha: STORAGE_KEYS.APP_VIGNETTE_ALPHA,
   liquidGlass: STORAGE_KEYS.APP_LIQUID_GLASS,

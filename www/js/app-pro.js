@@ -201,11 +201,19 @@ export const appProManager = {
     const isPro = !!this.purchased;
     document.documentElement.classList.toggle("is-pro-user", isPro);
 
+    const preferred = safeGetLS(STORAGE_KEYS.APP_ICON_NAME) || "default";
+    const normalized = preferred === "pro" ? "pro" : "default";
+
+    const canUseCustomIcon = this.canUse("app_icon");
+    const finalIcon = canUseCustomIcon ? normalized : "default";
+
+    if (!canUseCustomIcon && normalized !== "default") {
+      safeSetLS(STORAGE_KEYS.APP_ICON_NAME, "default");
+    }
+
     const iconPlugin = window.Capacitor?.Plugins?.AppIconSwitcher;
     if (iconPlugin?.setIconName) {
-      iconPlugin
-        .setIconName({ name: isPro ? "pro" : "default" })
-        .catch(() => {});
+      iconPlugin.setIconName({ name: finalIcon }).catch(() => {});
     }
   },
 };

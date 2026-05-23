@@ -3235,6 +3235,61 @@
     }
   }
 
+  #setting-row-app-icon {
+    overflow: visible;
+  }
+
+  #app-icon-options {
+    min-height: 5.5rem;
+    overscroll-behavior-x: contain;
+    touch-action: pan-x;
+  }
+
+  .app-icon-option {
+    width: 92px;
+    flex: 0 0 auto;
+    border-radius: 14px;
+    border: 1px solid color-mix(in srgb, var(--border-color) 78%, transparent);
+    background: color-mix(in srgb, var(--text-color) 4%, transparent);
+    padding: 8px 8px 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    transition:
+      transform var(--dur-short) var(--ease-standard),
+      border-color var(--dur-short) ease;
+  }
+
+  .app-icon-option:active {
+    transform: scale(0.96);
+  }
+
+  .app-icon-option.is-selected {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px
+      color-mix(in srgb, var(--primary-color) 30%, transparent);
+  }
+
+  .app-icon-option.is-locked {
+    opacity: 0.6;
+  }
+
+  .app-icon-preview {
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    object-fit: cover;
+    box-shadow: 0 2px 8px rgb(0 0 0 / 0.2);
+  }
+
+  .app-icon-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+
   @media (hover: none) {
     .settings-action-btn:hover,
     .tb-del-btn:hover,

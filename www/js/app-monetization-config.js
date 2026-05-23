@@ -197,6 +197,7 @@ export const APP_MONETIZATION_CONFIG = {
   proBadges: [
     { selector: "#setting-row-accent", feature: "accent_bg" },
     { selector: "#setting-row-bg", feature: "accent_bg" },
+    { selector: "#setting-row-app-icon", feature: "app_icon" },
     { selector: "#setting-row-sound-theme", feature: "sound_themes" },
     { selector: "#setting-row-ads", feature: "remove_ads" },
   ],
