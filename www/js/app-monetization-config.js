@@ -161,56 +161,91 @@ Lifetime:
 
 */
 
-/*
-  Central monetization config:
-  - Pro mode and feature gates
-  - Ads default
-  - JS-side ad scenarios (banner mode + interstitial triggers)
-*/
+export const APP_MONETIZATION_CONFIG = {
+  pro: {
+    enabled: true,
+    forcePurchased: false, // null | true | false
+    mode: "lifetime", // subscription | lifetime | disabled
 
-ui: {
+    features: {
+      custom_colors: true,
+      accent_bg: true,
+      remove_ads: true,
+      sound_themes: true,
+      app_icon: true,
+    },
+
+    pricing: {
+      currency: "RUB", // RUB | USD | EUR ...
+      currencySymbol: "₽", // символ для UI
+      amount: 990, // базовая цена
+      period: null, // "month" | "year" | null (null для lifetime)
+      discountEnabled: true,
+      discountPercent: 40, // 0..99
+    },
+  },
+
   ads: {
-    desktopFixedFromWidth: 1281, // >= этого брейкпоинта баннер fixed
-    desktopFixedTopOffsetPx: 8,
-    desktopFixedWidth: "min(96vw, 720px)",
+    enabledByDefault: true,
+    autoDisableOnProPurchase: true,
+    defaultProvider: "yandex", // yandex | admob | mediation
+    aggregator: "mediation",
+    strategy: "banner+interstitial",
+    interstitialCooldownMs: 5 * 60 * 1000,
   },
 
-  preload: {
-    showIconLabel: false, // глобально показывать подпись в preload
-    showLabelOnlyForProPurchase: true, // если true: подпись только при купленном Pro
-    proPurchasedLabelMode: "pro_word", // "icon_label" | "pro_word"
-    hideLabelWhenEmpty: true,
-  },
+  proBadges: [
+    { selector: "#setting-row-accent", feature: "accent_bg" },
+    { selector: "#setting-row-bg", feature: "accent_bg" },
+    { selector: "#setting-row-app-icon", feature: "app_icon" },
+    { selector: "#setting-row-sound-theme", feature: "sound_themes" },
+    { selector: "#setting-row-ads", feature: "remove_ads" },
+  ],
 
-  appIcons: {
-    fallbackImage: "img/app_img.png",
-    preloadTimeoutMs: 3000,
-    options: [
-      {
-        id: "default",
-        nativeName: "default",
-        image: "img/app_img.png",
-        labelKey: "app_icon_default",
-        proRequired: false,
-      },
-      {
-        id: "pro",
-        nativeName: "pro",
-        image: "img/app_img.png",
-        labelKey: "app_icon_pro",
-        proRequired: true,
-      },
-      {
-        id: "pro_1",
-        nativeName: "pro_1",
-        image: "img/app_img.png",
-        labelKey: "app_icon_pro_1",
-        proRequired: true,
-        labels: {
-          en: "Pro One",
-          ru: "Про 1",
+  ui: {
+    ads: {
+      desktopFixedFromWidth: 1281, // >= этого брейкпоинта баннер fixed
+      desktopFixedTopOffsetPx: 8,
+      desktopFixedWidth: "min(96vw, 720px)",
+    },
+
+    preload: {
+      showIconLabel: false, // глобально показывать подпись в preload
+      showLabelOnlyForProPurchase: true, // если true: подпись только при купленном Pro
+      proPurchasedLabelMode: "pro_word", // "icon_label" | "pro_word"
+      hideLabelWhenEmpty: true,
+    },
+
+    appIcons: {
+      fallbackImage: "img/app_img.png",
+      preloadTimeoutMs: 3000,
+      options: [
+        {
+          id: "default",
+          nativeName: "default",
+          image: "img/app_img.png",
+          labelKey: "app_icon_default",
+          proRequired: false,
         },
-      },
-    ],
+        {
+          id: "pro",
+          nativeName: "pro",
+          image: "img/app_img.png",
+          labelKey: "app_icon_pro",
+          proRequired: true,
+        },
+        {
+          id: "pro_1",
+          nativeName: "pro_1",
+          image: "img/app_img.png",
+          labelKey: "app_icon_pro_1",
+          proRequired: true,
+          labels: {
+            en: "Pro One",
+            ru: "Про 1",
+          },
+        },
+      ],
+    },
   },
-},
+};
