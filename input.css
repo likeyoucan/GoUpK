@@ -715,6 +715,15 @@
     animation: preloader-pulse 1.4s ease-in-out infinite;
   }
 
+  .app-preloader-icon-name {
+    display: block;
+    text-align: center;
+    line-height: 1.2;
+    opacity: 0.78;
+    letter-spacing: 0.02em;
+    max-width: 80vw;
+  }
+
   @media (min-width: 768px) {
     #app-preloader-icon {
       width: clamp(88px, 12vmin, 144px);
@@ -1605,6 +1614,26 @@
   html.dark.no-adaptive #sw-lapsContainer .lap-row:first-child {
     background-color: color-mix(in srgb, #ffffff 13%, transparent);
     border-color: color-mix(in srgb, #ffffff 30%, transparent);
+  }
+
+  #sw-lapsContainer.laps-table-mode {
+    border: 1px solid color-mix(in srgb, var(--border-color) 88%, transparent);
+    border-radius: 14px;
+    overflow: hidden;
+    background-color: color-mix(in srgb, var(--surface-color) 92%, transparent);
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  #sw-lapsContainer.laps-table-mode .lap-row {
+    margin-top: 0 !important;
+    border-radius: 0 !important;
+    border-bottom: 1px solid
+      color-mix(in srgb, var(--border-color) 88%, transparent);
+  }
+
+  #sw-lapsContainer.laps-table-mode .lap-row:last-child {
+    border-bottom: 0;
   }
 
   .lap-row.is-latest {
@@ -2957,13 +2986,15 @@
   }
 
   #app-ad-slot {
-    position: fixed;
-    top: calc(var(--safe-top) + 8px);
-    left: 50%;
-    transform: translateX(-50%);
-    width: min(96vw, 720px);
-    z-index: 140;
+    position: relative;
+    top: auto;
+    left: auto;
+    transform: none;
+    width: 100%;
+    max-width: 100%;
+    z-index: 1;
     pointer-events: auto;
+    flex: 0 0 auto;
   }
 
   #app-ad-slot.hidden {
@@ -2992,11 +3023,19 @@
     color: color-mix(in srgb, #ffffff 68%, transparent);
   }
 
-  @media (max-width: 420px) {
-    #app-ad-slot {
-      width: calc(100vw - 12px);
-    }
+  #app-ad-slot > * {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
 
+  @media (min-width: 1281px) {
+    #app-ad-slot > * {
+      width: auto !important;
+      max-width: none !important;
+    }
+  }
+
+  @media (max-width: 420px) {
     #app-ad-slot > .ad-placeholder {
       min-height: 34px;
       font-size: 10px;

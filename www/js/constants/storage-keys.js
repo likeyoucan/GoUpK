@@ -38,6 +38,8 @@ export const STORAGE_KEYS = {
   // Ads
   APP_ADS_ENABLED: "app_ads_enabled",
   APP_ADS_PROVIDER: "app_ads_provider",
+  APP_ADS_BANNER_MODE: "app_ads_banner_mode", // always | off
+  APP_ADS_INTERSTITIAL_TRIGGERS: "app_ads_interstitial_triggers", // JSON map
   APP_ADS_INTERSTITIAL_COOLDOWN_MS: "app_ads_interstitial_cooldown_ms",
   APP_ADS_LAST_INTERSTITIAL_AT: "app_ads_last_interstitial_at",
 

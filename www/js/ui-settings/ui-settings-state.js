@@ -3,6 +3,29 @@
 import { safeGetLS, safeRemoveLS } from "../utils.js?v=VERSION";
 import { STORAGE_KEYS } from "../constants/storage-keys.js?v=VERSION";
 
+const DEFAULT_INTERSTITIAL_TRIGGERS = {
+  app_start: true,
+  app_close: false,
+  share: false,
+  save_result: false,
+  timer_start: false,
+  timer_complete: true,
+  tabata_complete: true,
+};
+
+function parseTriggers(raw) {
+  if (!raw) return { ...DEFAULT_INTERSTITIAL_TRIGGERS };
+  try {
+    const parsed = JSON.parse(raw);
+    return {
+      ...DEFAULT_INTERSTITIAL_TRIGGERS,
+      ...(parsed && typeof parsed === "object" ? parsed : {}),
+    };
+  } catch {
+    return { ...DEFAULT_INTERSTITIAL_TRIGGERS };
+  }
+}
+
 export const UI_SETTINGS_KEYS = {
   fontSize: STORAGE_KEYS.FONT_SIZE,
   adaptiveBg: STORAGE_KEYS.APP_ADAPTIVE_BG,
@@ -19,6 +42,8 @@ export const UI_SETTINGS_KEYS = {
   // Ads
   adsEnabled: STORAGE_KEYS.APP_ADS_ENABLED,
   adsProvider: STORAGE_KEYS.APP_ADS_PROVIDER,
+  adsBannerMode: STORAGE_KEYS.APP_ADS_BANNER_MODE,
+  adsInterstitialTriggers: STORAGE_KEYS.APP_ADS_INTERSTITIAL_TRIGGERS,
 };
 
 export function createUiSettingsState() {
@@ -37,6 +62,8 @@ export function createUiSettingsState() {
     // Ads
     adsEnabled: true,
     adsProvider: "yandex",
+    adsBannerMode: "always",
+    adsInterstitialTriggers: { ...DEFAULT_INTERSTITIAL_TRIGGERS },
 
     lastSliderValues: {},
 
@@ -76,6 +103,13 @@ export function loadUiSettingsFromStorage(state) {
   // Ads
   state.adsEnabled = safeGetLS(UI_SETTINGS_KEYS.adsEnabled) !== "false";
   state.adsProvider = safeGetLS(UI_SETTINGS_KEYS.adsProvider) || "yandex";
+
+  const bannerMode = safeGetLS(UI_SETTINGS_KEYS.adsBannerMode) || "always";
+  state.adsBannerMode = bannerMode === "off" ? "off" : "always";
+
+  state.adsInterstitialTriggers = parseTriggers(
+    safeGetLS(UI_SETTINGS_KEYS.adsInterstitialTriggers),
+  );
 }
 
 export function resetUiSettingsStorage() {

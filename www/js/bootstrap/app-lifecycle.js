@@ -25,10 +25,12 @@ function bindPreloaderLifecycle(preload) {
 function bindForegroundLifecycle({
   initForegroundService,
   destroyForegroundService,
+  adsManager,
 }) {
   initForegroundService();
 
   const onBeforeUnload = () => {
+    adsManager?.showInterstitialIfAllowed?.("app_close");
     destroyForegroundService();
   };
 
@@ -39,7 +41,7 @@ function bindForegroundLifecycle({
   };
 }
 
-function bindCapacitorLifecycle({ modalManager, navigation }) {
+function bindCapacitorLifecycle({ modalManager, navigation, adsManager }) {
   if (!(window.Capacitor && window.Capacitor.isNativePlatform())) {
     return () => {};
   }
@@ -52,6 +54,7 @@ function bindCapacitorLifecycle({ modalManager, navigation }) {
   }
 
   let backHandle = null;
+  let appStateHandle = null;
 
   if (App?.addListener) {
     backHandle = App.addListener("backButton", () => {
@@ -63,10 +66,21 @@ function bindCapacitorLifecycle({ modalManager, navigation }) {
         App.minimizeApp();
       }
     });
+
+    // Treat app background/minimize as app_close monetization scenario.
+    appStateHandle = App.addListener("appStateChange", ({ isActive }) => {
+      if (isActive === false) {
+        adsManager?.showInterstitialIfAllowed?.("app_close");
+      }
+    });
   }
 
   return () => {
     Promise.resolve(backHandle)
+      .then((h) => h?.remove?.())
+      .catch(() => {});
+
+    Promise.resolve(appStateHandle)
       .then((h) => h?.remove?.())
       .catch(() => {});
   };
@@ -78,6 +92,7 @@ export function bindAppLifecycle({
   destroyForegroundService,
   modalManager,
   navigation,
+  adsManager,
 }) {
   preload.show();
 
@@ -85,8 +100,13 @@ export function bindAppLifecycle({
   const unbindForeground = bindForegroundLifecycle({
     initForegroundService,
     destroyForegroundService,
+    adsManager,
   });
-  const unbindCapacitor = bindCapacitorLifecycle({ modalManager, navigation });
+  const unbindCapacitor = bindCapacitorLifecycle({
+    modalManager,
+    navigation,
+    adsManager,
+  });
 
   return () => {
     unbindPreloader?.();

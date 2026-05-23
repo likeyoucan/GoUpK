@@ -13,6 +13,7 @@ import { modalManager } from "../modal.js?v=VERSION";
 import { CustomSelect } from "../custom-select.js?v=VERSION";
 import { APP_EVENTS } from "../constants/events.js?v=VERSION";
 import { STORAGE_KEYS } from "../constants/storage-keys.js?v=VERSION";
+import { adsManager } from "../ads.js?v=VERSION";
 
 export function setupStopwatchSessions(sw) {
   try {
@@ -152,6 +153,9 @@ export function setupStopwatchSessions(sw) {
         JSON.stringify(sw.savedSessions),
       );
       showToast(t("session_saved"));
+
+      // Interstitial scenario: save result
+      adsManager.showInterstitialIfAllowed("save_result");
     } else if (sw.nameModalState.action === "rename") {
       const session = sw.savedSessions.find(
         (s) => s.id === sw.nameModalState.targetId,

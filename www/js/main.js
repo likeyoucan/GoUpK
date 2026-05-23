@@ -30,7 +30,10 @@ import { APP_MONETIZATION_CONFIG } from "./app-monetization-config.js?v=VERSION"
 import { initProUi } from "./pro-ui.js?v=VERSION";
 import { APP_EVENTS } from "./constants/events.js?v=VERSION";
 import { STORAGE_KEYS } from "./constants/storage-keys.js?v=VERSION";
-import { initAppIconSelector } from "./app-icon-selector.js?v=VERSION";
+import {
+  initAppIconSelector,
+  getResolvedAppIconMeta,
+} from "./app-icon-selector.js?v=VERSION";
 
 const ERUDA_CDN_MARKER = "cdn.jsdelivr.net/npm/eruda";
 const OPTIONAL_RESOURCE_MARKERS = [ERUDA_CDN_MARKER, "/js/eruda.js"];
@@ -185,6 +188,14 @@ function bindProAdsAutomation() {
   maybeAutoDisableAdsForPro(!!appProManager.purchased);
 }
 
+function syncPreloaderIconMeta() {
+  const iconMeta = getResolvedAppIconMeta(t, appProManager);
+  preload.setIconMeta({
+    src: iconMeta.src,
+    label: iconMeta.label,
+  });
+}
+
 let bootStarted = false;
 
 async function bootstrap() {
@@ -197,6 +208,8 @@ async function bootstrap() {
   await reconcileNativeTimerAlarm();
 
   await appProManager.init();
+
+  syncPreloaderIconMeta();
 
   initializeApp({
     applyPerformanceProfile,
@@ -219,6 +232,7 @@ async function bootstrap() {
   adsManager.init();
   adsManager.bindAutoRefresh();
   adsManager.bindLifecycleMonetization();
+  adsManager.showInterstitialIfAllowed("app_start");
 
   bindAppLifecycle({
     preload,
@@ -226,6 +240,7 @@ async function bootstrap() {
     destroyForegroundService,
     modalManager,
     navigation,
+    adsManager,
   });
 
   bindUiInteractions({
@@ -253,6 +268,13 @@ async function bootstrap() {
   initAppIconSelector({
     t,
     appProManager,
+  });
+
+  document.addEventListener(APP_EVENTS.APP_ICON_CHANGED, (e) => {
+    preload.setIconMeta({
+      src: e?.detail?.src,
+      label: e?.detail?.label,
+    });
   });
 
   document.addEventListener("visibilitychange", () => {

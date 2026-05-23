@@ -11,6 +11,17 @@ const DEFAULT_PROVIDER = "yandex"; // yandex | admob | mediation
 const PROVIDERS = new Set(["yandex", "admob", "mediation"]);
 const KNOWN_TIMER_IDS = new Set(["stopwatch", "timer", "tabata"]);
 
+const DEFAULT_BANNER_MODE = "always"; // always | off
+const DEFAULT_INTERSTITIAL_TRIGGERS = {
+  app_start: true,
+  app_close: false,
+  share: false,
+  save_result: false,
+  timer_start: false,
+  timer_complete: true,
+  tabata_complete: true,
+};
+
 function isNative() {
   return !!(window.Capacitor && window.Capacitor.isNativePlatform());
 }
@@ -47,10 +58,39 @@ function createWebPlaceholder(provider) {
   return wrap;
 }
 
+function normalizeBannerMode(mode) {
+  return mode === "off" ? "off" : DEFAULT_BANNER_MODE;
+}
+
+function parseInterstitialTriggers(raw) {
+  if (!raw) return { ...DEFAULT_INTERSTITIAL_TRIGGERS };
+  try {
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") {
+      return { ...DEFAULT_INTERSTITIAL_TRIGGERS };
+    }
+    return {
+      ...DEFAULT_INTERSTITIAL_TRIGGERS,
+      ...parsed,
+    };
+  } catch {
+    return { ...DEFAULT_INTERSTITIAL_TRIGGERS };
+  }
+}
+
+function persistInterstitialTriggers(map) {
+  safeSetLS(STORAGE_KEYS.APP_ADS_INTERSTITIAL_TRIGGERS, JSON.stringify(map));
+}
+
 export const adsManager = {
   enabled: true,
   provider: DEFAULT_PROVIDER,
   interstitialCooldownMs: DEFAULT_COOLDOWN_MS,
+
+  // New settings
+  bannerMode: DEFAULT_BANNER_MODE,
+  interstitialTriggers: { ...DEFAULT_INTERSTITIAL_TRIGGERS },
+
   bannerMounted: false,
   initialized: false,
 
@@ -96,6 +136,14 @@ export const adsManager = {
       DEFAULT_COOLDOWN_MS,
     );
 
+    this.bannerMode = normalizeBannerMode(
+      safeGetLS(STORAGE_KEYS.APP_ADS_BANNER_MODE) || DEFAULT_BANNER_MODE,
+    );
+
+    this.interstitialTriggers = parseInterstitialTriggers(
+      safeGetLS(STORAGE_KEYS.APP_ADS_INTERSTITIAL_TRIGGERS),
+    );
+
     this.initialized = true;
 
     if (isNative()) {
@@ -112,10 +160,10 @@ export const adsManager = {
   },
 
   bindAutoRefresh() {
-    document.addEventListener(APP_EVENTS.ACTIVE_TIMER_CHANGED, () =>
+    document.addEventListener(APP_EVENTS.ADS_SETTINGS_CHANGED, () =>
       this.renderBanner(),
     );
-    document.addEventListener(APP_EVENTS.ADS_SETTINGS_CHANGED, () =>
+    document.addEventListener(APP_EVENTS.ADS_BANNER_MODE_CHANGED, () =>
       this.renderBanner(),
     );
     document.addEventListener(APP_EVENTS.PRO_STATUS_CHANGED, () =>
@@ -124,7 +172,7 @@ export const adsManager = {
   },
 
   bindLifecycleMonetization() {
-    // Interstitial after timer/tabata completion (guarded by cooldown and active timer state)
+    // Completion hooks
     document.addEventListener(APP_EVENTS.TIMER_COMPLETED, () => {
       this.showInterstitialIfAllowed("timer_complete");
     });
@@ -132,10 +180,17 @@ export const adsManager = {
     document.addEventListener(APP_EVENTS.TABATA_COMPLETED, () => {
       this.showInterstitialIfAllowed("tabata_complete");
     });
+
+    // Timer start hook
+    document.addEventListener(APP_EVENTS.TIMER_STARTED, (e) => {
+      if (e?.detail === "timer") {
+        this.showInterstitialIfAllowed("timer_start");
+      }
+    });
   },
 
   setEnabled(next) {
-    // remove_ads is a Pro feature.
+    // remove_ads is a Pro feature
     const canDisableAds = appProManager.canUse("remove_ads");
     const finalValue = canDisableAds ? !!next : true;
 
@@ -163,7 +218,29 @@ export const adsManager = {
         .catch(() => {});
     }
 
+    this.renderBanner();
     dispatch(APP_EVENTS.ADS_SETTINGS_CHANGED, { provider });
+  },
+
+  setBannerMode(mode) {
+    this.bannerMode = normalizeBannerMode(mode);
+    safeSetLS(STORAGE_KEYS.APP_ADS_BANNER_MODE, this.bannerMode);
+
+    this.renderBanner();
+    dispatch(APP_EVENTS.ADS_BANNER_MODE_CHANGED, { mode: this.bannerMode });
+  },
+
+  setInterstitialTriggers(map = {}) {
+    this.interstitialTriggers = {
+      ...DEFAULT_INTERSTITIAL_TRIGGERS,
+      ...(map && typeof map === "object" ? map : {}),
+    };
+
+    persistInterstitialTriggers(this.interstitialTriggers);
+
+    dispatch(APP_EVENTS.ADS_INTERSTITIAL_TRIGGERS_CHANGED, {
+      triggers: { ...this.interstitialTriggers },
+    });
   },
 
   setInterstitialCooldown(ms) {
@@ -178,11 +255,7 @@ export const adsManager = {
 
   shouldShowBanner() {
     if (!this.shouldShowAds()) return false;
-
-    // Don't show banner while an active timer/stopwatch/tabata session is running.
-    const active = this.reconcileActiveTimerState();
-    if (active) return false;
-
+    if (this.bannerMode === "off") return false;
     return true;
   },
 
@@ -215,12 +288,13 @@ export const adsManager = {
     slot.replaceChildren();
 
     if (!isNative()) {
-      // Web placeholder for github pages/dev.
+      // Web placeholder for github pages/dev
       slot.appendChild(createWebPlaceholder(this.provider));
     } else {
+      // Banner is now part of app layout (inline top slot)
       getAdsPlugin()
         ?.showBanner?.({
-          placement: "main_bottom_banner",
+          placement: "inline_top_banner",
           provider: this.provider,
         })
         .catch(() => {});
@@ -229,12 +303,15 @@ export const adsManager = {
     dispatch(APP_EVENTS.ADS_BANNER_VISIBILITY_CHANGED, { visible: true });
   },
 
-  canShowInterstitial() {
-    if (!this.shouldShowAds()) return false;
+  isInterstitialTriggerEnabled(context) {
+    const key = String(context || "").trim();
+    if (!key) return false;
+    return !!this.interstitialTriggers?.[key];
+  },
 
-    // Never show interstitial while timer is active.
-    const active = this.reconcileActiveTimerState();
-    if (active) return false;
+  canShowInterstitial(context = "generic") {
+    if (!this.shouldShowAds()) return false;
+    if (!this.isInterstitialTriggerEnabled(context)) return false;
 
     const lastAt = readNumber(STORAGE_KEYS.APP_ADS_LAST_INTERSTITIAL_AT, 0);
     return nowMs() - lastAt >= this.interstitialCooldownMs;
@@ -245,7 +322,7 @@ export const adsManager = {
   },
 
   showInterstitialIfAllowed(context = "generic") {
-    if (!this.canShowInterstitial()) return false;
+    if (!this.canShowInterstitial(context)) return false;
     this.markInterstitialShown();
 
     if (!isNative()) {

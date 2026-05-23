@@ -48,6 +48,12 @@ function fitStopwatchDisplay(el) {
   el.style.transform = `scaleX(${clamped.toFixed(3)})`;
 }
 
+function setLapsTableMode(isActive) {
+  const container = $("sw-lapsContainer");
+  if (!container) return;
+  container.classList.toggle("laps-table-mode", !!isActive);
+}
+
 export function setupStopwatchRender(sw) {
   sw.createLapElement = (lap, isLatest = false) => {
     const lapTemplate = $("sw-lap-row-template");
@@ -58,12 +64,10 @@ export function setupStopwatchRender(sw) {
 
     div.classList.add(
       "lap-row",
-      "mt-2.5",
       "py-3",
       "border-b",
       "app-border",
       "px-3",
-      "rounded-lg",
       "transition-all",
       "duration-300",
     );
@@ -100,6 +104,8 @@ export function setupStopwatchRender(sw) {
     sw.els.lapsContainer.replaceChildren();
 
     if (sw.laps.length === 0) {
+      setLapsTableMode(false);
+
       const noLapsDiv = document.createElement("div");
       noLapsDiv.className = "text-center app-text-sec opacity-50 mt-4 text-sm";
       noLapsDiv.setAttribute("data-i18n", "no_laps");
@@ -107,6 +113,8 @@ export function setupStopwatchRender(sw) {
       sw.els.lapsContainer.appendChild(noLapsDiv);
       return;
     }
+
+    setLapsTableMode(true);
 
     [...sw.laps].reverse().forEach((lap, i, arr) => {
       sw.els.lapsContainer.prepend(

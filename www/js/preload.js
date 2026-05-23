@@ -1,6 +1,8 @@
 // Файл: www/js/preload.js
 
 const PRELOADER_ID = "app-preloader";
+const PRELOADER_ICON_ID = "app-preloader-icon";
+const PRELOADER_ICON_NAME_ID = "app-preloader-icon-name";
 
 export const preload = {
   el: null,
@@ -11,6 +13,27 @@ export const preload = {
       this.el = document.getElementById(PRELOADER_ID);
     }
     return this.el;
+  },
+
+  _ensureIcon() {
+    return document.getElementById(PRELOADER_ICON_ID);
+  },
+
+  _ensureIconName() {
+    return document.getElementById(PRELOADER_ICON_NAME_ID);
+  },
+
+  setIconMeta({ src, label } = {}) {
+    const icon = this._ensureIcon();
+    const iconName = this._ensureIconName();
+
+    if (icon && src) {
+      icon.src = src;
+    }
+
+    if (iconName) {
+      iconName.textContent = label || "";
+    }
   },
 
   show() {

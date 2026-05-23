@@ -24,6 +24,11 @@ export const APP_EVENTS = {
   // Ads
   ADS_SETTINGS_CHANGED: "adsSettingsChanged",
   ADS_BANNER_VISIBILITY_CHANGED: "adsBannerVisibilityChanged",
+  ADS_BANNER_MODE_CHANGED: "adsBannerModeChanged",
+  ADS_INTERSTITIAL_TRIGGERS_CHANGED: "adsInterstitialTriggersChanged",
+
+  // App icon
+  APP_ICON_CHANGED: "appIconChanged",
 
   // App Pro
   PRO_STATUS_CHANGED: "proStatusChanged",

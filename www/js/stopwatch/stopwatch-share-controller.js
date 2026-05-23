@@ -3,6 +3,7 @@
 import { t } from "../i18n.js?v=VERSION";
 import { modalManager } from "../modal.js?v=VERSION";
 import { uiSettingsManager } from "../ui-settings.js?v=VERSION";
+import { adsManager } from "../ads.js?v=VERSION";
 
 export function setupStopwatchShareController(sw) {
   sw._buildSessionLapsForSave = () => {
@@ -43,12 +44,20 @@ export function setupStopwatchShareController(sw) {
   sw.shareCurrentResult = async () => {
     const session = sw.getCurrentSessionForShare();
     if (!session) return;
+
+    // Interstitial scenario: share button press
+    adsManager.showInterstitialIfAllowed("share");
+
     await sw.shareSessionWithChoice(session);
   };
 
   sw.shareSavedSession = async (id) => {
     const session = sw.savedSessions.find((s) => s.id === id);
     if (!session) return;
+
+    // Interstitial scenario: share button press
+    adsManager.showInterstitialIfAllowed("share");
+
     await sw.shareSessionWithChoice(session);
   };
 
