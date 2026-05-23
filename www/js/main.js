@@ -150,6 +150,12 @@ async function applyMonetizationConfig() {
     APP_MONETIZATION_CONFIG.ads.interstitialCooldownMs,
   );
 
+  // JS-side ads behavior config
+  adsManager.setBannerMode(APP_MONETIZATION_CONFIG.ads.bannerMode || "always");
+  adsManager.setInterstitialTriggers(
+    APP_MONETIZATION_CONFIG.ads.interstitialTriggers || {},
+  );
+
   const storedAdsEnabled = safeGetLS(STORAGE_KEYS.APP_ADS_ENABLED);
   if (storedAdsEnabled === null) {
     adsManager.setEnabled(APP_MONETIZATION_CONFIG.ads.enabledByDefault);
@@ -228,7 +234,6 @@ async function bootstrap() {
   bindProAdsAutomation();
   await applyMonetizationConfig();
 
-  adsManager.reconcileActiveTimerState({ sw, tm, tb });
   adsManager.init();
   adsManager.bindAutoRefresh();
   adsManager.bindLifecycleMonetization();

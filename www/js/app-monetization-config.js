@@ -161,6 +161,13 @@ Lifetime:
 
 */
 
+/*
+  Central monetization config:
+  - Pro mode and feature gates
+  - Ads defaults
+  - JS-side ad scenarios (banner mode + interstitial triggers)
+*/
+
 export const APP_MONETIZATION_CONFIG = {
   pro: {
     enabled: true,
@@ -176,12 +183,12 @@ export const APP_MONETIZATION_CONFIG = {
     },
 
     pricing: {
-      currency: "RUB", // RUB | USD | EUR ...
-      currencySymbol: "₽", // символ для UI
-      amount: 990, // базовая цена
-      period: null, // "month" | "year" | null (null для lifetime)
+      currency: "RUB",
+      currencySymbol: "₽",
+      amount: 990,
+      period: null, // "month" | "year" | null
       discountEnabled: true,
-      discountPercent: 40, // 0..99
+      discountPercent: 40,
     },
   },
 
@@ -192,6 +199,18 @@ export const APP_MONETIZATION_CONFIG = {
     aggregator: "mediation",
     strategy: "banner+interstitial",
     interstitialCooldownMs: 5 * 60 * 1000,
+
+    // JS-side only (not user settings)
+    bannerMode: "always", // "always" | "off"
+    interstitialTriggers: {
+      app_start: true,
+      app_close: false,
+      share: false,
+      save_result: false,
+      timer_start: false,
+      timer_complete: true,
+      tabata_complete: true,
+    },
   },
 
   proBadges: [

@@ -7,7 +7,6 @@ import { adsManager } from "../ads.js?v=VERSION";
 import { appProManager } from "../app-pro.js?v=VERSION";
 import { APP_EVENTS } from "../constants/events.js?v=VERSION";
 import { STORAGE_KEYS } from "../constants/storage-keys.js?v=VERSION";
-import { CustomSelect } from "../custom-select.js?v=VERSION";
 
 import {
   setFontSize,
@@ -24,69 +23,6 @@ import {
   persistRingWidth,
   persistVignetteAlpha,
 } from "./ui-settings-apply.js?v=VERSION";
-
-function bindAdsBannerModeSelect(state) {
-  const container = $("adsBannerModeSelectContainer");
-  if (!container) return;
-
-  const options = [
-    { value: "always", text: t("ads_banner_always") },
-    { value: "off", text: t("ads_banner_off") },
-  ];
-
-  const select = new CustomSelect(
-    "adsBannerModeSelectContainer",
-    options,
-    (value) => {
-      state.adsBannerMode = value === "off" ? "off" : "always";
-      safeSetLS(STORAGE_KEYS.APP_ADS_BANNER_MODE, state.adsBannerMode);
-      adsManager.setBannerMode(state.adsBannerMode);
-    },
-    state.adsBannerMode || "always",
-  );
-
-  document.addEventListener(APP_EVENTS.LANGUAGE_CHANGED, () => {
-    select.options = [
-      { value: "always", text: t("ads_banner_always") },
-      { value: "off", text: t("ads_banner_off") },
-    ];
-    select.populateOptions();
-    select.setValue(state.adsBannerMode || "always", false);
-  });
-}
-
-function bindAdsInterstitialTriggerToggles(state) {
-  const map = [
-    ["toggle-ads-int-app-start", "app_start"],
-    ["toggle-ads-int-app-close", "app_close"],
-    ["toggle-ads-int-share", "share"],
-    ["toggle-ads-int-save", "save_result"],
-    ["toggle-ads-int-timer-start", "timer_start"],
-    ["toggle-ads-int-timer-complete", "timer_complete"],
-    ["toggle-ads-int-tabata-complete", "tabata_complete"],
-  ];
-
-  map.forEach(([id, key]) => {
-    const el = $(id);
-    if (!el) return;
-
-    el.checked = !!state.adsInterstitialTriggers?.[key];
-
-    el.addEventListener("change", (e) => {
-      state.adsInterstitialTriggers = {
-        ...(state.adsInterstitialTriggers || {}),
-        [key]: !!e.target.checked,
-      };
-
-      safeSetLS(
-        STORAGE_KEYS.APP_ADS_INTERSTITIAL_TRIGGERS,
-        JSON.stringify(state.adsInterstitialTriggers),
-      );
-
-      adsManager.setInterstitialTriggers(state.adsInterstitialTriggers);
-    });
-  });
-}
 
 export function bindUiSettingsEvents(state) {
   document.addEventListener(APP_EVENTS.LANGUAGE_CHANGED, () =>
@@ -242,9 +178,6 @@ export function bindUiSettingsEvents(state) {
       adsManager.setProvider(next);
     });
   }
-
-  bindAdsBannerModeSelect(state);
-  bindAdsInterstitialTriggerToggles(state);
 
   syncAllRangeValuesRight();
 }

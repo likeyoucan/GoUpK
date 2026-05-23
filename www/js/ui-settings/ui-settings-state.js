@@ -3,29 +3,6 @@
 import { safeGetLS, safeRemoveLS } from "../utils.js?v=VERSION";
 import { STORAGE_KEYS } from "../constants/storage-keys.js?v=VERSION";
 
-const DEFAULT_INTERSTITIAL_TRIGGERS = {
-  app_start: true,
-  app_close: false,
-  share: false,
-  save_result: false,
-  timer_start: false,
-  timer_complete: true,
-  tabata_complete: true,
-};
-
-function parseTriggers(raw) {
-  if (!raw) return { ...DEFAULT_INTERSTITIAL_TRIGGERS };
-  try {
-    const parsed = JSON.parse(raw);
-    return {
-      ...DEFAULT_INTERSTITIAL_TRIGGERS,
-      ...(parsed && typeof parsed === "object" ? parsed : {}),
-    };
-  } catch {
-    return { ...DEFAULT_INTERSTITIAL_TRIGGERS };
-  }
-}
-
 export const UI_SETTINGS_KEYS = {
   fontSize: STORAGE_KEYS.FONT_SIZE,
   adaptiveBg: STORAGE_KEYS.APP_ADAPTIVE_BG,
@@ -39,11 +16,9 @@ export const UI_SETTINGS_KEYS = {
   showForegroundBanner: STORAGE_KEYS.APP_SHOW_FOREGROUND_BANNER,
   swMinuteBeep: STORAGE_KEYS.APP_SW_MINUTE_BEEP,
 
-  // Ads
+  // Ads (user-side only)
   adsEnabled: STORAGE_KEYS.APP_ADS_ENABLED,
   adsProvider: STORAGE_KEYS.APP_ADS_PROVIDER,
-  adsBannerMode: STORAGE_KEYS.APP_ADS_BANNER_MODE,
-  adsInterstitialTriggers: STORAGE_KEYS.APP_ADS_INTERSTITIAL_TRIGGERS,
 };
 
 export function createUiSettingsState() {
@@ -59,11 +34,9 @@ export function createUiSettingsState() {
     ringWidth: 4,
     swMinuteBeep: true,
 
-    // Ads
+    // Ads (user-side only)
     adsEnabled: true,
     adsProvider: "yandex",
-    adsBannerMode: "always",
-    adsInterstitialTriggers: { ...DEFAULT_INTERSTITIAL_TRIGGERS },
 
     lastSliderValues: {},
 
@@ -100,16 +73,9 @@ export function loadUiSettingsFromStorage(state) {
   state.vignetteAlpha =
     parseFloat(safeGetLS(UI_SETTINGS_KEYS.vignetteAlpha)) || 0.2;
 
-  // Ads
+  // Ads (user-side only)
   state.adsEnabled = safeGetLS(UI_SETTINGS_KEYS.adsEnabled) !== "false";
   state.adsProvider = safeGetLS(UI_SETTINGS_KEYS.adsProvider) || "yandex";
-
-  const bannerMode = safeGetLS(UI_SETTINGS_KEYS.adsBannerMode) || "always";
-  state.adsBannerMode = bannerMode === "off" ? "off" : "always";
-
-  state.adsInterstitialTriggers = parseTriggers(
-    safeGetLS(UI_SETTINGS_KEYS.adsInterstitialTriggers),
-  );
 }
 
 export function resetUiSettingsStorage() {
