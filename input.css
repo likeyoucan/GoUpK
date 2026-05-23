@@ -1454,8 +1454,9 @@
   #sw-mainDisplay.is-go,
   #tm-mainDisplay.is-go,
   #tb-mainTimer.is-go {
-    transform: translateX(0) !important;
+    translate: clamp(-3.5px, -0.75cqi, -1.25px) 0;
     transform-origin: center center;
+    text-align: center;
   }
 
   #sw-mainDisplay,
@@ -2738,55 +2739,74 @@
     }
   }
 
-.pro-badge {
-  --pb-c1: color-mix(in srgb, var(--primary-color) 88%, #ffffff 12%);
-  --pb-c2: color-mix(in srgb, var(--secondary-accent-color) 82%, var(--primary-color) 18%);
-  --pb-c3: color-mix(in srgb, var(--primary-color) 58%, #22d3ee 42%);
-  --pb-bg1: color-mix(in srgb, var(--primary-color) 16%, var(--surface-color) 84%);
-  --pb-bg2: color-mix(in srgb, var(--primary-color) 8%, var(--surface-color) 92%);
-  --pb-fg: color-mix(in srgb, var(--text-color) 96%, #ffffff 4%);
+  .pro-badge {
+    --pb-c1: color-mix(in srgb, var(--primary-color) 88%, #ffffff 12%);
+    --pb-c2: color-mix(
+      in srgb,
+      var(--secondary-accent-color) 82%,
+      var(--primary-color) 18%
+    );
+    --pb-c3: color-mix(in srgb, var(--primary-color) 58%, #22d3ee 42%);
+    --pb-bg1: color-mix(
+      in srgb,
+      var(--primary-color) 16%,
+      var(--surface-color) 84%
+    );
+    --pb-bg2: color-mix(
+      in srgb,
+      var(--primary-color) 8%,
+      var(--surface-color) 92%
+    );
+    --pb-fg: color-mix(in srgb, var(--text-color) 96%, #ffffff 4%);
 
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 
-  min-width: 28px;
-  height: 16px;
-  padding: 0 5px;
+    min-width: 28px;
+    height: 16px;
+    padding: 0 5px;
 
-  border: 1px solid transparent;
-  border-radius: 5px;
+    border: 1px solid transparent;
+    border-radius: 5px;
 
-  font-size: 9px;
-  font-style: italic;
-  font-weight: 600;
-  line-height: 1;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  text-align: center;
+    font-size: 9px;
+    font-style: italic;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    text-align: center;
 
-  color: var(--pb-fg);
-  text-shadow: none;
+    color: var(--pb-fg);
+    text-shadow: none;
 
-  background:
-    linear-gradient(var(--pb-bg1), var(--pb-bg2)) padding-box,
-    linear-gradient(45deg, var(--pb-c1), var(--pb-c2), var(--pb-c3), var(--pb-c1)) border-box;
-  background-size: 200% 200%;
+    background:
+      linear-gradient(var(--pb-bg1), var(--pb-bg2)) padding-box,
+      linear-gradient(
+          45deg,
+          var(--pb-c1),
+          var(--pb-c2),
+          var(--pb-c3),
+          var(--pb-c1)
+        )
+        border-box;
+    background-size: 200% 200%;
 
-  box-shadow: 0 0 3px color-mix(in srgb, var(--pb-c1) 34%, transparent);
-  animation: gradient-rotate 3.2s linear infinite;
+    box-shadow: 0 0 3px color-mix(in srgb, var(--pb-c1) 34%, transparent);
+    animation: gradient-rotate 3.2s linear infinite;
 
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.25s ease,
-    color 0.2s ease;
-}
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.25s ease,
+      color 0.2s ease;
+  }
 
-.pro-badge:active {
-  transform: scale(0.95);
-}
+  .pro-badge:active {
+    transform: scale(0.95);
+  }
 
   .pro-cta {
     min-height: 44px;
