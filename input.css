@@ -1454,6 +1454,7 @@
   #tm-mainDisplay.is-go,
   #tb-mainTimer.is-go {
     transform: translateX(0.02em);
+    text-align: center;
   }
 
   #sw-mainDisplay,
@@ -2737,62 +2738,47 @@
   }
 
   .pro-badge {
-    --pro-bg1: #262626;
-    --pro-bg2: #1e1e1e;
-    --pro-c: #ffffff;
-    --c1: #3355ff;
-    --c2: #ff00ff;
-    --c3: #00ffff;
-    --shadow: color-mix(in oklab, var(--c1) 45%, transparent);
-
     position: relative;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+    display: inline-grid;
+    place-items: center;
 
-    min-width: 30px;
-    height: 18px;
-    padding: 0 6px;
+    min-width: 28px;
+    height: 16px;
+    padding: 0 5px;
 
-    border: 1.5px solid transparent;
+    border: 1px solid var(--pro-badge-border, rgb(255 255 255 / 0.2));
     border-radius: 5px;
 
     font-size: 9px;
     font-style: italic;
     font-weight: 700;
     line-height: 1;
-    letter-spacing: 0.03em;
+    letter-spacing: 0.02em;
     text-transform: uppercase;
     white-space: nowrap;
 
-    color: var(--pro-badge-fg, var(--pro-c));
+    color: var(--pro-badge-fg, #ffffff);
+    background: var(
+      --pro-badge-bg,
+      color-mix(in srgb, var(--primary-color) 72%, #111827 28%)
+    );
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.18);
     text-shadow: none;
 
-    background:
-      linear-gradient(var(--pro-bg1), var(--pro-bg2)) padding-box,
-      linear-gradient(45deg, var(--c1), var(--c2), var(--c3), var(--c1))
-        border-box;
-    background-size: 200% 200%;
-
-    box-shadow: 0 0 4px var(--shadow);
-    animation: gradient-rotate 3.2s linear infinite;
-
     transition:
-      transform 0.25s ease,
-      box-shadow 0.25s ease;
+      background-color var(--dur-short) ease,
+      color var(--dur-short) ease,
+      border-color var(--dur-short) ease,
+      box-shadow var(--dur-short) ease,
+      transform var(--dur-micro) var(--ease-standard);
   }
 
   .pro-badge:active {
     transform: scale(0.95);
   }
 
-  html.dark .pro-badge {
-    color: var(--pro-badge-fg, #ffffff);
-    border-color: var(
-      --pro-badge-border,
-      color-mix(in srgb, var(--pro-badge-bg, #34d399) 86%, #ffffff 14%)
-    );
-    box-shadow: 0 1px 3px rgb(0 0 0 / 0.22);
+  .pro-badge:active {
+    transform: scale(0.95);
   }
 
   .pro-cta {

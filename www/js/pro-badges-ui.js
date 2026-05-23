@@ -91,26 +91,33 @@ function rgbToCss({ r, g, b }) {
 function applyProBadgeAdaptiveColors(badgeEl) {
   if (!(badgeEl instanceof HTMLElement)) return;
 
+  const root = document.documentElement;
+  const accent = getComputedStyle(root)
+    .getPropertyValue("--primary-color")
+    .trim();
+
+  // Фон бейджа зависит от текущего акцента.
+  badgeEl.style.setProperty(
+    "--pro-badge-bg",
+    `color-mix(in srgb, ${accent} 72%, #111827 28%)`,
+  );
+
   const bgColor = getComputedStyle(badgeEl).backgroundColor;
   const rgb = parseRgbString(bgColor);
   if (!rgb) return;
 
-  const isDarkTheme = document.documentElement.classList.contains("dark");
   const lum = relativeLuminance(rgb);
 
-  const fg = isDarkTheme ? "#ffffff" : lum > 0.58 ? "#052e16" : "#ffffff";
+  // Контрастный текст без отдельной dark/light ветки
+  const fg = lum > 0.56 ? "#111827" : "#ffffff";
 
   let borderRgb;
-  if (lum < 0.14) {
-    borderRgb = blendRgb(rgb, { r: 255, g: 255, b: 255 }, 0.34);
-  } else if (lum < 0.3) {
-    borderRgb = blendRgb(rgb, { r: 255, g: 255, b: 255 }, 0.22);
+  if (lum < 0.16) {
+    borderRgb = blendRgb(rgb, { r: 255, g: 255, b: 255 }, 0.3);
   } else if (lum > 0.78) {
-    borderRgb = blendRgb(rgb, { r: 15, g: 23, b: 42 }, 0.18);
+    borderRgb = blendRgb(rgb, { r: 15, g: 23, b: 42 }, 0.22);
   } else {
-    borderRgb = isDarkTheme
-      ? blendRgb(rgb, { r: 255, g: 255, b: 255 }, 0.14)
-      : blendRgb(rgb, { r: 15, g: 23, b: 42 }, 0.12);
+    borderRgb = blendRgb(rgb, { r: 15, g: 23, b: 42 }, 0.12);
   }
 
   badgeEl.style.setProperty("--pro-badge-fg", fg);
