@@ -21,7 +21,7 @@ const ICON_OPTIONS = [
     id: "pro_1",
     nativeName: "pro_1",
     image: "img/app_img.png",
-    labelKey: "app_icon_pro",
+    labelKey: "app_icon_pro_1",
   },
 ];
 
