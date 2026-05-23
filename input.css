@@ -741,6 +741,9 @@
     #app-preloader-icon {
       animation: none;
     }
+    .pro-badge {
+      animation: none !important;
+    }
   }
 
   /* VIGNETTE */
@@ -1444,7 +1447,13 @@
   .timer-display.is-go {
     font-size: clamp(2.9rem, min(33cqi, 33cqb), 5.3rem);
     font-style: italic;
-    padding-right: 0.04em;
+    padding-right: 0;
+  }
+
+  #sw-mainDisplay.is-go,
+  #tm-mainDisplay.is-go,
+  #tb-mainTimer.is-go {
+    transform: translateX(0.02em);
   }
 
   #sw-mainDisplay,
@@ -2715,40 +2724,66 @@
     gap: 0.38rem;
   }
 
+  @keyframes gradient-rotate {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
   .pro-badge {
+    --pro-bg1: #262626;
+    --pro-bg2: #1e1e1e;
+    --pro-c: #ffffff;
+    --c1: #3355ff;
+    --c2: #ff00ff;
+    --c3: #00ffff;
+    --shadow: color-mix(in oklab, var(--c1) 45%, transparent);
+
+    position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 16px;
-    padding: 2px 6px;
-    border-radius: 6px;
+
+    min-width: 30px;
+    height: 18px;
+    padding: 0 6px;
+
+    border: 1.5px solid transparent;
+    border-radius: 5px;
+
     font-size: 9px;
     font-style: italic;
     font-weight: 700;
-    text-transform: uppercase;
     line-height: 1;
     letter-spacing: 0.03em;
+    text-transform: uppercase;
     white-space: nowrap;
 
-    background-color: var(
-      --pro-badge-bg,
-      color-mix(in srgb, var(--secondary-accent-color) 78%, #1f2937 22%)
-    );
-    color: var(--pro-badge-fg, #ffffff);
-
-    border: 1px solid
-      var(
-        --pro-badge-border,
-        color-mix(in srgb, var(--pro-badge-bg, #34d399) 84%, #000000 16%)
-      );
-
-    box-shadow: 0 1px 2px rgb(0 0 0 / 0.12);
+    color: var(--pro-badge-fg, var(--pro-c));
     text-shadow: none;
+
+    background:
+      linear-gradient(var(--pro-bg1), var(--pro-bg2)) padding-box,
+      linear-gradient(45deg, var(--c1), var(--c2), var(--c3), var(--c1))
+        border-box;
+    background-size: 200% 200%;
+
+    box-shadow: 0 0 4px var(--shadow);
+    animation: gradient-rotate 3.2s linear infinite;
+
     transition:
-      background-color var(--dur-short) ease,
-      color var(--dur-short) ease,
-      border-color var(--dur-short) ease,
-      box-shadow var(--dur-short) ease;
+      transform 0.25s ease,
+      box-shadow 0.25s ease;
+  }
+
+  .pro-badge:active {
+    transform: scale(0.95);
   }
 
   html.dark .pro-badge {

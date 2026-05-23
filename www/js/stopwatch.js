@@ -277,6 +277,7 @@ const stopwatchModule = {
 
       updateText(this.els.display, "GO");
       this.els.display.classList.add("is-go");
+      this.els.display.style.transform = "";
       this.els.status.classList.add("hidden");
       this.els.extendedDisplay?.classList.add("hidden");
 
