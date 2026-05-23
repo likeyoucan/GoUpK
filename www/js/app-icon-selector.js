@@ -12,7 +12,13 @@ const ICON_OPTIONS = [
   {
     id: "pro",
     nativeName: "pro",
-    image: "apple-touch-icon.png",
+    image: "img/app_img.png",
+    labelKey: "app_icon_pro",
+  },
+    {
+    id: "pro_1",
+    nativeName: "pro_1",
+    image: "img/app_img.png",
     labelKey: "app_icon_pro",
   },
 ];
