@@ -21,6 +21,12 @@ const ICON_OPTIONS = [
     image: "img/app_img.png",
     labelKey: "app_icon_pro",
   },
+      {
+    id: "pro_123",
+    nativeName: "123",
+    image: "img/app_img.png",
+    labelKey: "app_icon_pro",
+  },
 ];
 
 function getNativePlugin() {
