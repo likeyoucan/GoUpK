@@ -640,15 +640,11 @@
   /* Strong blur only for Pro subscribe modal overlay */
   #pro-subscribe-modal.app-modal-overlay {
     backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
-    background-color: rgb(0 0 0 / 0.68);
   }
 
   /* Keep stronger effect when glass mode is on, only for this modal */
   .glass-effect #pro-subscribe-modal.app-modal-overlay {
     backdrop-filter: blur(24px) saturate(135%);
-    -webkit-backdrop-filter: blur(24px) saturate(135%);
-    background-color: rgb(0 0 0 / 0.62);
   }
 }
 
@@ -2454,7 +2450,6 @@
   .glass-effect .custom-select-options {
     background-color: color-mix(in srgb, var(--surface-color) 38%, transparent);
     border-color: color-mix(in srgb, var(--border-color) 55%, transparent);
-    -webkit-backdrop-filter: blur(16px) saturate(180%);
     backdrop-filter: blur(16px) saturate(180%);
     box-shadow:
       inset 0 1px 1px rgb(255 255 255 / 0.45),
