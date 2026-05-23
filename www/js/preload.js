@@ -32,7 +32,9 @@ export const preload = {
     }
 
     if (iconName) {
-      iconName.textContent = label || "";
+      const text = String(label || "").trim();
+      iconName.textContent = text;
+      iconName.classList.toggle("hidden", text.length === 0);
     }
   },
 

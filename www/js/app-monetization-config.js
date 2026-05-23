@@ -168,56 +168,49 @@ Lifetime:
   - JS-side ad scenarios (banner mode + interstitial triggers)
 */
 
-export const APP_MONETIZATION_CONFIG = {
-  pro: {
-    enabled: true,
-    forcePurchased: false, // null | true | false
-    mode: "lifetime", // subscription | lifetime | disabled
-
-    features: {
-      custom_colors: true,
-      accent_bg: true,
-      remove_ads: true,
-      sound_themes: true,
-      app_icon: true,
-    },
-
-    pricing: {
-      currency: "RUB",
-      currencySymbol: "₽",
-      amount: 990,
-      period: null, // "month" | "year" | null
-      discountEnabled: true,
-      discountPercent: 40,
-    },
-  },
-
+ui: {
   ads: {
-    enabledByDefault: true,
-    autoDisableOnProPurchase: true,
-    defaultProvider: "yandex", // yandex | admob | mediation
-    aggregator: "mediation",
-    strategy: "banner+interstitial",
-    interstitialCooldownMs: 5 * 60 * 1000,
-
-    // JS-side only (not user settings)
-    bannerMode: "always", // "always" | "off"
-    interstitialTriggers: {
-      app_start: true,
-      app_close: false,
-      share: false,
-      save_result: false,
-      timer_start: false,
-      timer_complete: true,
-      tabata_complete: true,
-    },
+    desktopFixedFromWidth: 1281, // >= этого брейкпоинта баннер fixed
+    desktopFixedTopOffsetPx: 8,
+    desktopFixedWidth: "min(96vw, 720px)",
   },
 
-  proBadges: [
-    { selector: "#setting-row-accent", feature: "accent_bg" },
-    { selector: "#setting-row-bg", feature: "accent_bg" },
-    { selector: "#setting-row-app-icon", feature: "app_icon" },
-    { selector: "#setting-row-sound-theme", feature: "sound_themes" },
-    { selector: "#setting-row-ads", feature: "remove_ads" },
-  ],
-};
+  preload: {
+    showIconLabel: false, // глобально показывать подпись в preload
+    showLabelOnlyForProPurchase: true, // если true: подпись только при купленном Pro
+    proPurchasedLabelMode: "pro_word", // "icon_label" | "pro_word"
+    hideLabelWhenEmpty: true,
+  },
+
+  appIcons: {
+    fallbackImage: "img/app_img.png",
+    preloadTimeoutMs: 3000,
+    options: [
+      {
+        id: "default",
+        nativeName: "default",
+        image: "img/app_img.png",
+        labelKey: "app_icon_default",
+        proRequired: false,
+      },
+      {
+        id: "pro",
+        nativeName: "pro",
+        image: "img/app_img.png",
+        labelKey: "app_icon_pro",
+        proRequired: true,
+      },
+      {
+        id: "pro_1",
+        nativeName: "pro_1",
+        image: "img/app_img.png",
+        labelKey: "app_icon_pro_1",
+        proRequired: true,
+        labels: {
+          en: "Pro One",
+          ru: "Про 1",
+        },
+      },
+    ],
+  },
+},

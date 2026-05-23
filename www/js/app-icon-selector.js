@@ -3,27 +3,12 @@
 import { safeGetLS, safeSetLS, showToast } from "./utils.js?v=VERSION";
 import { STORAGE_KEYS } from "./constants/storage-keys.js?v=VERSION";
 import { APP_EVENTS } from "./constants/events.js?v=VERSION";
+import { APP_MONETIZATION_CONFIG } from "./app-monetization-config.js?v=VERSION";
 
-const ICON_OPTIONS = [
-  {
-    id: "default",
-    nativeName: "default",
-    image: "img/app_img.png",
-    labelKey: "app_icon_default",
-  },
-  {
-    id: "pro",
-    nativeName: "pro",
-    image: "img/app_img.png",
-    labelKey: "app_icon_pro",
-  },
-    {
-    id: "pro_1",
-    nativeName: "pro_1",
-    image: "img/app_img.png",
-    labelKey: "app_icon_pro_1",
-  },
-];
+const ICON_CFG = APP_MONETIZATION_CONFIG.ui?.appIcons || {};
+const ICON_OPTIONS = Array.isArray(ICON_CFG.options) ? ICON_CFG.options : [];
+const FALLBACK_IMAGE = ICON_CFG.fallbackImage || "img/app_img.png";
+const PRELOAD_TIMEOUT_MS = Number(ICON_CFG.preloadTimeoutMs) || 3000;
 
 function getNativePlugin() {
   return window.Capacitor?.Plugins?.AppIconSwitcher || null;
@@ -48,11 +33,65 @@ function getOptionById(id) {
   return ICON_OPTIONS.find((x) => x.id === id) || ICON_OPTIONS[0];
 }
 
+function getCurrentLang() {
+  const lang = (document.documentElement.lang || "en").toLowerCase();
+  return lang.startsWith("ru") ? "ru" : "en";
+}
+
+function resolveOptionLabel(option, t) {
+  const lang = getCurrentLang();
+  if (
+    option?.labels &&
+    typeof option.labels === "object" &&
+    option.labels[lang]
+  ) {
+    return option.labels[lang];
+  }
+  return tr(t, option?.labelKey, option?.id || "icon");
+}
+
+function canUseOption(option, appProManager) {
+  if (!option) return false;
+  if (!option.proRequired) return true;
+  return !!appProManager?.canUse?.("app_icon");
+}
+
+function loadImageWithFallback(src, fallbackSrc, timeoutMs) {
+  return new Promise((resolve) => {
+    let done = false;
+    const timer = setTimeout(() => {
+      if (done) return;
+      done = true;
+      resolve(fallbackSrc);
+    }, timeoutMs);
+
+    const img = new Image();
+    img.onload = () => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      resolve(src);
+    };
+    img.onerror = () => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      resolve(fallbackSrc);
+    };
+    img.src = src;
+  });
+}
+
 export function getResolvedAppIconId(appProManager) {
-  const preferred = safeGetLS(STORAGE_KEYS.APP_ICON_NAME) || "default";
-  const normalized = preferred === "pro" ? "pro" : "default";
-  const canUseCustomIcon = appProManager?.canUse?.("app_icon");
-  return canUseCustomIcon ? normalized : "default";
+  const preferred =
+    safeGetLS(STORAGE_KEYS.APP_ICON_NAME) || ICON_OPTIONS[0]?.id;
+  const option = getOptionById(preferred);
+
+  if (canUseOption(option, appProManager)) return option.id;
+
+  // fallback to first non-pro icon
+  const fallback = ICON_OPTIONS.find((x) => !x.proRequired) || ICON_OPTIONS[0];
+  return fallback.id;
 }
 
 export function getResolvedAppIconMeta(t, appProManager) {
@@ -61,10 +100,11 @@ export function getResolvedAppIconMeta(t, appProManager) {
 
   return {
     id,
-    src: option.image,
-    nativeName: option.nativeName,
-    label: tr(t, option.labelKey, option.id),
-    labelKey: option.labelKey,
+    src: option.image || FALLBACK_IMAGE,
+    nativeName: option.nativeName || option.id,
+    label: resolveOptionLabel(option, t),
+    labelKey: option.labelKey || "",
+    proRequired: !!option.proRequired,
   };
 }
 
@@ -78,6 +118,7 @@ function dispatchIconChanged(t, appProManager) {
         src: meta.src,
         label: meta.label,
         labelKey: meta.labelKey,
+        proRequired: meta.proRequired,
       },
     }),
   );
@@ -87,17 +128,16 @@ export function initAppIconSelector({ t, appProManager }) {
   const container = document.getElementById("app-icon-options");
   if (!container) return;
 
-  let current = safeGetLS(STORAGE_KEYS.APP_ICON_NAME) || "default";
-  if (!ICON_OPTIONS.find((x) => x.id === current)) current = "default";
-
-  const canUseIconFeature = () => appProManager.canUse("app_icon");
+  let current = safeGetLS(STORAGE_KEYS.APP_ICON_NAME) || ICON_OPTIONS[0]?.id;
+  if (!ICON_OPTIONS.find((x) => x.id === current))
+    current = ICON_OPTIONS[0]?.id;
 
   const saveAndApply = async (id, { dispatch = true } = {}) => {
     const option = getOptionById(id);
 
     current = option.id;
     safeSetLS(STORAGE_KEYS.APP_ICON_NAME, current);
-    await applyNativeIcon(option.nativeName);
+    await applyNativeIcon(option.nativeName || option.id);
 
     if (dispatch) dispatchIconChanged(t, appProManager);
   };
@@ -106,30 +146,45 @@ export function initAppIconSelector({ t, appProManager }) {
     container.replaceChildren();
 
     ICON_OPTIONS.forEach((opt) => {
+      const locked = !!opt.proRequired && !appProManager.canUse("app_icon");
+
       const btn = document.createElement("button");
       btn.type = "button";
       btn.className = "app-icon-option";
       if (current === opt.id) btn.classList.add("is-selected");
-      if (!canUseIconFeature() && opt.id !== "default") {
-        btn.classList.add("is-locked");
-      }
+      if (locked) btn.classList.add("is-locked");
 
-      btn.setAttribute("aria-label", tr(t, opt.labelKey, opt.id));
+      const optionLabel = resolveOptionLabel(opt, t);
+      btn.setAttribute("aria-label", optionLabel);
 
       const img = document.createElement("img");
-      img.src = opt.image;
-      img.alt = tr(t, opt.labelKey, opt.id);
-      img.className = "app-icon-preview";
+      img.src = FALLBACK_IMAGE;
+      img.alt = optionLabel;
+      img.className = "app-icon-preview is-loading";
       img.decoding = "async";
+
+      loadImageWithFallback(
+        opt.image || FALLBACK_IMAGE,
+        FALLBACK_IMAGE,
+        PRELOAD_TIMEOUT_MS,
+      )
+        .then((readySrc) => {
+          img.src = readySrc;
+          img.classList.remove("is-loading");
+        })
+        .catch(() => {
+          img.src = FALLBACK_IMAGE;
+          img.classList.remove("is-loading");
+        });
 
       const label = document.createElement("span");
       label.className = "app-icon-label app-text-sec";
-      label.textContent = tr(t, opt.labelKey, opt.id);
+      label.textContent = optionLabel;
 
       btn.append(img, label);
 
       btn.addEventListener("click", async () => {
-        if (!canUseIconFeature() && opt.id !== "default") {
+        if (locked) {
           showToast(tr(t, "pro_required", "Feature available in Pro"));
           document.dispatchEvent(
             new CustomEvent(APP_EVENTS.PRO_PAYWALL_REQUESTED, {
@@ -148,11 +203,14 @@ export function initAppIconSelector({ t, appProManager }) {
   };
 
   const syncByProState = async () => {
-    if (!canUseIconFeature() && current !== "default") {
-      await saveAndApply("default", { dispatch: false });
+    const option = getOptionById(current);
+
+    if (!canUseOption(option, appProManager)) {
+      const fallback =
+        ICON_OPTIONS.find((x) => !x.proRequired) || ICON_OPTIONS[0];
+      await saveAndApply(fallback.id, { dispatch: false });
     } else {
-      const option = getOptionById(current);
-      await applyNativeIcon(option.nativeName);
+      await applyNativeIcon(option.nativeName || option.id);
     }
 
     render();

@@ -2989,6 +2989,8 @@
     position: relative;
     top: auto;
     left: auto;
+    right: auto;
+    bottom: auto;
     transform: none;
     width: 100%;
     max-width: 100%;
@@ -3029,9 +3031,19 @@
   }
 
   @media (min-width: 1281px) {
+    #app-ad-slot {
+      position: fixed;
+      top: calc(var(--safe-top) + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(96vw, 720px);
+      max-width: min(96vw, 720px);
+      z-index: 140;
+    }
+
     #app-ad-slot > * {
-      width: auto !important;
-      max-width: none !important;
+      width: 100% !important;
+      max-width: 100% !important;
     }
   }
 
@@ -3320,6 +3332,11 @@
     border-radius: 12px;
     object-fit: cover;
     box-shadow: 0 2px 8px rgb(0 0 0 / 0.2);
+  }
+
+  .app-icon-preview.is-loading {
+    opacity: 0.5;
+    filter: grayscale(0.25);
   }
 
   .app-icon-label {

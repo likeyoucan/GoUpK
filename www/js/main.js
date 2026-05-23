@@ -196,9 +196,27 @@ function bindProAdsAutomation() {
 
 function syncPreloaderIconMeta() {
   const iconMeta = getResolvedAppIconMeta(t, appProManager);
+  const preloadCfg = APP_MONETIZATION_CONFIG.ui?.preload || {};
+
+  let label = "";
+
+  const showIconLabel = preloadCfg.showIconLabel !== false;
+  const onlyForProPurchase = preloadCfg.showLabelOnlyForProPurchase !== false;
+  const labelMode = preloadCfg.proPurchasedLabelMode || "icon_label";
+
+  if (showIconLabel) {
+    if (!onlyForProPurchase || appProManager.purchased) {
+      if (labelMode === "pro_word" && appProManager.purchased) {
+        label = t("pro");
+      } else {
+        label = iconMeta.label || "";
+      }
+    }
+  }
+
   preload.setIconMeta({
     src: iconMeta.src,
-    label: iconMeta.label,
+    label,
   });
 }
 
@@ -275,12 +293,9 @@ async function bootstrap() {
     appProManager,
   });
 
-  document.addEventListener(APP_EVENTS.APP_ICON_CHANGED, (e) => {
-    preload.setIconMeta({
-      src: e?.detail?.src,
-      label: e?.detail?.label,
-    });
-  });
+  document.addEventListener(APP_EVENTS.APP_ICON_CHANGED, () => {
+  syncPreloaderIconMeta();
+});
 
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") {
