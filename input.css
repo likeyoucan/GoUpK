@@ -2994,6 +2994,20 @@
     }
   }
 
+  /* Strong blur only for Pro subscribe modal overlay */
+  #pro-subscribe-modal.app-modal-overlay {
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    background-color: rgb(0 0 0 / 0.68);
+  }
+
+  /* Keep stronger effect when glass mode is on, only for this modal */
+  .glass-effect #pro-subscribe-modal.app-modal-overlay {
+    backdrop-filter: blur(24px) saturate(135%);
+    -webkit-backdrop-filter: blur(24px) saturate(135%);
+    background-color: rgb(0 0 0 / 0.62);
+  }
+
   #setting-row-accent .color-btn,
   #setting-row-bg .color-btn {
     border-color: color-mix(in srgb, var(--text-color) 18%, transparent);
