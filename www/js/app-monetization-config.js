@@ -234,17 +234,6 @@ export const APP_MONETIZATION_CONFIG = {
           labelKey: "app_icon_pro",
           proRequired: true,
         },
-        {
-          id: "pro_1",
-          nativeName: "pro_1",
-          image: "img/app_img.png",
-          labelKey: "app_icon_pro_1",
-          proRequired: true,
-          labels: {
-            en: "Pro One",
-            ru: "Про 1",
-          },
-        },
       ],
     },
   },

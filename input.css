@@ -3036,8 +3036,8 @@
       top: calc(var(--safe-top) + 8px);
       left: 50%;
       transform: translateX(-50%);
-      width: min(96vw, 720px);
-      max-width: min(96vw, 720px);
+      width: min(96vw, 960px);
+      max-width: min(96vw, 960px);
       z-index: 140;
     }
 
