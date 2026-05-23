@@ -164,7 +164,7 @@ Lifetime:
 /*
   Central monetization config:
   - Pro mode and feature gates
-  - Ads defaults
+  - Ads default
   - JS-side ad scenarios (banner mode + interstitial triggers)
 */
 
