@@ -1632,74 +1632,6 @@
     padding-bottom: var(--nav-height);
   }
 
-  #sw-lapsContainer .lap-row {
-    border-radius: 0.5rem;
-  }
-
-  #sw-lapsContainer .lap-row:last-child {
-    border-bottom: none !important;
-  }
-
-  #sw-lapsContainer .lap-row:first-child {
-    background-color: color-mix(in srgb, var(--text-color) 8%, transparent);
-    border-color: color-mix(in srgb, var(--text-color) 18%, transparent);
-  }
-  html.dark.no-adaptive #sw-lapsContainer .lap-row {
-    background-color: color-mix(in srgb, #ffffff 8%, transparent);
-    border-color: color-mix(in srgb, #ffffff 22%, transparent);
-  }
-
-  html.dark.no-adaptive #sw-lapsContainer .lap-row:first-child {
-    background-color: color-mix(in srgb, #ffffff 13%, transparent);
-    border-color: color-mix(in srgb, #ffffff 30%, transparent);
-  }
-
-  #sw-lapsContainer.laps-table-mode {
-    border: 1px solid color-mix(in srgb, var(--border-color) 88%, transparent);
-    border-radius: 14px;
-    overflow: hidden;
-    background-color: color-mix(in srgb, var(--surface-color) 92%, transparent);
-    padding-left: 0 !important;
-    padding-right: 0 !important;
-  }
-
-  #sw-lapsContainer.laps-table-mode .lap-row {
-    margin-top: 0 !important;
-    border-radius: 0 !important;
-    border-bottom: 1px solid
-      color-mix(in srgb, var(--border-color) 88%, transparent);
-  }
-
-  #sw-lapsContainer.laps-table-mode .lap-row:last-child {
-    border-bottom: 0;
-  }
-
-  .lap-row.is-latest {
-    background-color: color-mix(in srgb, var(--primary-color) 7%, transparent);
-    border-color: color-mix(
-      in srgb,
-      var(--primary-color) 24%,
-      var(--border-color)
-    );
-  }
-
-  .lap-row .split-time.split-time-latest {
-    color: color-mix(in srgb, var(--primary-color) 78%, var(--text-color));
-  }
-
-  html.dark .lap-row.is-latest {
-    background-color: color-mix(in srgb, var(--primary-color) 14%, transparent);
-    border-color: color-mix(
-      in srgb,
-      var(--primary-color) 34%,
-      var(--border-color)
-    );
-  }
-
-  html.dark .lap-row .split-time.split-time-latest {
-    color: color-mix(in srgb, var(--primary-color) 90%, #ffffff 10%);
-  }
-
   #toast {
     top: calc(var(--safe-top) + 1rem);
   }
@@ -3037,23 +2969,21 @@
    ИСПРАВЛЕНИЯ ДЛЯ СПИСКА КРУГОВ (КАРТОЧКИ)
 ========================================= */
 
-  /* 1. Контейнеры делаем flex-списками с отступами между элементами (Скрин 4) */
   #sw-lapsContainer,
   .sw-session-laps {
     display: flex !important;
     flex-direction: column !important;
-    gap: 0.4rem !important; /* Расстояние между кругами */
-    padding: 0.4rem !important; /* Отступ от внешних краев */
+    gap: 0.4rem !important;
+    padding: 0.4rem !important;
     background: transparent !important;
     border: none !important;
   }
 
-  /* 2. Стилизуем сами строки кругов: убираем полоски, делаем плашками */
   #sw-lapsContainer .lap-row,
   .sw-session-laps > div,
   .sw-session-laps .lap-row {
     border-bottom: none !important;
-    border-radius: 0.5rem !important; /* Внутреннее скругление карточки */
+    border-radius: 0.5rem !important;
     margin: 0 !important;
     background-color: color-mix(
       in srgb,
@@ -3064,15 +2994,30 @@
     box-shadow: 0 1px 2px rgb(0 0 0 / 0.02);
   }
 
-  /* Темная тема для карточек */
   html.dark #sw-lapsContainer .lap-row,
   html.dark .sw-session-laps > div,
   html.dark .sw-session-laps .lap-row {
-    background-color: color-mix(in srgb, #ffffff 8%, transparent) !important;
-    border-color: color-mix(in srgb, #ffffff 12%, transparent) !important;
+    background-color: color-mix(in srgb, #ffffff 10%, transparent) !important;
+    border-color: color-mix(in srgb, #ffffff 18%, transparent) !important;
   }
 
-  /* 3. Подсветка последнего (активного) круга */
+  #sw-lapsContainer .lap-row [data-template="lap-total"],
+  .sw-session-laps [data-template="lap-total"] {
+    font-size: 0.78rem !important;
+    line-height: 1.15;
+    font-weight: 700;
+    opacity: 0.92 !important;
+    color: color-mix(in srgb, var(--text-color) 88%, transparent) !important;
+  }
+
+  #sw-lapsContainer .lap-row [data-template="lap-split"],
+  .sw-session-laps [data-template="lap-split"] {
+    font-size: 0.82rem !important;
+    line-height: 1.15;
+    font-weight: 800;
+    color: color-mix(in srgb, var(--text-color) 96%, transparent) !important;
+  }
+
   #sw-lapsContainer .lap-row.is-latest {
     background-color: color-mix(
       in srgb,
@@ -3086,9 +3031,34 @@
     ) !important;
   }
 
-  /* 4. Внешний контейнер сохраненных результатов (Скрин 3) */
+  html.dark #sw-lapsContainer .lap-row.is-latest {
+    background-color: color-mix(
+      in srgb,
+      var(--primary-color) 15%,
+      transparent
+    ) !important;
+    border-color: color-mix(
+      in srgb,
+      var(--primary-color) 36%,
+      var(--border-color)
+    ) !important;
+  }
+
+  #sw-lapsContainer .lap-row .split-time.split-time-latest {
+    color: color-mix(
+      in srgb,
+      var(--primary-color) 82%,
+      var(--text-color)
+    ) !important;
+  }
+
+  html.dark #sw-lapsContainer .lap-row .split-time.split-time-latest {
+    color: color-mix(in srgb, var(--primary-color) 92%, #ffffff 8%) !important;
+  }
+
+  /* 4. Внешний контейнер сохраненных результатов  */
   .sw-session-laps {
-    border-radius: 0.75rem !important; /* Внешнее скругление (0.75rem внешнее - 0.5rem внутреннее = идеальное прилегание) */
+    border-radius: 0.75rem !important;
     border: 1px solid color-mix(in srgb, var(--border-color) 60%, transparent) !important;
     background-color: color-mix(
       in srgb,
