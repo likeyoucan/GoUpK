@@ -2510,33 +2510,26 @@
     color: rgb(17 24 39 / 0.64) !important;
   }
 
-  @media (hover: hover) {
-    .custom-select-option:hover:not(.is-selected) {
-      background-color: color-mix(
-        in srgb,
-        var(--primary-color) 50%,
-        transparent
-      );
-    }
-    .custom-select-option:not(.is-selected):hover {
-      color: color-mix(in srgb, var(--text-color) 98%, transparent);
-    }
-    html.dark .custom-select-option:hover:not(.is-selected) {
-      background-color: color-mix(
-        in srgb,
-        var(--primary-color) 68%,
-        #0b0f14 32%
-      );
-      color: #ffffff;
-    }
+@media (hover: hover) {
+  .custom-select-option:hover:not(.is-selected) {
+    background-color: color-mix(
+      in srgb,
+      var(--primary-color) 50%,
+      transparent
+    );
+  }
 
-    html.dark.glass-effect .custom-select-option:hover:not(.is-selected) {
-      background-color: color-mix(
-        in srgb,
-        var(--primary-color) 62%,
-        #000000 38%
-      );
-    }
+  html.dark .custom-select-option:hover:not(.is-selected) {
+    background-color: color-mix(in srgb, var(--primary-color) 68%, #0b0f14 32%);
+    color: #ffffff;
+  }
+
+  html.dark.glass-effect .custom-select-option:hover:not(.is-selected) {
+    background-color: color-mix(in srgb, var(--primary-color) 62%, #000000 38%);
+  }
+
+  .custom-select-option:not(.is-selected):hover {
+    color: color-mix(in srgb, var(--text-color) 98%, transparent);
   }
 
   /* Theme mode select visuals */
