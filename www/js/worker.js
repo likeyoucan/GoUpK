@@ -53,7 +53,7 @@ function startHeartbeat() {
 }
 
 self.onmessage = function (e) {
-  if (typeof e.data !== "object" || !e.data.command) return;
+  if (!e.data || typeof e.data !== "object" || !("command" in e.data)) return;
 
   const { command, time } = e.data;
 
