@@ -250,15 +250,17 @@
     font-size: max(16px, 1em);
   }
 
-  button,
-  [role="button"],
-  .app-btn,
-  .app-icon-btn,
-  .settings-action-btn,
-  .color-btn,
-  .custom-select-trigger,
-  .custom-select-option,
-  #btn-open-legal-inline {
+  :where(
+    button,
+    [role="button"],
+    .app-btn,
+    .app-icon-btn,
+    .settings-action-btn,
+    .color-btn,
+    .custom-select-trigger,
+    .custom-select-option,
+    #btn-open-legal-inline
+  ) {
     cursor: pointer;
   }
 
