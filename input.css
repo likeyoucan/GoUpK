@@ -972,6 +972,7 @@
     background: transparent;
     user-select: none;
     touch-action: none;
+    cursor: grab;
   }
 
   .resizer_handler::before {
@@ -2639,7 +2640,7 @@
 
   #accent-colors-container.is-dragging-x *,
   #bg-colors-container.is-dragging-x * {
-    cursor: grab !important;
+    cursor: grabbing !important;
   }
 
   /* Во время drag отключаем попадание в кружки/кнопки, чтобы не было pointer-hover */
