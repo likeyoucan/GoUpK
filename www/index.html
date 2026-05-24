@@ -83,9 +83,7 @@
     <link rel="stylesheet" href="styles.css?v=VERSION" />
   </head>
 
-  <body
-    class="preload"
-  >
+  <body class="preload">
     <div id="sr-only-announce" aria-live="polite" class="sr-only"></div>
 
     <div
@@ -2413,11 +2411,14 @@
       </div>
     </template>
 
-    <div
-      class="no-js-warning bg-white text-black p-6 rounded-2xl font-bold shadow-2xl text-center max-w-sm mx-4 absolute z-50"
-    >
-      Please enable JavaScript to use Stopwatch Pro. Пожалуйста, включите
-      JavaScript для работы секундомера.
+    <div class="no-js-warning" aria-live="polite">
+      <div class="no-js-warning__panel">
+        <div class="no-js-warning__title">JavaScript Required</div>
+        <p class="no-js-warning__text">
+          Please enable JavaScript to use Stopwatch Pro. Пожалуйста, включите
+          JavaScript для работы секундомера.
+        </p>
+      </div>
     </div>
 
     <script type="module" src="./js/main.js?v=VERSION"></script>
