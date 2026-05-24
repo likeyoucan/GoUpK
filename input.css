@@ -3028,6 +3028,80 @@
     contain: layout paint style;
   }
 
+  /* =========================================
+   ИСПРАВЛЕНИЯ ДЛЯ СПИСКА КРУГОВ (КАРТОЧКИ)
+========================================= */
+
+  /* 1. Контейнеры делаем flex-списками с отступами между элементами (Скрин 4) */
+  #sw-lapsContainer,
+  .sw-session-laps {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.4rem !important; /* Расстояние между кругами */
+    padding: 0.4rem !important; /* Отступ от внешних краев */
+    background: transparent !important;
+    border: none !important;
+  }
+
+  /* 2. Стилизуем сами строки кругов: убираем полоски, делаем плашками */
+  #sw-lapsContainer .lap-row,
+  .sw-session-laps > div,
+  .sw-session-laps .lap-row {
+    border-bottom: none !important;
+    border-radius: 0.5rem !important; /* Внутреннее скругление карточки */
+    margin: 0 !important;
+    background-color: color-mix(
+      in srgb,
+      var(--text-color) 4%,
+      transparent
+    ) !important;
+    border: 1px solid color-mix(in srgb, var(--border-color) 40%, transparent) !important;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.02);
+  }
+
+  /* Темная тема для карточек */
+  html.dark #sw-lapsContainer .lap-row,
+  html.dark .sw-session-laps > div,
+  html.dark .sw-session-laps .lap-row {
+    background-color: color-mix(in srgb, #ffffff 8%, transparent) !important;
+    border-color: color-mix(in srgb, #ffffff 12%, transparent) !important;
+  }
+
+  /* 3. Подсветка последнего (активного) круга */
+  #sw-lapsContainer .lap-row.is-latest {
+    background-color: color-mix(
+      in srgb,
+      var(--primary-color) 12%,
+      transparent
+    ) !important;
+    border-color: color-mix(
+      in srgb,
+      var(--primary-color) 30%,
+      transparent
+    ) !important;
+  }
+
+  /* 4. Внешний контейнер сохраненных результатов (Скрин 3) */
+  .sw-session-laps {
+    border-radius: 0.75rem !important; /* Внешнее скругление (0.75rem внешнее - 0.5rem внутреннее = идеальное прилегание) */
+    border: 1px solid color-mix(in srgb, var(--border-color) 60%, transparent) !important;
+    background-color: color-mix(
+      in srgb,
+      var(--surface-color) 50%,
+      transparent
+    ) !important;
+  }
+
+  /* Если в основном окне есть шапка (КРУГ / ОБЩЕЕ), делаем ей скругление верхних углов */
+  #sw-currentLapsHeader {
+    border-radius: 0.5rem 0.5rem 0 0;
+    background-color: transparent;
+    border-bottom: none;
+    margin-bottom: 0.2rem;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
   #app-ad-slot {
     position: relative;
     top: auto;
