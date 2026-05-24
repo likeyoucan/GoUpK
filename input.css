@@ -2633,11 +2633,6 @@
     touch-action: auto;
   }
 
-  #accent-colors-container,
-  #bg-colors-container {
-    cursor: grab;
-  }
-
   #accent-colors-container.is-dragging-x *,
   #bg-colors-container.is-dragging-x * {
     cursor: grabbing !important;
