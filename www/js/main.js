@@ -1,5 +1,7 @@
 // Файл: www/js/main.js
 
+// Файл: www/js/main.js
+
 import { showToast } from "./utils.js?v=VERSION";
 import { langManager, t } from "./i18n.js?v=VERSION";
 import { themeManager } from "./theme.js?v=VERSION";
@@ -213,10 +215,16 @@ window.addEventListener(
   true,
 );
 
-document.addEventListener("DOMContent", async () => {
+async function startBoot() {
   try {
     await bootstrap();
   } catch (error) {
     renderBootError(error);
   }
-});
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", startBoot, { once: true });
+} else {
+  void startBoot();
+}
