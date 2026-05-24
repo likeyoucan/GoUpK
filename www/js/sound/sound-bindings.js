@@ -4,16 +4,10 @@ import { APP_EVENTS } from "../constants/events.js?v=VERSION";
 import { STORAGE_KEYS } from "../constants/storage-keys.js?v=VERSION";
 import { appProManager } from "../app-pro.js?v=VERSION";
 import { showToast } from "../utils.js?v=VERSION";
-
-function tr(t, key, fallback = "") {
-  const v = t(key);
-  return v === key ? fallback || key : v;
-}
+import { resolveToastText } from "../constants/toast-fallbacks.js?v=VERSION";
 
 function notifySoundThemeProLocked(t) {
-  showToast(
-    tr(t, "pro_sound_themes_locked", "Sound themes are available in Pro"),
-  );
+  showToast(resolveToastText(t, "pro_sound_themes_locked"));
   document.dispatchEvent(
     new CustomEvent(APP_EVENTS.PRO_PAYWALL_REQUESTED, {
       detail: { feature: "sound_themes" },
@@ -74,7 +68,6 @@ export function bindSoundControls(sm, { $, safeSetLS, CustomSelect, t }) {
     { value: "life", text: t("theme_life") },
   ];
 
-  // Guard: container can be absent in some layouts/builds.
   const soundThemeContainer = $("soundThemeSelectContainer");
   if (soundThemeContainer) {
     sm.soundThemeSelect = new CustomSelect(

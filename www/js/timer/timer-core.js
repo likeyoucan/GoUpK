@@ -2,7 +2,6 @@
 
 import { APP_EVENTS } from "../constants/events.js?v=VERSION";
 import { createTimerAlarmScheduler } from "./timer-alarm.js?v=VERSION";
-import { adsManager } from "../ads.js?v=VERSION";
 
 export function setupTimerCore(tm, { showToast, updateText }) {
   const alarmScheduler =
@@ -181,9 +180,6 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     ) {
       showToast("Enable exact alarms for precise background timer");
     }
-
-    // Interstitial scenario: timer start
-    adsManager.showInterstitialIfAllowed("timer_start");
   };
 
   tm.restart = async () => {
@@ -239,9 +235,6 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     ) {
       showToast("Enable exact alarms for precise background timer");
     }
-
-    // Interstitial scenario: timer start (restart treated as new start)
-    adsManager.showInterstitialIfAllowed("timer_start");
   };
 
   tm.reset = async (clearInputs = true) => {

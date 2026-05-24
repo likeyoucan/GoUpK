@@ -2,6 +2,7 @@
 
 import { formatTime, showToast } from "./utils.js?v=VERSION";
 import { t } from "./i18n.js?v=VERSION";
+import { resolveToastText } from "./constants/toast-fallbacks.js?v=VERSION";
 
 import {
   buildStopwatchPayload,
@@ -17,8 +18,7 @@ import {
 } from "./share/share-transport.js?v=VERSION";
 
 function getShareFileFailedText() {
-  const key = t("share_file_failed");
-  return key === "share_file_failed" ? t("share_failed") : key;
+  return resolveToastText(t, "share_file_failed");
 }
 
 export const shareResults = {
@@ -51,7 +51,7 @@ export const shareResults = {
       return true;
     }
 
-    showToast(t("share_failed"));
+    showToast(resolveToastText(t, "share_failed"));
     return false;
   },
 

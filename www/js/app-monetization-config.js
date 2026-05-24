@@ -1,42 +1,45 @@
 // Файл: www/js/app-monetization-config.js
 
 /*
+===========================================
+APP MONETIZATION CONFIG - PRODUCTION GUIDE
+===========================================
 
-===========================================
-APP MONETIZATION CONFIG - ОБНОВЛЕННАЯ ИНСТРУКЦИЯ
-===========================================
+Назначение:
+Единая декларативная конфигурация монетизации для web + Capacitor.
 
 Этот файл управляет:
-1) Pro-гейтингом
-2) Рекламой
-3) Pro-бейджами в настройках
-4) Ценообразованием для кнопки/модалки покупки
+1) Pro-гейтингом фич (UI/логика)
+2) Принудительными QA-режимами Pro
+3) Ценообразованием paywall
+4) Рекламной стратегией (баннер/интерстишл)
+5) Pro-бейджами в Settings
+6) Настройками preload/app icons
 
--------------------------------------------
-1. Раздел pro
--------------------------------------------
+-------------------------------------------------
+A. Раздел pro
+-------------------------------------------------
 
-pro.enabled
-Тип: boolean
-- true  -> Pro логика включена
-- false -> Pro ограничения отключены, приложение работает как free
+pro.enabled: boolean
+- true: Pro-механика включена
+- false: весь Pro-гейтинг отключен (все фичи считаются доступными)
 
-pro.forcePurchased
-Тип: null | true | false
-- null  -> обычный режим, берется реальное состояние
-- true  -> принудительно включить Pro (QA)
-- false -> принудительно выключить Pro (QA)
+pro.forcePurchased: null | true | false
+- null: НОРМАЛЬНЫЙ PROD-РЕЖИМ
+- true: принудительно активировать Pro (QA)
+- false: принудительно деактивировать Pro (QA)
 
-pro.mode
-Тип: "subscription" | "lifetime" | "disabled"
-- subscription -> подписка
-- lifetime     -> разовая покупка Pro
-- disabled     -> Pro-гейтинг отключен
+Важно:
+Для релиза всегда используйте forcePurchased: null.
+false/true перетирают фактическое состояние пользователя на старте.
 
-pro.features
-Тип: Record<string, boolean>
-- true  -> фича платная (нужен Pro)
-- false -> фича бесплатная
+pro.mode: "subscription" | "lifetime" | "disabled"
+- subscription: подписка
+- lifetime: разовая покупка
+- disabled: отключить Pro-логику, даже если enabled=true
+
+pro.features: Record<string, boolean>
+true = фича gated (требует Pro), false = free
 
 Ключи:
 - custom_colors
@@ -45,126 +48,88 @@ pro.features
 - sound_themes
 - app_icon
 
--------------------------------------------
-2. Раздел pro.pricing
--------------------------------------------
+-------------------------------------------------
+B. Раздел pro.pricing
+-------------------------------------------------
 
-Используется для отображения цены:
-- в кнопке покупки
-- в paywall-модалке
+Используется ТОЛЬКО для UI:
+- кнопка покупки в Settings
+- paywall-модалка
 
-pro.pricing.currency
-Тип: string
-Пример: "RUB", "USD", "EUR"
+pricing.currency: "RUB" | "USD" | ...
+pricing.currencySymbol: "₽" | "$" | ...
+pricing.amount: number (базовая цена)
+pricing.period: "month" | "year" | null
+pricing.discountEnabled: boolean
+pricing.discountPercent: 0..99
 
-pro.pricing.currencySymbol
-Тип: string
-Пример: "₽", "$", "€"
+Расчет:
+current = amount * (1 - discountPercent/100), если discountEnabled=true.
 
-pro.pricing.amount
-Тип: number
-Базовая цена до скидки
+-------------------------------------------------
+C. Раздел ads
+-------------------------------------------------
 
-pro.pricing.period
-Тип: "month" | "year" | null
-- month/year -> для подписок
-- null       -> для lifetime
+ads.enabledByDefault: boolean
+- применяется только при первом запуске (когда нет APP_ADS_ENABLED в storage)
 
-pro.pricing.discountEnabled
-Тип: boolean
+ads.autoDisableOnProPurchase: boolean
+- true: после покупки Pro реклама авто-выключается (однократно, через marker)
+- false: реклама остается, пользователь отключает вручную
 
-pro.pricing.discountPercent
-Тип: number (0..99)
+ads.defaultProvider: "yandex" | "admob" | "mediation"
+ads.aggregator: string
+ads.strategy: string
+ads.interstitialCooldownMs: number
+ads.bannerMode: "always" | "off"
+ads.interstitialTriggers: object (карта контекстов interstitial)
 
--------------------------------------------
-3. Раздел ads
--------------------------------------------
+-------------------------------------------------
+D. Раздел proBadges
+-------------------------------------------------
 
-ads.enabledByDefault
-Тип: boolean
-Назначение:
-Состояние рекламы по умолчанию только для первого запуска
-(когда в storage еще нет APP_ADS_ENABLED).
+Массив инъекций бейджей "Pro" в Settings:
 
-ads.autoDisableOnProPurchase
-Тип: boolean
-Назначение:
-Автоматически выключать рекламу при покупке Pro.
-- true  -> после покупки Pro реклама выключается автоматически
-- false -> реклама остается включенной, пользователь выключает вручную
-
-ads.defaultProvider
-Тип: "yandex" | "admob" | "mediation"
-
-ads.aggregator
-Тип: string
-Декларативный параметр для native-слоя/роутинга
-
-ads.strategy
-Тип: string
-Примеры: "banner", "interstitial", "banner+interstitial", "off"
-
-ads.interstitialCooldownMs
-Тип: number (мс)
-Минимальный интервал между interstitial-показами
-
--------------------------------------------
-4. Раздел proBadges
--------------------------------------------
-
-Массив правил для инжекта Pro-бейджей в настройки.
-
-Структура элемента:
 {
   selector: "#setting-row-...",
   feature: "feature_key"
 }
 
-selector:
-- CSS-селектор строки, где показать бейдж
+selector: CSS-строка цели
+feature: ключ из pro.features
+По клику отправляется APP_EVENTS.PRO_PAYWALL_REQUESTED.
 
-feature:
-- ключ из pro.features
-- при клике по бейджу открывается paywall для этой фичи
+-------------------------------------------------
+E. Раздел ui
+-------------------------------------------------
 
--------------------------------------------
-5. Профили
--------------------------------------------
+ui.ads: визуальная политика баннерного контейнера
+ui.preload: поведение подписи иконки на прелоадере
+ui.appIcons: список доступных иконок и их Pro-гейтинг
 
-Полностью free:
-- pro.enabled = false
-- pro.mode = "disabled"
-- все pro.features = false
+appIcons.options[*]:
+- id: внутренний id
+- nativeName: имя для нативного plugin setIconName()
+- image: путь к preview
+- labelKey: i18n ключ
+- proRequired: требует ли Pro
 
-Подписка:
-- pro.enabled = true
-- pro.mode = "subscription"
-- period = "month" или "year"
+-------------------------------------------------
+F. Валидация перед релизом
+-------------------------------------------------
 
-Lifetime:
-- pro.enabled = true
-- pro.mode = "lifetime"
-- period = null
-
--------------------------------------------
-6. Чек перед релизом
--------------------------------------------
-
-- forcePurchased === null
-- pro.enabled корректен
-- pro.mode соответствует продукту
-- pricing заполнен корректно
-- discountPercent в диапазоне 0..99
-- нет дубликатов Pro-бейджей в UI
-- interstitialCooldownMs адекватен
-- autoDisableOnProPurchase соответствует вашей продуктовой логике
-
+1) forcePurchased === null
+2) pro.mode соответствует продукту (subscription/lifetime)
+3) pricing.amount > 0 и discountPercent в 0..99
+4) proBadges.feature существует в pro.features
+5) ads.interstitialCooldownMs >= 30000
+6) enabledByDefault/autoDisableOnProPurchase соответствуют бизнес-логике
 */
 
 export const APP_MONETIZATION_CONFIG = {
   pro: {
     enabled: true,
-    forcePurchased: false, // null | true | false
+    forcePurchased: null, // null | true | false
     mode: "lifetime", // subscription | lifetime | disabled
 
     features: {
@@ -176,10 +141,10 @@ export const APP_MONETIZATION_CONFIG = {
     },
 
     pricing: {
-      currency: "RUB", // RUB | USD | EUR ...
-      currencySymbol: "₽", // символ для UI
-      amount: 990, // базовая цена
-      period: null, // "month" | "year" | null (null для lifetime)
+      currency: "RUB",
+      currencySymbol: "₽",
+      amount: 990,
+      period: null, // month | year | null
       discountEnabled: true,
       discountPercent: 40, // 0..99
     },
@@ -192,6 +157,18 @@ export const APP_MONETIZATION_CONFIG = {
     aggregator: "mediation",
     strategy: "banner+interstitial",
     interstitialCooldownMs: 5 * 60 * 1000,
+
+    // JS-side policy (используется bootstrap-модулем)
+    bannerMode: "always", // always | off
+    interstitialTriggers: {
+      app_start: true,
+      app_close: false,
+      share: false,
+      save_result: false,
+      timer_start: false,
+      timer_complete: true,
+      tabata_complete: true,
+    },
   },
 
   proBadges: [
@@ -204,15 +181,15 @@ export const APP_MONETIZATION_CONFIG = {
 
   ui: {
     ads: {
-      desktopFixedFromWidth: 1281, // >= этого брейкпоинта баннер fixed
+      desktopFixedFromWidth: 1281,
       desktopFixedTopOffsetPx: 8,
       desktopFixedWidth: "min(96vw, 720px)",
     },
 
     preload: {
-      showIconLabel: false, // глобально показывать подпись в preload
-      showLabelOnlyForProPurchase: true, // если true: подпись только при купленном Pro
-      proPurchasedLabelMode: "pro_word", // "icon_label" | "pro_word"
+      showIconLabel: false,
+      showLabelOnlyForProPurchase: true,
+      proPurchasedLabelMode: "pro_word", // icon_label | pro_word
       hideLabelWhenEmpty: true,
     },
 

@@ -4,6 +4,7 @@ import { safeGetLS, safeSetLS, showToast } from "./utils.js?v=VERSION";
 import { STORAGE_KEYS } from "./constants/storage-keys.js?v=VERSION";
 import { APP_EVENTS } from "./constants/events.js?v=VERSION";
 import { APP_MONETIZATION_CONFIG } from "./app-monetization-config.js?v=VERSION";
+import { resolveToastText } from "./constants/toast-fallbacks.js?v=VERSION";
 
 const ICON_CFG = APP_MONETIZATION_CONFIG.ui?.appIcons || {};
 const ICON_OPTIONS = Array.isArray(ICON_CFG.options) ? ICON_CFG.options : [];
@@ -89,7 +90,6 @@ export function getResolvedAppIconId(appProManager) {
 
   if (canUseOption(option, appProManager)) return option.id;
 
-  // fallback to first non-pro icon
   const fallback = ICON_OPTIONS.find((x) => !x.proRequired) || ICON_OPTIONS[0];
   return fallback.id;
 }
@@ -185,7 +185,7 @@ export function initAppIconSelector({ t, appProManager }) {
 
       btn.addEventListener("click", async () => {
         if (locked) {
-          showToast(tr(t, "pro_required", "Feature available in Pro"));
+          showToast(resolveToastText(t, "pro_required"));
           document.dispatchEvent(
             new CustomEvent(APP_EVENTS.PRO_PAYWALL_REQUESTED, {
               detail: { feature: "app_icon" },

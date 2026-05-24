@@ -5,6 +5,12 @@ let views = [];
 
 let globalSnap = "middle"; // "top" | "middle" | "bottom"
 
+// Явная настройка поведения при скрытии bottom в landscape.
+// true: bottom считается overlay-слоем (CSS должен читать data-split-overlay-bottom="1")
+const SPLIT_BEHAVIOR = {
+  overlayWhenBottomHidden: true,
+};
+
 function clamp(v, min, max) {
   return Math.max(min, Math.min(max, v));
 }
@@ -84,6 +90,30 @@ function getTargetFromGlobalSnap() {
   return middle;
 }
 
+function applyOverlayFlag(viewEl, target, { liveRaw = null } = {}) {
+  if (!SPLIT_BEHAVIOR.overlayWhenBottomHidden) {
+    viewEl.dataset.splitOverlayBottom = "0";
+    return;
+  }
+
+  if (!isRowLayout(viewEl)) {
+    viewEl.dataset.splitOverlayBottom = "0";
+    return;
+  }
+
+  if (target === 100) {
+    viewEl.dataset.splitOverlayBottom = "1";
+    return;
+  }
+
+  if (typeof liveRaw === "number" && liveRaw >= 94) {
+    viewEl.dataset.splitOverlayBottom = "1";
+    return;
+  }
+
+  viewEl.dataset.splitOverlayBottom = "0";
+}
+
 function updateAllA11y() {
   const target = getTargetFromGlobalSnap();
   views.forEach((v) => {
@@ -101,6 +131,7 @@ function applySnapToAll(target, { animate = true, duration = 240 } = {}) {
     if (!viewEl || !topHalf) return;
 
     viewEl.dataset.splitTarget = targetName;
+    applyOverlayFlag(viewEl, target);
 
     if (!animate) {
       viewEl.classList.remove("split-live", "split-animating");
@@ -126,6 +157,7 @@ function applySnapToAll(target, { animate = true, duration = 240 } = {}) {
       viewEl.classList.remove("split-animating");
       setStateClass(viewEl, target);
       setCollapseFx(viewEl, target === 0 ? 0 : target === 100 ? 100 : middle);
+      applyOverlayFlag(viewEl, target);
       viewEl.dataset.splitTarget = "";
     };
 
@@ -183,8 +215,6 @@ function setupOneView(ctx) {
       );
     }
 
-    // Учитываем нижний padding и высоту handler,
-    // чтобы handler не уходил под nav в mobile.
     const bottomHalf = viewEl.querySelector(".view-bottom-half");
     const bottomPad = bottomHalf
       ? parseFloat(getComputedStyle(bottomHalf).paddingBottom || "0")
@@ -206,13 +236,13 @@ function setupOneView(ctx) {
       "split-bottom-hidden",
     );
 
-    // Когда подходим к нижней границе на mobile,
-    // держим handler у nav уже во время drag.
     if (isMobilePortrait() && lastRaw >= 94) {
       viewEl.dataset.splitTarget = "bottom";
     } else {
       viewEl.dataset.splitTarget = "";
     }
+
+    applyOverlayFlag(viewEl, null, { liveRaw: lastRaw });
 
     viewEl.style.setProperty("--split", `${lastRaw}%`);
     setCollapseFx(viewEl, lastRaw);
@@ -286,8 +316,8 @@ function setupOneView(ctx) {
       const dt = Math.max(1, now - lastTs);
       const instV = (raw - lastRawForVel) / dt;
 
-      const t = getInertiaTuning(activePointerType);
-      velocity = velocity * t.keep + instV * t.add;
+      const tune = getInertiaTuning(activePointerType);
+      velocity = velocity * tune.keep + instV * tune.add;
 
       lastTs = now;
       lastRawForVel = raw;

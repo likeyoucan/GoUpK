@@ -1,6 +1,6 @@
 // Файл: www/js/main.js
 
-import { showToast, safeGetLS, safeSetLS } from "./utils.js?v=VERSION";
+import { showToast } from "./utils.js?v=VERSION";
 import { langManager, t } from "./i18n.js?v=VERSION";
 import { themeManager } from "./theme.js?v=VERSION";
 import { navigation } from "./navigation.js?v=VERSION";
@@ -15,29 +15,20 @@ import {
   initForegroundService,
   destroyForegroundService,
 } from "./foreground-service.js?v=VERSION";
+import { adsManager } from "./ads.js?v=VERSION";
 
 import { initRingSvg } from "./bootstrap/ring-svg-injector.js?v=VERSION";
 import { applyPerformanceProfile } from "./bootstrap/performance-profile.js?v=VERSION";
-import { bindAppLifecycle } from "./bootstrap/app-lifecycle.js?v=VERSION";
-import { initializeApp } from "./bootstrap/app-init.js?v=VERSION";
-import { bindUiInteractions } from "./bootstrap/ui-interactions.js?v=VERSION";
+import { initRuntimeBootstrap } from "./bootstrap/runtime-bootstrap.js?v=VERSION";
+import { initMonetizationBootstrap } from "./bootstrap/monetization-bootstrap.js?v=VERSION";
 import { initErudaTapToggle } from "./debug-eruda-toggle.js?v=VERSION";
 
 import { appProManager } from "./app-pro.js?v=VERSION";
-import { adsManager } from "./ads.js?v=VERSION";
 import { store } from "./store.js?v=VERSION";
 import { APP_MONETIZATION_CONFIG } from "./app-monetization-config.js?v=VERSION";
-import { initProUi } from "./pro-ui.js?v=VERSION";
-import { APP_EVENTS } from "./constants/events.js?v=VERSION";
-import { STORAGE_KEYS } from "./constants/storage-keys.js?v=VERSION";
-import {
-  initAppIconSelector,
-  getResolvedAppIconMeta,
-} from "./app-icon-selector.js?v=VERSION";
 
 const ERUDA_CDN_MARKER = "cdn.jsdelivr.net/npm/eruda";
 const OPTIONAL_RESOURCE_MARKERS = [ERUDA_CDN_MARKER, "/js/eruda.js"];
-const ADS_AUTO_DISABLE_MARKER = "app_ads_auto_disabled_after_pro";
 
 function isErudaNoiseFromErrorEvent(event) {
   const src = String(event?.filename || "");
@@ -127,99 +118,6 @@ async function reconcileNativeTimerAlarm() {
   }
 }
 
-async function applyMonetizationConfig() {
-  if (!APP_MONETIZATION_CONFIG.pro.enabled) {
-    await appProManager.setMode("disabled");
-  } else {
-    await appProManager.setMode(APP_MONETIZATION_CONFIG.pro.mode);
-
-    const entries = Object.entries(APP_MONETIZATION_CONFIG.pro.features || {});
-    for (const [featureKey, isGated] of entries) {
-      await appProManager.setFeatureGate(featureKey, !!isGated);
-    }
-
-    if (APP_MONETIZATION_CONFIG.pro.forcePurchased === true) {
-      await appProManager.purchase();
-    } else if (APP_MONETIZATION_CONFIG.pro.forcePurchased === false) {
-      await appProManager.revoke();
-    }
-  }
-
-  adsManager.setProvider(APP_MONETIZATION_CONFIG.ads.defaultProvider);
-  adsManager.setInterstitialCooldown(
-    APP_MONETIZATION_CONFIG.ads.interstitialCooldownMs,
-  );
-
-  // JS-side ads behavior config
-  adsManager.setBannerMode(APP_MONETIZATION_CONFIG.ads.bannerMode || "always");
-  adsManager.setInterstitialTriggers(
-    APP_MONETIZATION_CONFIG.ads.interstitialTriggers || {},
-  );
-
-  const storedAdsEnabled = safeGetLS(STORAGE_KEYS.APP_ADS_ENABLED);
-  if (storedAdsEnabled === null) {
-    adsManager.setEnabled(APP_MONETIZATION_CONFIG.ads.enabledByDefault);
-  } else {
-    adsManager.setEnabled(storedAdsEnabled !== "false");
-  }
-}
-
-function syncAdsToggleUi(checked) {
-  const toggleAds = document.getElementById("toggle-ads");
-  if (toggleAds) toggleAds.checked = !!checked;
-}
-
-function shouldAutoDisableAdsOnPro() {
-  return !!APP_MONETIZATION_CONFIG.ads?.autoDisableOnProPurchase;
-}
-
-function maybeAutoDisableAdsForPro(isPurchased) {
-  if (!isPurchased) return;
-  if (!shouldAutoDisableAdsOnPro()) return;
-
-  const marker = safeGetLS(ADS_AUTO_DISABLE_MARKER) === "true";
-  if (marker) return;
-
-  adsManager.setEnabled(false);
-  syncAdsToggleUi(false);
-  safeSetLS(ADS_AUTO_DISABLE_MARKER, "true");
-}
-
-function bindProAdsAutomation() {
-  document.addEventListener(APP_EVENTS.PRO_STATUS_CHANGED, (e) => {
-    const purchased = !!e?.detail?.purchased;
-    maybeAutoDisableAdsForPro(purchased);
-  });
-
-  maybeAutoDisableAdsForPro(!!appProManager.purchased);
-}
-
-function syncPreloaderIconMeta() {
-  const iconMeta = getResolvedAppIconMeta(t, appProManager);
-  const preloadCfg = APP_MONETIZATION_CONFIG.ui?.preload || {};
-
-  let label = "";
-
-  const showIconLabel = preloadCfg.showIconLabel !== false;
-  const onlyForProPurchase = preloadCfg.showLabelOnlyForProPurchase !== false;
-  const labelMode = preloadCfg.proPurchasedLabelMode || "icon_label";
-
-  if (showIconLabel) {
-    if (!onlyForProPurchase || appProManager.purchased) {
-      if (labelMode === "pro_word" && appProManager.purchased) {
-        label = t("pro");
-      } else {
-        label = iconMeta.label || "";
-      }
-    }
-  }
-
-  preload.setIconMeta({
-    src: iconMeta.src,
-    label,
-  });
-}
-
 let bootStarted = false;
 
 async function bootstrap() {
@@ -231,11 +129,15 @@ async function bootstrap() {
   store.reconcileActiveTimer({ sw, tm, tb });
   await reconcileNativeTimerAlarm();
 
-  await appProManager.init();
+  await initMonetizationBootstrap({
+    preload,
+    t,
+    langManager,
+    showToast,
+    config: APP_MONETIZATION_CONFIG,
+  });
 
-  syncPreloaderIconMeta();
-
-  initializeApp({
+  initRuntimeBootstrap({
     applyPerformanceProfile,
     initRingSvg,
     langManager,
@@ -247,55 +149,14 @@ async function bootstrap() {
     tb,
     navigation,
     modalManager,
-  });
-
-  bindProAdsAutomation();
-  await applyMonetizationConfig();
-
-  adsManager.init();
-  adsManager.bindAutoRefresh();
-  adsManager.bindLifecycleMonetization();
-  adsManager.showInterstitialIfAllowed("app_start");
-
-  bindAppLifecycle({
     preload,
     initForegroundService,
     destroyForegroundService,
-    modalManager,
-    navigation,
     adsManager,
-  });
-
-  bindUiInteractions({
-    $: (id) => document.getElementById(id),
     showToast,
     t,
-    modalManager,
-    themeManager,
-    sm,
-    langManager,
-    sw,
-    tm,
-    tb,
-    navigation,
+    getById: (id) => document.getElementById(id),
   });
-
-  initProUi({
-    t,
-    langManager,
-    appProManager,
-    config: APP_MONETIZATION_CONFIG,
-    showToast,
-  });
-
-  initAppIconSelector({
-    t,
-    appProManager,
-  });
-
-  document.addEventListener(APP_EVENTS.APP_ICON_CHANGED, () => {
-  syncPreloaderIconMeta();
-});
 
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") {
@@ -306,19 +167,16 @@ async function bootstrap() {
   });
 }
 
-// Runtime JS errors (logic)
 window.addEventListener("error", (e) => {
   if (isErudaNoiseFromErrorEvent(e)) return;
   console.error("[GLOBAL ERROR]", e.error || e.message);
 });
 
-// Runtime promise rejections
 window.addEventListener("unhandledrejection", (e) => {
   if (isErudaNoiseFromRejection(e)) return;
   console.error("[UNHANDLED PROMISE]", e.reason);
 });
 
-// Resource loading errors (scripts/styles/img), incl. 503
 window.addEventListener(
   "error",
   (e) => {

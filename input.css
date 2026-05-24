@@ -1282,6 +1282,7 @@
 
     .view-bottom-half {
       padding-bottom: 0;
+      min-width: 0;
       flex-direction: row;
     }
 
@@ -1321,22 +1322,34 @@
     }
 
     :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
+      .view-top-half {
+      flex-basis: 100%;
+    }
+
+    :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
       .view-bottom-half {
-      flex: 0 0 auto;
-      width: var(--handler-size);
-      min-width: var(--handler-size);
-      height: auto;
-      min-height: var(--handler-size);
-      padding-bottom: 0;
-      transform: none;
+      position: absolute;
+      inset: 0;
+      width: 0;
+      min-width: 0;
+      flex: 0 0 0;
+      height: 100%;
+      min-height: 0;
       overflow: visible;
+      pointer-events: none;
+      z-index: 45;
     }
 
     :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
       .view-bottom-half
       .resizer_handler {
+      pointer-events: auto;
       top: 0;
-      bottom: auto;
+      bottom: 0;
+      left: calc(100% - (var(--handler-size) / 2));
+      right: auto;
+      width: var(--handler-size);
+      height: 100%;
     }
 
     :is(

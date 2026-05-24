@@ -5,6 +5,7 @@ import { t } from "./i18n.js?v=VERSION";
 import { STORAGE_KEYS } from "./constants/storage-keys.js?v=VERSION";
 import { APP_EVENTS } from "./constants/events.js?v=VERSION";
 import { proSecurity } from "./app-pro-security.js?v=VERSION";
+import { resolveToastText } from "./constants/toast-fallbacks.js?v=VERSION";
 
 const DEFAULT_MODE = "subscription"; // subscription | lifetime | disabled
 const DEFAULT_FEATURES = {
@@ -25,11 +26,6 @@ function parseJson(raw, fallback) {
 
 function dispatch(name, detail = {}) {
   document.dispatchEvent(new CustomEvent(name, { detail }));
-}
-
-function tr(key, fallback = "") {
-  const v = t(key);
-  return v === key ? fallback || key : v;
 }
 
 export const appProManager = {
@@ -61,14 +57,12 @@ export const appProManager = {
     const ok = await proSecurity.verify(payload, signature);
 
     if (!signature) {
-      // Never trust purchased=true state without signature.
       if (this.purchased) {
         await this.resetToSafeState("missing_signature_with_purchased_true");
         this.initialized = true;
         return;
       }
 
-      // First-run free-state can be signed.
       await this.persist();
       this.initialized = true;
       this.applyProIcon();
@@ -102,9 +96,7 @@ export const appProManager = {
     await this.persist();
     this.applyProIcon();
 
-    showToast(
-      tr("pro_integrity_reset", "Pro data was reset after integrity check"),
-    );
+    showToast(resolveToastText(t, "pro_integrity_reset"));
     dispatch(APP_EVENTS.PRO_TAMPER_DETECTED, { reason });
     dispatch(APP_EVENTS.PRO_STATUS_CHANGED, { purchased: false });
   },
@@ -174,14 +166,14 @@ export const appProManager = {
     this.purchased = true;
     await this.persist();
     this.applyProIcon();
-    showToast(tr("pro_activated", "Pro activated"));
+    showToast(resolveToastText(t, "pro_activated"));
   },
 
   async revoke() {
     this.purchased = false;
     await this.persist();
     this.applyProIcon();
-    showToast(tr("pro_deactivated", "Pro deactivated"));
+    showToast(resolveToastText(t, "pro_deactivated"));
   },
 
   async setMode(nextMode) {

@@ -2,6 +2,7 @@
 
 import { APP_EVENTS } from "../constants/events.js?v=VERSION";
 import { appProManager } from "../app-pro.js?v=VERSION";
+import { resolveToastText } from "../constants/toast-fallbacks.js?v=VERSION";
 
 export function bindModalActions({
   $,
@@ -22,10 +23,8 @@ export function bindModalActions({
     setTimeout(() => showToast(t("settings_reset_success")), 450);
   };
 
-  const getProAlreadyActiveText = () => {
-    const text = t("pro_already_active");
-    return text && text !== "pro_already_active" ? text : "PRO уже активен";
-  };
+  const getProAlreadyActiveText = () =>
+    resolveToastText(t, "pro_already_active");
 
   const handlers = [];
 
@@ -84,7 +83,7 @@ export function bindModalActions({
         await appProManager.revoke();
       } catch (err) {
         console.error("[pro] revoke failed", err);
-        showToast(t("share_failed"));
+        showToast(resolveToastText(t, "share_failed"));
       }
       return;
     }
@@ -98,7 +97,7 @@ export function bindModalActions({
       modalManager.closeCurrent();
     } catch (err) {
       console.error("[pro] purchase failed", err);
-      showToast(t("share_failed"));
+      showToast(resolveToastText(t, "share_failed"));
     }
   });
 

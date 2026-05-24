@@ -17,6 +17,7 @@ import { APP_EVENTS } from "./constants/events.js?v=VERSION";
 import { STORAGE_KEYS } from "./constants/storage-keys.js?v=VERSION";
 import { CustomSelect } from "./custom-select.js?v=VERSION";
 import { t } from "./i18n.js?v=VERSION";
+import { resolveToastText } from "./constants/toast-fallbacks.js?v=VERSION";
 
 import {
   applyModeToDocument,
@@ -29,7 +30,7 @@ import {
 } from "./theme/theme-colors.js?v=VERSION";
 
 function notifyProBlocked(feature = "accent_bg") {
-  showToast("Feature available in Pro");
+  showToast(resolveToastText(t, "pro_required"));
   document.dispatchEvent(
     new CustomEvent(APP_EVENTS.PRO_PAYWALL_REQUESTED, {
       detail: { feature },
