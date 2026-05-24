@@ -28,6 +28,19 @@ import {
 const TRANSITION_DURATION = 200;
 let globalHandlersBound = false;
 
+/**
+ * @typedef {Object} SelectOption
+ * @property {string} value
+ * @property {string} text
+ * @property {string[]} [iconPaths]
+ */
+
+/**
+ * @callback OnSelectCallback
+ * @param {string} value
+ * @returns {void}
+ */
+
 function bindGlobalHandlersOnce() {
   if (globalHandlersBound) return;
   globalHandlersBound = true;
@@ -45,14 +58,29 @@ function bindGlobalHandlersOnce() {
 }
 
 export class CustomSelect {
+  /**
+   * @param {string} elementId
+   * @param {SelectOption[]} options
+   * @param {OnSelectCallback | null | undefined} onSelect
+   * @param {string} initialValue
+   */
   constructor(elementId, options, onSelect, initialValue) {
+    /** @type {HTMLElement | null} */
     this.container = document.getElementById(elementId);
+
+    /** @type {SelectOption[]} */
     this.options = Array.isArray(options) ? options : [];
+
+    /** @type {OnSelectCallback | null} */
     this.onSelect = typeof onSelect === "function" ? onSelect : null;
+
     this.currentValue = initialValue;
 
     this.isOpen = false;
+
+    /** @type {number} */
     this.focusedIndex = -1;
+
     this.isDestroyed = false;
 
     this._instanceAbort = new AbortController();
@@ -61,10 +89,26 @@ export class CustomSelect {
     this._rafReposition = 0;
     this._closeTimer = 0;
 
+    /** @type {"top" | "bottom"} */
     this._placement = "bottom";
+
+    /** @type {HTMLElement} */
     this._portalRoot = document.getElementById("app") || document.body;
+
     this._originalParent = null;
     this._nextSibling = null;
+
+    /** @type {HTMLElement | null} */
+    this.trigger = null;
+
+    /** @type {HTMLElement | null} */
+    this.selectedValueEl = null;
+
+    /** @type {SVGElement | null} */
+    this.arrow = null;
+
+    /** @type {HTMLElement | null} */
+    this.optionsPanel = null;
 
     if (!(this.container instanceof HTMLElement)) {
       console.warn(`[CustomSelect] container not found: ${elementId}`);
@@ -76,6 +120,25 @@ export class CustomSelect {
     this.attachBaseListeners();
 
     registerSelect(this);
+  }
+
+  _hasCoreNodes() {
+    return !!(this.container && this.trigger && this.optionsPanel);
+  }
+
+  /**
+   * @returns {{container: HTMLElement, trigger: HTMLElement, optionsPanel: HTMLElement}}
+   */
+  _getCoreNodesOrThrow() {
+    if (!this._hasCoreNodes()) {
+      throw new Error("[CustomSelect] core nodes are not initialized");
+    }
+
+    return {
+      container: this.container,
+      trigger: this.trigger,
+      optionsPanel: this.optionsPanel,
+    };
   }
 
   destroy() {
@@ -120,6 +183,8 @@ export class CustomSelect {
   }
 
   render() {
+    if (!this.container) return;
+
     this.container.replaceChildren();
 
     const triggerParts = createTrigger();
@@ -137,7 +202,7 @@ export class CustomSelect {
   }
 
   populateOptions() {
-    if (!this.optionsPanel) return;
+    if (!this.optionsPanel || !this.container) return;
     this.optionsPanel.replaceChildren();
 
     const fragment = document.createDocumentFragment();
@@ -168,13 +233,17 @@ export class CustomSelect {
   }
 
   renderSelectedValue(option) {
+    if (!this.selectedValueEl) return;
     appendOptionContent(this.selectedValueEl, option, createOptionIcon);
   }
 
   attachBaseListeners() {
+    if (!this._hasCoreNodes()) return;
+
+    const { trigger, optionsPanel, container } = this._getCoreNodesOrThrow();
     const signal = this._instanceAbort.signal;
 
-    this.trigger.addEventListener(
+    trigger.addEventListener(
       "click",
       (e) => {
         e.stopPropagation();
@@ -183,7 +252,7 @@ export class CustomSelect {
       { signal },
     );
 
-    this.trigger.addEventListener(
+    trigger.addEventListener(
       "keydown",
       (e) => {
         if (e.key === "Enter" || e.key === " ") {
@@ -208,7 +277,7 @@ export class CustomSelect {
       { signal },
     );
 
-    this.optionsPanel.addEventListener(
+    optionsPanel.addEventListener(
       "keydown",
       (e) => {
         if (e.key === "ArrowDown") {
@@ -229,7 +298,7 @@ export class CustomSelect {
           if (focused) {
             this.setValue(focused.dataset.value);
             this.close();
-            this.trigger.focus();
+            trigger.focus();
           }
           return;
         }
@@ -237,13 +306,13 @@ export class CustomSelect {
         if (e.key === "Escape") {
           e.preventDefault();
           this.close();
-          this.trigger.focus();
+          trigger.focus();
         }
       },
       { signal },
     );
 
-    this.optionsPanel.addEventListener(
+    optionsPanel.addEventListener(
       "click",
       (e) => {
         const target = e.target.closest(".custom-select-option");
@@ -251,12 +320,12 @@ export class CustomSelect {
 
         this.setValue(target.dataset.value);
         this.close();
-        this.trigger.focus();
+        trigger.focus();
       },
       { signal },
     );
 
-    this.optionsPanel.addEventListener(
+    optionsPanel.addEventListener(
       "mouseover",
       (e) => {
         const target = e.target.closest(".custom-select-option");
@@ -269,7 +338,7 @@ export class CustomSelect {
       { signal },
     );
 
-    this.optionsPanel.addEventListener(
+    optionsPanel.addEventListener(
       "mouseout",
       (e) => {
         const target = e.target.closest(".custom-select-option");
@@ -281,7 +350,7 @@ export class CustomSelect {
     const viewportHandler = (ev) => {
       if (!this.isOpen) return;
       const target = ev?.target;
-      if (target instanceof Node && this.optionsPanel.contains(target)) return;
+      if (target instanceof Node && optionsPanel.contains(target)) return;
       this.scheduleReposition();
     };
 
@@ -324,15 +393,14 @@ export class CustomSelect {
       });
       this._resizeObserver.observe(this._portalRoot);
     }
+
+    // keep reference used by typings / future migration
+    void container;
   }
 
   _movePanelToPortal() {
-    if (
-      !this.optionsPanel ||
-      this.optionsPanel.parentElement === this._portalRoot
-    ) {
-      return;
-    }
+    if (!this.optionsPanel) return;
+    if (this.optionsPanel.parentElement === this._portalRoot) return;
 
     this._originalParent = this.optionsPanel.parentElement;
     this._nextSibling = this.optionsPanel.nextSibling;
@@ -360,7 +428,7 @@ export class CustomSelect {
   }
 
   scheduleReposition() {
-    if (!this.isOpen) return;
+    if (!this.isOpen || !this._hasCoreNodes()) return;
     if (this._rafReposition) cancelAnimationFrame(this._rafReposition);
 
     this._rafReposition = requestAnimationFrame(() => {
@@ -384,14 +452,9 @@ export class CustomSelect {
   }
 
   open() {
-    if (
-      this.isOpen ||
-      this.isDestroyed ||
-      !this.optionsPanel ||
-      !this.trigger
-    ) {
-      return;
-    }
+    if (this.isOpen || this.isDestroyed || !this._hasCoreNodes()) return;
+
+    const { trigger, optionsPanel, container } = this._getCoreNodesOrThrow();
 
     this.isOpen = true;
 
@@ -406,16 +469,12 @@ export class CustomSelect {
     const openSignal = this._openAbort.signal;
 
     this._movePanelToPortal();
-    this.optionsPanel.classList.remove("hidden");
+    optionsPanel.classList.remove("hidden");
 
-    this._placement = decidePlacement(
-      this.trigger,
-      this.optionsPanel,
-      this._portalRoot,
-    );
+    this._placement = decidePlacement(trigger, optionsPanel, this._portalRoot);
     positionPanel({
-      triggerEl: this.trigger,
-      panelEl: this.optionsPanel,
+      triggerEl: trigger,
+      panelEl: optionsPanel,
       portalRoot: this._portalRoot,
       placement: this._placement,
     });
@@ -426,10 +485,7 @@ export class CustomSelect {
       "click",
       (e) => {
         const target = e.target;
-        if (
-          this.container?.contains(target) ||
-          this.optionsPanel?.contains(target)
-        ) {
+        if (container.contains(target) || optionsPanel.contains(target)) {
           return;
         }
         this.close();
@@ -438,19 +494,19 @@ export class CustomSelect {
     );
 
     requestAnimationFrame(() => {
-      if (!this.isOpen) return;
+      if (!this.isOpen || !this._hasCoreNodes()) return;
 
       positionPanel({
-        triggerEl: this.trigger,
-        panelEl: this.optionsPanel,
+        triggerEl: trigger,
+        panelEl: optionsPanel,
         portalRoot: this._portalRoot,
         placement: this._placement,
       });
 
-      this.optionsPanel.classList.add("is-open");
-      this.arrow.style.transform = "rotate(180deg)";
-      this.trigger.setAttribute("aria-expanded", "true");
-      this.container.classList.add("is-open");
+      optionsPanel.classList.add("is-open");
+      if (this.arrow) this.arrow.style.transform = "rotate(180deg)";
+      trigger.setAttribute("aria-expanded", "true");
+      container.classList.add("is-open");
 
       const selectedIdx = this.options.findIndex(
         (opt) => opt.value === this.currentValue,
@@ -459,13 +515,15 @@ export class CustomSelect {
 
       this.syncAriaActive();
       this.focusCurrentOption();
-      this.optionsPanel.focus();
+      optionsPanel.focus();
     });
   }
 
   close({ immediate = false } = {}) {
     if (!this.isOpen && !immediate) return;
+    if (!this._hasCoreNodes()) return;
 
+    const { trigger, optionsPanel, container } = this._getCoreNodesOrThrow();
     this.isOpen = false;
 
     if (this._openAbort) {
@@ -478,13 +536,11 @@ export class CustomSelect {
       this._rafReposition = 0;
     }
 
-    if (this.optionsPanel) this.optionsPanel.classList.remove("is-open");
+    optionsPanel.classList.remove("is-open");
     if (this.arrow) this.arrow.style.transform = "";
-    if (this.trigger) {
-      this.trigger.setAttribute("aria-expanded", "false");
-      this.trigger.removeAttribute("aria-activedescendant");
-    }
-    if (this.container) this.container.classList.remove("is-open");
+    trigger.setAttribute("aria-expanded", "false");
+    trigger.removeAttribute("aria-activedescendant");
+    container.classList.remove("is-open");
 
     unlockPageScroll();
 
@@ -515,10 +571,12 @@ export class CustomSelect {
   }
 
   moveFocus(direction) {
-    const optionEls = this.optionsPanel?.querySelectorAll(
+    if (!this._hasCoreNodes()) return;
+
+    const optionEls = this.optionsPanel.querySelectorAll(
       ".custom-select-option",
     );
-    if (!optionEls?.length) return;
+    if (!optionEls.length) return;
 
     if (this.focusedIndex < 0) this.focusedIndex = 0;
     else {
@@ -537,7 +595,8 @@ export class CustomSelect {
   }
 
   getFocusedOptionEl() {
-    return this.optionsPanel?.querySelector(
+    if (!this.optionsPanel) return null;
+    return this.optionsPanel.querySelector(
       `.custom-select-option[data-index="${this.focusedIndex}"]`,
     );
   }
@@ -549,8 +608,10 @@ export class CustomSelect {
   }
 
   setValue(value, triggerOnSelect = true) {
+    if (!this._hasCoreNodes()) return;
+
     const selectedOption = this.options.find((opt) => opt.value === value);
-    if (!selectedOption || !this.optionsPanel) return;
+    if (!selectedOption) return;
 
     this.currentValue = value;
     this.renderSelectedValue(selectedOption);

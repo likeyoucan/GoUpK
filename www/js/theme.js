@@ -29,6 +29,16 @@ import {
   applyBgTheme as applyBgThemeVars,
 } from "./theme/theme-colors.js?v=VERSION";
 
+/**
+ * @typedef {"system" | "light" | "dark"} ThemeMode
+ */
+
+/**
+ * @typedef {Object} ThemeColorSetOptions
+ * @property {boolean} [recordHistory=true]
+ * @property {boolean} [skipProCheck=false]
+ */
+
 function notifyProBlocked(feature = "accent_bg") {
   showToast(resolveToastText(t, "pro_required"));
   document.dispatchEvent(
@@ -245,6 +255,10 @@ export const themeManager = {
       : "light";
   },
 
+  /**
+   * @param {ThemeMode} mode
+   * @param {boolean} [useTransition=true]
+   */
   setMode(mode, useTransition = true) {
     if (useTransition) document.body.classList.add("is-updating-theme");
 
@@ -289,6 +303,11 @@ export const themeManager = {
     return this._history.getLastValid(type, this._getAvailableColorSet(type));
   },
 
+  /**
+   * @param {string} hex
+   * @param {boolean} [doScroll=true]
+   * @param {ThemeColorSetOptions} [options]
+   */
   setColor(hex, doScroll = true, options = {}) {
     const { recordHistory = true, skipProCheck = false } = options;
 
@@ -322,6 +341,11 @@ export const themeManager = {
     colorManager.syncPickers(this.currentAccent, this.currentBg);
   },
 
+  /**
+   * @param {string} hex
+   * @param {boolean} [doScroll=true]
+   * @param {ThemeColorSetOptions} [options]
+   */
   setBgColor(hex, doScroll = true, options = {}) {
     const { recordHistory = true, skipProCheck = false } = options;
 

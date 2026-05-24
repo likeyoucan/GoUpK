@@ -30,6 +30,14 @@ import { APP_MONETIZATION_CONFIG } from "./app-monetization-config.js?v=VERSION"
 const ERUDA_CDN_MARKER = "cdn.jsdelivr.net/npm/eruda";
 const OPTIONAL_RESOURCE_MARKERS = [ERUDA_CDN_MARKER, "/js/eruda.js"];
 
+function getCapacitorPlugins() {
+  return window.Capacitor?.Plugins || {};
+}
+
+function getTimerAlarmBridge() {
+  return getCapacitorPlugins().TimerAlarmBridge || null;
+}
+
 function isErudaNoiseFromErrorEvent(event) {
   const src = String(event?.filename || "");
   const msg = String(event?.message || "");
@@ -99,7 +107,7 @@ function renderBootError(error) {
 }
 
 async function reconcileNativeTimerAlarm() {
-  const bridge = window.Capacitor?.Plugins?.TimerAlarmBridge;
+  const bridge = getTimerAlarmBridge();
   if (!bridge?.readAndClearFiredFlag) return;
 
   try {
@@ -205,7 +213,7 @@ window.addEventListener(
   true,
 );
 
-document.addEventListener("DOMContentLoaded", async () => {
+document.addEventListener("DOMContent", async () => {
   try {
     await bootstrap();
   } catch (error) {

@@ -1,7 +1,34 @@
 // Файл: www/js/foreground/fg-platform.js
 
+/** @typedef {{
+ * App: any,
+ * FgService: any,
+ * start?: (opts: any) => Promise<any>,
+ * update?: (opts: any) => Promise<any>,
+ * stop?: () => Promise<any>
+ * }} ForegroundPluginFacade
+ */
+
+/** @type {ForegroundPluginFacade | null} */
 let pluginsRef = null;
 let handles = [];
+
+function getCapacitor() {
+  return window.Capacitor || null;
+}
+
+function isNativePlatform() {
+  const c = getCapacitor();
+  return !!(
+    c &&
+    typeof c.isNativePlatform === "function" &&
+    c.isNativePlatform()
+  );
+}
+
+function getCapacitorPlugins() {
+  return getCapacitor()?.Plugins || {};
+}
 
 function debugLog(...args) {
   try {
@@ -20,14 +47,14 @@ function hasGrantedValue(statusObj) {
 }
 
 export function isNative() {
-  return !!(window.Capacitor && window.Capacitor.isNativePlatform());
+  return isNativePlatform();
 }
 
 export function getPlugins() {
   if (pluginsRef) return pluginsRef;
   if (!isNative()) return null;
 
-  const allPlugins = window.Capacitor?.Plugins || {};
+  const allPlugins = getCapacitorPlugins();
   const App = allPlugins.App || null;
 
   // Priority:

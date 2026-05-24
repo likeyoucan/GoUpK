@@ -1,5 +1,13 @@
 // Файл: www/js/bootstrap/app-lifecycle.js
 
+function isNativePlatform() {
+  return !!(window.Capacitor && window.Capacitor.isNativePlatform());
+}
+
+function getCapacitorPlugins() {
+  return window.Capacitor?.Plugins || {};
+}
+
 function bindPreloaderLifecycle(preload) {
   let hidden = false;
 
@@ -42,11 +50,11 @@ function bindForegroundLifecycle({
 }
 
 function bindCapacitorLifecycle({ modalManager, navigation, adsManager }) {
-  if (!(window.Capacitor && window.Capacitor.isNativePlatform())) {
+  if (!isNativePlatform()) {
     return () => {};
   }
 
-  const { StatusBar, App } = window.Capacitor.Plugins || {};
+  const { StatusBar, App } = getCapacitorPlugins();
 
   if (StatusBar) {
     StatusBar.setOverlaysWebView({ overlay: true }).catch(() => {});

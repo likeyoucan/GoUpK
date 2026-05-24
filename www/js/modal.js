@@ -3,11 +3,38 @@
 import { $ } from "./utils.js?v=VERSION";
 import { BottomSheetDragController } from "./modal/bottom-sheet-drag.js?v=VERSION";
 
+/**
+ * @typedef {"bottom-sheet" | "alert"} ModalType
+ *
+ * @typedef {Object} ModalConfig
+ * @property {string} id
+ * @property {ModalType} type
+ * @property {string} [handlerId]
+ * @property {string} [contentId]
+ * @property {(data?: any) => void} [onOpen]
+ * @property {() => void} [onClose]
+ *
+ * @typedef {Object} ModalEntry
+ * @property {string} id
+ * @property {ModalType} type
+ * @property {HTMLElement} el
+ * @property {HTMLElement | null} content
+ * @property {HTMLElement | null} handlerEl
+ * @property {(data?: any) => void} [onOpen]
+ * @property {() => void} [onClose]
+ */
+
 class ModalManager {
   constructor() {
+    /** @type {Record<string, ModalEntry>} */
     this.modals = {};
+
+    /** @type {string[]} */
     this.activeStack = [];
+
     this.lastFocusedElement = null;
+
+    /** @type {Record<string, number | null>} */
     this.closeTimeouts = {};
 
     this.modalContainer = null;
@@ -39,6 +66,9 @@ class ModalManager {
     this._boundModalListeners = [];
   }
 
+  /**
+   * @param {ModalConfig[]} config
+   */
   init(config) {
     this.destroy();
 
@@ -258,13 +288,22 @@ class ModalManager {
     if (currentId) this.close(currentId);
   }
 
+  /**
+   * @returns {string | null}
+   */
   _getTopModalId() {
-    return this.activeStack[this.activeStack.length - 1] || null;
+    return this.activeStack.length
+      ? this.activeStack[this.activeStack.length - 1]
+      : null;
   }
 
+  /**
+   * @returns {ModalEntry | null}
+   */
   _getTopModal() {
     const id = this._getTopModalId();
-    return id ? this.modals[id] : null;
+    if (!id) return null;
+    return this.modals[id] || null;
   }
 
   _toggleInert(shouldBeInert) {

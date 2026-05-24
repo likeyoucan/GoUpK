@@ -30,6 +30,17 @@ import {
   buildForegroundPayload,
 } from "./foreground/fg-state.js?v=VERSION";
 
+/**
+ * @typedef {"stopwatch" | "timer" | "tabata"} ForegroundMode
+ */
+
+/**
+ * @typedef {Object} ForegroundSyncState
+ * @property {ForegroundMode} mode
+ * @property {boolean} running
+ * @property {string} [metaKey]
+ */
+
 const FG_ID = 101;
 const ACTION_TOGGLE = 1;
 const ACTION_STOP = 2;
@@ -75,9 +86,14 @@ function fgDebug(...args) {
   } catch {}
 }
 
+/**
+ * Signature should be stable and coarse-grained enough
+ * to avoid ultra-frequent updateForegroundService calls.
+ * @param {ForegroundSyncState} state
+ * @param {{ title: string, body: string }} payload
+ * @returns {string}
+ */
 function buildSignature(state, payload) {
-  // Signature should be stable and coarse-grained enough
-  // to avoid ultra-frequent updateForegroundService calls.
   return [
     state.mode,
     state.running ? "1" : "0",
@@ -87,6 +103,10 @@ function buildSignature(state, payload) {
   ].join("|");
 }
 
+/**
+ * @param {boolean} [force=false]
+ * @returns {Promise<boolean>}
+ */
 async function ensurePermissionIfNeeded(force = false) {
   const plugins = getPlugins();
   if (!plugins) return false;
@@ -180,6 +200,7 @@ export async function syncNotification() {
     return;
   }
 
+  /** @type {ForegroundSyncState | null} */
   const state = getForegroundState({
     sw,
     tm,

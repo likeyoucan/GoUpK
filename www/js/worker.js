@@ -1,7 +1,26 @@
 // Файл: www/js/worker.js
 
+/**
+ * @typedef {Object} WorkerCommandMessage
+ * @property {"start"|"stop"|"reset"|"adjust"} command
+ * @property {number} [time]
+ */
+
+const COMMANDS = Object.freeze({
+  START: "start",
+  STOP: "stop",
+  RESET: "reset",
+  ADJUST: "adjust",
+});
+
+const MODES = Object.freeze({
+  IDLE: "idle",
+  COUNTDOWN: "countdown",
+  HEARTBEAT: "heartbeat",
+});
+
 let intervalId = null;
-let mode = "idle"; // idle | countdown | heartbeat
+let mode = MODES.IDLE;
 let endEpochMs = 0;
 
 function stopInterval() {
@@ -16,19 +35,19 @@ function getRemainingMs() {
 }
 
 function countdownTick() {
-  if (mode !== "countdown") return;
+  if (mode !== MODES.COUNTDOWN) return;
 
   const remaining = getRemainingMs();
   self.postMessage({ type: "tick", time: remaining });
 
   if (remaining <= 0) {
     stopInterval();
-    mode = "idle";
+    mode = MODES.IDLE;
   }
 }
 
 function heartbeatTick() {
-  if (mode !== "heartbeat") return;
+  if (mode !== MODES.HEARTBEAT) return;
   self.postMessage({ type: "heartbeat" });
 }
 
@@ -37,7 +56,7 @@ function startCountdown(time) {
 
   const duration = Math.max(0, Number(time) || 0);
   endEpochMs = Date.now() + duration;
-  mode = "countdown";
+  mode = MODES.COUNTDOWN;
 
   // Мгновенный первый тик
   self.postMessage({ type: "tick", time: getRemainingMs() });
@@ -48,17 +67,19 @@ function startCountdown(time) {
 
 function startHeartbeat() {
   stopInterval();
-  mode = "heartbeat";
+  mode = MODES.HEARTBEAT;
   intervalId = setInterval(heartbeatTick, 1000);
 }
 
 self.onmessage = function (e) {
   if (!e.data || typeof e.data !== "object" || !("command" in e.data)) return;
 
-  const { command, time } = e.data;
+  /** @type {WorkerCommandMessage} */
+  const data = e.data;
+  const { command, time } = data;
 
   switch (command) {
-    case "start":
+    case COMMANDS.START:
       if (time !== undefined) {
         startCountdown(time);
       } else {
@@ -66,19 +87,19 @@ self.onmessage = function (e) {
       }
       break;
 
-    case "stop":
+    case COMMANDS.STOP:
       stopInterval();
-      mode = "idle";
+      mode = MODES.IDLE;
       break;
 
-    case "reset":
+    case COMMANDS.RESET:
       stopInterval();
       endEpochMs = 0;
-      mode = "idle";
+      mode = MODES.IDLE;
       break;
 
-    case "adjust":
-      if (mode === "countdown") {
+    case COMMANDS.ADJUST:
+      if (mode === MODES.COUNTDOWN) {
         endEpochMs += Number(time) || 0;
         if (endEpochMs < Date.now()) endEpochMs = Date.now();
         self.postMessage({ type: "tick", time: getRemainingMs() });
