@@ -1632,6 +1632,14 @@
     padding-bottom: var(--nav-height);
   }
 
+  #sw-lapsContainer .lap-row {
+    border-radius: 0.5rem;
+  }
+
+  #sw-lapsContainer .lap-row:last-child {
+    border-bottom: none !important;
+  }
+
   #sw-lapsContainer .lap-row:first-child {
     background-color: color-mix(in srgb, var(--text-color) 8%, transparent);
     border-color: color-mix(in srgb, var(--text-color) 18%, transparent);
@@ -1766,7 +1774,7 @@
 
   /* Saved results: inner rounding for rows */
   html:not(.dark).glass-effect .sw-session-laps > div {
-    border-radius: 0.6rem;
+    border-radius: 0.3rem;
   }
 
   html:not(.dark).glass-effect .sw-session-laps > div + div {
@@ -1774,10 +1782,15 @@
   }
 
   html.dark.glass-effect .sw-session-laps > div {
-    border-radius: 0.6rem;
+    border-radius: 0.3rem;
   }
   html.dark.glass-effect .sw-session-laps > div + div {
     margin-top: 0.3rem;
+  }
+
+  .sw-session-laps .lap-row,
+  .sw-session-laps > div {
+    border-radius: 0.3rem !important;
   }
 
   /* Строки кругов в сохраненной сессии чуть контрастнее контейнера */
