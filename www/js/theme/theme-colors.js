@@ -112,7 +112,7 @@ export function applyAccentVars({ hex, rootEl, hexToHSL }) {
     // В дефолтной теме (где primary в dark = зеленый) REST должен быть контрастным.
     rootEl.style.setProperty(
       "--secondary-accent-color",
-      isDark ? "#60a5fa" : "#3b82f6",
+      isDark ? "#60a5fa" : "#4ade80",
     );
 
     // Pro CTA по умолчанию оставляем мягко-зеленым.

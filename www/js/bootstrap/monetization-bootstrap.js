@@ -112,7 +112,8 @@ export async function initMonetizationBootstrap({
   showToast,
   config,
 }) {
-  const { config: validatedConfig, issues } = validateMonetizationConfig(config);
+  const { config: validatedConfig, issues } =
+    validateMonetizationConfig(config);
   reportMonetizationConfigIssues(issues);
 
   await appProManager.init();

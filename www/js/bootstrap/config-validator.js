@@ -131,7 +131,10 @@ function sanitizeAds(config, issues) {
     ads.bannerMode = bannerMode;
   }
 
-  if (!ads.interstitialTriggers || typeof ads.interstitialTriggers !== "object") {
+  if (
+    !ads.interstitialTriggers ||
+    typeof ads.interstitialTriggers !== "object"
+  ) {
     ads.interstitialTriggers = {};
   }
 }
