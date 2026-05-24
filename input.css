@@ -1846,7 +1846,7 @@
 
   html.dark .custom-toggle {
     background-color: color-mix(in srgb, #ffffff 24%, transparent);
-    border: 1px solid rgba(0, 0, 0, 0.3);
+    border: 1px solid color-mix(in srgb, var(--border-color) 86%, transparent);
     box-shadow: none;
   }
 
