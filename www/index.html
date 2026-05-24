@@ -2329,71 +2329,24 @@
           data-template-id="details"
         >
           <div class="flex justify-end gap-2 mb-3">
-            <!-- Кнопка Поделиться -->
             <button
               type="button"
-              class="sw-share-btn w-8 h-8 flex items-center justify-center bg-emerald-500/10 text-emerald-600 rounded-lg active:scale-95 transition-transform"
-              aria-label="Share"
+              class="sw-share-btn px-3 py-1 bg-emerald-500/10 text-emerald-600 rounded-lg text-xs font-bold uppercase tracking-wider active:scale-95 transition-transform"
+              data-i18n="share"
               data-template-id="shareBtn"
-            >
-              <svg
-                class="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                stroke-width="2"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8m-4-6l-4-4m0 0L8 6m4-4v13"
-                ></path>
-              </svg>
-            </button>
-
-            <!-- Кнопка Переименовать (Карандаш) -->
+            ></button>
             <button
               type="button"
-              class="sw-rename-btn w-8 h-8 flex items-center justify-center bg-blue-500/10 text-blue-500 rounded-lg active:scale-95 transition-transform"
-              aria-label="Rename"
+              class="sw-rename-btn px-3 py-1 bg-blue-500/10 text-blue-500 rounded-lg text-xs font-bold uppercase tracking-wider active:scale-95 transition-transform"
+              data-i18n="rename"
               data-template-id="renameBtn"
-            >
-              <svg
-                class="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                stroke-width="2"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-                ></path>
-              </svg>
-            </button>
-
-            <!-- Кнопка Удалить (Корзина) -->
+            ></button>
             <button
               type="button"
-              class="sw-delete-btn w-8 h-8 flex items-center justify-center bg-red-500/10 text-red-500 rounded-lg active:scale-95 transition-transform"
-              aria-label="Delete"
+              class="sw-delete-btn px-3 py-1 bg-red-500/10 text-red-500 rounded-lg text-xs font-bold uppercase tracking-wider active:scale-95 transition-transform"
+              data-i18n="delete"
               data-template-id="deleteBtn"
-            >
-              <svg
-                class="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                stroke-width="2"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                ></path>
-              </svg>
-            </button>
+            ></button>
           </div>
           <div
             class="max-h-48 overflow-y-auto no-scrollbar sw-session-laps rounded-lg p-2 border app-border scroll-panel"
