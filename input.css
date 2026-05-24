@@ -1329,7 +1329,10 @@
     :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
       .view-bottom-half {
       position: absolute;
-      inset: 0;
+      top: 0;
+      bottom: 0;
+      right: 0;
+      left: auto;
       width: 0;
       min-width: 0;
       flex: 0 0 0;
@@ -1346,8 +1349,8 @@
       pointer-events: auto;
       top: 0;
       bottom: 0;
-      left: calc(100% - (var(--handler-size) / 2));
-      right: auto;
+      left: auto;
+      right: 0;
       width: var(--handler-size);
       height: 100%;
     }
