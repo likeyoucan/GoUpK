@@ -3463,6 +3463,62 @@
     text-transform: uppercase;
   }
 
+  /* Stopwatch laps readability */
+  #sw-lapsContainer .lap-row [data-template="lap-total"],
+  .sw-session-laps [data-template="lap-total"] {
+    font-size: 0.78rem !important;
+    line-height: 1.15;
+    font-weight: 700;
+    opacity: 0.92 !important;
+    color: color-mix(in srgb, var(--text-color) 88%, transparent) !important;
+  }
+
+  #sw-lapsContainer .lap-row [data-template="lap-split"],
+  .sw-session-laps [data-template="lap-split"] {
+    font-size: 0.82rem !important;
+    line-height: 1.15;
+    font-weight: 800;
+    color: color-mix(in srgb, var(--text-color) 96%, transparent) !important;
+  }
+
+  /* Saved laps rows contrast boost */
+  .sw-session-laps > div,
+  .sw-session-laps .lap-row {
+    background-color: color-mix(
+      in srgb,
+      var(--text-color) 6%,
+      transparent
+    ) !important;
+    border-color: color-mix(
+      in srgb,
+      var(--border-color) 70%,
+      transparent
+    ) !important;
+  }
+
+  html.dark .sw-session-laps > div,
+  html.dark .sw-session-laps .lap-row {
+    background-color: color-mix(in srgb, #ffffff 11%, transparent) !important;
+    border-color: color-mix(in srgb, #ffffff 20%, transparent) !important;
+  }
+
+  /* LAST LAP in dark: same visual logic as light */
+  html.dark #sw-lapsContainer .lap-row.is-latest {
+    background-color: color-mix(
+      in srgb,
+      var(--primary-color) 15%,
+      transparent
+    ) !important;
+    border-color: color-mix(
+      in srgb,
+      var(--primary-color) 36%,
+      var(--border-color)
+    ) !important;
+  }
+  html.dark #sw-lapsContainer .lap-row.is-latest .split-time-latest {
+    color: color-mix(in srgb, var(--primary-color) 92%, #ffffff 8%) !important;
+  }
+
   @media (hover: none) {
     .settings-action-btn:hover,
     .tb-del-btn:hover,
