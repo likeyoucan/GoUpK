@@ -9,7 +9,7 @@ concurrency:
 
 on:
   push:
-    branches: ["main"]
+    branches: ["main", "vite"]
   workflow_dispatch:
 
 jobs:
