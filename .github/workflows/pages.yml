@@ -1,8 +1,6 @@
 name: Deploy to GitHub Pages
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
+# Убираем несуществующий env, он не нужен
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -28,10 +26,10 @@ jobs:
       - name: 📥 Скачивание кода
         uses: actions/checkout@v4
 
-      - name: ⚙️ Настройка Node.js 24
-        uses: actions/setup-node@v6
+      - name: ⚙️ Настройка Node.js (Версия 22 — самая свежая)
+        uses: actions/setup-node@v4 # Максимальная версия сейчас - v4
         with:
-          node-version: "24"
+          node-version: "22"       # Стабильная текущая версия
 
       - name: 📦 Установка зависимостей
         run: npm install
@@ -41,11 +39,9 @@ jobs:
 
       - name: 🏷️ Обновление версии (Cache Busting)
         run: |
-          # ВАЖНО: заменяем только query-плейсхолдер ?v=VERSION
-          # чтобы не ломать JS-код (например const VERSION = "1")
           find ./www -type f \( -name "*.html" -o -name "*.js" \) -exec sed -i "s/\?v=VERSION/?v=${{ github.run_id }}/g" {} +
 
-      - name: ✅ Проверка на поломанный JS после cache-busting
+      - name: ✅ Проверка на поломанный JS
         run: |
           if grep -R -nE "const [0-9]+ =" ./www/js; then
             echo "Cache-busting broke JS syntax"
@@ -53,7 +49,7 @@ jobs:
           fi
 
       - name: 🌐 Настройка GitHub Pages
-        uses: actions/configure-pages@v4
+        uses: actions/configure-pages@v5 # Обновил до v5
 
       - name: 📤 Загрузка папки www
         uses: actions/upload-pages-artifact@v3
