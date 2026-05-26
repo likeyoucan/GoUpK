@@ -6,6 +6,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.IBinder;
@@ -28,12 +29,6 @@ public class AppForegroundService extends Service {
     public static final String EXTRA_TOGGLE = "toggle";
     public static final String EXTRA_STOP = "stop";
     public static final String EXTRA_CHANNEL_ID = "channelId";
-
-    public static final String EXTRA_BG_COLOR = "bgColor";
-    public static final String EXTRA_TEXT_PRIMARY_COLOR = "textPrimaryColor";
-    public static final String EXTRA_TEXT_SECONDARY_COLOR = "textSecondaryColor";
-    public static final String EXTRA_BUTTON_BG_COLOR = "buttonBgColor";
-    public static final String EXTRA_BUTTON_ICON_COLOR = "buttonIconColor";
 
     private static final String DIAG_PREFS = "fg_diag";
     private static final String KEY_LAST_ERROR = "last_error";
@@ -62,12 +57,6 @@ public class AppForegroundService extends Service {
             String toggle = intent.getStringExtra(EXTRA_TOGGLE);
             String channelId = intent.getStringExtra(EXTRA_CHANNEL_ID);
 
-            String bgColor = intent.getStringExtra(EXTRA_BG_COLOR);
-            String textPrimaryColor = intent.getStringExtra(EXTRA_TEXT_PRIMARY_COLOR);
-            String textSecondaryColor = intent.getStringExtra(EXTRA_TEXT_SECONDARY_COLOR);
-            String buttonBgColor = intent.getStringExtra(EXTRA_BUTTON_BG_COLOR);
-            String buttonIconColor = intent.getStringExtra(EXTRA_BUTTON_ICON_COLOR);
-
             if (channelId == null || channelId.trim().isEmpty()) {
                 channelId = CHANNEL_ID;
             }
@@ -78,12 +67,7 @@ public class AppForegroundService extends Service {
                 channelId,
                 title != null ? title : "Stopwatch",
                 body != null ? body : "00:00",
-                toggle != null ? toggle : "Pause",
-                bgColor,
-                textPrimaryColor,
-                textSecondaryColor,
-                buttonBgColor,
-                buttonIconColor
+                toggle != null ? toggle : "Pause"
             );
 
             startForeground(NOTIFICATION_ID, notification);
@@ -95,63 +79,40 @@ public class AppForegroundService extends Service {
         }
     }
 
-    private int parseColorSafe(String raw, String fallback) {
-        try {
-            return Color.parseColor(raw);
-        } catch (Exception e) {
-            return Color.parseColor(fallback);
-        }
-    }
-
-    private void applyTheme(RemoteViews rv,
-                            int bgColor,
-                            int textPrimaryColor,
-                            int textSecondaryColor,
-                            int buttonBgColor,
-                            int buttonIconColor) {
-        rv.setInt(R.id.notif_root, "setBackgroundColor", bgColor);
-        rv.setTextColor(R.id.notif_title, textSecondaryColor);
-        rv.setTextColor(R.id.notif_body, textPrimaryColor);
-
-        // Красим именно круг-иконку, не контейнер
-        rv.setInt(R.id.notif_btn_toggle_bg, "setColorFilter", buttonBgColor);
-        rv.setInt(R.id.notif_btn_toggle_icon, "setColorFilter", buttonIconColor);
+    private boolean isDeviceDarkTheme() {
+        int nightModeFlags = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
+        return nightModeFlags == Configuration.UI_MODE_NIGHT_YES;
     }
 
     private Notification buildNotification(
         String channelId,
         String title,
         String body,
-        String toggleText,
-        String bgColorRaw,
-        String textPrimaryRaw,
-        String textSecondaryRaw,
-        String buttonBgRaw,
-        String buttonIconRaw
+        String toggleText
     ) {
-        int bgColor = parseColorSafe(bgColorRaw, "#273469");
-        int textPrimaryColor = parseColorSafe(textPrimaryRaw, "#F5F7FF");
-        int textSecondaryColor = parseColorSafe(textSecondaryRaw, "#BFC7D9");
-        int buttonBgColor = parseColorSafe(buttonBgRaw, "#E2EAFF");
-        int buttonIconColor = parseColorSafe(buttonIconRaw, "#2B3038");
+        boolean dark = isDeviceDarkTheme();
+
+        int bgColor = dark ? Color.parseColor("#273469") : Color.parseColor("#EEF2FA");
+        int textPrimaryColor = dark ? Color.parseColor("#F5F7FF") : Color.parseColor("#1F2D5A");
+        int textSecondaryColor = dark ? Color.parseColor("#BFC7D9") : Color.parseColor("#5D6781");
+        int buttonBgColor = dark ? Color.parseColor("#DCE5FF") : Color.parseColor("#273469");
+        int buttonIconColor = dark ? Color.parseColor("#2B3038") : Color.parseColor("#FFFFFF");
 
         RemoteViews compact = new RemoteViews(getPackageName(), R.layout.notification_timer);
-        RemoteViews big = new RemoteViews(getPackageName(), R.layout.notification_timer_big);
-
         compact.setTextViewText(R.id.notif_title, title);
         compact.setTextViewText(R.id.notif_body, body);
 
-        big.setTextViewText(R.id.notif_title, title);
-        big.setTextViewText(R.id.notif_body, body);
+        compact.setInt(R.id.notif_root, "setBackgroundColor", bgColor);
+        compact.setTextColor(R.id.notif_title, textSecondaryColor);
+        compact.setTextColor(R.id.notif_body, textPrimaryColor);
+        compact.setInt(R.id.notif_btn_toggle_bg, "setColorFilter", buttonBgColor);
+        compact.setInt(R.id.notif_btn_toggle_icon, "setColorFilter", buttonIconColor);
 
         boolean isPlay = "▶".equals(toggleText) || "Play".equalsIgnoreCase(toggleText);
-        int iconRes = isPlay ? R.drawable.ic_notif_play : R.drawable.ic_notif_pause;
-
-        compact.setImageViewResource(R.id.notif_btn_toggle_icon, iconRes);
-        big.setImageViewResource(R.id.notif_btn_toggle_icon, iconRes);
-
-        applyTheme(compact, bgColor, textPrimaryColor, textSecondaryColor, buttonBgColor, buttonIconColor);
-        applyTheme(big, bgColor, textPrimaryColor, textSecondaryColor, buttonBgColor, buttonIconColor);
+        compact.setImageViewResource(
+            R.id.notif_btn_toggle_icon,
+            isPlay ? R.drawable.ic_notif_play : R.drawable.ic_notif_pause
+        );
 
         PendingIntent togglePi = PendingIntent.getBroadcast(
             this,
@@ -171,12 +132,10 @@ public class AppForegroundService extends Service {
         );
 
         compact.setOnClickPendingIntent(R.id.notif_btn_toggle_wrap, togglePi);
-        big.setOnClickPendingIntent(R.id.notif_btn_toggle_wrap, togglePi);
 
         return new NotificationCompat.Builder(this, channelId)
             .setSmallIcon(R.drawable.ic_stat_name)
             .setCustomContentView(compact)
-            .setCustomBigContentView(big)
             .setStyle(new NotificationCompat.DecoratedCustomViewStyle())
             .setContentIntent(contentPi)
             .setOngoing(true)
@@ -223,6 +182,7 @@ public class AppForegroundService extends Service {
                 stopForeground(true);
             }
         } catch (Exception ignored) {}
+
         stopSelf();
     }
 

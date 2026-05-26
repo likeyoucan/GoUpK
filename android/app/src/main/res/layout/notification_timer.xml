@@ -3,9 +3,9 @@
     android:id="@+id/notif_root"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:minHeight="124dp"
+    android:minHeight="112dp"
     android:orientation="vertical"
-    android:padding="14dp"
+    android:padding="12dp"
     android:background="@drawable/bg_notification_card">
 
     <TextView
@@ -18,40 +18,46 @@
         android:maxLines="1"
         android:ellipsize="end" />
 
-    <TextView
-        android:id="@+id/notif_body"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:gravity="center_horizontal"
-        android:text="00:00"
-        android:textSize="42sp"
-        android:textColor="#F5F7FF"
-        android:fontFamily="monospace"
-        android:maxLines="1"
-        android:ellipsize="end" />
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
 
-    <FrameLayout
-        android:id="@+id/notif_btn_toggle_wrap"
-        android:layout_width="62dp"
-        android:layout_height="62dp"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginTop="10dp">
+        <TextView
+            android:id="@+id/notif_body"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="00:00"
+            android:textSize="40sp"
+            android:textColor="#F5F7FF"
+            android:fontFamily="monospace"
+            android:maxLines="1"
+            android:ellipsize="end" />
 
-        <ImageView
-            android:id="@+id/notif_btn_toggle_bg"
-            android:layout_width="62dp"
-            android:layout_height="62dp"
-            android:layout_gravity="center"
-            android:src="@drawable/ic_notif_btn_circle"
-            android:tint="#E2EAFF" />
+        <FrameLayout
+            android:id="@+id/notif_btn_toggle_wrap"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_marginStart="10dp">
 
-        <ImageView
-            android:id="@+id/notif_btn_toggle_icon"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:layout_gravity="center"
-            android:src="@drawable/ic_notif_play"
-            android:tint="#2B3038" />
-    </FrameLayout>
+            <ImageView
+                android:id="@+id/notif_btn_toggle_bg"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_notif_btn_circle"
+                android:tint="#E2EAFF" />
+
+            <ImageView
+                android:id="@+id/notif_btn_toggle_icon"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_notif_play"
+                android:tint="#2B3038" />
+        </FrameLayout>
+    </LinearLayout>
 </LinearLayout>
