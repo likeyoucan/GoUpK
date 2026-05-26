@@ -114,15 +114,13 @@ public class AppForegroundService extends Service {
 
         return new NotificationCompat.Builder(this, channelId)
             .setSmallIcon(R.drawable.ic_stat_name)
-            .setContentTitle(title)
-            .setContentText(body)
             .setCustomContentView(compact)
-            .setCustomBigContentView(compact)
-            .setStyle(new NotificationCompat.DecoratedCustomViewStyle())
+            .setCustomHeadsUpContentView(compact)
             .setContentIntent(contentPi)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setSilent(true)
+            .setShowWhen(false)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .build();

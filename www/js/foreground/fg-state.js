@@ -58,17 +58,17 @@ export function buildForegroundPayload({
   $,
   formatTime,
 }) {
-  const remainingLabel =
-    t("remaining") === "remaining" ? "Remaining" : t("remaining");
-
   if (state.mode === "stopwatch") {
-    // No milliseconds in notification for cleaner system tray display.
+    const time = formatTime(sw.elapsedTime, {
+      showMs: false,
+      forceHours: sw.elapsedTime >= 3600000,
+    });
+
     return {
-      title: t("stopwatch"),
-      body: formatTime(sw.elapsedTime, {
-        showMs: false,
-        forceHours: sw.elapsedTime >= 3600000,
-      }),
+      title: state.running
+        ? t("stopwatch")
+        : `${t("stopwatch")} • ${t("pause")}`,
+      body: time,
     };
   }
 
@@ -76,23 +76,21 @@ export function buildForegroundPayload({
     const rem = tm.getRemainingTime();
     const total = tm.initialDurationMs || tm.totalDuration || 0;
 
+    const left = total
+      ? `${t("timer")} ${formatTime(total, {
+          showMs: false,
+          forceHours: total >= 3600000,
+        })}`
+      : t("timer");
+
+    const title = state.running ? left : `${left} • ${t("pause")}`;
+
     return {
-      title:
-        total > 0
-          ? `${t("timer")} ${formatTime(total, {
-              showMs: false,
-              forceHours: total >= 3600000,
-            })}`
-          : t("timer"),
-      body: state.running
-        ? `${remainingLabel}: ${formatTime(rem, {
-            showMs: false,
-            forceHours: rem >= 3600000,
-          })}`
-        : `${t("pause")} • ${remainingLabel}: ${formatTime(rem, {
-            showMs: false,
-            forceHours: rem >= 3600000,
-          })}`,
+      title,
+      body: formatTime(rem, {
+        showMs: false,
+        forceHours: rem >= 3600000,
+      }),
     };
   }
 
@@ -114,7 +112,7 @@ export function buildForegroundPayload({
     t("tabata");
 
   return {
-    title: `${t("tabata")} - ${workoutName}`,
-    body: `${t("round")} ${tb.currentRound}/${tb.rounds} • ${phaseText} • ${formatTime(remTb, { showMs: false })}`,
+    title: `${t("tabata")} - ${workoutName} • ${t("round")} ${tb.currentRound}/${tb.rounds} • ${phaseText}`,
+    body: formatTime(remTb, { showMs: false }),
   };
 }

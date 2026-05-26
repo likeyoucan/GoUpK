@@ -24,10 +24,7 @@ import { setupTimerCore } from "./timer/timer-core.js?v=VERSION";
 export const tm = {
   totalDuration: 0,
   initialDurationMs: 0,
-
-  // Epoch deadline for stable timing in background/inactive tab.
   targetEpochMs: 0,
-
   remainingAtPause: 0,
   isRunning: false,
   isPaused: false,
@@ -39,12 +36,9 @@ export const tm = {
   ringCtrl: null,
   currentAdjustmentSec: 0,
 
-  // Smooth UI loop state
   rAF: null,
   lastUiRem: 0,
   _lastUiPaintTs: 0,
-
-  // Ignore stale worker ticks briefly after +/- adjustments
   skipWorkerTickUntil: 0,
 
   $,
@@ -105,13 +99,23 @@ export const tm = {
         return;
       }
 
-      // visible
       if (this.isRunning) {
         const rem = Math.max(0, this.targetEpochMs - Date.now());
         this.timeRemainingMs = rem;
         this.lastUiRem = rem;
         this.updateDisplay(rem);
         this.startUiLoop?.();
+        return;
+      }
+
+      if (this.isPaused) {
+        const rem = Math.max(
+          0,
+          this.remainingAtPause || this.timeRemainingMs || 0,
+        );
+        this.timeRemainingMs = rem;
+        this.updateDisplay(rem);
+        this.updateUIState();
       }
     });
   },

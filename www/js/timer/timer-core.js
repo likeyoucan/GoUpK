@@ -117,7 +117,6 @@ export function setupTimerCore(tm, { showToast, updateText }) {
       scheduled?.scheduled === false &&
       scheduled?.reason === "cannot_schedule_exact_alarm"
     ) {
-      // Keep UX clean: no intrusive toast, only diagnostics.
       logExactAlarmHintOnce();
     }
   }
@@ -129,16 +128,23 @@ export function setupTimerCore(tm, { showToast, updateText }) {
 
     if (tm.isRunning) {
       tm.store.clearActiveTimer();
+
+      const accurateRem = Math.max(0, tm.targetEpochMs - Date.now());
+      tm.timeRemainingMs = accurateRem;
+      tm.remainingAtPause = accurateRem;
+      tm.lastUiRem = accurateRem;
+      tm.targetEpochMs = 0;
+
       tm.isRunning = false;
       tm.isPaused = true;
       tm.isFinished = false;
-      tm.remainingAtPause = tm.timeRemainingMs;
 
       tm.bgWorker.postMessage({ command: "stop" });
       tm.stopUiLoop();
       await alarmScheduler.cancel();
       tm.releaseWakeLock();
       tm.updateTitle("");
+      tm.updateDisplay(accurateRem);
       tm.updateUIState();
       return;
     }
@@ -301,6 +307,10 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     tm.bgWorker.addEventListener("message", async (e) => {
       if (e.data?.type !== "tick") return;
 
+      if (!tm.isRunning) {
+        return;
+      }
+
       const remaining = e.data.time;
       const nowPerf = performance.now();
       const nowEpoch = Date.now();
@@ -315,20 +325,18 @@ export function setupTimerCore(tm, { showToast, updateText }) {
 
       tm.timeRemainingMs = remaining;
 
-      if (tm.isRunning) {
-        const predicted = Math.max(0, tm.targetEpochMs - nowEpoch);
-        if (Math.abs(predicted - remaining) > 220) {
-          tm.targetEpochMs = nowEpoch + remaining;
-          await scheduleExactAlarmAndHandleHint(tm.targetEpochMs);
-        }
+      const predicted = Math.max(0, tm.targetEpochMs - nowEpoch);
+      if (Math.abs(predicted - remaining) > 220) {
+        tm.targetEpochMs = nowEpoch + remaining;
+        await scheduleExactAlarmAndHandleHint(tm.targetEpochMs);
       }
 
-      if (document.hidden && tm.isRunning) {
+      if (document.hidden) {
         const forceHours = tm.totalDuration >= 3600000;
         tm.updateTitle(tm.formatTime(remaining, { forceHours }));
       }
 
-      if (remaining <= 0 && tm.isRunning) {
+      if (remaining <= 0) {
         tm.finishAsCompleted();
       }
     });
