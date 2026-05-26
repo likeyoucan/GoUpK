@@ -62,11 +62,11 @@ export function buildForegroundPayload({
     t("remaining") === "remaining" ? "Remaining" : t("remaining");
 
   if (state.mode === "stopwatch") {
-    // Секундомер: можно оставлять showMs по настройке
+    // No milliseconds in notification for cleaner system tray display.
     return {
       title: t("stopwatch"),
       body: formatTime(sw.elapsedTime, {
-        showMs,
+        showMs: false,
         forceHours: sw.elapsedTime >= 3600000,
       }),
     };
@@ -76,7 +76,6 @@ export function buildForegroundPayload({
     const rem = tm.getRemainingTime();
     const total = tm.initialDurationMs || tm.totalDuration || 0;
 
-    // Таймер: без миллисекунд в уведомлении
     return {
       title:
         total > 0
@@ -114,7 +113,6 @@ export function buildForegroundPayload({
     $("tb-activeName")?.textContent?.trim() ||
     t("tabata");
 
-  // Табата: без миллисекунд в уведомлении
   return {
     title: `${t("tabata")} - ${workoutName}`,
     body: `${t("round")} ${tb.currentRound}/${tb.rounds} • ${phaseText} • ${formatTime(remTb, { showMs: false })}`,

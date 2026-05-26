@@ -8,6 +8,7 @@ import android.app.Service;
 import android.content.Intent;
 import android.os.Build;
 import android.os.IBinder;
+import android.widget.RemoteViews;
 
 import androidx.core.app.NotificationCompat;
 
@@ -52,7 +53,6 @@ public class AppForegroundService extends Service {
             String title = intent.getStringExtra(EXTRA_TITLE);
             String body = intent.getStringExtra(EXTRA_BODY);
             String toggle = intent.getStringExtra(EXTRA_TOGGLE);
-            String stop = intent.getStringExtra(EXTRA_STOP);
             String channelId = intent.getStringExtra(EXTRA_CHANNEL_ID);
 
             if (channelId == null || channelId.trim().isEmpty()) {
@@ -65,8 +65,7 @@ public class AppForegroundService extends Service {
                 channelId,
                 title != null ? title : "Stopwatch",
                 body != null ? body : "00:00",
-                toggle != null ? toggle : "Pause",
-                stop != null ? stop : "Stop"
+                toggle != null ? toggle : "Pause"
             );
 
             startForeground(NOTIFICATION_ID, notification);
@@ -82,20 +81,22 @@ public class AppForegroundService extends Service {
         String channelId,
         String title,
         String body,
-        String toggleText,
-        String stopText
+        String toggleText
     ) {
+        RemoteViews compact = new RemoteViews(getPackageName(), R.layout.notification_timer);
+        compact.setTextViewText(R.id.notif_title, title);
+        compact.setTextViewText(R.id.notif_body, body);
+
+        boolean isPlay = "▶".equals(toggleText) || "Play".equalsIgnoreCase(toggleText);
+        compact.setImageViewResource(
+            R.id.notif_btn_toggle_icon,
+            isPlay ? R.drawable.ic_notif_play : R.drawable.ic_notif_pause
+        );
+
         PendingIntent togglePi = PendingIntent.getBroadcast(
             this,
             201,
             new Intent(this, ForegroundActionReceiver.class).setAction(ACTION_BTN_TOGGLE),
-            pendingFlags()
-        );
-
-        PendingIntent stopPi = PendingIntent.getBroadcast(
-            this,
-            202,
-            new Intent(this, ForegroundActionReceiver.class).setAction(ACTION_BTN_STOP),
             pendingFlags()
         );
 
@@ -109,18 +110,21 @@ public class AppForegroundService extends Service {
             pendingFlags()
         );
 
+        compact.setOnClickPendingIntent(R.id.notif_btn_toggle, togglePi);
+
         return new NotificationCompat.Builder(this, channelId)
             .setSmallIcon(R.drawable.ic_stat_name)
             .setContentTitle(title)
             .setContentText(body)
+            .setCustomContentView(compact)
+            .setCustomBigContentView(compact)
+            .setStyle(new NotificationCompat.DecoratedCustomViewStyle())
             .setContentIntent(contentPi)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setSilent(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
-            .addAction(R.drawable.ic_stat_name, toggleText, togglePi)
-            .addAction(R.drawable.ic_stat_name, stopText, stopPi)
             .build();
     }
 
