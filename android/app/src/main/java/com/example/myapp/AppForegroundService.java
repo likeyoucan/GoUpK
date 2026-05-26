@@ -103,19 +103,18 @@ public class AppForegroundService extends Service {
         }
     }
 
-    private void applyThemeToRemote(
-        RemoteViews rv,
-        int bgColor,
-        int textPrimaryColor,
-        int textSecondaryColor,
-        int buttonBgColor,
-        int buttonIconColor
-    ) {
+    private void applyTheme(RemoteViews rv,
+                            int bgColor,
+                            int textPrimaryColor,
+                            int textSecondaryColor,
+                            int buttonBgColor,
+                            int buttonIconColor) {
         rv.setInt(R.id.notif_root, "setBackgroundColor", bgColor);
         rv.setTextColor(R.id.notif_title, textSecondaryColor);
         rv.setTextColor(R.id.notif_body, textPrimaryColor);
 
-        rv.setInt(R.id.notif_btn_toggle, "setBackgroundColor", buttonBgColor);
+        // Красим именно круг-иконку, не контейнер
+        rv.setInt(R.id.notif_btn_toggle_bg, "setColorFilter", buttonBgColor);
         rv.setInt(R.id.notif_btn_toggle_icon, "setColorFilter", buttonIconColor);
     }
 
@@ -130,7 +129,7 @@ public class AppForegroundService extends Service {
         String buttonBgRaw,
         String buttonIconRaw
     ) {
-        int bgColor = parseColorSafe(bgColorRaw, "#1F2D5A");
+        int bgColor = parseColorSafe(bgColorRaw, "#273469");
         int textPrimaryColor = parseColorSafe(textPrimaryRaw, "#F5F7FF");
         int textSecondaryColor = parseColorSafe(textSecondaryRaw, "#BFC7D9");
         int buttonBgColor = parseColorSafe(buttonBgRaw, "#E2EAFF");
@@ -147,25 +146,12 @@ public class AppForegroundService extends Service {
 
         boolean isPlay = "▶".equals(toggleText) || "Play".equalsIgnoreCase(toggleText);
         int iconRes = isPlay ? R.drawable.ic_notif_play : R.drawable.ic_notif_pause;
+
         compact.setImageViewResource(R.id.notif_btn_toggle_icon, iconRes);
         big.setImageViewResource(R.id.notif_btn_toggle_icon, iconRes);
 
-        applyThemeToRemote(
-            compact,
-            bgColor,
-            textPrimaryColor,
-            textSecondaryColor,
-            buttonBgColor,
-            buttonIconColor
-        );
-        applyThemeToRemote(
-            big,
-            bgColor,
-            textPrimaryColor,
-            textSecondaryColor,
-            buttonBgColor,
-            buttonIconColor
-        );
+        applyTheme(compact, bgColor, textPrimaryColor, textSecondaryColor, buttonBgColor, buttonIconColor);
+        applyTheme(big, bgColor, textPrimaryColor, textSecondaryColor, buttonBgColor, buttonIconColor);
 
         PendingIntent togglePi = PendingIntent.getBroadcast(
             this,
@@ -184,14 +170,14 @@ public class AppForegroundService extends Service {
             pendingFlags()
         );
 
-        compact.setOnClickPendingIntent(R.id.notif_btn_toggle, togglePi);
-        big.setOnClickPendingIntent(R.id.notif_btn_toggle, togglePi);
+        compact.setOnClickPendingIntent(R.id.notif_btn_toggle_wrap, togglePi);
+        big.setOnClickPendingIntent(R.id.notif_btn_toggle_wrap, togglePi);
 
         return new NotificationCompat.Builder(this, channelId)
             .setSmallIcon(R.drawable.ic_stat_name)
             .setCustomContentView(compact)
             .setCustomBigContentView(big)
-            .setCustomHeadsUpContentView(big)
+            .setStyle(new NotificationCompat.DecoratedCustomViewStyle())
             .setContentIntent(contentPi)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
@@ -199,6 +185,8 @@ public class AppForegroundService extends Service {
             .setShowWhen(false)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
+            .setColor(bgColor)
+            .setColorized(true)
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
             .build();
     }
@@ -235,7 +223,6 @@ public class AppForegroundService extends Service {
                 stopForeground(true);
             }
         } catch (Exception ignored) {}
-
         stopSelf();
     }
 

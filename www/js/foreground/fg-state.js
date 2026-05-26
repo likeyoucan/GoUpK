@@ -59,16 +59,14 @@ export function buildForegroundPayload({
   formatTime,
 }) {
   if (state.mode === "stopwatch") {
-    const time = formatTime(sw.elapsedTime, {
-      showMs: false,
-      forceHours: sw.elapsedTime >= 3600000,
-    });
-
     return {
       title: state.running
         ? t("stopwatch")
         : `${t("stopwatch")} • ${t("pause")}`,
-      body: time,
+      body: formatTime(sw.elapsedTime, {
+        showMs: false,
+        forceHours: sw.elapsedTime >= 3600000,
+      }),
     };
   }
 
@@ -76,17 +74,15 @@ export function buildForegroundPayload({
     const rem = tm.getRemainingTime();
     const total = tm.initialDurationMs || tm.totalDuration || 0;
 
-    const left = total
+    const titleLeft = total
       ? `${t("timer")} ${formatTime(total, {
           showMs: false,
           forceHours: total >= 3600000,
         })}`
       : t("timer");
 
-    const title = state.running ? left : `${left} • ${t("pause")}`;
-
     return {
-      title,
+      title: state.running ? titleLeft : `${titleLeft} • ${t("pause")}`,
       body: formatTime(rem, {
         showMs: false,
         forceHours: rem >= 3600000,

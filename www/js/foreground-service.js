@@ -5,7 +5,6 @@ import {
   formatTime,
   requestWakeLock,
   releaseWakeLock,
-  getCssVariable,
 } from "./utils.js?v=VERSION";
 import { sw } from "./stopwatch.js?v=VERSION";
 import { tm } from "./timer.js?v=VERSION";
@@ -65,6 +64,8 @@ const listeners = {
   msChanged: null,
   languageChanged: null,
   foregroundSettingChanged: null,
+  accentChanged: null,
+  adaptiveBgChanged: null,
 };
 
 function fgDebug(...args) {
@@ -75,13 +76,18 @@ function fgDebug(...args) {
   } catch {}
 }
 
-function buildSignature(state, payload) {
+function buildSignature(state, payload, colors) {
   return [
     state.mode,
     state.running ? "1" : "0",
     state.metaKey || "",
     payload.title,
     payload.body,
+    colors.bgColor,
+    colors.textPrimaryColor,
+    colors.textSecondaryColor,
+    colors.buttonBgColor,
+    colors.buttonIconColor,
   ].join("|");
 }
 
@@ -110,11 +116,13 @@ function scheduleForegroundStop(delay = FOREGROUND_STOP_DEBOUNCE_MS) {
 
   pendingStopTimer = setTimeout(async () => {
     pendingStopTimer = null;
+
     const state = getCurrentForegroundState();
     if (!state) {
       await stopForeground();
       return;
     }
+
     await syncNotification({ reason: "stop_debounce_state_active" });
   }, delay);
 
@@ -159,9 +167,13 @@ async function handleNotificationToggle() {
   const state = getCurrentForegroundState();
   if (!state) return;
 
-  if (state.mode === "stopwatch") sw.toggle();
-  else if (state.mode === "timer") await tm.toggle();
-  else if (state.mode === "tabata") tb.toggle();
+  if (state.mode === "stopwatch") {
+    sw.toggle();
+  } else if (state.mode === "timer") {
+    await tm.toggle();
+  } else if (state.mode === "tabata") {
+    tb.toggle();
+  }
 
   setTimeout(() => {
     syncNotification({ reason: "button_toggle" });
@@ -186,19 +198,13 @@ async function handleNotificationStop() {
   }, 80);
 }
 
-function cssColorToHex(input, fallback = "#1F2D5A") {
-  const raw = String(input || "").trim();
+function rgbStringToHex(rgb, fallback = "#1F2D5A") {
+  const raw = String(rgb || "").trim();
+
   if (!raw) return fallback;
 
-  if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(raw)) {
-    if (raw.length === 4) {
-      return `#${raw[1]}${raw[1]}${raw[2]}${raw[2]}${raw[3]}${raw[3]}`;
-    }
-    return raw.toUpperCase();
-  }
-
   const m = raw.match(
-    /^rgba?\(\s*([0-9.]+)\s*,\s*([0-9.]+)\s*,\s*([0-9.]+)(?:\s*,\s*[0-9.]+\s*)?\)$/i,
+    /^rgba?\(\s*([0-9.]+)[,\s]+([0-9.]+)[,\s]+([0-9.]+)(?:[,\s/]+[0-9.]+)?\s*\)$/i,
   );
   if (!m) return fallback;
 
@@ -206,25 +212,54 @@ function cssColorToHex(input, fallback = "#1F2D5A") {
   const g = Math.max(0, Math.min(255, Math.round(Number(m[2]))));
   const b = Math.max(0, Math.min(255, Math.round(Number(m[3]))));
 
-  const hex = (n) => n.toString(16).padStart(2, "0").toUpperCase();
-  return `#${hex(r)}${hex(g)}${hex(b)}`;
+  const h = (n) => n.toString(16).padStart(2, "0").toUpperCase();
+  return `#${h(r)}${h(g)}${h(b)}`;
+}
+
+function getComputedClassColor(className, cssProp, fallbackHex) {
+  const probe = document.createElement("div");
+  probe.className = className;
+  probe.style.position = "fixed";
+  probe.style.left = "-9999px";
+  probe.style.top = "-9999px";
+  probe.style.pointerEvents = "none";
+
+  document.body.appendChild(probe);
+  const computed = getComputedStyle(probe)[cssProp] || "";
+  probe.remove();
+
+  return rgbStringToHex(computed, fallbackHex);
 }
 
 function resolveNotificationTheme() {
-  const bg = cssColorToHex(getCssVariable("--surface-color"), "#1F2D5A");
-  const textPrimary = cssColorToHex(getCssVariable("--text-color"), "#F5F7FF");
-  const textSecondary = cssColorToHex(
-    getCssVariable("--text-secondary"),
+  const bgColor = getComputedClassColor(
+    "app-surface",
+    "backgroundColor",
+    "#273469",
+  );
+  const textPrimaryColor = getComputedClassColor(
+    "app-text",
+    "color",
+    "#F5F7FF",
+  );
+  const textSecondaryColor = getComputedClassColor(
+    "app-text-sec",
+    "color",
     "#BFC7D9",
   );
-  const primary = cssColorToHex(getCssVariable("--primary-color"), "#E2EAFF");
+  const buttonBgColor = getComputedClassColor(
+    "primary-bg",
+    "backgroundColor",
+    "#E2EAFF",
+  );
+  const buttonIconColor = "#2B3038";
 
   return {
-    bgColor: bg,
-    textPrimaryColor: textPrimary,
-    textSecondaryColor: textSecondary,
-    buttonBgColor: primary,
-    buttonIconColor: "#2B3038",
+    bgColor,
+    textPrimaryColor,
+    textSecondaryColor,
+    buttonBgColor,
+    buttonIconColor,
   };
 }
 
@@ -260,10 +295,10 @@ export async function syncNotification({ reason = "unknown" } = {}) {
     formatTime,
   });
 
-  const signature = buildSignature(state, payload);
+  const colors = resolveNotificationTheme();
+  const signature = buildSignature(state, payload, colors);
   if (signature === lastSignature) return;
 
-  const colors = resolveNotificationTheme();
   const toggleTitle = state.running ? "⏸" : "▶";
   const stopTitle = "■";
 
@@ -281,6 +316,14 @@ export async function syncNotification({ reason = "unknown" } = {}) {
     ],
     ...colors,
   };
+
+  fgDebug("sync notification", {
+    reason,
+    mode: state.mode,
+    running: state.running,
+    payload,
+    colors,
+  });
 
   if (!isForegroundShown) {
     try {
@@ -302,6 +345,7 @@ export async function syncNotification({ reason = "unknown" } = {}) {
     })
     .catch(async (err) => {
       console.warn("[fg] update failed, fallback to start", err);
+
       try {
         await plugins.start?.(options);
         isForegroundShown = true;
@@ -335,9 +379,13 @@ function bindDocumentEvents() {
 
   listeners.msChanged = () => syncNotification({ reason: "ms_changed" });
   listeners.languageChanged = () =>
-    syncNotification({ reason: "lang_changed" });
+    syncNotification({ reason: "language_changed" });
   listeners.foregroundSettingChanged = () =>
     syncNotification({ reason: "foreground_setting_changed" });
+  listeners.accentChanged = () =>
+    syncNotification({ reason: "accent_changed" });
+  listeners.adaptiveBgChanged = () =>
+    syncNotification({ reason: "adaptive_bg_changed" });
 
   document.addEventListener(
     APP_EVENTS.ACTIVE_TIMER_CHANGED,
@@ -352,6 +400,14 @@ function bindDocumentEvents() {
   document.addEventListener(
     APP_EVENTS.FOREGROUND_NOTIFICATION_SETTING_CHANGED,
     listeners.foregroundSettingChanged,
+  );
+  document.addEventListener(
+    APP_EVENTS.ACCENT_COLOR_CHANGED,
+    listeners.accentChanged,
+  );
+  document.addEventListener(
+    APP_EVENTS.ADAPTIVE_BG_CHANGED,
+    listeners.adaptiveBgChanged,
   );
 }
 
@@ -383,12 +439,26 @@ function unbindDocumentEvents() {
       listeners.foregroundSettingChanged,
     );
   }
+  if (listeners.accentChanged) {
+    document.removeEventListener(
+      APP_EVENTS.ACCENT_COLOR_CHANGED,
+      listeners.accentChanged,
+    );
+  }
+  if (listeners.adaptiveBgChanged) {
+    document.removeEventListener(
+      APP_EVENTS.ADAPTIVE_BG_CHANGED,
+      listeners.adaptiveBgChanged,
+    );
+  }
 
   listeners.activeTimerChanged = null;
   listeners.timerStarted = null;
   listeners.msChanged = null;
   listeners.languageChanged = null;
   listeners.foregroundSettingChanged = null;
+  listeners.accentChanged = null;
+  listeners.adaptiveBgChanged = null;
 }
 
 function bindVisibilityFallback() {
