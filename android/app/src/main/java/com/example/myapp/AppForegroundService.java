@@ -22,13 +22,12 @@ public class AppForegroundService extends Service {
     public static final String ACTION_STOP_SERVICE = "com.example.myapp.FG_STOP_SERVICE";
 
     public static final String ACTION_BTN_TOGGLE = "com.example.myapp.FG_BTN_TOGGLE";
-    public static final String ACTION_BTN_STOP = "com.example.myapp.FG_BTN_STOP";
 
     public static final String EXTRA_TITLE = "title";
     public static final String EXTRA_BODY = "body";
     public static final String EXTRA_TOGGLE = "toggle";
-    public static final String EXTRA_STOP = "stop";
     public static final String EXTRA_CHANNEL_ID = "channelId";
+    public static final String EXTRA_IS_DARK_THEME = "isDarkTheme";
 
     private static final String DIAG_PREFS = "fg_diag";
     private static final String KEY_LAST_ERROR = "last_error";
@@ -42,7 +41,7 @@ public class AppForegroundService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (intent == null) return START_STICKY;
+        if (intent == null) return START_NOT_STICKY;
 
         try {
             String action = intent.getAction();
@@ -57,6 +56,10 @@ public class AppForegroundService extends Service {
             String toggle = intent.getStringExtra(EXTRA_TOGGLE);
             String channelId = intent.getStringExtra(EXTRA_CHANNEL_ID);
 
+            boolean isDarkTheme = intent.hasExtra(EXTRA_IS_DARK_THEME)
+                ? intent.getBooleanExtra(EXTRA_IS_DARK_THEME, false)
+                : isDeviceDarkTheme();
+
             if (channelId == null || channelId.trim().isEmpty()) {
                 channelId = CHANNEL_ID;
             }
@@ -67,16 +70,23 @@ public class AppForegroundService extends Service {
                 channelId,
                 title != null ? title : "Stopwatch",
                 body != null ? body : "00:00",
-                toggle != null ? toggle : "Pause"
+                toggle != null ? toggle : "Pause",
+                isDarkTheme
             );
 
             startForeground(NOTIFICATION_ID, notification);
-            return START_STICKY;
+            return START_NOT_STICKY;
         } catch (Throwable t) {
             saveLastError(t);
             stopServiceSafe();
             return START_NOT_STICKY;
         }
+    }
+
+    @Override
+    public void onTaskRemoved(Intent rootIntent) {
+        stopServiceSafe();
+        super.onTaskRemoved(rootIntent);
     }
 
     private boolean isDeviceDarkTheme() {
@@ -88,14 +98,13 @@ public class AppForegroundService extends Service {
         String channelId,
         String title,
         String body,
-        String toggleText
+        String toggleText,
+        boolean isDarkTheme
     ) {
-        boolean dark = isDeviceDarkTheme();
-
-        int textPrimaryColor = dark ? Color.parseColor("#F5F7FF") : Color.parseColor("#1F2D5A");
-        int textSecondaryColor = dark ? Color.parseColor("#BFC7D9") : Color.parseColor("#5D6781");
-        int buttonBgColor = dark ? Color.parseColor("#DCE5FF") : Color.parseColor("#273469");
-        int buttonIconColor = dark ? Color.parseColor("#2B3038") : Color.parseColor("#FFFFFF");
+        int textPrimaryColor = isDarkTheme ? Color.parseColor("#F3F5FF") : Color.parseColor("#1F2D5A");
+        int textSecondaryColor = isDarkTheme ? Color.parseColor("#BDC5DA") : Color.parseColor("#5D6781");
+        int buttonBgColor = isDarkTheme ? Color.parseColor("#2C3F8B") : Color.parseColor("#273469");
+        int buttonIconColor = Color.parseColor("#FFFFFF");
 
         RemoteViews compact = new RemoteViews(getPackageName(), R.layout.notification_timer);
         compact.setTextViewText(R.id.notif_title, title);

@@ -1,3 +1,5 @@
+// Файл: www/js/foreground-service.js
+
 import {
   $,
   formatTime,
@@ -70,13 +72,22 @@ function fgDebug(...args) {
   } catch {}
 }
 
-function buildSignature(state, payload) {
+function getThemeSnapshot() {
+  const isDarkTheme = document.documentElement.classList.contains("dark");
+  return {
+    isDarkTheme,
+    themeToken: isDarkTheme ? "dark" : "light",
+  };
+}
+
+function buildSignature(state, payload, themeToken) {
   return [
     state.mode,
     state.running ? "1" : "0",
     state.metaKey || "",
     payload.title,
     payload.body,
+    themeToken,
   ].join("|");
 }
 
@@ -200,7 +211,8 @@ export async function syncNotification({ reason = "unknown" } = {}) {
     formatTime,
   });
 
-  const signature = buildSignature(state, payload);
+  const { isDarkTheme, themeToken } = getThemeSnapshot();
+  const signature = buildSignature(state, payload, themeToken);
   if (signature === lastSignature) return;
 
   const toggleTitle = state.running ? "⏸" : "▶";
@@ -214,6 +226,7 @@ export async function syncNotification({ reason = "unknown" } = {}) {
     silent: true,
     serviceType: "specialUse",
     buttons: [{ id: ACTION_TOGGLE, title: toggleTitle }],
+    isDarkTheme,
   };
 
   fgDebug("sync notification", {
@@ -221,6 +234,7 @@ export async function syncNotification({ reason = "unknown" } = {}) {
     mode: state.mode,
     running: state.running,
     payload,
+    isDarkTheme,
   });
 
   if (!isForegroundShown) {
