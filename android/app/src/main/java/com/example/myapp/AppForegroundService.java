@@ -8,12 +8,11 @@ import android.app.Service;
 import android.content.Intent;
 import android.os.Build;
 import android.os.IBinder;
-import android.widget.RemoteViews;
 
 import androidx.core.app.NotificationCompat;
 
 public class AppForegroundService extends Service {
-    public static final String CHANNEL_ID = "stopwatch_channel_custom_v1";
+    public static final String CHANNEL_ID = "stopwatch_channel_silent_v2";
     public static final int NOTIFICATION_ID = 101;
 
     public static final String ACTION_START_OR_UPDATE = "com.example.myapp.FG_START_OR_UPDATE";
@@ -26,11 +25,12 @@ public class AppForegroundService extends Service {
     public static final String EXTRA_BODY = "body";
     public static final String EXTRA_TOGGLE = "toggle";
     public static final String EXTRA_STOP = "stop";
+    public static final String EXTRA_CHANNEL_ID = "channelId";
 
     @Override
     public void onCreate() {
         super.onCreate();
-        ensureChannel();
+        ensureChannel(CHANNEL_ID, "Stopwatch Pro", "Foreground timer controls");
     }
 
     @Override
@@ -39,8 +39,7 @@ public class AppForegroundService extends Service {
 
         String action = intent.getAction();
         if (ACTION_STOP_SERVICE.equals(action)) {
-            stopForeground(STOP_FOREGROUND_REMOVE);
-            stopSelf();
+            stopServiceSafe();
             return START_NOT_STICKY;
         }
 
@@ -48,8 +47,16 @@ public class AppForegroundService extends Service {
         String body = intent.getStringExtra(EXTRA_BODY);
         String toggle = intent.getStringExtra(EXTRA_TOGGLE);
         String stop = intent.getStringExtra(EXTRA_STOP);
+        String channelId = intent.getStringExtra(EXTRA_CHANNEL_ID);
+
+        if (channelId == null || channelId.trim().isEmpty()) {
+            channelId = CHANNEL_ID;
+        }
+
+        ensureChannel(channelId, "Stopwatch Pro", "Foreground timer controls");
 
         Notification notification = buildNotification(
+            channelId,
             title != null ? title : "Stopwatch",
             body != null ? body : "00:00",
             toggle != null ? toggle : "Pause",
@@ -60,13 +67,13 @@ public class AppForegroundService extends Service {
         return START_STICKY;
     }
 
-    private Notification buildNotification(String title, String body, String toggleText, String stopText) {
-        RemoteViews rv = new RemoteViews(getPackageName(), R.layout.notification_timer);
-        rv.setTextViewText(R.id.notif_title, title);
-        rv.setTextViewText(R.id.notif_body, body);
-        rv.setTextViewText(R.id.notif_btn_toggle, toggleText);
-        rv.setTextViewText(R.id.notif_btn_stop, stopText);
-
+    private Notification buildNotification(
+        String channelId,
+        String title,
+        String body,
+        String toggleText,
+        String stopText
+    ) {
         PendingIntent togglePi = PendingIntent.getBroadcast(
             this,
             201,
@@ -91,19 +98,17 @@ public class AppForegroundService extends Service {
             pendingFlags()
         );
 
-        rv.setOnClickPendingIntent(R.id.notif_btn_toggle, togglePi);
-        rv.setOnClickPendingIntent(R.id.notif_btn_stop, stopPi);
-
-        return new NotificationCompat.Builder(this, CHANNEL_ID)
+        return new NotificationCompat.Builder(this, channelId)
             .setSmallIcon(R.drawable.ic_stat_name)
             .setContentTitle(title)
             .setContentText(body)
-            .setCustomContentView(rv)
-            .setStyle(new NotificationCompat.DecoratedCustomViewStyle())
             .setContentIntent(contentPi)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setSilent(true)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .addAction(0, toggleText, togglePi)
+            .addAction(0, stopText, stopPi)
             .build();
     }
 
@@ -114,20 +119,33 @@ public class AppForegroundService extends Service {
         return PendingIntent.FLAG_UPDATE_CURRENT;
     }
 
-    private void ensureChannel() {
+    private void ensureChannel(String id, String name, String description) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return;
 
         NotificationManager nm = getSystemService(NotificationManager.class);
         if (nm == null) return;
 
         NotificationChannel channel = new NotificationChannel(
-            CHANNEL_ID,
-            "Stopwatch Pro",
+            id,
+            name,
             NotificationManager.IMPORTANCE_LOW
         );
-        channel.setDescription("Foreground timer controls");
+        channel.setDescription(description);
         channel.setSound(null, null);
+        channel.enableVibration(false);
         nm.createNotificationChannel(channel);
+    }
+
+    private void stopServiceSafe() {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                stopForeground(STOP_FOREGROUND_REMOVE);
+            } else {
+                stopForeground(true);
+            }
+        } catch (Exception ignored) {}
+
+        stopSelf();
     }
 
     @Override

@@ -1,6 +1,8 @@
 package com.example.myapp;
 
 import android.Manifest;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -17,8 +19,9 @@ import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 import com.getcapacitor.annotation.Permission;
+import com.getcapacitor.annotation.PermissionCallback;
 
-import org.json.JSONObject; // ✅ ВОТ ЭТОГО НЕ ХВАТАЛО
+import org.json.JSONObject;
 
 @CapacitorPlugin(
     name = "CustomForegroundService",
@@ -118,8 +121,8 @@ public class CustomForegroundServicePlugin extends Plugin {
         requestPermissionForAlias("notifications", call, "permissionsCallback");
     }
 
-    @SuppressWarnings("unused")
-    private void permissionsCallback(PluginCall call) {
+    @PermissionCallback
+    public void permissionsCallback(PluginCall call) {
         JSObject out = new JSObject();
         PermissionState state = getPermissionState("notifications");
         out.put("notifications", state == PermissionState.GRANTED ? "granted" : "denied");
@@ -128,14 +131,32 @@ public class CustomForegroundServicePlugin extends Plugin {
 
     @PluginMethod
     public void createNotificationChannel(PluginCall call) {
+        String id = call.getString("id", AppForegroundService.CHANNEL_ID);
+        String name = call.getString("name", "Stopwatch Pro");
+        String description = call.getString("description", "Foreground timer controls");
+        int importance = call.getInt("importance", NotificationManager.IMPORTANCE_LOW);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationManager nm = getContext().getSystemService(NotificationManager.class);
+            if (nm != null) {
+                NotificationChannel channel = new NotificationChannel(id, name, importance);
+                channel.setDescription(description);
+                channel.setSound(null, null);
+                channel.enableVibration(false);
+                nm.createNotificationChannel(channel);
+            }
+        }
+
         JSObject out = new JSObject();
         out.put("created", true);
+        out.put("id", id);
         call.resolve(out);
     }
 
     private void startOrUpdate(PluginCall call) {
         String title = call.getString("title", "Stopwatch");
         String body = call.getString("body", "00:00");
+        String channelId = call.getString("notificationChannelId", AppForegroundService.CHANNEL_ID);
 
         String toggleText = "Pause";
         String stopText = "Stop";
@@ -158,6 +179,7 @@ public class CustomForegroundServicePlugin extends Plugin {
         i.putExtra(AppForegroundService.EXTRA_BODY, body);
         i.putExtra(AppForegroundService.EXTRA_TOGGLE, toggleText);
         i.putExtra(AppForegroundService.EXTRA_STOP, stopText);
+        i.putExtra(AppForegroundService.EXTRA_CHANNEL_ID, channelId);
 
         startServiceCompat(i);
 
