@@ -17,8 +17,6 @@ public class ForegroundActionReceiver extends BroadcastReceiver {
 
         if (AppForegroundService.ACTION_BTN_TOGGLE.equals(action)) {
             buttonId = 1;
-        } else if (AppForegroundService.ACTION_BTN_STOP.equals(action)) {
-            buttonId = 2;
         }
 
         if (buttonId == 0) return;
