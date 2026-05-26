@@ -5,6 +5,7 @@ import {
   formatTime,
   requestWakeLock,
   releaseWakeLock,
+  getCssVariable,
 } from "./utils.js?v=VERSION";
 import { sw } from "./stopwatch.js?v=VERSION";
 import { tm } from "./timer.js?v=VERSION";
@@ -109,15 +110,11 @@ function scheduleForegroundStop(delay = FOREGROUND_STOP_DEBOUNCE_MS) {
 
   pendingStopTimer = setTimeout(async () => {
     pendingStopTimer = null;
-
-    // Stop only when there is no active timer context.
     const state = getCurrentForegroundState();
     if (!state) {
       await stopForeground();
       return;
     }
-
-    // If timer is still active, keep notification alive and refresh it.
     await syncNotification({ reason: "stop_debounce_state_active" });
   }, delay);
 
@@ -162,15 +159,9 @@ async function handleNotificationToggle() {
   const state = getCurrentForegroundState();
   if (!state) return;
 
-  fgDebug("button toggle", state);
-
-  if (state.mode === "stopwatch") {
-    sw.toggle();
-  } else if (state.mode === "timer") {
-    await tm.toggle();
-  } else if (state.mode === "tabata") {
-    tb.toggle();
-  }
+  if (state.mode === "stopwatch") sw.toggle();
+  else if (state.mode === "timer") await tm.toggle();
+  else if (state.mode === "tabata") tb.toggle();
 
   setTimeout(() => {
     syncNotification({ reason: "button_toggle" });
@@ -180,8 +171,6 @@ async function handleNotificationToggle() {
 async function handleNotificationStop() {
   const state = getCurrentForegroundState();
   if (!state) return;
-
-  fgDebug("button stop", state);
 
   if (state.mode === "stopwatch") {
     if (sw.isRunning) sw.toggle();
@@ -197,28 +186,65 @@ async function handleNotificationStop() {
   }, 80);
 }
 
+function cssColorToHex(input, fallback = "#1F2D5A") {
+  const raw = String(input || "").trim();
+  if (!raw) return fallback;
+
+  if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(raw)) {
+    if (raw.length === 4) {
+      return `#${raw[1]}${raw[1]}${raw[2]}${raw[2]}${raw[3]}${raw[3]}`;
+    }
+    return raw.toUpperCase();
+  }
+
+  const m = raw.match(
+    /^rgba?\(\s*([0-9.]+)\s*,\s*([0-9.]+)\s*,\s*([0-9.]+)(?:\s*,\s*[0-9.]+\s*)?\)$/i,
+  );
+  if (!m) return fallback;
+
+  const r = Math.max(0, Math.min(255, Math.round(Number(m[1]))));
+  const g = Math.max(0, Math.min(255, Math.round(Number(m[2]))));
+  const b = Math.max(0, Math.min(255, Math.round(Number(m[3]))));
+
+  const hex = (n) => n.toString(16).padStart(2, "0").toUpperCase();
+  return `#${hex(r)}${hex(g)}${hex(b)}`;
+}
+
+function resolveNotificationTheme() {
+  const bg = cssColorToHex(getCssVariable("--surface-color"), "#1F2D5A");
+  const textPrimary = cssColorToHex(getCssVariable("--text-color"), "#F5F7FF");
+  const textSecondary = cssColorToHex(
+    getCssVariable("--text-secondary"),
+    "#BFC7D9",
+  );
+  const primary = cssColorToHex(getCssVariable("--primary-color"), "#E2EAFF");
+
+  return {
+    bgColor: bg,
+    textPrimaryColor: textPrimary,
+    textSecondaryColor: textSecondary,
+    buttonBgColor: primary,
+    buttonIconColor: "#2B3038",
+  };
+}
+
 export async function syncNotification({ reason = "unknown" } = {}) {
   const plugins = getPlugins();
   if (!plugins) return;
 
   if (!shouldShowForegroundBanner()) {
-    fgDebug("skip sync: banner disabled", { reason });
     await stopForeground();
     return;
   }
 
   const state = getCurrentForegroundState();
-
-  // No active context -> stop foreground.
   if (!state) {
-    fgDebug("skip sync: no active state", { reason });
     await stopForeground();
     return;
   }
 
   const granted = await ensurePermissionIfNeeded(false);
   if (!granted) {
-    fgDebug("skip sync: permission denied", { reason });
     await stopForeground();
     return;
   }
@@ -237,6 +263,7 @@ export async function syncNotification({ reason = "unknown" } = {}) {
   const signature = buildSignature(state, payload);
   if (signature === lastSignature) return;
 
+  const colors = resolveNotificationTheme();
   const toggleTitle = state.running ? "⏸" : "▶";
   const stopTitle = "■";
 
@@ -252,22 +279,12 @@ export async function syncNotification({ reason = "unknown" } = {}) {
       { id: ACTION_TOGGLE, title: toggleTitle },
       { id: ACTION_STOP, title: stopTitle },
     ],
+    ...colors,
   };
-
-  fgDebug("sync notification", {
-    reason,
-    appIsActive,
-    shown: isForegroundShown,
-    mode: state.mode,
-    running: state.running,
-    title: options.title,
-    body: options.body,
-  });
 
   if (!isForegroundShown) {
     try {
-      const res = await plugins.start?.(options);
-      fgDebug("start result", res);
+      await plugins.start?.(options);
       isForegroundShown = true;
       lastSignature = signature;
       return;
@@ -280,16 +297,13 @@ export async function syncNotification({ reason = "unknown" } = {}) {
 
   await plugins
     .update?.(options)
-    .then((res) => {
-      fgDebug("update result", res);
+    .then(() => {
       lastSignature = signature;
     })
     .catch(async (err) => {
       console.warn("[fg] update failed, fallback to start", err);
-
       try {
-        const res = await plugins.start?.(options);
-        fgDebug("fallback start result", res);
+        await plugins.start?.(options);
         isForegroundShown = true;
         lastSignature = signature;
       } catch (startErr) {
@@ -304,14 +318,12 @@ function startPolling() {
   poller = setInterval(() => {
     syncNotification({ reason: "poll" });
   }, POLL_MS);
-  fgDebug("polling started");
 }
 
 function stopPolling() {
   if (!poller) return;
   clearInterval(poller);
   poller = null;
-  fgDebug("polling stopped");
 }
 
 function bindDocumentEvents() {
@@ -386,8 +398,6 @@ function bindVisibilityFallback() {
     const isActive = document.visibilityState === "visible";
     appIsActive = isActive;
 
-    fgDebug("visibilitychange", { isActive });
-
     if (!isActive) {
       cancelPendingStop();
       sm.unlock();
@@ -399,7 +409,6 @@ function bindVisibilityFallback() {
     }
 
     stopPolling();
-    // Keep notification alive for a short period to avoid race flicker.
     scheduleForegroundStop();
     await syncNotification({ reason: "visibility_visible" });
     releaseWakeLock();
@@ -412,11 +421,7 @@ export async function initForegroundService() {
   if (isInitialized) return;
   if (!isNative()) return;
 
-  fgDebug("init start", { native: true });
-
   const plugins = getPlugins();
-  fgDebug("plugins resolved", !!plugins);
-
   if (!plugins || !plugins.start || !plugins.stop) {
     console.warn("[fg] Foreground service plugin not available");
     return;
@@ -430,13 +435,10 @@ export async function initForegroundService() {
   }).catch(() => {});
 
   const permissionOk = await ensurePermissionIfNeeded(true);
-  const channelOk = await ensureNotificationChannel(plugins.FgService, CHANNEL);
-  fgDebug("init checks", { permissionOk, channelOk, hasApp: !!plugins.App });
+  await ensureNotificationChannel(plugins.FgService, CHANNEL);
 
   if (!permissionOk) {
-    console.warn(
-      "[fg] notification permission denied. Foreground notification disabled.",
-    );
+    console.warn("[fg] notification permission denied. Foreground disabled.");
     return;
   }
 
@@ -446,7 +448,6 @@ export async function initForegroundService() {
   if (plugins.App?.addListener) {
     listeners.appState = async ({ isActive }) => {
       appIsActive = isActive;
-      fgDebug("appStateChange", { isActive });
 
       if (!isActive) {
         cancelPendingStop();
@@ -512,5 +513,4 @@ export async function destroyForegroundService() {
 
   isInitialized = false;
   appIsActive = true;
-  fgDebug("destroyed");
 }
