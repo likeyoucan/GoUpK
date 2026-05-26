@@ -18,6 +18,8 @@ import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 import com.getcapacitor.annotation.Permission;
 
+import org.json.JSONObject; // ✅ ВОТ ЭТОГО НЕ ХВАТАЛО
+
 @CapacitorPlugin(
     name = "CustomForegroundService",
     permissions = {
