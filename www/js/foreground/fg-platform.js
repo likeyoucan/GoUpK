@@ -57,9 +57,6 @@ export function getPlugins() {
   const allPlugins = getCapacitorPlugins();
   const App = allPlugins.App || null;
 
-  // Priority:
-  // 1) Custom native plugin (Variant B)
-  // 2) Capawesome plugin fallbacks (legacy compatibility)
   const FgService =
     allPlugins.CustomForegroundService ||
     allPlugins.ForegroundService ||
@@ -88,6 +85,7 @@ export function getPlugins() {
     FgService.stop?.bind(FgService);
 
   pluginsRef = { App, FgService, start, update, stop };
+
   debugLog("plugins resolved", {
     hasApp: !!App,
     start: !!start,
@@ -100,9 +98,9 @@ export function getPlugins() {
 }
 
 export async function ensureNotificationPermission(FgService) {
-  const plugins = getCapacitorPlugins();
-  const LocalNotifications = plugins?.LocalNotifications || null;
-  const PushNotifications = plugins?.PushNotifications || null;
+  const allPlugins = getCapacitorPlugins();
+  const LocalNotifications = allPlugins?.LocalNotifications || null;
+  const PushNotifications = allPlugins?.PushNotifications || null;
 
   const providers = [
     {
@@ -123,7 +121,7 @@ export async function ensureNotificationPermission(FgService) {
   ].filter((p) => p.check && p.request);
 
   if (!providers.length) {
-    debugLog("permission providers missing");
+    debugLog("no notification permission providers found");
     return false;
   }
 
@@ -171,7 +169,7 @@ export async function ensureNotificationChannel(FgService, channel) {
 export function rememberHandle(handleOrPromise) {
   if (!handleOrPromise) return;
 
-  // Case 1: addListener returned Promise<PluginListenerHandle>
+  // Promise<PluginListenerHandle>
   if (typeof handleOrPromise.then === "function") {
     handleOrPromise
       .then((h) => {
@@ -185,7 +183,7 @@ export function rememberHandle(handleOrPromise) {
     return;
   }
 
-  // Case 2: addListener returned PluginListenerHandle directly
+  // PluginListenerHandle
   if (typeof handleOrPromise.remove === "function") {
     handles.push(handleOrPromise);
     return;

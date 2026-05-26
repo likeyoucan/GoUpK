@@ -30,30 +30,16 @@ import {
   buildForegroundPayload,
 } from "./foreground/fg-state.js?v=VERSION";
 
-/**
- * @typedef {"stopwatch" | "timer" | "tabata"} ForegroundMode
- */
-
-/**
- * @typedef {Object} ForegroundSyncState
- * @property {ForegroundMode} mode
- * @property {boolean} running
- * @property {string} [metaKey]
- */
-
 const FG_ID = 101;
 const ACTION_TOGGLE = 1;
 const ACTION_STOP = 2;
-
-// More stable for Android notification actions; prevents button flicker.
 const POLL_MS = 700;
 
-// NEW channel id to avoid inherited sound settings from old channel.
 const CHANNEL = {
   id: "stopwatch_channel_silent_v2",
   name: "Stopwatch Pro",
   description: "Background stopwatch, timer and tabata controls",
-  importance: 2, // LOW: silent tray behavior
+  importance: 2,
 };
 
 const SMALL_ICON = "ic_stat_name";
@@ -86,13 +72,6 @@ function fgDebug(...args) {
   } catch {}
 }
 
-/**
- * Signature should be stable and coarse-grained enough
- * to avoid ultra-frequent updateForegroundService calls.
- * @param {ForegroundSyncState} state
- * @param {{ title: string, body: string }} payload
- * @returns {string}
- */
 function buildSignature(state, payload) {
   return [
     state.mode,
@@ -103,10 +82,6 @@ function buildSignature(state, payload) {
   ].join("|");
 }
 
-/**
- * @param {boolean} [force=false]
- * @returns {Promise<boolean>}
- */
 async function ensurePermissionIfNeeded(force = false) {
   const plugins = getPlugins();
   if (!plugins) return false;
@@ -200,7 +175,6 @@ export async function syncNotification() {
     return;
   }
 
-  /** @type {ForegroundSyncState | null} */
   const state = getForegroundState({
     sw,
     tm,
@@ -228,7 +202,6 @@ export async function syncNotification() {
   const signature = buildSignature(state, payload);
   if (signature === lastSignature) return;
 
-  // Before first show, ensure notification permission.
   if (!isForegroundShown) {
     const granted = await ensurePermissionIfNeeded(false);
     if (!granted) {
@@ -239,7 +212,6 @@ export async function syncNotification() {
 
   lastSignature = signature;
 
-  // Text icons: most plugins support only title/id for action buttons.
   const toggleTitle = state.running ? "⏸" : "▶";
   const stopTitle = "■";
 
@@ -364,6 +336,31 @@ function unbindDocumentEvents() {
   listeners.foregroundSettingChanged = null;
 }
 
+function bindVisibilityFallback() {
+  if (listeners.appVisibility) return;
+
+  listeners.appVisibility = async () => {
+    const isActive = document.visibilityState === "visible";
+    appIsActive = isActive;
+    fgDebug("visibilitychange", { isActive });
+
+    if (!isActive) {
+      sm.unlock();
+      requestWakeLock();
+      await ensurePermissionIfNeeded(true);
+      await syncNotification();
+      startPolling();
+      return;
+    }
+
+    stopPolling();
+    await stopForeground();
+    releaseWakeLock();
+  };
+
+  document.addEventListener("visibilitychange", listeners.appVisibility);
+}
+
 export async function initForegroundService() {
   if (isInitialized) return;
   if (!isNative()) return;
@@ -381,7 +378,6 @@ export async function initForegroundService() {
   isInitialized = true;
   appIsActive = true;
 
-  // Remove old noisy channel if present.
   await plugins.FgService?.deleteNotificationChannel?.({
     id: "stopwatch_channel",
   }).catch(() => {});
@@ -390,7 +386,6 @@ export async function initForegroundService() {
   const channelOk = await ensureNotificationChannel(plugins.FgService, CHANNEL);
   fgDebug("init checks", { permissionOk, channelOk, hasApp: !!plugins.App });
 
-  // Critical guard: if denied/failed, do not continue lifecycle wiring.
   if (!permissionOk) {
     console.warn(
       "[fg] notification permission denied. Foreground notification disabled.",
@@ -399,6 +394,7 @@ export async function initForegroundService() {
   }
 
   bindDocumentEvents();
+  bindVisibilityFallback();
 
   if (plugins.App?.addListener) {
     listeners.appState = async ({ isActive }) => {
@@ -422,30 +418,6 @@ export async function initForegroundService() {
     rememberHandle(
       plugins.App.addListener("appStateChange", listeners.appState),
     );
-  } else {
-    // Fallback for builds without @capacitor/app plugin
-    fgDebug("App plugin missing, fallback to visibilitychange");
-
-    listeners.appVisibility = async () => {
-      const isActive = document.visibilityState === "visible";
-      appIsActive = isActive;
-      fgDebug("visibilitychange", { isActive });
-
-      if (!isActive) {
-        sm.unlock();
-        requestWakeLock();
-        await ensurePermissionIfNeeded(true);
-        await syncNotification();
-        startPolling();
-        return;
-      }
-
-      stopPolling();
-      await stopForeground();
-      releaseWakeLock();
-    };
-
-    document.addEventListener("visibilitychange", listeners.appVisibility);
   }
 
   rememberHandle(
