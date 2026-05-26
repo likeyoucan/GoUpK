@@ -390,6 +390,14 @@ export async function initForegroundService() {
   const channelOk = await ensureNotificationChannel(plugins.FgService, CHANNEL);
   fgDebug("init checks", { permissionOk, channelOk, hasApp: !!plugins.App });
 
+  // Critical guard: if denied/failed, do not continue lifecycle wiring.
+  if (!permissionOk) {
+    console.warn(
+      "[fg] notification permission denied. Foreground notification disabled.",
+    );
+    return;
+  }
+
   bindDocumentEvents();
 
   if (plugins.App?.addListener) {

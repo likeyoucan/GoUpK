@@ -9,7 +9,7 @@ concurrency:
 
 on:
   push:
-    branches: ["main"]
+    branches: ["main", "vite_2"]
   workflow_dispatch:
 
 jobs:
@@ -25,18 +25,20 @@ jobs:
         with:
           node-version: "24"
 
-      - name: ☕ Настройка Java 25
+      - name: ☕ Настройка Java 21
         uses: actions/setup-java@v5
         with:
           distribution: "temurin"
-          java-version: "25"
+          java-version: "21"
           cache: "gradle"
 
       - name: 📦 Установка зависимостей
         run: npm install
 
-      - name: ➕ Установка @capacitor/app (CI)
-        run: npm i @capacitor/app
+      # Важно для стабильной работы App.addListener и permission fallback
+      - name: ➕ Установка Capacitor plugins (CI)
+        run: |
+          npm i @capacitor/app @capacitor/local-notifications
 
       - name: 🎨 Сборка стилей Tailwind CSS v4
         run: npm run build:css

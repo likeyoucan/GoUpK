@@ -100,44 +100,51 @@ export function getPlugins() {
 }
 
 export async function ensureNotificationPermission(FgService) {
-  if (!FgService) {
-    debugLog("permission check skipped: no FgService");
+  const plugins = getCapacitorPlugins();
+  const LocalNotifications = plugins?.LocalNotifications || null;
+  const PushNotifications = plugins?.PushNotifications || null;
+
+  const providers = [
+    {
+      name: "ForegroundService",
+      check: FgService?.checkPermissions?.bind(FgService),
+      request: FgService?.requestPermissions?.bind(FgService),
+    },
+    {
+      name: "LocalNotifications",
+      check: LocalNotifications?.checkPermissions?.bind(LocalNotifications),
+      request: LocalNotifications?.requestPermissions?.bind(LocalNotifications),
+    },
+    {
+      name: "PushNotifications",
+      check: PushNotifications?.checkPermissions?.bind(PushNotifications),
+      request: PushNotifications?.requestPermissions?.bind(PushNotifications),
+    },
+  ].filter((p) => p.check && p.request);
+
+  if (!providers.length) {
+    debugLog("permission providers missing");
     return false;
   }
 
-  if (!FgService.checkPermissions || !FgService.requestPermissions) {
-    debugLog(
-      "permission API unavailable on plugin, continue without explicit request",
-    );
-    return true;
+  for (const p of providers) {
+    try {
+      const checked = await p.check();
+      debugLog(`${p.name}.checkPermissions`, checked);
+
+      if (hasGrantedValue(checked)) return true;
+
+      const requested = await p.request();
+      debugLog(`${p.name}.requestPermissions`, requested);
+
+      if (hasGrantedValue(requested)) return true;
+    } catch (err) {
+      console.warn(`[fg-platform] ${p.name} permission flow failed`, err);
+    }
   }
 
-  let status = null;
-  try {
-    status = await FgService.checkPermissions();
-    debugLog("checkPermissions result", status);
-  } catch (err) {
-    console.warn("[fg-platform] checkPermissions failed", err);
-    return false;
-  }
-
-  let granted = hasGrantedValue(status);
-  if (granted) return true;
-
-  try {
-    const requested = await FgService.requestPermissions();
-    debugLog("requestPermissions result", requested);
-    granted = hasGrantedValue(requested);
-  } catch (err) {
-    console.warn("[fg-platform] requestPermissions failed", err);
-    return false;
-  }
-
-  if (!granted) {
-    console.warn("[fg-platform] notifications permission is not granted");
-  }
-
-  return granted;
+  console.warn("[fg-platform] notifications permission is not granted");
+  return false;
 }
 
 export async function ensureNotificationChannel(FgService, channel) {
@@ -161,20 +168,40 @@ export async function ensureNotificationChannel(FgService, channel) {
   }
 }
 
-export function rememberHandle(handlePromise) {
-  handlePromise
-    ?.then((h) => {
-      if (h && typeof h.remove === "function") {
-        handles.push(h);
-      }
-    })
-    .catch((err) => {
-      console.warn("[fg-platform] listener handle rejected", err);
-    });
+export function rememberHandle(handleOrPromise) {
+  if (!handleOrPromise) return;
+
+  // Case 1: addListener returned Promise<PluginListenerHandle>
+  if (typeof handleOrPromise.then === "function") {
+    handleOrPromise
+      .then((h) => {
+        if (h && typeof h.remove === "function") {
+          handles.push(h);
+        }
+      })
+      .catch((err) => {
+        console.warn("[fg-platform] listener handle rejected", err);
+      });
+    return;
+  }
+
+  // Case 2: addListener returned PluginListenerHandle directly
+  if (typeof handleOrPromise.remove === "function") {
+    handles.push(handleOrPromise);
+    return;
+  }
+
+  console.warn("[fg-platform] unknown listener handle type", handleOrPromise);
 }
 
 export async function removeAllHandles() {
-  await Promise.all(handles.map((h) => h.remove().catch(() => {})));
+  await Promise.all(
+    handles.map((h) =>
+      Promise.resolve()
+        .then(() => h?.remove?.())
+        .catch(() => {}),
+    ),
+  );
   handles = [];
 }
 
