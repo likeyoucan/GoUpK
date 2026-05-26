@@ -1,6 +1,16 @@
 // Файл: www/js/timer/timer-render.js
 
 export function setupTimerRender(tm, { updateText, updateTitle }) {
+  function ensureSemanticButtonClasses() {
+    // Keep visual style resilient even if HTML not yet updated everywhere.
+    tm.els.resetBtn?.classList.add("btn-danger");
+    tm.els.resetBtn?.classList.remove("is-reset");
+
+    tm.els.adjustMinusBtn?.classList.add("timer-adjust-btn");
+    tm.els.adjustPlusBtn?.classList.add("timer-adjust-btn");
+    tm.els.restartBtn?.classList.add("timer-adjust-btn");
+  }
+
   function getAdjustmentAmount(remainingSeconds) {
     if (remainingSeconds > 3600) return 900;
     if (remainingSeconds > 1800) return 300;
@@ -15,7 +25,11 @@ export function setupTimerRender(tm, { updateText, updateTitle }) {
     return `${seconds / 60}m`;
   }
 
+  ensureSemanticButtonClasses();
+
   tm.updateUIState = () => {
+    ensureSemanticButtonClasses();
+
     if (!tm.els.form) return;
 
     const showResetWrap = tm.isPaused;

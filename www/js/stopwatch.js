@@ -142,8 +142,10 @@ const stopwatchModule = {
 
       this.els.status.classList.remove("hidden");
       updateText(this.els.lapBtn, t("reset"));
+
+      // Unified danger style through semantic class
       this.els.lapBtn.classList.remove("app-surface", "app-text");
-      this.els.lapBtn.classList.add("bg-red-500", "text-white", "is-reset");
+      this.els.lapBtn.classList.add("btn-danger");
 
       announceToScreenReader(
         `${t("stopwatch")} ${t("pause")}. ${formatTime(this.elapsedTime, {
@@ -174,7 +176,8 @@ const stopwatchModule = {
       this.els.lapBtn.classList.remove("hidden");
 
       updateText(this.els.lapBtn, t("lap"));
-      this.els.lapBtn.classList.remove("bg-red-500", "text-white", "is-reset");
+
+      this.els.lapBtn.classList.remove("btn-danger");
       this.els.lapBtn.classList.add("app-surface", "app-text");
     }
 
@@ -286,6 +289,9 @@ const stopwatchModule = {
         this.els.ring.style.strokeDashoffset = this.ringLength;
 
       this.els.lapBtn.classList.add("hidden");
+      this.els.lapBtn.classList.remove("btn-danger");
+      this.els.lapBtn.classList.add("app-surface", "app-text");
+
       this.els.currentLapsHeader.classList.add("hidden");
       this.els.currentLapsHeader.classList.remove("flex");
 
