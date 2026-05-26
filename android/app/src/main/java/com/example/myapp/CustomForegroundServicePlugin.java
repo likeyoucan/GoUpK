@@ -141,11 +141,11 @@ public class CustomForegroundServicePlugin extends Plugin {
         JSArray buttons = call.getArray("buttons");
         if (buttons != null && buttons.length() > 0) {
             try {
-                JSObject btn0 = buttons.getJSONObject(0);
-                if (btn0 != null) toggleText = btn0.getString("title", toggleText);
+                JSONObject btn0 = buttons.getJSONObject(0);
+                if (btn0 != null) toggleText = btn0.optString("title", toggleText);
                 if (buttons.length() > 1) {
-                    JSObject btn1 = buttons.getJSONObject(1);
-                    if (btn1 != null) stopText = btn1.getString("title", stopText);
+                    JSONObject btn1 = buttons.getJSONObject(1);
+                    if (btn1 != null) stopText = btn1.optString("title", stopText);
                 }
             } catch (Exception ignored) {}
         }
