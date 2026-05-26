@@ -10,7 +10,6 @@ import android.content.res.Configuration;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.IBinder;
-import android.util.TypedValue;
 import android.widget.RemoteViews;
 
 import androidx.core.app.NotificationCompat;
@@ -85,17 +84,6 @@ public class AppForegroundService extends Service {
         return nightModeFlags == Configuration.UI_MODE_NIGHT_YES;
     }
 
-    private float[] resolveAdaptiveSizes() {
-        // screenWidthDp доступен и стабилен для адаптации compact уведомления
-        int swDp = getResources().getConfiguration().screenWidthDp;
-
-        // titleSp, bodySp
-        if (swDp >= 900) return new float[] { 13f, 34f };
-        if (swDp >= 700) return new float[] { 12.5f, 32f };
-        if (swDp >= 500) return new float[] { 12f, 30f };
-        return new float[] { 11.5f, 28f };
-    }
-
     private Notification buildNotification(
         String channelId,
         String title,
@@ -104,30 +92,19 @@ public class AppForegroundService extends Service {
     ) {
         boolean dark = isDeviceDarkTheme();
 
-        // Цвет по теме устройства
-        int bgColor = dark ? Color.parseColor("#273469") : Color.parseColor("#E9EDF8");
-        int textPrimaryColor = dark ? Color.parseColor("#F3F6FF") : Color.parseColor("#22315F");
-        int textSecondaryColor = dark ? Color.parseColor("#B7C1DB") : Color.parseColor("#5C688A");
-        int buttonBgColor = dark ? Color.parseColor("#DDE5FA") : Color.parseColor("#2A3A70");
-        int buttonIconColor = dark ? Color.parseColor("#26324A") : Color.parseColor("#F3F6FF");
-
-        float[] sz = resolveAdaptiveSizes();
-        float titleSp = sz[0];
-        float bodySp = sz[1];
+        int bgColor = dark ? Color.parseColor("#273469") : Color.parseColor("#EEF2FA");
+        int textPrimaryColor = dark ? Color.parseColor("#F5F7FF") : Color.parseColor("#1F2D5A");
+        int textSecondaryColor = dark ? Color.parseColor("#BFC7D9") : Color.parseColor("#5D6781");
+        int buttonBgColor = dark ? Color.parseColor("#DCE5FF") : Color.parseColor("#273469");
+        int buttonIconColor = dark ? Color.parseColor("#2B3038") : Color.parseColor("#FFFFFF");
 
         RemoteViews compact = new RemoteViews(getPackageName(), R.layout.notification_timer);
         compact.setTextViewText(R.id.notif_title, title);
         compact.setTextViewText(R.id.notif_body, body);
 
-        compact.setTextViewTextSize(R.id.notif_title, TypedValue.COMPLEX_UNIT_SP, titleSp);
-        compact.setTextViewTextSize(R.id.notif_body, TypedValue.COMPLEX_UNIT_SP, bodySp);
-
-        // Единый цвет внутри кастомной части
         compact.setInt(R.id.notif_root, "setBackgroundColor", bgColor);
         compact.setTextColor(R.id.notif_title, textSecondaryColor);
         compact.setTextColor(R.id.notif_body, textPrimaryColor);
-
-        // Кнопка круглая через отдельный круговой drawable
         compact.setInt(R.id.notif_btn_toggle_bg, "setColorFilter", buttonBgColor);
         compact.setInt(R.id.notif_btn_toggle_icon, "setColorFilter", buttonIconColor);
 
@@ -167,7 +144,6 @@ public class AppForegroundService extends Service {
             .setShowWhen(false)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
-            // Попытка подогнать системную карточку в тот же тон
             .setColor(bgColor)
             .setColorized(true)
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
@@ -175,4 +151,52 @@ public class AppForegroundService extends Service {
     }
 
     private int pendingFlags() {
-        if (Build.VERSION.SDK_INT >= Build
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            return PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE;
+        }
+        return PendingIntent.FLAG_UPDATE_CURRENT;
+    }
+
+    private void ensureChannel(String id, String name, String description) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return;
+
+        NotificationManager nm = getSystemService(NotificationManager.class);
+        if (nm == null) return;
+
+        NotificationChannel channel = new NotificationChannel(
+            id,
+            name,
+            NotificationManager.IMPORTANCE_LOW
+        );
+        channel.setDescription(description);
+        channel.setSound(null, null);
+        channel.enableVibration(false);
+        nm.createNotificationChannel(channel);
+    }
+
+    private void stopServiceSafe() {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                stopForeground(STOP_FOREGROUND_REMOVE);
+            } else {
+                stopForeground(true);
+            }
+        } catch (Exception ignored) {}
+
+        stopSelf();
+    }
+
+    private void saveLastError(Throwable t) {
+        String msg = t.getClass().getName() + ": " + (t.getMessage() == null ? "" : t.getMessage());
+        getSharedPreferences(DIAG_PREFS, MODE_PRIVATE)
+            .edit()
+            .putString(KEY_LAST_ERROR, msg)
+            .putLong(KEY_LAST_ERROR_AT, System.currentTimeMillis())
+            .apply();
+    }
+
+    @Override
+    public IBinder onBind(Intent intent) {
+        return null;
+    }
+}
