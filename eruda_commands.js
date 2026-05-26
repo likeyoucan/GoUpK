@@ -2,7 +2,7 @@
 
 (async () => {
   try {
-    // Подхватываем тот же query v, что у main.js 1
+    // Подхватываем тот же query v, что у main.js
     const mainScript = [...document.scripts].find((s) =>
       s.src.includes("/js/main.js"),
     );
