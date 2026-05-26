@@ -1,4 +1,3 @@
-// Файл: android/app/src/main/java/com/example/myapp/MainActivity.java
 package com.example.myapp;
 
 import android.os.Bundle;
