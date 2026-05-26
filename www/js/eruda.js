@@ -1,4 +1,4 @@
-// Файл: www/js/eruda.js1
+// Файл: www/js/eruda.js
 
 import { onReady, injectStyle } from "./eruda/loader.js?v=VERSION";
 import { ensureErudaLoaded, safeAddPlugin } from "./eruda/plugins.js?v=VERSION";
