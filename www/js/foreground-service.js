@@ -34,6 +34,7 @@ const FG_ID = 101;
 const ACTION_TOGGLE = 1;
 const ACTION_STOP = 2;
 const POLL_MS = 700;
+const FOREGROUND_STOP_DEBOUNCE_MS = 1200;
 
 const CHANNEL = {
   id: "stopwatch_channel_silent_v2",
@@ -49,6 +50,7 @@ let appIsActive = true;
 let poller = null;
 let lastSignature = "";
 let isForegroundShown = false;
+let pendingStopTimer = null;
 
 let permissionGranted = null;
 let permissionCheckedAt = 0;
@@ -93,6 +95,33 @@ function getCurrentForegroundState() {
 
 function shouldShowForegroundBanner() {
   return !!uiSettingsManager.showForegroundBanner;
+}
+
+function cancelPendingStop() {
+  if (!pendingStopTimer) return;
+  clearTimeout(pendingStopTimer);
+  pendingStopTimer = null;
+  fgDebug("pending stop canceled");
+}
+
+function scheduleForegroundStop(delay = FOREGROUND_STOP_DEBOUNCE_MS) {
+  cancelPendingStop();
+
+  pendingStopTimer = setTimeout(async () => {
+    pendingStopTimer = null;
+
+    // Stop only when there is no active timer context.
+    const state = getCurrentForegroundState();
+    if (!state) {
+      await stopForeground();
+      return;
+    }
+
+    // If timer is still active, keep notification alive and refresh it.
+    await syncNotification({ reason: "stop_debounce_state_active" });
+  }, delay);
+
+  fgDebug("pending stop scheduled", { delay });
 }
 
 async function ensurePermissionIfNeeded(force = false) {
@@ -179,6 +208,8 @@ export async function syncNotification({ reason = "unknown" } = {}) {
   }
 
   const state = getCurrentForegroundState();
+
+  // No active context -> stop foreground.
   if (!state) {
     fgDebug("skip sync: no active state", { reason });
     await stopForeground();
@@ -287,7 +318,6 @@ function bindDocumentEvents() {
   listeners.activeTimerChanged = () =>
     syncNotification({ reason: "active_timer_changed" });
 
-  // Important: start protection immediately when timer/stopwatch/tabata starts.
   listeners.timerStarted = () =>
     syncNotification({ reason: "timer_started_event" });
 
@@ -359,6 +389,7 @@ function bindVisibilityFallback() {
     fgDebug("visibilitychange", { isActive });
 
     if (!isActive) {
+      cancelPendingStop();
       sm.unlock();
       requestWakeLock();
       await ensurePermissionIfNeeded(true);
@@ -368,6 +399,8 @@ function bindVisibilityFallback() {
     }
 
     stopPolling();
+    // Keep notification alive for a short period to avoid race flicker.
+    scheduleForegroundStop();
     await syncNotification({ reason: "visibility_visible" });
     releaseWakeLock();
   };
@@ -416,6 +449,7 @@ export async function initForegroundService() {
       fgDebug("appStateChange", { isActive });
 
       if (!isActive) {
+        cancelPendingStop();
         sm.unlock();
         requestWakeLock();
         await ensurePermissionIfNeeded(true);
@@ -425,6 +459,7 @@ export async function initForegroundService() {
       }
 
       stopPolling();
+      scheduleForegroundStop();
       await syncNotification({ reason: "appstate_foreground" });
       releaseWakeLock();
     };
@@ -459,6 +494,7 @@ export async function initForegroundService() {
 export async function destroyForegroundService() {
   if (!isInitialized) return;
 
+  cancelPendingStop();
   stopPolling();
   unbindDocumentEvents();
   await stopForeground();
