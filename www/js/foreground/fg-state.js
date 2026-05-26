@@ -53,7 +53,6 @@ export function buildForegroundPayload({
   sw,
   tm,
   tb,
-  showMs,
   t,
   $,
   formatTime,

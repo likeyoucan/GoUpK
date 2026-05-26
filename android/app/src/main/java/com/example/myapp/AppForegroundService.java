@@ -92,7 +92,6 @@ public class AppForegroundService extends Service {
     ) {
         boolean dark = isDeviceDarkTheme();
 
-        int bgColor = dark ? Color.parseColor("#273469") : Color.parseColor("#EEF2FA");
         int textPrimaryColor = dark ? Color.parseColor("#F5F7FF") : Color.parseColor("#1F2D5A");
         int textSecondaryColor = dark ? Color.parseColor("#BFC7D9") : Color.parseColor("#5D6781");
         int buttonBgColor = dark ? Color.parseColor("#DCE5FF") : Color.parseColor("#273469");
@@ -102,7 +101,6 @@ public class AppForegroundService extends Service {
         compact.setTextViewText(R.id.notif_title, title);
         compact.setTextViewText(R.id.notif_body, body);
 
-        compact.setInt(R.id.notif_root, "setBackgroundColor", bgColor);
         compact.setTextColor(R.id.notif_title, textSecondaryColor);
         compact.setTextColor(R.id.notif_body, textPrimaryColor);
         compact.setInt(R.id.notif_btn_toggle_bg, "setColorFilter", buttonBgColor);
@@ -136,7 +134,7 @@ public class AppForegroundService extends Service {
         return new NotificationCompat.Builder(this, channelId)
             .setSmallIcon(R.drawable.ic_stat_name)
             .setCustomContentView(compact)
-            .setStyle(new NotificationCompat.DecoratedCustomViewStyle())
+            .setCustomBigContentView(compact)
             .setContentIntent(contentPi)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
@@ -144,8 +142,7 @@ public class AppForegroundService extends Service {
             .setShowWhen(false)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
-            .setColor(bgColor)
-            .setColorized(true)
+            .setColorized(false)
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
             .build();
     }

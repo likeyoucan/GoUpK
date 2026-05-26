@@ -64,8 +64,6 @@ const listeners = {
   msChanged: null,
   languageChanged: null,
   foregroundSettingChanged: null,
-  accentChanged: null,
-  adaptiveBgChanged: null,
 };
 
 function fgDebug(...args) {
@@ -76,18 +74,13 @@ function fgDebug(...args) {
   } catch {}
 }
 
-function buildSignature(state, payload, colors) {
+function buildSignature(state, payload) {
   return [
     state.mode,
     state.running ? "1" : "0",
     state.metaKey || "",
     payload.title,
     payload.body,
-    colors.bgColor,
-    colors.textPrimaryColor,
-    colors.textSecondaryColor,
-    colors.buttonBgColor,
-    colors.buttonIconColor,
   ].join("|");
 }
 
@@ -198,71 +191,6 @@ async function handleNotificationStop() {
   }, 80);
 }
 
-function rgbStringToHex(rgb, fallback = "#1F2D5A") {
-  const raw = String(rgb || "").trim();
-
-  if (!raw) return fallback;
-
-  const m = raw.match(
-    /^rgba?\(\s*([0-9.]+)[,\s]+([0-9.]+)[,\s]+([0-9.]+)(?:[,\s/]+[0-9.]+)?\s*\)$/i,
-  );
-  if (!m) return fallback;
-
-  const r = Math.max(0, Math.min(255, Math.round(Number(m[1]))));
-  const g = Math.max(0, Math.min(255, Math.round(Number(m[2]))));
-  const b = Math.max(0, Math.min(255, Math.round(Number(m[3]))));
-
-  const h = (n) => n.toString(16).padStart(2, "0").toUpperCase();
-  return `#${h(r)}${h(g)}${h(b)}`;
-}
-
-function getComputedClassColor(className, cssProp, fallbackHex) {
-  const probe = document.createElement("div");
-  probe.className = className;
-  probe.style.position = "fixed";
-  probe.style.left = "-9999px";
-  probe.style.top = "-9999px";
-  probe.style.pointerEvents = "none";
-
-  document.body.appendChild(probe);
-  const computed = getComputedStyle(probe)[cssProp] || "";
-  probe.remove();
-
-  return rgbStringToHex(computed, fallbackHex);
-}
-
-function resolveNotificationTheme() {
-  const bgColor = getComputedClassColor(
-    "app-surface",
-    "backgroundColor",
-    "#273469",
-  );
-  const textPrimaryColor = getComputedClassColor(
-    "app-text",
-    "color",
-    "#F5F7FF",
-  );
-  const textSecondaryColor = getComputedClassColor(
-    "app-text-sec",
-    "color",
-    "#BFC7D9",
-  );
-  const buttonBgColor = getComputedClassColor(
-    "primary-bg",
-    "backgroundColor",
-    "#E2EAFF",
-  );
-  const buttonIconColor = "#2B3038";
-
-  return {
-    bgColor,
-    textPrimaryColor,
-    textSecondaryColor,
-    buttonBgColor,
-    buttonIconColor,
-  };
-}
-
 export async function syncNotification({ reason = "unknown" } = {}) {
   const plugins = getPlugins();
   if (!plugins) return;
@@ -289,14 +217,12 @@ export async function syncNotification({ reason = "unknown" } = {}) {
     sw,
     tm,
     tb,
-    showMs: uiSettingsManager.showMs,
     t,
     $,
     formatTime,
   });
 
-  const colors = resolveNotificationTheme();
-  const signature = buildSignature(state, payload, colors);
+  const signature = buildSignature(state, payload);
   if (signature === lastSignature) return;
 
   const toggleTitle = state.running ? "⏸" : "▶";
@@ -314,7 +240,6 @@ export async function syncNotification({ reason = "unknown" } = {}) {
       { id: ACTION_TOGGLE, title: toggleTitle },
       { id: ACTION_STOP, title: stopTitle },
     ],
-    ...colors,
   };
 
   fgDebug("sync notification", {
@@ -322,7 +247,6 @@ export async function syncNotification({ reason = "unknown" } = {}) {
     mode: state.mode,
     running: state.running,
     payload,
-    colors,
   });
 
   if (!isForegroundShown) {
@@ -382,10 +306,6 @@ function bindDocumentEvents() {
     syncNotification({ reason: "language_changed" });
   listeners.foregroundSettingChanged = () =>
     syncNotification({ reason: "foreground_setting_changed" });
-  listeners.accentChanged = () =>
-    syncNotification({ reason: "accent_changed" });
-  listeners.adaptiveBgChanged = () =>
-    syncNotification({ reason: "adaptive_bg_changed" });
 
   document.addEventListener(
     APP_EVENTS.ACTIVE_TIMER_CHANGED,
@@ -400,14 +320,6 @@ function bindDocumentEvents() {
   document.addEventListener(
     APP_EVENTS.FOREGROUND_NOTIFICATION_SETTING_CHANGED,
     listeners.foregroundSettingChanged,
-  );
-  document.addEventListener(
-    APP_EVENTS.ACCENT_COLOR_CHANGED,
-    listeners.accentChanged,
-  );
-  document.addEventListener(
-    APP_EVENTS.ADAPTIVE_BG_CHANGED,
-    listeners.adaptiveBgChanged,
   );
 }
 
@@ -439,26 +351,12 @@ function unbindDocumentEvents() {
       listeners.foregroundSettingChanged,
     );
   }
-  if (listeners.accentChanged) {
-    document.removeEventListener(
-      APP_EVENTS.ACCENT_COLOR_CHANGED,
-      listeners.accentChanged,
-    );
-  }
-  if (listeners.adaptiveBgChanged) {
-    document.removeEventListener(
-      APP_EVENTS.ADAPTIVE_BG_CHANGED,
-      listeners.adaptiveBgChanged,
-    );
-  }
 
   listeners.activeTimerChanged = null;
   listeners.timerStarted = null;
   listeners.msChanged = null;
   listeners.languageChanged = null;
   listeners.foregroundSettingChanged = null;
-  listeners.accentChanged = null;
-  listeners.adaptiveBgChanged = null;
 }
 
 function bindVisibilityFallback() {
