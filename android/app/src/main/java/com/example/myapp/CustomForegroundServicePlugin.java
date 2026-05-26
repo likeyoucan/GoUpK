@@ -118,6 +118,7 @@ public class CustomForegroundServicePlugin extends Plugin {
             call.resolve(out);
             return;
         }
+
         requestPermissionForAlias("notifications", call, "permissionsCallback");
     }
 
@@ -153,6 +154,23 @@ public class CustomForegroundServicePlugin extends Plugin {
         call.resolve(out);
     }
 
+    @PluginMethod
+    public void getLastServiceError(PluginCall call) {
+        Context ctx = getContext();
+        String err = ctx
+            .getSharedPreferences("fg_diag", Context.MODE_PRIVATE)
+            .getString("last_error", null);
+
+        long at = ctx
+            .getSharedPreferences("fg_diag", Context.MODE_PRIVATE)
+            .getLong("last_error_at", 0L);
+
+        JSObject out = new JSObject();
+        out.put("error", err);
+        out.put("at", at);
+        call.resolve(out);
+    }
+
     private void startOrUpdate(PluginCall call) {
         String title = call.getString("title", "Stopwatch");
         String body = call.getString("body", "00:00");
@@ -166,6 +184,7 @@ public class CustomForegroundServicePlugin extends Plugin {
             try {
                 JSONObject btn0 = buttons.getJSONObject(0);
                 if (btn0 != null) toggleText = btn0.optString("title", toggleText);
+
                 if (buttons.length() > 1) {
                     JSONObject btn1 = buttons.getJSONObject(1);
                     if (btn1 != null) stopText = btn1.optString("title", stopText);

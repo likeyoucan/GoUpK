@@ -9,6 +9,7 @@
 
     <!-- Foreground service -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
 
     <!-- Android 13+ notifications -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
@@ -39,19 +40,24 @@
             </intent-filter>
         </activity>
 
-        <!-- Custom foreground notification actions -->
+        <!-- Foreground notification actions -->
         <receiver
             android:name=".ForegroundActionReceiver"
             android:enabled="true"
             android:exported="false" />
 
-        <!-- Custom foreground service -->
+        <!-- Foreground service -->
         <service
             android:name=".AppForegroundService"
             android:enabled="true"
-            android:exported="false" />
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="User-started timer/stopwatch/tabata session with ongoing notification and controls" />
+        </service>
 
-        <!-- Alarm receiver for exact timer completion -->
+        <!-- Exact timer alarm receiver -->
         <receiver
             android:name=".TimerAlarmReceiver"
             android:enabled="true"

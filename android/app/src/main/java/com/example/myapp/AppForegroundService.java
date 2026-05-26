@@ -27,6 +27,10 @@ public class AppForegroundService extends Service {
     public static final String EXTRA_STOP = "stop";
     public static final String EXTRA_CHANNEL_ID = "channelId";
 
+    private static final String DIAG_PREFS = "fg_diag";
+    private static final String KEY_LAST_ERROR = "last_error";
+    private static final String KEY_LAST_ERROR_AT = "last_error_at";
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -37,34 +41,41 @@ public class AppForegroundService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent == null) return START_STICKY;
 
-        String action = intent.getAction();
-        if (ACTION_STOP_SERVICE.equals(action)) {
+        try {
+            String action = intent.getAction();
+
+            if (ACTION_STOP_SERVICE.equals(action)) {
+                stopServiceSafe();
+                return START_NOT_STICKY;
+            }
+
+            String title = intent.getStringExtra(EXTRA_TITLE);
+            String body = intent.getStringExtra(EXTRA_BODY);
+            String toggle = intent.getStringExtra(EXTRA_TOGGLE);
+            String stop = intent.getStringExtra(EXTRA_STOP);
+            String channelId = intent.getStringExtra(EXTRA_CHANNEL_ID);
+
+            if (channelId == null || channelId.trim().isEmpty()) {
+                channelId = CHANNEL_ID;
+            }
+
+            ensureChannel(channelId, "Stopwatch Pro", "Foreground timer controls");
+
+            Notification notification = buildNotification(
+                channelId,
+                title != null ? title : "Stopwatch",
+                body != null ? body : "00:00",
+                toggle != null ? toggle : "Pause",
+                stop != null ? stop : "Stop"
+            );
+
+            startForeground(NOTIFICATION_ID, notification);
+            return START_STICKY;
+        } catch (Throwable t) {
+            saveLastError(t);
             stopServiceSafe();
             return START_NOT_STICKY;
         }
-
-        String title = intent.getStringExtra(EXTRA_TITLE);
-        String body = intent.getStringExtra(EXTRA_BODY);
-        String toggle = intent.getStringExtra(EXTRA_TOGGLE);
-        String stop = intent.getStringExtra(EXTRA_STOP);
-        String channelId = intent.getStringExtra(EXTRA_CHANNEL_ID);
-
-        if (channelId == null || channelId.trim().isEmpty()) {
-            channelId = CHANNEL_ID;
-        }
-
-        ensureChannel(channelId, "Stopwatch Pro", "Foreground timer controls");
-
-        Notification notification = buildNotification(
-            channelId,
-            title != null ? title : "Stopwatch",
-            body != null ? body : "00:00",
-            toggle != null ? toggle : "Pause",
-            stop != null ? stop : "Stop"
-        );
-
-        startForeground(NOTIFICATION_ID, notification);
-        return START_STICKY;
     }
 
     private Notification buildNotification(
@@ -107,8 +118,9 @@ public class AppForegroundService extends Service {
             .setOnlyAlertOnce(true)
             .setSilent(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)
-            .addAction(0, toggleText, togglePi)
-            .addAction(0, stopText, stopPi)
+            .setCategory(NotificationCompat.CATEGORY_SERVICE)
+            .addAction(R.drawable.ic_stat_name, toggleText, togglePi)
+            .addAction(R.drawable.ic_stat_name, stopText, stopPi)
             .build();
     }
 
@@ -146,6 +158,15 @@ public class AppForegroundService extends Service {
         } catch (Exception ignored) {}
 
         stopSelf();
+    }
+
+    private void saveLastError(Throwable t) {
+        String msg = t.getClass().getName() + ": " + (t.getMessage() == null ? "" : t.getMessage());
+        getSharedPreferences(DIAG_PREFS, MODE_PRIVATE)
+            .edit()
+            .putString(KEY_LAST_ERROR, msg)
+            .putLong(KEY_LAST_ERROR_AT, System.currentTimeMillis())
+            .apply();
     }
 
     @Override
