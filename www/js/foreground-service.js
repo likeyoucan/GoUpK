@@ -1,5 +1,3 @@
-// Файл: www/js/foreground-service.js
-
 import {
   $,
   formatTime,
@@ -32,7 +30,6 @@ import {
 
 const FG_ID = 101;
 const ACTION_TOGGLE = 1;
-const ACTION_STOP = 2;
 const POLL_MS = 700;
 const FOREGROUND_STOP_DEBOUNCE_MS = 1200;
 
@@ -46,7 +43,6 @@ const CHANNEL = {
 const SMALL_ICON = "ic_stat_name";
 
 let isInitialized = false;
-let appIsActive = true;
 let poller = null;
 let lastSignature = "";
 let isForegroundShown = false;
@@ -173,24 +169,6 @@ async function handleNotificationToggle() {
   }, 80);
 }
 
-async function handleNotificationStop() {
-  const state = getCurrentForegroundState();
-  if (!state) return;
-
-  if (state.mode === "stopwatch") {
-    if (sw.isRunning) sw.toggle();
-    if (sw.elapsedTime > 0) sw.recordLapOrReset();
-  } else if (state.mode === "timer") {
-    await tm.reset(true);
-  } else if (state.mode === "tabata") {
-    tb.stop();
-  }
-
-  setTimeout(() => {
-    syncNotification({ reason: "button_stop" });
-  }, 80);
-}
-
 export async function syncNotification({ reason = "unknown" } = {}) {
   const plugins = getPlugins();
   if (!plugins) return;
@@ -226,7 +204,6 @@ export async function syncNotification({ reason = "unknown" } = {}) {
   if (signature === lastSignature) return;
 
   const toggleTitle = state.running ? "⏸" : "▶";
-  const stopTitle = "■";
 
   const options = {
     id: FG_ID,
@@ -236,10 +213,7 @@ export async function syncNotification({ reason = "unknown" } = {}) {
     notificationChannelId: CHANNEL.id,
     silent: true,
     serviceType: "specialUse",
-    buttons: [
-      { id: ACTION_TOGGLE, title: toggleTitle },
-      { id: ACTION_STOP, title: stopTitle },
-    ],
+    buttons: [{ id: ACTION_TOGGLE, title: toggleTitle }],
   };
 
   fgDebug("sync notification", {
@@ -364,7 +338,6 @@ function bindVisibilityFallback() {
 
   listeners.appVisibility = async () => {
     const isActive = document.visibilityState === "visible";
-    appIsActive = isActive;
 
     if (!isActive) {
       cancelPendingStop();
@@ -396,7 +369,6 @@ export async function initForegroundService() {
   }
 
   isInitialized = true;
-  appIsActive = true;
 
   await plugins.FgService?.deleteNotificationChannel?.({
     id: "stopwatch_channel",
@@ -415,8 +387,6 @@ export async function initForegroundService() {
 
   if (plugins.App?.addListener) {
     listeners.appState = async ({ isActive }) => {
-      appIsActive = isActive;
-
       if (!isActive) {
         cancelPendingStop();
         sm.unlock();
@@ -443,10 +413,6 @@ export async function initForegroundService() {
       const id = Number(buttonId);
       if (id === ACTION_TOGGLE) {
         await handleNotificationToggle();
-        return;
-      }
-      if (id === ACTION_STOP) {
-        await handleNotificationStop();
       }
     }),
   );
@@ -480,5 +446,4 @@ export async function destroyForegroundService() {
   permissionCheckedAt = 0;
 
   isInitialized = false;
-  appIsActive = true;
 }
