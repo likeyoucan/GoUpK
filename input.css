@@ -1450,7 +1450,7 @@
   /* TIMER RING */
   .timer-circle-wrap {
     --ring-safe-gap: clamp(10px, 3.2cqi, 18px);
-    --ring-size: clamp(188px, 96%, 680px);
+    --ring-size: var(--ring-size-dynamic, clamp(188px, 96%, 680px));
     width: min(100%, var(--ring-size));
     height: min(100%, var(--ring-size));
     aspect-ratio: 1 / 1;
@@ -1507,11 +1507,12 @@
   #sw-mainDisplay.is-go,
   #tm-mainDisplay.is-go,
   #tb-mainTimer.is-go {
-    translate: clamp(-3.5px, -0.75cqi, -1.25px) 0;
+    translate: 0 0;
+    transform: translate(var(--go-nudge-x, 0px), var(--go-nudge-y, 0px));
     transform-origin: center center;
     text-align: center;
+    min-inline-size: 2.3ch;
   }
-
   #sw-mainDisplay,
   #tm-mainDisplay,
   #tb-mainTimer {
