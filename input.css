@@ -2687,18 +2687,18 @@
     grid-template-columns: 16px minmax(0, 1fr);
     align-items: center;
     column-gap: 0.5rem;
-    font-weight: 700;
-    letter-spacing: 0.01em;
-    white-space: nowrap;
     line-height: 1.1;
+    font-weight: 600;
+    white-space: nowrap;
   }
 
-  #themeModeSelectContainer .custom-select-value svg {
-    width: 16px;
-    height: 16px;
-    min-width: 16px;
-    min-height: 16px;
-    transform: translateZ(0);
+  #themeModeSelectContainer .custom-select-option {
+    font-weight: 600;
+    min-height: 40px;
+  }
+
+  #themeModeSelectContainer .custom-select-option.is-selected {
+    font-weight: 600; /* без смены веса, чтобы не дергалось */
   }
 
   #themeModeSelectContainer .custom-select-option > div {
@@ -2710,12 +2710,14 @@
     width: 100%;
   }
 
+  #themeModeSelectContainer .custom-select-value svg,
   #themeModeSelectContainer .custom-select-option svg {
     width: 16px;
     height: 16px;
     min-width: 16px;
     min-height: 16px;
     transform: translateZ(0);
+    flex: 0 0 16px;
   }
 
   #themeModeSelectContainer .custom-select-option span {

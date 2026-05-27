@@ -313,6 +313,11 @@ export const colorManager = {
       const canScrollX = container.scrollWidth > container.clientWidth;
       if (!canScrollX) return;
 
+      const interactiveTarget = e.target.closest(
+        ".color-picker-wrapper input[type='color'], .color-action-btn, .color-btn",
+      );
+      if (interactiveTarget) return;
+
       isDown = true;
       moved = false;
       startX = e.clientX;
@@ -326,7 +331,6 @@ export const colorManager = {
       window.addEventListener("mouseleave", onUp);
       window.addEventListener("blur", onUp);
 
-      // Prevent text selection while drag starts
       e.preventDefault();
     });
 
