@@ -30,18 +30,17 @@ function calcDynamicRingSizePx(wrap) {
 
   // landscape split: кольцо заметно меньше, как раньше
   // portrait: больше, но не oversized
-  const k = row ? 0.39 : 0.7;
-
-  const maxPx = row ? 340 : 430;
-  const minPx = row ? 150 : 170;
+  const k = row ? 0.58 : 0.92;
+  const maxPx = row ? 520 : 680;
+  const minPx = row ? 220 : 220;
 
   return Math.round(clamp(limitingSide * k, minPx, maxPx));
 }
 
 function applyGoFontScale(displayEl, ringPx) {
   if (!displayEl) return;
-  const rem = ringPx * 0.24;
-  const px = clamp(rem, 44, 92);
+  const rem = ringPx * 0.285;
+  const px = clamp(rem, 56, 132);
   displayEl.style.setProperty("--go-font-dynamic", `${px}px`);
 }
 

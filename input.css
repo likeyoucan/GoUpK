@@ -86,11 +86,12 @@
     --ctl-alert-fg: var(--alert-btn-fg);
     --ctl-alert-border: color-mix(
       in srgb,
-      var(--ctl-alert-bg) 52%,
-      #ffffff 48%
+      var(--ctl-alert-bg) 72%,
+      #8a1320 28%
     );
     --ctl-alert-shadow:
-      0 1px 2px rgb(0 0 0 / 0.1), 0 8px 16px rgb(0 0 0 / 0.12);
+      0 1px 1px rgb(0 0 0 / 0.12),
+      0 5px 12px color-mix(in srgb, var(--ctl-alert-bg) 22%, transparent);
 
     --vignette-alpha: 0.15;
     --font-scale: 1;
@@ -201,11 +202,12 @@
     --ctl-alert-fg: var(--alert-btn-fg);
     --ctl-alert-border: color-mix(
       in srgb,
-      var(--ctl-alert-bg) 58%,
-      #111827 42%
+      var(--ctl-alert-bg) 64%,
+      #ffffff 36%
     );
     --ctl-alert-shadow:
-      0 1px 2px rgb(0 0 0 / 0.24), 0 10px 18px rgb(0 0 0 / 0.28);
+      0 1px 2px rgb(0 0 0 / 0.26),
+      0 8px 16px color-mix(in srgb, var(--ctl-alert-bg) 24%, transparent);
 
     --ring-meta-color: color-mix(in srgb, var(--text-color) 78%, transparent);
   }
@@ -237,8 +239,8 @@
 
     --ctl-alert-border: color-mix(
       in srgb,
-      var(--alert-btn-bg) 64%,
-      #111827 36%
+      var(--ctl-alert-bg) 70%,
+      #7a1220 30%
     );
   }
 
@@ -256,8 +258,8 @@
 
     --ctl-alert-border: color-mix(
       in srgb,
-      var(--alert-btn-bg) 54%,
-      #ffffff 46%
+      var(--ctl-alert-bg) 60%,
+      #ffffff 40%
     );
   }
 }
@@ -539,11 +541,7 @@
     color: var(--ctl-fg);
     border-color: var(--ctl-border);
     box-shadow: var(--ctl-shadow);
-    background-image: linear-gradient(
-      to bottom,
-      color-mix(in srgb, #ffffff 10%, transparent),
-      transparent 44%
-    );
+    background-image: none;
   }
 
   @media (hover: hover) {
@@ -566,11 +564,7 @@
     color: var(--ctl-alert-fg);
     border-color: var(--ctl-alert-border);
     box-shadow: var(--ctl-alert-shadow);
-    background-image: linear-gradient(
-      to bottom,
-      color-mix(in srgb, #ffffff 10%, transparent),
-      transparent 40%
-    );
+    background-image: none;
     text-shadow: none;
   }
 
