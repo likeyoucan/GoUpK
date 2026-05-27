@@ -4,19 +4,23 @@ function clamp(v, min, max) {
   return Math.max(min, Math.min(max, v));
 }
 
+function getTopHalfRect(wrap) {
+  const topHalf = wrap.closest(".view-top-half");
+  if (!topHalf) return null;
+  return topHalf.getBoundingClientRect();
+}
+
+// База: кольцо всегда ограничиваем меньшей стороной view-top-half
 function calcDynamicRingSizePx(wrap) {
-  const w = wrap.clientWidth || 0;
-  const h = wrap.clientHeight || 0;
-  const base = Math.min(w, h);
+  const topRect = getTopHalfRect(wrap);
+  if (!topRect) {
+    const fallback = Math.min(wrap.clientWidth || 0, wrap.clientHeight || 0);
+    return Math.round(clamp(fallback * 0.9, 188, 680));
+  }
 
-  const vw = window.innerWidth || document.documentElement.clientWidth || 0;
-  const vh = window.innerHeight || document.documentElement.clientHeight || 0;
-
-  let k = 0.96;
-  if (vw >= 1280) k = 0.92;
-  if (vh <= 700) k = 0.9;
-
-  return Math.round(clamp(base * k, 188, 680));
+  const limitingSide = Math.min(topRect.width, topRect.height);
+  const size = limitingSide * 0.86; // мягкий внутренний отступ под title/action rails
+  return Math.round(clamp(size, 188, 680));
 }
 
 function updateRingSize(wrap) {
@@ -78,7 +82,12 @@ export function initDynamicRingAndGoLayout() {
     refreshAll();
   });
 
-  wraps.forEach((w) => resizeObserver.observe(w));
+  wraps.forEach((w) => {
+    resizeObserver.observe(w);
+    const topHalf = w.closest(".view-top-half");
+    if (topHalf) resizeObserver.observe(topHalf);
+  });
+
   displays.forEach((d) => resizeObserver.observe(d));
 
   const textObservers = displays.map((displayEl) => {

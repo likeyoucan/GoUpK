@@ -219,6 +219,17 @@
     --text-color: #ffffff;
     --text-secondary: rgb(255 255 255 / 0.72);
     --border-color: rgb(255 255 255 / 0.15);
+    --ctl-bg: color-mix(in srgb, var(--surface-color) 70%, #000000 30%);
+    --ctl-bg-hover: color-mix(in srgb, var(--surface-color) 64%, #000000 36%);
+    --ctl-fg: #f8fafc;
+    --ctl-border: color-mix(in srgb, #ffffff 24%, transparent);
+    --ctl-shadow: 0 3px 10px rgb(0 0 0 / 0.24);
+
+    --ctl-alert-border: color-mix(
+      in srgb,
+      var(--alert-btn-bg) 64%,
+      #111827 36%
+    );
   }
 
   body.force-dark-text {
@@ -226,6 +237,17 @@
     --text-color: #111827;
     --text-secondary: rgb(17 24 39 / 0.68);
     --border-color: rgb(0 0 0 / 0.1);
+    --ctl-bg: color-mix(in srgb, var(--surface-color) 86%, #ffffff 14%);
+    --ctl-bg-hover: color-mix(in srgb, var(--surface-color) 80%, #ffffff 20%);
+    --ctl-fg: #111827;
+    --ctl-border: color-mix(in srgb, #111827 24%, transparent);
+    --ctl-shadow: 0 2px 8px rgb(0 0 0 / 0.13);
+
+    --ctl-alert-border: color-mix(
+      in srgb,
+      var(--alert-btn-bg) 54%,
+      #ffffff 46%
+    );
   }
 }
 
@@ -887,7 +909,7 @@
     border: 1px solid rgb(255 255 255 / 0.62);
     box-shadow: none;
   }
-  bbody.force-dark-text input:checked + .custom-toggle {
+  body.force-dark-text input:checked + .custom-toggle {
     background-color: var(--primary-color);
   }
 
@@ -1950,9 +1972,15 @@
   #tm-adjust-plus,
   #sw-lapBtn:not(.is-reset) {
     background-color: var(--ctl-bg);
-    border: 1px solid var(--ctl-border);
     color: var(--ctl-fg);
+    border: 1px solid var(--ctl-border);
     box-shadow: var(--ctl-shadow);
+    background-image: linear-gradient(
+      to bottom,
+      color-mix(in srgb, #ffffff 14%, transparent),
+      transparent 42%
+    );
+    background-clip: padding-box;
   }
 
   @media (hover: hover) {
@@ -2840,6 +2868,12 @@
   }
 
   .pro-badge {
+    --pb-c1: #60a5fa;
+    --pb-c2: #a78bfa;
+    --pb-c3: #34d399;
+    --pb-fill: #111111;
+    --pb-fg: #f9fafb;
+
     position: relative;
     display: inline-flex;
     align-items: center;
@@ -2849,7 +2883,7 @@
     height: 16px;
     padding: 0 5px;
 
-    border: 1px solid color-mix(in srgb, #000000 18%, transparent);
+    border: 1px solid transparent;
     border-radius: 5px;
 
     font-size: 9px;
@@ -2860,17 +2894,30 @@
     white-space: nowrap;
     text-align: center;
 
-    background-color: #111111;
-    color: #f9fafb;
+    color: var(--pb-fg);
     text-shadow: none;
+
+    background:
+      linear-gradient(var(--pb-fill), var(--pb-fill)) padding-box,
+      linear-gradient(
+          45deg,
+          var(--pb-c1),
+          var(--pb-c2),
+          var(--pb-c3),
+          var(--pb-c1)
+        )
+        border-box;
+    background-size:
+      100% 100%,
+      220% 220%;
+
     box-shadow: 0 1px 3px rgb(0 0 0 / 0.18);
+    animation: gradient-rotate 3.2s linear infinite;
 
     transition:
       transform 0.2s ease,
       box-shadow 0.2s ease,
-      background-color var(--dur-short) ease,
-      color var(--dur-short) ease,
-      border-color var(--dur-short) ease;
+      color var(--dur-short) ease;
   }
 
   .pro-badge:active {
@@ -2878,10 +2925,11 @@
   }
 
   html.dark .pro-badge {
-    background-color: #f8fafc;
-    color: #111111;
-    border-color: color-mix(in srgb, #111111 22%, transparent);
-    box-shadow: 0 1px 3px rgb(0 0 0 / 0.2);
+    --pb-c1: #93c5fd;
+    --pb-c2: #c4b5fd;
+    --pb-c3: #6ee7b7;
+    --pb-fill: #f8fafc;
+    --pb-fg: #111111;
   }
 
   .pro-cta {
