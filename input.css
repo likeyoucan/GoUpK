@@ -1854,6 +1854,30 @@
     margin-bottom: var(--safe-bottom);
   }
 
+  /* Saved results list as a single continuous table */
+  #sw-sessionsList {
+    padding-inline: 0;
+    gap: 0;
+    display: block;
+  }
+
+  .sw-session-row {
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .sw-session-row:first-child {
+    border-top: 1px solid var(--border-color);
+  }
+
+  .sw-session-header {
+    background: transparent;
+  }
+
+  .sw-session-details {
+    background-color: color-mix(in srgb, var(--text-color) 3%, transparent);
+  }
+
   @media (orientation: landscape) and (max-width: 767px) {
     #viewsContainer > div:not(#view-settings) {
       flex-direction: row;
@@ -3602,6 +3626,7 @@
     .tb-del-btn:hover,
     .sw-share-btn:hover,
     .sw-rename-btn:hover,
+    .sw-delete-btn:hover,
     #btn-open-legal-inline:hover {
       background-color: inherit;
       opacity: inherit;
