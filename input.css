@@ -2540,18 +2540,20 @@
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
     opacity: 0;
-    transform: scale(0.95) translateY(-10px);
+    transform: translateY(-6px); /* было scale(0.95) translateY(-10px) */
     transform-origin: top center;
     pointer-events: none;
     background-clip: padding-box;
     transition:
       opacity var(--dur-short) var(--ease-standard),
       transform var(--dur-short) var(--ease-standard);
+    will-change: opacity, transform;
+    backface-visibility: hidden;
   }
 
   .custom-select-options.is-open {
     opacity: 1;
-    transform: scale(1) translateY(0);
+    transform: translateY(0); /* было scale(1) translateY(0) */
     pointer-events: auto;
   }
 
@@ -3158,27 +3160,28 @@
   }
 
   /* Saved session laps: continuous table rows */
-.sw-session-laps > div {
-  border-radius: 0 !important;
-  margin: 0 !important;
-  border-bottom: 1px solid color-mix(in srgb, var(--border-color) 55%, transparent) !important;
-  background: transparent !important;
-  box-shadow: none !important;
-}
+  .sw-session-laps > div {
+    border-radius: 0 !important;
+    margin: 0 !important;
+    border-bottom: 1px solid
+      color-mix(in srgb, var(--border-color) 55%, transparent) !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
 
-.sw-session-laps > div:last-child {
-  border-bottom: 0 !important;
-}
+  .sw-session-laps > div:last-child {
+    border-bottom: 0 !important;
+  }
 
-.sw-session-laps > div:first-child {
-  border-top-left-radius: 0.75rem !important;
-  border-top-right-radius: 0.75rem !important;
-}
+  .sw-session-laps > div:first-child {
+    border-top-left-radius: 0.75rem !important;
+    border-top-right-radius: 0.75rem !important;
+  }
 
-.sw-session-laps > div:last-child {
-  border-bottom-left-radius: 0.75rem !important;
-  border-bottom-right-radius: 0.75rem !important;
-}
+  .sw-session-laps > div:last-child {
+    border-bottom-left-radius: 0.75rem !important;
+    border-bottom-right-radius: 0.75rem !important;
+  }
 
   html.dark #sw-lapsContainer .lap-row,
   html.dark .sw-session-laps > div,
