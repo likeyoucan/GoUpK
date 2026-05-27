@@ -169,7 +169,7 @@ export function setupStopwatchRender(sw) {
     sw.savedSessions.forEach((session) => {
       const clone = sessionTemplate.content.cloneNode(true);
       const sessionElement = clone.firstElementChild;
-      const shouldForceHours = session.totalTime >= 3600000;
+      const shouldForceHours = (session.totalTime || 0) >= 3600000;
 
       const dateObj = new Date(session.date || session.id);
       const dateStr = `${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString(
@@ -181,11 +181,11 @@ export function setupStopwatchRender(sw) {
       )}`;
 
       sessionElement.querySelector('[data-template="name"]').textContent =
-        session.name;
+        session.name || t("stopwatch");
       sessionElement.querySelector('[data-template="date"]').textContent =
         dateStr;
       sessionElement.querySelector('[data-template="totalTime"]').textContent =
-        formatTime(session.totalTime, {
+        formatTime(session.totalTime || 0, {
           showMs: uiSettingsManager.showMs,
           forceHours: shouldForceHours,
         });
@@ -203,21 +203,36 @@ export function setupStopwatchRender(sw) {
         '[data-template-id="deleteBtn"]',
       );
 
-      header.dataset.id = session.id;
-      if (share) share.dataset.id = session.id;
-      if (rename) rename.dataset.id = session.id;
-      if (del) del.dataset.id = session.id;
+      const id = Number(session.id);
+      header.dataset.id = id;
+      if (share) share.dataset.id = id;
+      if (rename) rename.dataset.id = id;
+      if (del) del.dataset.id = id;
 
       const detailsEl = sessionElement.querySelector(
         '[data-template-id="details"]',
       );
       const iconEl = sessionElement.querySelector('[data-template-id="icon"]');
-      detailsEl.id = `sw-details-${session.id}`;
-      iconEl.id = `sw-icon-${session.id}`;
+      detailsEl.id = `sw-details-${id}`;
+      iconEl.id = `sw-icon-${id}`;
 
-      if (share) share.textContent = t("share");
-      if (rename) rename.textContent = t("rename");
-      if (del) del.textContent = t("delete");
+      if (share) {
+        const s = t("share");
+        share.setAttribute("aria-label", s);
+        share.setAttribute("title", s);
+      }
+
+      if (rename) {
+        const r = t("rename");
+        rename.setAttribute("aria-label", r);
+        rename.setAttribute("title", r);
+      }
+
+      if (del) {
+        const d = t("delete");
+        del.setAttribute("aria-label", d);
+        del.setAttribute("title", d);
+      }
 
       const lapsContainer = sessionElement.querySelector(
         '[data-template="lapsContainer"]',
@@ -249,7 +264,8 @@ export function setupStopwatchRender(sw) {
       headerDiv.append(lapSpan, timesDiv);
       lapsContainer.appendChild(headerDiv);
 
-      session.laps.forEach((lap) => {
+      const laps = Array.isArray(session.laps) ? session.laps : [];
+      laps.forEach((lap) => {
         const lapClone = lapTemplate.content.cloneNode(true);
         const lapElement = lapClone.firstElementChild;
 

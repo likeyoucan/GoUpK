@@ -89,9 +89,7 @@
       var(--ctl-alert-bg) 72%,
       #8a1320 28%
     );
-    --ctl-alert-shadow:
-      0 1px 1px rgb(0 0 0 / 0.12),
-      0 5px 12px color-mix(in srgb, var(--ctl-alert-bg) 22%, transparent);
+    --ctl-alert-shadow: var(--ctl-shadow);
 
     --vignette-alpha: 0.15;
     --font-scale: 1;
@@ -154,6 +152,21 @@
     --pro-badge-y: 4px;
     --pro-badge-x: 8px;
     --pro-badge-r: 8px;
+
+    --ui-hover-bg: color-mix(in srgb, var(--text-color) 8%, transparent);
+    --ui-hover-bg-strong: color-mix(
+      in srgb,
+      var(--text-color) 14%,
+      transparent
+    );
+
+    --select-trigger-bg: color-mix(
+      in srgb,
+      var(--surface-color) 92%,
+      transparent
+    );
+    --select-panel-bg: var(--surface-color);
+    --select-panel-border: var(--border-color);
   }
 
   :root.dark {
@@ -205,24 +218,48 @@
       var(--ctl-alert-bg) 64%,
       #ffffff 36%
     );
-    --ctl-alert-shadow:
-      0 1px 2px rgb(0 0 0 / 0.26),
-      0 8px 16px color-mix(in srgb, var(--ctl-alert-bg) 24%, transparent);
+    --ctl-alert-shadow: var(--ctl-shadow);
 
     --ring-meta-color: color-mix(in srgb, var(--text-color) 78%, transparent);
+
+    --select-trigger-bg: color-mix(
+      in srgb,
+      var(--surface-color) 86%,
+      #000000 14%
+    );
+    --select-panel-bg: var(--surface-color);
+    --select-panel-border: var(--border-color);
   }
 
   .bg-red-zone {
-    --alert-color: hsl(20 92% 54%);
-    --alert-btn-bg: hsl(20 92% 54%);
-    --alert-btn-bg-hover: hsl(22 94% 58%);
-    --alert-btn-bg-active: hsl(18 90% 49%);
-    --alert-btn-border: hsl(34 100% 92% / 0.42);
+    --alert-color: hsl(28 90% 62%);
+    --alert-color-fg: #7c2d12;
 
-    --ctl-alert-bg: hsl(20 92% 54%);
-    --ctl-alert-bg-hover: hsl(22 94% 58%);
-    --ctl-alert-bg-active: hsl(18 90% 49%);
-    --ctl-alert-border: hsl(34 95% 88% / 0.35);
+    --ctl-alert-bg: hsl(31 94% 78%);
+    --ctl-alert-bg-hover: hsl(31 96% 74%);
+    --ctl-alert-bg-active: hsl(30 92% 68%);
+    --ctl-alert-fg: #7c2d12;
+    --ctl-alert-border: color-mix(in srgb, #fdba74 78%, #7c2d12 22%);
+
+    --alert-btn-bg: var(--ctl-alert-bg);
+    --alert-btn-bg-hover: var(--ctl-alert-bg-hover);
+    --alert-btn-bg-active: var(--ctl-alert-bg-active);
+    --alert-btn-fg: var(--ctl-alert-fg);
+    --alert-btn-border: var(--ctl-alert-border);
+  }
+
+  html.dark .bg-red-zone {
+    --ctl-alert-bg: hsl(28 88% 66%);
+    --ctl-alert-bg-hover: hsl(28 90% 70%);
+    --ctl-alert-bg-active: hsl(28 84% 60%);
+    --ctl-alert-fg: #1f2937;
+    --ctl-alert-border: color-mix(in srgb, #fed7aa 54%, #111827 46%);
+
+    --alert-btn-bg: var(--ctl-alert-bg);
+    --alert-btn-bg-hover: var(--ctl-alert-bg-hover);
+    --alert-btn-bg-active: var(--ctl-alert-bg-active);
+    --alert-btn-fg: var(--ctl-alert-fg);
+    --alert-btn-border: var(--ctl-alert-border);
   }
 
   body.force-light-text {
@@ -242,6 +279,20 @@
       var(--ctl-alert-bg) 70%,
       #7a1220 30%
     );
+
+    --tr-track-bg: rgb(255 255 255 / 0.34);
+    --tr-thumb-color: #ffffff;
+
+    --select-trigger-bg: rgb(255 255 255 / 0.16);
+    --select-panel-bg: color-mix(
+      in srgb,
+      var(--surface-color) 66%,
+      transparent
+    );
+    --select-panel-border: rgb(255 255 255 / 0.24);
+
+    --ui-hover-bg: rgb(255 255 255 / 0.14);
+    --ui-hover-bg-strong: rgb(255 255 255 / 0.2);
   }
 
   body.force-dark-text {
@@ -261,6 +312,20 @@
       var(--ctl-alert-bg) 60%,
       #ffffff 40%
     );
+
+    --tr-track-bg: rgb(17 24 39 / 0.26);
+    --tr-thumb-color: #f8fafc;
+
+    --select-trigger-bg: rgb(17 24 39 / 0.08);
+    --select-panel-bg: color-mix(
+      in srgb,
+      var(--surface-color) 90%,
+      transparent
+    );
+    --select-panel-border: rgb(17 24 39 / 0.2);
+
+    --ui-hover-bg: rgb(17 24 39 / 0.1);
+    --ui-hover-bg-strong: rgb(17 24 39 / 0.16);
   }
 }
 
@@ -656,15 +721,6 @@
     color: color-mix(in srgb, var(--alert-text-color) 86%, var(--text-color));
   }
 
-  .sw-delete-btn {
-    color: color-mix(in srgb, var(--alert-color) 85%, var(--text-color));
-    background-color: color-mix(in srgb, var(--alert-color) 14%, transparent);
-  }
-
-  .sw-delete-btn:hover {
-    background-color: color-mix(in srgb, var(--alert-color) 22%, transparent);
-  }
-
   .app-btn {
     min-height: 44px;
     border-radius: 0.75rem;
@@ -688,6 +744,10 @@
     min-width: 44px;
     min-height: 44px;
     border-radius: 0.5rem;
+    transition:
+      background-color var(--dur-short) ease,
+      color var(--dur-short) ease,
+      transform var(--dur-micro) var(--ease-standard);
   }
 
   .section-caption {
@@ -2449,13 +2509,14 @@
 
   .custom-select-trigger {
     min-height: 38px;
+    background-color: var(--select-trigger-bg);
   }
 
   .custom-select-options {
     position: fixed;
     z-index: 1000;
-    background-color: var(--surface-color);
-    border: 1px solid var(--border-color);
+    background-color: var(--select-panel-bg);
+    border: 1px solid var(--select-panel-border);
     border-radius: 0.75rem;
     box-shadow:
       0 10px 25px -5px rgb(0 0 0 / 0.1),
@@ -2598,36 +2659,47 @@
 
   /* Theme mode select visuals */
   #themeModeSelectContainer .custom-select-value {
-    display: inline-flex;
+    display: grid;
+    grid-template-columns: 16px minmax(0, 1fr);
     align-items: center;
-    gap: 0.5rem;
+    column-gap: 0.5rem;
     font-weight: 700;
     letter-spacing: 0.01em;
     white-space: nowrap;
-    line-height: 1;
+    line-height: 1.1;
   }
 
   #themeModeSelectContainer .custom-select-value svg {
     width: 16px;
     height: 16px;
-    flex: 0 0 16px;
+    min-width: 16px;
+    min-height: 16px;
+    transform: translateZ(0);
   }
 
   #themeModeSelectContainer .custom-select-option > div {
-    display: flex;
+    display: grid;
+    grid-template-columns: 16px minmax(0, 1fr);
     align-items: center;
-    gap: 0.5rem;
-    line-height: 1;
+    column-gap: 0.5rem;
+    line-height: 1.1;
+    width: 100%;
   }
 
   #themeModeSelectContainer .custom-select-option svg {
     width: 16px;
     height: 16px;
-    flex: 0 0 16px;
+    min-width: 16px;
+    min-height: 16px;
+    transform: translateZ(0);
   }
 
   #themeModeSelectContainer .custom-select-option span {
     white-space: nowrap;
+  }
+
+  #themeModeSelectContainer .custom-select-option.is-selected {
+    font-weight: 600;
   }
 
   /* COLOR SWATCH UI */
@@ -3284,8 +3356,18 @@
   body.force-light-text .tb-del-btn {
     color: #ffd5d9 !important;
   }
+
   .sw-share-btn,
-  .sw-rename-btn {
+  .sw-rename-btn,
+  .sw-delete-btn {
+    min-width: 36px;
+    min-height: 36px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
+    background: transparent;
     transition:
       background-color var(--dur-short) ease,
       color var(--dur-short) ease,
@@ -3293,8 +3375,13 @@
   }
 
   .sw-share-btn:active,
-  .sw-rename-btn:active {
+  .sw-rename-btn:active,
+  .sw-delete-btn:active {
     transform: scale(0.96);
+  }
+
+  .sw-delete-btn {
+    color: color-mix(in srgb, var(--alert-color) 85%, var(--text-color));
   }
 
   /* Neutral contrast boost for captions and nav on extreme backgrounds */
@@ -3410,6 +3497,14 @@
       border-color: color-mix(in srgb, var(--border-color) 85%, transparent);
     }
 
+    .app-icon-btn:hover {
+      background-color: var(--ui-hover-bg);
+    }
+
+    .app-icon-btn:active {
+      background-color: var(--ui-hover-bg-strong);
+    }
+
     #sw-clear-confirm:hover,
     #reset-confirm:hover,
     #tb-stopBtn:hover,
@@ -3425,11 +3520,16 @@
     }
 
     .sw-share-btn:hover {
-      background-color: color-mix(in srgb, #10b981 18%, transparent);
+      background-color: var(--ui-hover-bg);
     }
 
     .sw-rename-btn:hover {
-      background-color: color-mix(in srgb, #3b82f6 18%, transparent);
+      background-color: var(--ui-hover-bg);
+    }
+
+    .sw-delete-btn:hover {
+      opacity: 1;
+      background-color: var(--ui-hover-bg-strong);
     }
 
     #btn-open-legal-inline:hover {

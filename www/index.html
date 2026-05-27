@@ -721,7 +721,9 @@
               </h2>
             </div>
 
-            <div class="settings-content-wrap space-y-6 px-4 pt-1 settings-scroll-safe">
+            <div
+              class="settings-content-wrap space-y-6 px-4 pt-1 settings-scroll-safe"
+            >
               <div>
                 <h3
                   class="section-caption text-xs font-bold app-text-sec uppercase tracking-wider mb-3 ml-2"
@@ -1617,7 +1619,7 @@
           </div>
 
           <div
-            class="scroll-panel flex-1 min-h-0 overflow-y-auto scroll-lock no-scrollbar pb-10 space-y-3 selectable-data px-1"
+            class="scroll-panel flex-1 min-h-0 overflow-y-auto scroll-lock no-scrollbar pb-10 selectable-data"
             id="sw-sessionsList"
           ></div>
         </div>
@@ -2284,29 +2286,27 @@
     </template>
 
     <template id="sw-session-template">
-      <div
-        class="app-surface border app-border rounded-xl overflow-hidden transition-all mb-3"
-      >
+      <div class="sw-session-row border-b app-border">
         <div
-          class="p-4 cursor-pointer flex justify-between items-center active:bg-gray-500/10 sw-session-header"
+          class="sw-session-header p-3 cursor-pointer flex justify-between items-center"
           data-template-id="header"
         >
-          <div class="flex-1 min-w-0 pr-4">
+          <div class="flex-1 min-w-0 pr-3">
             <div
-              class="font-bold app-text text-lg truncate"
+              class="font-bold app-text text-base truncate"
               data-template="name"
             ></div>
             <div class="text-xs app-text-sec mt-1" data-template="date"></div>
           </div>
-          <div class="flex items-center gap-3 shrink-0">
+          <div class="flex items-center gap-2 shrink-0">
             <div
-              class="font-mono font-bold primary-text text-lg"
+              class="font-mono font-bold primary-text text-base"
               data-template="totalTime"
             ></div>
             <svg
               focusable="false"
               aria-hidden="true"
-              class="w-5 h-5 text-gray-400 transition-transform duration-300"
+              class="w-4 h-4 app-text-sec transition-transform duration-300"
               data-template-id="icon"
               fill="none"
               stroke="currentColor"
@@ -2323,31 +2323,78 @@
         </div>
 
         <div
-          class="hidden sw-session-details border-t app-border p-4"
+          class="hidden sw-session-details border-t app-border p-3"
           data-template-id="details"
         >
-          <div class="flex justify-end gap-2 mb-3">
+          <div class="flex justify-end gap-1 mb-2">
             <button
               type="button"
-              class="sw-share-btn px-3 py-1 bg-emerald-500/10 text-emerald-600 rounded-lg text-xs font-bold uppercase tracking-wider active:scale-95 transition-transform"
-              data-i18n="share"
+              class="sw-share-btn app-icon-btn app-text-sec rounded-lg active:scale-95"
               data-template-id="shareBtn"
-            ></button>
+              aria-label="Share"
+            >
+              <svg
+                class="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  d="M21 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h6"
+                />
+                <path d="m21 3-9 9" />
+                <path d="M15 3h6v6" />
+              </svg>
+            </button>
+
             <button
               type="button"
-              class="sw-rename-btn px-3 py-1 bg-blue-500/10 text-blue-500 rounded-lg text-xs font-bold uppercase tracking-wider active:scale-95 transition-transform"
-              data-i18n="rename"
+              class="sw-rename-btn app-icon-btn app-text-sec rounded-lg active:scale-95"
               data-template-id="renameBtn"
-            ></button>
+              aria-label="Rename"
+            >
+              <svg
+                class="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                stroke-width="2"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                ></path>
+              </svg>
+            </button>
+
             <button
               type="button"
-              class="sw-delete-btn px-3 py-1 bg-red-500/10 text-red-500 rounded-lg text-xs font-bold uppercase tracking-wider active:scale-95 transition-transform"
-              data-i18n="delete"
+              class="sw-delete-btn app-icon-btn rounded-lg active:scale-95"
               data-template-id="deleteBtn"
-            ></button>
+              aria-label="Delete"
+            >
+              <svg
+                class="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                stroke-width="2.2"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M6 18L18 6M6 6l12 12"
+                ></path>
+              </svg>
+            </button>
           </div>
+
           <div
-            class="max-h-48 overflow-y-auto no-scrollbar sw-session-laps rounded-lg p-2 border app-border scroll-panel"
+            class="sw-session-laps max-h-48 overflow-y-auto no-scrollbar scroll-panel"
             data-template="lapsContainer"
           ></div>
         </div>
