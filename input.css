@@ -1854,30 +1854,6 @@
     margin-bottom: var(--safe-bottom);
   }
 
-  /* Saved results list as a single continuous table */
-  #sw-sessionsList {
-    padding-inline: 0;
-    gap: 0;
-    display: block;
-  }
-
-  .sw-session-row {
-    border-radius: 0;
-    background: transparent;
-  }
-
-  .sw-session-row:first-child {
-    border-top: 1px solid var(--border-color);
-  }
-
-  .sw-session-header {
-    background: transparent;
-  }
-
-  .sw-session-details {
-    background-color: color-mix(in srgb, var(--text-color) 3%, transparent);
-  }
-
   @media (orientation: landscape) and (max-width: 767px) {
     #viewsContainer > div:not(#view-settings) {
       flex-direction: row;
@@ -2688,19 +2664,13 @@
   }
 
   #themeModeSelectContainer .custom-select-value {
-    width: 100%;
     display: grid;
     grid-template-columns: 16px minmax(0, 1fr);
     align-items: center;
     column-gap: 0.5rem;
-    line-height: 1.1;
+    line-height: 1;
     font-weight: 600;
     white-space: nowrap;
-  }
-
-  #themeModeSelectContainer .custom-select-value span {
-    display: block;
-    min-width: 0;
   }
 
   #themeModeSelectContainer .custom-select-option {
@@ -2709,7 +2679,7 @@
   }
 
   #themeModeSelectContainer .custom-select-option.is-selected {
-    font-weight: 600; /* без смены веса, чтобы не дергалось */
+    font-weight: 600;
   }
 
   #themeModeSelectContainer .custom-select-option > div {
@@ -2717,7 +2687,7 @@
     grid-template-columns: 16px minmax(0, 1fr);
     align-items: center;
     column-gap: 0.5rem;
-    line-height: 1.1;
+    line-height: 1;
     width: 100%;
   }
 
@@ -2727,16 +2697,14 @@
     height: 16px;
     min-width: 16px;
     min-height: 16px;
-    transform: translateZ(0);
-    flex: 0 0 16px;
+    display: block;
+    align-self: center;
+    transform: none;
+    margin: 0;
   }
 
   #themeModeSelectContainer .custom-select-option span {
     white-space: nowrap;
-  }
-
-  #themeModeSelectContainer .custom-select-option.is-selected {
-    font-weight: 600;
   }
 
   /* COLOR SWATCH UI */
@@ -3571,6 +3539,14 @@
 
     #btn-open-legal-inline:hover {
       opacity: 0.92;
+    }
+
+    .tb-edit-btn:hover {
+      background-color: var(--ui-hover-bg);
+    }
+
+    .tb-edit-btn:active {
+      background-color: var(--ui-hover-bg-strong);
     }
   }
 
