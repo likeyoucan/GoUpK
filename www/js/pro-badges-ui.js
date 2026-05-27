@@ -88,9 +88,61 @@ function rgbToCss({ r, g, b }) {
   return `rgb(${r} ${g} ${b})`;
 }
 
+function parseHexToRgb(hex) {
+  const h = String(hex || "").trim();
+  if (!h.startsWith("#")) return null;
+
+  if (h.length === 4) {
+    return {
+      r: parseInt(h[1] + h[1], 16),
+      g: parseInt(h[2] + h[2], 16),
+      b: parseInt(h[3] + h[3], 16),
+    };
+  }
+
+  if (h.length === 7) {
+    return {
+      r: parseInt(h.slice(1, 3), 16),
+      g: parseInt(h.slice(3, 5), 16),
+      b: parseInt(h.slice(5, 7), 16),
+    };
+  }
+
+  return null;
+}
+
+function parseColorToRgb(color) {
+  const raw = String(color || "").trim();
+  if (!raw) return null;
+
+  if (raw.startsWith("#")) return parseHexToRgb(raw);
+  return parseRgbString(raw);
+}
+
+function computeSaturationLike(rgb) {
+  const max = Math.max(rgb.r, rgb.g, rgb.b);
+  const min = Math.min(rgb.r, rgb.g, rgb.b);
+  if (max === 0) return 0;
+  return (max - min) / max;
+}
+
 function applyProBadgeAdaptiveColors(badgeEl) {
   if (!(badgeEl instanceof HTMLElement)) return;
-  // Цвета фона/рамки/анимация теперь полностью в CSS через --primary-color.
+
+  const rootStyle = getComputedStyle(document.documentElement);
+  const primaryRaw = rootStyle.getPropertyValue("--primary-color").trim();
+
+  const rgb = parseColorToRgb(primaryRaw);
+  if (!rgb) {
+    badgeEl.classList.remove("is-neutral-accent");
+    return;
+  }
+
+  const lum = relativeLuminance(rgb);
+  const satLike = computeSaturationLike(rgb);
+
+  const isNeutralOrMuted = satLike < 0.22 || lum > 0.93 || lum < 0.08;
+  badgeEl.classList.toggle("is-neutral-accent", isNeutralOrMuted);
 }
 
 function refreshInjectedBadges() {
