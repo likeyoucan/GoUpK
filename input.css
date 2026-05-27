@@ -33,8 +33,6 @@
 
     --default-accent-light: #3399ff;
     --default-bg-light: #fcfdff;
-    /* --default-accent-light: #22c55e;
-    --default-bg-light: #f3f4f6; */
     --default-accent-dark: #4ade80;
     --default-bg-dark: #000000;
 
@@ -73,6 +71,24 @@
     --danger-shadow:
       0 4px 10px color-mix(in srgb, var(--alert-color) 20%, transparent),
       0 1px 2px rgb(0 0 0 / 0.14);
+
+    /* Unified neutral controls (restart / +/- / lap non-reset) */
+    --ctl-bg: color-mix(in srgb, var(--surface-color) 92%, #ffffff 8%);
+    --ctl-bg-hover: color-mix(in srgb, var(--surface-color) 88%, #ffffff 12%);
+    --ctl-fg: color-mix(in srgb, var(--text-color) 94%, transparent);
+    --ctl-border: color-mix(in srgb, var(--text-color) 18%, transparent);
+    --ctl-shadow: 0 2px 8px rgb(0 0 0 / 0.12);
+
+    /* Unified danger controls */
+    --ctl-alert-bg: var(--alert-btn-bg);
+    --ctl-alert-bg-hover: var(--alert-btn-bg-hover);
+    --ctl-alert-fg: var(--alert-btn-fg);
+    --ctl-alert-border: color-mix(
+      in srgb,
+      var(--alert-btn-bg) 52%,
+      #ffffff 48%
+    );
+    --ctl-alert-shadow: var(--alert-btn-shadow);
 
     --vignette-alpha: 0.15;
     --font-scale: 1;
@@ -168,6 +184,24 @@
     --danger-shadow:
       0 6px 14px color-mix(in srgb, var(--alert-color) 26%, transparent),
       0 2px 4px rgb(0 0 0 / 0.32);
+
+    /* Unified neutral controls for dark */
+    --ctl-bg: color-mix(in srgb, var(--surface-color) 82%, #000000 18%);
+    --ctl-bg-hover: color-mix(in srgb, var(--surface-color) 76%, #000000 24%);
+    --ctl-fg: color-mix(in srgb, #ffffff 92%, transparent);
+    --ctl-border: color-mix(in srgb, #ffffff 16%, transparent);
+    --ctl-shadow: 0 3px 10px rgb(0 0 0 / 0.28);
+
+    /* Unified danger controls for dark */
+    --ctl-alert-bg: var(--alert-btn-bg);
+    --ctl-alert-bg-hover: var(--alert-btn-bg-hover);
+    --ctl-alert-fg: var(--alert-btn-fg);
+    --ctl-alert-border: color-mix(
+      in srgb,
+      var(--alert-btn-bg) 58%,
+      #111827 42%
+    );
+    --ctl-alert-shadow: var(--alert-btn-shadow);
 
     --ring-meta-color: color-mix(in srgb, var(--text-color) 78%, transparent);
   }
@@ -441,10 +475,10 @@
   #tm-resetBtn.is-reset,
   #sw-lapBtn.is-reset,
   .is-reset {
-    background-color: var(--alert-btn-bg) !important;
-    color: var(--alert-btn-fg) !important;
-    border: 1px solid var(--alert-btn-border) !important;
-    box-shadow: var(--alert-btn-shadow) !important;
+    background-color: var(--ctl-alert-bg);
+    color: var(--ctl-alert-fg);
+    border: 1px solid var(--ctl-alert-border);
+    box-shadow: var(--ctl-alert-shadow);
     text-shadow: none;
     background-image: linear-gradient(
       to bottom,
@@ -460,11 +494,36 @@
   #tm-resetBtn.is-reset:active,
   #sw-lapBtn.is-reset:active,
   .is-reset:active {
-    background-color: var(--alert-btn-bg-active) !important;
+    background-color: var(--alert-btn-bg-active);
     transform: translateY(0) scale(0.98);
     box-shadow:
       0 4px 10px rgb(0 0 0 / 0.14),
-      0 1px 3px rgb(0 0 0 / 0.1) !important;
+      0 1px 3px rgb(0 0 0 / 0.1);
+  }
+
+  .glass-effect #tm-restartBtn,
+  .glass-effect #tm-adjust-minus,
+  .glass-effect #tm-adjust-plus,
+  .glass-effect #sw-lapBtn:not(.is-reset) {
+    background: color-mix(in srgb, var(--ctl-bg) 72%, transparent);
+    border-color: color-mix(in srgb, var(--ctl-border) 76%, transparent);
+    backdrop-filter: blur(14px) saturate(145%);
+    box-shadow:
+      inset 0 1px 1px rgb(255 255 255 / 0.28),
+      0 4px 12px rgb(0 0 0 / 0.14);
+  }
+
+  .dark.glass-effect #tm-restartBtn,
+  .dark.glass-effect #tm-adjust-minus,
+  .dark.glass-effect #tm-adjust-plus,
+  .dark.glass-effect #sw-lapBtn:not(.is-reset),
+  body.force-light-text.glass-effect #tm-restartBtn,
+  body.force-light-text.glass-effect #tm-adjust-minus,
+  body.force-light-text.glass-effect #tm-adjust-plus,
+  body.force-light-text.glass-effect #sw-lapBtn:not(.is-reset) {
+    box-shadow:
+      inset 0 1px 1px rgb(255 255 255 / 0.1),
+      0 4px 12px rgb(0 0 0 / 0.3);
   }
 
   .bg-alert {
@@ -1886,32 +1945,23 @@
     animation: shake 0.3s ease-in-out;
   }
 
-  html.dark #tm-restartBtn,
-  html.dark #tm-adjust-minus,
-  html.dark #tm-adjust-plus,
-  html.dark #sw-lapBtn:not(.is-reset) {
-    background-color: color-mix(
-      in srgb,
-      var(--surface-color) 97%,
-      #ffffff 3%
-    ) !important;
-    border: 1px solid color-mix(in srgb, #ffffff 14%, transparent) !important;
-    color: color-mix(in srgb, #ffffff 90%, transparent) !important;
-    box-shadow:
-      inset 0 1px 1px rgb(255 255 255 / 0.05),
-      0 3px 10px rgb(0 0 0 / 0.28) !important;
+  #tm-restartBtn,
+  #tm-adjust-minus,
+  #tm-adjust-plus,
+  #sw-lapBtn:not(.is-reset) {
+    background-color: var(--ctl-bg);
+    border: 1px solid var(--ctl-border);
+    color: var(--ctl-fg);
+    box-shadow: var(--ctl-shadow);
   }
 
-  html.dark #tm-restartBtn:hover,
-  html.dark #tm-adjust-minus:hover,
-  html.dark #tm-adjust-plus:hover,
-  html.dark #sw-lapBtn:not(.is-reset):hover {
-    background-color: color-mix(
-      in srgb,
-      var(--surface-color) 93%,
-      #ffffff 7%
-    ) !important;
-    border-color: color-mix(in srgb, #ffffff 18%, transparent) !important;
+  @media (hover: hover) {
+    #tm-restartBtn:hover,
+    #tm-adjust-minus:hover,
+    #tm-adjust-plus:hover,
+    #sw-lapBtn:not(.is-reset):hover {
+      background-color: var(--ctl-bg-hover);
+    }
   }
 
   /* LIQUID GLASS (unified selectors) */
@@ -2651,7 +2701,7 @@
 
   #accent-colors-container,
   #bg-colors-container {
-    cursor: grab;
+    cursor: auto;
   }
 
   #accent-colors-container.is-dragging-x *,
@@ -2790,25 +2840,6 @@
   }
 
   .pro-badge {
-    --pb-c1: color-mix(in srgb, var(--primary-color) 88%, #ffffff 12%);
-    --pb-c2: color-mix(
-      in srgb,
-      var(--secondary-accent-color) 82%,
-      var(--primary-color) 18%
-    );
-    --pb-c3: color-mix(in srgb, var(--primary-color) 58%, #22d3ee 42%);
-    --pb-bg1: color-mix(
-      in srgb,
-      var(--primary-color) 16%,
-      var(--surface-color) 84%
-    );
-    --pb-bg2: color-mix(
-      in srgb,
-      var(--primary-color) 8%,
-      var(--surface-color) 92%
-    );
-    --pb-fg: color-mix(in srgb, var(--text-color) 96%, #ffffff 4%);
-
     position: relative;
     display: inline-flex;
     align-items: center;
@@ -2818,7 +2849,7 @@
     height: 16px;
     padding: 0 5px;
 
-    border: 1px solid transparent;
+    border: 1px solid color-mix(in srgb, #000000 18%, transparent);
     border-radius: 5px;
 
     font-size: 9px;
@@ -2829,51 +2860,28 @@
     white-space: nowrap;
     text-align: center;
 
-    color: var(--pb-fg);
+    background-color: #111111;
+    color: #f9fafb;
     text-shadow: none;
-
-    background:
-      linear-gradient(var(--pb-bg1), var(--pb-bg2)) padding-box,
-      linear-gradient(
-          45deg,
-          var(--pb-c1),
-          var(--pb-c2),
-          var(--pb-c3),
-          var(--pb-c1)
-        )
-        border-box;
-    background-size: 200% 200%;
-
-    box-shadow: 0 0 3px color-mix(in srgb, var(--pb-c1) 34%, transparent);
-    animation: gradient-rotate 3.2s linear infinite;
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.18);
 
     transition:
       transform 0.2s ease,
-      box-shadow 0.25s ease,
-      color 0.2s ease;
+      box-shadow 0.2s ease,
+      background-color var(--dur-short) ease,
+      color var(--dur-short) ease,
+      border-color var(--dur-short) ease;
   }
 
   .pro-badge:active {
     transform: scale(0.95);
   }
 
-  .pro-badge.is-neutral-accent {
-    --pb-c1: color-mix(in srgb, var(--text-color) 46%, #9ca3af 54%);
-    --pb-c2: color-mix(in srgb, var(--text-color) 38%, #6b7280 62%);
-    --pb-c3: color-mix(in srgb, var(--text-color) 42%, #d1d5db 58%);
-    --pb-bg1: color-mix(
-      in srgb,
-      var(--surface-color) 88%,
-      var(--text-color) 12%
-    );
-    --pb-bg2: color-mix(
-      in srgb,
-      var(--surface-color) 94%,
-      var(--text-color) 6%
-    );
-    --pb-fg: color-mix(in srgb, var(--text-color) 96%, #ffffff 4%);
-    box-shadow: 0 0 0 1px color-mix(in srgb, var(--text-color) 16%, transparent);
-    animation-duration: 4.4s;
+  html.dark .pro-badge {
+    background-color: #f8fafc;
+    color: #111111;
+    border-color: color-mix(in srgb, #111111 22%, transparent);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.2);
   }
 
   .pro-cta {
@@ -3230,11 +3238,11 @@
   @media (hover: hover) and (pointer: fine) {
     #setting-row-accent .color-btn:hover,
     #setting-row-bg .color-btn:hover {
-      transform: translateY(-1px) scale(1.085);
+      transform: translateY(-1px) scale(1.06);
       box-shadow:
-        0 4px 12px rgb(0 0 0 / 0.14),
-        0 1px 2px rgb(255 255 255 / 0.22) inset;
-      filter: saturate(1.02);
+        0 2px 7px rgb(0 0 0 / 0.11),
+        0 1px 1px rgb(255 255 255 / 0.2) inset;
+      filter: saturate(1.015);
     }
 
     #setting-row-accent .color-swatch-wrapper.ring-2 .color-btn:hover,
@@ -3244,7 +3252,7 @@
       box-shadow:
         0 0 0 2px var(--surface-color),
         0 0 0 4px var(--primary-color),
-        0 5px 14px rgb(0 0 0 / 0.18);
+        0 3px 9px rgb(0 0 0 / 0.14);
     }
   }
 
