@@ -271,7 +271,6 @@ export const colorManager = {
         const prevLeft = container.scrollLeft;
         container.scrollLeft += delta;
 
-        // Prevent page scroll only when horizontal movement actually happened
         if (container.scrollLeft !== prevLeft) {
           e.preventDefault();
         }
@@ -279,7 +278,6 @@ export const colorManager = {
       { passive: false },
     );
 
-    // Drag with left mouse button (desktop)
     let isDown = false;
     let moved = false;
     let startX = 0;
@@ -313,6 +311,9 @@ export const colorManager = {
       const canScrollX = container.scrollWidth > container.clientWidth;
       if (!canScrollX) return;
 
+      // IMPORTANT:
+      // do not hijack mousedown for interactive targets,
+      // otherwise native color input dialog cannot open.
       const interactiveTarget = e.target.closest(
         ".color-picker-wrapper input[type='color'], .color-action-btn, .color-btn",
       );
