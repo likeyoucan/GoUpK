@@ -142,8 +142,13 @@ const stopwatchModule = {
 
       this.els.status.classList.remove("hidden");
       updateText(this.els.lapBtn, t("reset"));
-      this.els.lapBtn.classList.remove("app-surface", "app-text");
-      this.els.lapBtn.classList.add("bg-red-500", "text-white", "is-reset");
+      this.els.lapBtn.classList.remove(
+        "app-surface",
+        "app-text",
+        "bg-red-500",
+        "text-white",
+      );
+      this.els.lapBtn.classList.add("is-reset");
 
       announceToScreenReader(
         `${t("stopwatch")} ${t("pause")}. ${formatTime(this.elapsedTime, {

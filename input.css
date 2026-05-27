@@ -649,7 +649,6 @@
     border-color: var(--ctl-alert-border) !important;
     box-shadow: var(--ctl-alert-shadow) !important;
     background-image: none !important;
-    text-shadow: none !important;
   }
 
   #sw-lapBtn.is-reset:active {
@@ -658,6 +657,28 @@
   }
 
   /* Glass mode for controls */
+
+  /* Neutral controls in glass: border tone depends on theme */
+  html:not(.dark).glass-effect
+    :is(
+      #tm-restartBtn,
+      #tm-adjust-minus,
+      #tm-adjust-plus,
+      #sw-lapBtn:not(.is-reset)
+    ) {
+    border-color: color-mix(in srgb, #ffffff 78%, var(--border-color) 22%);
+  }
+
+  html.dark.glass-effect
+    :is(
+      #tm-restartBtn,
+      #tm-adjust-minus,
+      #tm-adjust-plus,
+      #sw-lapBtn:not(.is-reset)
+    ) {
+    border-color: color-mix(in srgb, #000000 62%, var(--border-color) 38%);
+  }
+
   .glass-effect
     :is(
       #tm-restartBtn,
@@ -2003,11 +2024,10 @@
   }
 
   html.dark .custom-toggle {
-    background-color: color-mix(in srgb, #ffffff 10%, transparent);
-    border: 1px solid color-mix(in srgb, #111827 62%, #ffffff 38%);
+    background-color: color-mix(in srgb, #ffffff 8%, transparent);
+    border: 1px solid color-mix(in srgb, #000000 62%, transparent);
     box-shadow: none;
   }
-
   html.dark input:checked + .custom-toggle {
     background-color: var(--primary-color);
     border-color: color-mix(in srgb, var(--primary-color) 72%, transparent);
@@ -3179,6 +3199,9 @@
   }
 
   .sw-session-laps > div:last-child {
+    min-height: 38px;
+    padding-top: 0.55rem !important;
+    padding-bottom: 0.55rem !important;
     border-bottom-left-radius: 0.75rem !important;
     border-bottom-right-radius: 0.75rem !important;
   }
@@ -3197,6 +3220,15 @@
     font-weight: 700;
     opacity: 0.92 !important;
     color: color-mix(in srgb, var(--text-color) 88%, transparent) !important;
+  }
+
+  .sw-session-laps > div:first-child [data-template="lap-index"],
+  .sw-session-laps > div:first-child [data-template="lap-total"],
+  .sw-session-laps > div:first-child [data-template="lap-split"] {
+    font-size: 11px !important;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 700;
   }
 
   #sw-lapsContainer .lap-row [data-template="lap-split"],
