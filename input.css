@@ -643,6 +643,20 @@
     transform: scale(0.98);
   }
 
+  #sw-lapBtn.is-reset {
+    background-color: var(--ctl-alert-bg) !important;
+    color: var(--ctl-alert-fg) !important;
+    border-color: var(--ctl-alert-border) !important;
+    box-shadow: var(--ctl-alert-shadow) !important;
+    background-image: none !important;
+    text-shadow: none !important;
+  }
+
+  #sw-lapBtn.is-reset:active {
+    background-color: var(--ctl-alert-bg-active) !important;
+    transform: scale(0.98);
+  }
+
   /* Glass mode for controls */
   .glass-effect
     :is(
@@ -2660,7 +2674,9 @@
   /* Theme mode select visuals */
 
   #themeModeSelectContainer .custom-select-trigger {
-    min-width: 10rem;
+    min-height: 38px;
+    line-height: 1;
+    font-size: 14px;
   }
 
   #themeModeSelectContainer .custom-select-value {
@@ -2671,11 +2687,13 @@
     line-height: 1;
     font-weight: 600;
     white-space: nowrap;
+    min-height: 16px;
   }
 
   #themeModeSelectContainer .custom-select-option {
-    font-weight: 600;
     min-height: 40px;
+    font-weight: 600;
+    line-height: 1;
   }
 
   #themeModeSelectContainer .custom-select-option.is-selected {
@@ -2688,6 +2706,7 @@
     align-items: center;
     column-gap: 0.5rem;
     line-height: 1;
+    min-height: 16px;
     width: 100%;
   }
 
@@ -2698,12 +2717,19 @@
     min-width: 16px;
     min-height: 16px;
     display: block;
-    align-self: center;
-    transform: none;
+    position: relative;
+    top: 0;
+    transform: none !important;
     margin: 0;
+    align-self: center;
   }
 
+  #themeModeSelectContainer .custom-select-value span,
   #themeModeSelectContainer .custom-select-option span {
+    display: block;
+    line-height: 1;
+    transform: none;
+    margin: 0;
     white-space: nowrap;
   }
 
@@ -3109,8 +3135,7 @@
    ИСПРАВЛЕНИЯ ДЛЯ СПИСКА КРУГОВ (КАРТОЧКИ)
 ========================================= */
 
-  #sw-lapsContainer,
-  .sw-session-laps {
+  #sw-lapsContainer {
     display: flex !important;
     flex-direction: column !important;
     gap: 0.4rem !important;
@@ -3119,20 +3144,41 @@
     border: none !important;
   }
 
-  #sw-lapsContainer .lap-row,
-  .sw-session-laps > div,
-  .sw-session-laps .lap-row {
-    border-bottom: none !important;
-    border-radius: 0.5rem !important;
-    margin: 0 !important;
+  .sw-session-laps {
+    display: block !important;
+    gap: 0 !important;
+    padding: 0 !important;
+    border-radius: 0.75rem !important;
+    border: 1px solid color-mix(in srgb, var(--border-color) 60%, transparent) !important;
     background-color: color-mix(
       in srgb,
-      var(--text-color) 4%,
+      var(--surface-color) 50%,
       transparent
     ) !important;
-    border: 1px solid color-mix(in srgb, var(--border-color) 40%, transparent) !important;
-    box-shadow: 0 1px 2px rgb(0 0 0 / 0.02);
   }
+
+  /* Saved session laps: continuous table rows */
+.sw-session-laps > div {
+  border-radius: 0 !important;
+  margin: 0 !important;
+  border-bottom: 1px solid color-mix(in srgb, var(--border-color) 55%, transparent) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.sw-session-laps > div:last-child {
+  border-bottom: 0 !important;
+}
+
+.sw-session-laps > div:first-child {
+  border-top-left-radius: 0.75rem !important;
+  border-top-right-radius: 0.75rem !important;
+}
+
+.sw-session-laps > div:last-child {
+  border-bottom-left-radius: 0.75rem !important;
+  border-bottom-right-radius: 0.75rem !important;
+}
 
   html.dark #sw-lapsContainer .lap-row,
   html.dark .sw-session-laps > div,
