@@ -2682,7 +2682,13 @@
   }
 
   /* Theme mode select visuals */
+
+  #themeModeSelectContainer .custom-select-trigger {
+    min-width: 10rem;
+  }
+
   #themeModeSelectContainer .custom-select-value {
+    width: 100%;
     display: grid;
     grid-template-columns: 16px minmax(0, 1fr);
     align-items: center;
@@ -2690,6 +2696,11 @@
     line-height: 1.1;
     font-weight: 600;
     white-space: nowrap;
+  }
+
+  #themeModeSelectContainer .custom-select-value span {
+    display: block;
+    min-width: 0;
   }
 
   #themeModeSelectContainer .custom-select-option {
