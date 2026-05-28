@@ -86,8 +86,8 @@
     --ctl-alert-fg: var(--alert-btn-fg);
     --ctl-alert-border: color-mix(
       in srgb,
-      var(--ctl-alert-bg) 72%,
-      #8a1320 28%
+      var(--ctl-alert-bg) 58%,
+      var(--border-color) 42%
     );
     --ctl-alert-shadow: var(--ctl-shadow);
 
@@ -215,8 +215,8 @@
     --ctl-alert-fg: var(--alert-btn-fg);
     --ctl-alert-border: color-mix(
       in srgb,
-      var(--ctl-alert-bg) 64%,
-      #ffffff 36%
+      var(--ctl-alert-bg) 52%,
+      var(--border-color) 48%
     );
     --ctl-alert-shadow: var(--ctl-shadow);
 
@@ -239,7 +239,11 @@
     --ctl-alert-bg-hover: hsl(31 96% 74%);
     --ctl-alert-bg-active: hsl(30 92% 68%);
     --ctl-alert-fg: #7c2d12;
-    --ctl-alert-border: color-mix(in srgb, #fdba74 78%, #7c2d12 22%);
+    --ctl-alert-border: color-mix(
+      in srgb,
+      var(--ctl-alert-bg) 58%,
+      var(--border-color) 42%
+    );
 
     --alert-btn-bg: var(--ctl-alert-bg);
     --alert-btn-bg-hover: var(--ctl-alert-bg-hover);
@@ -253,7 +257,11 @@
     --ctl-alert-bg-hover: hsl(28 90% 70%);
     --ctl-alert-bg-active: hsl(28 84% 60%);
     --ctl-alert-fg: #1f2937;
-    --ctl-alert-border: color-mix(in srgb, #fed7aa 54%, #111827 46%);
+    --ctl-alert-border: color-mix(
+      in srgb,
+      var(--ctl-alert-bg) 52%,
+      var(--border-color) 48%
+    );
 
     --alert-btn-bg: var(--ctl-alert-bg);
     --alert-btn-bg-hover: var(--ctl-alert-bg-hover);
@@ -276,8 +284,8 @@
 
     --ctl-alert-border: color-mix(
       in srgb,
-      var(--ctl-alert-bg) 70%,
-      #7a1220 30%
+      var(--ctl-alert-bg) 60%,
+      var(--border-color) 40%
     );
 
     --tr-track-bg: rgb(255 255 255 / 0.34);
@@ -309,8 +317,8 @@
 
     --ctl-alert-border: color-mix(
       in srgb,
-      var(--ctl-alert-bg) 60%,
-      #ffffff 40%
+      var(--ctl-alert-bg) 54%,
+      var(--border-color) 46%
     );
 
     --tr-track-bg: rgb(17 24 39 / 0.26);
