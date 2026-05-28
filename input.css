@@ -1884,20 +1884,6 @@
     }
   }
 
-  #sw-sessions-modal > :not(#sw-modal-handler),
-  #tb-modal > :not(#tb-modal-handler) {
-    width: 100%;
-    max-width: 760px;
-    margin-inline: auto;
-  }
-
-  @media (min-width: 1280px) {
-    #sw-sessions-modal > :not(#sw-modal-handler),
-    #tb-modal > :not(#tb-modal-handler) {
-      max-width: 840px;
-    }
-  }
-
   /* SETTINGS + SCROLL CONTAINERS */
   #view-settings .settings-content-wrap {
     width: 100%;
@@ -3228,6 +3214,23 @@
   #tb-modal,
   #sw-sessions-modal {
     will-change: transform;
+  }
+
+  @media (min-width: 768px) {
+    #sw-sessions-modal,
+    #tb-modal {
+      left: 50%;
+      right: auto;
+      transform: translateX(-50%);
+      width: min(92vw, 760px);
+    }
+  }
+
+  @media (min-width: 1280px) {
+    #sw-sessions-modal,
+    #tb-modal {
+      width: min(88vw, 840px);
+    }
   }
 
   #sw-modal-handler,
