@@ -287,13 +287,17 @@
     --ctl-bg: color-mix(in srgb, var(--surface-color) 70%, #000000 30%);
     --ctl-bg-hover: color-mix(in srgb, var(--surface-color) 64%, #000000 36%);
     --ctl-fg: #f8fafc;
-    --ctl-border: color-mix(in srgb, #ffffff 24%, transparent);
+    --ctl-border: color-mix(
+      in srgb,
+      color-mix(in srgb, var(--ctl-bg) 72%, var(--bg-color) 28%) 76%,
+      #ffffff 24%
+    );
     --ctl-shadow: 0 3px 10px rgb(0 0 0 / 0.24);
 
     --ctl-alert-border: color-mix(
       in srgb,
       var(--ctl-alert-bg) 60%,
-      var(--border-color) 40%
+      color-mix(in srgb, var(--bg-color) 58%, var(--border-color) 42%) 40%
     );
 
     --tr-track-bg: rgb(255 255 255 / 0.34);
@@ -320,13 +324,17 @@
     --ctl-bg: color-mix(in srgb, var(--surface-color) 86%, #ffffff 14%);
     --ctl-bg-hover: color-mix(in srgb, var(--surface-color) 80%, #ffffff 20%);
     --ctl-fg: #111827;
-    --ctl-border: color-mix(in srgb, #111827 24%, transparent);
+    --ctl-border: color-mix(
+      in srgb,
+      color-mix(in srgb, var(--ctl-bg) 72%, var(--bg-color) 28%) 76%,
+      #111827 24%
+    );
     --ctl-shadow: 0 2px 8px rgb(0 0 0 / 0.13);
 
     --ctl-alert-border: color-mix(
       in srgb,
       var(--ctl-alert-bg) 54%,
-      var(--border-color) 46%
+      color-mix(in srgb, var(--bg-color) 58%, var(--border-color) 42%) 46%
     );
 
     --tr-track-bg: rgb(17 24 39 / 0.26);
