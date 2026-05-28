@@ -102,6 +102,44 @@ function isRedLikeHue(h) {
   return h >= 345 || h <= 15;
 }
 
+function applyIconHoverPalette({ root, hue, adaptive, isRedZone }) {
+  // Defaults: share green, edit blue, delete from alert.
+  let shareColor = "#16a34a";
+  let shareBg = "color-mix(in srgb, #16a34a 16%, transparent)";
+  let editColor = "#2563eb";
+  let editBg = "color-mix(in srgb, #2563eb 16%, transparent)";
+  let deleteColor =
+    "color-mix(in srgb, var(--alert-color) 92%, var(--text-color))";
+  let deleteBg = "color-mix(in srgb, var(--alert-color) 20%, transparent)";
+
+  if (!adaptive) {
+    if (isRedZone) {
+      // Red background: avoid red-on-red for delete hover.
+      deleteColor = "#c2410c";
+      deleteBg = "color-mix(in srgb, #fb923c 28%, transparent)";
+    } else if (hue >= 185 && hue < 255) {
+      // Blue/cyan background: avoid blue/green collisions.
+      shareColor = "#d97706";
+      shareBg = "color-mix(in srgb, #f59e0b 18%, transparent)";
+      editColor = "#7c3aed";
+      editBg = "color-mix(in srgb, #8b5cf6 18%, transparent)";
+    } else if (hue >= 95 && hue < 165) {
+      // Green backgrounds: shift share/edit away from green.
+      shareColor = "#2563eb";
+      shareBg = "color-mix(in srgb, #2563eb 16%, transparent)";
+      editColor = "#7c3aed";
+      editBg = "color-mix(in srgb, #8b5cf6 18%, transparent)";
+    }
+  }
+
+  root.style.setProperty("--icon-share-hover-color", shareColor);
+  root.style.setProperty("--icon-share-hover-bg", shareBg);
+  root.style.setProperty("--icon-edit-hover-color", editColor);
+  root.style.setProperty("--icon-edit-hover-bg", editBg);
+  root.style.setProperty("--icon-delete-hover-color", deleteColor);
+  root.style.setProperty("--icon-delete-hover-bg", deleteBg);
+}
+
 export function applyAccentVars({ hex, rootEl, hexToHSL }) {
   if (hex === "default") {
     rootEl.style.removeProperty("--primary-color");
@@ -157,6 +195,13 @@ export function applyBgTheme({
     root.style.removeProperty("--bg-color");
     root.style.removeProperty("--surface-color");
     root.classList.remove("bg-red-zone");
+
+    applyIconHoverPalette({
+      root,
+      hue: 210,
+      adaptive: isAdaptive,
+      isRedZone: false,
+    });
     return;
   }
 
@@ -167,6 +212,13 @@ export function applyBgTheme({
   // Red zone is only meaningful for non-adaptive custom background mode.
   const isRedZone = !isAdaptive && isRedLikeHue(h) && s > 32;
   root.classList.toggle("bg-red-zone", isRedZone);
+
+  applyIconHoverPalette({
+    root,
+    hue: h,
+    adaptive: isAdaptive,
+    isRedZone,
+  });
 
   if (!isAdaptive) {
     // Keep theme mode independent from background adaptation.
