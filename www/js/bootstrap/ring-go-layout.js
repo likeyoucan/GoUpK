@@ -28,9 +28,9 @@ function calcDynamicRingSizePx(wrap) {
   const limitingSide = Math.min(rect.width, rect.height);
   const row = isRowLayout(topHalfEl);
 
-  const k = row ? 0.68 : 0.92;
-  const maxPx = row ? 620 : 680;
-  const minPx = row ? 240 : 220;
+  const k = row ? 0.64 : 0.92;
+  const maxPx = row ? 580 : 680;
+  const minPx = row ? 230 : 220;
 
   // const k = row ? 0.58 : 0.92;
   // const maxPx = row ? 520 : 680;
