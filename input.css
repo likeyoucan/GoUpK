@@ -2225,17 +2225,19 @@
       0 8px 32px rgb(0 0 0 / 0.3);
   }
 
-  .glass-effect .lap-row:first-child:not(.is-latest) {
+  .glass-effect .sw-session-laps-table .lap-row:first-child:not(.is-latest) {
     background-color: rgb(0 0 0 / 0.08);
     box-shadow: none;
   }
 
-  .dark.glass-effect .lap-row:first-child:not(.is-latest) {
+  .dark.glass-effect
+    .sw-session-laps-table
+    .lap-row:first-child:not(.is-latest) {
     background-color: rgb(255 255 255 / 0.1);
     box-shadow: none;
   }
 
-  .glass-effect .lap-row,
+  .glass-effect .sw-session-laps-table .lap-row,
   .glass-effect .tb-workout-row,
   .glass-effect .sw-session-header,
   .glass-effect [id^="sw-details-"] > div:last-child {
@@ -2245,7 +2247,7 @@
       0 1px 2px rgb(0 0 0 / 0.06);
   }
 
-  .dark.glass-effect .lap-row,
+  .dark.glass-effect .sw-session-laps-table .lap-row,
   .dark.glass-effect .tb-workout-row,
   .dark.glass-effect .sw-session-header,
   .dark.glass-effect [id^="sw-details-"] > div:last-child {
@@ -2255,7 +2257,7 @@
       0 2px 4px rgb(0 0 0 / 0.2);
   }
 
-  html:not(.dark).glass-effect .lap-row {
+  html:not(.dark).glass-effect .sw-session-laps-table .lap-row {
     background-color: color-mix(in srgb, var(--surface-color) 72%, transparent);
     border-color: color-mix(in srgb, var(--text-color) 12%, transparent);
     box-shadow:
@@ -2263,7 +2265,7 @@
       0 1px 3px rgb(0 0 0 / 0.05);
   }
 
-  html:not(.dark).glass-effect .lap-row.is-latest {
+  html:not(.dark).glass-effect .sw-session-laps-table .lap-row.is-latest {
     background-color: color-mix(in srgb, var(--primary-color) 10%, #ffffff 90%);
     border-color: color-mix(
       in srgb,
@@ -2275,7 +2277,10 @@
       0 2px 6px rgb(0 0 0 / 0.07);
   }
 
-  html:not(.dark).glass-effect .lap-row .split-time.split-time-latest {
+  html:not(.dark).glass-effect
+    .sw-session-laps-table
+    .lap-row
+    .split-time.split-time-latest {
     color: color-mix(in srgb, var(--primary-color) 82%, var(--text-color));
   }
 
@@ -3682,6 +3687,9 @@
     .sw-share-btn:hover,
     .sw-rename-btn:hover,
     .sw-delete-btn:hover,
+    .icon-action-share:hover,
+    .icon-action-edit:hover,
+    .icon-action-delete:hover,
     #btn-open-legal-inline:hover {
       background-color: inherit;
       opacity: inherit;
