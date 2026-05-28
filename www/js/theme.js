@@ -369,6 +369,13 @@ export const themeManager = {
 
     this.applyBgTheme(hex);
 
+    // Re-apply accent vars after bg-mode classes changed (red-zone / adaptive).
+    // This keeps danger palette coherent and prevents red-on-red merge.
+    this.setColor(this.currentAccent, false, {
+      recordHistory: false,
+      skipProCheck: true,
+    });
+
     colorManager.updateSelectionUI("bg", hex, doScroll);
     colorManager.syncPickers(this.currentAccent, this.currentBg);
   },

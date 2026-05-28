@@ -98,6 +98,37 @@ function pickReadableTextForHsl(hslString) {
   return cDark >= cWhite ? "#111827" : "#ffffff";
 }
 
+function hexToRgbSafe(hex) {
+  const h = String(hex || "").trim();
+  if (!h.startsWith("#")) return null;
+
+  if (h.length === 4) {
+    return {
+      r: parseInt(h[1] + h[1], 16),
+      g: parseInt(h[2] + h[2], 16),
+      b: parseInt(h[3] + h[3], 16),
+    };
+  }
+
+  if (h.length === 7) {
+    return {
+      r: parseInt(h.slice(1, 3), 16),
+      g: parseInt(h.slice(3, 5), 16),
+      b: parseInt(h.slice(5, 7), 16),
+    };
+  }
+
+  return null;
+}
+
+function pickOnPrimaryFromHex(hex) {
+  const rgb = hexToRgbSafe(hex);
+  if (!rgb) return "#ffffff";
+
+  const lum = relativeLuminance(rgb.r, rgb.g, rgb.b);
+  return lum > 0.54 ? "#111827" : "#ffffff";
+}
+
 function isRedLikeHue(h) {
   return h >= 345 || h <= 15;
 }
@@ -157,6 +188,11 @@ export function applyAccentVars({ hex, rootEl, hexToHSL }) {
     rootEl.style.setProperty("--pro-badge-bg", "#34d399");
     rootEl.style.setProperty("--pro-badge-fg", "#052e16");
 
+    rootEl.style.setProperty(
+      "--on-primary-color",
+      isDark ? "#111827" : "#ffffff",
+    );
+
     const alert = "hsl(20 92% 54%)";
     rootEl.style.setProperty("--alert-color", alert);
     rootEl.style.setProperty("--alert-color-fg", pickReadableTextForHsl(alert));
@@ -172,6 +208,25 @@ export function applyAccentVars({ hex, rootEl, hexToHSL }) {
 
   rootEl.style.removeProperty("--pro-badge-bg");
   rootEl.style.removeProperty("--pro-badge-fg");
+
+  rootEl.style.setProperty("--on-primary-color", pickOnPrimaryFromHex(hex));
+
+  // Respect red-zone safety in no-adaptive mode to avoid red-on-red merge.
+  const isRedZone =
+    rootEl.classList.contains("no-adaptive") &&
+    rootEl.classList.contains("bg-red-zone");
+
+  if (isRedZone) {
+    const forced = rootEl.classList.contains("dark")
+      ? "hsl(28 88% 66%)"
+      : "hsl(28 90% 62%)";
+    rootEl.style.setProperty("--alert-color", forced);
+    rootEl.style.setProperty(
+      "--alert-color-fg",
+      pickReadableTextForHsl(forced),
+    );
+    return;
+  }
 
   const alert = getPairedAlertColor(h, l);
   rootEl.style.setProperty("--alert-color", alert);
@@ -210,7 +265,7 @@ export function applyBgTheme({
   const luminance = getLuminance(r, g, b);
 
   // Red zone is only meaningful for non-adaptive custom background mode.
-  const isRedZone = !isAdaptive && isRedLikeHue(h) && s > 32;
+  const isRedZone = !isAdaptive && isRedLikeHue(h) && s > 20;
   root.classList.toggle("bg-red-zone", isRedZone);
 
   applyIconHoverPalette({
