@@ -757,17 +757,6 @@
       0 10px 20px rgb(0 0 0 / 0.36);
   }
 
-  html.no-adaptive.bg-red-zone .main_btn_red {
-    background: linear-gradient(
-      160deg,
-      var(--ctl-alert-bg),
-      var(--ctl-alert-bg-active)
-    );
-    border: 1px solid var(--ctl-alert-border);
-    color: var(--ctl-alert-fg);
-    background-image: none;
-  }
-
   .bg-alert {
     background-color: var(--alert-color);
     color: var(--alert-color-fg);
