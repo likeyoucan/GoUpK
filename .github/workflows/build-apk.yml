@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 📥 Скачивание кода
+      - name: 📥 Скачивание кода !
         uses: actions/checkout@v4
 
       - name: ⚙️ Настройка Node.js 24
