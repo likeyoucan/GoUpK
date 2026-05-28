@@ -649,11 +649,22 @@
   }
 
   .main_btn {
-    background-color: var(--ctl-bg);
+    background-color: color-mix(in srgb, var(--surface-color) 94%, #ffffff 6%);
     color: var(--ctl-fg);
-    border-color: var(--ctl-border);
-    box-shadow: var(--ctl-shadow);
+    border-color: color-mix(
+      in srgb,
+      var(--border-color) 78%,
+      var(--text-color) 22%
+    );
+    box-shadow: 0 2px 8px rgb(0 0 0 / 0.12);
     background-image: none;
+    backdrop-filter: none;
+  }
+
+  html.dark .main_btn {
+    background-color: color-mix(in srgb, var(--surface-color) 90%, #000000 10%);
+    border-color: color-mix(in srgb, var(--border-color) 72%, #ffffff 28%);
+    box-shadow: 0 3px 10px rgb(0 0 0 / 0.28);
   }
 
   .main_btn_red {
@@ -703,12 +714,13 @@
   }
 
   /* Glass mode for controls */
-  html.dark.glass-effect .main_btn {
-    background: color-mix(in srgb, var(--surface-color) 24%, transparent);
-    border-color: color-mix(in srgb, var(--border-color) 66%, #ffffff 34%);
+  .glass-effect .main_btn {
+    background: color-mix(in srgb, var(--surface-color) 34%, transparent);
+    border-color: color-mix(in srgb, var(--border-color) 56%, #ffffff 44%);
+    backdrop-filter: blur(14px) saturate(145%);
     box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.1),
-      0 3px 10px rgb(0 0 0 / 0.24);
+      inset 0 1px 0 rgb(255 255 255 / 0.34),
+      0 4px 12px rgb(0 0 0 / 0.1);
   }
 
   .glass-effect .main_btn_red {
@@ -725,8 +737,8 @@
   }
 
   html.dark.glass-effect .main_btn {
-    background: color-mix(in srgb, var(--surface-color) 76%, #ffffff 6%);
-    border-color: color-mix(in srgb, var(--border-color) 78%, #ffffff 22%);
+    background: color-mix(in srgb, var(--surface-color) 24%, transparent);
+    border-color: color-mix(in srgb, var(--border-color) 66%, #ffffff 34%);
     box-shadow:
       inset 0 1px 0 rgb(255 255 255 / 0.1),
       0 3px 10px rgb(0 0 0 / 0.24);
@@ -2234,6 +2246,7 @@
     color: var(--ctl-fg);
     border-color: var(--ctl-border);
     box-shadow: var(--ctl-shadow);
+    backdrop-filter: none;
   }
 
   .glass-effect #sw-name-confirm,
@@ -3748,6 +3761,33 @@
       opacity: inherit;
       border-color: inherit;
     }
+  }
+
+  /* Hard safety for danger controls on red backgrounds */
+  html.no-adaptive.bg-red-zone .main_btn_red {
+    background: linear-gradient(160deg, #fdba74, #fb923c) !important;
+    color: #7c2d12 !important;
+    border-color: color-mix(
+      in srgb,
+      #fb923c 64%,
+      var(--border-color) 36%
+    ) !important;
+    box-shadow:
+      0 2px 8px rgb(0 0 0 / 0.14),
+      inset 0 1px 0 rgb(255 255 255 / 0.32) !important;
+  }
+
+  html.dark.no-adaptive.bg-red-zone .main_btn_red {
+    background: linear-gradient(160deg, #fb923c, #ea580c) !important;
+    color: #111827 !important;
+    border-color: color-mix(
+      in srgb,
+      #fb923c 58%,
+      var(--border-color) 42%
+    ) !important;
+    box-shadow:
+      0 4px 12px rgb(0 0 0 / 0.32),
+      inset 0 1px 0 rgb(255 255 255 / 0.16) !important;
   }
 
   /* ERUDA */
