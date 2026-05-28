@@ -47,10 +47,6 @@ export function bindModalActions({
     modalManager.open("reset-modal");
   });
 
-  bind("btn-open-legal", "click", () => {
-    modalManager.open("legal-modal");
-  });
-
   bind("btn-open-legal-inline", "click", () => {
     modalManager.open("legal-modal");
   });

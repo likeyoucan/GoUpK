@@ -577,13 +577,14 @@
     #tm-restartBtn,
     #tm-adjust-minus,
     #tm-adjust-plus,
-    #sw-lapBtn:not(.is-reset),
+    #sw-lapBtn:not(.main_btn_red),
     #sw-clear-confirm,
     #reset-confirm,
     #tb-stopBtn,
-    #tm-resetBtn.is-reset,
-    #sw-lapBtn.is-reset,
-    .is-reset
+    #tm-resetBtn,
+    #sw-lapBtn.main_btn_red,
+    .main_btn,
+    .main_btn_red
   ) {
     border-radius: 0.95rem;
     border-width: 1px;
@@ -597,11 +598,14 @@
       transform var(--dur-micro) var(--ease-standard);
   }
 
-  /* Neutral controls */
-  #tm-restartBtn,
-  #tm-adjust-minus,
-  #tm-adjust-plus,
-  #sw-lapBtn:not(.is-reset) {
+  /* Unified public classes */
+  .main_btn,
+  .main_btn_red {
+    min-height: 44px;
+    font-weight: 700;
+  }
+
+  .main_btn {
     background-color: var(--ctl-bg);
     color: var(--ctl-fg);
     border-color: var(--ctl-border);
@@ -609,22 +613,7 @@
     background-image: none;
   }
 
-  @media (hover: hover) {
-    #tm-restartBtn:hover,
-    #tm-adjust-minus:hover,
-    #tm-adjust-plus:hover,
-    #sw-lapBtn:not(.is-reset):hover {
-      background-color: var(--ctl-bg-hover);
-    }
-  }
-
-  /* Danger controls */
-  #sw-clear-confirm,
-  #reset-confirm,
-  #tb-stopBtn,
-  #tm-resetBtn.is-reset,
-  #sw-lapBtn.is-reset,
-  .is-reset {
+  .main_btn_red {
     background-color: var(--ctl-alert-bg);
     color: var(--ctl-alert-fg);
     border-color: var(--ctl-alert-border);
@@ -633,59 +622,76 @@
     text-shadow: none;
   }
 
+  .main_btn:active,
+  .main_btn_red:active {
+    transform: scale(0.98);
+  }
+
+  .main_btn_red:active {
+    background-color: var(--ctl-alert-bg-active);
+  }
+
+  /* Compatibility for current id-based controls */
+  #tm-restartBtn,
+  #tm-adjust-minus,
+  #tm-adjust-plus,
+  #sw-lapBtn.main_btn {
+    background-color: var(--ctl-bg);
+    color: var(--ctl-fg);
+    border-color: var(--ctl-border);
+    box-shadow: var(--ctl-shadow);
+    background-image: none;
+  }
+
+  #sw-clear-confirm,
+  #reset-confirm,
+  #tb-stopBtn,
+  #tm-resetBtn,
+  #sw-lapBtn.main_btn_red {
+    background-color: var(--ctl-alert-bg);
+    color: var(--ctl-alert-fg);
+    border-color: var(--ctl-alert-border);
+    box-shadow: var(--ctl-alert-shadow);
+    background-image: none;
+    text-shadow: none;
+  }
+
+  @media (hover: hover) {
+    .main_btn:hover {
+      background-color: var(--ctl-bg-hover);
+    }
+
+    .main_btn_red:hover {
+      background-color: var(--ctl-alert-bg-hover);
+    }
+
+    #tm-restartBtn:hover,
+    #tm-adjust-minus:hover,
+    #tm-adjust-plus:hover,
+    #sw-lapBtn.main_btn:hover {
+      background-color: var(--ctl-bg-hover);
+    }
+
+    #sw-clear-confirm:hover,
+    #reset-confirm:hover,
+    #tb-stopBtn:hover,
+    #tm-resetBtn:hover,
+    #sw-lapBtn.main_btn_red:hover {
+      background-color: var(--ctl-alert-bg-hover);
+    }
+  }
+
   #sw-clear-confirm:active,
   #reset-confirm:active,
   #tb-stopBtn:active,
-  #tm-resetBtn.is-reset:active,
-  #sw-lapBtn.is-reset:active,
-  .is-reset:active {
+  #tm-resetBtn:active,
+  #sw-lapBtn.main_btn_red:active {
     background-color: var(--ctl-alert-bg-active);
     transform: scale(0.98);
   }
 
-  #sw-lapBtn.is-reset {
-    background-color: var(--ctl-alert-bg) !important;
-    color: var(--ctl-alert-fg) !important;
-    border-color: var(--ctl-alert-border) !important;
-    box-shadow: var(--ctl-alert-shadow) !important;
-    background-image: none !important;
-  }
-
-  #sw-lapBtn.is-reset:active {
-    background-color: var(--ctl-alert-bg-active) !important;
-    transform: scale(0.98);
-  }
-
   /* Glass mode for controls */
-
-  /* Neutral controls in glass: border tone depends on theme */
-  html:not(.dark).glass-effect
-    :is(
-      #tm-restartBtn,
-      #tm-adjust-minus,
-      #tm-adjust-plus,
-      #sw-lapBtn:not(.is-reset)
-    ) {
-    border-color: color-mix(in srgb, #ffffff 78%, var(--border-color) 22%);
-  }
-
-  html.dark.glass-effect
-    :is(
-      #tm-restartBtn,
-      #tm-adjust-minus,
-      #tm-adjust-plus,
-      #sw-lapBtn:not(.is-reset)
-    ) {
-    border-color: color-mix(in srgb, #000000 62%, var(--border-color) 38%);
-  }
-
-  .glass-effect
-    :is(
-      #tm-restartBtn,
-      #tm-adjust-minus,
-      #tm-adjust-plus,
-      #sw-lapBtn:not(.is-reset)
-    ) {
+  .glass-effect .main_btn {
     background-color: color-mix(in srgb, var(--ctl-bg) 70%, transparent);
     border-color: color-mix(in srgb, var(--ctl-border) 72%, transparent);
     backdrop-filter: blur(12px) saturate(140%);
@@ -694,21 +700,41 @@
       0 4px 10px rgb(0 0 0 / 0.12);
   }
 
-  .glass-effect
-    :is(
-      #sw-clear-confirm,
-      #reset-confirm,
-      #tb-stopBtn,
-      #tm-resetBtn.is-reset,
-      #sw-lapBtn.is-reset,
-      .is-reset
-    ) {
+  .glass-effect .main_btn_red {
     background-color: color-mix(in srgb, var(--ctl-alert-bg) 78%, transparent);
     border-color: color-mix(in srgb, var(--ctl-alert-border) 80%, transparent);
     backdrop-filter: blur(12px) saturate(145%);
     box-shadow:
       inset 0 1px 1px rgb(255 255 255 / 0.16),
       0 5px 12px rgb(0 0 0 / 0.18);
+  }
+
+  html:not(.dark).glass-effect .main_btn {
+    border-color: color-mix(in srgb, #ffffff 78%, var(--border-color) 22%);
+  }
+
+  html.dark.glass-effect .main_btn {
+    border-color: color-mix(in srgb, #000000 62%, var(--border-color) 38%);
+  }
+
+  html.dark.glass-effect .main_btn_red {
+    background: linear-gradient(
+      160deg,
+      color-mix(in srgb, var(--ctl-alert-bg) 76%, #2a1013 24%),
+      color-mix(in srgb, var(--ctl-alert-bg-active) 86%, #1b0d0f 14%)
+    );
+    border: 1px solid
+      color-mix(in srgb, var(--ctl-alert-border) 80%, #ffffff 20%);
+    box-shadow:
+      inset 0 1px 1px rgb(255 255 255 / 0.14),
+      0 10px 20px rgb(0 0 0 / 0.36);
+  }
+
+  .bg-red-zone .main_btn_red {
+    background: linear-gradient(160deg, hsl(20 92% 58%), hsl(16 88% 50%));
+    border: 1px solid hsl(34 95% 88% / 0.35);
+    color: #fffaf2;
+    background-image: none;
   }
 
   .bg-alert {
@@ -842,6 +868,7 @@
     }
   }
 }
+
 /* =========================================
    5. СОСТОЯНИЯ UI
 ========================================= */
@@ -1420,6 +1447,7 @@
       --action-rail: 48px;
     }
   }
+
   .view-top-half .top_content {
     opacity: calc(1 - var(--collapse-top-k));
     filter: blur(calc(var(--collapse-top-k) * 2.2px));
@@ -2028,6 +2056,7 @@
     border: 1px solid color-mix(in srgb, #000000 62%, transparent);
     box-shadow: none;
   }
+
   html.dark input:checked + .custom-toggle {
     background-color: var(--primary-color);
     border-color: color-mix(in srgb, var(--primary-color) 72%, transparent);
@@ -2113,6 +2142,7 @@
   .animate-shake {
     animation: shake 0.3s ease-in-out;
   }
+
   /* LIQUID GLASS (unified selectors) */
   .glass-effect #bottom-sheet-overlay {
     background-color: rgb(255 255 255 / 0.4);
@@ -2560,7 +2590,7 @@
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
     opacity: 0;
-    transform: translateY(-6px); /* было scale(0.95) translateY(-10px) */
+    transform: translateY(-6px);
     transform-origin: top center;
     pointer-events: none;
     background-clip: padding-box;
@@ -2573,7 +2603,7 @@
 
   .custom-select-options.is-open {
     opacity: 1;
-    transform: translateY(0); /* было scale(1) translateY(0) */
+    transform: translateY(0);
     pointer-events: auto;
   }
 
@@ -2607,6 +2637,7 @@
   .custom-select-option.is-selected.needs-dark-text {
     color: #1f2937;
   }
+
   .glass-effect .custom-select-trigger {
     background-color: color-mix(in srgb, var(--surface-color) 50%, transparent);
     backdrop-filter: blur(12px) saturate(150%);
@@ -2694,7 +2725,6 @@
   }
 
   /* Theme mode select visuals */
-
   #themeModeSelectContainer .custom-select-trigger {
     min-height: 38px;
     line-height: 1;
@@ -3013,6 +3043,7 @@
     --pb-fill: #f8fafc;
     --pb-fg: #111111;
   }
+
   .pro-cta {
     min-height: 44px;
     border-radius: 0.75rem;
@@ -3157,7 +3188,8 @@
    ИСПРАВЛЕНИЯ ДЛЯ СПИСКА КРУГОВ (КАРТОЧКИ)
 ========================================= */
 
-  #sw-lapsContainer {
+  #sw-lapsContainer,
+  .sw-session-laps {
     display: flex !important;
     flex-direction: column !important;
     gap: 0.4rem !important;
@@ -3166,44 +3198,19 @@
     border: none !important;
   }
 
-  .sw-session-laps {
-    display: block !important;
-    gap: 0 !important;
-    padding: 0 !important;
-    border-radius: 0.75rem !important;
-    border: 1px solid color-mix(in srgb, var(--border-color) 60%, transparent) !important;
+  #sw-lapsContainer .lap-row,
+  .sw-session-laps > div,
+  .sw-session-laps .lap-row {
+    border-bottom: none !important;
+    border-radius: 0.5rem !important;
+    margin: 0 !important;
     background-color: color-mix(
       in srgb,
-      var(--surface-color) 50%,
+      var(--text-color) 4%,
       transparent
     ) !important;
-  }
-
-  /* Saved session laps: continuous table rows */
-  .sw-session-laps > div {
-    border-radius: 0 !important;
-    margin: 0 !important;
-    border-bottom: 1px solid
-      color-mix(in srgb, var(--border-color) 55%, transparent) !important;
-    background: transparent !important;
-    box-shadow: none !important;
-  }
-
-  .sw-session-laps > div:last-child {
-    border-bottom: 0 !important;
-  }
-
-  .sw-session-laps > div:first-child {
-    border-top-left-radius: 0.75rem !important;
-    border-top-right-radius: 0.75rem !important;
-  }
-
-  .sw-session-laps > div:last-child {
-    min-height: 38px;
-    padding-top: 0.55rem !important;
-    padding-bottom: 0.55rem !important;
-    border-bottom-left-radius: 0.75rem !important;
-    border-bottom-right-radius: 0.75rem !important;
+    border: 1px solid color-mix(in srgb, var(--border-color) 40%, transparent) !important;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.02);
   }
 
   html.dark #sw-lapsContainer .lap-row,
@@ -3220,15 +3227,6 @@
     font-weight: 700;
     opacity: 0.92 !important;
     color: color-mix(in srgb, var(--text-color) 88%, transparent) !important;
-  }
-
-  .sw-session-laps > div:first-child [data-template="lap-index"],
-  .sw-session-laps > div:first-child [data-template="lap-total"],
-  .sw-session-laps > div:first-child [data-template="lap-split"] {
-    font-size: 11px !important;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    font-weight: 700;
   }
 
   #sw-lapsContainer .lap-row [data-template="lap-split"],
@@ -3589,15 +3587,6 @@
 
     .app-icon-btn:active {
       background-color: var(--ui-hover-bg-strong);
-    }
-
-    #sw-clear-confirm:hover,
-    #reset-confirm:hover,
-    #tb-stopBtn:hover,
-    #tm-resetBtn.is-reset:hover,
-    #sw-lapBtn.is-reset:hover,
-    .is-reset:hover {
-      background-color: var(--ctl-alert-bg-hover);
     }
 
     .tb-del-btn:hover {

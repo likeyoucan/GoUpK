@@ -66,6 +66,19 @@ const stopwatchModule = {
       shareModeCsvBtn: $("sw-share-csv-btn"),
     };
 
+    // Normalize lap button to neutral shared style on init.
+    if (this.els.lapBtn) {
+      this.els.lapBtn.classList.add("main_btn");
+      this.els.lapBtn.classList.remove(
+        "main_btn_red",
+        "is-reset",
+        "app-surface",
+        "app-text",
+        "bg-red-500",
+        "text-white",
+      );
+    }
+
     if (this.els.ring) {
       this.els.ring.style.strokeDasharray = this.ringLength;
       this.els.ring.style.strokeDashoffset = this.ringLength;
@@ -142,13 +155,10 @@ const stopwatchModule = {
 
       this.els.status.classList.remove("hidden");
       updateText(this.els.lapBtn, t("reset"));
-      this.els.lapBtn.classList.remove(
-        "app-surface",
-        "app-text",
-        "bg-red-500",
-        "text-white",
-      );
-      this.els.lapBtn.classList.add("is-reset");
+
+      // Switch Lap button to shared red variant without inline visual classes.
+      this.els.lapBtn.classList.remove("main_btn");
+      this.els.lapBtn.classList.add("main_btn_red");
 
       announceToScreenReader(
         `${t("stopwatch")} ${t("pause")}. ${formatTime(this.elapsedTime, {
@@ -179,8 +189,10 @@ const stopwatchModule = {
       this.els.lapBtn.classList.remove("hidden");
 
       updateText(this.els.lapBtn, t("lap"));
-      this.els.lapBtn.classList.remove("bg-red-500", "text-white", "is-reset");
-      this.els.lapBtn.classList.add("app-surface", "app-text");
+
+      // Switch Lap button back to shared neutral variant.
+      this.els.lapBtn.classList.remove("main_btn_red");
+      this.els.lapBtn.classList.add("main_btn");
     }
 
     this.updateSaveButtonVisibility();
@@ -291,6 +303,11 @@ const stopwatchModule = {
         this.els.ring.style.strokeDashoffset = this.ringLength;
 
       this.els.lapBtn.classList.add("hidden");
+
+      // Keep default neutral style after reset.
+      this.els.lapBtn.classList.remove("main_btn_red");
+      this.els.lapBtn.classList.add("main_btn");
+
       this.els.currentLapsHeader.classList.add("hidden");
       this.els.currentLapsHeader.classList.remove("flex");
 

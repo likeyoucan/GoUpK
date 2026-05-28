@@ -30,9 +30,13 @@ function calcDynamicRingSizePx(wrap) {
 
   // landscape split: кольцо заметно меньше, как раньше
   // portrait: больше, но не oversized
-  const k = row ? 0.58 : 0.92;
-  const maxPx = row ? 520 : 680;
-  const minPx = row ? 220 : 220;
+  const k = row ? 0.56 : 0.84;
+  const maxPx = row ? 500 : 640;
+  const minPx = row ? 210 : 190;
+
+  // const k = row ? 0.58 : 0.92;
+  // const maxPx = row ? 520 : 680;
+  // const minPx = row ? 220 : 220;
 
   return Math.round(clamp(limitingSide * k, minPx, maxPx));
 }
