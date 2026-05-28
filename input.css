@@ -632,29 +632,6 @@
   }
 
   /* Compatibility for current id-based controls */
-  #tm-restartBtn,
-  #tm-adjust-minus,
-  #tm-adjust-plus,
-  #sw-lapBtn.main_btn {
-    background-color: var(--ctl-bg);
-    color: var(--ctl-fg);
-    border-color: var(--ctl-border);
-    box-shadow: var(--ctl-shadow);
-    background-image: none;
-  }
-
-  #sw-clear-confirm,
-  #reset-confirm,
-  #tb-stopBtn,
-  #tm-resetBtn,
-  #sw-lapBtn.main_btn_red {
-    background-color: var(--ctl-alert-bg);
-    color: var(--ctl-alert-fg);
-    border-color: var(--ctl-alert-border);
-    box-shadow: var(--ctl-alert-shadow);
-    background-image: none;
-    text-shadow: none;
-  }
 
   @media (hover: hover) {
     .main_btn:hover {
@@ -670,14 +647,6 @@
     #tm-adjust-plus:hover,
     #sw-lapBtn.main_btn:hover {
       background-color: var(--ctl-bg-hover);
-    }
-
-    #sw-clear-confirm:hover,
-    #reset-confirm:hover,
-    #tb-stopBtn:hover,
-    #tm-resetBtn:hover,
-    #sw-lapBtn.main_btn_red:hover {
-      background-color: var(--ctl-alert-bg-hover);
     }
   }
 
@@ -1958,16 +1927,8 @@
     background-color: color-mix(in srgb, var(--text-color) 4%, transparent);
   }
 
-  .sw-session-laps {
-    background-color: color-mix(in srgb, var(--text-color) 5%, transparent);
-  }
-
   html.dark .sw-session-details {
     background-color: color-mix(in srgb, #ffffff 8%, transparent);
-  }
-
-  html.dark .sw-session-laps {
-    background-color: color-mix(in srgb, #ffffff 10%, transparent);
   }
 
   /* Saved results: Light + Glass */
@@ -1978,31 +1939,6 @@
   html:not(.dark).glass-effect .sw-session-laps {
     background-color: color-mix(in srgb, #e5e7eb 26%, transparent);
     border-color: color-mix(in srgb, var(--text-color) 10%, transparent);
-  }
-
-  html:not(.dark).glass-effect .sw-session-laps > div {
-    border-radius: 0.3rem;
-  }
-
-  html:not(.dark).glass-effect .sw-session-laps > div + div {
-    margin-top: 0.3rem;
-  }
-
-  html.dark.glass-effect .sw-session-laps > div {
-    border-radius: 0.3rem;
-  }
-
-  html.dark.glass-effect .sw-session-laps > div + div {
-    margin-top: 0.3rem;
-  }
-
-  .sw-session-laps .lap-row,
-  .sw-session-laps > div {
-    border-radius: 0.3rem !important;
-  }
-
-  html:not(.dark).glass-effect .sw-session-laps > div {
-    background-color: color-mix(in srgb, #f3f4f6 42%, transparent);
   }
 
   /* COMMON CONTROLS */
