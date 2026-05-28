@@ -20,7 +20,10 @@ export function createTrigger() {
   arrowSvg.setAttribute("focusable", "false");
   arrowSvg.setAttribute("aria-hidden", "true");
   arrowSvg.setAttribute("viewBox", "0 0 24 24");
+  arrowSvg.setAttribute("fill", "none");
+  arrowSvg.setAttribute("stroke", "currentColor");
   arrowSvg.classList.add(
+    "custom-select-arrow",
     "w-4",
     "h-4",
     "app-text-sec",
@@ -29,6 +32,8 @@ export function createTrigger() {
   );
 
   const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  path.setAttribute("stroke", "currentColor");
+  path.setAttribute("fill", "none");
   path.setAttribute("stroke-linecap", "round");
   path.setAttribute("stroke-linejoin", "round");
   path.setAttribute("stroke-width", "2");

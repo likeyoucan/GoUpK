@@ -76,7 +76,11 @@
     --ctl-bg: color-mix(in srgb, var(--bg-color) 90%, #ffffff 10%);
     --ctl-bg-hover: color-mix(in srgb, var(--bg-color) 86%, #ffffff 14%);
     --ctl-fg: color-mix(in srgb, var(--text-color) 92%, transparent);
-    --ctl-border: color-mix(in srgb, var(--ctl-bg) 74%, var(--text-color) 26%);
+    --ctl-border: color-mix(
+      in srgb,
+      color-mix(in srgb, var(--ctl-bg) 72%, var(--bg-color) 28%) 74%,
+      var(--text-color) 26%
+    );
     --ctl-shadow: 0 1px 2px rgb(0 0 0 / 0.08), 0 6px 14px rgb(0 0 0 / 0.06);
 
     /* Unified danger controls */
@@ -87,7 +91,7 @@
     --ctl-alert-border: color-mix(
       in srgb,
       var(--ctl-alert-bg) 58%,
-      var(--border-color) 42%
+      color-mix(in srgb, var(--bg-color) 55%, var(--border-color) 45%) 42%
     );
     --ctl-alert-shadow: var(--ctl-shadow);
 
@@ -205,7 +209,11 @@
     --ctl-bg: color-mix(in srgb, var(--bg-color) 84%, #000000 16%);
     --ctl-bg-hover: color-mix(in srgb, var(--bg-color) 80%, #000000 20%);
     --ctl-fg: color-mix(in srgb, #ffffff 92%, transparent);
-    --ctl-border: color-mix(in srgb, #ffffff 18%, transparent);
+    --ctl-border: color-mix(
+      in srgb,
+      color-mix(in srgb, var(--ctl-bg) 70%, var(--bg-color) 30%) 82%,
+      #ffffff 18%
+    );
     --ctl-shadow: 0 1px 2px rgb(0 0 0 / 0.22), 0 8px 16px rgb(0 0 0 / 0.24);
 
     /* Unified danger controls for dark */
@@ -216,7 +224,7 @@
     --ctl-alert-border: color-mix(
       in srgb,
       var(--ctl-alert-bg) 52%,
-      var(--border-color) 48%
+      color-mix(in srgb, var(--bg-color) 55%, var(--border-color) 45%) 48%
     );
     --ctl-alert-shadow: var(--ctl-shadow);
 
@@ -669,12 +677,17 @@
 
   /* Glass mode for controls */
   .glass-effect .main_btn {
-    background-color: color-mix(in srgb, var(--ctl-bg) 70%, transparent);
-    border-color: color-mix(in srgb, var(--ctl-border) 72%, transparent);
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface-color) 78%, #ffffff 22%),
+      color-mix(in srgb, var(--surface-color) 66%, #ffffff 34%)
+    );
+    border-color: color-mix(in srgb, #ffffff 72%, var(--border-color) 28%);
     backdrop-filter: blur(12px) saturate(140%);
     box-shadow:
-      inset 0 1px 1px rgb(255 255 255 / 0.2),
-      0 4px 10px rgb(0 0 0 / 0.12);
+      inset 0 1px 1px rgb(255 255 255 / 0.55),
+      inset 0 -1px 0 rgb(0 0 0 / 0.04),
+      0 4px 10px rgb(0 0 0 / 0.1);
   }
 
   .glass-effect .main_btn_red {
@@ -691,7 +704,16 @@
   }
 
   html.dark.glass-effect .main_btn {
-    border-color: color-mix(in srgb, #000000 62%, var(--border-color) 38%);
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface-color) 52%, #ffffff 8%),
+      color-mix(in srgb, var(--surface-color) 72%, #000000 28%)
+    );
+    border-color: color-mix(in srgb, #ffffff 20%, var(--border-color) 80%);
+    box-shadow:
+      inset 0 1px 1px rgb(255 255 255 / 0.1),
+      inset 0 -1px 0 rgb(0 0 0 / 0.32),
+      0 8px 16px rgb(0 0 0 / 0.3);
   }
 
   html.dark.glass-effect .main_btn_red {
@@ -2505,6 +2527,41 @@
   }
 
   /* CUSTOM SELECT (deduplicated) */
+  .custom-select-arrow {
+    color: color-mix(in srgb, var(--text-color) 70%, transparent);
+  }
+
+  body.force-light-text .custom-select-arrow {
+    color: rgb(255 255 255 / 0.82);
+  }
+
+  body.force-dark-text .custom-select-arrow {
+    color: rgb(17 24 39 / 0.74);
+  }
+
+  html.no-adaptive:not(.glass-effect) .custom-select-trigger {
+    background-color: color-mix(
+      in srgb,
+      var(--surface-color) 96%,
+      var(--bg-color) 4%
+    );
+    backdrop-filter: none;
+  }
+
+  html.no-adaptive:not(.glass-effect) .custom-select-options {
+    background-color: color-mix(
+      in srgb,
+      var(--surface-color) 98%,
+      var(--bg-color) 2%
+    );
+    border-color: color-mix(
+      in srgb,
+      var(--border-color) 88%,
+      var(--bg-color) 12%
+    );
+    backdrop-filter: none;
+  }
+
   .custom-select-container {
     overflow: visible;
   }
@@ -3132,64 +3189,60 @@
    ИСПРАВЛЕНИЯ ДЛЯ СПИСКА КРУГОВ (КАРТОЧКИ)
 ========================================= */
 
-  #sw-lapsContainer,
-  .sw-session-laps {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 0.4rem !important;
-    padding: 0.4rem !important;
-    background: transparent !important;
-    border: none !important;
+  #sw-lapsContainer.laps-table-mode,
+  .sw-session-laps-table {
+    display: block;
+    padding: 0 !important;
+    gap: 0 !important;
+    border: 1px solid color-mix(in srgb, var(--border-color) 72%, transparent);
+    border-radius: 0.75rem;
+    background-color: color-mix(in srgb, var(--surface-color) 94%, transparent);
+    overflow: hidden;
   }
 
-  #sw-lapsContainer .lap-row,
-  .sw-session-laps > div,
-  .sw-session-laps .lap-row {
-    border-bottom: none !important;
-    border-radius: 0.5rem !important;
+  .sw-laps-table-head {
+    min-height: 42px;
+    padding: 0 0.75rem;
+    border-bottom: 1px solid
+      color-mix(in srgb, var(--border-color) 78%, transparent);
+    background-color: color-mix(in srgb, var(--text-color) 4%, transparent);
+  }
+
+  .sw-laps-table-row {
+    min-height: 38px;
+    border-bottom: 1px solid
+      color-mix(in srgb, var(--border-color) 62%, transparent);
+    border-radius: 0 !important;
     margin: 0 !important;
-    background-color: color-mix(
-      in srgb,
-      var(--text-color) 4%,
-      transparent
-    ) !important;
-    border: 1px solid color-mix(in srgb, var(--border-color) 40%, transparent) !important;
-    box-shadow: 0 1px 2px rgb(0 0 0 / 0.02);
+    background: transparent !important;
+    box-shadow: none !important;
   }
 
-  html.dark #sw-lapsContainer .lap-row,
-  html.dark .sw-session-laps > div,
-  html.dark .sw-session-laps .lap-row {
-    background-color: color-mix(in srgb, #ffffff 10%, transparent) !important;
-    border-color: color-mix(in srgb, #ffffff 18%, transparent) !important;
+  .sw-laps-table-row:last-child {
+    border-bottom: 0;
   }
 
   #sw-lapsContainer .lap-row [data-template="lap-total"],
   .sw-session-laps [data-template="lap-total"] {
-    font-size: 0.78rem !important;
+    font-size: 0.78rem;
     line-height: 1.15;
     font-weight: 700;
-    opacity: 0.92 !important;
-    color: color-mix(in srgb, var(--text-color) 88%, transparent) !important;
+    opacity: 0.92;
+    color: color-mix(in srgb, var(--text-color) 88%, transparent);
   }
 
   #sw-lapsContainer .lap-row [data-template="lap-split"],
   .sw-session-laps [data-template="lap-split"] {
-    font-size: 0.82rem !important;
+    font-size: 0.82rem;
     line-height: 1.15;
     font-weight: 800;
-    color: color-mix(in srgb, var(--text-color) 96%, transparent) !important;
+    color: color-mix(in srgb, var(--text-color) 96%, transparent);
   }
 
   #sw-lapsContainer .lap-row.is-latest {
     background-color: color-mix(
       in srgb,
-      var(--primary-color) 12%,
-      transparent
-    ) !important;
-    border-color: color-mix(
-      in srgb,
-      var(--primary-color) 30%,
+      var(--primary-color) 10%,
       transparent
     ) !important;
   }
@@ -3197,45 +3250,9 @@
   html.dark #sw-lapsContainer .lap-row.is-latest {
     background-color: color-mix(
       in srgb,
-      var(--primary-color) 15%,
+      var(--primary-color) 14%,
       transparent
     ) !important;
-    border-color: color-mix(
-      in srgb,
-      var(--primary-color) 36%,
-      var(--border-color)
-    ) !important;
-  }
-
-  #sw-lapsContainer .lap-row .split-time.split-time-latest {
-    color: color-mix(
-      in srgb,
-      var(--primary-color) 82%,
-      var(--text-color)
-    ) !important;
-  }
-
-  html.dark #sw-lapsContainer .lap-row .split-time.split-time-latest {
-    color: color-mix(in srgb, var(--primary-color) 92%, #ffffff 8%) !important;
-  }
-
-  .sw-session-laps {
-    border-radius: 0.75rem !important;
-    border: 1px solid color-mix(in srgb, var(--border-color) 60%, transparent) !important;
-    background-color: color-mix(
-      in srgb,
-      var(--surface-color) 50%,
-      transparent
-    ) !important;
-  }
-
-  #sw-currentLapsHeader {
-    border-radius: 0.5rem 0.5rem 0 0;
-    background-color: transparent;
-    border-bottom: none;
-    margin-bottom: 0.2rem;
-    padding-left: 0.75rem;
-    padding-right: 0.75rem;
   }
 
   #app-ad-slot {
@@ -3538,17 +3555,20 @@
       background-color: color-mix(in srgb, var(--alert-color) 18%, transparent);
     }
 
-    .sw-share-btn:hover {
-      background-color: var(--ui-hover-bg);
+    .icon-action-share:hover {
+      color: #16a34a;
+      background-color: color-mix(in srgb, #16a34a 16%, transparent);
     }
 
-    .sw-rename-btn:hover {
-      background-color: var(--ui-hover-bg);
+    .icon-action-edit:hover {
+      color: #2563eb;
+      background-color: color-mix(in srgb, #2563eb 16%, transparent);
     }
 
-    .sw-delete-btn:hover {
+    .icon-action-delete:hover {
       opacity: 1;
-      background-color: var(--ui-hover-bg-strong);
+      color: color-mix(in srgb, var(--alert-color) 92%, var(--text-color));
+      background-color: color-mix(in srgb, var(--alert-color) 20%, transparent);
     }
 
     #btn-open-legal-inline:hover {

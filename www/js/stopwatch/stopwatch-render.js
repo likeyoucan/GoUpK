@@ -54,6 +54,34 @@ function setLapsTableMode(isActive) {
   container.classList.toggle("laps-table-mode", !!isActive);
 }
 
+function createSavedSessionTableHead() {
+  const headerDiv = document.createElement("div");
+  headerDiv.className = "sw-laps-table-head flex justify-between items-center";
+
+  const lapSpan = document.createElement("span");
+  lapSpan.className =
+    "text-[10px] font-bold app-text-sec uppercase tracking-wider";
+  lapSpan.textContent = t("lap_text");
+
+  const timesDiv = document.createElement("div");
+  timesDiv.className = "flex items-center gap-4";
+
+  const totalSpan = document.createElement("span");
+  totalSpan.className =
+    "text-[10px] font-bold app-text-sec uppercase tracking-wider w-16 text-right";
+  totalSpan.textContent = t("total_time");
+
+  const splitSpan = document.createElement("span");
+  splitSpan.className =
+    "text-[10px] font-bold app-text-sec uppercase tracking-wider w-16 text-right";
+  splitSpan.textContent = t("split_time");
+
+  timesDiv.append(totalSpan, splitSpan);
+  headerDiv.append(lapSpan, timesDiv);
+
+  return headerDiv;
+}
+
 export function setupStopwatchRender(sw) {
   sw.createLapElement = (lap, isLatest = false) => {
     const lapTemplate = $("sw-lap-row-template");
@@ -62,21 +90,15 @@ export function setupStopwatchRender(sw) {
     const clone = lapTemplate.content.cloneNode(true);
     const div = clone.firstElementChild;
 
-    div.classList.add(
-      "lap-row",
-      "py-3",
-      "border-b",
-      "app-border",
-      "px-3",
-      "transition-all",
-      "duration-300",
-    );
-    div.classList.remove("py-2", "border-gray-500/10", "px-2");
+    // Unified table row look (no cards).
+    div.className =
+      "lap-row sw-laps-table-row flex justify-between items-center px-3";
 
     const shouldForceHours = sw.elapsedTime >= 3600000;
 
     div.querySelector('[data-template="lap-index"]').textContent =
       `${t("lap_text")} ${lap.index}`;
+
     div.querySelector('[data-template="lap-total"]').textContent = formatTime(
       lap.total,
       {
@@ -237,37 +259,17 @@ export function setupStopwatchRender(sw) {
       const lapsContainer = sessionElement.querySelector(
         '[data-template="lapsContainer"]',
       );
+      lapsContainer.classList.add("sw-session-laps-table");
 
-      const headerDiv = document.createElement("div");
-      headerDiv.className =
-        "flex justify-between items-center py-1.5 border-b border-gray-500/30 mb-1 px-2";
-
-      const lapSpan = document.createElement("span");
-      lapSpan.className =
-        "text-[10px] font-bold app-text-sec uppercase tracking-wider";
-      lapSpan.textContent = t("lap_text");
-
-      const timesDiv = document.createElement("div");
-      timesDiv.className = "flex items-center gap-4";
-
-      const totalSpan = document.createElement("span");
-      totalSpan.className =
-        "text-[10px] font-bold app-text-sec uppercase tracking-wider w-16 text-right";
-      totalSpan.textContent = t("total_time");
-
-      const splitSpan = document.createElement("span");
-      splitSpan.className =
-        "text-[10px] font-bold app-text-sec uppercase tracking-wider w-16 text-right";
-      splitSpan.textContent = t("split_time");
-
-      timesDiv.append(totalSpan, splitSpan);
-      headerDiv.append(lapSpan, timesDiv);
-      lapsContainer.appendChild(headerDiv);
+      lapsContainer.appendChild(createSavedSessionTableHead());
 
       const laps = Array.isArray(session.laps) ? session.laps : [];
       laps.forEach((lap) => {
         const lapClone = lapTemplate.content.cloneNode(true);
         const lapElement = lapClone.firstElementChild;
+
+        lapElement.className =
+          "lap-row sw-laps-table-row flex justify-between items-center px-3";
 
         lapElement.querySelector('[data-template="lap-index"]').textContent =
           `${t("lap_text")} ${lap.index}`;

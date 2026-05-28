@@ -307,7 +307,7 @@
 
                   <div
                     id="sw-currentLapsHeader"
-                    class="hidden flex justify-between items-center px-3 py-1.5 border-b app-border shrink-0 mt-1"
+                    class="sw-laps-table-head hidden flex justify-between items-center px-3 py-1.5 border-b app-border shrink-0 mt-1"
                   >
                     <span
                       class="text-[10px] font-bold app-text-sec uppercase tracking-wider"
@@ -2266,7 +2266,7 @@
     <!-- Templates -->
     <template id="sw-lap-row-template">
       <div
-        class="flex justify-between items-center py-2 border-b border-gray-500/10 last:border-0 px-2"
+        class="lap-row sw-laps-table-row flex justify-between items-center px-3 py-2 border-b app-border"
       >
         <span
           class="text-xs app-text-sec font-medium"
@@ -2331,7 +2331,7 @@
           <div class="flex justify-end gap-1 mb-3">
             <button
               type="button"
-              class="sw-share-btn app-icon-btn app-text-sec rounded-lg active:scale-95"
+              class="sw-share-btn icon-action-share app-icon-btn app-text-sec rounded-lg active:scale-95"
               data-template-id="shareBtn"
               aria-label="Share"
             >
@@ -2354,7 +2354,7 @@
 
             <button
               type="button"
-              class="sw-rename-btn app-icon-btn app-text-sec rounded-lg active:scale-95"
+              class="sw-rename-btn icon-action-edit app-icon-btn app-text-sec rounded-lg active:scale-95"
               data-template-id="renameBtn"
               aria-label="Rename"
             >
@@ -2375,7 +2375,7 @@
 
             <button
               type="button"
-              class="sw-delete-btn app-icon-btn rounded-lg active:scale-95"
+              class="sw-delete-btn icon-action-delete app-icon-btn rounded-lg active:scale-95"
               data-template-id="deleteBtn"
               aria-label="Delete"
             >
@@ -2396,7 +2396,7 @@
           </div>
 
           <div
-            class="sw-session-laps max-h-48 overflow-y-auto no-scrollbar scroll-panel"
+            class="sw-session-laps sw-session-laps-table max-h-48 overflow-y-auto no-scrollbar scroll-panel"
             data-template="lapsContainer"
           ></div>
         </div>

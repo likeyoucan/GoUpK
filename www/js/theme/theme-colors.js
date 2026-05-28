@@ -109,16 +109,13 @@ export function applyAccentVars({ hex, rootEl, hexToHSL }) {
 
     const isDark = rootEl.classList.contains("dark");
 
-    // В дефолтной теме (где primary в dark = зеленый) REST должен быть контрастным.
+    // In default theme keep high-contrast rest color.
     rootEl.style.setProperty(
       "--secondary-accent-color",
       isDark ? "#60a5fa" : "#4ade80",
     );
 
-    // Pro CTA по умолчанию оставляем мягко-зеленым.
     rootEl.style.setProperty("--pro-cta-color", "#34d399");
-
-    // Pro badge: зеленый только для дефолтного акцента.
     rootEl.style.setProperty("--pro-badge-bg", "#34d399");
     rootEl.style.setProperty("--pro-badge-fg", "#052e16");
 
@@ -132,12 +129,9 @@ export function applyAccentVars({ hex, rootEl, hexToHSL }) {
   const { h, l } = hexToHSL(hex);
   rootEl.style.setProperty("--accent-h", h);
 
-  // Для кастомных акцентов остается текущая адаптивность.
   rootEl.style.setProperty("--secondary-accent-color", getPairedRestColor(h));
   rootEl.style.setProperty("--pro-cta-color", hex);
 
-  // Сбрасываем дефолтные фиксированные цвета бейджа,
-  // чтобы снова работала адаптивная схема из CSS.
   rootEl.style.removeProperty("--pro-badge-bg");
   rootEl.style.removeProperty("--pro-badge-fg");
 
@@ -156,7 +150,8 @@ export function applyBgTheme({
   const root = document.documentElement;
   document.body.classList.remove("force-light-text", "force-dark-text");
 
-  root.classList.toggle("no-adaptive", !uiSettingsManager.isAdaptiveBg);
+  const isAdaptive = !!uiSettingsManager.isAdaptiveBg;
+  root.classList.toggle("no-adaptive", !isAdaptive);
 
   if (hex === "default") {
     root.style.removeProperty("--bg-color");
@@ -169,12 +164,12 @@ export function applyBgTheme({
   const { h, s, l } = hexToHSL(hex);
   const luminance = getLuminance(r, g, b);
 
-  root.classList.toggle("bg-red-zone", isRedLikeHue(h) && s > 32);
+  // Red zone is only meaningful for non-adaptive custom background mode.
+  const isRedZone = !isAdaptive && isRedLikeHue(h) && s > 32;
+  root.classList.toggle("bg-red-zone", isRedZone);
 
-  if (!uiSettingsManager.isAdaptiveBg) {
-    // Important:
-    // Do not toggle .dark here.
-    // Theme mode controls default swatches; background adaptation only adjusts readability.
+  if (!isAdaptive) {
+    // Keep theme mode independent from background adaptation.
     const shouldUseDarkText = luminance >= 0.52;
 
     root.style.setProperty("--bg-color", hex);
