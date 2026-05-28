@@ -239,7 +239,7 @@
     --select-panel-border: var(--border-color);
   }
 
-  .bg-red-zone {
+  html.no-adaptive.bg-red-zone {
     --alert-color: hsl(28 90% 62%);
     --alert-color-fg: #7c2d12;
 
@@ -260,7 +260,7 @@
     --alert-btn-border: var(--ctl-alert-border);
   }
 
-  html.dark .bg-red-zone {
+  html.dark.no-adaptive.bg-red-zone {
     --ctl-alert-bg: hsl(28 88% 66%);
     --ctl-alert-bg-hover: hsl(28 90% 70%);
     --ctl-alert-bg-active: hsl(28 84% 60%);
@@ -737,7 +737,7 @@
       0 10px 20px rgb(0 0 0 / 0.36);
   }
 
-  .bg-red-zone .main_btn_red {
+  html.no-adaptive.bg-red-zone .main_btn_red {
     background: linear-gradient(160deg, hsl(20 92% 58%), hsl(16 88% 50%));
     border: 1px solid hsl(34 95% 88% / 0.35);
     color: #fffaf2;
@@ -784,8 +784,8 @@
     background-color: color-mix(in srgb, var(--alert-color) 22%, transparent);
   }
 
-  .bg-red-zone .text-alert,
-  .bg-red-zone .btn-alert-soft {
+  html.no-adaptive.bg-red-zone .text-alert,
+  html.no-adaptive.bg-red-zone .btn-alert-soft {
     color: color-mix(in srgb, var(--alert-text-color) 86%, var(--text-color));
   }
 
@@ -3194,7 +3194,7 @@
   }
 
   /* =========================================
-   ИСПРАВЛЕНИЯ ДЛЯ СПИСКА КРУГОВ (КАРТОЧКИ)
+   SAVED LAPS TABLE
 ========================================= */
 
   #sw-lapsContainer.laps-table-mode,
@@ -3402,7 +3402,7 @@
     opacity: 0.72;
   }
 
-  .bg-red-zone .tb-del-btn {
+  html.no-adaptive.bg-red-zone .tb-del-btn {
     color: #ffd9dc !important;
   }
 
