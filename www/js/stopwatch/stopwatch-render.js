@@ -92,7 +92,7 @@ export function setupStopwatchRender(sw) {
 
     // Unified table row look (no cards).
     div.className =
-      "lap-row sw-laps-table-row flex justify-between items-center px-3";
+      "lap-row sw-current-lap-row flex justify-between items-center px-3 py-2 border-b app-border";
 
     const shouldForceHours = sw.elapsedTime >= 3600000;
 

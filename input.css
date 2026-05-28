@@ -738,9 +738,13 @@
   }
 
   html.no-adaptive.bg-red-zone .main_btn_red {
-    background: linear-gradient(160deg, hsl(20 92% 58%), hsl(16 88% 50%));
-    border: 1px solid hsl(34 95% 88% / 0.35);
-    color: #fffaf2;
+    background: linear-gradient(
+      160deg,
+      var(--ctl-alert-bg),
+      var(--ctl-alert-bg-active)
+    );
+    border: 1px solid var(--ctl-alert-border);
+    color: var(--ctl-alert-fg);
     background-image: none;
   }
 
@@ -3197,7 +3201,27 @@
    SAVED LAPS TABLE
 ========================================= */
 
-  #sw-lapsContainer.laps-table-mode,
+  #sw-lapsContainer.laps-table-mode {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding: 0.4rem !important;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    overflow: visible;
+  }
+
+  #sw-lapsContainer .sw-current-lap-row {
+    border-radius: 0.5rem;
+    border: 1px solid color-mix(in srgb, var(--border-color) 55%, transparent);
+    background-color: color-mix(in srgb, var(--text-color) 4%, transparent);
+    border-bottom: 1px solid
+      color-mix(in srgb, var(--border-color) 55%, transparent) !important;
+    margin: 0;
+  }
+
+  /* MODAL: saved sessions table (keep as table) */
   .sw-session-laps-table {
     display: block;
     padding: 0 !important;
