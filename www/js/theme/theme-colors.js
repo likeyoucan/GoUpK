@@ -172,11 +172,16 @@ function applyIconHoverPalette({ root, hue, adaptive, isRedZone }) {
 }
 
 export function applyAccentVars({ hex, rootEl, hexToHSL }) {
+  const isDark = rootEl.classList.contains("dark");
+  const isRedZone =
+    rootEl.classList.contains("no-adaptive") &&
+    rootEl.classList.contains("bg-red-zone");
+
+  const forcedRedZoneAlert = isDark ? "hsl(28 88% 66%)" : "hsl(28 90% 62%)";
+
   if (hex === "default") {
     rootEl.style.removeProperty("--primary-color");
     rootEl.style.removeProperty("--accent-h");
-
-    const isDark = rootEl.classList.contains("dark");
 
     // In default theme keep high-contrast rest color.
     rootEl.style.setProperty(
@@ -192,6 +197,15 @@ export function applyAccentVars({ hex, rootEl, hexToHSL }) {
       "--on-primary-color",
       isDark ? "#111827" : "#ffffff",
     );
+
+    if (isRedZone) {
+      rootEl.style.setProperty("--alert-color", forcedRedZoneAlert);
+      rootEl.style.setProperty(
+        "--alert-color-fg",
+        pickReadableTextForHsl(forcedRedZoneAlert),
+      );
+      return;
+    }
 
     const alert = "hsl(20 92% 54%)";
     rootEl.style.setProperty("--alert-color", alert);
@@ -211,19 +225,11 @@ export function applyAccentVars({ hex, rootEl, hexToHSL }) {
 
   rootEl.style.setProperty("--on-primary-color", pickOnPrimaryFromHex(hex));
 
-  // Respect red-zone safety in no-adaptive mode to avoid red-on-red merge.
-  const isRedZone =
-    rootEl.classList.contains("no-adaptive") &&
-    rootEl.classList.contains("bg-red-zone");
-
   if (isRedZone) {
-    const forced = rootEl.classList.contains("dark")
-      ? "hsl(28 88% 66%)"
-      : "hsl(28 90% 62%)";
-    rootEl.style.setProperty("--alert-color", forced);
+    rootEl.style.setProperty("--alert-color", forcedRedZoneAlert);
     rootEl.style.setProperty(
       "--alert-color-fg",
-      pickReadableTextForHsl(forced),
+      pickReadableTextForHsl(forcedRedZoneAlert),
     );
     return;
   }
@@ -292,12 +298,15 @@ export function applyBgTheme({
     return;
   }
 
-  const isDark = root.classList.contains("dark");
-  const sat = isDark ? Math.min(s, 40) : Math.max(s, 20);
+  const isDarkLocal = root.classList.contains("dark");
+  const sat = isDarkLocal ? Math.min(s, 40) : Math.max(s, 20);
 
-  root.style.setProperty("--bg-color", `hsl(${h} ${sat}% ${isDark ? 8 : 94}%)`);
+  root.style.setProperty(
+    "--bg-color",
+    `hsl(${h} ${sat}% ${isDarkLocal ? 8 : 94}%)`,
+  );
   root.style.setProperty(
     "--surface-color",
-    `hsl(${h} ${sat}% ${isDark ? 14 : 98}%)`,
+    `hsl(${h} ${sat}% ${isDarkLocal ? 14 : 98}%)`,
   );
 }
