@@ -648,10 +648,10 @@
     font-weight: 700;
   }
 
-  .main_btn {
+  main_btn {
     background-color: var(--ctl-bg);
     color: var(--ctl-fg);
-    border-color: color-mix(in srgb, var(--ctl-border) 82%, transparent);
+    border-color: var(--border-color);
     box-shadow: var(--ctl-shadow);
     background-image: none;
     backdrop-filter: none;
@@ -659,7 +659,7 @@
 
   html.dark .main_btn {
     background-color: var(--ctl-bg);
-    border-color: color-mix(in srgb, var(--ctl-border) 88%, transparent);
+    border-color: var(--border-color);
     box-shadow: var(--ctl-shadow);
   }
 
@@ -1602,6 +1602,7 @@
       right: auto;
       width: var(--handler-size);
       height: 100%;
+      transform: translateX(calc(var(--handler-size) * -0.5));
     }
 
     .resizer_handler::before {
@@ -1619,20 +1620,16 @@
     }
 
     :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
-      .view-bottom-half {
-      position: absolute;
+      .view-bottom-half
+      .resizer_handler {
+      pointer-events: auto;
       top: 0;
-      bottom: var(--nav-height);
-      right: 0;
+      bottom: 0;
       left: auto;
-      width: 0;
-      min-width: 0;
-      flex: 0 0 0;
-      height: auto;
-      min-height: 0;
-      overflow: visible;
-      pointer-events: none;
-      z-index: 45;
+      right: 0;
+      width: var(--handler-size);
+      height: 100%;
+      transform: translateX(calc(var(--handler-size) * 0.5));
     }
 
     :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
@@ -1755,10 +1752,7 @@
 
   .timer-display {
     display: block;
-    font-size: var(
-      --timer-font-dynamic,
-      clamp(2rem, min(22cqi, 22cqb), 2.7rem)
-    );
+    font-size: clamp(2rem, var(--timer-font-dynamic, 2.35rem), 2.7rem);
     line-height: 0.95;
     letter-spacing: -0.04em;
     white-space: nowrap;
@@ -3213,30 +3207,6 @@
   #tb-modal-handler {
     touch-action: pan-y;
     overscroll-behavior: contain;
-  }
-
-  .modal-drag-handle {
-    height: var(--handler-size);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 40;
-    background: transparent;
-    user-select: none;
-    touch-action: pan-y;
-  }
-
-  .modal-drag-pill {
-    width: clamp(28px, 18vw, 72px);
-    height: 3px;
-    border-radius: 999px;
-    margin-top: 0;
-    background: color-mix(in srgb, var(--text-color) 26%, transparent);
-    opacity: 0.4;
-    transition:
-      opacity var(--dur-short) var(--ease-standard),
-      background-color var(--dur-short) var(--ease-standard),
-      transform var(--dur-short) var(--ease-standard);
   }
 
   @media (hover: hover) {

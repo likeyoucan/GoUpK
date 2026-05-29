@@ -51,14 +51,16 @@ function applyDisplayScale(displayEl, ringPx) {
     displayEl.classList.contains("is-go") && text.toUpperCase() === "GO";
 
   if (isGo) {
-    const goPx = clamp(ringPx * 0.235, 48, 108);
+    // Возврат ближе к старому визуальному масштабу GO
+    const goPx = clamp(ringPx * 0.21, 44, 96);
     displayEl.style.setProperty("--go-font-dynamic", `${goPx}px`);
     return;
   }
 
+  // Основной таймер/секундомер: меньше, чем у вас сейчас
   const hasMs = text.includes(".");
-  const factor = hasMs ? 0.145 : 0.165;
-  const timerPx = clamp(ringPx * factor, 24, 68);
+  const factor = hasMs ? 0.125 : 0.145;
+  const timerPx = clamp(ringPx * factor, 22, 58);
   displayEl.style.setProperty("--timer-font-dynamic", `${timerPx}px`);
 }
 
