@@ -1670,7 +1670,7 @@
       inset: 0 -10px;
     }
 
-    is(#view-stopwatch, #view-timer, #view-tabata).split-top-hidden
+    :is(#view-stopwatch, #view-timer, #view-tabata).split-top-hidden
       .view-bottom-half
       .resizer_handler {
       left: 0;
@@ -1790,7 +1790,7 @@
     justify-content: center;
     container-type: size;
     container-name: timer-ring;
-    overflow: visible;
+    overflow: clip;
   }
 
   #sw-startStopBtn,
@@ -1805,11 +1805,13 @@
 
   .timer-display {
     display: block;
-    font-size: clamp(2rem, var(--timer-font-dynamic, 2.35rem), 2.7rem);
-    line-height: 0.95;
+    inline-size: min(100%, calc(100cqi - (var(--ring-safe-gap) * 2)));
+    max-inline-size: 100%;
+    min-inline-size: 0;
+    font-size: var(--timer-font-dynamic, clamp(1.9rem, 18cqi, 3.5rem));
+    line-height: 0.96;
     letter-spacing: -0.04em;
     white-space: nowrap;
-    max-inline-size: 100%;
     overflow: hidden;
     text-overflow: clip;
     text-align: center;
@@ -1826,8 +1828,8 @@
   }
 
   .timer-display.is-go {
-    font-size: var(--go-font-dynamic, clamp(2.9rem, min(33cqi, 33cqb), 5.3rem));
-    font-style: normal;
+    font-size: var(--go-font-dynamic, clamp(2.5rem, 28cqi, 5rem));
+    max-inline-size: 82%;
     letter-spacing: -0.02em;
     font-family: "Segoe UI", "Arial Black", Arial, sans-serif;
     font-weight: 800;
@@ -1847,8 +1849,20 @@
   #tm-mainDisplay,
   #tb-mainTimer {
     display: inline-block;
-    min-inline-size: 8ch;
+    min-inline-size: 0;
+    max-inline-size: 100%;
     text-align: center;
+  }
+
+  @container timer-ring (max-width: 260px) {
+    .timer-display {
+      font-size: clamp(1.5rem, 16cqi, 2.4rem);
+    }
+
+    .timer-display.is-go {
+      font-size: clamp(2rem, 23cqi, 3.2rem);
+      max-inline-size: 78%;
+    }
   }
 
   #sw-statusText,
