@@ -616,23 +616,16 @@
   }
 
   /* Shared iOS-like control shell */
-  :is(
-    #tm-restartBtn,
-    #tm-adjust-minus,
-    #tm-adjust-plus,
-    #sw-lapBtn:not(.main_btn_red),
-    #sw-clear-confirm,
-    #reset-confirm,
-    #tb-stopBtn,
-    #tm-resetBtn,
-    #sw-lapBtn.main_btn_red,
-    .main_btn,
-    .main_btn_red
-  ) {
+  /* Shared iOS-like control shell */
+  .btn-shell,
+  .main_btn,
+  .main_btn_red {
     border-radius: 0.95rem;
     border-width: 1px;
     border-style: solid;
     background-clip: padding-box;
+    min-height: 44px;
+    font-weight: 700;
     transition:
       background-color var(--dur-short) ease,
       border-color var(--dur-short) ease,
@@ -691,22 +684,6 @@
     .main_btn_red:hover {
       background-color: var(--ctl-alert-bg-hover);
     }
-
-    #tm-restartBtn:hover,
-    #tm-adjust-minus:hover,
-    #tm-adjust-plus:hover,
-    #sw-lapBtn.main_btn:hover {
-      background-color: var(--ctl-bg-hover);
-    }
-  }
-
-  #sw-clear-confirm:active,
-  #reset-confirm:active,
-  #tb-stopBtn:active,
-  #tm-resetBtn:active,
-  #sw-lapBtn.main_btn_red:active {
-    background-color: var(--ctl-alert-bg-active);
-    transform: scale(0.98);
   }
 
   /* Glass mode for controls */
@@ -1381,16 +1358,6 @@
     min-height: var(--handler-size);
     height: var(--handler-size);
     padding-bottom: 0;
-  }
-
-  :is(
-      #view-stopwatch,
-      #view-timer,
-      #view-tabata
-    ).split-animating[data-split-target="bottom"]
-    .resizer_handler {
-    top: 0;
-    bottom: auto;
   }
 
   @media (max-width: 767px) and (orientation: portrait) {
