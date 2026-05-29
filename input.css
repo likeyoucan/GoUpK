@@ -3209,14 +3209,29 @@
     overscroll-behavior: contain;
   }
 
+  .modal-drag-pill {
+    width: clamp(28px, 18vw, 72px);
+    height: 3px;
+    border-radius: 999px;
+    margin-top: 0;
+    background: color-mix(in srgb, var(--text-color) 26%, transparent);
+    opacity: 0.4;
+    transition:
+      opacity var(--dur-short) var(--ease-standard),
+      background-color var(--dur-short) var(--ease-standard),
+      transform var(--dur-short) var(--ease-standard);
+  }
+
   @media (hover: hover) {
-    .modal-drag-handle:hover .modal-drag-pill {
+    #sw-modal-handler:hover .modal-drag-pill,
+    #tb-modal-handler:hover .modal-drag-pill {
       opacity: 0.88;
       background: color-mix(in srgb, var(--text-color) 40%, transparent);
     }
   }
 
-  .modal-drag-handle:active .modal-drag-pill {
+  #sw-modal-handler:active .modal-drag-pill,
+  #tb-modal-handler:active .modal-drag-pill {
     opacity: 1;
     background: color-mix(in srgb, var(--primary-color) 70%, var(--text-color));
     transform: scale(1.05);
