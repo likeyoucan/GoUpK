@@ -1330,13 +1330,18 @@
 
   :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
     .view-bottom-half {
-    flex: 0 0 var(--handler-size);
-    min-height: var(--handler-size);
-    height: var(--handler-size);
+    position: absolute;
+    top: 0;
+    bottom: var(--nav-height);
+    right: 0;
+    left: auto;
+    width: 0;
+    min-width: 0;
+    flex: 0 0 0;
+    min-height: 0;
     overflow: visible;
-    position: relative;
-    transform: none;
-    padding-bottom: 0;
+    pointer-events: none;
+    z-index: 45;
   }
 
   :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
@@ -1723,6 +1728,11 @@
     .top_content {
       max-height: min(37.5dvw, 500px);
     }
+
+    :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
+      .view-bottom-half {
+      bottom: 0;
+    }
   }
 
   /* TIMER RING */
@@ -1754,7 +1764,10 @@
 
   .timer-display {
     display: block;
-    font-size: clamp(2rem, min(22cqi, 22cqb), 2.7rem);
+    font-size: var(
+      --timer-font-dynamic,
+      clamp(2rem, min(22cqi, 22cqb), 2.7rem)
+    );
     line-height: 0.95;
     letter-spacing: -0.04em;
     white-space: nowrap;
@@ -1777,16 +1790,17 @@
 
   .timer-display.is-go {
     font-size: var(--go-font-dynamic, clamp(2.9rem, min(33cqi, 33cqb), 5.3rem));
-    font-style: italic;
-    padding-right: 0;
-    letter-spacing: -0.03em;
+    font-style: normal;
+    letter-spacing: -0.02em;
+    font-family: "Segoe UI", "Arial Black", Arial, sans-serif;
+    font-weight: 800;
   }
 
   #sw-mainDisplay.is-go,
   #tm-mainDisplay.is-go,
   #tb-mainTimer.is-go {
-    translate: 0 0;
-    transform: translate(var(--go-nudge-x, 0px), var(--go-nudge-y, 0px));
+    transform: translate(var(--go-nudge-x, 0px), var(--go-nudge-y, 0px))
+      skewX(-8deg);
     transform-origin: center center;
     text-align: center;
     min-inline-size: 2.3ch;
@@ -1848,28 +1862,10 @@
     text-shadow: 0 1px 2px rgb(0 0 0 / 0.28);
   }
 
-  @container timer-ring (max-width: 260px) {
-    .timer-display {
-      font-size: clamp(1.75rem, min(19cqi, 19cqb), 2.4rem);
-    }
-
-    .timer-display.is-go {
-      font-size: clamp(2.45rem, min(28cqi, 28cqb), 3.95rem);
-    }
-  }
-
   @media (max-height: 700px) and (orientation: portrait) {
     .timer-input {
       width: 3rem;
       height: 3rem;
-    }
-
-    .timer-display {
-      font-size: clamp(1.5rem, min(19cqi, 19cqb), 2.2rem);
-    }
-
-    .timer-display.is-go {
-      font-size: clamp(2.2rem, min(28cqi, 28cqb), 3.7rem);
     }
   }
 
