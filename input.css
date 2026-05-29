@@ -375,27 +375,6 @@
     --ui-hover-bg-strong: rgb(17 24 39 / 0.16);
   }
 
-  html.no-adaptive.bg-red-zone body.force-light-text {
-    /* Темный фон в no-adaptive red-zone */
-    --ctl-alert-bg: hsl(28 88% 64%);
-    --ctl-alert-bg-hover: hsl(28 90% 68%);
-    --ctl-alert-bg-active: hsl(27 84% 58%);
-    --ctl-alert-fg: #111827;
-    --ctl-alert-border: color-mix(
-      in srgb,
-      var(--ctl-alert-bg) 54%,
-      #ffffff 20%
-    );
-    --ctl-alert-shadow: var(--ctl-shadow);
-
-    --alert-btn-bg: var(--ctl-alert-bg);
-    --alert-btn-bg-hover: var(--ctl-alert-bg-hover);
-    --alert-btn-bg-active: var(--ctl-alert-bg-active);
-    --alert-btn-fg: var(--ctl-alert-fg);
-    --alert-btn-border: var(--ctl-alert-border);
-    --alert-btn-shadow: var(--ctl-alert-shadow);
-  }
-
   html.no-adaptive.bg-red-zone body.force-dark-text {
     /* Светлый фон в no-adaptive red-zone */
     --ctl-alert-bg: hsl(30 96% 76%);
@@ -437,8 +416,8 @@
     );
   }
 
-  /* Отдельно для red-zone делаем "оранжевую" палитру */
   html.no-adaptive.bg-red-zone body.force-light-text {
+    /* Светлый текстовый режим на red-zone */
     --ctl-alert-bg: hsl(30 96% 76%);
     --ctl-alert-bg-hover: hsl(30 98% 72%);
     --ctl-alert-bg-active: hsl(29 94% 66%);
@@ -448,6 +427,14 @@
       var(--ctl-alert-bg) 56%,
       #7a2e12 44%
     );
+    --ctl-alert-shadow: var(--ctl-shadow);
+
+    --alert-btn-bg: var(--ctl-alert-bg);
+    --alert-btn-bg-hover: var(--ctl-alert-bg-hover);
+    --alert-btn-bg-active: var(--ctl-alert-bg-active);
+    --alert-btn-fg: var(--ctl-alert-fg);
+    --alert-btn-border: var(--ctl-alert-border);
+    --alert-btn-shadow: var(--ctl-alert-shadow);
   }
 }
 
@@ -860,7 +847,7 @@
     box-shadow:
       inset 0 1px 0 rgb(255 255 255 / 0.22),
       0 5px 12px rgb(0 0 0 / 0.14);
-  }я
+  }
 
   .bg-alert {
     background-color: var(--alert-color);
@@ -1675,6 +1662,8 @@
       padding-bottom: 0;
       min-width: 0;
       flex-direction: row;
+      position: relative;
+      overflow: hidden;
     }
 
     .top_content {
@@ -1692,12 +1681,6 @@
 
     .mid_content > div.app-border {
       border: none;
-    }
-
-    .view-bottom-half {
-      position: relative;
-      min-width: 0;
-      overflow: hidden;
     }
 
     .resizer_handler {
@@ -1731,9 +1714,10 @@
     :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
       .view-bottom-half
       .resizer_handler {
-      left: auto;
-      right: 0;
-      transform: translateX(0);
+      left: 0;
+      right: auto;
+      transform: translateX(-50%);
+      pointer-events: auto;
     }
 
     :is(
@@ -1744,11 +1728,11 @@
       .resizer_handler {
       top: 0;
       bottom: 0;
-      left: auto;
-      right: 0;
+      left: 0;
+      right: auto;
       width: var(--handler-size);
       height: 100%;
-      transform: translateX(0);
+      transform: translateX(-50%);
     }
 
     #tm-form,
@@ -1803,7 +1787,18 @@
 
     :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
       .view-bottom-half {
+      position: absolute;
+      top: 0;
+      right: 0;
       bottom: 0;
+      width: var(--handler-size);
+      min-width: var(--handler-size);
+      height: auto;
+      flex: 0 0 auto;
+      overflow: visible;
+      z-index: 45;
+      pointer-events: none;
+      padding-bottom: 0;
     }
   }
 
