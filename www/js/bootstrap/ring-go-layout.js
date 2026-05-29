@@ -51,14 +51,14 @@ function applyDisplayScale(displayEl, ringPx) {
     displayEl.classList.contains("is-go") && text.toUpperCase() === "GO";
 
   if (isGo) {
-    const goPx = clamp(ringPx * 0.285, 56, 132);
+    const goPx = clamp(ringPx * 0.235, 48, 108);
     displayEl.style.setProperty("--go-font-dynamic", `${goPx}px`);
     return;
   }
 
   const hasMs = text.includes(".");
-  const factor = hasMs ? 0.19 : 0.215;
-  const timerPx = clamp(ringPx * factor, 30, 92);
+  const factor = hasMs ? 0.145 : 0.165;
+  const timerPx = clamp(ringPx * factor, 24, 68);
   displayEl.style.setProperty("--timer-font-dynamic", `${timerPx}px`);
 }
 
