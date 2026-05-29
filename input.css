@@ -396,26 +396,6 @@
     --alert-btn-shadow: var(--ctl-alert-shadow);
   }
 
-  html.no-adaptive body.force-light-text {
-    /* На ярких no-adaptive фонах нейтральные кнопки остаются светлыми */
-    --ctl-bg: #ffffff;
-    --ctl-bg-hover: #f8fafc;
-    --ctl-fg: #111827;
-    --ctl-border: color-mix(in srgb, #111827 16%, #ffffff 84%);
-    --ctl-shadow: 0 1px 2px rgb(0 0 0 / 0.08), 0 6px 14px rgb(0 0 0 / 0.08);
-
-    /* Красные кнопки не уводим в темный */
-    --ctl-alert-bg: hsl(357 94% 56%);
-    --ctl-alert-bg-hover: hsl(357 96% 60%);
-    --ctl-alert-bg-active: hsl(357 88% 51%);
-    --ctl-alert-fg: #ffffff;
-    --ctl-alert-border: color-mix(
-      in srgb,
-      var(--ctl-alert-bg) 58%,
-      #7f1d1d 42%
-    );
-  }
-
   html.no-adaptive.bg-red-zone body.force-light-text {
     /* Светлый текстовый режим на red-zone */
     --ctl-alert-bg: hsl(30 96% 76%);
@@ -1705,8 +1685,12 @@
     :is(#view-stopwatch, #view-timer, #view-tabata).split-top-hidden
       .view-bottom-half
       .resizer_handler {
+      top: 0;
+      bottom: 0;
       left: 0;
       right: auto;
+      width: var(--handler-size);
+      height: 100%;
       transform: translateX(0);
       z-index: 45;
     }
@@ -1714,10 +1698,13 @@
     :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
       .view-bottom-half
       .resizer_handler {
-      left: 0;
-      right: auto;
-      transform: translateX(-50%);
-      pointer-events: auto;
+      top: 0;
+      bottom: 0;
+      left: auto;
+      right: 0;
+      width: var(--handler-size);
+      height: 100%;
+      transform: translateX(0);
     }
 
     :is(
