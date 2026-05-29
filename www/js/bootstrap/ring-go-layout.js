@@ -4,6 +4,10 @@ function clamp(v, min, max) {
   return Math.max(min, Math.min(max, v));
 }
 
+function snap4(px) {
+  return Math.round(px / 4) * 4;
+}
+
 function getTopHalfEl(wrap) {
   return wrap.closest(".view-top-half");
 }
@@ -30,7 +34,7 @@ function calcDynamicRingSizePx(wrap) {
 
   if (!rect) {
     const fallback = Math.min(wrap.clientWidth || 0, wrap.clientHeight || 0);
-    return Math.round(clamp(fallback * 0.68, 170, 420));
+    return snap4(clamp(fallback * 0.68, 172, 420));
   }
 
   const limitingSide = Math.min(rect.width, rect.height);
@@ -38,29 +42,38 @@ function calcDynamicRingSizePx(wrap) {
 
   const k = row ? 0.64 : 0.92;
   const maxPx = row ? 580 : 680;
-  const minPx = row ? 230 : 220;
+  const minPx = row ? 232 : 220;
 
-  return Math.round(clamp(limitingSide * k, minPx, maxPx));
+  return snap4(clamp(limitingSide * k, minPx, maxPx));
 }
 
-function applyDisplayScale(displayEl, ringPx) {
+function applyDisplayScale(displayEl, ringPx, rowLayout) {
   if (!displayEl || !ringPx) return;
 
   const text = String(displayEl.textContent || "").trim();
   const isGo =
     displayEl.classList.contains("is-go") && text.toUpperCase() === "GO";
 
+  // phi^-1
+  const phiInv = 0.618;
+
   if (isGo) {
-    // GO крупнее, но в безопасных пределах для разных экранов.
-    const goPx = clamp(ringPx * 0.245, 52, 112);
+    // Landscape: немного крупнее, Portrait: немного компактнее.
+    const goRatio = rowLayout ? 0.258 : 0.238;
+    const raw = ringPx * goRatio * phiInv * 1.62;
+    const goPx = snap4(clamp(raw, rowLayout ? 60 : 52, rowLayout ? 120 : 108));
+
     displayEl.style.setProperty("--go-font-dynamic", `${goPx}px`);
+    displayEl.style.setProperty("--go-skew-deg", "-11deg");
     return;
   }
 
-  // Цифры остаются адаптивными и отдельно масштабируются от GO.
+  // Цифры отдельно от GO, адаптивно.
   const hasMs = text.includes(".");
-  const factor = hasMs ? 0.125 : 0.145;
-  const timerPx = clamp(ringPx * factor, 22, 58);
+  const base = rowLayout ? (hasMs ? 0.132 : 0.152) : hasMs ? 0.124 : 0.144;
+  const rawTimer = ringPx * base;
+  const timerPx = snap4(clamp(rawTimer, 24, rowLayout ? 60 : 56));
+
   displayEl.style.setProperty("--timer-font-dynamic", `${timerPx}px`);
 }
 
@@ -81,7 +94,7 @@ function centerGoDisplay(displayEl) {
   const host = displayEl.closest("button");
   if (!host) return;
 
-  // Сброс перед измерением, чтобы не копился сдвиг.
+  // Сбрасываем перед измерением, чтобы не копился drift.
   displayEl.style.setProperty("--go-nudge-x", "0px");
   displayEl.style.setProperty("--go-nudge-y", "0px");
 
@@ -93,9 +106,9 @@ function centerGoDisplay(displayEl) {
   const textCx = textRect.left + textRect.width / 2;
   const textCy = textRect.top + textRect.height / 2;
 
-  // Оптическая компенсация под skew/курсивную форму GO.
-  const skewCompX = textRect.width * 0.012;
-  const opticalCompY = -textRect.height * 0.018;
+  // Оптическая поправка под сильный skew.
+  const skewCompX = textRect.width * 0.015;
+  const opticalCompY = -textRect.height * 0.02;
 
   const dx = clamp(hostCx - textCx + skewCompX, -10, 10);
   const dy = clamp(hostCy - textCy + opticalCompY, -10, 10);
@@ -127,17 +140,20 @@ export function initDynamicRingAndGoLayout() {
 
       wrap.style.setProperty("--ring-size-dynamic", `${px}px`);
 
+      const topHalf = getTopHalfEl(wrap);
+      const rowLayout = isRowLayout(topHalf);
+
       displays.forEach((displayEl) => {
         const ownWrap = getRingWrapForDisplay(displayEl);
         if (ownWrap === wrap) {
-          applyDisplayScale(displayEl, px);
+          applyDisplayScale(displayEl, px, rowLayout);
         }
       });
     });
 
     displays.forEach((displayEl) => {
       if (!getRingWrapForDisplay(displayEl)) {
-        applyDisplayScale(displayEl, 320);
+        applyDisplayScale(displayEl, 320, false);
       }
       centerGoDisplay(displayEl);
     });

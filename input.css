@@ -75,8 +75,8 @@
       0 1px 2px rgb(0 0 0 / 0.14);
 
     /* Unified neutral controls (restart / +/- / lap non-reset) */
-    --ctl-bg: color-mix(in srgb, var(--bg-color) 90%, #ffffff 10%);
-    --ctl-bg-hover: color-mix(in srgb, var(--bg-color) 86%, #ffffff 14%);
+    --ctl-bg: #ffffff;
+    --ctl-bg-hover: #f8fafc;
     --ctl-fg: color-mix(in srgb, var(--text-color) 92%, transparent);
     --ctl-border: color-mix(in srgb, var(--ctl-bg) 84%, var(--text-color) 16%);
     --ctl-shadow: 0 1px 2px rgb(0 0 0 / 0.08), 0 6px 14px rgb(0 0 0 / 0.06);
@@ -221,8 +221,8 @@
       0 2px 4px rgb(0 0 0 / 0.32);
 
     /* Unified neutral controls for dark */
-    --ctl-bg: color-mix(in srgb, var(--bg-color) 84%, #000000 16%);
-    --ctl-bg-hover: color-mix(in srgb, var(--bg-color) 80%, #000000 20%);
+    --ctl-bg: #18181b;
+    --ctl-bg-hover: #212126;
     --ctl-fg: color-mix(in srgb, #ffffff 92%, transparent);
     --ctl-border: color-mix(
       in srgb,
@@ -275,6 +275,11 @@
     --alert-btn-fg: var(--ctl-alert-fg);
     --alert-btn-border: var(--ctl-alert-border);
     --alert-btn-shadow: var(--ctl-alert-shadow);
+
+    --ctl-bg: color-mix(in srgb, var(--surface-color) 92%, #ffffff 8%);
+    --ctl-bg-hover: color-mix(in srgb, var(--surface-color) 88%, #ffffff 12%);
+    --ctl-fg: color-mix(in srgb, var(--text-color) 94%, transparent);
+    --ctl-border: color-mix(in srgb, var(--ctl-bg) 82%, var(--text-color) 18%);
   }
 
   html.dark.no-adaptive.bg-red-zone {
@@ -295,6 +300,11 @@
     --alert-btn-fg: var(--ctl-alert-fg);
     --alert-btn-border: var(--ctl-alert-border);
     --alert-btn-shadow: var(--ctl-alert-shadow);
+
+    --ctl-bg: color-mix(in srgb, var(--surface-color) 82%, #000000 18%);
+    --ctl-bg-hover: color-mix(in srgb, var(--surface-color) 78%, #000000 22%);
+    --ctl-fg: color-mix(in srgb, #ffffff 92%, transparent);
+    --ctl-border: color-mix(in srgb, var(--ctl-bg) 78%, #ffffff 22%);
   }
 
   body.force-light-text {
@@ -1609,13 +1619,8 @@
     :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
       .view-bottom-half
       .resizer_handler {
-      pointer-events: auto;
-      top: 0;
-      bottom: 0;
       left: auto;
       right: 0;
-      width: var(--handler-size);
-      height: 100%;
       transform: translateX(calc(var(--handler-size) * 0.5));
     }
 
@@ -1765,7 +1770,7 @@
   #tm-mainDisplay.is-go,
   #tb-mainTimer.is-go {
     transform: translate(var(--go-nudge-x, 0px), var(--go-nudge-y, 0px))
-      skewX(-8deg);
+      skewX(var(--go-skew-deg, -11deg));
     transform-origin: center center;
     text-align: center;
     min-inline-size: 2.3ch;
