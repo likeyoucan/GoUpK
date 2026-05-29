@@ -78,11 +78,7 @@
     --ctl-bg: color-mix(in srgb, var(--bg-color) 90%, #ffffff 10%);
     --ctl-bg-hover: color-mix(in srgb, var(--bg-color) 86%, #ffffff 14%);
     --ctl-fg: color-mix(in srgb, var(--text-color) 92%, transparent);
-    --ctl-border: color-mix(
-      in srgb,
-      color-mix(in srgb, var(--ctl-bg) 72%, var(--bg-color) 28%) 74%,
-      var(--text-color) 26%
-    );
+    --ctl-border: color-mix(in srgb, var(--ctl-bg) 84%, var(--text-color) 16%);
     --ctl-shadow: 0 1px 2px rgb(0 0 0 / 0.08), 0 6px 14px rgb(0 0 0 / 0.06);
 
     /* Unified danger controls */
@@ -259,42 +255,46 @@
   }
 
   html.no-adaptive.bg-red-zone {
-    --alert-color: hsl(28 90% 62%);
-    --alert-color-fg: #7c2d12;
+    --alert-color: hsl(24 86% 56%);
+    --alert-color-fg: #7a2e12;
 
-    --ctl-alert-bg: hsl(31 94% 78%);
-    --ctl-alert-bg-hover: hsl(31 96% 74%);
-    --ctl-alert-bg-active: hsl(30 92% 68%);
-    --ctl-alert-fg: #7c2d12;
+    --ctl-alert-bg: hsl(30 96% 76%);
+    --ctl-alert-bg-hover: hsl(30 98% 72%);
+    --ctl-alert-bg-active: hsl(29 94% 66%);
+    --ctl-alert-fg: #7a2e12;
     --ctl-alert-border: color-mix(
       in srgb,
-      var(--ctl-alert-bg) 58%,
-      var(--border-color) 42%
+      var(--ctl-alert-bg) 56%,
+      var(--ctl-border) 44%
     );
+    --ctl-alert-shadow: var(--ctl-shadow);
 
     --alert-btn-bg: var(--ctl-alert-bg);
     --alert-btn-bg-hover: var(--ctl-alert-bg-hover);
     --alert-btn-bg-active: var(--ctl-alert-bg-active);
     --alert-btn-fg: var(--ctl-alert-fg);
     --alert-btn-border: var(--ctl-alert-border);
+    --alert-btn-shadow: var(--ctl-alert-shadow);
   }
 
   html.dark.no-adaptive.bg-red-zone {
-    --ctl-alert-bg: hsl(28 88% 66%);
-    --ctl-alert-bg-hover: hsl(28 90% 70%);
-    --ctl-alert-bg-active: hsl(28 84% 60%);
-    --ctl-alert-fg: #1f2937;
+    --ctl-alert-bg: hsl(28 88% 64%);
+    --ctl-alert-bg-hover: hsl(28 90% 68%);
+    --ctl-alert-bg-active: hsl(27 84% 58%);
+    --ctl-alert-fg: #111827;
     --ctl-alert-border: color-mix(
       in srgb,
-      var(--ctl-alert-bg) 52%,
-      var(--border-color) 48%
+      var(--ctl-alert-bg) 54%,
+      var(--ctl-border) 46%
     );
+    --ctl-alert-shadow: var(--ctl-shadow);
 
     --alert-btn-bg: var(--ctl-alert-bg);
     --alert-btn-bg-hover: var(--ctl-alert-bg-hover);
     --alert-btn-bg-active: var(--ctl-alert-bg-active);
     --alert-btn-fg: var(--ctl-alert-fg);
     --alert-btn-border: var(--ctl-alert-border);
+    --alert-btn-shadow: var(--ctl-alert-shadow);
   }
 
   body.force-light-text {
@@ -648,10 +648,10 @@
     font-weight: 700;
   }
 
-  main_btn {
+  .main_btn {
     background-color: var(--ctl-bg);
     color: var(--ctl-fg);
-    border-color: var(--border-color);
+    border-color: var(--ctl-border);
     box-shadow: var(--ctl-shadow);
     background-image: none;
     backdrop-filter: none;
@@ -659,7 +659,7 @@
 
   html.dark .main_btn {
     background-color: var(--ctl-bg);
-    border-color: var(--border-color);
+    border-color: var(--ctl-border);
     box-shadow: var(--ctl-shadow);
   }
 
@@ -751,6 +751,26 @@
     box-shadow:
       inset 0 1px 1px rgb(255 255 255 / 0.14),
       0 10px 20px rgb(0 0 0 / 0.36);
+  }
+
+  html.no-adaptive.bg-red-zone.glass-effect .main_btn_red {
+    background: color-mix(in srgb, var(--ctl-alert-bg) 78%, transparent);
+    color: var(--ctl-alert-fg);
+    border-color: color-mix(in srgb, var(--ctl-alert-border) 82%, transparent);
+    backdrop-filter: blur(12px) saturate(145%);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.22),
+      0 5px 12px rgb(0 0 0 / 0.14);
+  }
+
+  html.dark.no-adaptive.bg-red-zone.glass-effect .main_btn_red {
+    background: color-mix(in srgb, var(--ctl-alert-bg) 74%, #1b0d0f 26%);
+    color: var(--ctl-alert-fg);
+    border-color: color-mix(in srgb, var(--ctl-alert-border) 84%, #ffffff 16%);
+    backdrop-filter: blur(12px) saturate(145%);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.12),
+      0 8px 18px rgb(0 0 0 / 0.3);
   }
 
   .bg-alert {
@@ -1632,18 +1652,6 @@
       transform: translateX(calc(var(--handler-size) * 0.5));
     }
 
-    :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
-      .view-bottom-half
-      .resizer_handler {
-      pointer-events: auto;
-      top: 0;
-      bottom: 0;
-      left: auto;
-      right: 0;
-      width: var(--handler-size);
-      height: 100%;
-    }
-
     :is(
         #view-stopwatch,
         #view-timer,
@@ -1664,7 +1672,12 @@
       ).split-animating[data-split-target="bottom"]
       .resizer_handler {
       top: 0;
-      bottom: auto;
+      bottom: 0;
+      left: auto;
+      right: 0;
+      width: var(--handler-size);
+      height: 100%;
+      transform: translateX(calc(var(--handler-size) * 0.5));
     }
 
     #tm-form,
@@ -3207,9 +3220,13 @@
   #tb-modal-handler {
     touch-action: pan-y;
     overscroll-behavior: contain;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .modal-drag-pill {
+    margin-inline: auto;
     width: clamp(28px, 18vw, 72px);
     height: 3px;
     border-radius: 999px;
@@ -3762,67 +3779,6 @@
       opacity: inherit;
       border-color: inherit;
     }
-  }
-
-  /* Hard safety for danger controls on red backgrounds */
-  html.no-adaptive.bg-red-zone .main_btn_red {
-    background: linear-gradient(160deg, #fdba74, #fb923c) !important;
-    color: #7c2d12 !important;
-    border-color: color-mix(
-      in srgb,
-      #fb923c 64%,
-      var(--border-color) 36%
-    ) !important;
-    box-shadow:
-      0 2px 8px rgb(0 0 0 / 0.14),
-      inset 0 1px 0 rgb(255 255 255 / 0.32) !important;
-  }
-
-  html.dark.no-adaptive.bg-red-zone .main_btn_red {
-    background: linear-gradient(160deg, #fb923c, #ea580c) !important;
-    color: #111827 !important;
-    border-color: color-mix(
-      in srgb,
-      #fb923c 58%,
-      var(--border-color) 42%
-    ) !important;
-    box-shadow:
-      0 4px 12px rgb(0 0 0 / 0.32),
-      inset 0 1px 0 rgb(255 255 255 / 0.16) !important;
-  }
-
-  html.no-adaptive.bg-red-zone.glass-effect .main_btn_red {
-    background: linear-gradient(
-      160deg,
-      color-mix(in srgb, #fdba74 82%, transparent),
-      color-mix(in srgb, #fb923c 86%, transparent)
-    ) !important;
-    color: #7c2d12 !important;
-    border-color: color-mix(
-      in srgb,
-      #fb923c 62%,
-      var(--border-color) 38%
-    ) !important;
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.28),
-      0 5px 12px rgb(0 0 0 / 0.16) !important;
-  }
-
-  html.dark.no-adaptive.bg-red-zone.glass-effect .main_btn_red {
-    background: linear-gradient(
-      160deg,
-      color-mix(in srgb, #fb923c 80%, #2a1013 20%),
-      color-mix(in srgb, #ea580c 86%, #1b0d0f 14%)
-    ) !important;
-    color: #111827 !important;
-    border-color: color-mix(
-      in srgb,
-      #fb923c 58%,
-      var(--border-color) 42%
-    ) !important;
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.16),
-      0 8px 18px rgb(0 0 0 / 0.34) !important;
   }
 
   /* ERUDA */

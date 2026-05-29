@@ -51,13 +51,13 @@ function applyDisplayScale(displayEl, ringPx) {
     displayEl.classList.contains("is-go") && text.toUpperCase() === "GO";
 
   if (isGo) {
-    // Возврат ближе к старому визуальному масштабу GO
-    const goPx = clamp(ringPx * 0.21, 44, 96);
+    // GO крупнее, но в безопасных пределах для разных экранов.
+    const goPx = clamp(ringPx * 0.245, 52, 112);
     displayEl.style.setProperty("--go-font-dynamic", `${goPx}px`);
     return;
   }
 
-  // Основной таймер/секундомер: меньше, чем у вас сейчас
+  // Цифры остаются адаптивными и отдельно масштабируются от GO.
   const hasMs = text.includes(".");
   const factor = hasMs ? 0.125 : 0.145;
   const timerPx = clamp(ringPx * factor, 22, 58);
@@ -81,6 +81,10 @@ function centerGoDisplay(displayEl) {
   const host = displayEl.closest("button");
   if (!host) return;
 
+  // Сброс перед измерением, чтобы не копился сдвиг.
+  displayEl.style.setProperty("--go-nudge-x", "0px");
+  displayEl.style.setProperty("--go-nudge-y", "0px");
+
   const hostRect = host.getBoundingClientRect();
   const textRect = displayEl.getBoundingClientRect();
 
@@ -89,8 +93,12 @@ function centerGoDisplay(displayEl) {
   const textCx = textRect.left + textRect.width / 2;
   const textCy = textRect.top + textRect.height / 2;
 
-  const dx = clamp(hostCx - textCx, -8, 8);
-  const dy = clamp(hostCy - textCy, -8, 8);
+  // Оптическая компенсация под skew/курсивную форму GO.
+  const skewCompX = textRect.width * 0.012;
+  const opticalCompY = -textRect.height * 0.018;
+
+  const dx = clamp(hostCx - textCx + skewCompX, -10, 10);
+  const dy = clamp(hostCy - textCy + opticalCompY, -10, 10);
 
   displayEl.style.setProperty("--go-nudge-x", `${dx.toFixed(2)}px`);
   displayEl.style.setProperty("--go-nudge-y", `${dy.toFixed(2)}px`);
