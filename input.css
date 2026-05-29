@@ -313,15 +313,12 @@
     --text-secondary: rgb(255 255 255 / 0.72);
     --border-color: rgb(255 255 255 / 0.15);
 
-    --ctl-bg: color-mix(in srgb, var(--surface-color) 70%, #000000 30%);
-    --ctl-bg-hover: color-mix(in srgb, var(--surface-color) 64%, #000000 36%);
+    /* Темный фон -> кнопки как dark theme */
+    --ctl-bg: #18181b;
+    --ctl-bg-hover: #23232a;
     --ctl-fg: #f8fafc;
-    --ctl-border: color-mix(
-      in srgb,
-      color-mix(in srgb, var(--ctl-bg) 72%, var(--bg-color) 28%) 76%,
-      #ffffff 24%
-    );
-    --ctl-shadow: 0 3px 10px rgb(0 0 0 / 0.24);
+    --ctl-border: color-mix(in srgb, #ffffff 22%, transparent);
+    --ctl-shadow: 0 1px 2px rgb(0 0 0 / 0.24), 0 8px 16px rgb(0 0 0 / 0.26);
 
     --ctl-alert-border: color-mix(
       in srgb,
@@ -350,15 +347,12 @@
     --text-secondary: rgb(17 24 39 / 0.68);
     --border-color: rgb(0 0 0 / 0.1);
 
-    --ctl-bg: color-mix(in srgb, var(--surface-color) 86%, #ffffff 14%);
-    --ctl-bg-hover: color-mix(in srgb, var(--surface-color) 80%, #ffffff 20%);
+    /* Светлый фон -> кнопки как light theme */
+    --ctl-bg: #ffffff;
+    --ctl-bg-hover: #f8fafc;
     --ctl-fg: #111827;
-    --ctl-border: color-mix(
-      in srgb,
-      color-mix(in srgb, var(--ctl-bg) 72%, var(--bg-color) 28%) 76%,
-      #111827 24%
-    );
-    --ctl-shadow: 0 2px 8px rgb(0 0 0 / 0.13);
+    --ctl-border: color-mix(in srgb, #111827 16%, transparent);
+    --ctl-shadow: 0 1px 2px rgb(0 0 0 / 0.08), 0 6px 14px rgb(0 0 0 / 0.06);
 
     --ctl-alert-border: color-mix(
       in srgb,
@@ -379,6 +373,48 @@
 
     --ui-hover-bg: rgb(17 24 39 / 0.1);
     --ui-hover-bg-strong: rgb(17 24 39 / 0.16);
+  }
+
+  html.no-adaptive.bg-red-zone body.force-light-text {
+    /* Темный фон в no-adaptive red-zone */
+    --ctl-alert-bg: hsl(28 88% 64%);
+    --ctl-alert-bg-hover: hsl(28 90% 68%);
+    --ctl-alert-bg-active: hsl(27 84% 58%);
+    --ctl-alert-fg: #111827;
+    --ctl-alert-border: color-mix(
+      in srgb,
+      var(--ctl-alert-bg) 54%,
+      #ffffff 20%
+    );
+    --ctl-alert-shadow: var(--ctl-shadow);
+
+    --alert-btn-bg: var(--ctl-alert-bg);
+    --alert-btn-bg-hover: var(--ctl-alert-bg-hover);
+    --alert-btn-bg-active: var(--ctl-alert-bg-active);
+    --alert-btn-fg: var(--ctl-alert-fg);
+    --alert-btn-border: var(--ctl-alert-border);
+    --alert-btn-shadow: var(--ctl-alert-shadow);
+  }
+
+  html.no-adaptive.bg-red-zone body.force-dark-text {
+    /* Светлый фон в no-adaptive red-zone */
+    --ctl-alert-bg: hsl(30 96% 76%);
+    --ctl-alert-bg-hover: hsl(30 98% 72%);
+    --ctl-alert-bg-active: hsl(29 94% 66%);
+    --ctl-alert-fg: #7a2e12;
+    --ctl-alert-border: color-mix(
+      in srgb,
+      var(--ctl-alert-bg) 56%,
+      #111827 20%
+    );
+    --ctl-alert-shadow: var(--ctl-shadow);
+
+    --alert-btn-bg: var(--ctl-alert-bg);
+    --alert-btn-bg-hover: var(--ctl-alert-bg-hover);
+    --alert-btn-bg-active: var(--ctl-alert-bg-active);
+    --alert-btn-fg: var(--ctl-alert-fg);
+    --alert-btn-border: var(--ctl-alert-border);
+    --alert-btn-shadow: var(--ctl-alert-shadow);
   }
 }
 
@@ -758,6 +794,29 @@
     box-shadow:
       inset 0 1px 0 rgb(255 255 255 / 0.12),
       0 8px 18px rgb(0 0 0 / 0.3);
+  }
+
+  /* no-adaptive + red-zone + glass: подстройка по реальной яркости фона */
+  html.no-adaptive.bg-red-zone.glass-effect
+    body.force-light-text
+    .main_btn_red {
+    background: color-mix(in srgb, var(--ctl-alert-bg) 74%, #1b0d0f 26%);
+    color: var(--ctl-alert-fg);
+    border-color: color-mix(in srgb, var(--ctl-alert-border) 84%, #ffffff 16%);
+    backdrop-filter: blur(12px) saturate(145%);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.12),
+      0 8px 18px rgb(0 0 0 / 0.3);
+  }
+
+  html.no-adaptive.bg-red-zone.glass-effect body.force-dark-text .main_btn_red {
+    background: color-mix(in srgb, var(--ctl-alert-bg) 78%, transparent);
+    color: var(--ctl-alert-fg);
+    border-color: color-mix(in srgb, var(--ctl-alert-border) 82%, transparent);
+    backdrop-filter: blur(12px) saturate(145%);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.22),
+      0 5px 12px rgb(0 0 0 / 0.14);
   }
 
   .bg-alert {
@@ -1264,7 +1323,7 @@
     height: 3px;
     border-radius: 999px;
     background: color-mix(in srgb, var(--text-color) 26%, transparent);
-    opacity: 0.4;
+    opacity: 0.5;
     transition:
       opacity var(--dur-short) var(--ease-standard),
       background-color var(--dur-short) var(--ease-standard),
@@ -1611,6 +1670,15 @@
       inset: 0 -10px;
     }
 
+    is(#view-stopwatch, #view-timer, #view-tabata).split-top-hidden
+      .view-bottom-half
+      .resizer_handler {
+      left: 0;
+      right: auto;
+      transform: translateX(0);
+      z-index: 45;
+    }
+
     :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
       .view-top-half {
       flex-basis: 100%;
@@ -1621,7 +1689,7 @@
       .resizer_handler {
       left: auto;
       right: 0;
-      transform: translateX(calc(var(--handler-size) * 0.5));
+      transform: translateX(0);
     }
 
     :is(
@@ -1649,7 +1717,7 @@
       right: 0;
       width: var(--handler-size);
       height: 100%;
-      transform: translateX(calc(var(--handler-size) * 0.5));
+      transform: translateX(0);
     }
 
     #tm-form,
@@ -1747,8 +1815,7 @@
     text-align: center;
     transition:
       font-size var(--dur-short) var(--ease-standard),
-      color var(--dur-short) ease,
-      transform var(--dur-short) var(--ease-standard);
+      color var(--dur-short) ease;
     font-style: normal;
     font-variant-numeric: tabular-nums;
   }
