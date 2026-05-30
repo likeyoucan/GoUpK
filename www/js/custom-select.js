@@ -41,12 +41,50 @@ let globalHandlersBound = false;
  * @returns {void}
  */
 
+function hasOpenSelects() {
+  let hasOpen = false;
+  forEachActiveSelect((select) => {
+    if (select?.isOpen) hasOpen = true;
+  });
+  return hasOpen;
+}
+
+function isTargetInsideAnySelect(target) {
+  if (!(target instanceof Node)) return false;
+
+  let inside = false;
+  forEachActiveSelect((select) => {
+    if (inside || !select) return;
+
+    if (select.container?.contains(target)) {
+      inside = true;
+      return;
+    }
+
+    if (select.optionsPanel?.contains(target)) {
+      inside = true;
+    }
+  });
+
+  return inside;
+}
+
 function bindGlobalHandlersOnce() {
   if (globalHandlersBound) return;
   globalHandlersBound = true;
 
-  document.addEventListener("click", () => {
+  // Single global outside-click closer.
+  // Prevents duplicate close logic per instance and removes flicker/race.
+  document.addEventListener("click", (e) => {
+    if (!hasOpenSelects()) return;
+    if (isTargetInsideAnySelect(e.target)) return;
     closeAllOpenSelects();
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && hasOpenSelects()) {
+      closeAllOpenSelects();
+    }
   });
 
   document.addEventListener(APP_EVENTS.ACCENT_COLOR_CHANGED, () => {
@@ -84,7 +122,6 @@ export class CustomSelect {
     this.isDestroyed = false;
 
     this._instanceAbort = new AbortController();
-    this._openAbort = null;
     this._resizeObserver = null;
     this._rafReposition = 0;
     this._closeTimer = 0;
@@ -153,11 +190,6 @@ export class CustomSelect {
     this.close({ immediate: true });
 
     this._instanceAbort.abort();
-
-    if (this._openAbort) {
-      this._openAbort.abort();
-      this._openAbort = null;
-    }
 
     if (this._resizeObserver) {
       this._resizeObserver.disconnect();
@@ -465,9 +497,6 @@ export class CustomSelect {
 
     closeAllSelectsExcept(this);
 
-    this._openAbort = new AbortController();
-    const openSignal = this._openAbort.signal;
-
     this._movePanelToPortal();
     optionsPanel.classList.remove("hidden");
 
@@ -480,18 +509,6 @@ export class CustomSelect {
     });
 
     lockPageScroll();
-
-    document.addEventListener(
-      "click",
-      (e) => {
-        const target = e.target;
-        if (container.contains(target) || optionsPanel.contains(target)) {
-          return;
-        }
-        this.close();
-      },
-      { capture: true, signal: openSignal },
-    );
 
     requestAnimationFrame(() => {
       if (!this.isOpen || !this._hasCoreNodes()) return;
@@ -525,11 +542,6 @@ export class CustomSelect {
 
     const { trigger, optionsPanel, container } = this._getCoreNodesOrThrow();
     this.isOpen = false;
-
-    if (this._openAbort) {
-      this._openAbort.abort();
-      this._openAbort = null;
-    }
 
     if (this._rafReposition) {
       cancelAnimationFrame(this._rafReposition);
