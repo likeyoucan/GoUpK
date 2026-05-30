@@ -172,7 +172,7 @@ function applyIconHoverPalette({ root, hue, adaptive, isRedZone }) {
 }
 
 function applyNoAdaptiveRedZoneButtonVars({ root, shouldUseDarkText }) {
-  // One red/orange palette, but border sync follows visual theme.
+  // Unified orange-red danger palette.
   const alertBg = "hsl(8 78% 52%)";
   const alertBgHover = "hsl(8 80% 56%)";
   const alertBgActive = "hsl(8 74% 47%)";
@@ -182,12 +182,23 @@ function applyNoAdaptiveRedZoneButtonVars({ root, shouldUseDarkText }) {
   root.style.setProperty("--ctl-alert-bg-active", alertBgActive);
   root.style.setProperty("--ctl-alert-fg", "#ffffff");
 
-  // Sync border style with active visual mode:
-  // - light mode surface => light-theme border formula
-  // - dark mode surface => dark-theme border formula
+  // Sync neutral shadow with effective light/dark mode from background luminance.
+  if (shouldUseDarkText) {
+    root.style.setProperty(
+      "--ctl-shadow",
+      "0 1px 2px rgb(0 0 0 / 0.08), 0 6px 14px rgb(0 0 0 / 0.06)",
+    );
+  } else {
+    root.style.setProperty(
+      "--ctl-shadow",
+      "0 1px 2px rgb(0 0 0 / 0.22), 0 8px 16px rgb(0 0 0 / 0.24)",
+    );
+  }
+
+  // Border follows effective visual mode (light vs dark).
   const border = shouldUseDarkText
     ? "color-mix(in srgb, var(--ctl-alert-bg) 56%, #111827 20%)"
-    : "color-mix(in srgb, var(--ctl-alert-bg) 58%, #7f1d1d 42%)";
+    : "color-mix(in srgb, var(--ctl-alert-bg) 52%, color-mix(in srgb, var(--bg-color) 55%, var(--border-color) 45%) 48%)";
 
   root.style.setProperty("--ctl-alert-border", border);
   root.style.setProperty("--ctl-alert-shadow", "var(--ctl-shadow)");

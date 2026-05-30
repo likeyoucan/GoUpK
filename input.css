@@ -726,15 +726,51 @@
       0 4px 12px rgb(0 0 0 / 0.1);
   }
 
-  html.no-adaptive.glass-effect body.force-light-text .main_btn {
-    background: color-mix(in srgb, #ffffff 82%, transparent);
-    color: #111827;
-    border-color: color-mix(in srgb, #111827 16%, #ffffff 84%);
-    backdrop-filter: blur(14px) saturate(145%);
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.4),
-      0 4px 12px rgb(0 0 0 / 0.08);
-  }
+  /* no-adaptive + dark background + glass */
+html.no-adaptive.bg-deep-dark.glass-effect .main_btn {
+  background: color-mix(in srgb, var(--surface-color) 24%, transparent);
+  color: var(--ctl-fg);
+  border-color: color-mix(in srgb, var(--ctl-border) 68%, #ffffff 32%);
+  backdrop-filter: blur(14px) saturate(145%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.1),
+    0 3px 10px rgb(0 0 0 / 0.24);
+}
+
+html.no-adaptive.bg-deep-dark.glass-effect .main_btn_red {
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--ctl-alert-bg) 76%, #2a1013 24%),
+    color-mix(in srgb, var(--ctl-alert-bg-active) 86%, #1b0d0f 14%)
+  );
+  color: var(--ctl-alert-fg);
+  border-color: color-mix(in srgb, var(--ctl-alert-border) 80%, #ffffff 20%);
+  backdrop-filter: blur(12px) saturate(145%);
+  box-shadow:
+    inset 0 1px 1px rgb(255 255 255 / 0.14),
+    0 10px 20px rgb(0 0 0 / 0.36);
+}
+
+/* no-adaptive + light background + glass */
+html.no-adaptive:not(.bg-deep-dark).glass-effect .main_btn {
+  background: color-mix(in srgb, var(--surface-color) 36%, transparent);
+  color: var(--ctl-fg);
+  border-color: color-mix(in srgb, var(--ctl-border) 72%, #ffffff 28%);
+  backdrop-filter: blur(14px) saturate(145%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.34),
+    0 4px 12px rgb(0 0 0 / 0.1);
+}
+
+html.no-adaptive:not(.bg-deep-dark).glass-effect .main_btn_red {
+  background: color-mix(in srgb, var(--ctl-alert-bg) 84%, transparent);
+  color: var(--ctl-alert-fg);
+  border-color: color-mix(in srgb, var(--ctl-alert-border) 84%, transparent);
+  backdrop-filter: blur(12px) saturate(145%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.22),
+    0 5px 12px rgb(0 0 0 / 0.14);
+}
 
   .glass-effect .main_btn_red {
     background-color: color-mix(in srgb, var(--ctl-alert-bg) 78%, transparent);
