@@ -1597,207 +1597,207 @@
   }
 
   /* landscape tablet/desktop */
-  @media (min-width: 768px) and (orientation: landscape) {
-    :root {
-      --split: 50%;
-    }
-
-    #view-stopwatch,
-    #view-timer,
-    #view-tabata {
-      /* Important: include safe area to avoid tablet offset drift */
-      --landscape-bottom-offset: var(--nav-total);
-      padding-bottom: var(--landscape-bottom-offset);
-      flex-direction: row;
-      align-items: stretch;
-    }
-
-    #tb-runningControls {
-      justify-content: center;
-    }
-
-    .view-top-half {
-      position: relative;
-      border-right: none;
-    }
-
-    .view-top-half::after {
-      content: "";
-      position: absolute;
-      top: 0;
-      right: 0;
-      width: 1px;
-      height: 100%;
-      background: var(--border-color);
-      opacity: 1;
-      pointer-events: none;
-      transition:
-        opacity var(--dur-short) var(--ease-standard),
-        background-color var(--dur-short) ease;
-    }
-
-    :is(#view-stopwatch, #view-timer, #view-tabata).split-top-hidden
-      .view-top-half::after,
-    :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
-      .view-top-half::after {
-      opacity: 0;
-    }
-
-    :is(#view-stopwatch, #view-timer, #view-tabata).split-live
-      .view-top-half::after {
-      opacity: calc(1 - max(var(--collapse-top-k), var(--collapse-bottom-k)));
-    }
-
-    .view-bottom-half {
-      padding-bottom: 0;
-      min-width: 0;
-      flex-direction: row;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .top_content {
-      --top-pad: var(--space-4);
-      --title-rail: 44px;
-      --action-rail: 52px;
-      max-height: min(62.5dvw, 620px);
-    }
-
-    .mid_content {
-      padding-block: var(--space-6);
-      padding-top: var(--space-6);
-      padding-inline: 0;
-    }
-
-    .mid_content > div.app-border {
-      border: none;
-    }
-
-    .resizer_handler {
-      top: 0;
-      bottom: var(--landscape-bottom-offset);
-      left: calc(var(--handler-size) * -0.5);
-      right: auto;
-      width: var(--handler-size);
-      height: auto;
-      transform: none;
-    }
-
-    .resizer_handler::before {
-      width: 3px;
-      height: clamp(28px, 20vh, 72px);
-    }
-
-    .resizer_handler::after {
-      inset: 0 -10px;
-    }
-
-    :is(#view-stopwatch, #view-timer, #view-tabata).split-top-hidden
-      .view-bottom-half
-      .resizer_handler {
-      top: 0;
-      bottom: var(--landscape-bottom-offset);
-      left: calc(var(--handler-size) * -0.5);
-      right: auto;
-      width: var(--handler-size);
-      height: auto;
-      transform: none;
-      z-index: 45;
-    }
-
-    :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
-      .view-top-half {
-      flex: 1 1 auto;
-      min-width: 0;
-    }
-
-    :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
-      .view-bottom-half {
-      position: absolute;
-      top: 0;
-      bottom: var(--landscape-bottom-offset);
-      right: 0;
-      left: auto;
-      width: 0;
-      min-width: 0;
-      flex: 0 0 0;
-      height: auto;
-      min-height: 0;
-      overflow: visible;
-      pointer-events: none;
-      z-index: 45;
-      padding-bottom: 0;
-    }
-
-    :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
-      .view-bottom-half
-      .resizer_handler {
-      pointer-events: auto;
-      top: 0;
-      bottom: var(--landscape-bottom-offset);
-      left: auto;
-      right: calc(var(--handler-size) * -0.5);
-      width: var(--handler-size);
-      height: auto;
-      transform: none;
-    }
-
-    :is(
-        #view-stopwatch,
-        #view-timer,
-        #view-tabata
-      ).split-animating[data-split-target="bottom"]
-      .view-bottom-half {
-      position: relative;
-      top: auto;
-      right: auto;
-      bottom: auto;
-      left: auto;
-      width: var(--handler-size);
-      min-width: var(--handler-size);
-      flex: 0 0 var(--handler-size);
-      height: auto;
-      min-height: 0;
-      overflow: visible;
-      padding-bottom: 0;
-      pointer-events: auto;
-    }
-
-    :is(
-        #view-stopwatch,
-        #view-timer,
-        #view-tabata
-      ).split-animating[data-split-target="bottom"]
-      .resizer_handler {
-      top: 0;
-      bottom: var(--landscape-bottom-offset);
-      left: calc(var(--handler-size) * -0.5);
-      right: auto;
-      width: var(--handler-size);
-      height: auto;
-      transform: none;
-    }
-
-    #tm-form,
-    #tm-adjust-controls,
-    #tm-resetBtn-wrap,
-    #tm-restartBtn-wrap {
-      flex: 1;
-    }
-
-    .view-top-half h2 {
-      font-size: 0.85rem;
-      letter-spacing: 0.25em;
-    }
-
-    #tb-activeName {
-      padding-top: 8px;
-    }
-
-    #tm-adjust-controls {
-      margin: 0;
-    }
+ @media (min-width: 768px) and (orientation: landscape) {
+  :root {
+    --split: 50%;
   }
+
+  #view-stopwatch,
+  #view-timer,
+  #view-tabata {
+    /* Important: include safe area to avoid tablet offset drift */
+    --landscape-bottom-offset: var(--nav-total);
+    padding-bottom: var(--landscape-bottom-offset);
+    flex-direction: row;
+    align-items: stretch;
+  }
+
+  #tb-runningControls {
+    justify-content: center;
+  }
+
+  .view-top-half {
+    position: relative;
+    border-right: none;
+  }
+
+  .view-top-half::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 1px;
+    height: 100%;
+    background: var(--border-color);
+    opacity: 1;
+    pointer-events: none;
+    transition:
+      opacity var(--dur-short) var(--ease-standard),
+      background-color var(--dur-short) ease;
+  }
+
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-top-hidden
+    .view-top-half::after,
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
+    .view-top-half::after {
+    opacity: 0;
+  }
+
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-live
+    .view-top-half::after {
+    opacity: calc(1 - max(var(--collapse-top-k), var(--collapse-bottom-k)));
+  }
+
+  .view-bottom-half {
+    padding-bottom: 0;
+    min-width: 0;
+    flex-direction: row;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .top_content {
+    --top-pad: var(--space-4);
+    --title-rail: 44px;
+    --action-rail: 52px;
+    max-height: min(62.5dvw, 620px);
+  }
+
+  .mid_content {
+    padding-block: var(--space-6);
+    padding-top: var(--space-6);
+    padding-inline: 0;
+  }
+
+  .mid_content > div.app-border {
+    border: none;
+  }
+
+  .resizer_handler {
+    top: 0;
+    bottom: var(--landscape-bottom-offset);
+    left: calc(var(--handler-size) * -0.5);
+    right: auto;
+    width: var(--handler-size);
+    height: auto;
+    transform: none;
+  }
+
+  .resizer_handler::before {
+    width: 3px;
+    height: clamp(28px, 20vh, 72px);
+  }
+
+  .resizer_handler::after {
+    inset: 0 -10px;
+  }
+
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-top-hidden
+    .view-bottom-half
+    .resizer_handler {
+    top: 0;
+    bottom: var(--landscape-bottom-offset);
+    left: calc(var(--handler-size) * -0.5);
+    right: auto;
+    width: var(--handler-size);
+    height: auto;
+    transform: none;
+    z-index: 45;
+  }
+
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
+    .view-top-half {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
+    .view-bottom-half {
+    position: absolute;
+    top: 0;
+    bottom: var(--landscape-bottom-offset);
+    right: 0;
+    left: auto;
+    width: 0;
+    min-width: 0;
+    flex: 0 0 0;
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+    pointer-events: none;
+    z-index: 45;
+    padding-bottom: 0;
+  }
+
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
+    .view-bottom-half
+    .resizer_handler {
+    pointer-events: auto;
+    top: 0;
+    bottom: var(--landscape-bottom-offset);
+    left: auto;
+    right: calc(var(--handler-size) * -0.5);
+    width: var(--handler-size);
+    height: auto;
+    transform: none;
+  }
+
+  :is(
+      #view-stopwatch,
+      #view-timer,
+      #view-tabata
+    ).split-animating[data-split-target="bottom"]
+    .view-bottom-half {
+    position: relative;
+    top: auto;
+    right: auto;
+    bottom: auto;
+    left: auto;
+    width: var(--handler-size);
+    min-width: var(--handler-size);
+    flex: 0 0 var(--handler-size);
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+    padding-bottom: 0;
+    pointer-events: auto;
+  }
+
+  :is(
+      #view-stopwatch,
+      #view-timer,
+      #view-tabata
+    ).split-animating[data-split-target="bottom"]
+    .resizer_handler {
+    top: 0;
+    bottom: var(--landscape-bottom-offset);
+    left: calc(var(--handler-size) * -0.5);
+    right: auto;
+    width: var(--handler-size);
+    height: auto;
+    transform: none;
+  }
+
+  #tm-form,
+  #tm-adjust-controls,
+  #tm-resetBtn-wrap,
+  #tm-restartBtn-wrap {
+    flex: 1;
+  }
+
+  .view-top-half h2 {
+    font-size: 0.85rem;
+    letter-spacing: 0.25em;
+  }
+
+  #tb-activeName {
+    padding-top: 8px;
+  }
+
+  #tm-adjust-controls {
+    margin: 0;
+  }
+}
 
   @media (min-width: 375px) and (orientation: portrait) {
     .top_content {
