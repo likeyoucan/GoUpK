@@ -371,6 +371,13 @@
     --ctl-shadow: 0 1px 2px rgb(0 0 0 / 0.08), 0 6px 14px rgb(0 0 0 / 0.06);
   }
 
+  /* no-adaptive red-zone palette is controlled from JS (theme-colors.js)
+   to keep border/text synchronized with real light/dark background mode. */
+  html.no-adaptive.bg-red-zone {
+    --alert-color: hsl(24 86% 56%);
+    --alert-color-fg: #ffffff;
+  }
+
   /* adaptive ON: кнопки только от темы */
   html:not(.no-adaptive):not(.dark) body.force-light-text,
   html:not(.no-adaptive):not(.dark) body.force-dark-text {
