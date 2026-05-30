@@ -1597,7 +1597,7 @@
   }
 
   /* landscape tablet/desktop */
- @media (min-width: 768px) and (orientation: landscape) {
+@media (min-width: 768px) and (orientation: landscape) {
   :root {
     --split: 50%;
   }
@@ -1605,7 +1605,7 @@
   #view-stopwatch,
   #view-timer,
   #view-tabata {
-    /* Important: include safe area to avoid tablet offset drift */
+    /* include safe-area + nav offset on tablet landscape */
     --landscape-bottom-offset: var(--nav-total);
     padding-bottom: var(--landscape-bottom-offset);
     flex-direction: row;
@@ -1675,7 +1675,7 @@
 
   .resizer_handler {
     top: 0;
-    bottom: var(--landscape-bottom-offset);
+    bottom: 0; /* fixed: avoid double offset (container already has padding-bottom) */
     left: calc(var(--handler-size) * -0.5);
     right: auto;
     width: var(--handler-size);
@@ -1696,7 +1696,7 @@
     .view-bottom-half
     .resizer_handler {
     top: 0;
-    bottom: var(--landscape-bottom-offset);
+    bottom: 0;
     left: calc(var(--handler-size) * -0.5);
     right: auto;
     width: var(--handler-size);
@@ -1715,7 +1715,7 @@
     .view-bottom-half {
     position: absolute;
     top: 0;
-    bottom: var(--landscape-bottom-offset);
+    bottom: 0; /* fixed: avoid extra lift */
     right: 0;
     left: auto;
     width: 0;
@@ -1734,7 +1734,7 @@
     .resizer_handler {
     pointer-events: auto;
     top: 0;
-    bottom: var(--landscape-bottom-offset);
+    bottom: 0;
     left: auto;
     right: calc(var(--handler-size) * -0.5);
     width: var(--handler-size);
@@ -1770,7 +1770,7 @@
     ).split-animating[data-split-target="bottom"]
     .resizer_handler {
     top: 0;
-    bottom: var(--landscape-bottom-offset);
+    bottom: 0;
     left: calc(var(--handler-size) * -0.5);
     right: auto;
     width: var(--handler-size);
@@ -1805,7 +1805,7 @@
     }
   }
 
-  /* @media (min-width: 1281px) and (orientation: landscape) {
+  @media (min-width: 1281px) and (orientation: landscape) {
     :is(#view-stopwatch, #view-timer, #view-tabata) {
       --landscape-bottom-offset: 0px;
     }
@@ -1847,7 +1847,7 @@
       pointer-events: none;
       padding-bottom: 0;
     }
-  } */
+  }
 
   /* TIMER RING */
   .timer-circle-wrap {
