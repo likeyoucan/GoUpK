@@ -170,12 +170,6 @@
     --select-panel-bg: var(--surface-color);
     --select-panel-border: var(--border-color);
 
-    --icon-share-hover-color: #16a34a;
-    --icon-share-hover-bg: color-mix(in srgb, #16a34a 16%, transparent);
-
-    --icon-edit-hover-color: #2563eb;
-    --icon-edit-hover-bg: color-mix(in srgb, #2563eb 16%, transparent);
-
     --icon-delete-hover-color: color-mix(
       in srgb,
       var(--alert-color) 92%,
@@ -624,7 +618,6 @@
     transition: stroke var(--dur-short) ease;
   }
 
-  /* Shared iOS-like control shell */
   /* Shared iOS-like control shell */
   .btn-shell,
   .main_btn,
@@ -1783,7 +1776,7 @@
       right: auto;
       width: var(--handler-size);
       height: auto;
-      transform: translateX(-56%);
+      transform: translateX(-50%);
     }
 
     #tm-form,
