@@ -1676,12 +1676,11 @@
     .resizer_handler {
       top: 0;
       bottom: var(--landscape-bottom-offset);
-      left: 0;
+      left: calc(var(--handler-size) * -0.5);
       right: auto;
       width: var(--handler-size);
       height: auto;
-      /* Slightly left like mobile visual */
-      transform: translateX(-50%);
+      transform: none;
     }
 
     .resizer_handler::before {
@@ -1698,11 +1697,11 @@
       .resizer_handler {
       top: 0;
       bottom: var(--landscape-bottom-offset);
-      left: 0;
+      left: calc(var(--handler-size) * -0.5);
       right: auto;
       width: var(--handler-size);
       height: auto;
-      transform: translateX(-50%);
+      transform: none;
       z-index: 45;
     }
 
@@ -1737,10 +1736,10 @@
       top: 0;
       bottom: var(--landscape-bottom-offset);
       left: auto;
-      right: 0;
+      right: calc(var(--handler-size) * -0.5);
       width: var(--handler-size);
       height: auto;
-      transform: translateX(50%);
+      transform: none;
     }
 
     :is(
@@ -1772,11 +1771,11 @@
       .resizer_handler {
       top: 0;
       bottom: var(--landscape-bottom-offset);
-      left: 0;
+      left: calc(var(--handler-size) * -0.5);
       right: auto;
       width: var(--handler-size);
       height: auto;
-      transform: translateX(-50%);
+      transform: none;
     }
 
     #tm-form,
