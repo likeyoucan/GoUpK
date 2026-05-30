@@ -1805,6 +1805,10 @@
   }
 
   @media (min-width: 1281px) and (orientation: landscape) {
+    :is(#view-stopwatch, #view-timer, #view-tabata) {
+      --landscape-bottom-offset: 0px;
+    }
+
     #app {
       width: 960px;
       max-width: 960px;
