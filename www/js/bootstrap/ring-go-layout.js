@@ -58,10 +58,10 @@ function applyDisplayScale(displayEl, ringPx, rowLayout) {
   const phiInv = 0.618;
 
   if (isGo) {
-    // Landscape: немного крупнее, Portrait: немного компактнее.
-    const goRatio = rowLayout ? 0.258 : 0.238;
+    // Landscape: чуть крупнее, portrait: заметно крупнее чем было.
+    const goRatio = rowLayout ? 0.27 : 0.265;
     const raw = ringPx * goRatio * phiInv * 1.62;
-    const goPx = snap4(clamp(raw, rowLayout ? 60 : 52, rowLayout ? 120 : 108));
+    const goPx = snap4(clamp(raw, rowLayout ? 64 : 58, rowLayout ? 126 : 114));
 
     displayEl.style.setProperty("--go-font-dynamic", `${goPx}px`);
     displayEl.style.setProperty("--go-skew-deg", "-11deg");
@@ -106,12 +106,12 @@ function centerGoDisplay(displayEl) {
   const textCx = textRect.left + textRect.width / 2;
   const textCy = textRect.top + textRect.height / 2;
 
-  // Оптическая поправка под сильный skew.
-  const skewCompX = textRect.width * 0.015;
-  const opticalCompY = -textRect.height * 0.02;
+  // Оптическая компенсация skew: слегка влево и немного вверх.
+  const skewCompX = -textRect.width * 0.02;
+  const opticalCompY = -textRect.height * 0.01;
 
-  const dx = clamp(hostCx - textCx + skewCompX, -10, 10);
-  const dy = clamp(hostCy - textCy + opticalCompY, -10, 10);
+  const dx = clamp(hostCx - textCx + skewCompX, -14, 14);
+  const dy = clamp(hostCy - textCy + opticalCompY, -12, 12);
 
   displayEl.style.setProperty("--go-nudge-x", `${dx.toFixed(2)}px`);
   displayEl.style.setProperty("--go-nudge-y", `${dy.toFixed(2)}px`);

@@ -341,27 +341,6 @@
     --ctl-shadow: 0 1px 2px rgb(0 0 0 / 0.24), 0 8px 16px rgb(0 0 0 / 0.26);
   }
 
-  /* no-adaptive: поведение по реальной яркости фона */
-  html.no-adaptive body.force-light-text {
-    /* Темный фон -> темные нейтральные кнопки */
-    --ctl-bg: #18181b;
-    --ctl-bg-hover: #23232a;
-    --ctl-fg: #f8fafc;
-    --ctl-border: color-mix(in srgb, #ffffff 22%, transparent);
-    --ctl-shadow: 0 1px 2px rgb(0 0 0 / 0.24), 0 8px 16px rgb(0 0 0 / 0.26);
-
-    /* Базовый danger (не red-zone) */
-    --ctl-alert-bg: hsl(357 94% 56%);
-    --ctl-alert-bg-hover: hsl(357 96% 60%);
-    --ctl-alert-bg-active: hsl(357 88% 51%);
-    --ctl-alert-fg: #ffffff;
-    --ctl-alert-border: color-mix(
-      in srgb,
-      var(--ctl-alert-bg) 58%,
-      #7f1d1d 42%
-    );
-  }
-
   html.no-adaptive body.force-dark-text {
     /* Светлый фон -> светлые нейтральные кнопки */
     --ctl-bg: #ffffff;
@@ -727,50 +706,50 @@
   }
 
   /* no-adaptive + dark background + glass */
-html.no-adaptive.bg-deep-dark.glass-effect .main_btn {
-  background: color-mix(in srgb, var(--surface-color) 24%, transparent);
-  color: var(--ctl-fg);
-  border-color: color-mix(in srgb, var(--ctl-border) 68%, #ffffff 32%);
-  backdrop-filter: blur(14px) saturate(145%);
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.1),
-    0 3px 10px rgb(0 0 0 / 0.24);
-}
+  html.no-adaptive.bg-deep-dark.glass-effect .main_btn {
+    background: color-mix(in srgb, var(--surface-color) 24%, transparent);
+    color: var(--ctl-fg);
+    border-color: color-mix(in srgb, var(--ctl-border) 68%, #ffffff 32%);
+    backdrop-filter: blur(14px) saturate(145%);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.1),
+      0 3px 10px rgb(0 0 0 / 0.24);
+  }
 
-html.no-adaptive.bg-deep-dark.glass-effect .main_btn_red {
-  background: linear-gradient(
-    160deg,
-    color-mix(in srgb, var(--ctl-alert-bg) 76%, #2a1013 24%),
-    color-mix(in srgb, var(--ctl-alert-bg-active) 86%, #1b0d0f 14%)
-  );
-  color: var(--ctl-alert-fg);
-  border-color: color-mix(in srgb, var(--ctl-alert-border) 80%, #ffffff 20%);
-  backdrop-filter: blur(12px) saturate(145%);
-  box-shadow:
-    inset 0 1px 1px rgb(255 255 255 / 0.14),
-    0 10px 20px rgb(0 0 0 / 0.36);
-}
+  html.no-adaptive.bg-deep-dark.glass-effect .main_btn_red {
+    background: linear-gradient(
+      160deg,
+      color-mix(in srgb, var(--ctl-alert-bg) 76%, #2a1013 24%),
+      color-mix(in srgb, var(--ctl-alert-bg-active) 86%, #1b0d0f 14%)
+    );
+    color: var(--ctl-alert-fg);
+    border-color: color-mix(in srgb, var(--ctl-alert-border) 80%, #ffffff 20%);
+    backdrop-filter: blur(12px) saturate(145%);
+    box-shadow:
+      inset 0 1px 1px rgb(255 255 255 / 0.14),
+      0 10px 20px rgb(0 0 0 / 0.36);
+  }
 
-/* no-adaptive + light background + glass */
-html.no-adaptive:not(.bg-deep-dark).glass-effect .main_btn {
-  background: color-mix(in srgb, var(--surface-color) 36%, transparent);
-  color: var(--ctl-fg);
-  border-color: color-mix(in srgb, var(--ctl-border) 72%, #ffffff 28%);
-  backdrop-filter: blur(14px) saturate(145%);
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.34),
-    0 4px 12px rgb(0 0 0 / 0.1);
-}
+  /* no-adaptive + light background + glass */
+  html.no-adaptive:not(.bg-deep-dark).glass-effect .main_btn {
+    background: color-mix(in srgb, var(--surface-color) 36%, transparent);
+    color: var(--ctl-fg);
+    border-color: color-mix(in srgb, var(--ctl-border) 72%, #ffffff 28%);
+    backdrop-filter: blur(14px) saturate(145%);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.34),
+      0 4px 12px rgb(0 0 0 / 0.1);
+  }
 
-html.no-adaptive:not(.bg-deep-dark).glass-effect .main_btn_red {
-  background: color-mix(in srgb, var(--ctl-alert-bg) 84%, transparent);
-  color: var(--ctl-alert-fg);
-  border-color: color-mix(in srgb, var(--ctl-alert-border) 84%, transparent);
-  backdrop-filter: blur(12px) saturate(145%);
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.22),
-    0 5px 12px rgb(0 0 0 / 0.14);
-}
+  html.no-adaptive:not(.bg-deep-dark).glass-effect .main_btn_red {
+    background: color-mix(in srgb, var(--ctl-alert-bg) 84%, transparent);
+    color: var(--ctl-alert-fg);
+    border-color: color-mix(in srgb, var(--ctl-alert-border) 84%, transparent);
+    backdrop-filter: blur(12px) saturate(145%);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.22),
+      0 5px 12px rgb(0 0 0 / 0.14);
+  }
 
   .glass-effect .main_btn_red {
     background-color: color-mix(in srgb, var(--ctl-alert-bg) 78%, transparent);
@@ -804,49 +783,6 @@ html.no-adaptive:not(.bg-deep-dark).glass-effect .main_btn_red {
     box-shadow:
       inset 0 1px 1px rgb(255 255 255 / 0.14),
       0 10px 20px rgb(0 0 0 / 0.36);
-  }
-
-  html.no-adaptive.bg-red-zone.glass-effect .main_btn_red {
-    background: color-mix(in srgb, var(--ctl-alert-bg) 78%, transparent);
-    color: var(--ctl-alert-fg);
-    border-color: color-mix(in srgb, var(--ctl-alert-border) 82%, transparent);
-    backdrop-filter: blur(12px) saturate(145%);
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.22),
-      0 5px 12px rgb(0 0 0 / 0.14);
-  }
-
-  html.dark.no-adaptive.bg-red-zone.glass-effect .main_btn_red {
-    background: color-mix(in srgb, var(--ctl-alert-bg) 74%, #1b0d0f 26%);
-    color: var(--ctl-alert-fg);
-    border-color: color-mix(in srgb, var(--ctl-alert-border) 84%, #ffffff 16%);
-    backdrop-filter: blur(12px) saturate(145%);
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.12),
-      0 8px 18px rgb(0 0 0 / 0.3);
-  }
-
-  /* no-adaptive + red-zone + glass: подстройка по реальной яркости фона */
-  html.no-adaptive.bg-red-zone.glass-effect
-    body.force-light-text
-    .main_btn_red {
-    background: color-mix(in srgb, var(--ctl-alert-bg) 84%, transparent);
-    color: var(--ctl-alert-fg);
-    border-color: color-mix(in srgb, var(--ctl-alert-border) 86%, transparent);
-    backdrop-filter: blur(12px) saturate(145%);
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.22),
-      0 5px 12px rgb(0 0 0 / 0.14);
-  }
-
-  html.no-adaptive.bg-red-zone.glass-effect body.force-dark-text .main_btn_red {
-    background: color-mix(in srgb, var(--ctl-alert-bg) 78%, transparent);
-    color: var(--ctl-alert-fg);
-    border-color: color-mix(in srgb, var(--ctl-alert-border) 82%, transparent);
-    backdrop-filter: blur(12px) saturate(145%);
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.22),
-      0 5px 12px rgb(0 0 0 / 0.14);
   }
 
   .bg-alert {
@@ -1752,7 +1688,7 @@ html.no-adaptive:not(.bg-deep-dark).glass-effect .main_btn_red {
       width: var(--handler-size);
       height: auto;
       /* Slightly left like mobile visual */
-      transform: translateX(-56%);
+      transform: translateX(-50%);
     }
 
     .resizer_handler::before {
@@ -1773,7 +1709,7 @@ html.no-adaptive:not(.bg-deep-dark).glass-effect .main_btn_red {
       right: auto;
       width: var(--handler-size);
       height: auto;
-      transform: translateX(-4px);
+      transform: translateX(-50%);
       z-index: 45;
     }
 
@@ -1811,7 +1747,7 @@ html.no-adaptive:not(.bg-deep-dark).glass-effect .main_btn_red {
       right: 0;
       width: var(--handler-size);
       height: auto;
-      transform: translateX(4px);
+      transform: translateX(50%);
     }
 
     :is(
@@ -3865,6 +3801,20 @@ html.no-adaptive:not(.bg-deep-dark).glass-effect .main_btn_red {
       background-color: var(--ui-hover-bg);
     }
 
+    #sw-saveBtn:hover,
+    #sw-saveBtn:focus-visible,
+    #sw-openResultsBtn:hover,
+    #sw-openResultsBtn:focus-visible,
+    #sw-shareBtn:hover,
+    #sw-shareBtn:focus-visible {
+      color: var(--primary-color) !important;
+      background-color: color-mix(
+        in srgb,
+        var(--primary-color) 14%,
+        transparent
+      );
+    }
+
     .app-icon-btn:active {
       background-color: var(--ui-hover-bg-strong);
     }
@@ -3874,14 +3824,14 @@ html.no-adaptive:not(.bg-deep-dark).glass-effect .main_btn_red {
       background-color: color-mix(in srgb, var(--alert-color) 18%, transparent);
     }
 
-    .icon-action-share:hover {
-      color: var(--icon-share-hover-color);
-      background-color: var(--icon-share-hover-bg);
-    }
-
+    .icon-action-share:hover,
     .icon-action-edit:hover {
-      color: var(--icon-edit-hover-color);
-      background-color: var(--icon-edit-hover-bg);
+      color: var(--primary-color);
+      background-color: color-mix(
+        in srgb,
+        var(--primary-color) 16%,
+        transparent
+      );
     }
 
     .icon-action-delete:hover {
