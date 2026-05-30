@@ -1723,8 +1723,11 @@
       --split: 50%;
     }
 
-    :is(#view-stopwatch, #view-timer, #view-tabata) {
-      --landscape-bottom-offset: var(--nav-height);
+    #view-stopwatch,
+    #view-timer,
+    #view-tabata {
+      /* Important: include safe area to avoid tablet offset drift */
+      --landscape-bottom-offset: var(--nav-total);
       padding-bottom: var(--landscape-bottom-offset);
       flex-direction: row;
       align-items: stretch;
@@ -1798,7 +1801,8 @@
       right: auto;
       width: var(--handler-size);
       height: auto;
-      transform: translateX(-50%);
+      /* Slightly left like mobile visual */
+      transform: translateX(-56%);
     }
 
     .resizer_handler::before {
@@ -1819,7 +1823,7 @@
       right: auto;
       width: var(--handler-size);
       height: auto;
-      transform: translateX(0);
+      transform: translateX(-4px);
       z-index: 45;
     }
 
@@ -1857,7 +1861,7 @@
       right: 0;
       width: var(--handler-size);
       height: auto;
-      transform: translateX(0);
+      transform: translateX(4px);
     }
 
     :is(
@@ -1893,7 +1897,7 @@
       right: auto;
       width: var(--handler-size);
       height: auto;
-      transform: translateX(-50%);
+      transform: translateX(-56%);
     }
 
     #tm-form,

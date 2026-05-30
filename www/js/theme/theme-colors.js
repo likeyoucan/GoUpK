@@ -171,6 +171,54 @@ function applyIconHoverPalette({ root, hue, adaptive, isRedZone }) {
   root.style.setProperty("--icon-delete-hover-bg", deleteBg);
 }
 
+function applyNoAdaptiveRedZoneButtonVars({ root, shouldUseDarkText }) {
+  // One red/orange palette, but border sync follows visual theme.
+  const alertBg = "hsl(8 78% 52%)";
+  const alertBgHover = "hsl(8 80% 56%)";
+  const alertBgActive = "hsl(8 74% 47%)";
+
+  root.style.setProperty("--ctl-alert-bg", alertBg);
+  root.style.setProperty("--ctl-alert-bg-hover", alertBgHover);
+  root.style.setProperty("--ctl-alert-bg-active", alertBgActive);
+  root.style.setProperty("--ctl-alert-fg", "#ffffff");
+
+  // Sync border style with active visual mode:
+  // - light mode surface => light-theme border formula
+  // - dark mode surface => dark-theme border formula
+  const border = shouldUseDarkText
+    ? "color-mix(in srgb, var(--ctl-alert-bg) 56%, #111827 20%)"
+    : "color-mix(in srgb, var(--ctl-alert-bg) 58%, #7f1d1d 42%)";
+
+  root.style.setProperty("--ctl-alert-border", border);
+  root.style.setProperty("--ctl-alert-shadow", "var(--ctl-shadow)");
+
+  root.style.setProperty("--alert-btn-bg", "var(--ctl-alert-bg)");
+  root.style.setProperty("--alert-btn-bg-hover", "var(--ctl-alert-bg-hover)");
+  root.style.setProperty("--alert-btn-bg-active", "var(--ctl-alert-bg-active)");
+  root.style.setProperty("--alert-btn-fg", "var(--ctl-alert-fg)");
+  root.style.setProperty("--alert-btn-border", "var(--ctl-alert-border)");
+  root.style.setProperty("--alert-btn-shadow", "var(--ctl-alert-shadow)");
+}
+
+function clearNoAdaptiveRedZoneButtonVars(root) {
+  const keys = [
+    "--ctl-alert-bg",
+    "--ctl-alert-bg-hover",
+    "--ctl-alert-bg-active",
+    "--ctl-alert-fg",
+    "--ctl-alert-border",
+    "--ctl-alert-shadow",
+    "--alert-btn-bg",
+    "--alert-btn-bg-hover",
+    "--alert-btn-bg-active",
+    "--alert-btn-fg",
+    "--alert-btn-border",
+    "--alert-btn-shadow",
+  ];
+
+  keys.forEach((k) => root.style.removeProperty(k));
+}
+
 export function applyAccentVars({ hex, rootEl, hexToHSL }) {
   const isDark = rootEl.classList.contains("dark");
   const isRedZone =
@@ -255,7 +303,9 @@ export function applyBgTheme({
   if (hex === "default") {
     root.style.removeProperty("--bg-color");
     root.style.removeProperty("--surface-color");
-    root.classList.remove("bg-red-zone");
+    root.classList.remove("bg-red-zone", "bg-deep-dark");
+
+    clearNoAdaptiveRedZoneButtonVars(root);
 
     applyIconHoverPalette({
       root,
@@ -274,6 +324,10 @@ export function applyBgTheme({
   const isRedZone = !isAdaptive && isRedLikeHue(h) && s > 20;
   root.classList.toggle("bg-red-zone", isRedZone);
 
+  // Mark really dark custom backgrounds for no-adaptive control skin.
+  const isDeepDark = !isAdaptive && luminance < 0.42;
+  root.classList.toggle("bg-deep-dark", isDeepDark);
+
   applyIconHoverPalette({
     root,
     hue: h,
@@ -282,7 +336,6 @@ export function applyBgTheme({
   });
 
   if (!isAdaptive) {
-    // Keep theme mode independent from background adaptation.
     const shouldUseDarkText = luminance >= 0.52;
 
     root.style.setProperty("--bg-color", hex);
@@ -295,8 +348,18 @@ export function applyBgTheme({
 
     document.body.classList.toggle("force-light-text", !shouldUseDarkText);
     document.body.classList.toggle("force-dark-text", shouldUseDarkText);
+
+    if (isRedZone) {
+      applyNoAdaptiveRedZoneButtonVars({ root, shouldUseDarkText });
+    } else {
+      clearNoAdaptiveRedZoneButtonVars(root);
+    }
+
     return;
   }
+
+  root.classList.remove("bg-deep-dark");
+  clearNoAdaptiveRedZoneButtonVars(root);
 
   const isDarkLocal = root.classList.contains("dark");
   const sat = isDarkLocal ? Math.min(s, 40) : Math.max(s, 20);
