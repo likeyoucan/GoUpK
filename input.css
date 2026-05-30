@@ -1795,22 +1795,23 @@
     }
 
     .resizer_handler {
+      --handler-hit-size: clamp(26px, 3.4vw, 40px);
       top: 0;
       bottom: 0;
       left: 0;
       right: auto;
-      width: var(--handler-size);
+      width: var(--handler-hit-size);
       height: 100%;
       transform: translateX(-50%);
     }
 
     .resizer_handler::before {
       width: 3px;
-      height: clamp(28px, 20vh, 72px);
+      height: clamp(32px, 24vh, 88px);
     }
 
     .resizer_handler::after {
-      inset: 0 -10px;
+      inset: 0 -14px;
     }
 
     :is(#view-stopwatch, #view-timer, #view-tabata).split-top-hidden
@@ -1820,9 +1821,9 @@
       bottom: 0;
       left: 0;
       right: auto;
-      width: var(--handler-size);
+      width: var(--handler-hit-size);
       height: 100%;
-      transform: translateX(0);
+      transform: translateX(-50%);
       z-index: 45;
     }
 
@@ -1858,9 +1859,9 @@
       bottom: 0;
       left: auto;
       right: 0;
-      width: var(--handler-size);
+      width: var(--handler-hit-size);
       height: 100%;
-      transform: translateX(0);
+      transform: translateX(50%);
     }
 
     :is(
@@ -1894,7 +1895,7 @@
       bottom: 0;
       left: 0;
       right: auto;
-      width: var(--handler-size);
+      width: var(--handler-hit-size);
       height: 100%;
       transform: translateX(-50%);
     }
@@ -1917,6 +1918,21 @@
 
     #tm-adjust-controls {
       margin: 0;
+    }
+  }
+
+  @media (min-width: 768px) and (max-width: 1280px) and (orientation: landscape) {
+    :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
+      .view-bottom-half {
+      top: 0;
+      bottom: var(--nav-height);
+    }
+
+    :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
+      .view-bottom-half
+      .resizer_handler {
+      top: 0;
+      bottom: 0;
     }
   }
 
