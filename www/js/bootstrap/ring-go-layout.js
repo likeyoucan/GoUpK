@@ -58,7 +58,6 @@ function applyDisplayScale(displayEl, ringPx, rowLayout) {
   const phiInv = 0.618;
 
   if (isGo) {
-    // Landscape: чуть крупнее, portrait: заметно крупнее чем было.
     const goRatio = rowLayout ? 0.27 : 0.265;
     const raw = ringPx * goRatio * phiInv * 1.62;
     const goPx = snap4(clamp(raw, rowLayout ? 64 : 58, rowLayout ? 126 : 114));
@@ -68,7 +67,6 @@ function applyDisplayScale(displayEl, ringPx, rowLayout) {
     return;
   }
 
-  // Цифры отдельно от GO, адаптивно.
   const hasMs = text.includes(".");
   const base = rowLayout ? (hasMs ? 0.132 : 0.152) : hasMs ? 0.124 : 0.144;
   const rawTimer = ringPx * base;
@@ -94,7 +92,10 @@ function centerGoDisplay(displayEl) {
   const host = displayEl.closest("button");
   if (!host) return;
 
-  // Сбрасываем перед измерением, чтобы не копился drift.
+  const wrap = getRingWrapForDisplay(displayEl);
+  const rowLayout = isRowLayout(getTopHalfEl(wrap));
+
+  // Сброс перед измерением.
   displayEl.style.setProperty("--go-nudge-x", "0px");
   displayEl.style.setProperty("--go-nudge-y", "0px");
 
@@ -106,12 +107,17 @@ function centerGoDisplay(displayEl) {
   const textCx = textRect.left + textRect.width / 2;
   const textCy = textRect.top + textRect.height / 2;
 
-  // Оптическая компенсация skew: слегка влево и немного вверх.
-  const skewCompX = -textRect.width * 0.02;
-  const opticalCompY = -textRect.height * 0.01;
+  // Оптическая компенсация для наклонного "GO":
+  // слегка вправо, чтобы визуальный центр совпадал с центром кольца.
+  const opticalCompX =
+    clamp(textRect.width * (rowLayout ? 0.012 : 0.014), 1.2, rowLayout ? 4.8 : 5.2) +
+    (rowLayout ? 0.35 : 0.2);
 
-  const dx = clamp(hostCx - textCx + skewCompX, -14, 14);
-  const dy = clamp(hostCy - textCy + opticalCompY, -12, 12);
+  // Небольшой вертикальный подъем.
+  const opticalCompY = -clamp(textRect.height * 0.008, 0.4, 2.2);
+
+  const dx = clamp(hostCx - textCx + opticalCompX, -10, 10);
+  const dy = clamp(hostCy - textCy + opticalCompY, -10, 10);
 
   displayEl.style.setProperty("--go-nudge-x", `${dx.toFixed(2)}px`);
   displayEl.style.setProperty("--go-nudge-y", `${dy.toFixed(2)}px`);
