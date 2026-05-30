@@ -1795,7 +1795,8 @@
     }
 
     .resizer_handler {
-      --handler-hit-size: clamp(26px, 3.4vw, 40px);
+      /* Увеличиваем только hit-area по ширине */
+      --handler-hit-size: clamp(30px, 4.4vw, 44px);
       top: 0;
       bottom: 0;
       left: 0;
@@ -1806,12 +1807,14 @@
     }
 
     .resizer_handler::before {
+      /* Возврат к прошлой визуальной высоте полоски */
       width: 3px;
-      height: clamp(32px, 24vh, 88px);
+      height: clamp(28px, 20vh, 72px);
     }
 
     .resizer_handler::after {
-      inset: 0 -14px;
+      /* Доп hit-area, не меняет визуал */
+      inset: 0 -12px;
     }
 
     :is(#view-stopwatch, #view-timer, #view-tabata).split-top-hidden
@@ -1837,13 +1840,13 @@
       .view-bottom-half {
       position: absolute;
       top: 0;
-      bottom: 0;
+      bottom: var(--landscape-bottom-offset, 0px);
       right: 0;
       left: auto;
       width: 0;
       min-width: 0;
       flex: 0 0 0;
-      height: 100%;
+      height: auto;
       min-height: 0;
       overflow: visible;
       pointer-events: none;
@@ -1922,17 +1925,8 @@
   }
 
   @media (min-width: 768px) and (max-width: 1280px) and (orientation: landscape) {
-    :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
-      .view-bottom-half {
-      top: 0;
-      bottom: var(--nav-height);
-    }
-
-    :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
-      .view-bottom-half
-      .resizer_handler {
-      top: 0;
-      bottom: 0;
+    :is(#view-stopwatch, #view-timer, #view-tabata) {
+      --landscape-bottom-offset: var(--nav-height);
     }
   }
 
