@@ -425,15 +425,14 @@
   }
 
   html.no-adaptive.bg-red-zone body.force-dark-text {
-    /* Светлый фон в no-adaptive red-zone */
-    --ctl-alert-bg: hsl(30 96% 76%);
-    --ctl-alert-bg-hover: hsl(30 98% 72%);
-    --ctl-alert-bg-active: hsl(29 94% 66%);
-    --ctl-alert-fg: #7a2e12;
+    --ctl-alert-bg: hsl(8 78% 52%);
+    --ctl-alert-bg-hover: hsl(8 80% 56%);
+    --ctl-alert-bg-active: hsl(8 74% 47%);
+    --ctl-alert-fg: #ffffff;
     --ctl-alert-border: color-mix(
       in srgb,
-      var(--ctl-alert-bg) 56%,
-      #111827 20%
+      var(--ctl-alert-bg) 58%,
+      #7f1d1d 42%
     );
     --ctl-alert-shadow: var(--ctl-shadow);
 
@@ -446,15 +445,14 @@
   }
 
   html.no-adaptive.bg-red-zone body.force-light-text {
-    /* Светлый текстовый режим на red-zone */
-    --ctl-alert-bg: hsl(30 96% 76%);
-    --ctl-alert-bg-hover: hsl(30 98% 72%);
-    --ctl-alert-bg-active: hsl(29 94% 66%);
-    --ctl-alert-fg: #7a2e12;
+    --ctl-alert-bg: hsl(8 78% 52%);
+    --ctl-alert-bg-hover: hsl(8 80% 56%);
+    --ctl-alert-bg-active: hsl(8 74% 47%);
+    --ctl-alert-fg: #ffffff;
     --ctl-alert-border: color-mix(
       in srgb,
-      var(--ctl-alert-bg) 56%,
-      #7a2e12 44%
+      var(--ctl-alert-bg) 58%,
+      #7f1d1d 42%
     );
     --ctl-alert-shadow: var(--ctl-shadow);
 
