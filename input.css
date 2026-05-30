@@ -375,6 +375,25 @@
     --ui-hover-bg-strong: rgb(17 24 39 / 0.16);
   }
 
+  /* no-adaptive + force-light-text:
+   по умолчанию (не deep dark) делаем светлые кнопки */
+  html.no-adaptive:not(.bg-deep-dark) body.force-light-text {
+    --ctl-bg: #ffffff;
+    --ctl-bg-hover: #f8fafc;
+    --ctl-fg: #111827;
+    --ctl-border: color-mix(in srgb, #111827 16%, #ffffff 84%);
+    --ctl-shadow: 0 1px 2px rgb(0 0 0 / 0.08), 0 6px 14px rgb(0 0 0 / 0.08);
+  }
+
+  /* no-adaptive + реально темный фон */
+  html.no-adaptive.bg-deep-dark body.force-light-text {
+    --ctl-bg: #18181b;
+    --ctl-bg-hover: #23232a;
+    --ctl-fg: #f8fafc;
+    --ctl-border: color-mix(in srgb, #ffffff 22%, transparent);
+    --ctl-shadow: 0 1px 2px rgb(0 0 0 / 0.24), 0 8px 16px rgb(0 0 0 / 0.26);
+  }
+
   /* no-adaptive: поведение по реальной яркости фона */
   html.no-adaptive body.force-light-text {
     /* Темный фон -> темные нейтральные кнопки */
@@ -1583,6 +1602,65 @@
     }
   }
 
+  @media (min-width: 768px) and (orientation: portrait) {
+    :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
+      .view-top-half {
+      flex-basis: calc(100% - var(--nav-height) - var(--handler-size));
+      max-height: calc(100% - var(--nav-height) - var(--handler-size));
+    }
+
+    :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
+      .view-bottom-half {
+      flex: 0 0 calc(var(--nav-height) + var(--handler-size));
+      min-height: calc(var(--nav-height) + var(--handler-size));
+      height: calc(var(--nav-height) + var(--handler-size));
+      padding-bottom: 0;
+      overflow: visible;
+      transform: none;
+    }
+
+    :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
+      .view-bottom-half
+      .resizer_handler {
+      top: 0;
+      bottom: auto;
+    }
+
+    :is(
+        #view-stopwatch,
+        #view-timer,
+        #view-tabata
+      ).split-live[data-split-target="bottom"]
+      .view-top-half,
+    :is(
+        #view-stopwatch,
+        #view-timer,
+        #view-tabata
+      ).split-animating[data-split-target="bottom"]
+      .view-top-half {
+      flex-basis: calc(100% - var(--nav-height) - var(--handler-size));
+      max-height: calc(100% - var(--nav-height) - var(--handler-size));
+    }
+
+    :is(
+        #view-stopwatch,
+        #view-timer,
+        #view-tabata
+      ).split-live[data-split-target="bottom"]
+      .view-bottom-half,
+    :is(
+        #view-stopwatch,
+        #view-timer,
+        #view-tabata
+      ).split-animating[data-split-target="bottom"]
+      .view-bottom-half {
+      flex: 0 0 calc(var(--nav-height) + var(--handler-size));
+      min-height: calc(var(--nav-height) + var(--handler-size));
+      height: calc(var(--nav-height) + var(--handler-size));
+      padding-bottom: 0;
+    }
+  }
+
   .view-top-half .top_content {
     opacity: calc(1 - var(--collapse-top-k));
     filter: blur(calc(var(--collapse-top-k) * 2.2px));
@@ -1749,8 +1827,33 @@
     }
 
     :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
+      .view-top-half {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
+      .view-bottom-half {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      right: 0;
+      left: auto;
+      width: 0;
+      min-width: 0;
+      flex: 0 0 0;
+      height: 100%;
+      min-height: 0;
+      overflow: visible;
+      pointer-events: none;
+      z-index: 45;
+      padding-bottom: 0;
+    }
+
+    :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
       .view-bottom-half
       .resizer_handler {
+      pointer-events: auto;
       top: 0;
       bottom: 0;
       left: auto;
@@ -1758,6 +1861,27 @@
       width: var(--handler-size);
       height: 100%;
       transform: translateX(0);
+    }
+
+    :is(
+        #view-stopwatch,
+        #view-timer,
+        #view-tabata
+      ).split-animating[data-split-target="bottom"]
+      .view-bottom-half {
+      position: relative;
+      top: auto;
+      right: auto;
+      bottom: auto;
+      left: auto;
+      width: var(--handler-size);
+      min-width: var(--handler-size);
+      flex: 0 0 var(--handler-size);
+      height: auto;
+      min-height: 0;
+      overflow: visible;
+      padding-bottom: 0;
+      pointer-events: auto;
     }
 
     :is(
@@ -1823,22 +1947,6 @@
 
     .top_content {
       max-height: min(37.5dvw, 500px);
-    }
-
-    :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
-      .view-bottom-half {
-      position: absolute;
-      top: 0;
-      right: 0;
-      bottom: 0;
-      width: var(--handler-size);
-      min-width: var(--handler-size);
-      height: auto;
-      flex: 0 0 auto;
-      overflow: visible;
-      z-index: 45;
-      pointer-events: none;
-      padding-bottom: 0;
     }
   }
 
