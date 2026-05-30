@@ -1605,7 +1605,6 @@
     #view-stopwatch,
     #view-timer,
     #view-tabata {
-      /* include safe-area + nav offset for stable geometry */
       --landscape-bottom-offset: var(--nav-total);
       padding-bottom: var(--landscape-bottom-offset);
       flex-direction: row;
@@ -1715,9 +1714,7 @@
       .view-bottom-half {
       position: absolute;
       top: 0;
-      bottom: var(
-        --landscape-bottom-offset
-      ); /* fixed: remove nav-area from handler geometry */
+      bottom: var(--landscape-bottom-offset);
       right: 0;
       left: auto;
       width: 0;
@@ -1736,9 +1733,7 @@
       .resizer_handler {
       pointer-events: auto;
       top: 0;
-      bottom: var(
-        --landscape-bottom-offset
-      ); /* keep handle centered to content height */
+      bottom: 0; /* важно: не дублируем landscape offset */
       left: auto;
       right: 0;
       width: var(--handler-size);
@@ -1774,9 +1769,7 @@
       ).split-animating[data-split-target="bottom"]
       .resizer_handler {
       top: 0;
-      bottom: var(
-        --landscape-bottom-offset
-      ); /* prevent drop when moving to right edge */
+      bottom: 0; /* важно: не дублируем landscape offset */
       left: 0;
       right: auto;
       width: var(--handler-size);
