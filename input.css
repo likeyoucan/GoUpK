@@ -1723,10 +1723,9 @@
       --split: 50%;
     }
 
-    #view-stopwatch,
-    #view-timer,
-    #view-tabata {
-      padding-bottom: var(--nav-height);
+    :is(#view-stopwatch, #view-timer, #view-tabata) {
+      --landscape-bottom-offset: var(--nav-height);
+      padding-bottom: var(--landscape-bottom-offset);
       flex-direction: row;
       align-items: stretch;
     }
@@ -1794,11 +1793,11 @@
 
     .resizer_handler {
       top: 0;
-      bottom: 0;
+      bottom: var(--landscape-bottom-offset);
       left: 0;
       right: auto;
       width: var(--handler-size);
-      height: 100%;
+      height: auto;
       transform: translateX(-50%);
     }
 
@@ -1815,11 +1814,11 @@
       .view-bottom-half
       .resizer_handler {
       top: 0;
-      bottom: 0;
+      bottom: var(--landscape-bottom-offset);
       left: 0;
       right: auto;
       width: var(--handler-size);
-      height: 100%;
+      height: auto;
       transform: translateX(0);
       z-index: 45;
     }
@@ -1834,13 +1833,13 @@
       .view-bottom-half {
       position: absolute;
       top: 0;
-      bottom: 0;
+      bottom: var(--landscape-bottom-offset);
       right: 0;
       left: auto;
       width: 0;
       min-width: 0;
       flex: 0 0 0;
-      height: 100%;
+      height: auto;
       min-height: 0;
       overflow: visible;
       pointer-events: none;
@@ -1853,11 +1852,11 @@
       .resizer_handler {
       pointer-events: auto;
       top: 0;
-      bottom: 0;
+      bottom: var(--landscape-bottom-offset);
       left: auto;
       right: 0;
       width: var(--handler-size);
-      height: 100%;
+      height: auto;
       transform: translateX(0);
     }
 
@@ -1889,11 +1888,11 @@
       ).split-animating[data-split-target="bottom"]
       .resizer_handler {
       top: 0;
-      bottom: 0;
+      bottom: var(--landscape-bottom-offset);
       left: 0;
       right: auto;
       width: var(--handler-size);
-      height: 100%;
+      height: auto;
       transform: translateX(-50%);
     }
 
@@ -1925,6 +1924,10 @@
   }
 
   @media (min-width: 1281px) and (orientation: landscape) {
+    :is(#view-stopwatch, #view-timer, #view-tabata) {
+      --landscape-bottom-offset: 0px;
+    }
+
     #app {
       width: 960px;
       max-width: 960px;

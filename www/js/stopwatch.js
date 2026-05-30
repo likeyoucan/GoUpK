@@ -116,10 +116,6 @@ const stopwatchModule = {
       }
     });
 
-    document.addEventListener(APP_EVENTS.LANGUAGE_CHANGED, () => {
-      this.onLanguageChangedForSessions();
-    });
-
     document.addEventListener(APP_EVENTS.MS_CHANGED, () => {
       if (!this.isRunning && this.elapsedTime > 0) this.updateDisplay();
 
