@@ -1795,23 +1795,22 @@
     }
 
     .resizer_handler {
-      --handler-hit-size: clamp(26px, 3.4vw, 40px);
       top: 0;
       bottom: 0;
       left: 0;
       right: auto;
-      width: var(--handler-hit-size);
+      width: var(--handler-size);
       height: 100%;
       transform: translateX(-50%);
     }
 
     .resizer_handler::before {
       width: 3px;
-      height: clamp(32px, 24vh, 88px);
+      height: clamp(28px, 20vh, 72px);
     }
 
     .resizer_handler::after {
-      inset: 0 -14px;
+      inset: 0 -10px;
     }
 
     :is(#view-stopwatch, #view-timer, #view-tabata).split-top-hidden
@@ -1821,9 +1820,9 @@
       bottom: 0;
       left: 0;
       right: auto;
-      width: var(--handler-hit-size);
+      width: var(--handler-size);
       height: 100%;
-      transform: translateX(-50%);
+      transform: translateX(0);
       z-index: 45;
     }
 
@@ -1859,9 +1858,9 @@
       bottom: 0;
       left: auto;
       right: 0;
-      width: var(--handler-hit-size);
+      width: var(--handler-size);
       height: 100%;
-      transform: translateX(50%);
+      transform: translateX(0);
     }
 
     :is(
@@ -1895,7 +1894,7 @@
       bottom: 0;
       left: 0;
       right: auto;
-      width: var(--handler-hit-size);
+      width: var(--handler-size);
       height: 100%;
       transform: translateX(-50%);
     }
@@ -1918,21 +1917,6 @@
 
     #tm-adjust-controls {
       margin: 0;
-    }
-  }
-
-  @media (min-width: 768px) and (max-width: 1280px) and (orientation: landscape) {
-    :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
-      .view-bottom-half {
-      top: 0;
-      bottom: var(--nav-height);
-    }
-
-    :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
-      .view-bottom-half
-      .resizer_handler {
-      top: 0;
-      bottom: 0;
     }
   }
 
@@ -1963,6 +1947,22 @@
 
     .top_content {
       max-height: min(37.5dvw, 500px);
+    }
+
+    :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
+      .view-bottom-half {
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: var(--handler-size);
+      min-width: var(--handler-size);
+      height: auto;
+      flex: 0 0 auto;
+      overflow: visible;
+      z-index: 45;
+      pointer-events: none;
+      padding-bottom: 0;
     }
   }
 
