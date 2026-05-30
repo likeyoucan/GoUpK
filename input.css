@@ -1605,7 +1605,9 @@
     #view-stopwatch,
     #view-timer,
     #view-tabata {
-      padding-bottom: var(--nav-height);
+      /* include safe-area + nav offset for stable geometry */
+      --landscape-bottom-offset: var(--nav-total);
+      padding-bottom: var(--landscape-bottom-offset);
       flex-direction: row;
       align-items: stretch;
     }
@@ -1650,6 +1652,8 @@
       padding-bottom: 0;
       min-width: 0;
       flex-direction: row;
+      position: relative;
+      overflow: hidden;
     }
 
     .top_content {
@@ -1675,7 +1679,8 @@
       left: 0;
       right: auto;
       width: var(--handler-size);
-      height: 100%;
+      height: auto;
+      transform: none;
     }
 
     .resizer_handler::before {
@@ -1687,26 +1692,43 @@
       inset: 0 -10px;
     }
 
+    :is(#view-stopwatch, #view-timer, #view-tabata).split-top-hidden
+      .view-bottom-half
+      .resizer_handler {
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: auto;
+      width: var(--handler-size);
+      height: auto;
+      transform: none;
+      z-index: 45;
+    }
+
     :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
       .view-top-half {
       flex-basis: 100%;
+      min-width: 0;
     }
 
     :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
       .view-bottom-half {
       position: absolute;
       top: 0;
-      bottom: 0;
+      bottom: var(
+        --landscape-bottom-offset
+      ); /* fixed: remove nav-area from handler geometry */
       right: 0;
       left: auto;
       width: 0;
       min-width: 0;
       flex: 0 0 0;
-      height: 100%;
+      height: auto;
       min-height: 0;
       overflow: visible;
       pointer-events: none;
       z-index: 45;
+      padding-bottom: 0;
     }
 
     :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
@@ -1714,11 +1736,14 @@
       .resizer_handler {
       pointer-events: auto;
       top: 0;
-      bottom: 0;
+      bottom: var(
+        --landscape-bottom-offset
+      ); /* keep handle centered to content height */
       left: auto;
       right: 0;
       width: var(--handler-size);
-      height: 100%;
+      height: auto;
+      transform: none;
     }
 
     :is(
@@ -1727,11 +1752,19 @@
         #view-tabata
       ).split-animating[data-split-target="bottom"]
       .view-bottom-half {
+      position: relative;
+      top: auto;
+      right: auto;
+      bottom: auto;
+      left: auto;
       width: var(--handler-size);
       min-width: var(--handler-size);
-      padding-bottom: 0;
+      flex: 0 0 var(--handler-size);
       height: auto;
-      min-height: var(--handler-size);
+      min-height: 0;
+      overflow: visible;
+      padding-bottom: 0;
+      pointer-events: auto;
     }
 
     :is(
@@ -1741,7 +1774,14 @@
       ).split-animating[data-split-target="bottom"]
       .resizer_handler {
       top: 0;
-      bottom: auto;
+      bottom: var(
+        --landscape-bottom-offset
+      ); /* prevent drop when moving to right edge */
+      left: 0;
+      right: auto;
+      width: var(--handler-size);
+      height: auto;
+      transform: none;
     }
 
     #tm-form,
@@ -1772,10 +1812,6 @@
   }
 
   @media (min-width: 1281px) and (orientation: landscape) {
-    :is(#view-stopwatch, #view-timer, #view-tabata) {
-      --landscape-bottom-offset: 0px;
-    }
-
     #app {
       width: 960px;
       max-width: 960px;
