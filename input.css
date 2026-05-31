@@ -679,29 +679,29 @@
   /* Compatibility for current id-based controls */
 
   @media (hover: hover) {
-  .main_btn:hover {
-    color: var(--primary-color);
-    background-color: color-mix(
-      in srgb,
-      var(--primary-color) 14%,
-      var(--ctl-bg) 86%
-    );
-    border-color: color-mix(
-      in srgb,
-      var(--primary-color) 36%,
-      var(--ctl-border) 64%
-    );
-  }
+    .main_btn:hover {
+      color: var(--primary-color);
+      background-color: color-mix(
+        in srgb,
+        var(--primary-color) 14%,
+        var(--ctl-bg) 86%
+      );
+      border-color: color-mix(
+        in srgb,
+        var(--primary-color) 36%,
+        var(--ctl-border) 64%
+      );
+    }
 
-  .main_btn_red:hover {
-    color: var(--icon-delete-hover-color);
-    background-color: var(--icon-delete-hover-bg);
-    border-color: color-mix(
-      in srgb,
-      var(--icon-delete-hover-color) 34%,
-      var(--ctl-alert-border) 66%
-    );
-  }
+    .main_btn_red:hover {
+      color: var(--icon-delete-hover-color);
+      background-color: var(--icon-delete-hover-bg);
+      border-color: color-mix(
+        in srgb,
+        var(--icon-delete-hover-color) 34%,
+        var(--ctl-alert-border) 66%
+      );
+    }
   }
 
   /* Glass mode for controls */
@@ -2180,8 +2180,8 @@
     border-radius: 9999px;
     position: relative;
     border: 1px solid
-    color-mix(in srgb, var(--bg-color) 70%, var(--text-color) 30%);
-  background-color: color-mix(in srgb, var(--bg-color) 88%, transparent);
+      color-mix(in srgb, var(--bg-color) 70%, var(--text-color) 30%);
+    background-color: color-mix(in srgb, var(--bg-color) 88%, transparent);
     transition:
       background-color var(--dur-short) ease,
       border-color var(--dur-short) ease;
@@ -2196,7 +2196,11 @@
 
   html.dark input:checked + .custom-toggle {
     background-color: color-mix(in srgb, var(--bg-color) 80%, transparent);
-    border-color: color-mix(in srgb, var(--bg-color) 62%, var(--text-color) 38%);
+    border-color: color-mix(
+      in srgb,
+      var(--bg-color) 62%,
+      var(--text-color) 38%
+    );
   }
 
   .custom-toggle::after {
@@ -3446,6 +3450,17 @@
     border-radius: 0;
     background: transparent;
     overflow: visible;
+  }
+
+  #view-stopwatch
+    #sw-lapsContainer.scroll-panel.scroll-list.flex-1.overflow-y-auto.scroll-lock.no-scrollbar.select-none.laps-table-mode {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  #view-stopwatch #sw-lapsContainer .sw-current-lap-row {
+    margin: 0;
   }
 
   #sw-currentLapsHeader.sw-laps-table-head {
