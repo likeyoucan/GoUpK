@@ -11,6 +11,13 @@ const SPLIT_BEHAVIOR = {
   overlayWhenBottomHidden: true,
 };
 
+// Viewport policy to prevent layout collapse on extreme ratios.
+const VIEWPORT_POLICY = {
+  compactWidthMax: 768,
+  compactHeightMax: 700,
+  ultraHeightMax: 460,
+};
+
 function clamp(v, min, max) {
   return Math.max(min, Math.min(max, v));
 }
@@ -31,24 +38,32 @@ function getMiddleAnchor() {
 }
 
 /**
- * Guard rail for split on compact viewports.
- * On compact sizes we always keep middle split to avoid layout collapse.
+ * Returns forced target for current viewport:
+ * - 100: ultra compact (show top, hide bottom)
+ * - middle: compact range (stable split)
+ * - null: normal behavior
  */
-function isCompactSplitViewport() {
+function getForcedTargetForViewport() {
   const w = window.innerWidth || 0;
   const h = window.innerHeight || 0;
-  const landscape = w > h;
 
-  // Main problematic area: landscape with low height.
-  if (landscape) return h < 620;
+  // Ultra-compact: keep only top area reliable.
+  if (h <= VIEWPORT_POLICY.ultraHeightMax) return 100;
 
-  // Extra safety for very short portrait.
-  return h < 430;
+  // Compact zone: prevent unstable top/bottom hidden transitions.
+  if (
+    w <= VIEWPORT_POLICY.compactWidthMax &&
+    h <= VIEWPORT_POLICY.compactHeightMax
+  ) {
+    return getMiddleAnchor();
+  }
+
+  return null;
 }
 
 function normalizeTargetForViewport(target) {
-  const middle = getMiddleAnchor();
-  return isCompactSplitViewport() ? middle : target;
+  const forced = getForcedTargetForViewport();
+  return forced == null ? target : forced;
 }
 
 function nearestAnchor(value, anchors) {
@@ -229,9 +244,9 @@ function setupOneView(ctx) {
   let tapTimer = null;
 
   const getAnchors = () => {
-    const middle = getMiddleAnchor();
-    if (isCompactSplitViewport()) return [middle];
-    return [0, middle, 100];
+    const forced = getForcedTargetForViewport();
+    if (forced != null) return [forced];
+    return [0, getMiddleAnchor(), 100];
   };
 
   const pointerToRaw = (ev) => {
@@ -259,8 +274,9 @@ function setupOneView(ctx) {
   const applyLive = (raw) => {
     lastRaw = clamp(raw, 0, 100);
 
-    if (isCompactSplitViewport()) {
-      lastRaw = getMiddleAnchor();
+    const forced = getForcedTargetForViewport();
+    if (forced != null) {
+      lastRaw = forced;
     }
 
     viewEl.classList.add("split-live");
@@ -286,11 +302,10 @@ function setupOneView(ctx) {
 
   const snapFromCurrent = () => {
     const anchors = getAnchors();
-    const middle = anchors[0] === undefined ? getMiddleAnchor() : anchors[0];
     const tuning = getInertiaTuning(activePointerType);
 
-    if (isCompactSplitViewport()) {
-      applySnapToAll(middle, { animate: true, duration: 220 });
+    if (anchors.length === 1) {
+      applySnapToAll(anchors[0], { animate: true, duration: 220 });
       return;
     }
 
@@ -313,13 +328,13 @@ function setupOneView(ctx) {
   };
 
   const cycleState = () => {
-    const middle = getMiddleAnchor();
-
-    if (isCompactSplitViewport()) {
-      applySnapToAll(middle, { animate: true, duration: 220 });
+    const forced = getForcedTargetForViewport();
+    if (forced != null) {
+      applySnapToAll(forced, { animate: true, duration: 220 });
       return;
     }
 
+    const middle = getMiddleAnchor();
     const currentTarget = getTargetFromGlobalSnap();
 
     if (currentTarget === 0) {
@@ -404,17 +419,18 @@ function setupOneView(ctx) {
   });
 
   handler.addEventListener("keydown", (e) => {
+    const forced = getForcedTargetForViewport();
+    if (forced != null) {
+      e.preventDefault();
+      applySnapToAll(forced, { animate: true, duration: 220 });
+      return;
+    }
+
     const middle = getMiddleAnchor();
 
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
       cycleState();
-      return;
-    }
-
-    if (isCompactSplitViewport()) {
-      e.preventDefault();
-      applySnapToAll(middle, { animate: true, duration: 220 });
       return;
     }
 
@@ -467,6 +483,13 @@ export function initSplitResizer() {
   applySnapToAll(initialTarget, { animate: false });
 
   const onViewportResize = () => {
+    const forced = getForcedTargetForViewport();
+    if (forced != null) {
+      globalSnap = forced === 100 ? "bottom" : "middle";
+      applySnapToAll(forced, { animate: false });
+      return;
+    }
+
     const target = getTargetFromGlobalSnap();
     applySnapToAll(target, { animate: false });
   };
