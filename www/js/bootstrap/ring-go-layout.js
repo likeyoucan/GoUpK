@@ -12,6 +12,10 @@ function getTopHalfEl(wrap) {
   return wrap.closest(".view-top-half");
 }
 
+function getViewElFromWrap(wrap) {
+  return wrap.closest("#view-stopwatch, #view-timer, #view-tabata");
+}
+
 function getRingWrapForDisplay(displayEl) {
   if (!displayEl) return null;
   return displayEl.closest(".timer-circle-wrap");
@@ -47,6 +51,23 @@ function calcDynamicRingSizePx(wrap) {
   return snap4(clamp(limitingSide * k, minPx, maxPx));
 }
 
+function estimateInnerRingAreaPx(ringPx) {
+  // Sync with CSS ring-safe-gap clamp(10px, 3.2cqi, 18px)
+  const ringSafeGap = clamp(ringPx * 0.055, 10, 18);
+  // ring-stroke-width usually 4, but allow some variability
+  const stroke = clamp(4, 2, 10);
+  const inner = ringPx - (ringSafeGap + stroke + 2) * 2;
+  return Math.max(1, inner);
+}
+
+function computeGoFontPx(ringPx) {
+  // GO scales from inner diameter (always proportional to ring).
+  const inner = estimateInnerRingAreaPx(ringPx);
+  // Tuned ratio to avoid oversize on compact/mobile + split states.
+  const px = inner * 0.29;
+  return snap4(clamp(px, 38, 96));
+}
+
 function applyDisplayScale(displayEl, ringPx, rowLayout) {
   if (!displayEl || !ringPx) return;
 
@@ -55,12 +76,7 @@ function applyDisplayScale(displayEl, ringPx, rowLayout) {
     displayEl.classList.contains("is-go") && text.toUpperCase() === "GO";
 
   if (isGo) {
-    // Unified GO ratio for all layouts to keep visual size consistent
-    // across desktop/mobile and portrait/landscape.
-    const goRatio = 0.266;
-    const raw = ringPx * goRatio;
-    const goPx = snap4(clamp(raw, 60, 120));
-
+    const goPx = computeGoFontPx(ringPx);
     displayEl.style.setProperty("--go-font-dynamic", `${goPx}px`);
     displayEl.style.setProperty("--go-skew-deg", "-11deg");
     return;
@@ -91,7 +107,7 @@ function centerGoDisplay(displayEl) {
   const host = displayEl.closest("button");
   if (!host) return;
 
-  // Reset offsets before measuring
+  // Reset before measure
   displayEl.style.setProperty("--go-nudge-x", "0px");
   displayEl.style.setProperty("--go-nudge-y", "0px");
 
@@ -104,17 +120,13 @@ function centerGoDisplay(displayEl) {
   const textCy = textRect.top + textRect.height / 2;
 
   const fontPx = parseFloat(getComputedStyle(displayEl).fontSize) || 0;
-  const skewDeg =
-    parseFloat(getComputedStyle(displayEl).getPropertyValue("--go-skew-deg")) ||
-    -11;
-  const skewRad = Math.abs(skewDeg) * (Math.PI / 180);
 
-  // Optical compensation based on actual skew and size, not viewport mode.
-  const opticalCompX = clamp(Math.tan(skewRad) * fontPx * 0.16, 0.6, 3.6);
-  const opticalCompY = -clamp(fontPx * 0.012, 0.4, 1.8);
+  // Small optical correction only (main centering is geometric).
+  const opticalCompX = clamp(fontPx * 0.01, 0.2, 1.2);
+  const opticalCompY = -clamp(fontPx * 0.004, 0.1, 0.7);
 
-  const dx = clamp(hostCx - textCx + opticalCompX, -10, 10);
-  const dy = clamp(hostCy - textCy + opticalCompY, -10, 10);
+  const dx = clamp(hostCx - textCx + opticalCompX, -8, 8);
+  const dy = clamp(hostCy - textCy + opticalCompY, -8, 8);
 
   displayEl.style.setProperty("--go-nudge-x", `${dx.toFixed(2)}px`);
   displayEl.style.setProperty("--go-nudge-y", `${dy.toFixed(2)}px`);
@@ -133,6 +145,8 @@ export function initDynamicRingAndGoLayout() {
   }
 
   let rafId = 0;
+  let splitTrackRaf = 0;
+  let splitTrackUntil = 0;
 
   const refreshNow = () => {
     rafId = 0;
@@ -167,6 +181,23 @@ export function initDynamicRingAndGoLayout() {
     rafId = requestAnimationFrame(refreshNow);
   };
 
+  const startSplitTracking = (durationMs = 420) => {
+    splitTrackUntil = performance.now() + durationMs;
+
+    if (splitTrackRaf) return;
+
+    const loop = () => {
+      splitTrackRaf = 0;
+      scheduleRefresh();
+
+      if (performance.now() < splitTrackUntil) {
+        splitTrackRaf = requestAnimationFrame(loop);
+      }
+    };
+
+    splitTrackRaf = requestAnimationFrame(loop);
+  };
+
   const ro =
     typeof ResizeObserver !== "undefined"
       ? new ResizeObserver(scheduleRefresh)
@@ -197,7 +228,10 @@ export function initDynamicRingAndGoLayout() {
   });
 
   const onResize = () => scheduleRefresh();
-  const onOrientation = () => scheduleRefresh();
+  const onOrientation = () => {
+    startSplitTracking(520);
+    scheduleRefresh();
+  };
 
   window.addEventListener("resize", onResize, { passive: true });
   window.addEventListener("orientationchange", onOrientation, {
@@ -205,7 +239,12 @@ export function initDynamicRingAndGoLayout() {
   });
 
   if (document.fonts?.ready) {
-    document.fonts.ready.then(scheduleRefresh).catch(() => {});
+    document.fonts.ready
+      .then(() => {
+        startSplitTracking(320);
+        scheduleRefresh();
+      })
+      .catch(() => {});
   }
 
   if (document.fonts?.addEventListener) {
@@ -213,12 +252,36 @@ export function initDynamicRingAndGoLayout() {
     document.fonts.addEventListener("loadingerror", scheduleRefresh);
   }
 
+  const splitViews = Array.from(
+    new Set(wraps.map((w) => getViewElFromWrap(w)).filter(Boolean)),
+  );
+
+  const onSplitTransitionStart = () => {
+    startSplitTracking(520);
+  };
+
+  const onSplitTransitionEnd = () => {
+    startSplitTracking(180);
+  };
+
+  splitViews.forEach((viewEl) => {
+    viewEl.addEventListener("transitionrun", onSplitTransitionStart);
+    viewEl.addEventListener("transitionstart", onSplitTransitionStart);
+    viewEl.addEventListener("transitionend", onSplitTransitionEnd);
+    viewEl.addEventListener("transitioncancel", onSplitTransitionEnd);
+  });
+
   scheduleRefresh();
 
   return () => {
     if (rafId) {
       cancelAnimationFrame(rafId);
       rafId = 0;
+    }
+
+    if (splitTrackRaf) {
+      cancelAnimationFrame(splitTrackRaf);
+      splitTrackRaf = 0;
     }
 
     ro?.disconnect();
@@ -231,5 +294,12 @@ export function initDynamicRingAndGoLayout() {
       document.fonts.removeEventListener("loadingdone", scheduleRefresh);
       document.fonts.removeEventListener("loadingerror", scheduleRefresh);
     }
+
+    splitViews.forEach((viewEl) => {
+      viewEl.removeEventListener("transitionrun", onSplitTransitionStart);
+      viewEl.removeEventListener("transitionstart", onSplitTransitionStart);
+      viewEl.removeEventListener("transitionend", onSplitTransitionEnd);
+      viewEl.removeEventListener("transitioncancel", onSplitTransitionEnd);
+    });
   };
 }
