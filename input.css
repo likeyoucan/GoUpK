@@ -679,13 +679,29 @@
   /* Compatibility for current id-based controls */
 
   @media (hover: hover) {
-    .main_btn:hover {
-      background-color: var(--ctl-bg-hover);
-    }
+  .main_btn:hover {
+    color: var(--primary-color);
+    background-color: color-mix(
+      in srgb,
+      var(--primary-color) 14%,
+      var(--ctl-bg) 86%
+    );
+    border-color: color-mix(
+      in srgb,
+      var(--primary-color) 36%,
+      var(--ctl-border) 64%
+    );
+  }
 
-    .main_btn_red:hover {
-      background-color: var(--ctl-alert-bg-hover);
-    }
+  .main_btn_red:hover {
+    color: var(--icon-delete-hover-color);
+    background-color: var(--icon-delete-hover-bg);
+    border-color: color-mix(
+      in srgb,
+      var(--icon-delete-hover-color) 34%,
+      var(--ctl-alert-border) 66%
+    );
+  }
   }
 
   /* Glass mode for controls */
@@ -1903,8 +1919,22 @@
     font-size: var(--go-font-dynamic, clamp(2.5rem, 28cqi, 5rem));
     max-inline-size: 82%;
     letter-spacing: -0.02em;
-    font-family: "Segoe UI", "Arial Black", Arial, sans-serif;
-    font-weight: 800;
+    font-family: "Segoe UI", Roboto, "Noto Sans", Arial, sans-serif;
+    font-weight: 760;
+    text-rendering: geometricPrecision;
+  }
+
+  @media (pointer: coarse) {
+    .timer-display.is-go {
+      font-weight: 740;
+      -webkit-text-stroke: 0.35px currentColor;
+    }
+  }
+
+  @media (pointer: fine) {
+    .timer-display.is-go {
+      -webkit-text-stroke: 0;
+    }
   }
 
   #sw-mainDisplay.is-go,
@@ -2149,8 +2179,9 @@
     display: inline-block;
     border-radius: 9999px;
     position: relative;
-    border: 1px solid color-mix(in srgb, var(--border-color) 86%, transparent);
-    background-color: var(--bg-color);
+    border: 1px solid
+    color-mix(in srgb, var(--bg-color) 70%, var(--text-color) 30%);
+  background-color: color-mix(in srgb, var(--bg-color) 88%, transparent);
     transition:
       background-color var(--dur-short) ease,
       border-color var(--dur-short) ease;
@@ -2164,8 +2195,8 @@
   }
 
   html.dark input:checked + .custom-toggle {
-    background-color: var(--primary-color);
-    border-color: color-mix(in srgb, var(--primary-color) 72%, transparent);
+    background-color: color-mix(in srgb, var(--bg-color) 80%, transparent);
+    border-color: color-mix(in srgb, var(--bg-color) 62%, var(--text-color) 38%);
   }
 
   .custom-toggle::after {

@@ -129,6 +129,35 @@ function pickOnPrimaryFromHex(hex) {
   return lum > 0.54 ? "#111827" : "#ffffff";
 }
 
+// Adaptive mode safeguard:
+// if accent becomes too close to light/dark surface perception,
+// force high-contrast fallback so accent never blends into background.
+function ensureAdaptiveAccentContrast(accentHex, rootEl) {
+  const adaptiveOn = !rootEl.classList.contains("no-adaptive");
+  if (!adaptiveOn) return accentHex;
+
+  const acc = hexToRgbSafe(accentHex);
+  if (!acc) return accentHex;
+
+  const accLum = relativeLuminance(acc.r, acc.g, acc.b);
+  const isDarkTheme = rootEl.classList.contains("dark");
+
+  // Direct guard for extreme accents in adaptive mode.
+  if (!isDarkTheme && accLum > 0.84) return "#111827";
+  if (isDarkTheme && accLum < 0.16) return "#f3f4f6";
+
+  // Extra contrast check when bg var is hex.
+  const bgRaw = getComputedStyle(rootEl).getPropertyValue("--bg-color").trim();
+  const bg = hexToRgbSafe(bgRaw);
+  if (!bg) return accentHex;
+
+  const bgLum = relativeLuminance(bg.r, bg.g, bg.b);
+  const cr = contrastRatio(accLum, bgLum);
+
+  if (cr >= 1.6) return accentHex;
+  return bgLum >= 0.5 ? "#111827" : "#f3f4f6";
+}
+
 function isRedLikeHue(h) {
   return h >= 345 || h <= 15;
 }
@@ -213,17 +242,22 @@ export function applyAccentVars({ hex, rootEl, hexToHSL }) {
     return;
   }
 
-  rootEl.style.setProperty("--primary-color", hex);
-  const { h, l } = hexToHSL(hex);
+  const effectiveHex = ensureAdaptiveAccentContrast(hex, rootEl);
+
+  rootEl.style.setProperty("--primary-color", effectiveHex);
+  const { h, l } = hexToHSL(effectiveHex);
   rootEl.style.setProperty("--accent-h", h);
 
   rootEl.style.setProperty("--secondary-accent-color", getPairedRestColor(h));
-  rootEl.style.setProperty("--pro-cta-color", hex);
+  rootEl.style.setProperty("--pro-cta-color", effectiveHex);
 
   rootEl.style.removeProperty("--pro-badge-bg");
   rootEl.style.removeProperty("--pro-badge-fg");
 
-  rootEl.style.setProperty("--on-primary-color", pickOnPrimaryFromHex(hex));
+  rootEl.style.setProperty(
+    "--on-primary-color",
+    pickOnPrimaryFromHex(effectiveHex),
+  );
 
   if (isRedZone) {
     rootEl.style.setProperty("--alert-color", forcedRedZoneAlert);
@@ -282,7 +316,7 @@ export function applyBgTheme({
   });
 
   if (!isAdaptive) {
-    // Комбинированная оценка "темный/светлый" для ярких насыщенных тонов.
+    // Combined "light/dark" estimation for bright saturated tones.
     const perceived = (r * 299 + g * 587 + b * 114) / 255000;
     const shouldUseDarkText = luminance >= 0.42 || perceived >= 0.58 || l >= 58;
 

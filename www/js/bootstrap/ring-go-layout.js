@@ -54,13 +54,12 @@ function applyDisplayScale(displayEl, ringPx, rowLayout) {
   const isGo =
     displayEl.classList.contains("is-go") && text.toUpperCase() === "GO";
 
-  // phi^-1
-  const phiInv = 0.618;
-
   if (isGo) {
-    const goRatio = rowLayout ? 0.27 : 0.265;
-    const raw = ringPx * goRatio * phiInv * 1.62;
-    const goPx = snap4(clamp(raw, rowLayout ? 64 : 58, rowLayout ? 126 : 114));
+    // Unified GO ratio for all layouts to keep visual size consistent
+    // across desktop/mobile and portrait/landscape.
+    const goRatio = 0.266;
+    const raw = ringPx * goRatio;
+    const goPx = snap4(clamp(raw, 60, 120));
 
     displayEl.style.setProperty("--go-font-dynamic", `${goPx}px`);
     displayEl.style.setProperty("--go-skew-deg", "-11deg");
@@ -92,10 +91,7 @@ function centerGoDisplay(displayEl) {
   const host = displayEl.closest("button");
   if (!host) return;
 
-  const wrap = getRingWrapForDisplay(displayEl);
-  const rowLayout = isRowLayout(getTopHalfEl(wrap));
-
-  // Сброс перед измерением.
+  // Reset offsets before measuring
   displayEl.style.setProperty("--go-nudge-x", "0px");
   displayEl.style.setProperty("--go-nudge-y", "0px");
 
@@ -107,17 +103,15 @@ function centerGoDisplay(displayEl) {
   const textCx = textRect.left + textRect.width / 2;
   const textCy = textRect.top + textRect.height / 2;
 
-  // Оптическая компенсация для наклонного "GO":
-  // слегка вправо, чтобы визуальный центр совпадал с центром кольца.
-  const opticalCompX =
-    clamp(
-      textRect.width * (rowLayout ? 0.012 : 0.014),
-      1.2,
-      rowLayout ? 4.8 : 5.2,
-    ) + (rowLayout ? 0.35 : 0.2);
+  const fontPx = parseFloat(getComputedStyle(displayEl).fontSize) || 0;
+  const skewDeg =
+    parseFloat(getComputedStyle(displayEl).getPropertyValue("--go-skew-deg")) ||
+    -11;
+  const skewRad = Math.abs(skewDeg) * (Math.PI / 180);
 
-  // Небольшой вертикальный подъем.
-  const opticalCompY = -clamp(textRect.height * 0.008, 0.4, 2.2);
+  // Optical compensation based on actual skew and size, not viewport mode.
+  const opticalCompX = clamp(Math.tan(skewRad) * fontPx * 0.16, 0.6, 3.6);
+  const opticalCompY = -clamp(fontPx * 0.012, 0.4, 1.8);
 
   const dx = clamp(hostCx - textCx + opticalCompX, -10, 10);
   const dy = clamp(hostCy - textCy + opticalCompY, -10, 10);
