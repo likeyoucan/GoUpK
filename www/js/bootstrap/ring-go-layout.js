@@ -75,9 +75,26 @@ function applyDisplayScale(displayEl, ringPx, rowLayout) {
     displayEl.classList.contains("is-go") && text.toUpperCase() === "GO";
 
   if (isGo) {
-    const goPx = computeGoFontPx(ringPx);
+    const minPx = 42;
+    const maxPx = 108;
+
+    // First pass: base proportion from ring
+    let goPx = clamp(ringPx * 0.255, minPx, maxPx);
+    goPx = snap4(goPx);
+
     displayEl.style.setProperty("--go-font-dynamic", `${goPx}px`);
     displayEl.style.setProperty("--go-skew-deg", "-11deg");
+
+    // Second pass: fit by real rendered width (fixes device/font differences)
+    const targetWordWidth = ringPx * 0.45;
+    const w = displayEl.getBoundingClientRect().width || 0;
+    if (w > 0) {
+      const k = clamp(targetWordWidth / w, 0.82, 1.22);
+      goPx = clamp(goPx * k, minPx, maxPx);
+      goPx = snap4(goPx);
+      displayEl.style.setProperty("--go-font-dynamic", `${goPx}px`);
+    }
+
     return;
   }
 
@@ -118,10 +135,8 @@ function centerGoDisplay(displayEl) {
   const textCy = textRect.top + textRect.height / 2;
 
   const fontPx = parseFloat(getComputedStyle(displayEl).fontSize) || 0;
-
-  // Минимальная и стабильная оптическая компенсация для skew.
-  const opticalCompX = clamp(fontPx * 0.018, 0.4, 1.8);
-  const opticalCompY = -clamp(fontPx * 0.006, 0.2, 1.1);
+  const opticalCompX = clamp(fontPx * 0.016, 0.3, 1.6);
+  const opticalCompY = -clamp(fontPx * 0.005, 0.15, 0.9);
 
   const dx = clamp(hostCx - textCx + opticalCompX, -6, 6);
   const dy = clamp(hostCy - textCy + opticalCompY, -6, 6);

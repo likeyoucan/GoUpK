@@ -1098,10 +1098,6 @@
     box-shadow: none;
   }
 
-  body.force-light-text input:checked + .custom-toggle {
-    background-color: color-mix(in srgb, var(--primary-color) 82%, #ffffff 18%);
-  }
-
   body.force-light-text .custom-toggle::after {
     background-color: #ffffff;
     box-shadow: 0 1px 4px rgb(0 0 0 / 0.34);
@@ -1111,10 +1107,6 @@
     background-color: rgb(17 24 39 / 0.24);
     border: 1px solid rgb(255 255 255 / 0.62);
     box-shadow: none;
-  }
-
-  body.force-dark-text input:checked + .custom-toggle {
-    background-color: var(--primary-color);
   }
 
   body.force-dark-text .custom-toggle::after {
@@ -1888,8 +1880,8 @@
   }
 
   .timer-display.is-go {
-    font-size: var(--go-font-dynamic, 72px);
-    max-inline-size: 76%;
+    font-size: var(--go-font-dynamic, 64px);
+    max-inline-size: 100%;
     letter-spacing: -0.02em;
     font-family: "Segoe UI", Roboto, "Noto Sans", Arial, sans-serif;
     font-weight: 760;
@@ -2164,15 +2156,6 @@
     box-shadow: none;
   }
 
-  html.dark input:checked + .custom-toggle {
-    background-color: color-mix(in srgb, var(--bg-color) 80%, transparent);
-    border-color: color-mix(
-      in srgb,
-      var(--bg-color) 62%,
-      var(--text-color) 38%
-    );
-  }
-
   .custom-toggle::after {
     content: "";
     position: absolute;
@@ -2184,10 +2167,6 @@
     border-radius: 50%;
     box-shadow: 0 1px 3px rgb(0 0 0 / 0.26);
     transition: transform var(--dur-short) var(--ease-standard);
-  }
-
-  input:checked + .custom-toggle {
-    background-color: var(--primary-color);
   }
 
   input:checked + .custom-toggle::after {
@@ -3401,6 +3380,20 @@
     will-change: auto;
   }
 
+  /* Single source of truth for checked toggle accent */
+  input:checked + .custom-toggle {
+    background-color: var(--primary-color) !important;
+    border-color: color-mix(
+      in srgb,
+      var(--primary-color) 72%,
+      transparent
+    ) !important;
+  }
+
+  input:checked + .custom-toggle::after {
+    background-color: var(--on-primary-color) !important;
+  }
+
   #sw-lapsContainer,
   #tb-workoutsList,
   #sw-sessionsList {
@@ -3630,6 +3623,49 @@
         0 0 0 4px var(--primary-color),
         0 3px 9px rgb(0 0 0 / 0.14);
     }
+
+    @media (hover: hover) and (pointer: fine) {
+  .main_btn:hover,
+  .glass-effect .main_btn:hover,
+  html.dark.glass-effect .main_btn:hover {
+    background-color: color-mix(
+      in srgb,
+      var(--ctl-bg) 88%,
+      var(--primary-color) 12%
+    ) !important;
+    border-color: color-mix(
+      in srgb,
+      var(--ctl-border) 76%,
+      var(--primary-color) 24%
+    ) !important;
+  }
+
+  html:not(.dark) .main_btn_red:hover {
+    background-color: color-mix(
+      in srgb,
+      var(--ctl-alert-bg) 86%,
+      #ffffff 14%
+    ) !important;
+    border-color: color-mix(
+      in srgb,
+      var(--ctl-alert-border) 80%,
+      #ffffff 20%
+    ) !important;
+  }
+
+  html.dark .main_btn_red:hover {
+    background-color: color-mix(
+      in srgb,
+      var(--ctl-alert-bg) 94%,
+      #000000 6%
+    ) !important;
+    border-color: color-mix(
+      in srgb,
+      var(--ctl-alert-border) 88%,
+      #ffffff 12%
+    ) !important;
+  }
+}
   }
 
   .color-swatch-wrapper.ring-2,
@@ -3853,38 +3889,6 @@
     .tb-edit-btn:active {
       background-color: var(--ui-hover-bg-strong);
     }
-
-    /* Compatibility for current id-based controls */
-    .main_btn:hover,
-    .glass-effect .main_btn:hover,
-    html.dark.glass-effect .main_btn:hover,
-    html.no-adaptive.bg-deep-dark.glass-effect .main_btn:hover,
-    html.no-adaptive:not(.bg-deep-dark).glass-effect .main_btn:hover {
-      background-color: color-mix(
-        in srgb,
-        var(--primary-color) 14%,
-        var(--ctl-bg) 86%
-      ) !important;
-      border-color: color-mix(
-        in srgb,
-        var(--primary-color) 36%,
-        var(--ctl-border) 64%
-      ) !important;
-    }
-
-    .main_btn_red:hover,
-    .glass-effect .main_btn_red:hover,
-    html.dark.glass-effect .main_btn_red:hover,
-    html.no-adaptive.bg-deep-dark.glass-effect .main_btn_red:hover,
-    html.no-adaptive:not(.bg-deep-dark).glass-effect .main_btn_red:hover {
-      background-color: var(--icon-delete-hover-bg) !important;
-      border-color: color-mix(
-        in srgb,
-        var(--icon-delete-hover-color) 34%,
-        var(--ctl-alert-border) 66%
-      ) !important;
-    }
-  }
 
   #setting-row-app-icon {
     overflow: visible;

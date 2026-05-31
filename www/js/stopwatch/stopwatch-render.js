@@ -36,6 +36,12 @@ function formatStopwatchExtended(ms) {
 function fitStopwatchDisplay(el) {
   if (!el) return;
 
+  // GO size/position is controlled by ring-go-layout.js.
+  // Do not override transform here.
+  const isGo = el.classList.contains("is-go");
+  el.style.transformOrigin = "center center";
+  if (isGo) return;
+
   el.style.transform = "scaleX(1)";
 
   const available = el.clientWidth || el.parentElement?.clientWidth || 0;
