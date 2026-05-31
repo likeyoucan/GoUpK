@@ -3453,7 +3453,7 @@
   #view-stopwatch .scroll-list {
     display: flex;
     flex-direction: column;
-    gap: 0.2rem;
+    gap: 0.4rem;
   }
 
   #sw-currentLapsHeader.sw-laps-table-head {
