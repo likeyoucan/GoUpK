@@ -415,9 +415,13 @@ export function initSplitResizer() {
   applySnapToAll(initialTarget, { animate: false });
 
   window.addEventListener("resize", () => {
-    const tooCompact = window.innerWidth <= 766 && window.innerHeight <= 400;
+    const w = window.innerWidth;
+    const h = window.innerHeight;
 
-    if (tooCompact) {
+    const tooCompactTiny = w <= 766 && h <= 400;
+    const tooCompactMid = w >= 670 && w <= 768 && h <= 700;
+
+    if (tooCompactTiny || tooCompactMid) {
       globalSnap = "middle";
       applySnapToAll(getMiddleAnchor(), { animate: false });
       return;

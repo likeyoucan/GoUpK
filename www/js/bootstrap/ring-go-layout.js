@@ -71,15 +71,15 @@ function applyDisplayScale(displayEl, ringPx, rowLayout, renderedRingPx) {
   if (isGo) {
     const ringForGo = renderedRingPx || ringPx;
 
-    // Base GO size from actual ring on screen.
-    let goPx = ringForGo * 0.228;
+    // Slightly bigger GO (tuned from 0.228 -> 0.236).
+    let goPx = ringForGo * 0.236;
     goPx = clamp(goPx, 40, 90);
     goPx = snap2(goPx);
 
     displayEl.style.setProperty("--go-font-dynamic", `${goPx}px`);
     displayEl.style.setProperty("--go-skew-deg", "-11deg");
 
-    // Small correction by rendered word width to normalize font metrics across devices.
+    // Small normalization across browser/device font metrics.
     const renderedWordW = displayEl.getBoundingClientRect().width || 0;
     if (renderedWordW > 0) {
       const targetWordW = ringForGo * 0.355;
