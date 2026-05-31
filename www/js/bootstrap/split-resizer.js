@@ -5,8 +5,8 @@ let views = [];
 
 let globalSnap = "middle"; // "top" | "middle" | "bottom"
 
-// Явная настройка поведения при скрытии bottom в landscape.
-// true: bottom считается overlay-слоем (CSS должен читать data-split-overlay-bottom="1")
+// Explicit behavior when bottom is hidden in landscape.
+// true: bottom is treated as overlay layer (CSS reads data-split-overlay-bottom="1")
 const SPLIT_BEHAVIOR = {
   overlayWhenBottomHidden: true,
 };
@@ -28,6 +28,27 @@ function isMobilePortrait() {
 
 function getMiddleAnchor() {
   return isMobilePortrait() ? 60 : 50;
+}
+
+/**
+ * Guard rail for split on compact viewports.
+ * On compact sizes we always keep middle split to avoid layout collapse.
+ */
+function isCompactSplitViewport() {
+  const w = window.innerWidth || 0;
+  const h = window.innerHeight || 0;
+  const landscape = w > h;
+
+  // Main problematic area: landscape with low height.
+  if (landscape) return h < 620;
+
+  // Extra safety for very short portrait.
+  return h < 430;
+}
+
+function normalizeTargetForViewport(target) {
+  const middle = getMiddleAnchor();
+  return isCompactSplitViewport() ? middle : target;
 }
 
 function nearestAnchor(value, anchors) {
@@ -85,9 +106,12 @@ function setHandlerA11y(handler, snapValue) {
 
 function getTargetFromGlobalSnap() {
   const middle = getMiddleAnchor();
-  if (globalSnap === "top") return 0;
-  if (globalSnap === "bottom") return 100;
-  return middle;
+
+  let target = middle;
+  if (globalSnap === "top") target = 0;
+  else if (globalSnap === "bottom") target = 100;
+
+  return normalizeTargetForViewport(target);
 }
 
 function applyOverlayFlag(viewEl, target, { liveRaw = null } = {}) {
@@ -122,6 +146,8 @@ function updateAllA11y() {
 }
 
 function applySnapToAll(target, { animate = true, duration = 240 } = {}) {
+  target = normalizeTargetForViewport(target);
+
   const middle = getMiddleAnchor();
   const visualTarget = target === 0 ? 0.15 : target === 100 ? 99.85 : middle;
   const targetName =
@@ -202,7 +228,11 @@ function setupOneView(ctx) {
   let velocity = 0;
   let tapTimer = null;
 
-  const getAnchors = () => [0, getMiddleAnchor(), 100];
+  const getAnchors = () => {
+    const middle = getMiddleAnchor();
+    if (isCompactSplitViewport()) return [middle];
+    return [0, middle, 100];
+  };
 
   const pointerToRaw = (ev) => {
     const rect = viewEl.getBoundingClientRect();
@@ -229,6 +259,10 @@ function setupOneView(ctx) {
   const applyLive = (raw) => {
     lastRaw = clamp(raw, 0, 100);
 
+    if (isCompactSplitViewport()) {
+      lastRaw = getMiddleAnchor();
+    }
+
     viewEl.classList.add("split-live");
     viewEl.classList.remove(
       "split-top-hidden",
@@ -236,7 +270,7 @@ function setupOneView(ctx) {
       "split-bottom-hidden",
     );
 
-    if (isMobilePortrait() && lastRaw >= 94) {
+    if (isMobilePortrait() && lastRaw >= 96.5) {
       viewEl.dataset.splitTarget = "bottom";
     } else {
       viewEl.dataset.splitTarget = "";
@@ -252,8 +286,13 @@ function setupOneView(ctx) {
 
   const snapFromCurrent = () => {
     const anchors = getAnchors();
-    const middle = anchors[1];
+    const middle = anchors[0] === undefined ? getMiddleAnchor() : anchors[0];
     const tuning = getInertiaTuning(activePointerType);
+
+    if (isCompactSplitViewport()) {
+      applySnapToAll(middle, { animate: true, duration: 220 });
+      return;
+    }
 
     const inertiaShift = clamp(
       velocity * tuning.gain,
@@ -265,8 +304,9 @@ function setupOneView(ctx) {
 
     let target;
     if (Math.abs(projected - 0) <= SNAP_THRESHOLD) target = 0;
-    else if (Math.abs(projected - middle) <= SNAP_THRESHOLD) target = middle;
-    else if (Math.abs(projected - 100) <= SNAP_THRESHOLD) target = 100;
+    else if (Math.abs(projected - getMiddleAnchor()) <= SNAP_THRESHOLD) {
+      target = getMiddleAnchor();
+    } else if (Math.abs(projected - 100) <= SNAP_THRESHOLD) target = 100;
     else target = nearestAnchor(projected, anchors);
 
     applySnapToAll(target, { animate: true, duration: tuning.duration });
@@ -274,6 +314,12 @@ function setupOneView(ctx) {
 
   const cycleState = () => {
     const middle = getMiddleAnchor();
+
+    if (isCompactSplitViewport()) {
+      applySnapToAll(middle, { animate: true, duration: 220 });
+      return;
+    }
+
     const currentTarget = getTargetFromGlobalSnap();
 
     if (currentTarget === 0) {
@@ -366,6 +412,12 @@ function setupOneView(ctx) {
       return;
     }
 
+    if (isCompactSplitViewport()) {
+      e.preventDefault();
+      applySnapToAll(middle, { animate: true, duration: 220 });
+      return;
+    }
+
     if (e.key === "Home") {
       e.preventDefault();
       applySnapToAll(0, { animate: true, duration: 220 });
@@ -414,20 +466,11 @@ export function initSplitResizer() {
   const initialTarget = getTargetFromGlobalSnap();
   applySnapToAll(initialTarget, { animate: false });
 
-  window.addEventListener("resize", () => {
-    const w = window.innerWidth;
-    const h = window.innerHeight;
-
-    const tooCompactTiny = w <= 766 && h <= 400;
-    const tooCompactMid = w >= 670 && w <= 768 && h <= 700;
-
-    if (tooCompactTiny || tooCompactMid) {
-      globalSnap = "middle";
-      applySnapToAll(getMiddleAnchor(), { animate: false });
-      return;
-    }
-
+  const onViewportResize = () => {
     const target = getTargetFromGlobalSnap();
     applySnapToAll(target, { animate: false });
-  });
+  };
+
+  window.addEventListener("resize", onViewportResize);
+  window.addEventListener("orientationchange", onViewportResize);
 }

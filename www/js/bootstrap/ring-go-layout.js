@@ -72,7 +72,7 @@ function applyDisplayScale(displayEl, ringPx, rowLayout, renderedRingPx) {
     const ringForGo = renderedRingPx || ringPx;
 
     // Slightly bigger GO (tuned from 0.228 -> 0.236).
-    let goPx = ringForGo * 0.236;
+    let goPx = ringForGo * 0.24;
     goPx = clamp(goPx, 40, 90);
     goPx = snap2(goPx);
 
