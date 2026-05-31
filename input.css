@@ -1867,9 +1867,7 @@
     overflow: hidden;
     text-overflow: clip;
     text-align: center;
-    transition:
-      font-size var(--dur-short) var(--ease-standard),
-      color var(--dur-short) ease;
+    transition: color var(--dur-short) ease;
     font-style: normal;
     font-variant-numeric: tabular-nums;
   }

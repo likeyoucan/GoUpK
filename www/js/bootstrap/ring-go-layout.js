@@ -4,20 +4,16 @@ function clamp(v, min, max) {
   return Math.max(min, Math.min(max, v));
 }
 
-function snap4(px) {
-  return Math.round(px / 4) * 4;
-}
-
 function snap2(px) {
   return Math.round(px * 2) / 2;
 }
 
-function getTopHalfEl(wrap) {
-  return wrap.closest(".view-top-half");
+function snap4(px) {
+  return Math.round(px / 4) * 4;
 }
 
-function getViewElFromWrap(wrap) {
-  return wrap.closest("#view-stopwatch, #view-timer, #view-tabata");
+function getTopHalfEl(wrap) {
+  return wrap.closest(".view-top-half");
 }
 
 function getRingWrapForDisplay(displayEl) {
@@ -63,32 +59,19 @@ function applyDisplayScale(displayEl, ringPx, rowLayout) {
     displayEl.classList.contains("is-go") && text.toUpperCase() === "GO";
 
   if (isGo) {
-    const minPx = 42;
-    const maxPx = 112;
-
-    // Base proportional size from ring
-    let goPx = clamp(ringPx * 0.242, minPx, maxPx);
-
-    displayEl.style.setProperty("--go-font-dynamic", `${goPx.toFixed(2)}px`);
+    // GO: only proportional to ring size (no glyph-width re-fit),
+    // so tiny ring delta cannot produce huge GO delta.
+    const goPx = snap2(clamp(ringPx * 0.262, 52, 108));
+    displayEl.style.setProperty("--go-font-dynamic", `${goPx}px`);
     displayEl.style.setProperty("--go-skew-deg", "-11deg");
-
-    // Hard normalize by actual rendered width (main stabilizer)
-    const renderedW = displayEl.getBoundingClientRect().width || 0;
-    const targetW = ringPx * 0.43;
-
-    if (renderedW > 0) {
-      const k = clamp(targetW / renderedW, 0.72, 1.35);
-      goPx = clamp(goPx * k, minPx, maxPx);
-      displayEl.style.setProperty("--go-font-dynamic", `${goPx.toFixed(2)}px`);
-    }
-
     return;
   }
 
+  // IMPORTANT: keep original timer sizing logic untouched.
   const hasMs = text.includes(".");
   const base = rowLayout ? (hasMs ? 0.132 : 0.152) : hasMs ? 0.124 : 0.144;
   const rawTimer = ringPx * base;
-  const timerPx = Math.round(clamp(rawTimer, 24, rowLayout ? 60 : 56));
+  const timerPx = snap4(clamp(rawTimer, 24, rowLayout ? 60 : 56));
 
   displayEl.style.setProperty("--timer-font-dynamic", `${timerPx}px`);
 }
@@ -123,8 +106,8 @@ function centerGoDisplay(displayEl) {
 
   const fontPx = parseFloat(getComputedStyle(displayEl).fontSize) || 0;
 
-  // Small and stable optical compensation for skewed GO.
-  const opticalCompX = clamp(fontPx * 0.016, 0.3, 1.6);
+  // Small fixed optical correction for skewed GO.
+  const opticalCompX = clamp(fontPx * 0.014, 0.3, 1.4);
   const opticalCompY = -clamp(fontPx * 0.005, 0.15, 0.9);
 
   const dx = clamp(hostCx - textCx + opticalCompX, -6, 6);
@@ -147,14 +130,11 @@ export function initDynamicRingAndGoLayout() {
   }
 
   let rafId = 0;
-  let splitTrackRaf = 0;
-  let splitTrackUntil = 0;
 
   const refreshNow = () => {
     rafId = 0;
 
     wraps.forEach((wrap) => {
-
       const px = calcDynamicRingSizePx(wrap);
       if (px <= 0) return;
 
@@ -184,23 +164,6 @@ export function initDynamicRingAndGoLayout() {
     rafId = requestAnimationFrame(refreshNow);
   };
 
-  const startSplitTracking = (durationMs = 420) => {
-    splitTrackUntil = performance.now() + durationMs;
-
-    if (splitTrackRaf) return;
-
-    const loop = () => {
-      splitTrackRaf = 0;
-      scheduleRefresh();
-
-      if (performance.now() < splitTrackUntil) {
-        splitTrackRaf = requestAnimationFrame(loop);
-      }
-    };
-
-    splitTrackRaf = requestAnimationFrame(loop);
-  };
-
   const ro =
     typeof ResizeObserver !== "undefined"
       ? new ResizeObserver(scheduleRefresh)
@@ -218,12 +181,11 @@ export function initDynamicRingAndGoLayout() {
     if (host) ro?.observe(host);
   });
 
-  const textObservers = displays.map((displayEl) => {
+  // Observe only class changes (GO <-> time state), not every text mutation.
+  // This removes jitter during live time updates.
+  const classObservers = displays.map((displayEl) => {
     const mo = new MutationObserver(scheduleRefresh);
     mo.observe(displayEl, {
-      characterData: true,
-      childList: true,
-      subtree: true,
       attributes: true,
       attributeFilter: ["class"],
     });
@@ -231,10 +193,7 @@ export function initDynamicRingAndGoLayout() {
   });
 
   const onResize = () => scheduleRefresh();
-  const onOrientation = () => {
-    startSplitTracking(520);
-    scheduleRefresh();
-  };
+  const onOrientation = () => scheduleRefresh();
 
   window.addEventListener("resize", onResize, { passive: true });
   window.addEventListener("orientationchange", onOrientation, {
@@ -242,37 +201,13 @@ export function initDynamicRingAndGoLayout() {
   });
 
   if (document.fonts?.ready) {
-    document.fonts.ready
-      .then(() => {
-        startSplitTracking(320);
-        scheduleRefresh();
-      })
-      .catch(() => {});
+    document.fonts.ready.then(scheduleRefresh).catch(() => {});
   }
 
   if (document.fonts?.addEventListener) {
     document.fonts.addEventListener("loadingdone", scheduleRefresh);
     document.fonts.addEventListener("loadingerror", scheduleRefresh);
   }
-
-  const splitViews = Array.from(
-    new Set(wraps.map((w) => getViewElFromWrap(w)).filter(Boolean)),
-  );
-
-  const onSplitTransitionStart = () => {
-    startSplitTracking(520);
-  };
-
-  const onSplitTransitionEnd = () => {
-    startSplitTracking(180);
-  };
-
-  splitViews.forEach((viewEl) => {
-    viewEl.addEventListener("transitionrun", onSplitTransitionStart);
-    viewEl.addEventListener("transitionstart", onSplitTransitionStart);
-    viewEl.addEventListener("transitionend", onSplitTransitionEnd);
-    viewEl.addEventListener("transitioncancel", onSplitTransitionEnd);
-  });
 
   scheduleRefresh();
 
@@ -282,13 +217,8 @@ export function initDynamicRingAndGoLayout() {
       rafId = 0;
     }
 
-    if (splitTrackRaf) {
-      cancelAnimationFrame(splitTrackRaf);
-      splitTrackRaf = 0;
-    }
-
     ro?.disconnect();
-    textObservers.forEach((o) => o.disconnect());
+    classObservers.forEach((o) => o.disconnect());
 
     window.removeEventListener("resize", onResize);
     window.removeEventListener("orientationchange", onOrientation);
@@ -297,12 +227,5 @@ export function initDynamicRingAndGoLayout() {
       document.fonts.removeEventListener("loadingdone", scheduleRefresh);
       document.fonts.removeEventListener("loadingerror", scheduleRefresh);
     }
-
-    splitViews.forEach((viewEl) => {
-      viewEl.removeEventListener("transitionrun", onSplitTransitionStart);
-      viewEl.removeEventListener("transitionstart", onSplitTransitionStart);
-      viewEl.removeEventListener("transitionend", onSplitTransitionEnd);
-      viewEl.removeEventListener("transitioncancel", onSplitTransitionEnd);
-    });
   };
 }

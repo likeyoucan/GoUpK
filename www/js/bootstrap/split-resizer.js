@@ -419,8 +419,7 @@ export function initSplitResizer() {
 
     if (tooCompact) {
       globalSnap = "middle";
-      const middle = getMiddleAnchor();
-      applySnapToAll(middle, { animate: false });
+      applySnapToAll(getMiddleAnchor(), { animate: false });
       return;
     }
 
