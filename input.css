@@ -3665,6 +3665,22 @@
           #ffffff 8%
         ) !important;
       }
+
+      .glass-effect .main_btn_red:hover,
+      html.dark.glass-effect .main_btn_red:hover,
+      html.no-adaptive.bg-deep-dark.glass-effect .main_btn_red:hover,
+      html.no-adaptive:not(.bg-deep-dark).glass-effect .main_btn_red:hover {
+        background-color: color-mix(
+          in srgb,
+          var(--ctl-alert-bg) 90%,
+          #ffffff 10%
+        ) !important;
+        border-color: color-mix(
+          in srgb,
+          var(--ctl-alert-border) 82%,
+          #ffffff 18%
+        ) !important;
+      }
     }
   }
 

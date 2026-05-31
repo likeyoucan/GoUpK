@@ -63,25 +63,23 @@ function applyDisplayScale(displayEl, ringPx, rowLayout) {
     displayEl.classList.contains("is-go") && text.toUpperCase() === "GO";
 
   if (isGo) {
-    const minPx = 40;
-    const maxPx = 96;
+    const minPx = 42;
+    const maxPx = 112;
 
-    // Base proportional scale from ring diameter.
-    let goPx = clamp(ringPx * 0.245, minPx, maxPx);
-    goPx = snap2(goPx);
+    // Base proportional size from ring
+    let goPx = clamp(ringPx * 0.242, minPx, maxPx);
 
-    displayEl.style.setProperty("--go-font-dynamic", `${goPx}px`);
+    displayEl.style.setProperty("--go-font-dynamic", `${goPx.toFixed(2)}px`);
     displayEl.style.setProperty("--go-skew-deg", "-11deg");
 
-    // Correct by actual rendered glyph width to normalize cross-device font metrics.
-    const targetWordWidth = ringPx * 0.44;
-    const w = displayEl.getBoundingClientRect().width || 0;
+    // Hard normalize by actual rendered width (main stabilizer)
+    const renderedW = displayEl.getBoundingClientRect().width || 0;
+    const targetW = ringPx * 0.43;
 
-    if (w > 0) {
-      const k = clamp(targetWordWidth / w, 0.9, 1.12);
+    if (renderedW > 0) {
+      const k = clamp(targetW / renderedW, 0.72, 1.35);
       goPx = clamp(goPx * k, minPx, maxPx);
-      goPx = snap2(goPx);
-      displayEl.style.setProperty("--go-font-dynamic", `${goPx}px`);
+      displayEl.style.setProperty("--go-font-dynamic", `${goPx.toFixed(2)}px`);
     }
 
     return;
@@ -90,7 +88,7 @@ function applyDisplayScale(displayEl, ringPx, rowLayout) {
   const hasMs = text.includes(".");
   const base = rowLayout ? (hasMs ? 0.132 : 0.152) : hasMs ? 0.124 : 0.144;
   const rawTimer = ringPx * base;
-  const timerPx = snap4(clamp(rawTimer, 24, rowLayout ? 60 : 56));
+  const timerPx = Math.round(clamp(rawTimer, 24, rowLayout ? 60 : 56));
 
   displayEl.style.setProperty("--timer-font-dynamic", `${timerPx}px`);
 }
@@ -156,8 +154,6 @@ export function initDynamicRingAndGoLayout() {
     rafId = 0;
 
     wraps.forEach((wrap) => {
-      const wrapRect = wrap.getBoundingClientRect();
-      if (wrapRect.width < 40 || wrapRect.height < 40) return;
 
       const px = calcDynamicRingSizePx(wrap);
       if (px <= 0) return;
