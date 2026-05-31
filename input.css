@@ -3450,15 +3450,10 @@
     overflow: visible;
   }
 
-  #view-stopwatch
-    #sw-lapsContainer.scroll-panel.scroll-list.flex-1.overflow-y-auto.scroll-lock.no-scrollbar.select-none.laps-table-mode {
+  #view-stopwatch .scroll-list {
     display: flex;
     flex-direction: column;
     gap: 0.2rem;
-  }
-
-  #view-stopwatch #sw-lapsContainer .sw-current-lap-row {
-    margin: 0;
   }
 
   #sw-currentLapsHeader.sw-laps-table-head {
