@@ -4,11 +4,19 @@ function clamp(v, min, max) {
   return Math.max(min, Math.min(max, v));
 }
 
+function snap2(px) {
+  return Math.round(px * 2) / 2;
+}
+
+function snap4(px) {
+  return Math.round(px / 4) * 4;
+}
+
 function getTopHalfEl(wrap) {
   return wrap.closest(".view-top-half");
 }
 
-function getViewEl(wrap) {
+function getViewElFromWrap(wrap) {
   return wrap.closest("#view-stopwatch, #view-timer, #view-tabata");
 }
 
@@ -34,7 +42,7 @@ function calcDynamicRingSizePx(wrap) {
 
   if (!rect) {
     const fallback = Math.min(wrap.clientWidth || 0, wrap.clientHeight || 0);
-    return clamp(fallback * 0.68, 172, 420);
+    return snap4(clamp(fallback * 0.68, 172, 420));
   }
 
   const limitingSide = Math.min(rect.width, rect.height);
@@ -44,16 +52,16 @@ function calcDynamicRingSizePx(wrap) {
   const maxPx = row ? 580 : 680;
   const minPx = row ? 220 : 220;
 
-  return clamp(limitingSide * k, minPx, maxPx);
+  return snap4(clamp(limitingSide * k, minPx, maxPx));
 }
 
-function calcGoPxFromRing(ringPx) {
-  // One stable proportional formula across all devices.
-  // Tuned from your screenshots: removes "too big" on phones and keeps readable on desktop.
-  return clamp(ringPx * 0.208, 44, 96);
+function getRenderedRingPx(wrap, fallback) {
+  const r = wrap.getBoundingClientRect();
+  const v = Math.min(r.width || 0, r.height || 0);
+  return v > 0 ? v : fallback;
 }
 
-function applyDisplayScale(displayEl, ringPx, rowLayout) {
+function applyDisplayScale(displayEl, ringPx, rowLayout, renderedRingPx) {
   if (!displayEl || !ringPx) return;
 
   const text = String(displayEl.textContent || "").trim();
@@ -61,22 +69,36 @@ function applyDisplayScale(displayEl, ringPx, rowLayout) {
     displayEl.classList.contains("is-go") && text.toUpperCase() === "GO";
 
   if (isGo) {
-    const goPx = calcGoPxFromRing(ringPx);
-    displayEl.style.setProperty("--go-font-dynamic", `${goPx.toFixed(2)}px`);
+    const ringForGo = renderedRingPx || ringPx;
+
+    // Base GO size from actual ring on screen.
+    let goPx = ringForGo * 0.228;
+    goPx = clamp(goPx, 40, 90);
+    goPx = snap2(goPx);
+
+    displayEl.style.setProperty("--go-font-dynamic", `${goPx}px`);
     displayEl.style.setProperty("--go-skew-deg", "-11deg");
+
+    // Small correction by rendered word width to normalize font metrics across devices.
+    const renderedWordW = displayEl.getBoundingClientRect().width || 0;
+    if (renderedWordW > 0) {
+      const targetWordW = ringForGo * 0.355;
+      const k = clamp(targetWordW / renderedWordW, 0.9, 1.1);
+      goPx = clamp(goPx * k, 40, 90);
+      goPx = snap2(goPx);
+      displayEl.style.setProperty("--go-font-dynamic", `${goPx}px`);
+    }
+
     return;
   }
 
-  // Keep original timer sizing logic intact.
+  // Keep timer sizing logic unchanged.
   const hasMs = text.includes(".");
   const base = rowLayout ? (hasMs ? 0.132 : 0.152) : hasMs ? 0.124 : 0.144;
   const rawTimer = ringPx * base;
-  const timerPx = clamp(rawTimer, 24, rowLayout ? 60 : 56);
+  const timerPx = snap4(clamp(rawTimer, 24, rowLayout ? 60 : 56));
 
-  displayEl.style.setProperty(
-    "--timer-font-dynamic",
-    `${timerPx.toFixed(2)}px`,
-  );
+  displayEl.style.setProperty("--timer-font-dynamic", `${timerPx}px`);
 }
 
 function centerGoDisplay(displayEl) {
@@ -109,9 +131,8 @@ function centerGoDisplay(displayEl) {
 
   const fontPx = parseFloat(getComputedStyle(displayEl).fontSize) || 0;
 
-  // Minimal optical compensation for skewed word.
-  const opticalCompX = clamp(fontPx * 0.012, 0.25, 1.3);
-  const opticalCompY = -clamp(fontPx * 0.004, 0.1, 0.75);
+  const opticalCompX = clamp(fontPx * 0.012, 0.2, 1.2);
+  const opticalCompY = -clamp(fontPx * 0.004, 0.1, 0.7);
 
   const dx = clamp(hostCx - textCx + opticalCompX, -5.5, 5.5);
   const dy = clamp(hostCy - textCy + opticalCompY, -5.5, 5.5);
@@ -128,7 +149,9 @@ export function initDynamicRingAndGoLayout() {
     document.getElementById("tb-mainTimer"),
   ].filter(Boolean);
 
-  if (!wraps.length && !displays.length) return () => {};
+  if (!wraps.length && !displays.length) {
+    return () => {};
+  }
 
   let rafId = 0;
   let splitTrackRaf = 0;
@@ -142,6 +165,7 @@ export function initDynamicRingAndGoLayout() {
       if (px <= 0) return;
 
       wrap.style.setProperty("--ring-size-dynamic", `${px.toFixed(2)}px`);
+      const renderedRingPx = getRenderedRingPx(wrap, px);
 
       const topHalf = getTopHalfEl(wrap);
       const rowLayout = isRowLayout(topHalf);
@@ -149,14 +173,14 @@ export function initDynamicRingAndGoLayout() {
       displays.forEach((displayEl) => {
         const ownWrap = getRingWrapForDisplay(displayEl);
         if (ownWrap === wrap) {
-          applyDisplayScale(displayEl, px, rowLayout);
+          applyDisplayScale(displayEl, px, rowLayout, renderedRingPx);
         }
       });
     });
 
     displays.forEach((displayEl) => {
       if (!getRingWrapForDisplay(displayEl)) {
-        applyDisplayScale(displayEl, 320, false);
+        applyDisplayScale(displayEl, 320, false, 320);
       }
       centerGoDisplay(displayEl);
     });
@@ -200,7 +224,7 @@ export function initDynamicRingAndGoLayout() {
     if (host) ro?.observe(host);
   });
 
-  // Observe GO state switch only (avoid jitter on live time text updates).
+  // Observe GO state changes only, to avoid per-frame jitter on running time updates.
   const classObservers = displays.map((displayEl) => {
     const mo = new MutationObserver(scheduleRefresh);
     mo.observe(displayEl, {
@@ -211,7 +235,7 @@ export function initDynamicRingAndGoLayout() {
   });
 
   const onResize = () => {
-    startSplitTracking(260);
+    startSplitTracking(300);
     scheduleRefresh();
   };
 
@@ -239,8 +263,8 @@ export function initDynamicRingAndGoLayout() {
     document.fonts.addEventListener("loadingerror", scheduleRefresh);
   }
 
-  const views = Array.from(
-    new Set(wraps.map((w) => getViewEl(w)).filter(Boolean)),
+  const splitViews = Array.from(
+    new Set(wraps.map((w) => getViewElFromWrap(w)).filter(Boolean)),
   );
 
   const onSplitTransitionStart = () => startSplitTracking(520);
@@ -249,7 +273,7 @@ export function initDynamicRingAndGoLayout() {
     scheduleRefresh();
   };
 
-  views.forEach((viewEl) => {
+  splitViews.forEach((viewEl) => {
     viewEl.addEventListener("transitionrun", onSplitTransitionStart);
     viewEl.addEventListener("transitionstart", onSplitTransitionStart);
     viewEl.addEventListener("transitionend", onSplitTransitionEnd);
@@ -259,10 +283,15 @@ export function initDynamicRingAndGoLayout() {
   scheduleRefresh();
 
   return () => {
-    if (rafId) cancelAnimationFrame(rafId);
-    if (splitTrackRaf) cancelAnimationFrame(splitTrackRaf);
-    rafId = 0;
-    splitTrackRaf = 0;
+    if (rafId) {
+      cancelAnimationFrame(rafId);
+      rafId = 0;
+    }
+
+    if (splitTrackRaf) {
+      cancelAnimationFrame(splitTrackRaf);
+      splitTrackRaf = 0;
+    }
 
     ro?.disconnect();
     classObservers.forEach((o) => o.disconnect());
@@ -275,7 +304,7 @@ export function initDynamicRingAndGoLayout() {
       document.fonts.removeEventListener("loadingerror", scheduleRefresh);
     }
 
-    views.forEach((viewEl) => {
+    splitViews.forEach((viewEl) => {
       viewEl.removeEventListener("transitionrun", onSplitTransitionStart);
       viewEl.removeEventListener("transitionstart", onSplitTransitionStart);
       viewEl.removeEventListener("transitionend", onSplitTransitionEnd);

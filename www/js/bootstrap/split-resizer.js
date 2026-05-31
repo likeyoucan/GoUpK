@@ -415,7 +415,7 @@ export function initSplitResizer() {
   applySnapToAll(initialTarget, { animate: false });
 
   window.addEventListener("resize", () => {
-    const tooCompact = window.innerHeight < 360 || window.innerWidth < 520;
+    const tooCompact = window.innerWidth <= 766 && window.innerHeight <= 400;
 
     if (tooCompact) {
       globalSnap = "middle";
