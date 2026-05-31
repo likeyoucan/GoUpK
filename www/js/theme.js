@@ -268,11 +268,14 @@ export const themeManager = {
     applyModeToDocument(mode);
     this._syncThemeModeSelectValue();
 
+    // 1) Сначала фон и классы режима (в т.ч. no-adaptive/bg-red-zone/bg-deep-dark)
+    this.applyBgTheme(this.currentBg);
+
+    // 2) Потом акцент, чтобы он вычислялся уже в корректном режиме
     this.setColor(this.currentAccent, false, {
       recordHistory: false,
       skipProCheck: true,
     });
-    this.applyBgTheme(this.currentBg);
 
     colorManager.syncPickers(this.currentAccent, this.currentBg);
     colorManager.updateSelectionUI("accent", this.currentAccent, false);

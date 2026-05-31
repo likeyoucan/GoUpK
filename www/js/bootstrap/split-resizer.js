@@ -489,16 +489,12 @@ export function initSplitResizer() {
   }
 
   const onViewportResize = () => {
-    const onViewportResize = () => {
-      if (isUltraCompactViewport()) {
-        globalSnap = "middle";
-        applySnapToAll(getMiddleAnchor(), { animate: false });
-        return;
-      }
+    if (isUltraCompactViewport()) {
+      globalSnap = "middle";
+      applySnapToAll(getMiddleAnchor(), { animate: false });
+      return;
+    }
 
-      const target = getTargetFromGlobalSnap();
-      applySnapToAll(target, { animate: false });
-    };
     const forced = getForcedTargetForViewport();
     if (forced != null) {
       globalSnap = forced === 100 ? "bottom" : "middle";
@@ -506,8 +502,7 @@ export function initSplitResizer() {
       return;
     }
 
-    const target = getTargetFromGlobalSnap();
-    applySnapToAll(target, { animate: false });
+    applySnapToAll(getTargetFromGlobalSnap(), { animate: false });
   };
 
   window.addEventListener("resize", onViewportResize);

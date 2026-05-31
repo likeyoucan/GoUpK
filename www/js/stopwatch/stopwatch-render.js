@@ -36,22 +36,27 @@ function formatStopwatchExtended(ms) {
 function fitStopwatchDisplay(el) {
   if (!el) return;
 
-  // GO size/position is controlled by ring-go-layout.js.
-  // Do not override transform here.
   const isGo = el.classList.contains("is-go");
   el.style.transformOrigin = "center center";
   if (isGo) return;
 
-  el.style.transform = "scaleX(1)";
-
   const available = el.clientWidth || el.parentElement?.clientWidth || 0;
   const needed = el.scrollWidth || 0;
   if (!available || !needed) return;
-  if (needed <= available) return;
 
-  const ratio = available / needed;
-  const clamped = Math.max(0.9, Math.min(1, ratio));
-  el.style.transform = `scaleX(${clamped.toFixed(3)})`;
+  let target = 1;
+  if (needed > available + 1) {
+    target = Math.max(0.9, Math.min(1, available / needed));
+  }
+
+  const prev = Number(el.dataset.scaleX || "1");
+  const next = Math.round(target * 1000) / 1000;
+
+  // Гистерезис: убирает визуальный микроджиттер
+  if (Math.abs(prev - next) < 0.012) return;
+
+  el.style.transform = `scaleX(${next})`;
+  el.dataset.scaleX = String(next);
 }
 
 function setLapsTableMode(isActive) {
