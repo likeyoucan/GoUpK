@@ -132,20 +132,29 @@ function pickOnPrimaryFromHex(hex) {
 // Important rule:
 // This adaptation works ONLY when adaptive colors are enabled.
 // If adaptive is OFF (html.no-adaptive), white stays white and black stays black.
+function normalizeHex6(hex) {
+  const h = String(hex || "")
+    .trim()
+    .toLowerCase();
+  if (!h.startsWith("#")) return h;
+  if (h.length === 4) {
+    return `#${h[1]}${h[1]}${h[2]}${h[2]}${h[3]}${h[3]}`;
+  }
+  return h;
+}
+
+// Important rule:
+// This adaptation works ONLY when adaptive colors are enabled.
+// If adaptive is OFF (html.no-adaptive), white stays white and black stays black.
 function adaptExtremeAccentForAdaptive(hex, rootEl) {
   if (rootEl.classList.contains("no-adaptive")) return hex;
 
-  const rgb = hexToRgbSafe(hex);
-  if (!rgb) return hex;
-
-  const lum = relativeLuminance(rgb.r, rgb.g, rgb.b);
+  const norm = normalizeHex6(hex);
   const isDarkTheme = rootEl.classList.contains("dark");
 
-  // Light theme + near-white accent -> shift to light gray so it is visible.
-  if (!isDarkTheme && lum >= 0.9) return "#d1d5db";
-
-  // Dark theme + near-black accent -> shift to dark gray so it is visible.
-  if (isDarkTheme && lum <= 0.1) return "#4b5563";
+  // Only exact white/black are adapted.
+  if (!isDarkTheme && norm === "#ffffff") return "#d1d5db"; // light gray
+  if (isDarkTheme && norm === "#000000") return "#4b5563"; // dark gray
 
   return hex;
 }
