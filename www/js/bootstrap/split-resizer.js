@@ -11,11 +11,10 @@ const SPLIT_BEHAVIOR = {
   overlayWhenBottomHidden: true,
 };
 
-// Viewport policy to prevent layout collapse on extreme ratios.
+// Hard fail-safe zone where split must stay stable to avoid layout collapse.
 const VIEWPORT_POLICY = {
-  compactWidthMax: 768,
-  compactHeightMax: 700,
-  ultraHeightMax: 460,
+  stableWidthMax: 768,
+  stableHeightMax: 700,
 };
 
 function clamp(v, min, max) {
@@ -37,27 +36,16 @@ function getMiddleAnchor() {
   return isMobilePortrait() ? 60 : 50;
 }
 
-/**
- * Returns forced target for current viewport:
- * - 100: ultra compact (show top, hide bottom)
- * - middle: compact range (stable split)
- * - null: normal behavior
- */
-function getForcedTargetForViewport() {
+function isStableLayoutViewport() {
   const w = window.innerWidth || 0;
   const h = window.innerHeight || 0;
+  return (
+    w <= VIEWPORT_POLICY.stableWidthMax && h <= VIEWPORT_POLICY.stableHeightMax
+  );
+}
 
-  // Ultra-compact: keep only top area reliable.
-  if (h <= VIEWPORT_POLICY.ultraHeightMax) return 100;
-
-  // Compact zone: prevent unstable top/bottom hidden transitions.
-  if (
-    w <= VIEWPORT_POLICY.compactWidthMax &&
-    h <= VIEWPORT_POLICY.compactHeightMax
-  ) {
-    return getMiddleAnchor();
-  }
-
+function getForcedTargetForViewport() {
+  if (isStableLayoutViewport()) return getMiddleAnchor();
   return null;
 }
 
@@ -158,6 +146,32 @@ function updateAllA11y() {
   views.forEach((v) => {
     if (v.handler) setHandlerA11y(v.handler, target);
   });
+}
+
+function forceStableSplitLayout() {
+  const middle = getMiddleAnchor();
+
+  views.forEach(({ viewEl }) => {
+    if (!viewEl) return;
+
+    viewEl.classList.remove(
+      "split-top-hidden",
+      "split-bottom-hidden",
+      "split-live",
+      "split-animating",
+    );
+    viewEl.classList.add("split-middle");
+
+    viewEl.style.setProperty("--split", `${middle}%`);
+    viewEl.style.setProperty("--collapse-top-k", "0");
+    viewEl.style.setProperty("--collapse-bottom-k", "0");
+
+    viewEl.dataset.splitTarget = "";
+    viewEl.dataset.splitOverlayBottom = "0";
+  });
+
+  globalSnap = "middle";
+  updateAllA11y();
 }
 
 function applySnapToAll(target, { animate = true, duration = 240 } = {}) {
@@ -483,10 +497,8 @@ export function initSplitResizer() {
   applySnapToAll(initialTarget, { animate: false });
 
   const onViewportResize = () => {
-    const forced = getForcedTargetForViewport();
-    if (forced != null) {
-      globalSnap = forced === 100 ? "bottom" : "middle";
-      applySnapToAll(forced, { animate: false });
+    if (isStableLayoutViewport()) {
+      forceStableSplitLayout();
       return;
     }
 

@@ -72,8 +72,8 @@ function applyDisplayScale(displayEl, ringPx, rowLayout, renderedRingPx) {
     const ringForGo = renderedRingPx || ringPx;
 
     // Slightly bigger GO (tuned from 0.228 -> 0.236).
-    let goPx = ringForGo * 0.24;
-    goPx = clamp(goPx, 40, 90);
+    let goPx = ringForGo * 0.232;
+    goPx = clamp(goPx, 44, 88);
     goPx = snap2(goPx);
 
     displayEl.style.setProperty("--go-font-dynamic", `${goPx}px`);
