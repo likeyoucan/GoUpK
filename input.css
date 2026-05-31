@@ -845,7 +845,7 @@
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--text-secondary);
+
   }
 
   .settings-row {
@@ -3634,32 +3634,6 @@
         in srgb,
         var(--ctl-border) 76%,
         var(--primary-color) 24%
-      ) !important;
-    }
-
-    html:not(.dark) .main_btn_red:hover {
-      background-color: color-mix(
-        in srgb,
-        var(--ctl-alert-bg) 72%,
-        #ffffff 28%
-      ) !important;
-      border-color: color-mix(
-        in srgb,
-        var(--ctl-alert-border) 64%,
-        #ffffff 36%
-      ) !important;
-    }
-
-    html.dark .main_btn_red:hover {
-      background-color: color-mix(
-        in srgb,
-        var(--ctl-alert-bg) 98%,
-        #000000 2%
-      ) !important;
-      border-color: color-mix(
-        in srgb,
-        var(--ctl-alert-border) 92%,
-        #ffffff 8%
       ) !important;
     }
 
