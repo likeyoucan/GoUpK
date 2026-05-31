@@ -3625,47 +3625,47 @@
     }
 
     @media (hover: hover) and (pointer: fine) {
-  .main_btn:hover,
-  .glass-effect .main_btn:hover,
-  html.dark.glass-effect .main_btn:hover {
-    background-color: color-mix(
-      in srgb,
-      var(--ctl-bg) 88%,
-      var(--primary-color) 12%
-    ) !important;
-    border-color: color-mix(
-      in srgb,
-      var(--ctl-border) 76%,
-      var(--primary-color) 24%
-    ) !important;
-  }
+      .main_btn:hover,
+      .glass-effect .main_btn:hover,
+      html.dark.glass-effect .main_btn:hover {
+        background-color: color-mix(
+          in srgb,
+          var(--ctl-bg) 88%,
+          var(--primary-color) 12%
+        ) !important;
+        border-color: color-mix(
+          in srgb,
+          var(--ctl-border) 76%,
+          var(--primary-color) 24%
+        ) !important;
+      }
 
-  html:not(.dark) .main_btn_red:hover {
-    background-color: color-mix(
-      in srgb,
-      var(--ctl-alert-bg) 86%,
-      #ffffff 14%
-    ) !important;
-    border-color: color-mix(
-      in srgb,
-      var(--ctl-alert-border) 80%,
-      #ffffff 20%
-    ) !important;
-  }
+      html:not(.dark) .main_btn_red:hover {
+        background-color: color-mix(
+          in srgb,
+          var(--ctl-alert-bg) 86%,
+          #ffffff 14%
+        ) !important;
+        border-color: color-mix(
+          in srgb,
+          var(--ctl-alert-border) 80%,
+          #ffffff 20%
+        ) !important;
+      }
 
-  html.dark .main_btn_red:hover {
-    background-color: color-mix(
-      in srgb,
-      var(--ctl-alert-bg) 94%,
-      #000000 6%
-    ) !important;
-    border-color: color-mix(
-      in srgb,
-      var(--ctl-alert-border) 88%,
-      #ffffff 12%
-    ) !important;
-  }
-}
+      html.dark .main_btn_red:hover {
+        background-color: color-mix(
+          in srgb,
+          var(--ctl-alert-bg) 94%,
+          #000000 6%
+        ) !important;
+        border-color: color-mix(
+          in srgb,
+          var(--ctl-alert-border) 88%,
+          #ffffff 12%
+        ) !important;
+      }
+    }
   }
 
   .color-swatch-wrapper.ring-2,
@@ -3889,6 +3889,33 @@
     .tb-edit-btn:active {
       background-color: var(--ui-hover-bg-strong);
     }
+
+    html:not(.dark) .main_btn_red:hover {
+      background-color: color-mix(
+        in srgb,
+        var(--ctl-alert-bg) 84%,
+        #ffffff 16%
+      ) !important;
+      border-color: color-mix(
+        in srgb,
+        var(--ctl-alert-border) 78%,
+        #ffffff 22%
+      ) !important;
+    }
+
+    html.dark .main_btn_red:hover {
+      background-color: color-mix(
+        in srgb,
+        var(--ctl-alert-bg) 92%,
+        #000000 8%
+      ) !important;
+      border-color: color-mix(
+        in srgb,
+        var(--ctl-alert-border) 88%,
+        #ffffff 12%
+      ) !important;
+    }
+  }
 
   #setting-row-app-icon {
     overflow: visible;
