@@ -3622,70 +3622,68 @@
         0 3px 9px rgb(0 0 0 / 0.14);
     }
 
-    @media (hover: hover) and (pointer: fine) {
-      .main_btn:hover,
-      .glass-effect .main_btn:hover,
-      html.dark.glass-effect .main_btn:hover {
-        background-color: color-mix(
-          in srgb,
-          var(--ctl-bg) 88%,
-          var(--primary-color) 12%
-        ) !important;
-        border-color: color-mix(
-          in srgb,
-          var(--ctl-border) 76%,
-          var(--primary-color) 24%
-        ) !important;
-      }
+    .main_btn:hover,
+    .glass-effect .main_btn:hover,
+    html.dark.glass-effect .main_btn:hover {
+      background-color: color-mix(
+        in srgb,
+        var(--ctl-bg) 88%,
+        var(--primary-color) 12%
+      ) !important;
+      border-color: color-mix(
+        in srgb,
+        var(--ctl-border) 76%,
+        var(--primary-color) 24%
+      ) !important;
+    }
 
-      html:not(.dark) .main_btn_red:hover {
-        background-color: color-mix(
-          in srgb,
-          var(--ctl-alert-bg) 72%,
-          #ffffff 28%
-        ) !important;
-        border-color: color-mix(
-          in srgb,
-          var(--ctl-alert-border) 64%,
-          #ffffff 36%
-        ) !important;
-      }
+    html:not(.dark) .main_btn_red:hover {
+      background-color: color-mix(
+        in srgb,
+        var(--ctl-alert-bg) 72%,
+        #ffffff 28%
+      ) !important;
+      border-color: color-mix(
+        in srgb,
+        var(--ctl-alert-border) 64%,
+        #ffffff 36%
+      ) !important;
+    }
 
-      html.dark .main_btn_red:hover {
-        background-color: color-mix(
-          in srgb,
-          var(--ctl-alert-bg) 98%,
-          #000000 2%
-        ) !important;
-        border-color: color-mix(
-          in srgb,
-          var(--ctl-alert-border) 92%,
-          #ffffff 8%
-        ) !important;
-      }
+    html.dark .main_btn_red:hover {
+      background-color: color-mix(
+        in srgb,
+        var(--ctl-alert-bg) 98%,
+        #000000 2%
+      ) !important;
+      border-color: color-mix(
+        in srgb,
+        var(--ctl-alert-border) 92%,
+        #ffffff 8%
+      ) !important;
+    }
 
-      .glass-effect .main_btn_red:hover,
-      html.no-adaptive.bg-deep-dark.glass-effect .main_btn_red:hover,
-      html.no-adaptive:not(.bg-deep-dark).glass-effect .main_btn_red:hover {
-        background-color: color-mix(
-          in srgb,
-          var(--ctl-alert-bg) 90%,
-          #ffffff 10%
-        ) !important;
-        border-color: color-mix(
-          in srgb,
-          var(--ctl-alert-border) 82%,
-          #ffffff 18%
-        ) !important;
-      }
+    .glass-effect .main_btn_red:hover,
+    html.no-adaptive.bg-deep-dark.glass-effect .main_btn_red:hover,
+    html.no-adaptive:not(.bg-deep-dark).glass-effect .main_btn_red:hover {
+      background-color: color-mix(
+        in srgb,
+        var(--ctl-alert-bg) 90%,
+        #ffffff 10%
+      ) !important;
+      border-color: color-mix(
+        in srgb,
+        var(--ctl-alert-border) 82%,
+        #ffffff 18%
+      ) !important;
+    }
 
-      html.dark.glass-effect .main_btn_red:hover {
-        background-color: color-mix(
-          in srgb,
-          var(--ctl-alert-bg) 96%,
-          #000000 4%
-        ) !important;
-      }
+    html.dark.glass-effect .main_btn_red:hover {
+      background-color: color-mix(
+        in srgb,
+        var(--ctl-alert-bg) 96%,
+        #000000 4%
+      ) !important;
     }
   }
 
