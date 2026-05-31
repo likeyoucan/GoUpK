@@ -110,8 +110,11 @@ function centerGoDisplay(displayEl) {
   // Оптическая компенсация для наклонного "GO":
   // слегка вправо, чтобы визуальный центр совпадал с центром кольца.
   const opticalCompX =
-    clamp(textRect.width * (rowLayout ? 0.012 : 0.014), 1.2, rowLayout ? 4.8 : 5.2) +
-    (rowLayout ? 0.35 : 0.2);
+    clamp(
+      textRect.width * (rowLayout ? 0.012 : 0.014),
+      1.2,
+      rowLayout ? 4.8 : 5.2,
+    ) + (rowLayout ? 0.35 : 0.2);
 
   // Небольшой вертикальный подъем.
   const opticalCompY = -clamp(textRect.height * 0.008, 0.4, 2.2);
