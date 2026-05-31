@@ -129,33 +129,25 @@ function pickOnPrimaryFromHex(hex) {
   return lum > 0.54 ? "#111827" : "#ffffff";
 }
 
-// Adaptive mode safeguard:
-// if accent becomes too close to light/dark surface perception,
-// force high-contrast fallback so accent never blends into background.
-function ensureAdaptiveAccentContrast(accentHex, rootEl) {
-  const adaptiveOn = !rootEl.classList.contains("no-adaptive");
-  if (!adaptiveOn) return accentHex;
+// Important rule:
+// This adaptation works ONLY when adaptive colors are enabled.
+// If adaptive is OFF (html.no-adaptive), white stays white and black stays black.
+function adaptExtremeAccentForAdaptive(hex, rootEl) {
+  if (rootEl.classList.contains("no-adaptive")) return hex;
 
-  const acc = hexToRgbSafe(accentHex);
-  if (!acc) return accentHex;
+  const rgb = hexToRgbSafe(hex);
+  if (!rgb) return hex;
 
-  const accLum = relativeLuminance(acc.r, acc.g, acc.b);
+  const lum = relativeLuminance(rgb.r, rgb.g, rgb.b);
   const isDarkTheme = rootEl.classList.contains("dark");
 
-  // Direct guard for extreme accents in adaptive mode.
-  if (!isDarkTheme && accLum > 0.84) return "#111827";
-  if (isDarkTheme && accLum < 0.16) return "#f3f4f6";
+  // Light theme + near-white accent -> shift to light gray so it is visible.
+  if (!isDarkTheme && lum >= 0.9) return "#d1d5db";
 
-  // Extra contrast check when bg var is hex.
-  const bgRaw = getComputedStyle(rootEl).getPropertyValue("--bg-color").trim();
-  const bg = hexToRgbSafe(bgRaw);
-  if (!bg) return accentHex;
+  // Dark theme + near-black accent -> shift to dark gray so it is visible.
+  if (isDarkTheme && lum <= 0.1) return "#4b5563";
 
-  const bgLum = relativeLuminance(bg.r, bg.g, bg.b);
-  const cr = contrastRatio(accLum, bgLum);
-
-  if (cr >= 1.6) return accentHex;
-  return bgLum >= 0.5 ? "#111827" : "#f3f4f6";
+  return hex;
 }
 
 function isRedLikeHue(h) {
@@ -242,7 +234,7 @@ export function applyAccentVars({ hex, rootEl, hexToHSL }) {
     return;
   }
 
-  const effectiveHex = ensureAdaptiveAccentContrast(hex, rootEl);
+  const effectiveHex = adaptExtremeAccentForAdaptive(hex, rootEl);
 
   rootEl.style.setProperty("--primary-color", effectiveHex);
   const { h, l } = hexToHSL(effectiveHex);

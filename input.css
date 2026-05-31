@@ -680,7 +680,6 @@
 
   @media (hover: hover) {
     .main_btn:hover {
-      color: var(--primary-color);
       background-color: color-mix(
         in srgb,
         var(--primary-color) 14%,
@@ -694,7 +693,6 @@
     }
 
     .main_btn_red:hover {
-      color: var(--icon-delete-hover-color);
       background-color: var(--icon-delete-hover-bg);
       border-color: color-mix(
         in srgb,
