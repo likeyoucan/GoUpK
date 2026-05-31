@@ -61,11 +61,10 @@ function estimateInnerRingAreaPx(ringPx) {
 }
 
 function computeGoFontPx(ringPx) {
-  // GO scales from inner diameter (always proportional to ring).
-  const inner = estimateInnerRingAreaPx(ringPx);
-  // Tuned ratio to avoid oversize on compact/mobile + split states.
-  const px = inner * 0.29;
-  return snap4(clamp(px, 38, 96));
+  // Стабильная пропорция относительно визуального диаметра кольца.
+  // 0.235 дает одинаковое ощущение на телефоне/планшете/десктопе.
+  const px = ringPx * 0.235;
+  return snap4(clamp(px, 44, 112));
 }
 
 function applyDisplayScale(displayEl, ringPx, rowLayout) {
@@ -107,7 +106,6 @@ function centerGoDisplay(displayEl) {
   const host = displayEl.closest("button");
   if (!host) return;
 
-  // Reset before measure
   displayEl.style.setProperty("--go-nudge-x", "0px");
   displayEl.style.setProperty("--go-nudge-y", "0px");
 
@@ -121,12 +119,12 @@ function centerGoDisplay(displayEl) {
 
   const fontPx = parseFloat(getComputedStyle(displayEl).fontSize) || 0;
 
-  // Small optical correction only (main centering is geometric).
-  const opticalCompX = clamp(fontPx * 0.01, 0.2, 1.2);
-  const opticalCompY = -clamp(fontPx * 0.004, 0.1, 0.7);
+  // Минимальная и стабильная оптическая компенсация для skew.
+  const opticalCompX = clamp(fontPx * 0.018, 0.4, 1.8);
+  const opticalCompY = -clamp(fontPx * 0.006, 0.2, 1.1);
 
-  const dx = clamp(hostCx - textCx + opticalCompX, -8, 8);
-  const dy = clamp(hostCy - textCy + opticalCompY, -8, 8);
+  const dx = clamp(hostCx - textCx + opticalCompX, -6, 6);
+  const dy = clamp(hostCy - textCy + opticalCompY, -6, 6);
 
   displayEl.style.setProperty("--go-nudge-x", `${dx.toFixed(2)}px`);
   displayEl.style.setProperty("--go-nudge-y", `${dy.toFixed(2)}px`);

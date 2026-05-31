@@ -676,32 +676,6 @@
     background-color: var(--ctl-alert-bg-active);
   }
 
-  /* Compatibility for current id-based controls */
-
-  @media (hover: hover) {
-    .main_btn:hover {
-      background-color: color-mix(
-        in srgb,
-        var(--primary-color) 14%,
-        var(--ctl-bg) 86%
-      );
-      border-color: color-mix(
-        in srgb,
-        var(--primary-color) 36%,
-        var(--ctl-border) 64%
-      );
-    }
-
-    .main_btn_red:hover {
-      background-color: var(--icon-delete-hover-bg);
-      border-color: color-mix(
-        in srgb,
-        var(--icon-delete-hover-color) 34%,
-        var(--ctl-alert-border) 66%
-      );
-    }
-  }
-
   /* Glass mode for controls */
   .glass-effect .main_btn {
     background: color-mix(in srgb, var(--surface-color) 34%, transparent);
@@ -1914,12 +1888,11 @@
   }
 
   .timer-display.is-go {
-    font-size: var(--go-font-dynamic, clamp(2.5rem, 28cqi, 5rem));
-    max-inline-size: 82%;
+    font-size: var(--go-font-dynamic, 72px);
+    max-inline-size: 76%;
     letter-spacing: -0.02em;
     font-family: "Segoe UI", Roboto, "Noto Sans", Arial, sans-serif;
     font-weight: 760;
-    text-rendering: geometricPrecision;
   }
 
   @media (pointer: coarse) {
@@ -1960,8 +1933,7 @@
     }
 
     .timer-display.is-go {
-      font-size: clamp(2rem, 23cqi, 3.2rem);
-      max-inline-size: 78%;
+      max-inline-size: 76%;
     }
   }
 
@@ -3880,6 +3852,37 @@
 
     .tb-edit-btn:active {
       background-color: var(--ui-hover-bg-strong);
+    }
+
+    /* Compatibility for current id-based controls */
+    .main_btn:hover,
+    .glass-effect .main_btn:hover,
+    html.dark.glass-effect .main_btn:hover,
+    html.no-adaptive.bg-deep-dark.glass-effect .main_btn:hover,
+    html.no-adaptive:not(.bg-deep-dark).glass-effect .main_btn:hover {
+      background-color: color-mix(
+        in srgb,
+        var(--primary-color) 14%,
+        var(--ctl-bg) 86%
+      ) !important;
+      border-color: color-mix(
+        in srgb,
+        var(--primary-color) 36%,
+        var(--ctl-border) 64%
+      ) !important;
+    }
+
+    .main_btn_red:hover,
+    .glass-effect .main_btn_red:hover,
+    html.dark.glass-effect .main_btn_red:hover,
+    html.no-adaptive.bg-deep-dark.glass-effect .main_btn_red:hover,
+    html.no-adaptive:not(.bg-deep-dark).glass-effect .main_btn_red:hover {
+      background-color: var(--icon-delete-hover-bg) !important;
+      border-color: color-mix(
+        in srgb,
+        var(--icon-delete-hover-color) 34%,
+        var(--ctl-alert-border) 66%
+      ) !important;
     }
   }
 
