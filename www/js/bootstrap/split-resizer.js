@@ -11,10 +11,11 @@ const SPLIT_BEHAVIOR = {
   overlayWhenBottomHidden: true,
 };
 
-// Hard fail-safe zone where split must stay stable to avoid layout collapse.
+// Viewport policy to prevent layout collapse on extreme ratios.
 const VIEWPORT_POLICY = {
-  stableWidthMax: 768,
-  stableHeightMax: 700,
+  compactWidthMax: 768,
+  compactHeightMax: 700,
+  ultraHeightMax: 460,
 };
 
 function clamp(v, min, max) {
@@ -36,16 +37,27 @@ function getMiddleAnchor() {
   return isMobilePortrait() ? 60 : 50;
 }
 
-function isStableLayoutViewport() {
+/**
+ * Returns forced target for current viewport:
+ * - 100: ultra compact (show top, hide bottom)
+ * - middle: compact range (stable split)
+ * - null: normal behavior
+ */
+function getForcedTargetForViewport() {
   const w = window.innerWidth || 0;
   const h = window.innerHeight || 0;
-  return (
-    w <= VIEWPORT_POLICY.stableWidthMax && h <= VIEWPORT_POLICY.stableHeightMax
-  );
-}
 
-function getForcedTargetForViewport() {
-  if (isStableLayoutViewport()) return getMiddleAnchor();
+  // Ultra-compact: keep only top area reliable.
+  if (h <= VIEWPORT_POLICY.ultraHeightMax) return 100;
+
+  // Compact zone: prevent unstable top/bottom hidden transitions.
+  if (
+    w <= VIEWPORT_POLICY.compactWidthMax &&
+    h <= VIEWPORT_POLICY.compactHeightMax
+  ) {
+    return getMiddleAnchor();
+  }
+
   return null;
 }
 
@@ -146,32 +158,6 @@ function updateAllA11y() {
   views.forEach((v) => {
     if (v.handler) setHandlerA11y(v.handler, target);
   });
-}
-
-function forceStableSplitLayout() {
-  const middle = getMiddleAnchor();
-
-  views.forEach(({ viewEl }) => {
-    if (!viewEl) return;
-
-    viewEl.classList.remove(
-      "split-top-hidden",
-      "split-bottom-hidden",
-      "split-live",
-      "split-animating",
-    );
-    viewEl.classList.add("split-middle");
-
-    viewEl.style.setProperty("--split", `${middle}%`);
-    viewEl.style.setProperty("--collapse-top-k", "0");
-    viewEl.style.setProperty("--collapse-bottom-k", "0");
-
-    viewEl.dataset.splitTarget = "";
-    viewEl.dataset.splitOverlayBottom = "0";
-  });
-
-  globalSnap = "middle";
-  updateAllA11y();
 }
 
 function applySnapToAll(target, { animate = true, duration = 240 } = {}) {
@@ -496,9 +482,27 @@ export function initSplitResizer() {
   const initialTarget = getTargetFromGlobalSnap();
   applySnapToAll(initialTarget, { animate: false });
 
+  function isUltraCompactViewport() {
+    const w = window.innerWidth || 0;
+    const h = window.innerHeight || 0;
+    return h < 320 || (w < 420 && h < 420);
+  }
+
   const onViewportResize = () => {
-    if (isStableLayoutViewport()) {
-      forceStableSplitLayout();
+    const onViewportResize = () => {
+      if (isUltraCompactViewport()) {
+        globalSnap = "middle";
+        applySnapToAll(getMiddleAnchor(), { animate: false });
+        return;
+      }
+
+      const target = getTargetFromGlobalSnap();
+      applySnapToAll(target, { animate: false });
+    };
+    const forced = getForcedTargetForViewport();
+    if (forced != null) {
+      globalSnap = forced === 100 ? "bottom" : "middle";
+      applySnapToAll(forced, { animate: false });
       return;
     }
 

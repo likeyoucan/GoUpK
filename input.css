@@ -4007,53 +4007,6 @@
     }
   }
 
-  @media (max-width: 768px) and (max-height: 700px) {
-    #view-stopwatch,
-    #view-timer,
-    #view-tabata {
-      flex-direction: column !important;
-      align-items: stretch !important;
-      justify-content: flex-start !important;
-    }
-
-    #view-stopwatch .view-top-half,
-    #view-timer .view-top-half,
-    #view-tabata .view-top-half {
-      flex-basis: 60% !important;
-      min-height: 0 !important;
-      pointer-events: auto !important;
-    }
-
-    #view-stopwatch .view-bottom-half,
-    #view-timer .view-bottom-half,
-    #view-tabata .view-bottom-half {
-      flex: 1 1 auto !important;
-      min-height: 0 !important;
-      height: auto !important;
-      overflow: hidden !important;
-      pointer-events: auto !important;
-    }
-
-    #view-stopwatch .view-bottom-half .mid_content,
-    #view-timer .view-bottom-half .mid_content,
-    #view-tabata .view-bottom-half .mid_content {
-      opacity: 1 !important;
-      visibility: visible !important;
-      pointer-events: auto !important;
-      transform: none !important;
-    }
-
-    #view-stopwatch .resizer_handler,
-    #view-timer .resizer_handler,
-    #view-tabata .resizer_handler {
-      display: none !important;
-    }
-
-    #app-ad-slot {
-      display: none !important;
-    }
-  }
-
   /* ERUDA */
   #__erudaBar {
     backdrop-filter: blur(10px);
