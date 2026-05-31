@@ -8,6 +8,10 @@ function snap4(px) {
   return Math.round(px / 4) * 4;
 }
 
+function snap2(px) {
+  return Math.round(px * 2) / 2;
+}
+
 function getTopHalfEl(wrap) {
   return wrap.closest(".view-top-half");
 }
@@ -51,22 +55,6 @@ function calcDynamicRingSizePx(wrap) {
   return snap4(clamp(limitingSide * k, minPx, maxPx));
 }
 
-function estimateInnerRingAreaPx(ringPx) {
-  // Sync with CSS ring-safe-gap clamp(10px, 3.2cqi, 18px)
-  const ringSafeGap = clamp(ringPx * 0.055, 10, 18);
-  // ring-stroke-width usually 4, but allow some variability
-  const stroke = clamp(4, 2, 10);
-  const inner = ringPx - (ringSafeGap + stroke + 2) * 2;
-  return Math.max(1, inner);
-}
-
-function computeGoFontPx(ringPx) {
-  // Стабильная пропорция относительно визуального диаметра кольца.
-  // 0.235 дает одинаковое ощущение на телефоне/планшете/десктопе.
-  const px = ringPx * 0.235;
-  return snap4(clamp(px, 44, 112));
-}
-
 function applyDisplayScale(displayEl, ringPx, rowLayout) {
   if (!displayEl || !ringPx) return;
 
@@ -75,23 +63,24 @@ function applyDisplayScale(displayEl, ringPx, rowLayout) {
     displayEl.classList.contains("is-go") && text.toUpperCase() === "GO";
 
   if (isGo) {
-    const minPx = 42;
-    const maxPx = 108;
+    const minPx = 40;
+    const maxPx = 96;
 
-    // First pass: base proportion from ring
-    let goPx = clamp(ringPx * 0.255, minPx, maxPx);
-    goPx = snap4(goPx);
+    // Base proportional scale from ring diameter.
+    let goPx = clamp(ringPx * 0.245, minPx, maxPx);
+    goPx = snap2(goPx);
 
     displayEl.style.setProperty("--go-font-dynamic", `${goPx}px`);
     displayEl.style.setProperty("--go-skew-deg", "-11deg");
 
-    // Second pass: fit by real rendered width (fixes device/font differences)
-    const targetWordWidth = ringPx * 0.45;
+    // Correct by actual rendered glyph width to normalize cross-device font metrics.
+    const targetWordWidth = ringPx * 0.44;
     const w = displayEl.getBoundingClientRect().width || 0;
+
     if (w > 0) {
-      const k = clamp(targetWordWidth / w, 0.82, 1.22);
+      const k = clamp(targetWordWidth / w, 0.9, 1.12);
       goPx = clamp(goPx * k, minPx, maxPx);
-      goPx = snap4(goPx);
+      goPx = snap2(goPx);
       displayEl.style.setProperty("--go-font-dynamic", `${goPx}px`);
     }
 
@@ -135,6 +124,8 @@ function centerGoDisplay(displayEl) {
   const textCy = textRect.top + textRect.height / 2;
 
   const fontPx = parseFloat(getComputedStyle(displayEl).fontSize) || 0;
+
+  // Small and stable optical compensation for skewed GO.
   const opticalCompX = clamp(fontPx * 0.016, 0.3, 1.6);
   const opticalCompY = -clamp(fontPx * 0.005, 0.15, 0.9);
 
@@ -165,6 +156,9 @@ export function initDynamicRingAndGoLayout() {
     rafId = 0;
 
     wraps.forEach((wrap) => {
+      const wrapRect = wrap.getBoundingClientRect();
+      if (wrapRect.width < 40 || wrapRect.height < 40) return;
+
       const px = calcDynamicRingSizePx(wrap);
       if (px <= 0) return;
 
