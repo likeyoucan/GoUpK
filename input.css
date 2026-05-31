@@ -3512,7 +3512,7 @@
   .sw-session-laps [data-template="lap-split"] {
     font-size: 0.82rem;
     line-height: 1.15;
-    font-weight: 800;
+    font-weight: 600;
     color: color-mix(in srgb, var(--text-color) 96%, transparent);
   }
 
