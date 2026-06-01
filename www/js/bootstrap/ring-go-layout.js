@@ -4,10 +4,6 @@ function clamp(v, min, max) {
   return Math.max(min, Math.min(max, v));
 }
 
-function snap2(px) {
-  return Math.round(px * 2) / 2;
-}
-
 function snap4(px) {
   return Math.round(px / 4) * 4;
 }
@@ -55,13 +51,7 @@ function calcDynamicRingSizePx(wrap) {
   return snap4(clamp(limitingSide * k, minPx, maxPx));
 }
 
-function getRenderedRingPx(wrap, fallback) {
-  const r = wrap.getBoundingClientRect();
-  const v = Math.min(r.width || 0, r.height || 0);
-  return v > 0 ? v : fallback;
-}
-
-function applyDisplayScale(displayEl, ringPx, rowLayout, renderedRingPx) {
+function applyDisplayScale(displayEl, ringPx, rowLayout) {
   if (!displayEl || !ringPx) return;
 
   const text = String(displayEl.textContent || "").trim();
@@ -86,6 +76,8 @@ function applyDisplayScale(displayEl, ringPx, rowLayout, renderedRingPx) {
 
 function centerGoDisplay(displayEl) {
   if (!displayEl) return;
+
+  // Fully deterministic: no optical auto-nudge.
   displayEl.style.setProperty("--go-nudge-x", "0px");
   displayEl.style.setProperty("--go-nudge-y", "0px");
 }
@@ -109,18 +101,15 @@ export function initDynamicRingAndGoLayout() {
   const refreshNow = () => {
     rafId = 0;
 
-    // Skip expensive relayout during nav transition snapshots.
+    // Skip relayout during nav transition snapshots.
     const app = document.getElementById("app");
-    if (app?.classList.contains("is-view-transitioning")) {
-      return;
-    }
+    if (app?.classList.contains("is-view-transitioning")) return;
 
     wraps.forEach((wrap) => {
       const px = calcDynamicRingSizePx(wrap);
       if (px <= 0) return;
 
       wrap.style.setProperty("--ring-size-dynamic", `${px.toFixed(2)}px`);
-      const renderedRingPx = getRenderedRingPx(wrap, px);
 
       const topHalf = getTopHalfEl(wrap);
       const rowLayout = isRowLayout(topHalf);
@@ -128,14 +117,14 @@ export function initDynamicRingAndGoLayout() {
       displays.forEach((displayEl) => {
         const ownWrap = getRingWrapForDisplay(displayEl);
         if (ownWrap === wrap) {
-          applyDisplayScale(displayEl, px, rowLayout, renderedRingPx);
+          applyDisplayScale(displayEl, px, rowLayout);
         }
       });
     });
 
     displays.forEach((displayEl) => {
       if (!getRingWrapForDisplay(displayEl)) {
-        applyDisplayScale(displayEl, 320, false, 320);
+        applyDisplayScale(displayEl, 320, false);
       }
       centerGoDisplay(displayEl);
     });
