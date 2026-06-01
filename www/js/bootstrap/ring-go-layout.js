@@ -71,23 +71,13 @@ function applyDisplayScale(displayEl, ringPx, rowLayout, renderedRingPx) {
   if (isGo) {
     const ringForGo = renderedRingPx || ringPx;
 
-    // Bigger GO, still bounded for small devices.
+    // Stable GO size: single-pass sizing to avoid cross-view jitter.
     let goPx = ringForGo * 0.258;
     goPx = clamp(goPx, 46, 98);
     goPx = snap2(goPx);
 
     displayEl.style.setProperty("--go-font-dynamic", `${goPx}px`);
     displayEl.style.setProperty("--go-skew-deg", "-11deg");
-
-    // Mild normalization across browser/device font metrics.
-    const renderedWordW = displayEl.getBoundingClientRect().width || 0;
-    if (renderedWordW > 0) {
-      const targetWordW = ringForGo * 0.355;
-      const k = clamp(targetWordW / renderedWordW, 0.94, 1.08);
-      goPx = clamp(goPx * k, 40, 90);
-      goPx = snap2(goPx);
-      displayEl.style.setProperty("--go-font-dynamic", `${goPx}px`);
-    }
 
     return;
   }
@@ -129,14 +119,10 @@ function centerGoDisplay(displayEl) {
   const textCx = textRect.left + textRect.width / 2;
   const textCy = textRect.top + textRect.height / 2;
 
-  const fontPx = parseFloat(getComputedStyle(displayEl).fontSize) || 0;
+  const dx = clamp(hostCx - textCx, -2, 2);
+  const dy = clamp(hostCy - textCy, -2, 2);
 
-  const opticalCompX = clamp(fontPx * 0.012, 0.2, 1.2);
-  const opticalCompY = -clamp(fontPx * 0.004, 0.1, 0.7);
-
-  const dx = clamp(hostCx - textCx + opticalCompX, -5.5, 5.5);
-  const dy = clamp(hostCy - textCy + opticalCompY, -5.5, 5.5);
-
+  // Keep nudge minimal and deterministic to avoid visible reflow between views.
   displayEl.style.setProperty("--go-nudge-x", `${dx.toFixed(2)}px`);
   displayEl.style.setProperty("--go-nudge-y", `${dy.toFixed(2)}px`);
 }
