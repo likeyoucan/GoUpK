@@ -1867,6 +1867,50 @@
     }
   }
 
+  @media (max-width: 767px) and (orientation: landscape) {
+    :is(#view-stopwatch, #view-timer, #view-tabata).split-force-middle {
+      --split: 50%;
+      flex-direction: row;
+      align-items: stretch;
+    }
+
+    :is(#view-stopwatch, #view-timer, #view-tabata).split-force-middle
+      .view-top-half {
+      flex: 0 0 50% !important;
+      flex-basis: 50% !important;
+      min-width: 0 !important;
+      max-width: none !important;
+      min-height: 0 !important;
+    }
+
+    :is(#view-stopwatch, #view-timer, #view-tabata).split-force-middle
+      .view-bottom-half {
+      flex: 1 1 auto !important;
+      min-width: var(--handler-size) !important;
+      min-height: 0 !important;
+      height: auto !important;
+      overflow: hidden !important;
+    }
+
+    :is(#view-stopwatch, #view-timer, #view-tabata).split-force-middle
+      .resizer_handler {
+      top: 0 !important;
+      bottom: 0 !important;
+      left: 0 !important;
+      right: auto !important;
+      width: var(--handler-size) !important;
+      height: auto !important;
+    }
+
+    :is(#view-stopwatch, #view-timer, #view-tabata).split-force-middle
+      .mid_content {
+      opacity: 1 !important;
+      visibility: visible !important;
+      pointer-events: auto !important;
+      transform: none !important;
+    }
+  }
+
   /* TIMER RING */
   .timer-circle-wrap {
     --ring-safe-gap: clamp(10px, 3.2cqi, 18px);
