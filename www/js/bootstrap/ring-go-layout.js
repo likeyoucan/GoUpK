@@ -69,7 +69,7 @@ function applyDisplayScale(displayEl, ringPx, rowLayout, renderedRingPx) {
     displayEl.classList.contains("is-go") && text.toUpperCase() === "GO";
 
   if (isGo) {
-    const ringForGo = renderedRingPx || ringPx;
+    const ringForGo = ringPx;
 
     // Stable GO size: single-pass sizing to avoid cross-view jitter.
     let goPx = ringForGo * 0.258;
@@ -94,37 +94,10 @@ function applyDisplayScale(displayEl, ringPx, rowLayout, renderedRingPx) {
 function centerGoDisplay(displayEl) {
   if (!displayEl) return;
 
-  const text = String(displayEl.textContent || "")
-    .trim()
-    .toUpperCase();
-  const isGo = displayEl.classList.contains("is-go") && text === "GO";
-
-  if (!isGo) {
-    displayEl.style.setProperty("--go-nudge-x", "0px");
-    displayEl.style.setProperty("--go-nudge-y", "0px");
-    return;
-  }
-
-  const host = displayEl.closest("button");
-  if (!host) return;
-
+  // Fully deterministic: no optical auto-nudge.
+  // Prevents micro-jitter when switching views.
   displayEl.style.setProperty("--go-nudge-x", "0px");
   displayEl.style.setProperty("--go-nudge-y", "0px");
-
-  const hostRect = host.getBoundingClientRect();
-  const textRect = displayEl.getBoundingClientRect();
-
-  const hostCx = hostRect.left + hostRect.width / 2;
-  const hostCy = hostRect.top + hostRect.height / 2;
-  const textCx = textRect.left + textRect.width / 2;
-  const textCy = textRect.top + textRect.height / 2;
-
-  const dx = clamp(hostCx - textCx, -2, 2);
-  const dy = clamp(hostCy - textCy, -2, 2);
-
-  // Keep nudge minimal and deterministic to avoid visible reflow between views.
-  displayEl.style.setProperty("--go-nudge-x", `${dx.toFixed(2)}px`);
-  displayEl.style.setProperty("--go-nudge-y", `${dy.toFixed(2)}px`);
 }
 
 export function initDynamicRingAndGoLayout() {
