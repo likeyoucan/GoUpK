@@ -69,14 +69,9 @@ function applyDisplayScale(displayEl, ringPx, rowLayout, renderedRingPx) {
     displayEl.classList.contains("is-go") && text.toUpperCase() === "GO";
 
   if (isGo) {
-    // Use stable ringPx (not renderedRingPx) to avoid subpixel jitter between views.
-    const ringForGo = ringPx;
-
-    let goPx = ringForGo * 0.258;
-    goPx = clamp(goPx, 46, 98);
-    goPx = snap2(goPx);
-
-    displayEl.style.setProperty("--go-font-dynamic", `${goPx}px`);
+    // Keep GO fully stable across view switches:
+    // no dynamic font re-sizing in JS.
+    displayEl.style.removeProperty("--go-font-dynamic");
     displayEl.style.setProperty("--go-skew-deg", "-11deg");
     return;
   }
@@ -91,9 +86,6 @@ function applyDisplayScale(displayEl, ringPx, rowLayout, renderedRingPx) {
 
 function centerGoDisplay(displayEl) {
   if (!displayEl) return;
-
-  // Fully deterministic: no optical auto-nudge.
-  // This removes micro-jitter on view/split transitions.
   displayEl.style.setProperty("--go-nudge-x", "0px");
   displayEl.style.setProperty("--go-nudge-y", "0px");
 }

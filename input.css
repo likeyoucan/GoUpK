@@ -1832,18 +1832,30 @@
   }
 
   @media (max-width: 1024px) and (max-height: 720px) {
+    :is(#view-stopwatch, #view-timer, #view-tabata).split-force-middle {
+      --split: 50%;
+    }
+
     :is(#view-stopwatch, #view-timer, #view-tabata).split-force-middle
       .view-top-half {
       flex: 0 0 var(--split) !important;
-      min-height: 0;
+      flex-basis: var(--split) !important;
+      min-height: 0 !important;
       max-height: none !important;
+      pointer-events: auto !important;
     }
 
     :is(#view-stopwatch, #view-timer, #view-tabata).split-force-middle
       .view-bottom-half {
       flex: 1 1 auto !important;
-      min-height: var(--handler-size);
+      min-height: var(--handler-size) !important;
       height: auto !important;
+      overflow: hidden !important;
+    }
+
+    :is(#view-stopwatch, #view-timer, #view-tabata).split-force-middle
+      .resizer_handler {
+      pointer-events: auto !important;
     }
 
     :is(#view-stopwatch, #view-timer, #view-tabata).split-force-middle
@@ -2074,16 +2086,15 @@
   }
 
   @media (orientation: landscape) and (max-width: 767px) {
-  .app-nav-safe {
-    padding-right: calc(var(--safe-right) + 1rem);
-    padding-bottom: 0.5rem;
-    height: var(--nav-height);
-  }
+    .app-nav-safe {
+      padding-right: calc(var(--safe-right) + 1rem);
+      padding-bottom: 0.5rem;
+      height: var(--nav-height);
+    }
 
-  #view-settings {
-    flex-direction: column;
-    touch-action: pan-y;
-  }on: pan-y;
+    #view-settings {
+      flex-direction: column;
+      touch-action: pan-y;
     }
   }
 
