@@ -61,6 +61,18 @@ function getRenderedRingPx(wrap, fallback) {
   return v > 0 ? v : fallback;
 }
 
+function setGoFontStable(displayEl, nextPx) {
+  const prev = Number(displayEl.dataset.goFontPx || "0");
+
+  // Ignore tiny fluctuations that cause visual jitter.
+  if (prev > 0 && Math.abs(nextPx - prev) < 0.8) {
+    return;
+  }
+
+  displayEl.style.setProperty("--go-font-dynamic", `${nextPx}px`);
+  displayEl.dataset.goFontPx = String(nextPx);
+}
+
 function applyDisplayScale(displayEl, ringPx, rowLayout, renderedRingPx) {
   if (!displayEl || !ringPx) return;
 
@@ -71,12 +83,11 @@ function applyDisplayScale(displayEl, ringPx, rowLayout, renderedRingPx) {
   if (isGo) {
     const ringForGo = renderedRingPx || ringPx;
 
-    // Bigger GO, still bounded for small devices.
+    // Keep proper auto scaling.
     let goPx = ringForGo * 0.258;
     goPx = clamp(goPx, 46, 98);
     goPx = snap2(goPx);
 
-    displayEl.style.setProperty("--go-font-dynamic", `${goPx}px`);
     displayEl.style.setProperty("--go-skew-deg", "-11deg");
 
     // Mild normalization across browser/device font metrics.
@@ -86,13 +97,12 @@ function applyDisplayScale(displayEl, ringPx, rowLayout, renderedRingPx) {
       const k = clamp(targetWordW / renderedWordW, 0.94, 1.08);
       goPx = clamp(goPx * k, 40, 90);
       goPx = snap2(goPx);
-      displayEl.style.setProperty("--go-font-dynamic", `${goPx}px`);
     }
 
+    setGoFontStable(displayEl, goPx);
     return;
   }
 
-  // Timer sizing unchanged.
   const hasMs = text.includes(".");
   const base = rowLayout ? (hasMs ? 0.132 : 0.152) : hasMs ? 0.124 : 0.144;
   const rawTimer = ringPx * base;
@@ -104,41 +114,9 @@ function applyDisplayScale(displayEl, ringPx, rowLayout, renderedRingPx) {
 function centerGoDisplay(displayEl) {
   if (!displayEl) return;
 
-  const text = String(displayEl.textContent || "")
-    .trim()
-    .toUpperCase();
-  const isGo = displayEl.classList.contains("is-go") && text === "GO";
-
-  if (!isGo) {
-    displayEl.style.setProperty("--go-nudge-x", "0px");
-    displayEl.style.setProperty("--go-nudge-y", "0px");
-    return;
-  }
-
-  const host = displayEl.closest("button");
-  if (!host) return;
-
+  // Deterministic center to avoid transition jitter.
   displayEl.style.setProperty("--go-nudge-x", "0px");
   displayEl.style.setProperty("--go-nudge-y", "0px");
-
-  const hostRect = host.getBoundingClientRect();
-  const textRect = displayEl.getBoundingClientRect();
-
-  const hostCx = hostRect.left + hostRect.width / 2;
-  const hostCy = hostRect.top + hostRect.height / 2;
-  const textCx = textRect.left + textRect.width / 2;
-  const textCy = textRect.top + textRect.height / 2;
-
-  const fontPx = parseFloat(getComputedStyle(displayEl).fontSize) || 0;
-
-  const opticalCompX = clamp(fontPx * 0.012, 0.2, 1.2);
-  const opticalCompY = -clamp(fontPx * 0.004, 0.1, 0.7);
-
-  const dx = clamp(hostCx - textCx + opticalCompX, -5.5, 5.5);
-  const dy = clamp(hostCy - textCy + opticalCompY, -5.5, 5.5);
-
-  displayEl.style.setProperty("--go-nudge-x", `${dx.toFixed(2)}px`);
-  displayEl.style.setProperty("--go-nudge-y", `${dy.toFixed(2)}px`);
 }
 
 export function initDynamicRingAndGoLayout() {
@@ -159,6 +137,10 @@ export function initDynamicRingAndGoLayout() {
 
   const refreshNow = () => {
     rafId = 0;
+
+    // Do not recompute in the middle of nav snapshot transition.
+    const app = document.getElementById("app");
+    if (app?.classList.contains("is-view-transitioning")) return;
 
     wraps.forEach((wrap) => {
       const px = calcDynamicRingSizePx(wrap);
@@ -224,7 +206,6 @@ export function initDynamicRingAndGoLayout() {
     if (host) ro?.observe(host);
   });
 
-  // Observe GO state changes only to avoid jitter on every time tick.
   const classObservers = displays.map((displayEl) => {
     const mo = new MutationObserver(scheduleRefresh);
     mo.observe(displayEl, {
