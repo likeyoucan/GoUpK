@@ -4,6 +4,10 @@ function clamp(v, min, max) {
   return Math.max(min, Math.min(max, v));
 }
 
+function snap2(px) {
+  return Math.round(px * 2) / 2;
+}
+
 function snap4(px) {
   return Math.round(px / 4) * 4;
 }
@@ -51,7 +55,13 @@ function calcDynamicRingSizePx(wrap) {
   return snap4(clamp(limitingSide * k, minPx, maxPx));
 }
 
-function applyDisplayScale(displayEl, ringPx, rowLayout) {
+function getRenderedRingPx(wrap, fallback) {
+  const r = wrap.getBoundingClientRect();
+  const v = Math.min(r.width || 0, r.height || 0);
+  return v > 0 ? v : fallback;
+}
+
+function applyDisplayScale(displayEl, ringPx, rowLayout, renderedRingPx) {
   if (!displayEl || !ringPx) return;
 
   const text = String(displayEl.textContent || "").trim();
@@ -59,13 +69,30 @@ function applyDisplayScale(displayEl, ringPx, rowLayout) {
     displayEl.classList.contains("is-go") && text.toUpperCase() === "GO";
 
   if (isGo) {
-    // Keep GO fully stable across view switches:
-    // no dynamic font re-sizing in JS.
-    displayEl.style.removeProperty("--go-font-dynamic");
+    const ringForGo = renderedRingPx || ringPx;
+
+    // Bigger GO, still bounded for small devices.
+    let goPx = ringForGo * 0.258;
+    goPx = clamp(goPx, 46, 98);
+    goPx = snap2(goPx);
+
+    displayEl.style.setProperty("--go-font-dynamic", `${goPx}px`);
     displayEl.style.setProperty("--go-skew-deg", "-11deg");
+
+    // Mild normalization across browser/device font metrics.
+    const renderedWordW = displayEl.getBoundingClientRect().width || 0;
+    if (renderedWordW > 0) {
+      const targetWordW = ringForGo * 0.355;
+      const k = clamp(targetWordW / renderedWordW, 0.94, 1.08);
+      goPx = clamp(goPx * k, 40, 90);
+      goPx = snap2(goPx);
+      displayEl.style.setProperty("--go-font-dynamic", `${goPx}px`);
+    }
+
     return;
   }
 
+  // Timer sizing unchanged.
   const hasMs = text.includes(".");
   const base = rowLayout ? (hasMs ? 0.132 : 0.152) : hasMs ? 0.124 : 0.144;
   const rawTimer = ringPx * base;
@@ -77,9 +104,41 @@ function applyDisplayScale(displayEl, ringPx, rowLayout) {
 function centerGoDisplay(displayEl) {
   if (!displayEl) return;
 
-  // Fully deterministic: no optical auto-nudge.
+  const text = String(displayEl.textContent || "")
+    .trim()
+    .toUpperCase();
+  const isGo = displayEl.classList.contains("is-go") && text === "GO";
+
+  if (!isGo) {
+    displayEl.style.setProperty("--go-nudge-x", "0px");
+    displayEl.style.setProperty("--go-nudge-y", "0px");
+    return;
+  }
+
+  const host = displayEl.closest("button");
+  if (!host) return;
+
   displayEl.style.setProperty("--go-nudge-x", "0px");
   displayEl.style.setProperty("--go-nudge-y", "0px");
+
+  const hostRect = host.getBoundingClientRect();
+  const textRect = displayEl.getBoundingClientRect();
+
+  const hostCx = hostRect.left + hostRect.width / 2;
+  const hostCy = hostRect.top + hostRect.height / 2;
+  const textCx = textRect.left + textRect.width / 2;
+  const textCy = textRect.top + textRect.height / 2;
+
+  const fontPx = parseFloat(getComputedStyle(displayEl).fontSize) || 0;
+
+  const opticalCompX = clamp(fontPx * 0.012, 0.2, 1.2);
+  const opticalCompY = -clamp(fontPx * 0.004, 0.1, 0.7);
+
+  const dx = clamp(hostCx - textCx + opticalCompX, -5.5, 5.5);
+  const dy = clamp(hostCy - textCy + opticalCompY, -5.5, 5.5);
+
+  displayEl.style.setProperty("--go-nudge-x", `${dx.toFixed(2)}px`);
+  displayEl.style.setProperty("--go-nudge-y", `${dy.toFixed(2)}px`);
 }
 
 export function initDynamicRingAndGoLayout() {
@@ -101,15 +160,12 @@ export function initDynamicRingAndGoLayout() {
   const refreshNow = () => {
     rafId = 0;
 
-    // Skip relayout during nav transition snapshots.
-    const app = document.getElementById("app");
-    if (app?.classList.contains("is-view-transitioning")) return;
-
     wraps.forEach((wrap) => {
       const px = calcDynamicRingSizePx(wrap);
       if (px <= 0) return;
 
       wrap.style.setProperty("--ring-size-dynamic", `${px.toFixed(2)}px`);
+      const renderedRingPx = getRenderedRingPx(wrap, px);
 
       const topHalf = getTopHalfEl(wrap);
       const rowLayout = isRowLayout(topHalf);
@@ -117,14 +173,14 @@ export function initDynamicRingAndGoLayout() {
       displays.forEach((displayEl) => {
         const ownWrap = getRingWrapForDisplay(displayEl);
         if (ownWrap === wrap) {
-          applyDisplayScale(displayEl, px, rowLayout);
+          applyDisplayScale(displayEl, px, rowLayout, renderedRingPx);
         }
       });
     });
 
     displays.forEach((displayEl) => {
       if (!getRingWrapForDisplay(displayEl)) {
-        applyDisplayScale(displayEl, 320, false);
+        applyDisplayScale(displayEl, 320, false, 320);
       }
       centerGoDisplay(displayEl);
     });
