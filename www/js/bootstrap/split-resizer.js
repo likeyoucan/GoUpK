@@ -162,7 +162,18 @@ function updateAllA11y() {
 }
 
 function applySnapToAll(target, { animate = true, duration = 240 } = {}) {
-  target = normalizeTargetForViewport(target);
+  const forcedTarget = getForcedTargetForViewport();
+
+  if (forcedTarget != null) {
+    target = forcedTarget;
+  }
+
+  const forcedMiddle =
+    forcedTarget !== null && forcedTarget !== 0 && forcedTarget !== 100;
+
+  if (forcedMiddle) {
+    target = getMiddleAnchor();
+  }
 
   const middle = getMiddleAnchor();
   const visualTarget = target === 0 ? 0.15 : target === 100 ? 99.85 : middle;
@@ -171,6 +182,8 @@ function applySnapToAll(target, { animate = true, duration = 240 } = {}) {
 
   views.forEach(({ viewEl, topHalf }) => {
     if (!viewEl || !topHalf) return;
+
+    viewEl.classList.toggle("split-force-middle", forcedMiddle);
 
     viewEl.dataset.splitTarget = targetName;
     applyOverlayFlag(viewEl, target);
@@ -279,6 +292,11 @@ function setupOneView(ctx) {
     if (forced != null) {
       lastRaw = forced;
     }
+
+    viewEl.classList.toggle(
+      "split-force-middle",
+      forced !== null && forced !== 0 && forced !== 100,
+    );
 
     viewEl.classList.add("split-live");
     viewEl.classList.remove(
