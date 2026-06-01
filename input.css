@@ -2074,22 +2074,16 @@
   }
 
   @media (orientation: landscape) and (max-width: 767px) {
-    #viewsContainer > div:not(#view-settings) {
-      flex-direction: row;
-      align-items: center;
-      justify-content: center;
-      gap: 1rem;
-    }
+  .app-nav-safe {
+    padding-right: calc(var(--safe-right) + 1rem);
+    padding-bottom: 0.5rem;
+    height: var(--nav-height);
+  }
 
-    .app-nav-safe {
-      padding-right: calc(var(--safe-right) + 1rem);
-      padding-bottom: 0.5rem;
-      height: var(--nav-height);
-    }
-
-    #view-settings {
-      flex-direction: column;
-      touch-action: pan-y;
+  #view-settings {
+    flex-direction: column;
+    touch-action: pan-y;
+  }on: pan-y;
     }
   }
 

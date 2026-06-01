@@ -69,20 +69,18 @@ function applyDisplayScale(displayEl, ringPx, rowLayout, renderedRingPx) {
     displayEl.classList.contains("is-go") && text.toUpperCase() === "GO";
 
   if (isGo) {
+    // Use stable ringPx (not renderedRingPx) to avoid subpixel jitter between views.
     const ringForGo = ringPx;
 
-    // Stable GO size: single-pass sizing to avoid cross-view jitter.
     let goPx = ringForGo * 0.258;
     goPx = clamp(goPx, 46, 98);
     goPx = snap2(goPx);
 
     displayEl.style.setProperty("--go-font-dynamic", `${goPx}px`);
     displayEl.style.setProperty("--go-skew-deg", "-11deg");
-
     return;
   }
 
-  // Timer sizing unchanged.
   const hasMs = text.includes(".");
   const base = rowLayout ? (hasMs ? 0.132 : 0.152) : hasMs ? 0.124 : 0.144;
   const rawTimer = ringPx * base;
@@ -95,7 +93,7 @@ function centerGoDisplay(displayEl) {
   if (!displayEl) return;
 
   // Fully deterministic: no optical auto-nudge.
-  // Prevents micro-jitter when switching views.
+  // This removes micro-jitter on view/split transitions.
   displayEl.style.setProperty("--go-nudge-x", "0px");
   displayEl.style.setProperty("--go-nudge-y", "0px");
 }
@@ -118,6 +116,12 @@ export function initDynamicRingAndGoLayout() {
 
   const refreshNow = () => {
     rafId = 0;
+
+    // Skip expensive relayout during nav transition snapshots.
+    const app = document.getElementById("app");
+    if (app?.classList.contains("is-view-transitioning")) {
+      return;
+    }
 
     wraps.forEach((wrap) => {
       const px = calcDynamicRingSizePx(wrap);
