@@ -14,9 +14,7 @@ const SPLIT_BEHAVIOR = {
 
 // Viewport policy to prevent layout collapse on extreme ratios.
 const VIEWPORT_POLICY = {
-  compactWidthMax: 768,
-  compactHeightMax: 700,
-  ultraHeightMax: 460,
+  emergencyHeightMax: 320,
 };
 
 function clamp(v, min, max) {
@@ -45,17 +43,11 @@ function getMiddleAnchor() {
  * - null: normal behavior
  */
 function getForcedTargetForViewport() {
-  const w = window.innerWidth || 0;
   const h = window.innerHeight || 0;
 
-  // Ultra-compact: keep only top area reliable.
-  if (h <= VIEWPORT_POLICY.ultraHeightMax) return 100;
-
-  // Compact zone: prevent unstable top/bottom hidden transitions.
-  if (
-    w <= VIEWPORT_POLICY.compactWidthMax &&
-    h <= VIEWPORT_POLICY.compactHeightMax
-  ) {
+  // Форс только в аварийном кейсе.
+  // В обычных low-res split должен быть полностью draggable.
+  if (h <= VIEWPORT_POLICY.emergencyHeightMax) {
     return getMiddleAnchor();
   }
 

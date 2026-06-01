@@ -53,7 +53,7 @@ export function bindUiInteractions({
 
   unbinders.push(bindStopwatchDoubleTapLap({ $, sw }));
 
-  initSplitResizer();
+  unbinders.push(initSplitResizer());
 
   return () => {
     unbinders.forEach((fn) => {
