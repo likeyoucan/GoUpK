@@ -107,7 +107,7 @@
 
     --split: 65%;
     --split-snap-duration: 260ms;
-    --handler-size: clamp(14px, 2.2dvh, 22px);
+    --handler-size: clamp(20px, 3.2dvh, 30px);
     --collapse-top-k: 0;
     --collapse-bottom-k: 0;
     --title-gap: clamp(8px, 1.5vmin, 20px);
@@ -1275,7 +1275,7 @@
   .resizer_handler::after {
     content: "";
     position: absolute;
-    inset: -10px 0;
+    inset: -18px 0;
   }
 
   @media (hover: hover) {
@@ -1671,7 +1671,7 @@
     }
 
     .resizer_handler::after {
-      inset: 0 -10px;
+      inset: 0 -18px;
     }
 
     :is(#view-stopwatch, #view-timer, #view-tabata).split-top-hidden

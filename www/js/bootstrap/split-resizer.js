@@ -33,7 +33,20 @@ function isMobilePortrait() {
 }
 
 function getMiddleAnchor() {
-  return isMobilePortrait() ? 60 : 50;
+  const w = window.innerWidth || 0;
+  const h = window.innerHeight || 0;
+  if (!w || !h) return 50;
+
+  const ratio = w / h;
+
+  // Явный ландшафт
+  if (ratio >= 1.15) return 50;
+
+  // Почти квадратные экраны
+  if (ratio >= 0.9 && ratio <= 1.1) return 55;
+
+  // Портретные вытянутые
+  return 60;
 }
 
 /**
@@ -45,8 +58,7 @@ function getMiddleAnchor() {
 function getForcedTargetForViewport() {
   const h = window.innerHeight || 0;
 
-  // Форс только в аварийном кейсе.
-  // В обычных low-res split должен быть полностью draggable.
+  // Форс только для аварийно низкой высоты
   if (h <= VIEWPORT_POLICY.emergencyHeightMax) {
     return getMiddleAnchor();
   }
@@ -497,11 +509,10 @@ export function initSplitResizer() {
   const initialTarget = getTargetFromGlobalSnap();
   applySnapToAll(initialTarget, { animate: false });
 
-  function isUltraCompactViewport() {
-    const w = window.innerWidth || 0;
-    const h = window.innerHeight || 0;
-    return h < 320 || (w < 420 && h < 420);
-  }
+function isUltraCompactViewport() {
+  const h = window.innerHeight || 0;
+  return h <= VIEWPORT_POLICY.emergencyHeightMax;
+}
 
   const onViewportResize = () => {
     if (isUltraCompactViewport()) {
