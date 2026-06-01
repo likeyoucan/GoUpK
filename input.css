@@ -1781,6 +1781,13 @@
     }
   }
 
+  @media (min-width: 768px) and (orientation: landscape) {
+    :is(#view-stopwatch, #view-timer, #view-tabata).split-force-middle
+      .view-top-half::after {
+      opacity: 1 !important;
+    }
+  }
+
   @media (min-width: 375px) and (orientation: portrait) {
     .top_content {
       --top-pad: var(--space-4);
@@ -1895,8 +1902,6 @@
   @media (max-width: 1024px) and (max-height: 720px) and (orientation: landscape) {
     :is(#view-stopwatch, #view-timer, #view-tabata).split-force-middle {
       --split: 50%;
-      flex-direction: row !important;
-      align-items: stretch !important;
     }
 
     :is(#view-stopwatch, #view-timer, #view-tabata).split-force-middle
@@ -1924,23 +1929,6 @@
       overflow: hidden !important;
       pointer-events: auto !important;
       padding-bottom: 0 !important;
-    }
-
-    :is(#view-stopwatch, #view-timer, #view-tabata).split-force-middle
-      .resizer_handler {
-      top: 0 !important;
-      bottom: 0 !important;
-      left: 0 !important;
-      right: auto !important;
-      width: var(--handler-size) !important;
-      height: auto !important;
-      transform: none !important;
-    }
-
-    :is(#view-stopwatch, #view-timer, #view-tabata).split-force-middle
-      .resizer_handler::before {
-      width: 3px !important;
-      height: clamp(28px, 20vh, 72px) !important;
     }
 
     :is(#view-stopwatch, #view-timer, #view-tabata).split-force-middle
