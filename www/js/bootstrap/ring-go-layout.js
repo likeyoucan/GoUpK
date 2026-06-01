@@ -71,7 +71,7 @@ function applyDisplayScale(displayEl, ringPx, rowLayout, renderedRingPx) {
   if (isGo) {
     const ringForGo = renderedRingPx || ringPx;
 
-    // Slightly bigger GO (tuned from 0.228 -> 0.236).
+    // Bigger GO, still bounded for small devices.
     let goPx = ringForGo * 0.258;
     goPx = clamp(goPx, 46, 98);
     goPx = snap2(goPx);
@@ -79,7 +79,7 @@ function applyDisplayScale(displayEl, ringPx, rowLayout, renderedRingPx) {
     displayEl.style.setProperty("--go-font-dynamic", `${goPx}px`);
     displayEl.style.setProperty("--go-skew-deg", "-11deg");
 
-    // Small normalization across browser/device font metrics.
+    // Mild normalization across browser/device font metrics.
     const renderedWordW = displayEl.getBoundingClientRect().width || 0;
     if (renderedWordW > 0) {
       const targetWordW = ringForGo * 0.355;
@@ -92,7 +92,7 @@ function applyDisplayScale(displayEl, ringPx, rowLayout, renderedRingPx) {
     return;
   }
 
-  // Keep timer sizing logic unchanged.
+  // Timer sizing unchanged.
   const hasMs = text.includes(".");
   const base = rowLayout ? (hasMs ? 0.132 : 0.152) : hasMs ? 0.124 : 0.144;
   const rawTimer = ringPx * base;
@@ -224,7 +224,7 @@ export function initDynamicRingAndGoLayout() {
     if (host) ro?.observe(host);
   });
 
-  // Observe GO state changes only, to avoid per-frame jitter on running time updates.
+  // Observe GO state changes only to avoid jitter on every time tick.
   const classObservers = displays.map((displayEl) => {
     const mo = new MutationObserver(scheduleRefresh);
     mo.observe(displayEl, {

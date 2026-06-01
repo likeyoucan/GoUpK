@@ -226,15 +226,8 @@ export const themeManager = {
 
     colorManager.syncPickers(this.currentAccent, this.currentBg);
 
+    // setMode уже применяет фон и акцент в правильном порядке
     this.setMode(this.currentMode, false);
-    this.setColor(this.currentAccent, false, {
-      recordHistory: false,
-      skipProCheck: true,
-    });
-    this.setBgColor(this.currentBg, false, {
-      recordHistory: false,
-      skipProCheck: true,
-    });
   },
 
   resetSettings() {
@@ -268,17 +261,16 @@ export const themeManager = {
     applyModeToDocument(mode);
     this._syncThemeModeSelectValue();
 
-    // 1) Сначала фон и классы режима (в т.ч. no-adaptive/bg-red-zone/bg-deep-dark)
+    // 1) Сначала фон и классы режима (no-adaptive/bg-red-zone/bg-deep-dark)
     this.applyBgTheme(this.currentBg);
 
-    // 2) Потом акцент, чтобы он вычислялся уже в корректном режиме
+    // 2) Потом акцент, чтобы он считался уже в актуальном режиме
     this.setColor(this.currentAccent, false, {
       recordHistory: false,
       skipProCheck: true,
     });
 
-    colorManager.syncPickers(this.currentAccent, this.currentBg);
-    colorManager.updateSelectionUI("accent", this.currentAccent, false);
+    // Синхронизируем bg-селектор после смены mode
     colorManager.updateSelectionUI("bg", this.currentBg, false);
 
     this._applyMetaThemeColor();
@@ -372,8 +364,7 @@ export const themeManager = {
 
     this.applyBgTheme(hex);
 
-    // Re-apply accent vars after bg-mode classes changed (red-zone / adaptive).
-    // This keeps danger palette coherent and prevents red-on-red merge.
+    // Пересчитываем акцент после смены bg-классов (red-zone/adaptive)
     this.setColor(this.currentAccent, false, {
       recordHistory: false,
       skipProCheck: true,

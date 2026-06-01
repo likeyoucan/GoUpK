@@ -2,6 +2,7 @@
 
 const VIEW_IDS = ["view-stopwatch", "view-timer", "view-tabata"];
 let views = [];
+let detachViewportListeners = null;
 
 let globalSnap = "middle"; // "top" | "middle" | "bottom"
 
@@ -466,6 +467,10 @@ function setupOneView(ctx) {
 }
 
 export function initSplitResizer() {
+  // Защита от повторной инициализации
+  detachViewportListeners?.();
+  detachViewportListeners = null;
+
   views = VIEW_IDS.map((id) => {
     const viewEl = document.getElementById(id);
     if (!viewEl) return null;
@@ -507,4 +512,11 @@ export function initSplitResizer() {
 
   window.addEventListener("resize", onViewportResize);
   window.addEventListener("orientationchange", onViewportResize);
+
+  detachViewportListeners = () => {
+    window.removeEventListener("resize", onViewportResize);
+    window.removeEventListener("orientationchange", onViewportResize);
+  };
+
+  return detachViewportListeners;
 }
