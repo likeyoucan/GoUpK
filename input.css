@@ -2194,23 +2194,6 @@
     transition: transform var(--dur-short) var(--ease-standard);
   }
 
-  input:checked + .custom-toggle::after {
-    transform: translateX(20px);
-    background-color: var(--on-primary-color) !important;
-  }
-
-  html:not(.dark) input:checked + .custom-toggle::after {
-    background-color: #ffffff !important;
-  }
-
-  html:not(.dark) input:checked + .custom-toggle {
-    border-color: color-mix(
-      in srgb,
-      var(--text-color) 24%,
-      transparent
-    ) !important;
-  }
-
   input[type="checkbox"]:focus-visible + .custom-toggle {
     outline: 2px solid var(--primary-color);
     outline-offset: 2px;
@@ -3427,6 +3410,23 @@
     ) !important;
   }
 
+  input:checked + .custom-toggle::after {
+    transform: translateX(20px);
+    background-color: var(--on-primary-color);
+  }
+
+  html:not(.dark) input:checked + .custom-toggle::after {
+    background-color: #ffffff;
+  }
+
+  html:not(.dark) input:checked + .custom-toggle {
+    border-color: color-mix(
+      in srgb,
+      var(--text-color) 24%,
+      transparent
+    ) !important;
+  }
+
   #sw-lapsContainer,
   #tb-workoutsList,
   #sw-sessionsList {
@@ -3664,35 +3664,12 @@
         in srgb,
         var(--ctl-bg) 88%,
         var(--primary-color) 12%
-      ) !important;
+      );
       border-color: color-mix(
         in srgb,
         var(--ctl-border) 76%,
         var(--primary-color) 24%
-      ) !important;
-    }
-
-    .glass-effect .main_btn_red:hover,
-    html.no-adaptive.bg-deep-dark.glass-effect .main_btn_red:hover,
-    html.no-adaptive:not(.bg-deep-dark).glass-effect .main_btn_red:hover {
-      background-color: color-mix(
-        in srgb,
-        var(--ctl-alert-bg) 90%,
-        #ffffff 10%
-      ) !important;
-      border-color: color-mix(
-        in srgb,
-        var(--ctl-alert-border) 82%,
-        #ffffff 18%
-      ) !important;
-    }
-
-    html.dark.glass-effect .main_btn_red:hover {
-      background-color: color-mix(
-        in srgb,
-        var(--ctl-alert-bg) 96%,
-        #000000 4%
-      ) !important;
+      );
     }
 
     #sw-share-mode-content .app-btn:not([data-modal-close]):hover,
@@ -3725,6 +3702,50 @@
       box-shadow:
         inset 0 1px 0 rgb(255 255 255 / 0.24),
         0 3px 10px rgb(0 0 0 / 0.12);
+    }
+
+    html:not(.dark):not(.glass-effect) .main_btn_red:hover {
+      background-color: color-mix(
+        in srgb,
+        var(--ctl-alert-bg) 84%,
+        #ffffff 16%
+      );
+      border-color: color-mix(
+        in srgb,
+        var(--ctl-alert-border) 78%,
+        #ffffff 22%
+      );
+    }
+
+    html.dark:not(.glass-effect) .main_btn_red:hover {
+      background-color: color-mix(in srgb, var(--ctl-alert-bg) 92%, #000000 8%);
+      border-color: color-mix(
+        in srgb,
+        var(--ctl-alert-border) 88%,
+        #ffffff 12%
+      );
+    }
+
+    html:not(.dark).glass-effect .main_btn_red:hover {
+      background-color: color-mix(
+        in srgb,
+        var(--ctl-alert-bg) 90%,
+        #ffffff 10%
+      );
+      border-color: color-mix(
+        in srgb,
+        var(--ctl-alert-border) 82%,
+        #ffffff 18%
+      );
+    }
+
+    html.dark.glass-effect .main_btn_red:hover {
+      background-color: color-mix(in srgb, var(--ctl-alert-bg) 96%, #000000 4%);
+      border-color: color-mix(
+        in srgb,
+        var(--ctl-alert-border) 80%,
+        #ffffff 20%
+      );
     }
   }
 
@@ -3948,32 +3969,6 @@
 
     .tb-edit-btn:active {
       background-color: var(--ui-hover-bg-strong);
-    }
-
-    html:not(.dark) .main_btn_red:hover {
-      background-color: color-mix(
-        in srgb,
-        var(--ctl-alert-bg) 84%,
-        #ffffff 16%
-      ) !important;
-      border-color: color-mix(
-        in srgb,
-        var(--ctl-alert-border) 78%,
-        #ffffff 22%
-      ) !important;
-    }
-
-    html.dark .main_btn_red:hover {
-      background-color: color-mix(
-        in srgb,
-        var(--ctl-alert-bg) 92%,
-        #000000 8%
-      ) !important;
-      border-color: color-mix(
-        in srgb,
-        var(--ctl-alert-border) 88%,
-        #ffffff 12%
-      ) !important;
     }
   }
 
