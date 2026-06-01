@@ -12,7 +12,7 @@ const SPLIT_BEHAVIOR = {
   overlayWhenBottomHidden: true,
 };
 
-// Viewport policy to prevent layout collapse on extreme ratios.
+// Viewport policy: force only in emergency tiny-height mode.
 const VIEWPORT_POLICY = {
   emergencyHeightMax: 320,
 };
@@ -32,33 +32,47 @@ function isMobilePortrait() {
   );
 }
 
-function getMiddleAnchor() {
+function getViewportRatio() {
   const w = window.innerWidth || 0;
   const h = window.innerHeight || 0;
-  if (!w || !h) return 50;
+  if (!w || !h) return 1;
+  return w / h;
+}
 
-  const ratio = w / h;
+function isNearSquareLandscape() {
+  const w = window.innerWidth || 0;
+  const ratio = getViewportRatio();
+  // Example: 712x654 (~1.09)
+  return ratio > 1 && ratio <= 1.2 && w < 900;
+}
 
-  // Явный ландшафт
+function getViewportRawMax() {
+  // In near-square landscape don't allow full collapse to 100
+  // to keep handler reachable above nav area.
+  return isNearSquareLandscape() ? 92 : 100;
+}
+
+function getMiddleAnchor() {
+  const ratio = getViewportRatio();
+
+  // Landscape
   if (ratio >= 1.15) return 50;
 
-  // Почти квадратные экраны
+  // Near-square
   if (ratio >= 0.9 && ratio <= 1.1) return 55;
 
-  // Портретные вытянутые
+  // Portrait
   return 60;
 }
 
 /**
  * Returns forced target for current viewport:
- * - 100: ultra compact (show top, hide bottom)
- * - middle: compact range (stable split)
+ * - middle: only for emergency tiny-height mode
  * - null: normal behavior
  */
 function getForcedTargetForViewport() {
   const h = window.innerHeight || 0;
 
-  // Форс только для аварийно низкой высоты
   if (h <= VIEWPORT_POLICY.emergencyHeightMax) {
     return getMiddleAnchor();
   }
@@ -66,9 +80,18 @@ function getForcedTargetForViewport() {
   return null;
 }
 
+function normalizeTargetForGeometry(target) {
+  // Prevent bottom-hidden state in near-square landscape
+  if (isNearSquareLandscape() && target === 100) {
+    return getMiddleAnchor();
+  }
+  return target;
+}
+
 function normalizeTargetForViewport(target) {
   const forced = getForcedTargetForViewport();
-  return forced == null ? target : forced;
+  const base = forced == null ? target : forced;
+  return normalizeTargetForGeometry(base);
 }
 
 function nearestAnchor(value, anchors) {
@@ -172,6 +195,8 @@ function applySnapToAll(target, { animate = true, duration = 240 } = {}) {
     target = forcedTarget;
   }
 
+  target = normalizeTargetForViewport(target);
+
   const forcedMiddle =
     forcedTarget !== null && forcedTarget !== 0 && forcedTarget !== 100;
 
@@ -269,12 +294,13 @@ function setupOneView(ctx) {
 
   const pointerToRaw = (ev) => {
     const rect = viewEl.getBoundingClientRect();
+    const rawMax = getViewportRawMax();
 
     if (isRowLayout(viewEl)) {
       return clamp(
         ((ev.clientX - rect.left) / Math.max(1, rect.width)) * 100,
         0,
-        100,
+        rawMax,
       );
     }
 
@@ -286,16 +312,19 @@ function setupOneView(ctx) {
     const handlerPx = handler.getBoundingClientRect().height || 16;
     const usableHeight = Math.max(1, rect.height - bottomPad - handlerPx);
 
-    return clamp(((ev.clientY - rect.top) / usableHeight) * 100, 0, 100);
+    return clamp(((ev.clientY - rect.top) / usableHeight) * 100, 0, rawMax);
   };
 
   const applyLive = (raw) => {
-    lastRaw = clamp(raw, 0, 100);
+    const rawMax = getViewportRawMax();
+    lastRaw = clamp(raw, 0, rawMax);
 
     const forced = getForcedTargetForViewport();
     if (forced != null) {
       lastRaw = forced;
     }
+
+    lastRaw = Math.min(lastRaw, rawMax);
 
     viewEl.classList.toggle(
       "split-force-middle",
@@ -338,14 +367,21 @@ function setupOneView(ctx) {
       tuning.maxShift,
     );
 
-    const projected = clamp(lastRaw + inertiaShift, 0, 100);
+    const projected = clamp(lastRaw + inertiaShift, 0, getViewportRawMax());
+    const middle = getMiddleAnchor();
 
     let target;
-    if (Math.abs(projected - 0) <= SNAP_THRESHOLD) target = 0;
-    else if (Math.abs(projected - getMiddleAnchor()) <= SNAP_THRESHOLD) {
-      target = getMiddleAnchor();
-    } else if (Math.abs(projected - 100) <= SNAP_THRESHOLD) target = 100;
-    else target = nearestAnchor(projected, anchors);
+
+    if (isNearSquareLandscape()) {
+      // In near-square landscape: never snap to bottom-hidden extreme.
+      if (Math.abs(projected - 0) <= SNAP_THRESHOLD) target = 0;
+      else target = middle;
+    } else {
+      if (Math.abs(projected - 0) <= SNAP_THRESHOLD) target = 0;
+      else if (Math.abs(projected - middle) <= SNAP_THRESHOLD) target = middle;
+      else if (Math.abs(projected - 100) <= SNAP_THRESHOLD) target = 100;
+      else target = nearestAnchor(projected, anchors);
+    }
 
     applySnapToAll(target, { animate: true, duration: tuning.duration });
   };
@@ -359,6 +395,16 @@ function setupOneView(ctx) {
 
     const middle = getMiddleAnchor();
     const currentTarget = getTargetFromGlobalSnap();
+
+    if (isNearSquareLandscape()) {
+      // Two-state cycle to keep handler always visible
+      if (currentTarget === 0) {
+        applySnapToAll(middle, { animate: true, duration: 240 });
+      } else {
+        applySnapToAll(0, { animate: true, duration: 240 });
+      }
+      return;
+    }
 
     if (currentTarget === 0) {
       applySnapToAll(middle, { animate: true, duration: 240 });
@@ -450,6 +496,7 @@ function setupOneView(ctx) {
     }
 
     const middle = getMiddleAnchor();
+    const endTarget = isNearSquareLandscape() ? middle : 100;
 
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
@@ -465,7 +512,7 @@ function setupOneView(ctx) {
 
     if (e.key === "End") {
       e.preventDefault();
-      applySnapToAll(100, { animate: true, duration: 220 });
+      applySnapToAll(endTarget, { animate: true, duration: 220 });
       return;
     }
 
@@ -477,7 +524,7 @@ function setupOneView(ctx) {
 
     if (e.key === "ArrowRight" || e.key === "ArrowDown") {
       e.preventDefault();
-      applySnapToAll(100, { animate: true, duration: 220 });
+      applySnapToAll(endTarget, { animate: true, duration: 220 });
       return;
     }
 
@@ -489,7 +536,7 @@ function setupOneView(ctx) {
 }
 
 export function initSplitResizer() {
-  // Защита от повторной инициализации
+  // Guard against duplicate init
   detachViewportListeners?.();
   detachViewportListeners = null;
 
@@ -509,10 +556,10 @@ export function initSplitResizer() {
   const initialTarget = getTargetFromGlobalSnap();
   applySnapToAll(initialTarget, { animate: false });
 
-function isUltraCompactViewport() {
-  const h = window.innerHeight || 0;
-  return h <= VIEWPORT_POLICY.emergencyHeightMax;
-}
+  function isUltraCompactViewport() {
+    const h = window.innerHeight || 0;
+    return h <= VIEWPORT_POLICY.emergencyHeightMax;
+  }
 
   const onViewportResize = () => {
     if (isUltraCompactViewport()) {
@@ -523,7 +570,7 @@ function isUltraCompactViewport() {
 
     const forced = getForcedTargetForViewport();
     if (forced != null) {
-      globalSnap = forced === 100 ? "bottom" : "middle";
+      globalSnap = forced === 0 ? "top" : "middle";
       applySnapToAll(forced, { animate: false });
       return;
     }

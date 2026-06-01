@@ -1462,6 +1462,66 @@
     }
   }
 
+  @media (max-width: 767px) and (orientation: landscape) {
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
+    .view-top-half {
+    flex-basis: calc(100% - var(--nav-total) - var(--handler-size));
+    max-height: calc(100% - var(--nav-total) - var(--handler-size));
+  }
+
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
+    .view-bottom-half {
+    flex: 0 0 calc(var(--nav-total) + var(--handler-size));
+    min-height: calc(var(--nav-total) + var(--handler-size));
+    height: calc(var(--nav-total) + var(--handler-size));
+    padding-bottom: 0;
+    overflow: visible;
+    transform: none;
+  }
+
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
+    .view-bottom-half
+    .resizer_handler {
+    top: 0;
+    bottom: auto;
+  }
+
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
+    .view-bottom-half
+    .mid_content {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(10px);
+  }
+
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-live[data-split-target="bottom"]
+    .view-top-half,
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-animating[data-split-target="bottom"]
+    .view-top-half {
+    flex-basis: calc(100% - var(--nav-total) - var(--handler-size));
+    max-height: calc(100% - var(--nav-total) - var(--handler-size));
+  }
+
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-live[data-split-target="bottom"]
+    .view-bottom-half,
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-animating[data-split-target="bottom"]
+    .view-bottom-half {
+    flex: 0 0 calc(var(--nav-total) + var(--handler-size));
+    min-height: calc(var(--nav-total) + var(--handler-size));
+    height: calc(var(--nav-total) + var(--handler-size));
+    padding-bottom: 0;
+  }
+
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-live[data-split-target="bottom"]
+    .resizer_handler,
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-animating[data-split-target="bottom"]
+    .resizer_handler {
+    top: 0;
+    bottom: auto;
+  }
+}
+
   @media (min-width: 768px) and (orientation: portrait) {
     :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
       .view-top-half {
