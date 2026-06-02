@@ -20,6 +20,9 @@ const DEFAULT_INTERSTITIAL_TRIGGERS = {
   tabata_complete: true,
 };
 
+const DESKTOP_FIXED_MIN_WIDTH = 1281;
+const TWO_COLUMN_MIN_WIDTH = 600;
+
 function isNative() {
   return !!(window.Capacitor && window.Capacitor.isNativePlatform());
 }
@@ -67,6 +70,34 @@ function normalizeTriggers(map) {
   };
 }
 
+function isDesktopAdLayout() {
+  return window.matchMedia(`(min-width: ${DESKTOP_FIXED_MIN_WIDTH}px)`).matches;
+}
+
+function isTwoColumnLandscapeNonDesktop() {
+  return (
+    window.matchMedia("(orientation: landscape)").matches &&
+    window.matchMedia(`(min-width: ${TWO_COLUMN_MIN_WIDTH}px)`).matches &&
+    window.matchMedia(`(max-width: ${DESKTOP_FIXED_MIN_WIDTH - 1}px)`).matches
+  );
+}
+
+function shouldKeepMobileReserve() {
+  // Reserve only for non-desktop single-column layouts.
+  // Two-column landscape non-desktop keeps old behavior.
+  return !isDesktopAdLayout() && !isTwoColumnLandscapeNonDesktop();
+}
+
+function ensureMobileAdReserve(slot) {
+  let spacer = slot.querySelector(".ad-reserve-spacer");
+  if (!spacer) {
+    spacer = document.createElement("div");
+    spacer.className = "ad-reserve-spacer";
+    spacer.setAttribute("aria-hidden", "true");
+    slot.appendChild(spacer);
+  }
+}
+
 export const adsManager = {
   enabled: true,
   provider: DEFAULT_PROVIDER,
@@ -78,6 +109,7 @@ export const adsManager = {
 
   bannerMounted: false,
   initialized: false,
+  _viewportListenerBound: false,
 
   init() {
     // User-level settings kept only for global ads on/off and provider
@@ -103,7 +135,20 @@ export const adsManager = {
         .catch(() => {});
     }
 
+    this._bindViewportListener();
     this.renderBanner();
+  },
+
+  _bindViewportListener() {
+    if (this._viewportListenerBound) return;
+    this._viewportListenerBound = true;
+
+    const onViewportChange = () => this.renderBanner();
+
+    window.addEventListener("resize", onViewportChange, { passive: true });
+    window.addEventListener("orientationchange", onViewportChange, {
+      passive: true,
+    });
   },
 
   bindAutoRefresh() {
@@ -207,9 +252,10 @@ export const adsManager = {
       return;
     }
 
+    const desktop = isDesktopAdLayout();
+    const keepReserve = shouldKeepMobileReserve();
+
     if (!visible) {
-      slot.classList.add("hidden");
-      slot.replaceChildren();
       this.bannerMounted = false;
 
       if (isNative()) {
@@ -218,17 +264,39 @@ export const adsManager = {
           .catch(() => {});
       }
 
+      slot.replaceChildren();
+
+      if (desktop) {
+        // Desktop fixed layout: old behavior.
+        slot.classList.add("hidden");
+        slot.classList.remove("ad-reserve-empty");
+      } else if (keepReserve) {
+        // Mobile single-column: keep reserve to prevent layout jump.
+        slot.classList.remove("hidden");
+        slot.classList.add("ad-reserve-empty");
+        ensureMobileAdReserve(slot);
+      } else {
+        // Two-column landscape non-desktop: old behavior (no reserve).
+        slot.classList.add("hidden");
+        slot.classList.remove("ad-reserve-empty");
+      }
+
       dispatch(APP_EVENTS.ADS_BANNER_VISIBILITY_CHANGED, { visible: false });
       return;
     }
 
-    slot.classList.remove("hidden");
+    slot.classList.remove("hidden", "ad-reserve-empty");
     this.bannerMounted = true;
     slot.replaceChildren();
 
     if (!isNative()) {
       slot.appendChild(createWebPlaceholder(this.provider));
     } else {
+      // Reserve in native mode only where single-column reserve policy is active.
+      if (keepReserve) {
+        ensureMobileAdReserve(slot);
+      }
+
       getAdsPlugin()
         ?.showBanner?.({
           placement: "inline_top_banner",

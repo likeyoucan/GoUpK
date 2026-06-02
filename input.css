@@ -3745,6 +3745,32 @@
     max-width: 100% !important;
   }
 
+  #app-ad-slot.ad-reserve-empty {
+    background: transparent !important;
+    border-color: transparent !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+  }
+
+  #app-ad-slot .ad-reserve-spacer {
+    width: 100%;
+    min-height: 36px;
+    pointer-events: none;
+  }
+
+  @media (max-width: 420px) {
+    #app-ad-slot .ad-reserve-spacer {
+      min-height: 34px;
+    }
+  }
+
+  /* Desktop fixed layout: keep previous behavior */
+  @media (min-width: 1281px) {
+    #app-ad-slot.ad-reserve-empty {
+      display: none !important;
+    }
+  }
+
   @media (min-width: 1281px) {
     #app-ad-slot {
       position: fixed;
