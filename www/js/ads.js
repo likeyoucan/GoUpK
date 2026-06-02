@@ -1,7 +1,5 @@
 // Файл: www/js/ads.js
 
-// Файл: www/js/ads.js
-
 import { $, safeGetLS, safeSetLS } from "./utils.js?v=VERSION";
 import { STORAGE_KEYS } from "./constants/storage-keys.js?v=VERSION";
 import { APP_EVENTS } from "./constants/events.js?v=VERSION";
@@ -22,9 +20,8 @@ const DEFAULT_INTERSTITIAL_TRIGGERS = {
   tabata_complete: true,
 };
 
+const DEFAULT_INTERSTITIAL_MIN_COOLDOWN_MS = 30_000;
 const DESKTOP_FIXED_MIN_WIDTH = 1281;
-const TWO_COLUMN_MIN_WIDTH = 600;
-const MOBILE_MAX_WIDTH = 767;
 
 function isNative() {
   return !!(window.Capacitor && window.Capacitor.isNativePlatform());
@@ -77,26 +74,20 @@ function isDesktopAdLayout() {
   return window.matchMedia(`(min-width: ${DESKTOP_FIXED_MIN_WIDTH}px)`).matches;
 }
 
-function isTwoColumnLandscapeNonDesktop() {
-  return (
-    window.matchMedia("(orientation: landscape)").matches &&
-    window.matchMedia(`(min-width: ${TWO_COLUMN_MIN_WIDTH}px)`).matches &&
-    window.matchMedia(`(max-width: ${DESKTOP_FIXED_MIN_WIDTH - 1}px)`).matches
-  );
+function shouldApplyMobileOffsetWhenAdsOff() {
+  // Offset is needed only on mobile portrait single-column.
+  // In landscape two-column and desktop offset must be 0.
+  return window.matchMedia("(max-width: 767px) and (orientation: portrait)")
+    .matches;
 }
 
-function isMobileLayout() {
-  return window.matchMedia(`(max-width: ${MOBILE_MAX_WIDTH}px)`).matches;
-}
+function updateMobileOffsetClass(isBannerVisible) {
+  const viewsContainer = $("viewsContainer");
+  if (!viewsContainer) return;
 
-function shouldApplyMobileTopOffsetWhenAdsOff() {
-  // Only mobile single-column gets slot reserve when ads are off.
-  return isMobileLayout() && !isTwoColumnLandscapeNonDesktop();
+  const shouldOffset = !isBannerVisible && shouldApplyMobileOffsetWhenAdsOff();
+  viewsContainer.classList.toggle("ads-mobile-offset", shouldOffset);
 }
-
-// Kept as compatibility no-op: layout compensation is now handled by
-// #app-ad-slot.hidden.ad-slot-reserve CSS, not by viewsContainer padding classes.
-function updateMobileOffsetClass() {}
 
 export const adsManager = {
   enabled: true,
@@ -228,7 +219,10 @@ export const adsManager = {
   },
 
   setInterstitialCooldown(ms) {
-    const value = Math.max(30_000, Number(ms) || DEFAULT_COOLDOWN_MS);
+    const value = Math.max(
+      DEFAULT_INTERSTITIAL_MIN_COOLDOWN_MS,
+      Number(ms) || DEFAULT_COOLDOWN_MS,
+    );
     this.interstitialCooldownMs = value;
     safeSetLS(STORAGE_KEYS.APP_ADS_INTERSTITIAL_COOLDOWN_MS, String(value));
   },
@@ -262,21 +256,18 @@ export const adsManager = {
           .catch(() => {});
       }
 
-      // Keep reserved slot only for mobile single-column.
-      const reserve = shouldApplyMobileTopOffsetWhenAdsOff();
-      slot.classList.toggle("ad-slot-reserve", reserve);
-
-      // No ad content.
+      // Ads OFF: slot must not render any strip.
       slot.replaceChildren();
       slot.classList.add("hidden");
 
+      // Keep mobile portrait composition stable.
       updateMobileOffsetClass(false);
+
       dispatch(APP_EVENTS.ADS_BANNER_VISIBILITY_CHANGED, { visible: false });
       return;
     }
 
     slot.classList.remove("hidden");
-    slot.classList.remove("ad-slot-reserve");
     this.bannerMounted = true;
     slot.replaceChildren();
 
@@ -293,7 +284,9 @@ export const adsManager = {
         .catch(() => {});
     }
 
+    // Banner visible: remove mobile offset.
     updateMobileOffsetClass(true);
+
     dispatch(APP_EVENTS.ADS_BANNER_VISIBILITY_CHANGED, { visible: true });
   },
 

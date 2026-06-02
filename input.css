@@ -1084,24 +1084,6 @@
     opacity: 1;
   }
 
-  /* Mobile single-column ads OFF internal offset */
-  #app.ads-mobile-offset {
-    padding-top: calc(var(--safe-top) + 36px);
-  }
-
-  @media (max-width: 420px) {
-    #app.ads-mobile-offset {
-      padding-top: calc(var(--safe-top) + 34px);
-    }
-  }
-
-  /* Desktop fixed ads keeps old behavior */
-  @media (min-width: 1281px) {
-    #app.ads-mobile-offset {
-      padding-top: var(--safe-top);
-    }
-  }
-
   /* VIGNETTE */
   .app-bg::before {
     content: "";
@@ -3751,22 +3733,25 @@
     display: none;
   }
 
-  /* mobile portrait only: keep reserved height when ads are off */
-  @media (max-width: 767px) and (orientation: portrait) {
-    #app-ad-slot.hidden.ad-slot-reserve {
-      display: block;
-      visibility: hidden;
-      pointer-events: none;
-      min-height: 36px;
-      padding: 0 12px;
-      border: 0;
-      margin: 0;
-    }
+  #viewsContainer.ads-mobile-offset {
+    padding-top: 36px;
   }
 
   @media (max-width: 420px) and (orientation: portrait) {
-    #app-ad-slot.hidden.ad-slot-reserve {
-      min-height: 34px;
+    #viewsContainer.ads-mobile-offset {
+      padding-top: 34px;
+    }
+  }
+
+  @media (min-width: 768px), (orientation: landscape) {
+    #viewsContainer.ads-mobile-offset {
+      padding-top: 0;
+    }
+  }
+
+  @media (min-width: 1281px) {
+    #viewsContainer.ads-mobile-offset {
+      padding-top: 0;
     }
   }
 
