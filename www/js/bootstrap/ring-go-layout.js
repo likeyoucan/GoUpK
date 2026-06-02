@@ -73,6 +73,24 @@ function setGoFontStable(displayEl, nextPx) {
   displayEl.dataset.goFontPx = String(nextPx);
 }
 
+function applyMetaTextScale(wrap, ringPx, rowLayout) {
+  if (!wrap || !ringPx) return;
+
+  const metaFontPx = snap2(
+    clamp(ringPx * (rowLayout ? 0.062 : 0.058), 11, rowLayout ? 20 : 24),
+  );
+  const statusOffsetPx = snap2(
+    clamp(ringPx * (rowLayout ? 0.26 : 0.28), 48, rowLayout ? 112 : 140),
+  );
+  const extendedOffsetPx = snap2(
+    clamp(ringPx * (rowLayout ? 0.26 : 0.28), 48, rowLayout ? 112 : 140),
+  );
+
+  wrap.style.setProperty("--ring-meta-font-px", `${metaFontPx}px`);
+  wrap.style.setProperty("--ring-status-offset-px", `${statusOffsetPx}px`);
+  wrap.style.setProperty("--ring-extended-offset-px", `${extendedOffsetPx}px`);
+}
+
 function applyDisplayScale(displayEl, ringPx, rowLayout, renderedRingPx) {
   if (!displayEl || !ringPx) return;
 
@@ -83,8 +101,7 @@ function applyDisplayScale(displayEl, ringPx, rowLayout, renderedRingPx) {
   if (isGo) {
     const ringForGo = renderedRingPx || ringPx;
 
-    // GO всегда масштабируется от фактического размера кольца.
-    // Отдельные лимиты для row/column layout.
+    // GO always scales from real ring size.
     const minGo = rowLayout ? 44 : 48;
     const maxGo = rowLayout ? 132 : 168;
 
@@ -93,7 +110,7 @@ function applyDisplayScale(displayEl, ringPx, rowLayout, renderedRingPx) {
 
     displayEl.style.setProperty("--go-skew-deg", "-11deg");
 
-    // Мягкая корректировка метрик шрифта без жесткого "зажатия" размера.
+    // Mild normalization across browser/device font metrics.
     const renderedWordW = displayEl.getBoundingClientRect().width || 0;
     if (renderedWordW > 0) {
       const targetWordW = ringForGo * 0.355;
@@ -107,9 +124,9 @@ function applyDisplayScale(displayEl, ringPx, rowLayout, renderedRingPx) {
   }
 
   const hasMs = text.includes(".");
-  const base = rowLayout ? (hasMs ? 0.132 : 0.152) : hasMs ? 0.124 : 0.144;
+  const base = rowLayout ? (hasMs ? 0.15 : 0.175) : hasMs ? 0.145 : 0.17;
   const rawTimer = ringPx * base;
-  const timerPx = snap4(clamp(rawTimer, 24, rowLayout ? 60 : 56));
+  const timerPx = snap2(clamp(rawTimer, 24, rowLayout ? 88 : 108));
 
   displayEl.style.setProperty("--timer-font-dynamic", `${timerPx}px`);
 }
@@ -154,6 +171,9 @@ export function initDynamicRingAndGoLayout() {
 
       const topHalf = getTopHalfEl(wrap);
       const rowLayout = isRowLayout(topHalf);
+
+      // Scale PAUSE / extended day-hour text relative to ring size.
+      applyMetaTextScale(wrap, renderedRingPx, rowLayout);
 
       displays.forEach((displayEl) => {
         const ownWrap = getRingWrapForDisplay(displayEl);
