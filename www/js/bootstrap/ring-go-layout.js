@@ -36,6 +36,14 @@ function isRowLayout(topHalfEl) {
   return getComputedStyle(parentView).flexDirection.startsWith("row");
 }
 
+function isCompactViewport() {
+  return window.innerHeight < 430 || window.innerWidth < 280;
+}
+
+function isCompactRing(ringPx) {
+  return ringPx < 180 || isCompactViewport();
+}
+
 function calcDynamicRingSizePx(wrap) {
   const topHalfEl = getTopHalfEl(wrap);
   const rect = topHalfEl?.getBoundingClientRect?.();
@@ -76,14 +84,31 @@ function setGoFontStable(displayEl, nextPx) {
 function applyMetaTextScale(wrap, ringPx, rowLayout) {
   if (!wrap || !ringPx) return;
 
+  const compact = isCompactRing(ringPx);
+
   const metaFontPx = snap2(
-    clamp(ringPx * (rowLayout ? 0.062 : 0.058), 11, rowLayout ? 20 : 24),
+    clamp(
+      ringPx *
+        (compact ? (rowLayout ? 0.05 : 0.052) : rowLayout ? 0.062 : 0.058),
+      compact ? 9 : 11,
+      compact ? 14 : rowLayout ? 20 : 24,
+    ),
   );
+
   const statusOffsetPx = snap2(
-    clamp(ringPx * (rowLayout ? 0.26 : 0.28), 48, rowLayout ? 112 : 140),
+    clamp(
+      ringPx * (compact ? 0.22 : rowLayout ? 0.26 : 0.28),
+      compact ? 20 : 48,
+      compact ? 56 : rowLayout ? 112 : 140,
+    ),
   );
+
   const extendedOffsetPx = snap2(
-    clamp(ringPx * (rowLayout ? 0.26 : 0.28), 48, rowLayout ? 112 : 140),
+    clamp(
+      ringPx * (compact ? 0.22 : rowLayout ? 0.26 : 0.28),
+      compact ? 20 : 48,
+      compact ? 56 : rowLayout ? 112 : 140,
+    ),
   );
 
   wrap.style.setProperty("--ring-meta-font-px", `${metaFontPx}px`);
@@ -100,10 +125,11 @@ function applyDisplayScale(displayEl, ringPx, rowLayout, renderedRingPx) {
 
   if (isGo) {
     const ringForGo = renderedRingPx || ringPx;
+    const compact = isCompactRing(ringForGo);
 
     // GO always scales from real ring size.
-    const minGo = rowLayout ? 44 : 48;
-    const maxGo = rowLayout ? 132 : 168;
+    const minGo = compact ? 28 : rowLayout ? 44 : 48;
+    const maxGo = compact ? 76 : rowLayout ? 132 : 168;
 
     let goPx = ringForGo * 0.258;
     goPx = clamp(goPx, minGo, maxGo);
@@ -113,8 +139,8 @@ function applyDisplayScale(displayEl, ringPx, rowLayout, renderedRingPx) {
     // Mild normalization across browser/device font metrics.
     const renderedWordW = displayEl.getBoundingClientRect().width || 0;
     if (renderedWordW > 0) {
-      const targetWordW = ringForGo * 0.355;
-      const k = clamp(targetWordW / renderedWordW, 0.9, 1.12);
+      const targetWordW = ringForGo * (compact ? 0.42 : 0.355);
+      const k = clamp(targetWordW / renderedWordW, 0.88, 1.14);
       goPx = clamp(goPx * k, minGo, maxGo);
     }
 
@@ -123,10 +149,25 @@ function applyDisplayScale(displayEl, ringPx, rowLayout, renderedRingPx) {
     return;
   }
 
+  const compact = isCompactRing(ringPx);
   const hasMs = text.includes(".");
-  const base = rowLayout ? (hasMs ? 0.15 : 0.175) : hasMs ? 0.145 : 0.17;
+
+  const base = compact
+    ? hasMs
+      ? 0.17
+      : 0.19
+    : rowLayout
+      ? hasMs
+        ? 0.15
+        : 0.175
+      : hasMs
+        ? 0.145
+        : 0.17;
+
   const rawTimer = ringPx * base;
-  const timerPx = snap2(clamp(rawTimer, 24, rowLayout ? 88 : 108));
+  const timerPx = snap2(
+    clamp(rawTimer, compact ? 12 : 24, compact ? 40 : rowLayout ? 88 : 108),
+  );
 
   displayEl.style.setProperty("--timer-font-dynamic", `${timerPx}px`);
 }
