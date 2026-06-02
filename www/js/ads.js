@@ -82,20 +82,21 @@ function isTwoColumnLandscapeNonDesktop() {
   );
 }
 
-function shouldKeepMobileReserve() {
-  // Reserve only for non-desktop single-column layouts.
-  // Two-column landscape non-desktop keeps old behavior.
+function isMobileSingleColumnLayout() {
   return !isDesktopAdLayout() && !isTwoColumnLandscapeNonDesktop();
 }
 
-function ensureMobileAdReserve(slot) {
-  let spacer = slot.querySelector(".ad-reserve-spacer");
-  if (!spacer) {
-    spacer = document.createElement("div");
-    spacer.className = "ad-reserve-spacer";
-    spacer.setAttribute("aria-hidden", "true");
-    slot.appendChild(spacer);
-  }
+function updateAppAdsOffsetClass(isBannerVisible) {
+  const appEl = $("app");
+  if (!appEl) return;
+
+  // Requested behavior:
+  // - mobile single-column + ads OFF -> keep internal top offset (no empty slot)
+  // - mobile single-column + ads ON -> remove offset, banner shifts content
+  // - two-column landscape non-desktop -> keep old behavior (no offset)
+  // - desktop fixed -> keep old behavior
+  const shouldOffset = isMobileSingleColumnLayout() && !isBannerVisible;
+  appEl.classList.toggle("ads-mobile-offset", shouldOffset);
 }
 
 export const adsManager = {
@@ -248,12 +249,12 @@ export const adsManager = {
     const visible = this.shouldShowBanner();
 
     if (!slot) {
+      updateAppAdsOffsetClass(false);
       dispatch(APP_EVENTS.ADS_BANNER_VISIBILITY_CHANGED, { visible: false });
       return;
     }
 
     const desktop = isDesktopAdLayout();
-    const keepReserve = shouldKeepMobileReserve();
 
     if (!visible) {
       this.bannerMounted = false;
@@ -267,36 +268,25 @@ export const adsManager = {
       slot.replaceChildren();
 
       if (desktop) {
-        // Desktop fixed layout: old behavior.
+        // Desktop fixed layout: keep old behavior.
         slot.classList.add("hidden");
-        slot.classList.remove("ad-reserve-empty");
-      } else if (keepReserve) {
-        // Mobile single-column: keep reserve to prevent layout jump.
-        slot.classList.remove("hidden");
-        slot.classList.add("ad-reserve-empty");
-        ensureMobileAdReserve(slot);
       } else {
-        // Two-column landscape non-desktop: old behavior (no reserve).
+        // Non-desktop: no empty slot when ads are off.
         slot.classList.add("hidden");
-        slot.classList.remove("ad-reserve-empty");
       }
 
+      updateAppAdsOffsetClass(false);
       dispatch(APP_EVENTS.ADS_BANNER_VISIBILITY_CHANGED, { visible: false });
       return;
     }
 
-    slot.classList.remove("hidden", "ad-reserve-empty");
+    slot.classList.remove("hidden");
     this.bannerMounted = true;
     slot.replaceChildren();
 
     if (!isNative()) {
       slot.appendChild(createWebPlaceholder(this.provider));
     } else {
-      // Reserve in native mode only where single-column reserve policy is active.
-      if (keepReserve) {
-        ensureMobileAdReserve(slot);
-      }
-
       getAdsPlugin()
         ?.showBanner?.({
           placement: "inline_top_banner",
@@ -305,6 +295,8 @@ export const adsManager = {
         .catch(() => {});
     }
 
+    // Banner visible -> remove internal offset so banner naturally shifts content.
+    updateAppAdsOffsetClass(true);
     dispatch(APP_EVENTS.ADS_BANNER_VISIBILITY_CHANGED, { visible: true });
   },
 

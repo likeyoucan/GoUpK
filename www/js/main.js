@@ -21,6 +21,7 @@ import { initRingSvg } from "./bootstrap/ring-svg-injector.js?v=VERSION";
 import { applyPerformanceProfile } from "./bootstrap/performance-profile.js?v=VERSION";
 import { initRuntimeBootstrap } from "./bootstrap/runtime-bootstrap.js?v=VERSION";
 import { initMonetizationBootstrap } from "./bootstrap/monetization-bootstrap.js?v=VERSION";
+import { bindLayoutOverlay } from "./bootstrap/layout-overlay.js?v=VERSION";
 import { initErudaTapToggle } from "./debug-eruda-toggle.js?v=VERSION";
 
 import { appProManager } from "./app-pro.js?v=VERSION";
@@ -164,6 +165,12 @@ async function bootstrap() {
     showToast,
     t,
     getById: (id) => document.getElementById(id),
+  });
+
+  bindLayoutOverlay({
+    minDeltaPx: 18,
+    settleDelayMs: 220,
+    holdMs: 100,
   });
 
   document.addEventListener("visibilitychange", () => {
