@@ -1672,7 +1672,7 @@
     #view-stopwatch,
     #view-timer,
     #view-tabata {
-      --landscape-bottom-offset: var(--nav-total);
+      --landscape-bottom-offset: var(--nav-height);
       padding-bottom: var(--landscape-bottom-offset);
       flex-direction: row;
       align-items: stretch;
@@ -3748,8 +3748,7 @@
   #app-ad-slot.ad-reserve-empty {
     background: transparent !important;
     border-color: transparent !important;
-    padding-top: 0 !important;
-    padding-bottom: 0 !important;
+    padding: 0 !important;
   }
 
   #app-ad-slot .ad-reserve-spacer {
