@@ -213,8 +213,9 @@ function centerGoDisplay(displayEl) {
 
   // Optical vertical center correction for italic/skewed GO glyph.
   const y = compact ? -2 : -3;
+  const x = compact ? -1 : -2;
 
-  displayEl.style.setProperty("--go-nudge-x", "0px");
+  displayEl.style.setProperty("--go-nudge-x", `${x}px`);
   displayEl.style.setProperty("--go-nudge-y", `${y}px`);
 }
 

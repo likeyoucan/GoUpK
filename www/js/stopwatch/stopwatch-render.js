@@ -38,7 +38,10 @@ function fitStopwatchDisplay(el) {
 
   const isGo = el.classList.contains("is-go");
   el.style.transformOrigin = "center center";
-  if (isGo) return;
+  if (isGo) {
+    el.style.transform = "";
+    return;
+  }
 
   const available = el.clientWidth || el.parentElement?.clientWidth || 0;
   const needed = el.scrollWidth || 0;
@@ -55,7 +58,7 @@ function fitStopwatchDisplay(el) {
   // Гистерезис: убирает визуальный микроджиттер
   if (Math.abs(prev - next) < 0.012) return;
 
-  el.style.transform = `scaleX(${next})`;
+  el.style.transform = `translateX(0px) scaleX(${next})`;
   el.dataset.scaleX = String(next);
 }
 

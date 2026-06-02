@@ -84,6 +84,10 @@ export function setupTimerRender(tm, { updateText, updateTitle }) {
     const timeStr = tm.formatTime(rem, { forceHours });
     updateText(tm.els.display, timeStr);
 
+    if (!tm.els.display.classList.contains("is-go")) {
+      tm.els.display.style.transform = "translateX(0px)";
+    }
+
     // Keep title updates out of hot path on active screen
     if (document.hidden) updateTitle(timeStr);
   };

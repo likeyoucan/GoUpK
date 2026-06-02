@@ -50,6 +50,10 @@ export function setupTabataRender(tb) {
     const timeStr = formatTime(safeRem);
     updateText(tb.els.timer, timeStr);
 
+    if (!tb.els.timer.classList.contains("is-go")) {
+      tb.els.timer.style.transform = "translateX(0px)";
+    }
+
     if (document.hidden) updateTitle(`${tb.status}: ${timeStr}`);
 
     if (!tb.ringCtrl) return;
