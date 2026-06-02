@@ -180,19 +180,24 @@ function applyDisplayScale(displayEl, ringPx, rowLayout, renderedRingPx) {
 
   const base = compact
     ? hasMs
-      ? 0.17
-      : 0.19
+      ? 0.155
+      : 0.175
     : rowLayout
       ? hasMs
-        ? 0.15
-        : 0.175
+        ? 0.132
+        : 0.152
       : hasMs
-        ? 0.145
-        : 0.17;
+        ? 0.128
+        : 0.148;
 
   const rawTimer = ringPx * base;
+
+  const minPx = compact ? 10 : rowLayout ? 12 : 14;
+  const hardMaxPx = compact ? 36 : rowLayout ? 64 : 84;
+  const ratioMaxPx = ringPx * (hasMs ? 0.24 : 0.27);
+
   const timerPx = snap2(
-    clamp(rawTimer, compact ? 12 : 24, compact ? 40 : rowLayout ? 88 : 108),
+    clamp(rawTimer, minPx, Math.min(hardMaxPx, ratioMaxPx)),
   );
 
   displayEl.style.setProperty("--timer-font-dynamic", `${timerPx}px`);
