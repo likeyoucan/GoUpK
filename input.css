@@ -1257,6 +1257,7 @@
   }
 
   .view-top-half h2 {
+    min-height: 1.25em;
     text-align: center;
   }
 
@@ -1497,13 +1498,6 @@
       top: 0;
       bottom: auto;
     }
-
-    :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
-      .top_content {
-      --top-pad: 12px;
-      --title-rail: 40px;
-      --action-rail: 48px;
-    }
   }
 
   @media (max-width: 599px) and (orientation: landscape) {
@@ -1653,7 +1647,7 @@
     opacity: calc(1 - var(--collapse-top-k));
     filter: blur(calc(var(--collapse-top-k) * 2.2px));
     transform: scale(calc(1 - (var(--collapse-top-k) * 0.012)));
-    transform-origin: center center;
+    transform-origin: center top;
     transition:
       opacity 120ms linear,
       filter 120ms linear,
