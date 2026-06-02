@@ -55,7 +55,7 @@ function calcDynamicRingSizePx(wrap) {
       "(max-width: 767px) and (orientation: portrait)",
     ).matches;
 
-    // Keep compact fallback only for mobile portrait.
+    // Compact fallback only for mobile portrait.
     if (isMobilePortrait) {
       return snap4(clamp(fallback * 0.62, 148, 380));
     }
@@ -117,7 +117,7 @@ function applyMetaTextScale(wrap, ringPx, rowLayout) {
 
   const statusOffsetPx = snap2(
     clamp(
-      ringPx * (compact ? 0.21 : rowLayout ? 0.26 : 0.27),
+      ringPx * (compact ? 0.22 : rowLayout ? 0.26 : 0.28),
       compact ? 20 : 48,
       compact ? 56 : rowLayout ? 112 : 140,
     ),
@@ -125,15 +125,21 @@ function applyMetaTextScale(wrap, ringPx, rowLayout) {
 
   const extendedOffsetPx = snap2(
     clamp(
-      ringPx * (compact ? 0.21 : rowLayout ? 0.26 : 0.27),
+      ringPx * (compact ? 0.22 : rowLayout ? 0.26 : 0.28),
       compact ? 20 : 48,
       compact ? 56 : rowLayout ? 112 : 140,
     ),
   );
 
+  // Optical Y-correction for PAUSE / extended labels.
+  const statusNudgePx = rowLayout ? 4 : 2;
+  const extendedNudgePx = rowLayout ? 1 : 0;
+
   wrap.style.setProperty("--ring-meta-font-px", `${metaFontPx}px`);
   wrap.style.setProperty("--ring-status-offset-px", `${statusOffsetPx}px`);
   wrap.style.setProperty("--ring-extended-offset-px", `${extendedOffsetPx}px`);
+  wrap.style.setProperty("--ring-status-nudge-y", `${statusNudgePx}px`);
+  wrap.style.setProperty("--ring-extended-nudge-y", `${extendedNudgePx}px`);
 }
 
 function applyDisplayScale(displayEl, ringPx, rowLayout, renderedRingPx) {

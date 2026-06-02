@@ -2186,6 +2186,7 @@
     margin: auto;
     font-size: var(--ring-meta-font-px, 14px);
     line-height: 1.1;
+    transform: translateY(var(--ring-status-nudge-y, 0px));
   }
 
   #sw-statusText.hidden,
@@ -2207,6 +2208,7 @@
     height: calc(var(--ring-meta-font-px, 14px) * 1.6);
     font-size: var(--ring-meta-font-px, 14px);
     line-height: 1.1;
+    transform: translateY(var(--ring-extended-nudge-y, 0px));
   }
 
   #sw-statusText,
