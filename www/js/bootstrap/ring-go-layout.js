@@ -63,7 +63,7 @@ function calcDynamicRingSizePx(wrap) {
   // Унифицированный коэффициент размера кольца:
   let k = row ? 0.64 : 0.92;
   if (isMobilePortrait) {
-    k = 0.82;
+    k = 0.8;
   }
 
   const maxPx = row ? 580 : isMobilePortrait ? 560 : 680;
