@@ -47,8 +47,7 @@ function isNearSquareLandscape() {
 }
 
 function getViewportRawMax() {
-  // In near-square landscape don't allow full collapse to 100
-  // to keep handler reachable above nav area.
+  // In near-square landscape don't allow full collapse to keep handler reachable.
   return isNearSquareLandscape() ? 92 : 100;
 }
 
@@ -373,7 +372,7 @@ function setupOneView(ctx) {
     let target;
 
     if (isNearSquareLandscape()) {
-      // In near-square landscape: never snap to bottom-hidden extreme.
+      // In near-square landscape never snap to bottom-hidden extreme.
       if (Math.abs(projected - 0) <= SNAP_THRESHOLD) target = 0;
       else target = middle;
     } else {
@@ -397,7 +396,7 @@ function setupOneView(ctx) {
     const currentTarget = getTargetFromGlobalSnap();
 
     if (isNearSquareLandscape()) {
-      // Two-state cycle to keep handler always visible
+      // Two-state cycle keeps handler always visible
       if (currentTarget === 0) {
         applySnapToAll(middle, { animate: true, duration: 240 });
       } else {

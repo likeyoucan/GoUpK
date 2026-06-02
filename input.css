@@ -1462,7 +1462,7 @@
     }
   }
 
-  @media (max-width: 767px) and (orientation: landscape) {
+  @media (max-width: 599px) and (orientation: landscape) {
     :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
       .view-top-half {
       flex-basis: calc(100% - var(--nav-height) - var(--handler-size));
@@ -1664,7 +1664,7 @@
   }
 
   /* landscape tablet/desktop */
-  @media (min-width: 768px) and (orientation: landscape) {
+  @media (min-width: 600px) and (orientation: landscape) {
     :root {
       --split: 50%;
     }
@@ -1865,7 +1865,7 @@
     }
   }
 
-  @media (min-width: 768px) and (orientation: landscape) {
+  @media (min-width: 600px) and (orientation: landscape) {
     :is(#view-stopwatch, #view-timer, #view-tabata).split-force-middle
       .view-top-half::after {
       opacity: 1 !important;
@@ -1878,7 +1878,7 @@
     }
   }
 
-  @media (min-width: 1281px) and (orientation: landscape) {
+  @media (min-width: 1440px) and (min-aspect-ratio: 13/8) and (orientation: landscape) {
     :is(#view-stopwatch, #view-timer, #view-tabata) {
       --landscape-bottom-offset: 0px;
     }
