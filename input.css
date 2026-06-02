@@ -1465,15 +1465,15 @@
   @media (max-width: 767px) and (orientation: landscape) {
     :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
       .view-top-half {
-      flex-basis: calc(100% - var(--nav-total) - var(--handler-size));
-      max-height: calc(100% - var(--nav-total) - var(--handler-size));
+      flex-basis: calc(100% - var(--nav-height) - var(--handler-size));
+      max-height: calc(100% - var(--nav-height) - var(--handler-size));
     }
 
     :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
       .view-bottom-half {
-      flex: 0 0 calc(var(--nav-total) + var(--handler-size));
-      min-height: calc(var(--nav-total) + var(--handler-size));
-      height: calc(var(--nav-total) + var(--handler-size));
+      flex: 0 0 calc(var(--nav-height) + var(--handler-size));
+      min-height: calc(var(--nav-height) + var(--handler-size));
+      height: calc(var(--nav-height) + var(--handler-size));
       padding-bottom: 0;
       overflow: visible;
       transform: none;
@@ -1507,8 +1507,8 @@
         #view-tabata
       ).split-animating[data-split-target="bottom"]
       .view-top-half {
-      flex-basis: calc(100% - var(--nav-total) - var(--handler-size));
-      max-height: calc(100% - var(--nav-total) - var(--handler-size));
+      flex-basis: calc(100% - var(--nav-height) - var(--handler-size));
+      max-height: calc(100% - var(--nav-height) - var(--handler-size));
     }
 
     :is(
@@ -1523,9 +1523,9 @@
         #view-tabata
       ).split-animating[data-split-target="bottom"]
       .view-bottom-half {
-      flex: 0 0 calc(var(--nav-total) + var(--handler-size));
-      min-height: calc(var(--nav-total) + var(--handler-size));
-      height: calc(var(--nav-total) + var(--handler-size));
+      flex: 0 0 calc(var(--nav-height) + var(--handler-size));
+      min-height: calc(var(--nav-height) + var(--handler-size));
+      height: calc(var(--nav-height) + var(--handler-size));
       padding-bottom: 0;
     }
 
