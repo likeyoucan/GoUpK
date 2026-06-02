@@ -83,22 +83,25 @@ function applyDisplayScale(displayEl, ringPx, rowLayout, renderedRingPx) {
   if (isGo) {
     const ringForGo = renderedRingPx || ringPx;
 
-    // Keep proper auto scaling.
+    // GO всегда масштабируется от фактического размера кольца.
+    // Отдельные лимиты для row/column layout.
+    const minGo = rowLayout ? 44 : 48;
+    const maxGo = rowLayout ? 132 : 168;
+
     let goPx = ringForGo * 0.258;
-    goPx = clamp(goPx, 46, 98);
-    goPx = snap2(goPx);
+    goPx = clamp(goPx, minGo, maxGo);
 
     displayEl.style.setProperty("--go-skew-deg", "-11deg");
 
-    // Mild normalization across browser/device font metrics.
+    // Мягкая корректировка метрик шрифта без жесткого "зажатия" размера.
     const renderedWordW = displayEl.getBoundingClientRect().width || 0;
     if (renderedWordW > 0) {
       const targetWordW = ringForGo * 0.355;
-      const k = clamp(targetWordW / renderedWordW, 0.94, 1.08);
-      goPx = clamp(goPx * k, 40, 90);
-      goPx = snap2(goPx);
+      const k = clamp(targetWordW / renderedWordW, 0.9, 1.12);
+      goPx = clamp(goPx * k, minGo, maxGo);
     }
 
+    goPx = snap2(goPx);
     setGoFontStable(displayEl, goPx);
     return;
   }
