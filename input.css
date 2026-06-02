@@ -3746,6 +3746,23 @@
     flex: 0 0 auto;
   }
 
+  #viewsContainer.ads-mobile-offset {
+    padding-top: 36px;
+  }
+
+  @media (max-width: 420px) {
+    #viewsContainer.ads-mobile-offset {
+      padding-top: 34px;
+    }
+  }
+
+  /* no mobile offset on desktop fixed layout */
+  @media (min-width: 1281px) {
+    #viewsContainer.ads-mobile-offset {
+      padding-top: 0;
+    }
+  }
+
   #app-ad-slot.hidden {
     display: none;
   }
@@ -3775,31 +3792,6 @@
   #app-ad-slot > * {
     width: 100% !important;
     max-width: 100% !important;
-  }
-
-  #app-ad-slot.ad-reserve-empty {
-    background: transparent !important;
-    border-color: transparent !important;
-    padding: 0 !important;
-  }
-
-  #app-ad-slot .ad-reserve-spacer {
-    width: 100%;
-    min-height: 36px;
-    pointer-events: none;
-  }
-
-  @media (max-width: 420px) {
-    #app-ad-slot .ad-reserve-spacer {
-      min-height: 34px;
-    }
-  }
-
-  /* Desktop fixed layout: keep previous behavior */
-  @media (min-width: 1281px) {
-    #app-ad-slot.ad-reserve-empty {
-      display: none !important;
-    }
   }
 
   @media (min-width: 1281px) {

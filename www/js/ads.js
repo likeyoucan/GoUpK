@@ -22,6 +22,7 @@ const DEFAULT_INTERSTITIAL_TRIGGERS = {
 
 const DESKTOP_FIXED_MIN_WIDTH = 1281;
 const TWO_COLUMN_MIN_WIDTH = 600;
+const MOBILE_MAX_WIDTH = 767;
 
 function isNative() {
   return !!(window.Capacitor && window.Capacitor.isNativePlatform());
@@ -82,21 +83,22 @@ function isTwoColumnLandscapeNonDesktop() {
   );
 }
 
-function isMobileSingleColumnLayout() {
-  return !isDesktopAdLayout() && !isTwoColumnLandscapeNonDesktop();
+function isMobileLayout() {
+  return window.matchMedia(`(max-width: ${MOBILE_MAX_WIDTH}px)`).matches;
 }
 
-function updateAppAdsOffsetClass(isBannerVisible) {
-  const appEl = $("app");
-  if (!appEl) return;
+function shouldApplyMobileTopOffsetWhenAdsOff() {
+  // Only mobile single-column gets top offset when ads are off.
+  return isMobileLayout() && !isTwoColumnLandscapeNonDesktop();
+}
 
-  // Requested behavior:
-  // - mobile single-column + ads OFF -> keep internal top offset (no empty slot)
-  // - mobile single-column + ads ON -> remove offset, banner shifts content
-  // - two-column landscape non-desktop -> keep old behavior (no offset)
-  // - desktop fixed -> keep old behavior
-  const shouldOffset = isMobileSingleColumnLayout() && !isBannerVisible;
-  appEl.classList.toggle("ads-mobile-offset", shouldOffset);
+function updateMobileOffsetClass(isBannerVisible) {
+  const viewsContainer = $("viewsContainer");
+  if (!viewsContainer) return;
+
+  const shouldOffset =
+    !isBannerVisible && shouldApplyMobileTopOffsetWhenAdsOff();
+  viewsContainer.classList.toggle("ads-mobile-offset", shouldOffset);
 }
 
 export const adsManager = {
@@ -249,12 +251,10 @@ export const adsManager = {
     const visible = this.shouldShowBanner();
 
     if (!slot) {
-      updateAppAdsOffsetClass(false);
+      updateMobileOffsetClass(false);
       dispatch(APP_EVENTS.ADS_BANNER_VISIBILITY_CHANGED, { visible: false });
       return;
     }
-
-    const desktop = isDesktopAdLayout();
 
     if (!visible) {
       this.bannerMounted = false;
@@ -265,17 +265,13 @@ export const adsManager = {
           .catch(() => {});
       }
 
+      // No empty slot when ads are off.
       slot.replaceChildren();
+      slot.classList.add("hidden");
 
-      if (desktop) {
-        // Desktop fixed layout: keep old behavior.
-        slot.classList.add("hidden");
-      } else {
-        // Non-desktop: no empty slot when ads are off.
-        slot.classList.add("hidden");
-      }
+      // Offset is internal and only for mobile single-column.
+      updateMobileOffsetClass(false);
 
-      updateAppAdsOffsetClass(false);
       dispatch(APP_EVENTS.ADS_BANNER_VISIBILITY_CHANGED, { visible: false });
       return;
     }
@@ -289,14 +285,17 @@ export const adsManager = {
     } else {
       getAdsPlugin()
         ?.showBanner?.({
-          placement: "inline_top_banner",
+          placement: isDesktopAdLayout()
+            ? "fixed_top_banner"
+            : "inline_top_banner",
           provider: this.provider,
         })
         .catch(() => {});
     }
 
-    // Banner visible -> remove internal offset so banner naturally shifts content.
-    updateAppAdsOffsetClass(true);
+    // Banner visible -> remove mobile offset.
+    updateMobileOffsetClass(true);
+
     dispatch(APP_EVENTS.ADS_BANNER_VISIBILITY_CHANGED, { visible: true });
   },
 

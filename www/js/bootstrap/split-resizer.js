@@ -567,6 +567,14 @@ export function initSplitResizer() {
       return;
     }
 
+    // Critical fix:
+    // when layout becomes row (two-column landscape), avoid stale "bottom"
+    // state that can hide divider/border visuals.
+    const anyRow = views.some((v) => v?.viewEl && isRowLayout(v.viewEl));
+    if (anyRow && globalSnap === "bottom") {
+      globalSnap = "middle";
+    }
+
     const forced = getForcedTargetForViewport();
     if (forced != null) {
       globalSnap = forced === 0 ? "top" : "middle";
