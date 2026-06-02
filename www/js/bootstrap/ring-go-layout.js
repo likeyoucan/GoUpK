@@ -109,15 +109,15 @@ function applyMetaTextScale(wrap, ringPx, rowLayout) {
   const metaFontPx = snap2(
     clamp(
       ringPx *
-        (compact ? (rowLayout ? 0.05 : 0.052) : rowLayout ? 0.062 : 0.058),
-      compact ? 9 : 11,
-      compact ? 14 : rowLayout ? 20 : 24,
+        (compact ? (rowLayout ? 0.044 : 0.046) : rowLayout ? 0.054 : 0.05),
+      compact ? 8 : 10,
+      compact ? 12 : rowLayout ? 17 : 20,
     ),
   );
 
   const statusOffsetPx = snap2(
     clamp(
-      ringPx * (compact ? 0.22 : rowLayout ? 0.26 : 0.28),
+      ringPx * (compact ? 0.21 : rowLayout ? 0.26 : 0.27),
       compact ? 20 : 48,
       compact ? 56 : rowLayout ? 112 : 140,
     ),
@@ -125,7 +125,7 @@ function applyMetaTextScale(wrap, ringPx, rowLayout) {
 
   const extendedOffsetPx = snap2(
     clamp(
-      ringPx * (compact ? 0.22 : rowLayout ? 0.26 : 0.28),
+      ringPx * (compact ? 0.21 : rowLayout ? 0.26 : 0.27),
       compact ? 20 : 48,
       compact ? 56 : rowLayout ? 112 : 140,
     ),
