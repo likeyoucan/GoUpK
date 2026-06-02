@@ -1,5 +1,7 @@
 // Файл: www/js/ads.js
 
+// Файл: www/js/ads.js
+
 import { $, safeGetLS, safeSetLS } from "./utils.js?v=VERSION";
 import { STORAGE_KEYS } from "./constants/storage-keys.js?v=VERSION";
 import { APP_EVENTS } from "./constants/events.js?v=VERSION";
@@ -88,18 +90,13 @@ function isMobileLayout() {
 }
 
 function shouldApplyMobileTopOffsetWhenAdsOff() {
-  // Only mobile single-column gets top offset when ads are off.
+  // Only mobile single-column gets slot reserve when ads are off.
   return isMobileLayout() && !isTwoColumnLandscapeNonDesktop();
 }
 
-function updateMobileOffsetClass(isBannerVisible) {
-  const viewsContainer = $("viewsContainer");
-  if (!viewsContainer) return;
-
-  const shouldOffset =
-    !isBannerVisible && shouldApplyMobileTopOffsetWhenAdsOff();
-  viewsContainer.classList.toggle("ads-mobile-offset", shouldOffset);
-}
+// Kept as compatibility no-op: layout compensation is now handled by
+// #app-ad-slot.hidden.ad-slot-reserve CSS, not by viewsContainer padding classes.
+function updateMobileOffsetClass() {}
 
 export const adsManager = {
   enabled: true,
@@ -265,18 +262,21 @@ export const adsManager = {
           .catch(() => {});
       }
 
-      // No empty slot when ads are off.
+      // Keep reserved slot only for mobile single-column.
+      const reserve = shouldApplyMobileTopOffsetWhenAdsOff();
+      slot.classList.toggle("ad-slot-reserve", reserve);
+
+      // No ad content.
       slot.replaceChildren();
       slot.classList.add("hidden");
 
-      // Offset is internal and only for mobile single-column.
       updateMobileOffsetClass(false);
-
       dispatch(APP_EVENTS.ADS_BANNER_VISIBILITY_CHANGED, { visible: false });
       return;
     }
 
     slot.classList.remove("hidden");
+    slot.classList.remove("ad-slot-reserve");
     this.bannerMounted = true;
     slot.replaceChildren();
 
@@ -293,9 +293,7 @@ export const adsManager = {
         .catch(() => {});
     }
 
-    // Banner visible -> remove mobile offset.
     updateMobileOffsetClass(true);
-
     dispatch(APP_EVENTS.ADS_BANNER_VISIBILITY_CHANGED, { visible: true });
   },
 

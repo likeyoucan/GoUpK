@@ -3746,25 +3746,28 @@
     flex: 0 0 auto;
   }
 
-  #viewsContainer.ads-mobile-offset {
-    padding-top: 36px;
-  }
-
-  @media (max-width: 420px) {
-    #viewsContainer.ads-mobile-offset {
-      padding-top: 34px;
-    }
-  }
-
-  /* no mobile offset on desktop fixed layout */
-  @media (min-width: 1281px) {
-    #viewsContainer.ads-mobile-offset {
-      padding-top: 0;
-    }
-  }
-
+  /* default: hidden slot removed */
   #app-ad-slot.hidden {
     display: none;
+  }
+
+  /* mobile portrait only: keep reserved height when ads are off */
+  @media (max-width: 767px) and (orientation: portrait) {
+    #app-ad-slot.hidden.ad-slot-reserve {
+      display: block;
+      visibility: hidden;
+      pointer-events: none;
+      min-height: 36px;
+      padding: 0 12px;
+      border: 0;
+      margin: 0;
+    }
+  }
+
+  @media (max-width: 420px) and (orientation: portrait) {
+    #app-ad-slot.hidden.ad-slot-reserve {
+      min-height: 34px;
+    }
   }
 
   #app-ad-slot > .ad-placeholder {
