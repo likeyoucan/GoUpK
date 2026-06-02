@@ -50,7 +50,18 @@ function calcDynamicRingSizePx(wrap) {
 
   if (!rect) {
     const fallback = Math.min(wrap.clientWidth || 0, wrap.clientHeight || 0);
-    return snap4(clamp(fallback * 0.66, 160, 420));
+    const row = isRowLayout(topHalfEl);
+    const isMobilePortrait = window.matchMedia(
+      "(max-width: 767px) and (orientation: portrait)",
+    ).matches;
+
+    // Keep compact fallback only for mobile portrait.
+    if (isMobilePortrait) {
+      return snap4(clamp(fallback * 0.62, 148, 380));
+    }
+
+    // Preserve old behavior for two-column / desktop flows.
+    return snap4(clamp(fallback * 0.68, 172, row ? 580 : 680));
   }
 
   const limitingSide = Math.min(rect.width, rect.height);
@@ -60,7 +71,7 @@ function calcDynamicRingSizePx(wrap) {
     "(max-width: 767px) and (orientation: portrait)",
   ).matches;
 
-  // Унифицированный коэффициент размера кольца:
+  // Portrait mobile compact ring only.
   let k = row ? 0.64 : 0.92;
   if (isMobilePortrait) {
     k = 0.8;
@@ -184,9 +195,16 @@ function applyDisplayScale(displayEl, ringPx, rowLayout, renderedRingPx) {
 function centerGoDisplay(displayEl) {
   if (!displayEl) return;
 
-  // Deterministic center to avoid transition jitter.
+  const wrap = getRingWrapForDisplay(displayEl);
+  const rect = wrap?.getBoundingClientRect?.();
+  const ringPx = rect ? Math.min(rect.width || 0, rect.height || 0) : 0;
+  const compact = ringPx > 0 && ringPx < 220;
+
+  // Optical vertical center correction for italic/skewed GO glyph.
+  const y = compact ? -2 : -3;
+
   displayEl.style.setProperty("--go-nudge-x", "0px");
-  displayEl.style.setProperty("--go-nudge-y", "0px");
+  displayEl.style.setProperty("--go-nudge-y", `${y}px`);
 }
 
 export function initDynamicRingAndGoLayout() {

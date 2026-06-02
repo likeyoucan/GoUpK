@@ -2149,6 +2149,8 @@
     min-inline-size: 0;
     max-inline-size: 100%;
     text-align: center;
+    line-height: 1;
+    vertical-align: middle;
   }
 
   @container timer-ring (max-width: 260px) {
