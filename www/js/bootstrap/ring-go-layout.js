@@ -178,6 +178,7 @@ function applyDisplayScale(displayEl, ringPx, rowLayout, renderedRingPx) {
   const compact = isCompactRing(ringPx);
   const hasMs = text.includes(".");
 
+  // Softer scaling for timer text, with stricter lower bounds removed.
   const base = compact
     ? hasMs
       ? 0.155
@@ -191,7 +192,6 @@ function applyDisplayScale(displayEl, ringPx, rowLayout, renderedRingPx) {
         : 0.148;
 
   const rawTimer = ringPx * base;
-
   const minPx = compact ? 10 : rowLayout ? 12 : 14;
   const hardMaxPx = compact ? 36 : rowLayout ? 64 : 84;
   const ratioMaxPx = ringPx * (hasMs ? 0.24 : 0.27);
@@ -211,7 +211,7 @@ function centerGoDisplay(displayEl) {
   const ringPx = rect ? Math.min(rect.width || 0, rect.height || 0) : 0;
   const compact = ringPx > 0 && ringPx < 220;
 
-  // Optical vertical center correction for italic/skewed GO glyph.
+  // Optical center correction for italic/skewed GO glyph.
   const y = compact ? -2 : -3;
   const x = compact ? -1 : -2;
 
@@ -318,6 +318,22 @@ export function initDynamicRingAndGoLayout() {
     return mo;
   });
 
+  // React to text changes (e.g., milliseconds on/off) to recompute scale.
+  const textObservers = displays.map((displayEl) => {
+    const mo = new MutationObserver(() => {
+      startSplitTracking(120);
+      scheduleRefresh();
+    });
+
+    mo.observe(displayEl, {
+      characterData: true,
+      childList: true,
+      subtree: true,
+    });
+
+    return mo;
+  });
+
   const onResize = () => {
     startSplitTracking(300);
     scheduleRefresh();
@@ -328,10 +344,16 @@ export function initDynamicRingAndGoLayout() {
     scheduleRefresh();
   };
 
+  const onMsChanged = () => {
+    startSplitTracking(120);
+    scheduleRefresh();
+  };
+
   window.addEventListener("resize", onResize, { passive: true });
   window.addEventListener("orientationchange", onOrientation, {
     passive: true,
   });
+  document.addEventListener("msChanged", onMsChanged);
 
   if (document.fonts?.ready) {
     document.fonts.ready
@@ -379,9 +401,11 @@ export function initDynamicRingAndGoLayout() {
 
     ro?.disconnect();
     classObservers.forEach((o) => o.disconnect());
+    textObservers.forEach((o) => o.disconnect());
 
     window.removeEventListener("resize", onResize);
     window.removeEventListener("orientationchange", onOrientation);
+    document.removeEventListener("msChanged", onMsChanged);
 
     if (document.fonts?.removeEventListener) {
       document.fonts.removeEventListener("loadingdone", scheduleRefresh);
