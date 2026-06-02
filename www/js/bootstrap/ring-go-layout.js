@@ -50,24 +50,15 @@ function calcDynamicRingSizePx(wrap) {
 
   if (!rect) {
     const fallback = Math.min(wrap.clientWidth || 0, wrap.clientHeight || 0);
-    return snap4(clamp(fallback * 0.66, 160, 420));
+    return snap4(clamp(fallback * 0.68, 172, 420));
   }
 
   const limitingSide = Math.min(rect.width, rect.height);
   const row = isRowLayout(topHalfEl);
 
-  const isMobilePortrait = window.matchMedia(
-    "(max-width: 767px) and (orientation: portrait)",
-  ).matches;
-
-  // Унифицированный коэффициент размера кольца:
-  let k = row ? 0.64 : 0.92;
-  if (isMobilePortrait) {
-    k = 0.84;
-  }
-
-  const maxPx = row ? 580 : isMobilePortrait ? 560 : 680;
-  const minPx = row ? 200 : isMobilePortrait ? 180 : 220;
+  const k = row ? 0.64 : 0.92;
+  const maxPx = row ? 580 : 680;
+  const minPx = row ? 220 : 220;
 
   return snap4(clamp(limitingSide * k, minPx, maxPx));
 }
