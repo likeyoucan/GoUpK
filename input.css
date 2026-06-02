@@ -486,6 +486,7 @@
   }
 
   #app {
+    --app-mobile-ad-offset: 0px;
     position: relative;
     display: flex;
     flex-direction: column;
@@ -499,6 +500,35 @@
     padding-left: var(--safe-left);
     padding-right: var(--safe-right);
     background-color: var(--bg-color);
+  }
+
+  /* Mobile ads-off offset via app variable */
+  #app .app-bg {
+    padding-top: var(--app-mobile-ad-offset);
+  }
+
+  @media (max-width: 767px) and (orientation: portrait) {
+    #app.ads-mobile-offset-var {
+      --app-mobile-ad-offset: 36px;
+    }
+  }
+
+  @media (max-width: 420px) and (orientation: portrait) {
+    #app.ads-mobile-offset-var {
+      --app-mobile-ad-offset: 34px;
+    }
+  }
+
+  @media (min-width: 768px), (orientation: landscape) {
+    #app.ads-mobile-offset-var {
+      --app-mobile-ad-offset: 0px;
+    }
+  }
+
+  @media (min-width: 1281px) {
+    #app.ads-mobile-offset-var {
+      --app-mobile-ad-offset: 0px;
+    }
   }
 
   .app-bg {
@@ -3731,28 +3761,6 @@
   /* default: hidden slot removed */
   #app-ad-slot.hidden {
     display: none;
-  }
-
-  #viewsContainer.ads-mobile-offset {
-    padding-top: 36px;
-  }
-
-  @media (max-width: 420px) and (orientation: portrait) {
-    #viewsContainer.ads-mobile-offset {
-      padding-top: 34px;
-    }
-  }
-
-  @media (min-width: 768px), (orientation: landscape) {
-    #viewsContainer.ads-mobile-offset {
-      padding-top: 0;
-    }
-  }
-
-  @media (min-width: 1281px) {
-    #viewsContainer.ads-mobile-offset {
-      padding-top: 0;
-    }
   }
 
   #app-ad-slot > .ad-placeholder {

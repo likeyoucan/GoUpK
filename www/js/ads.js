@@ -75,18 +75,22 @@ function isDesktopAdLayout() {
 }
 
 function shouldApplyMobileOffsetWhenAdsOff() {
-  // Offset is needed only on mobile portrait single-column.
-  // In landscape two-column and desktop offset must be 0.
+  // Offset is needed only in mobile portrait single-column layout.
   return window.matchMedia("(max-width: 767px) and (orientation: portrait)")
     .matches;
 }
 
 function updateMobileOffsetClass(isBannerVisible) {
+  const app = $("app");
   const viewsContainer = $("viewsContainer");
-  if (!viewsContainer) return;
+
+  if (!app) return;
+
+  // Cleanup legacy class if still present.
+  viewsContainer?.classList.remove("ads-mobile-offset");
 
   const shouldOffset = !isBannerVisible && shouldApplyMobileOffsetWhenAdsOff();
-  viewsContainer.classList.toggle("ads-mobile-offset", shouldOffset);
+  app.classList.toggle("ads-mobile-offset-var", shouldOffset);
 }
 
 export const adsManager = {
@@ -256,11 +260,11 @@ export const adsManager = {
           .catch(() => {});
       }
 
-      // Ads OFF: slot must not render any strip.
+      // Ads OFF: slot must be fully removed from layout.
       slot.replaceChildren();
       slot.classList.add("hidden");
 
-      // Keep mobile portrait composition stable.
+      // Compensate only on mobile portrait through app variable class.
       updateMobileOffsetClass(false);
 
       dispatch(APP_EVENTS.ADS_BANNER_VISIBILITY_CHANGED, { visible: false });
@@ -284,7 +288,7 @@ export const adsManager = {
         .catch(() => {});
     }
 
-    // Banner visible: remove mobile offset.
+    // Banner visible -> no compensation.
     updateMobileOffsetClass(true);
 
     dispatch(APP_EVENTS.ADS_BANNER_VISIBILITY_CHANGED, { visible: true });
