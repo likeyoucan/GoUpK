@@ -147,8 +147,6 @@ async function bootstrap() {
     config: APP_MONETIZATION_CONFIG,
   });
 
-  initImageSkeletons({ timeoutMs: 3000 });
-
   initRuntimeBootstrap({
     applyPerformanceProfile,
     initRingSvg,
@@ -168,6 +166,10 @@ async function bootstrap() {
     showToast,
     t,
     getById: (id) => document.getElementById(id),
+  });
+
+  requestAnimationFrame(() => {
+    initImageSkeletons({ timeoutMs: 3000 });
   });
 
   bindLayoutOverlay({

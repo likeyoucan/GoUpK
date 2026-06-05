@@ -60,11 +60,11 @@ function setHostState(host, state) {
 }
 
 function resolveHostForImage(img) {
-  return (
-    img.closest(".app-icon-option") ||
-    img.closest("#app-preloader") ||
-    img.parentElement
-  );
+  // Для прелоадера используем сам img, чтобы не трогать полноэкранный контейнер.
+  if (img.id === "app-preloader-icon") return img;
+
+  // Для settings-иконок используем карточку опции.
+  return img.closest(".app-icon-option") || img;
 }
 
 function bindImage(img, timeoutMs) {
@@ -100,7 +100,6 @@ function bindImage(img, timeoutMs) {
 
   const markError = () => {
     clearTimer();
-    // По ТЗ: оставляем анимированный layout в цвет фона.
     setHostState(host, "error");
     img.style.opacity = "0";
     img.setAttribute("aria-hidden", "true");
@@ -112,11 +111,8 @@ function bindImage(img, timeoutMs) {
   };
 
   if (img.complete) {
-    if (img.naturalWidth > 0 && img.naturalHeight > 0) {
-      markReady();
-    } else {
-      markLoading();
-    }
+    if (img.naturalWidth > 0 && img.naturalHeight > 0) markReady();
+    else markLoading();
   } else {
     markLoading();
   }
@@ -137,11 +133,14 @@ function bindImage(img, timeoutMs) {
 
 function collectTargets() {
   const targets = [];
-  targets.push(
-    ...document.querySelectorAll("#app-icon-options img.app-icon-preview"),
-  );
+
   const preloaderIcon = document.getElementById("app-preloader-icon");
   if (preloaderIcon) targets.push(preloaderIcon);
+
+  document
+    .querySelectorAll("#app-icon-options img.app-icon-preview")
+    .forEach((img) => targets.push(img));
+
   return targets;
 }
 
@@ -160,8 +159,12 @@ export function initImageSkeletons({ timeoutMs = DEFAULT_TIMEOUT_MS } = {}) {
 
   scan();
 
+  // Наблюдаем только за нужной зоной, не за всем body.
+  const iconOptions = document.getElementById("app-icon-options");
   const mo = new MutationObserver(scan);
-  mo.observe(document.body, { childList: true, subtree: true });
+  if (iconOptions) {
+    mo.observe(iconOptions, { childList: true, subtree: true });
+  }
 
   return () => {
     mo.disconnect();
