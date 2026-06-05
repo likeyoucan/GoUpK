@@ -1903,47 +1903,49 @@
       margin: 0;
     }
 
-    /* Two-column split: center drag handler on divider */
-    @media (min-width: 600px) and (orientation: landscape) {
-      :root {
-        --split-handler-divider-nudge: -2px; /* можно -1px..-4px под вкус */
-      }
+    :is(#view-stopwatch, #view-timer, #view-tabata).split-force-middle
+      .view-top-half::after {
+      opacity: 1 !important;
+    }
 
-      .view-bottom-half .resizer_handler {
-        left: 0;
-        right: auto;
-        transform: translateX(calc(-50% + var(--split-handler-divider-nudge)));
-      }
+    :root {
+      --split-handler-divider-nudge: -2px; /* можно -1px..-4px под вкус */
+    }
 
-      /* Когда bottom скрыт и хендлер стоит у правой границы, тоже держим по центру divider */
-      :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
-        .view-bottom-half
-        .resizer_handler {
-        right: 0;
-        left: auto;
-        transform: translateX(
-          calc(50% + (var(--split-handler-divider-nudge) * -1))
-        );
-      }
+    .view-bottom-half .resizer_handler {
+      left: 0;
+      right: auto;
+      transform: translateX(calc(-50% + var(--split-handler-divider-nudge)));
+    }
 
-      :is(
-          #view-stopwatch,
-          #view-timer,
-          #view-tabata
-        ).split-live[data-split-target="bottom"]
-        .view-bottom-half
-        .resizer_handler,
-      :is(
-          #view-stopwatch,
-          #view-timer,
-          #view-tabata
-        ).split-animating[data-split-target="bottom"]
-        .view-bottom-half
-        .resizer_handler {
-        left: 0;
-        right: auto;
-        transform: translateX(calc(-50% + var(--split-handler-divider-nudge)));
-      }
+    /* Когда bottom скрыт и хендлер стоит у правой границы, тоже держим по центру divider */
+    :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
+      .view-bottom-half
+      .resizer_handler {
+      right: 0;
+      left: auto;
+      transform: translateX(
+        calc(50% + (var(--split-handler-divider-nudge) * -1))
+      );
+    }
+
+    :is(
+        #view-stopwatch,
+        #view-timer,
+        #view-tabata
+      ).split-live[data-split-target="bottom"]
+      .view-bottom-half
+      .resizer_handler,
+    :is(
+        #view-stopwatch,
+        #view-timer,
+        #view-tabata
+      ).split-animating[data-split-target="bottom"]
+      .view-bottom-half
+      .resizer_handler {
+      left: 0;
+      right: auto;
+      transform: translateX(calc(-50% + var(--split-handler-divider-nudge)));
     }
   }
 
