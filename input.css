@@ -568,7 +568,6 @@
   }
 
   .app-text {
-    text-align: center;
     color: var(--text-color);
     transition: color var(--dur-short) ease;
   }
@@ -850,6 +849,7 @@
     min-height: 44px;
     border-radius: 0.75rem;
     font-weight: 700;
+    text-align: center;
     transition: transform var(--dur-micro) var(--ease-standard);
   }
 
