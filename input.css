@@ -184,8 +184,6 @@
     --icon-share-hover-bg: color-mix(in srgb, #16a34a 16%, transparent);
     --icon-edit-hover-color: #2563eb;
     --icon-edit-hover-bg: color-mix(in srgb, #2563eb 16%, transparent);
-
-    --go-nudge-y: -1px;
   }
 
   :root.dark {
@@ -2090,7 +2088,6 @@
     padding-inline: var(--ring-safe-gap);
     padding-block: var(--ring-safe-gap);
     box-sizing: border-box;
-    position: relative;
   }
 
   .timer-display {
@@ -2139,10 +2136,7 @@
   #sw-mainDisplay.is-go,
   #tm-mainDisplay.is-go,
   #tb-mainTimer.is-go {
-    transform: translate(
-        calc(-50% + var(--go-nudge-x, 0px)),
-        calc(-50% + var(--go-nudge-y, 0px))
-      )
+    transform: translate(var(--go-nudge-x, 0px), var(--go-nudge-y, 0px))
       skewX(var(--go-skew-deg, -11deg));
     transform-origin: center center;
     text-align: center;
@@ -2158,13 +2152,6 @@
     text-align: center;
     line-height: 1;
     vertical-align: middle;
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    margin: 0;
-    line-height: 1;
-    transform: translate(-50%, -50%);
-    transform-origin: center center;
   }
 
   /* GO enter animation (keeps geometric centering via --go-nudge-x/y) */

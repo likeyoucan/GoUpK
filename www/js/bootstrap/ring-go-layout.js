@@ -214,13 +214,57 @@ function centerGoDisplay(displayEl) {
   if (!isGo) {
     displayEl.style.setProperty("--go-nudge-x", "0px");
     displayEl.style.setProperty("--go-nudge-y", "0px");
+    displayEl.dataset.goNudgeX = "0";
+    displayEl.dataset.goNudgeY = "0";
     return;
   }
 
-  // Keep GO centered by CSS absolute 50/50.
-  // Optional tiny optical correction can stay constant.
-  displayEl.style.setProperty("--go-nudge-x", "0px");
-  displayEl.style.setProperty("--go-nudge-y", "-1px");
+  const wrap = getRingWrapForDisplay(displayEl);
+  const wrapRect = wrap?.getBoundingClientRect?.();
+  if (!wrapRect || !wrapRect.width || !wrapRect.height) return;
+
+  // 1) Пытаемся взять tight bbox текста (glyph box), а не line box
+  let inkRect = null;
+  const textNode = displayEl.firstChild;
+  if (textNode && textNode.nodeType === Node.TEXT_NODE) {
+    const range = document.createRange();
+    range.selectNodeContents(displayEl);
+    const r = range.getBoundingClientRect();
+    if (r && r.width > 0 && r.height > 0) {
+      inkRect = r;
+    }
+    range.detach?.();
+  }
+
+  // fallback: обычный bbox элемента
+  const txtRect = inkRect || displayEl.getBoundingClientRect();
+  if (!txtRect || !txtRect.width || !txtRect.height) return;
+
+  const wrapCx = wrapRect.left + wrapRect.width / 2;
+  const wrapCy = wrapRect.top + wrapRect.height / 2;
+  const txtCx = txtRect.left + txtRect.width / 2;
+  const txtCy = txtRect.top + txtRect.height / 2;
+
+  const dx = wrapCx - txtCx;
+  const dy = wrapCy - txtCy;
+
+  const prevX = Number(displayEl.dataset.goNudgeX || "0");
+  const prevY = Number(displayEl.dataset.goNudgeY || "0");
+
+  // Один шаг к точному центру, с ограничением
+  let nextX = snap2(clamp(prevX + dx, -28, 28));
+  let nextY = snap2(clamp(prevY + dy, -28, 28));
+
+  // Меньше микродрожания
+  if (Math.abs(dx) < 0.08) nextX = prevX;
+  if (Math.abs(dy) < 0.08) nextY = prevY;
+
+  if (nextX === prevX && nextY === prevY) return;
+
+  displayEl.style.setProperty("--go-nudge-x", `${nextX}px`);
+  displayEl.style.setProperty("--go-nudge-y", `${nextY}px`);
+  displayEl.dataset.goNudgeX = String(nextX);
+  displayEl.dataset.goNudgeY = String(nextY);
 }
 
 export function initDynamicRingAndGoLayout() {
