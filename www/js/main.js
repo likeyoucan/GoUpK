@@ -23,6 +23,7 @@ import { initRuntimeBootstrap } from "./bootstrap/runtime-bootstrap.js?v=VERSION
 import { initMonetizationBootstrap } from "./bootstrap/monetization-bootstrap.js?v=VERSION";
 import { bindLayoutOverlay } from "./bootstrap/layout-overlay.js?v=VERSION";
 import { initErudaTapToggle } from "./debug-eruda-toggle.js?v=VERSION";
+import { initImageSkeletons } from "./ui/image-skeletons.js?v=VERSION";
 
 import { appProManager } from "./app-pro.js?v=VERSION";
 import { store } from "./store.js?v=VERSION";
@@ -145,6 +146,8 @@ async function bootstrap() {
     showToast,
     config: APP_MONETIZATION_CONFIG,
   });
+
+  initImageSkeletons({ timeoutMs: 3000 });
 
   initRuntimeBootstrap({
     applyPerformanceProfile,
