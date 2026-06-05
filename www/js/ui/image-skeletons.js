@@ -9,81 +9,107 @@ function ensureStyles() {
   const style = document.createElement("style");
   style.id = STYLE_ID;
   style.textContent = `
-  .img-skeleton-host {
-    position: relative;
-    overflow: hidden;
-  }
-
-  .img-skeleton-overlay {
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 220ms cubic-bezier(0.32, 0.72, 0, 1);
-    will-change: background-position;
-    /* Важно: фиксируем период, чтобы цикл был бесшовным */
-    --sk-period: 240px;
-    --sk-angle: 128deg;
-    --sk-base: color-mix(in srgb, var(--bg-color) 90%, transparent);
-    --sk-mid: color-mix(in srgb, var(--bg-color) 78%, var(--text-color) 22%);
-    background-image:
-      repeating-linear-gradient(
-        var(--sk-angle),
-        var(--sk-base) 0px,
-        var(--sk-base) 72px,
-        var(--sk-mid) 108px,
-        var(--sk-base) 144px,
-        var(--sk-base) var(--sk-period)
-      );
-    background-size: var(--sk-period) var(--sk-period);
-    background-position: 0 0;
-  }
-
-  .img-skeleton-host.is-img-loading .img-skeleton-overlay,
-  .img-skeleton-host.is-img-error .img-skeleton-overlay {
-    opacity: 1;
-    animation: img-skeleton-shimmer-ios 1.25s linear infinite;
-  }
-
-  /* Бесшовная диагональная анимация:
-     конец кадра совпадает с началом следующего периода */
-  @keyframes img-skeleton-shimmer-ios {
-    from { background-position: 0 0; }
-    to { background-position: var(--sk-period) var(--sk-period); }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .img-skeleton-host.is-img-loading .img-skeleton-overlay,
-    .img-skeleton-host.is-img-error .img-skeleton-overlay {
-      animation: none;
+    .img-skeleton-frame {
+      position: relative;
+      display: inline-block;
+      overflow: hidden;
+      vertical-align: middle;
+      transform: translateZ(0);
+      contain: layout paint;
     }
-  }
-`;
+
+    .img-skeleton-frame > img {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .img-skeleton-overlay {
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 220ms cubic-bezier(0.32, 0.72, 0, 1);
+      will-change: background-position;
+
+      --sk-period: 240px;
+      --sk-angle: 128deg;
+      --sk-base: color-mix(in srgb, var(--bg-color) 90%, transparent);
+      --sk-mid: color-mix(in srgb, var(--bg-color) 78%, var(--text-color) 22%);
+
+      background-image:
+        repeating-linear-gradient(
+          var(--sk-angle),
+          var(--sk-base) 0px,
+          var(--sk-base) 72px,
+          var(--sk-mid) 108px,
+          var(--sk-base) 144px,
+          var(--sk-base) var(--sk-period)
+        );
+      background-size: var(--sk-period) var(--sk-period);
+      background-position: 0 0;
+    }
+
+    .img-skeleton-frame.is-img-loading .img-skeleton-overlay,
+    .img-skeleton-frame.is-img-error .img-skeleton-overlay {
+      opacity: 1;
+      animation: img-skeleton-shimmer-ios 1.25s linear infinite;
+    }
+
+    @keyframes img-skeleton-shimmer-ios {
+      from { background-position: 0 0; }
+      to { background-position: var(--sk-period) var(--sk-period); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .img-skeleton-frame.is-img-loading .img-skeleton-overlay,
+      .img-skeleton-frame.is-img-error .img-skeleton-overlay {
+        animation: none;
+      }
+    }
+  `;
   document.head.appendChild(style);
 }
 
-function ensureOverlay(host) {
-  let overlay = host.querySelector(":scope > .img-skeleton-overlay");
+function ensureOverlay(frame) {
+  let overlay = frame.querySelector(":scope > .img-skeleton-overlay");
   if (!overlay) {
     overlay = document.createElement("span");
     overlay.className = "img-skeleton-overlay";
-    host.appendChild(overlay);
+    frame.appendChild(overlay);
   }
   return overlay;
 }
 
-function setHostState(host, state) {
-  host.classList.toggle("is-img-loading", state === "loading");
-  host.classList.toggle("is-img-error", state === "error");
+function setFrameState(frame, state) {
+  frame.classList.toggle("is-img-loading", state === "loading");
+  frame.classList.toggle("is-img-error", state === "error");
 }
 
-function resolveHostForImage(img) {
-  // Для прелоадера используем сам img, чтобы не трогать полноэкранный контейнер.
-  if (img.id === "app-preloader-icon") return img;
+function ensureFrameForImage(img) {
+  if (!(img instanceof HTMLImageElement)) return null;
 
-  // Для settings-иконок используем карточку опции.
-  return img.closest(".app-icon-option") || img;
+  const parent = img.parentElement;
+  if (parent?.classList.contains("img-skeleton-frame")) return parent;
+
+  const cs = getComputedStyle(img);
+  const frame = document.createElement("span");
+  frame.className = "img-skeleton-frame";
+
+  const width = cs.width || `${img.width || 52}px`;
+  const height = cs.height || `${img.height || 52}px`;
+  const radius = cs.borderRadius || "12px";
+
+  frame.style.width = width;
+  frame.style.height = height;
+  frame.style.borderRadius = radius;
+
+  img.replaceWith(frame);
+  frame.appendChild(img);
+
+  ensureOverlay(frame);
+  return frame;
 }
 
 function bindImage(img, timeoutMs) {
@@ -92,11 +118,8 @@ function bindImage(img, timeoutMs) {
 
   img.dataset.skeletonBound = "1";
 
-  const host = resolveHostForImage(img);
-  if (!(host instanceof HTMLElement)) return () => {};
-
-  host.classList.add("img-skeleton-host");
-  ensureOverlay(host);
+  const frame = ensureFrameForImage(img);
+  if (!(frame instanceof HTMLElement)) return () => {};
 
   let timeoutId = null;
 
@@ -109,7 +132,7 @@ function bindImage(img, timeoutMs) {
   const markReady = () => {
     clearTimer();
     if (img.naturalWidth > 0 && img.naturalHeight > 0) {
-      setHostState(host, "ready");
+      setFrameState(frame, "ready");
       img.style.opacity = "";
       img.removeAttribute("aria-hidden");
       return;
@@ -119,13 +142,13 @@ function bindImage(img, timeoutMs) {
 
   const markError = () => {
     clearTimer();
-    setHostState(host, "error");
+    setFrameState(frame, "error");
     img.style.opacity = "0";
     img.setAttribute("aria-hidden", "true");
   };
 
   const markLoading = () => {
-    setHostState(host, "loading");
+    setFrameState(frame, "loading");
     timeoutId = setTimeout(markError, timeoutMs);
   };
 
@@ -178,7 +201,6 @@ export function initImageSkeletons({ timeoutMs = DEFAULT_TIMEOUT_MS } = {}) {
 
   scan();
 
-  // Наблюдаем только за нужной зоной, не за всем body.
   const iconOptions = document.getElementById("app-icon-options");
   const mo = new MutationObserver(scan);
   if (iconOptions) {
