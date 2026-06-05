@@ -1907,46 +1907,7 @@
       .view-top-half::after {
       opacity: 1 !important;
     }
-
-    :root {
-      --split-handler-divider-nudge: -2px; /* можно -1px..-4px под вкус */
-    }
-
-    .view-bottom-half .resizer_handler {
-      left: 0;
-      right: auto;
-      transform: translateX(calc(-50% + var(--split-handler-divider-nudge)));
-    }
-
-    /* Когда bottom скрыт и хендлер стоит у правой границы, тоже держим по центру divider */
-    :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
-      .view-bottom-half
-      .resizer_handler {
-      right: 0;
-      left: auto;
-      transform: translateX(
-        calc(50% + (var(--split-handler-divider-nudge) * -1))
-      );
-    }
-
-    :is(
-        #view-stopwatch,
-        #view-timer,
-        #view-tabata
-      ).split-live[data-split-target="bottom"]
-      .view-bottom-half
-      .resizer_handler,
-    :is(
-        #view-stopwatch,
-        #view-timer,
-        #view-tabata
-      ).split-animating[data-split-target="bottom"]
-      .view-bottom-half
-      .resizer_handler {
-      left: 0;
-      right: auto;
-      transform: translateX(calc(-50% + var(--split-handler-divider-nudge)));
-    }
+    
   }
 
   @media (min-width: 375px) and (orientation: portrait) {
