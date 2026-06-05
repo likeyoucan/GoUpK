@@ -221,10 +221,24 @@ function centerGoDisplay(displayEl) {
 
   const wrap = getRingWrapForDisplay(displayEl);
   const wrapRect = wrap?.getBoundingClientRect?.();
-  const txtRect = displayEl.getBoundingClientRect();
+  if (!wrapRect || !wrapRect.width || !wrapRect.height) return;
 
-  if (!wrapRect || !wrapRect.width || !wrapRect.height || !txtRect.width)
-    return;
+  // 1) Пытаемся взять tight bbox текста (glyph box), а не line box
+  let inkRect = null;
+  const textNode = displayEl.firstChild;
+  if (textNode && textNode.nodeType === Node.TEXT_NODE) {
+    const range = document.createRange();
+    range.selectNodeContents(displayEl);
+    const r = range.getBoundingClientRect();
+    if (r && r.width > 0 && r.height > 0) {
+      inkRect = r;
+    }
+    range.detach?.();
+  }
+
+  // fallback: обычный bbox элемента
+  const txtRect = inkRect || displayEl.getBoundingClientRect();
+  if (!txtRect || !txtRect.width || !txtRect.height) return;
 
   const wrapCx = wrapRect.left + wrapRect.width / 2;
   const wrapCy = wrapRect.top + wrapRect.height / 2;
@@ -237,15 +251,15 @@ function centerGoDisplay(displayEl) {
   const prevX = Number(displayEl.dataset.goNudgeX || "0");
   const prevY = Number(displayEl.dataset.goNudgeY || "0");
 
-  // Accumulative converge to exact geometric center.
-  let nextX = snap2(clamp(prevX + dx, -24, 24));
-  let nextY = snap2(clamp(prevY + dy, -24, 24));
+  // Один шаг к точному центру, с ограничением
+  let nextX = snap2(clamp(prevX + dx, -28, 28));
+  let nextY = snap2(clamp(prevY + dy, -28, 28));
 
-  // Deadzone to avoid micro-jitter.
-  if (Math.abs(dx) < 0.2) nextX = prevX;
-  if (Math.abs(dy) < 0.2) nextY = prevY;
+  // Меньше микродрожания
+  if (Math.abs(dx) < 0.08) nextX = prevX;
+  if (Math.abs(dy) < 0.08) nextY = prevY;
 
-  if (Math.abs(nextX - prevX) < 0.1 && Math.abs(nextY - prevY) < 0.1) return;
+  if (nextX === prevX && nextY === prevY) return;
 
   displayEl.style.setProperty("--go-nudge-x", `${nextX}px`);
   displayEl.style.setProperty("--go-nudge-y", `${nextY}px`);
