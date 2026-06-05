@@ -9,38 +9,57 @@ function ensureStyles() {
   const style = document.createElement("style");
   style.id = STYLE_ID;
   style.textContent = `
-    .img-skeleton-host {
-      position: relative;
-      overflow: hidden;
-    }
+  .img-skeleton-host {
+    position: relative;
+    overflow: hidden;
+  }
 
-    .img-skeleton-overlay {
-      position: absolute;
-      inset: 0;
-      border-radius: inherit;
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity 180ms ease;
-      background: linear-gradient(
-        90deg,
-        color-mix(in srgb, var(--bg-color) 92%, transparent) 0%,
-        color-mix(in srgb, var(--bg-color) 82%, var(--text-color) 18%) 50%,
-        color-mix(in srgb, var(--bg-color) 92%, transparent) 100%
+  .img-skeleton-overlay {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 220ms cubic-bezier(0.32, 0.72, 0, 1);
+    will-change: background-position;
+    /* Важно: фиксируем период, чтобы цикл был бесшовным */
+    --sk-period: 240px;
+    --sk-angle: 128deg;
+    --sk-base: color-mix(in srgb, var(--bg-color) 90%, transparent);
+    --sk-mid: color-mix(in srgb, var(--bg-color) 78%, var(--text-color) 22%);
+    background-image:
+      repeating-linear-gradient(
+        var(--sk-angle),
+        var(--sk-base) 0px,
+        var(--sk-base) 72px,
+        var(--sk-mid) 108px,
+        var(--sk-base) 144px,
+        var(--sk-base) var(--sk-period)
       );
-      background-size: 220% 100%;
-    }
+    background-size: var(--sk-period) var(--sk-period);
+    background-position: 0 0;
+  }
 
+  .img-skeleton-host.is-img-loading .img-skeleton-overlay,
+  .img-skeleton-host.is-img-error .img-skeleton-overlay {
+    opacity: 1;
+    animation: img-skeleton-shimmer-ios 1.25s linear infinite;
+  }
+
+  /* Бесшовная диагональная анимация:
+     конец кадра совпадает с началом следующего периода */
+  @keyframes img-skeleton-shimmer-ios {
+    from { background-position: 0 0; }
+    to { background-position: var(--sk-period) var(--sk-period); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
     .img-skeleton-host.is-img-loading .img-skeleton-overlay,
     .img-skeleton-host.is-img-error .img-skeleton-overlay {
-      opacity: 1;
-      animation: img-skeleton-shimmer 1.1s ease-in-out infinite;
+      animation: none;
     }
-
-    @keyframes img-skeleton-shimmer {
-      0% { background-position: 0% 50%; }
-      100% { background-position: 100% 50%; }
-    }
-  `;
+  }
+`;
   document.head.appendChild(style);
 }
 
