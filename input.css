@@ -568,6 +568,7 @@
   }
 
   .app-text {
+    text-align: center;
     color: var(--text-color);
     transition: color var(--dur-short) ease;
   }
