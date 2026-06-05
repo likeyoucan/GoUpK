@@ -16,6 +16,7 @@ function ensureStyles() {
       vertical-align: middle;
       transform: translateZ(0);
       contain: layout paint;
+      border-radius: 12px;
     }
 
     .img-skeleton-frame > img {
@@ -31,40 +32,52 @@ function ensureStyles() {
       pointer-events: none;
       opacity: 0;
       transition: opacity 220ms cubic-bezier(0.32, 0.72, 0, 1);
-      will-change: background-position;
+      background: color-mix(in srgb, var(--bg-color) 88%, var(--text-color) 12%);
+      overflow: hidden;
+      transform: translateZ(0);
+    }
 
-      --sk-period: 240px;
-      --sk-angle: 128deg;
-      --sk-base: color-mix(in srgb, var(--bg-color) 90%, transparent);
-      --sk-mid: color-mix(in srgb, var(--bg-color) 78%, var(--text-color) 22%);
-
-      background-image:
-        repeating-linear-gradient(
-          var(--sk-angle),
-          var(--sk-base) 0px,
-          var(--sk-base) 72px,
-          var(--sk-mid) 108px,
-          var(--sk-base) 144px,
-          var(--sk-base) var(--sk-period)
-        );
-      background-size: var(--sk-period) var(--sk-period);
-      background-position: 0 0;
+    .img-skeleton-shine {
+      position: absolute;
+      top: -40%;
+      bottom: -40%;
+      left: -170%;
+      width: 90%;
+      pointer-events: none;
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        color-mix(in srgb, #ffffff 58%, transparent) 45%,
+        color-mix(in srgb, #ffffff 72%, transparent) 50%,
+        color-mix(in srgb, #ffffff 58%, transparent) 55%,
+        transparent 100%
+      );
+      transform: skewX(-18deg) translate3d(0, 0, 0);
+      will-change: transform;
+      opacity: 0.7;
     }
 
     .img-skeleton-frame.is-img-loading .img-skeleton-overlay,
     .img-skeleton-frame.is-img-error .img-skeleton-overlay {
       opacity: 1;
-      animation: img-skeleton-shimmer-ios 1.25s linear infinite;
     }
 
-    @keyframes img-skeleton-shimmer-ios {
-      from { background-position: 0 0; }
-      to { background-position: var(--sk-period) var(--sk-period); }
+    .img-skeleton-frame.is-img-loading .img-skeleton-shine,
+    .img-skeleton-frame.is-img-error .img-skeleton-shine {
+      animation: img-skeleton-ios-shine 1.35s linear infinite;
+    }
+
+    /* Бесшовный цикл: старт и конец полностью вне области кадра */
+    @keyframes img-skeleton-ios-shine {
+      0% { transform: skewX(-18deg) translate3d(0%, 0, 0); }
+      12% { transform: skewX(-18deg) translate3d(0%, 0, 0); }
+      88% { transform: skewX(-18deg) translate3d(390%, 0, 0); }
+      100% { transform: skewX(-18deg) translate3d(390%, 0, 0); }
     }
 
     @media (prefers-reduced-motion: reduce) {
-      .img-skeleton-frame.is-img-loading .img-skeleton-overlay,
-      .img-skeleton-frame.is-img-error .img-skeleton-overlay {
+      .img-skeleton-frame.is-img-loading .img-skeleton-shine,
+      .img-skeleton-frame.is-img-error .img-skeleton-shine {
         animation: none;
       }
     }
@@ -77,6 +90,11 @@ function ensureOverlay(frame) {
   if (!overlay) {
     overlay = document.createElement("span");
     overlay.className = "img-skeleton-overlay";
+
+    const shine = document.createElement("span");
+    shine.className = "img-skeleton-shine";
+    overlay.appendChild(shine);
+
     frame.appendChild(overlay);
   }
   return overlay;
@@ -153,8 +171,11 @@ function bindImage(img, timeoutMs) {
   };
 
   if (img.complete) {
-    if (img.naturalWidth > 0 && img.naturalHeight > 0) markReady();
-    else markLoading();
+    if (img.naturalWidth > 0 && img.naturalHeight > 0) {
+      markReady();
+    } else {
+      markLoading();
+    }
   } else {
     markLoading();
   }
