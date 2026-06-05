@@ -2154,6 +2154,42 @@
     vertical-align: middle;
   }
 
+  /* GO enter animation (keeps geometric centering via --go-nudge-x/y) */
+  @keyframes go-ios-enter {
+    0% {
+      transform: translate(var(--go-nudge-x, 0px), var(--go-nudge-y, 0px))
+        skewX(var(--go-skew-deg, -11deg)) scale(1.28);
+      opacity: 0.86;
+      filter: blur(0.2px);
+    }
+    60% {
+      transform: translate(var(--go-nudge-x, 0px), var(--go-nudge-y, 0px))
+        skewX(var(--go-skew-deg, -11deg)) scale(0.98);
+      opacity: 1;
+      filter: blur(0);
+    }
+    100% {
+      transform: translate(var(--go-nudge-x, 0px), var(--go-nudge-y, 0px))
+        skewX(var(--go-skew-deg, -11deg)) scale(1);
+      opacity: 1;
+      filter: blur(0);
+    }
+  }
+
+  #sw-mainDisplay.is-go.go-enter,
+  #tm-mainDisplay.is-go.go-enter,
+  #tb-mainTimer.is-go.go-enter {
+    animation: go-ios-enter 420ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #sw-mainDisplay.is-go.go-enter,
+    #tm-mainDisplay.is-go.go-enter,
+    #tb-mainTimer.is-go.go-enter {
+      animation: none;
+    }
+  }
+
   @container timer-ring (max-width: 260px) {
     .timer-display {
       font-size: clamp(1.5rem, 16cqi, 2.4rem);

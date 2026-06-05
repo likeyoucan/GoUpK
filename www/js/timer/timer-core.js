@@ -2,6 +2,7 @@
 
 import { APP_EVENTS } from "../constants/events.js?v=VERSION";
 import { createTimerAlarmScheduler } from "./timer-alarm.js?v=VERSION";
+import { animateGoEnter } from "../utils.js?v=VERSION";
 
 export function setupTimerCore(tm, { showToast, updateText }) {
   const alarmScheduler =
@@ -292,6 +293,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
 
     updateText(tm.els.display, "GO");
     tm.els.display?.classList.add("is-go");
+    animateGoEnter(tm.els.display);
     if (tm.els.display) tm.els.display.style.transform = "";
   };
 

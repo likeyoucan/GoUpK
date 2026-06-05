@@ -8,6 +8,7 @@ import {
   updateTitle,
   updateText,
   bgWorker,
+  animateGoEnter,
 } from "../utils.js?v=VERSION";
 import { store } from "../store.js?v=VERSION";
 import { APP_EVENTS } from "../constants/events.js?v=VERSION";
@@ -25,6 +26,7 @@ export function setupTabataCore(tb) {
     updateText,
     t,
     bgWorker,
+    animateGoEnter,
   });
 
   setupTabataBackgroundSync(tb, {

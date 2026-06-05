@@ -79,6 +79,14 @@ export const announceToScreenReader = (text) => {
   if (el) el.textContent = text;
 };
 
+// iOS-like GO entry animation trigger.
+export function animateGoEnter(el) {
+  if (!el) return;
+  el.classList.remove("go-enter");
+  void el.offsetWidth;
+  el.classList.add("go-enter");
+}
+
 export const adjustVal = (id, delta) => {
   const el = $(id);
   if (!el) return;

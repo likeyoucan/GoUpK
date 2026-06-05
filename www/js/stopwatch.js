@@ -9,6 +9,7 @@ import {
   releaseWakeLock,
   bgWorker,
   announceToScreenReader,
+  animateGoEnter,
 } from "./utils.js?v=VERSION";
 import { sm } from "./sound.js?v=VERSION";
 import { t } from "./i18n.js?v=VERSION";
@@ -23,7 +24,6 @@ import { setupStopwatchSessions } from "./stopwatch/stopwatch-sessions.js?v=VERS
 import { setupStopwatchShareController } from "./stopwatch/stopwatch-share-controller.js?v=VERSION";
 
 const stopwatchModule = {
-  // Date.now()-based anchor for stable wall-clock timing
   startEpochMs: 0,
 
   elapsedTime: 0,
@@ -66,7 +66,6 @@ const stopwatchModule = {
       shareModeCsvBtn: $("sw-share-csv-btn"),
     };
 
-    // Normalize lap button to neutral shared style on init.
     if (this.els.lapBtn) {
       this.els.lapBtn.classList.add("main_btn");
       this.els.lapBtn.classList.remove(
@@ -152,7 +151,6 @@ const stopwatchModule = {
       this.els.status.classList.remove("hidden");
       updateText(this.els.lapBtn, t("reset"));
 
-      // Switch Lap button to shared red variant without inline visual classes.
       this.els.lapBtn.classList.remove("main_btn");
       this.els.lapBtn.classList.add("main_btn_red");
 
@@ -170,7 +168,6 @@ const stopwatchModule = {
     } else {
       store.activate("stopwatch");
 
-      // Keep elapsed continuity with wall-clock base.
       this.startEpochMs = Date.now() - this.elapsedTime;
       this.lastMinuteBeep = Math.floor(this.elapsedTime / 60000);
       this.isRunning = true;
@@ -186,7 +183,6 @@ const stopwatchModule = {
 
       updateText(this.els.lapBtn, t("lap"));
 
-      // Switch Lap button back to shared neutral variant.
       this.els.lapBtn.classList.remove("main_btn_red");
       this.els.lapBtn.classList.add("main_btn");
     }
@@ -290,6 +286,7 @@ const stopwatchModule = {
 
       updateText(this.els.display, "GO");
       this.els.display.classList.add("is-go");
+      animateGoEnter(this.els.display);
       this.els.display.style.transform = "";
       this.els.status.classList.add("hidden");
       this.els.extendedDisplay?.classList.add("hidden");
@@ -300,7 +297,6 @@ const stopwatchModule = {
 
       this.els.lapBtn.classList.add("hidden");
 
-      // Keep default neutral style after reset.
       this.els.lapBtn.classList.remove("main_btn_red");
       this.els.lapBtn.classList.add("main_btn");
 

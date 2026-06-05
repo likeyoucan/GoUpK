@@ -206,17 +206,51 @@ function applyDisplayScale(displayEl, ringPx, rowLayout, renderedRingPx) {
 function centerGoDisplay(displayEl) {
   if (!displayEl) return;
 
+  const text = String(displayEl.textContent || "")
+    .trim()
+    .toUpperCase();
+  const isGo = displayEl.classList.contains("is-go") && text === "GO";
+
+  if (!isGo) {
+    displayEl.style.setProperty("--go-nudge-x", "0px");
+    displayEl.style.setProperty("--go-nudge-y", "0px");
+    displayEl.dataset.goNudgeX = "0";
+    displayEl.dataset.goNudgeY = "0";
+    return;
+  }
+
   const wrap = getRingWrapForDisplay(displayEl);
-  const rect = wrap?.getBoundingClientRect?.();
-  const ringPx = rect ? Math.min(rect.width || 0, rect.height || 0) : 0;
-  const compact = ringPx > 0 && ringPx < 220;
+  const wrapRect = wrap?.getBoundingClientRect?.();
+  const txtRect = displayEl.getBoundingClientRect();
 
-  // Optical center correction for italic/skewed GO glyph.
-  const y = compact ? -2 : -3;
-  const x = compact ? -1 : -2;
+  if (!wrapRect || !wrapRect.width || !wrapRect.height || !txtRect.width)
+    return;
 
-  displayEl.style.setProperty("--go-nudge-x", `${x}px`);
-  displayEl.style.setProperty("--go-nudge-y", `${y}px`);
+  const wrapCx = wrapRect.left + wrapRect.width / 2;
+  const wrapCy = wrapRect.top + wrapRect.height / 2;
+  const txtCx = txtRect.left + txtRect.width / 2;
+  const txtCy = txtRect.top + txtRect.height / 2;
+
+  const dx = wrapCx - txtCx;
+  const dy = wrapCy - txtCy;
+
+  const prevX = Number(displayEl.dataset.goNudgeX || "0");
+  const prevY = Number(displayEl.dataset.goNudgeY || "0");
+
+  // Accumulative converge to exact geometric center.
+  let nextX = snap2(clamp(prevX + dx, -24, 24));
+  let nextY = snap2(clamp(prevY + dy, -24, 24));
+
+  // Deadzone to avoid micro-jitter.
+  if (Math.abs(dx) < 0.2) nextX = prevX;
+  if (Math.abs(dy) < 0.2) nextY = prevY;
+
+  if (Math.abs(nextX - prevX) < 0.1 && Math.abs(nextY - prevY) < 0.1) return;
+
+  displayEl.style.setProperty("--go-nudge-x", `${nextX}px`);
+  displayEl.style.setProperty("--go-nudge-y", `${nextY}px`);
+  displayEl.dataset.goNudgeX = String(nextX);
+  displayEl.dataset.goNudgeY = String(nextY);
 }
 
 export function initDynamicRingAndGoLayout() {
