@@ -1707,6 +1707,7 @@
   @media (min-width: 600px) and (orientation: landscape) {
     :root {
       --split: 50%;
+      --split-pill-nudge-x: -7px;
     }
 
     #view-stopwatch,
@@ -1908,10 +1909,6 @@
     :is(#view-stopwatch, #view-timer, #view-tabata).split-force-middle
       .view-top-half::after {
       opacity: 1 !important;
-    }
-
-    :root {
-      --split-pill-nudge-x: -3px; /* подстройка: -2px..-5px */
     }
   }
 
