@@ -1336,7 +1336,7 @@
   .resizer_handler:active::before {
     opacity: 1;
     background: color-mix(in srgb, var(--primary-color) 70%, var(--text-color));
-    transform: scale(1.05);
+    transform: translateX(var(--split-pill-nudge-x)) scale(1.05);
   }
 
   .resizer_handler:active,
@@ -1791,6 +1791,7 @@
     .resizer_handler::before {
       width: 3px;
       height: clamp(28px, 20vh, 72px);
+      transform: translateX(var(--split-pill-nudge-x));
     }
 
     .resizer_handler::after {
@@ -1910,16 +1911,6 @@
 
     :root {
       --split-pill-nudge-x: -3px; /* подстройка: -2px..-5px */
-    }
-
-    .resizer_handler::before {
-      transform: translateX(var(--split-pill-nudge-x));
-    }
-
-    .resizer_handler:focus-visible::before,
-    .resizer_handler.is-dragging::before,
-    .resizer_handler:active::before {
-      transform: translateX(var(--split-pill-nudge-x)) scale(1.05);
     }
   }
 
