@@ -1707,7 +1707,8 @@
   @media (min-width: 600px) and (orientation: landscape) {
     :root {
       --split: 50%;
-      --split-pill-nudge-x: -7px;
+      --split-pill-nudge-x: -3px; /* тонкая оптическая коррекция пилюли в middle-state */
+      --split-edge-handle-gap: 10px; /* одинаковый отступ хендлера от левого/правого края в 0%/100% */
     }
 
     #view-stopwatch,
@@ -1800,17 +1801,43 @@
       inset: 0 -18px;
     }
 
+    /* focus/drag state сохраняет тот же nudge, чтобы не было скачка */
+    .resizer_handler:focus-visible::before,
+    .resizer_handler.is-dragging::before,
+    .resizer_handler:active::before {
+      transform: translateX(var(--split-pill-nudge-x)) scale(1.05);
+    }
+
     :is(#view-stopwatch, #view-timer, #view-tabata).split-top-hidden
       .view-bottom-half
       .resizer_handler {
       top: 0;
       bottom: 0;
-      left: 0;
+      left: var(--split-edge-handle-gap);
       right: auto;
       width: var(--handler-size);
       height: auto;
       transform: none;
       z-index: 45;
+    }
+
+    /* В крайнем левом состоянии пилюля строго по центру хендлера */
+    :is(#view-stopwatch, #view-timer, #view-tabata).split-top-hidden
+      .view-bottom-half
+      .resizer_handler::before {
+      transform: none;
+    }
+
+    :is(#view-stopwatch, #view-timer, #view-tabata).split-top-hidden
+      .view-bottom-half
+      .resizer_handler:focus-visible::before,
+    :is(#view-stopwatch, #view-timer, #view-tabata).split-top-hidden
+      .view-bottom-half
+      .resizer_handler.is-dragging::before,
+    :is(#view-stopwatch, #view-timer, #view-tabata).split-top-hidden
+      .view-bottom-half
+      .resizer_handler:active::before {
+      transform: scale(1.05);
     }
 
     :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
@@ -1842,12 +1869,31 @@
       .resizer_handler {
       pointer-events: auto;
       top: 0;
-      bottom: 0; /* важно: не дублируем landscape offset */
+      bottom: 0;
       left: auto;
-      right: 0;
+      right: var(--split-edge-handle-gap);
       width: var(--handler-size);
       height: auto;
       transform: none;
+    }
+
+    /* В крайнем правом состоянии пилюля строго по центру хендлера */
+    :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
+      .view-bottom-half
+      .resizer_handler::before {
+      transform: none;
+    }
+
+    :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
+      .view-bottom-half
+      .resizer_handler:focus-visible::before,
+    :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
+      .view-bottom-half
+      .resizer_handler.is-dragging::before,
+    :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
+      .view-bottom-half
+      .resizer_handler:active::before {
+      transform: scale(1.05);
     }
 
     :is(
@@ -1878,12 +1924,42 @@
       ).split-animating[data-split-target="bottom"]
       .resizer_handler {
       top: 0;
-      bottom: 0; /* важно: не дублируем landscape offset */
-      left: 0;
-      right: auto;
+      bottom: 0;
+      left: auto;
+      right: var(--split-edge-handle-gap);
       width: var(--handler-size);
       height: auto;
       transform: none;
+    }
+
+    :is(
+        #view-stopwatch,
+        #view-timer,
+        #view-tabata
+      ).split-animating[data-split-target="bottom"]
+      .resizer_handler::before {
+      transform: none;
+    }
+
+    :is(
+        #view-stopwatch,
+        #view-timer,
+        #view-tabata
+      ).split-animating[data-split-target="bottom"]
+      .resizer_handler:focus-visible::before,
+    :is(
+        #view-stopwatch,
+        #view-timer,
+        #view-tabata
+      ).split-animating[data-split-target="bottom"]
+      .resizer_handler.is-dragging::before,
+    :is(
+        #view-stopwatch,
+        #view-timer,
+        #view-tabata
+      ).split-animating[data-split-target="bottom"]
+      .resizer_handler:active::before {
+      transform: scale(1.05);
     }
 
     #tm-form,
