@@ -1704,6 +1704,7 @@
   }
 
   /* landscape tablet/desktop */
+  /* ===== SINGLE clean landscape block ===== */
   @media (min-width: 600px) and (orientation: landscape) {
     :root {
       --split: 50%;
@@ -1780,7 +1781,7 @@
       border: none;
     }
 
-    /* Handler stays in place; pill is shifted left of divider */
+    /* handler stays on its rail, pill visually moved left of divider */
     .resizer_handler {
       top: 0;
       bottom: 0;
@@ -2266,7 +2267,7 @@
     vertical-align: middle;
   }
 
-  /* GO enter animation (keeps geometric centering via --go-nudge-x/y) */
+  /* ===== GO + TIME animations (single source of truth) ===== */
   @keyframes go-ios-enter {
     0% {
       transform: translate(var(--go-nudge-x, 0px), var(--go-nudge-y, 0px))
@@ -2286,6 +2287,12 @@
       opacity: 1;
       filter: blur(0);
     }
+  }
+
+  #sw-mainDisplay.is-go.go-enter,
+  #tm-mainDisplay.is-go.go-enter,
+  #tb-mainTimer.is-go.go-enter {
+    animation: go-ios-enter 420ms cubic-bezier(0.22, 1, 0.36, 1) both !important;
   }
 
   @keyframes timer-ios-enter {
@@ -2309,14 +2316,17 @@
   #sw-mainDisplay.time-enter,
   #tm-mainDisplay.time-enter,
   #tb-mainTimer.time-enter {
-    animation: timer-ios-enter 420ms cubic-bezier(0.22, 1, 0.36, 1);
+    animation: timer-ios-enter 420ms cubic-bezier(0.22, 1, 0.36, 1) both !important;
   }
 
   @media (prefers-reduced-motion: reduce) {
+    #sw-mainDisplay.is-go.go-enter,
+    #tm-mainDisplay.is-go.go-enter,
+    #tb-mainTimer.is-go.go-enter,
     #sw-mainDisplay.time-enter,
     #tm-mainDisplay.time-enter,
     #tb-mainTimer.time-enter {
-      animation: none;
+      animation: none !important;
     }
   }
 
