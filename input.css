@@ -1780,11 +1780,11 @@
       border: none;
     }
 
-    /* Handler container is fully left from the divider */
+    /* Handler stays in place; pill is shifted left of divider */
     .resizer_handler {
       top: 0;
       bottom: 0;
-      left: calc(var(--handler-size) * -1);
+      left: 0;
       right: auto;
       width: var(--handler-size);
       height: auto;
@@ -1794,7 +1794,7 @@
     .resizer_handler::before {
       width: 3px;
       height: clamp(28px, 20vh, 72px);
-      transform: none;
+      transform: translateX(calc(var(--handler-size) * -0.5));
     }
 
     .resizer_handler::after {
@@ -1804,7 +1804,7 @@
     .resizer_handler:focus-visible::before,
     .resizer_handler.is-dragging::before,
     .resizer_handler:active::before {
-      transform: scale(1.05);
+      transform: translateX(calc(var(--handler-size) * -0.5)) scale(1.05);
     }
 
     :is(#view-stopwatch, #view-timer, #view-tabata).split-middle
@@ -1815,7 +1815,7 @@
       .resizer_handler::before,
     :is(#view-stopwatch, #view-timer, #view-tabata).split-force-middle
       .resizer_handler::before {
-      transform: none;
+      transform: translateX(calc(var(--handler-size) * -0.5));
     }
 
     :is(#view-stopwatch, #view-timer, #view-tabata).split-middle
@@ -1842,7 +1842,7 @@
       .resizer_handler.is-dragging::before,
     :is(#view-stopwatch, #view-timer, #view-tabata).split-force-middle
       .resizer_handler:active::before {
-      transform: scale(1.05);
+      transform: translateX(calc(var(--handler-size) * -0.5)) scale(1.05);
     }
 
     :is(#view-stopwatch, #view-timer, #view-tabata).split-top-hidden
