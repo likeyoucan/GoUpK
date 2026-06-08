@@ -1,5 +1,4 @@
-// Файл: www/js/bootstrap/ring-go-layout.js
-
+// www/js/bootstrap/ring-go-layout.js
 function clamp(v, min, max) {
   return Math.max(min, Math.min(max, v));
 }
@@ -62,7 +61,9 @@ function triggerGoEnter(displayEl) {
 function triggerTimeEnter(displayEl) {
   if (!displayEl) return;
 
-  const text = String(displayEl.textContent || "").trim().toUpperCase();
+  const text = String(displayEl.textContent || "")
+    .trim()
+    .toUpperCase();
   const isTimeLike = text !== "GO" && /[:\d]/.test(text);
   if (!isTimeLike) return;
 
@@ -382,6 +383,14 @@ export function initDynamicRingAndGoLayout() {
 
   displays.forEach((displayEl) => {
     displayEl.dataset.wasGo = isGoDisplay(displayEl) ? "1" : "0";
+  });
+
+  requestAnimationFrame(() => {
+    displays.forEach((displayEl) => {
+      if (isGoDisplay(displayEl)) {
+        triggerGoEnter(displayEl);
+      }
+    });
   });
 
   const handleDisplayMutation = (displayEl) => {
