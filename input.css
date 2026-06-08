@@ -1843,7 +1843,7 @@
       .resizer_handler.is-dragging::before,
     :is(#view-stopwatch, #view-timer, #view-tabata).split-force-middle
       .resizer_handler:active::before {
-      transform: translateX(calc(var(--handler-size) * -0.5)) scale(1.05);
+      transform: translateX(-5px) scale(1.05);
     }
 
     :is(#view-stopwatch, #view-timer, #view-tabata).split-top-hidden
