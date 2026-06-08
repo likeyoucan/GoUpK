@@ -1711,6 +1711,11 @@
       --split-edge-handle-gap: 9px;
     }
 
+    :is(#view-stopwatch, #view-timer, #view-tabata).split-middle,
+    :is(#view-stopwatch, #view-timer, #view-tabata).split-force-middle {
+      --split-pill-nudge-x: 0px;
+    }
+
     #view-stopwatch,
     #view-timer,
     #view-tabata {

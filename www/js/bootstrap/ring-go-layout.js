@@ -44,6 +44,21 @@ function isCompactRing(ringPx) {
   return ringPx < 180 || isCompactViewport();
 }
 
+function isGoDisplay(displayEl) {
+  if (!displayEl) return false;
+  const text = String(displayEl.textContent || "")
+    .trim()
+    .toUpperCase();
+  return displayEl.classList.contains("is-go") && text === "GO";
+}
+
+function triggerGoEnter(displayEl) {
+  if (!isGoDisplay(displayEl)) return;
+  displayEl.classList.remove("go-enter");
+  void displayEl.offsetWidth;
+  displayEl.classList.add("go-enter");
+}
+
 function calcDynamicRingSizePx(wrap) {
   const topHalfEl = getTopHalfEl(wrap);
   const rect = topHalfEl?.getBoundingClientRect?.();
@@ -55,12 +70,10 @@ function calcDynamicRingSizePx(wrap) {
       "(max-width: 767px) and (orientation: portrait)",
     ).matches;
 
-    // Compact fallback only for mobile portrait.
     if (isMobilePortrait) {
       return snap4(clamp(fallback * 0.62, 148, 380));
     }
 
-    // Preserve old behavior for two-column / desktop flows.
     return snap4(clamp(fallback * 0.68, 172, row ? 580 : 680));
   }
 
@@ -71,7 +84,6 @@ function calcDynamicRingSizePx(wrap) {
     "(max-width: 767px) and (orientation: portrait)",
   ).matches;
 
-  // Portrait mobile compact ring only.
   let k = row ? 0.64 : 0.92;
   if (isMobilePortrait) {
     k = 0.8;
@@ -92,7 +104,6 @@ function getRenderedRingPx(wrap, fallback) {
 function setGoFontStable(displayEl, nextPx) {
   const prev = Number(displayEl.dataset.goFontPx || "0");
 
-  // Ignore tiny fluctuations that cause visual jitter.
   if (prev > 0 && Math.abs(nextPx - prev) < 0.8) {
     return;
   }
@@ -131,7 +142,6 @@ function applyMetaTextScale(wrap, ringPx, rowLayout) {
     ),
   );
 
-  // Optical Y-correction for PAUSE / extended labels.
   const statusNudgePx = rowLayout ? 4 : 2;
   const extendedNudgePx = rowLayout ? 1 : 0;
 
@@ -153,7 +163,6 @@ function applyDisplayScale(displayEl, ringPx, rowLayout, renderedRingPx) {
     const ringForGo = renderedRingPx || ringPx;
     const compact = isCompactRing(ringForGo);
 
-    // GO always scales from real ring size.
     const minGo = compact ? 28 : rowLayout ? 44 : 48;
     const maxGo = compact ? 76 : rowLayout ? 132 : 168;
 
@@ -162,7 +171,6 @@ function applyDisplayScale(displayEl, ringPx, rowLayout, renderedRingPx) {
 
     displayEl.style.setProperty("--go-skew-deg", "-11deg");
 
-    // Mild normalization across browser/device font metrics.
     const renderedWordW = displayEl.getBoundingClientRect().width || 0;
     if (renderedWordW > 0) {
       const targetWordW = ringForGo * (compact ? 0.42 : 0.355);
@@ -178,7 +186,6 @@ function applyDisplayScale(displayEl, ringPx, rowLayout, renderedRingPx) {
   const compact = isCompactRing(ringPx);
   const hasMs = text.includes(".");
 
-  // Softer scaling for timer text, with stricter lower bounds removed.
   const base = compact
     ? hasMs
       ? 0.155
@@ -223,7 +230,6 @@ function centerGoDisplay(displayEl) {
   const wrapRect = wrap?.getBoundingClientRect?.();
   if (!wrapRect || !wrapRect.width || !wrapRect.height) return;
 
-  // 1) Пытаемся взять tight bbox текста (glyph box), а не line box
   let inkRect = null;
   const textNode = displayEl.firstChild;
   if (textNode && textNode.nodeType === Node.TEXT_NODE) {
@@ -236,7 +242,6 @@ function centerGoDisplay(displayEl) {
     range.detach?.();
   }
 
-  // fallback: обычный bbox элемента
   const txtRect = inkRect || displayEl.getBoundingClientRect();
   if (!txtRect || !txtRect.width || !txtRect.height) return;
 
@@ -245,17 +250,19 @@ function centerGoDisplay(displayEl) {
   const txtCx = txtRect.left + txtRect.width / 2;
   const txtCy = txtRect.top + txtRect.height / 2;
 
-  const dx = wrapCx - txtCx;
-  const dy = wrapCy - txtCy;
+  let dx = wrapCx - txtCx;
+  let dy = wrapCy - txtCy;
+
+  // Optical correction for skewed GO baseline.
+  const opticalUp = Math.max(1.5, txtRect.height * 0.06);
+  dy -= opticalUp;
 
   const prevX = Number(displayEl.dataset.goNudgeX || "0");
   const prevY = Number(displayEl.dataset.goNudgeY || "0");
 
-  // Один шаг к точному центру, с ограничением
-  let nextX = snap2(clamp(prevX + dx, -28, 28));
-  let nextY = snap2(clamp(prevY + dy, -28, 28));
+  let nextX = snap2(clamp(prevX + dx, -36, 36));
+  let nextY = snap2(clamp(prevY + dy, -36, 36));
 
-  // Меньше микродрожания
   if (Math.abs(dx) < 0.08) nextX = prevX;
   if (Math.abs(dy) < 0.08) nextY = prevY;
 
@@ -282,11 +289,11 @@ export function initDynamicRingAndGoLayout() {
   let rafId = 0;
   let splitTrackRaf = 0;
   let splitTrackUntil = 0;
+  let settleCenterRaf = 0;
 
   const refreshNow = () => {
     rafId = 0;
 
-    // Do not recompute in the middle of nav snapshot transition.
     const app = document.getElementById("app");
     if (app?.classList.contains("is-view-transitioning")) return;
 
@@ -300,7 +307,6 @@ export function initDynamicRingAndGoLayout() {
       const topHalf = getTopHalfEl(wrap);
       const rowLayout = isRowLayout(topHalf);
 
-      // Scale PAUSE / extended day-hour text relative to ring size.
       applyMetaTextScale(wrap, renderedRingPx, rowLayout);
 
       displays.forEach((displayEl) => {
@@ -316,6 +322,13 @@ export function initDynamicRingAndGoLayout() {
         applyDisplayScale(displayEl, 320, false, 320);
       }
       centerGoDisplay(displayEl);
+    });
+
+    // Second pass after browser settles glyph metrics/paint.
+    if (settleCenterRaf) cancelAnimationFrame(settleCenterRaf);
+    settleCenterRaf = requestAnimationFrame(() => {
+      settleCenterRaf = 0;
+      displays.forEach((displayEl) => centerGoDisplay(displayEl));
     });
   };
 
@@ -357,8 +370,25 @@ export function initDynamicRingAndGoLayout() {
     if (host) ro?.observe(host);
   });
 
+  displays.forEach((displayEl) => {
+    displayEl.dataset.wasGo = isGoDisplay(displayEl) ? "1" : "0";
+  });
+
+  const handleDisplayMutation = (displayEl) => {
+    const wasGo = displayEl.dataset.wasGo === "1";
+    const nowGo = isGoDisplay(displayEl);
+
+    if (nowGo && !wasGo) {
+      triggerGoEnter(displayEl);
+    }
+
+    displayEl.dataset.wasGo = nowGo ? "1" : "0";
+    startSplitTracking(120);
+    scheduleRefresh();
+  };
+
   const classObservers = displays.map((displayEl) => {
-    const mo = new MutationObserver(scheduleRefresh);
+    const mo = new MutationObserver(() => handleDisplayMutation(displayEl));
     mo.observe(displayEl, {
       attributes: true,
       attributeFilter: ["class"],
@@ -366,12 +396,8 @@ export function initDynamicRingAndGoLayout() {
     return mo;
   });
 
-  // React to text changes (e.g., milliseconds on/off) to recompute scale.
   const textObservers = displays.map((displayEl) => {
-    const mo = new MutationObserver(() => {
-      startSplitTracking(120);
-      scheduleRefresh();
-    });
+    const mo = new MutationObserver(() => handleDisplayMutation(displayEl));
 
     mo.observe(displayEl, {
       characterData: true,
@@ -445,6 +471,11 @@ export function initDynamicRingAndGoLayout() {
     if (splitTrackRaf) {
       cancelAnimationFrame(splitTrackRaf);
       splitTrackRaf = 0;
+    }
+
+    if (settleCenterRaf) {
+      cancelAnimationFrame(settleCenterRaf);
+      settleCenterRaf = 0;
     }
 
     ro?.disconnect();
