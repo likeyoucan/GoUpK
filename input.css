@@ -1815,7 +1815,7 @@
       .resizer_handler::before,
     :is(#view-stopwatch, #view-timer, #view-tabata).split-force-middle
       .resizer_handler::before {
-      transform: translateX(calc(var(--handler-size) * -0.5));
+      transform: translateX(-5px);
     }
 
     :is(#view-stopwatch, #view-timer, #view-tabata).split-middle
