@@ -60,7 +60,14 @@ function triggerGoEnter(displayEl) {
 }
 
 function triggerTimeEnter(displayEl) {
-  if (!displayEl || isGoDisplay(displayEl)) return;
+  if (!displayEl) return;
+
+  const text = String(displayEl.textContent || "")
+    .trim()
+    .toUpperCase();
+  const isTimeLike = text !== "GO" && /[:\d]/.test(text);
+  if (!isTimeLike) return;
+
   displayEl.classList.remove("time-enter");
   void displayEl.offsetWidth;
   displayEl.classList.add("time-enter");
@@ -386,7 +393,11 @@ export function initDynamicRingAndGoLayout() {
     if (nowGo && !wasGo) {
       triggerGoEnter(displayEl);
     } else if (!nowGo && wasGo) {
-      triggerTimeEnter(displayEl);
+      requestAnimationFrame(() => {
+        if (!isGoDisplay(displayEl)) {
+          triggerTimeEnter(displayEl);
+        }
+      });
     }
 
     displayEl.dataset.wasGo = nowGo ? "1" : "0";
