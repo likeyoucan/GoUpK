@@ -62,9 +62,7 @@ function triggerGoEnter(displayEl) {
 function triggerTimeEnter(displayEl) {
   if (!displayEl) return;
 
-  const text = String(displayEl.textContent || "")
-    .trim()
-    .toUpperCase();
+  const text = String(displayEl.textContent || "").trim().toUpperCase();
   const isTimeLike = text !== "GO" && /[:\d]/.test(text);
   if (!isTimeLike) return;
 
