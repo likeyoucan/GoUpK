@@ -59,6 +59,13 @@ function triggerGoEnter(displayEl) {
   displayEl.classList.add("go-enter");
 }
 
+function triggerTimeEnter(displayEl) {
+  if (!displayEl || isGoDisplay(displayEl)) return;
+  displayEl.classList.remove("time-enter");
+  void displayEl.offsetWidth;
+  displayEl.classList.add("time-enter");
+}
+
 function calcDynamicRingSizePx(wrap) {
   const topHalfEl = getTopHalfEl(wrap);
   const rect = topHalfEl?.getBoundingClientRect?.();
@@ -253,7 +260,6 @@ function centerGoDisplay(displayEl) {
   let dx = wrapCx - txtCx;
   let dy = wrapCy - txtCy;
 
-  // Optical correction for skewed GO baseline.
   const opticalUp = Math.max(1.5, txtRect.height * 0.06);
   dy -= opticalUp;
 
@@ -324,7 +330,6 @@ export function initDynamicRingAndGoLayout() {
       centerGoDisplay(displayEl);
     });
 
-    // Second pass after browser settles glyph metrics/paint.
     if (settleCenterRaf) cancelAnimationFrame(settleCenterRaf);
     settleCenterRaf = requestAnimationFrame(() => {
       settleCenterRaf = 0;
@@ -380,6 +385,8 @@ export function initDynamicRingAndGoLayout() {
 
     if (nowGo && !wasGo) {
       triggerGoEnter(displayEl);
+    } else if (!nowGo && wasGo) {
+      triggerTimeEnter(displayEl);
     }
 
     displayEl.dataset.wasGo = nowGo ? "1" : "0";
