@@ -1707,13 +1707,7 @@
   @media (min-width: 600px) and (orientation: landscape) {
     :root {
       --split: 50%;
-      --split-pill-nudge-x: -2px;
       --split-edge-handle-gap: 9px;
-    }
-
-    :is(#view-stopwatch, #view-timer, #view-tabata).split-middle,
-    :is(#view-stopwatch, #view-timer, #view-tabata).split-force-middle {
-      --split-pill-nudge-x: 0px;
     }
 
     #view-stopwatch,
@@ -1786,10 +1780,11 @@
       border: none;
     }
 
+    /* Handler in two-column layout */
     .resizer_handler {
       top: 0;
       bottom: 0;
-      left: 0;
+      left: calc(var(--handler-size) * -0.5);
       right: auto;
       width: var(--handler-size);
       height: auto;
@@ -1799,18 +1794,57 @@
     .resizer_handler::before {
       width: 3px;
       height: clamp(28px, 20vh, 72px);
-      transform: translateX(var(--split-pill-nudge-x));
+      transform: none;
     }
 
     .resizer_handler::after {
       inset: 0 -18px;
     }
 
-    /* focus/drag state сохраняет тот же nudge, чтобы не было скачка */
+    /* Keep active/focus animation without horizontal jump */
     .resizer_handler:focus-visible::before,
     .resizer_handler.is-dragging::before,
     .resizer_handler:active::before {
-      transform: translateX(var(--split-pill-nudge-x)) scale(1.05);
+      transform: scale(1.05);
+    }
+
+    /* Middle/live/animating: pill strictly centered in handler */
+    :is(#view-stopwatch, #view-timer, #view-tabata).split-middle
+      .resizer_handler::before,
+    :is(#view-stopwatch, #view-timer, #view-tabata).split-live
+      .resizer_handler::before,
+    :is(#view-stopwatch, #view-timer, #view-tabata).split-animating
+      .resizer_handler::before,
+    :is(#view-stopwatch, #view-timer, #view-tabata).split-force-middle
+      .resizer_handler::before {
+      transform: none;
+    }
+
+    :is(#view-stopwatch, #view-timer, #view-tabata).split-middle
+      .resizer_handler:focus-visible::before,
+    :is(#view-stopwatch, #view-timer, #view-tabata).split-middle
+      .resizer_handler.is-dragging::before,
+    :is(#view-stopwatch, #view-timer, #view-tabata).split-middle
+      .resizer_handler:active::before,
+    :is(#view-stopwatch, #view-timer, #view-tabata).split-live
+      .resizer_handler:focus-visible::before,
+    :is(#view-stopwatch, #view-timer, #view-tabata).split-live
+      .resizer_handler.is-dragging::before,
+    :is(#view-stopwatch, #view-timer, #view-tabata).split-live
+      .resizer_handler:active::before,
+    :is(#view-stopwatch, #view-timer, #view-tabata).split-animating
+      .resizer_handler:focus-visible::before,
+    :is(#view-stopwatch, #view-timer, #view-tabata).split-animating
+      .resizer_handler.is-dragging::before,
+    :is(#view-stopwatch, #view-timer, #view-tabata).split-animating
+      .resizer_handler:active::before,
+    :is(#view-stopwatch, #view-timer, #view-tabata).split-force-middle
+      .resizer_handler:focus-visible::before,
+    :is(#view-stopwatch, #view-timer, #view-tabata).split-force-middle
+      .resizer_handler.is-dragging::before,
+    :is(#view-stopwatch, #view-timer, #view-tabata).split-force-middle
+      .resizer_handler:active::before {
+      transform: scale(1.05);
     }
 
     :is(#view-stopwatch, #view-timer, #view-tabata).split-top-hidden
@@ -1826,7 +1860,6 @@
       z-index: 45;
     }
 
-    /* В крайнем левом состоянии пилюля строго по центру хендлера */
     :is(#view-stopwatch, #view-timer, #view-tabata).split-top-hidden
       .view-bottom-half
       .resizer_handler::before {
@@ -1882,7 +1915,6 @@
       transform: none;
     }
 
-    /* В крайнем правом состоянии пилюля строго по центру хендлера */
     :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
       .view-bottom-half
       .resizer_handler::before {
