@@ -1900,6 +1900,51 @@
       padding-bottom: 0;
     }
 
+    /* Hide right panel internals when bottom side is fully collapsed in 2-column layout */
+    :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
+      .view-bottom-half
+      .mid_content,
+    :is(
+        #view-stopwatch,
+        #view-timer,
+        #view-tabata
+      ).split-live[data-split-target="bottom"]
+      .view-bottom-half
+      .mid_content,
+    :is(
+        #view-stopwatch,
+        #view-timer,
+        #view-tabata
+      ).split-animating[data-split-target="bottom"]
+      .view-bottom-half
+      .mid_content {
+      opacity: 0 !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+      transform: none !important;
+    }
+
+    /* Extra guard: hide any non-handler child to avoid edge bleed */
+    :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
+      .view-bottom-half
+      > :not(.resizer_handler),
+    :is(
+        #view-stopwatch,
+        #view-timer,
+        #view-tabata
+      ).split-live[data-split-target="bottom"]
+      .view-bottom-half
+      > :not(.resizer_handler),
+    :is(
+        #view-stopwatch,
+        #view-timer,
+        #view-tabata
+      ).split-animating[data-split-target="bottom"]
+      .view-bottom-half
+      > :not(.resizer_handler) {
+      visibility: hidden !important;
+    }
+
     :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
       .view-bottom-half
       .resizer_handler {
