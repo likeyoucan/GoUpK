@@ -1776,6 +1776,19 @@
       padding-inline: 0;
     }
 
+    #view-tabata .mid_content {
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
+      padding-inline: clamp(10px, 2vw, 24px);
+    }
+
+    #view-tabata #tb-list-section,
+    #view-tabata #tb-runningControls {
+      width: min(100%, 760px);
+      margin-inline: auto;
+    }
+
     .mid_content > div.app-border {
       border: none;
     }
@@ -2464,6 +2477,13 @@
   @media (min-width: 1280px) {
     #view-settings .settings-content-wrap {
       max-width: 840px;
+    }
+  }
+
+  @media (min-width: 1280px) and (orientation: landscape) {
+    #view-tabata #tb-list-section,
+    #view-tabata #tb-runningControls {
+      width: min(100%, 840px);
     }
   }
 
