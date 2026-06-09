@@ -4426,6 +4426,114 @@
     line-height: 1;
   }
 
+  /* 1) Универсальное центрирование +/- в круглых кнопках Tabata */
+  [data-tb-adj] {
+    display: grid !important;
+    place-items: center !important;
+    padding: 0 !important;
+    line-height: 0;
+    min-width: 44px;
+    min-height: 44px;
+    aspect-ratio: 1 / 1;
+  }
+
+  [data-tb-adj] svg {
+    display: block;
+    width: 24px;
+    height: 24px;
+    flex: none;
+    margin: 0;
+    transform: translateZ(0);
+  }
+
+  /* Подстраховка для +/- в таймере */
+  #tm-adjust-minus svg,
+  #tm-adjust-plus svg {
+    display: block;
+    margin: 0 auto;
+  }
+
+  /* 2) Анимированный placeholder, если изображение иконки не загрузилось */
+  .app-icon-preview-wrap {
+    position: relative;
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    overflow: hidden;
+    flex: 0 0 52px;
+  }
+
+  .app-icon-preview {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 12px;
+    display: block;
+  }
+
+  .app-icon-missing {
+    position: absolute;
+    inset: 0;
+    display: none;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--text-color) 8%, var(--surface-color));
+    overflow: hidden;
+  }
+
+  .app-icon-missing::before {
+    content: "";
+    position: absolute;
+    top: -40%;
+    bottom: -40%;
+    left: -140%;
+    width: 80%;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      color-mix(in srgb, #ffffff 62%, transparent) 50%,
+      transparent 100%
+    );
+    transform: skewX(-18deg);
+    animation: app-icon-missing-shine 1.25s linear infinite;
+  }
+
+  .app-icon-option.is-img-missing .app-icon-preview {
+    opacity: 0;
+  }
+
+  .app-icon-option.is-img-missing .app-icon-missing {
+    display: block;
+  }
+
+  @keyframes app-icon-missing-shine {
+    0% {
+      transform: skewX(-18deg) translateX(0);
+    }
+    100% {
+      transform: skewX(-18deg) translateX(330%);
+    }
+  }
+
+  /* 3) Значения справа у range — визуально в одну линию с ползунком */
+  .range-row .range-field {
+    display: flex;
+    align-items: center;
+  }
+
+  .range-row .range-field input[type="range"] {
+    display: block;
+    margin: 0;
+  }
+
+  .range-value {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    align-self: center;
+    min-height: 24px;
+    line-height: 1.2;
+  }
+
   @media (max-width: 420px) {
     #tm-adjust-controls > div {
       gap: 0.75rem;

@@ -11,8 +11,8 @@ const ICON_OPTIONS = Array.isArray(ICON_CFG.options) ? ICON_CFG.options : [];
 const FALLBACK_IMAGE = ICON_CFG.fallbackImage || "img/app_img.png";
 const PRELOAD_TIMEOUT_MS = Number(ICON_CFG.preloadTimeoutMs) || 3000;
 
-// Cache resolved image src per icon id to prevent repeated visual reload.
-const ICON_SRC_CACHE = new Map();
+// Cache resolved preview state per icon id to avoid visual reload on rerender.
+const ICON_PREVIEW_CACHE = new Map();
 
 function getNativePlugin() {
   return window.Capacitor?.Plugins?.AppIconSwitcher || null;
@@ -63,6 +63,7 @@ function canUseOption(option, appProManager) {
 function loadImageWithFallback(src, fallbackSrc, timeoutMs) {
   return new Promise((resolve) => {
     let done = false;
+
     const timer = setTimeout(() => {
       if (done) return;
       done = true;
@@ -84,6 +85,23 @@ function loadImageWithFallback(src, fallbackSrc, timeoutMs) {
     };
     img.src = src;
   });
+}
+
+async function resolvePreviewForOption(option) {
+  const desiredSrc = option?.image || FALLBACK_IMAGE;
+
+  if (!option?.image) {
+    return { src: FALLBACK_IMAGE, missing: true };
+  }
+
+  const readySrc = await loadImageWithFallback(
+    desiredSrc,
+    FALLBACK_IMAGE,
+    PRELOAD_TIMEOUT_MS,
+  );
+
+  const missing = readySrc === FALLBACK_IMAGE && desiredSrc !== FALLBACK_IMAGE;
+  return { src: readySrc, missing };
 }
 
 export function getResolvedAppIconId(appProManager) {
@@ -132,8 +150,9 @@ export function initAppIconSelector({ t, appProManager }) {
   if (!container) return;
 
   let current = safeGetLS(STORAGE_KEYS.APP_ICON_NAME) || ICON_OPTIONS[0]?.id;
-  if (!ICON_OPTIONS.find((x) => x.id === current))
+  if (!ICON_OPTIONS.find((x) => x.id === current)) {
     current = ICON_OPTIONS[0]?.id;
+  }
 
   const saveAndApply = async (id, { dispatch = true } = {}) => {
     const option = getOptionById(id);
@@ -160,35 +179,61 @@ export function initAppIconSelector({ t, appProManager }) {
       const optionLabel = resolveOptionLabel(opt, t);
       btn.setAttribute("aria-label", optionLabel);
 
-      const img = document.createElement("img");
-      const cachedSrc = ICON_SRC_CACHE.get(opt.id);
+      const previewWrap = document.createElement("span");
+      previewWrap.className = "app-icon-preview-wrap";
 
-      img.src = cachedSrc || opt.image || FALLBACK_IMAGE;
+      const img = document.createElement("img");
       img.alt = optionLabel;
       img.className = "app-icon-preview";
       img.decoding = "async";
 
-      if (!cachedSrc) {
-        loadImageWithFallback(
-          opt.image || FALLBACK_IMAGE,
-          FALLBACK_IMAGE,
-          PRELOAD_TIMEOUT_MS,
-        )
-          .then((readySrc) => {
-            ICON_SRC_CACHE.set(opt.id, readySrc);
-            if (img.isConnected) img.src = readySrc;
+      const missingOverlay = document.createElement("span");
+      missingOverlay.className = "app-icon-missing";
+
+      const setMissing = (flag) => {
+        btn.classList.toggle("is-img-missing", !!flag);
+      };
+
+      const cached = ICON_PREVIEW_CACHE.get(opt.id);
+      if (cached) {
+        img.src = cached.src;
+        setMissing(!!cached.missing);
+      } else {
+        img.src = opt.image || FALLBACK_IMAGE;
+        setMissing(false);
+
+        resolvePreviewForOption(opt)
+          .then((resolved) => {
+            ICON_PREVIEW_CACHE.set(opt.id, resolved);
+            if (!img.isConnected) return;
+            img.src = resolved.src;
+            setMissing(!!resolved.missing);
           })
           .catch(() => {
-            ICON_SRC_CACHE.set(opt.id, FALLBACK_IMAGE);
-            if (img.isConnected) img.src = FALLBACK_IMAGE;
+            const fallbackState = { src: FALLBACK_IMAGE, missing: true };
+            ICON_PREVIEW_CACHE.set(opt.id, fallbackState);
+            if (!img.isConnected) return;
+            img.src = FALLBACK_IMAGE;
+            setMissing(true);
           });
       }
+
+      img.addEventListener(
+        "error",
+        () => {
+          setMissing(true);
+          img.src = FALLBACK_IMAGE;
+        },
+        { once: true },
+      );
+
+      previewWrap.append(img, missingOverlay);
 
       const label = document.createElement("span");
       label.className = "app-icon-label app-text-sec";
       label.textContent = optionLabel;
 
-      btn.append(img, label);
+      btn.append(previewWrap, label);
 
       btn.addEventListener("click", async () => {
         if (locked) {
