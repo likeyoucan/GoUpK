@@ -1336,8 +1336,7 @@
   .resizer_handler:active::before {
     opacity: 1;
     background: color-mix(in srgb, var(--primary-color) 70%, var(--text-color));
-    transform: scale(1.05);
-    transform: translateX(var(--split-pill-nudge-x));
+    transform: translateX(var(--split-pill-nudge-x)) scale(1.05);
   }
 
   .resizer_handler:active,
