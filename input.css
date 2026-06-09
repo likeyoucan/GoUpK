@@ -4427,18 +4427,6 @@
     line-height: 1;
   }
 
-  .app-icon-preview.is-loading {
-    opacity: 0.5;
-    filter: grayscale(0.25);
-  }
-
-  .app-icon-label {
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.03em;
-    text-transform: uppercase;
-  }
-
   @media (max-width: 420px) {
     #tm-adjust-controls > div {
       gap: 0.75rem;
