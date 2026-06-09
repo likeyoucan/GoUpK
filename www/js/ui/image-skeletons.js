@@ -67,7 +67,6 @@ function ensureStyles() {
       animation: img-skeleton-ios-shine 1.35s linear infinite;
     }
 
-    /* Бесшовный цикл: старт и конец полностью вне области кадра */
     @keyframes img-skeleton-ios-shine {
       0% { transform: skewX(-18deg) translate3d(0%, 0, 0); }
       12% { transform: skewX(-18deg) translate3d(0%, 0, 0); }
@@ -200,9 +199,7 @@ function collectTargets() {
   const preloaderIcon = document.getElementById("app-preloader-icon");
   if (preloaderIcon) targets.push(preloaderIcon);
 
-  document
-    .querySelectorAll("#app-icon-options img.app-icon-preview")
-    .forEach((img) => targets.push(img));
+  // App icon options are intentionally excluded to avoid reload/skeleton flicker.
 
   return targets;
 }

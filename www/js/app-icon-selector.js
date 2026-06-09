@@ -11,6 +11,9 @@ const ICON_OPTIONS = Array.isArray(ICON_CFG.options) ? ICON_CFG.options : [];
 const FALLBACK_IMAGE = ICON_CFG.fallbackImage || "img/app_img.png";
 const PRELOAD_TIMEOUT_MS = Number(ICON_CFG.preloadTimeoutMs) || 3000;
 
+// Cache resolved image src per icon id to prevent repeated visual reload.
+const ICON_SRC_CACHE = new Map();
+
 function getNativePlugin() {
   return window.Capacitor?.Plugins?.AppIconSwitcher || null;
 }
@@ -158,24 +161,28 @@ export function initAppIconSelector({ t, appProManager }) {
       btn.setAttribute("aria-label", optionLabel);
 
       const img = document.createElement("img");
-      img.src = FALLBACK_IMAGE;
+      const cachedSrc = ICON_SRC_CACHE.get(opt.id);
+
+      img.src = cachedSrc || opt.image || FALLBACK_IMAGE;
       img.alt = optionLabel;
-      img.className = "app-icon-preview is-loading";
+      img.className = "app-icon-preview";
       img.decoding = "async";
 
-      loadImageWithFallback(
-        opt.image || FALLBACK_IMAGE,
-        FALLBACK_IMAGE,
-        PRELOAD_TIMEOUT_MS,
-      )
-        .then((readySrc) => {
-          img.src = readySrc;
-          img.classList.remove("is-loading");
-        })
-        .catch(() => {
-          img.src = FALLBACK_IMAGE;
-          img.classList.remove("is-loading");
-        });
+      if (!cachedSrc) {
+        loadImageWithFallback(
+          opt.image || FALLBACK_IMAGE,
+          FALLBACK_IMAGE,
+          PRELOAD_TIMEOUT_MS,
+        )
+          .then((readySrc) => {
+            ICON_SRC_CACHE.set(opt.id, readySrc);
+            if (img.isConnected) img.src = readySrc;
+          })
+          .catch(() => {
+            ICON_SRC_CACHE.set(opt.id, FALLBACK_IMAGE);
+            if (img.isConnected) img.src = FALLBACK_IMAGE;
+          });
+      }
 
       const label = document.createElement("span");
       label.className = "app-icon-label app-text-sec";
