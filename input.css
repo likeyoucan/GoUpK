@@ -1405,6 +1405,23 @@
     transform: translateY(10px);
   }
 
+  /* In fully collapsed bottom state: do not scale/squeeze content */
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
+    .view-bottom-half
+    .mid_content {
+    transform: none !important;
+  }
+
+  /* During live drag close to right edge: keep natural width, just clip */
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-live
+    .view-bottom-half
+    .mid_content,
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-animating
+    .view-bottom-half
+    .mid_content {
+    flex-shrink: 0 !important;
+  }
+
   :is(
       #view-stopwatch,
       #view-timer,
@@ -1761,6 +1778,26 @@
       flex-direction: row;
       position: relative;
       overflow: hidden;
+    }
+
+    /* Keep bottom content at stable width; hide instead of compressing */
+    .view-bottom-half .mid_content {
+      width: 100%;
+      min-width: 320px; /* базовая защита от сжатия */
+      flex-shrink: 0; /* запрещаем ужимание содержимого */
+      transform-origin: left center;
+      overflow: hidden;
+    }
+
+    /* For Tabata list/running panels keep fixed readable canvas */
+    #view-tabata .view-bottom-half .mid_content {
+      min-width: 360px;
+    }
+
+    #view-tabata #tb-list-section,
+    #view-tabata #tb-runningControls {
+      min-width: 360px;
+      flex-shrink: 0;
     }
 
     .top_content {
