@@ -1336,7 +1336,7 @@
   .resizer_handler:active::before {
     opacity: 1;
     background: color-mix(in srgb, var(--primary-color) 70%, var(--text-color));
-    transform: translateX(var(--split-pill-nudge-x)) scale(1.05);
+    transform: translateX(var(--split-pill-nudge-x, 0px)) scale(1.05);
   }
 
   .resizer_handler:active,
@@ -1402,24 +1402,7 @@
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
-    transform: translateY(10px);
-  }
-
-  /* In fully collapsed bottom state: do not scale/squeeze content */
-  :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
-    .view-bottom-half
-    .mid_content {
     transform: none !important;
-  }
-
-  /* During live drag close to right edge: keep natural width, just clip */
-  :is(#view-stopwatch, #view-timer, #view-tabata).split-live
-    .view-bottom-half
-    .mid_content,
-  :is(#view-stopwatch, #view-timer, #view-tabata).split-animating
-    .view-bottom-half
-    .mid_content {
-    flex-shrink: 0 !important;
   }
 
   :is(
@@ -1789,17 +1772,6 @@
       overflow: hidden;
     }
 
-    /* For Tabata list/running panels keep fixed readable canvas */
-    #view-tabata .view-bottom-half .mid_content {
-      min-width: 360px;
-    }
-
-    #view-tabata #tb-list-section,
-    #view-tabata #tb-runningControls {
-      min-width: 360px;
-      flex-shrink: 0;
-    }
-
     .top_content {
       --top-pad: var(--space-4);
       --title-rail: 44px;
@@ -1823,7 +1795,9 @@
     #view-tabata #tb-list-section,
     #view-tabata #tb-runningControls {
       width: min(100%, 760px);
+      min-width: clamp(280px, 32vw, 360px);
       margin-inline: auto;
+      flex-shrink: 0;
     }
 
     .mid_content > div.app-border {
@@ -1993,6 +1967,24 @@
       .view-bottom-half
       > :not(.resizer_handler) {
       visibility: hidden !important;
+    }
+
+    /* Keep natural width only in 2-column landscape when collapsing to bottom */
+    :is(
+        #view-stopwatch,
+        #view-timer,
+        #view-tabata
+      ).split-live[data-split-target="bottom"]
+      .view-bottom-half
+      .mid_content,
+    :is(
+        #view-stopwatch,
+        #view-timer,
+        #view-tabata
+      ).split-animating[data-split-target="bottom"]
+      .view-bottom-half
+      .mid_content {
+      flex-shrink: 0 !important;
     }
 
     :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
@@ -3164,10 +3156,16 @@
   .range-value {
     width: 3.25rem;
     flex: 0 0 3.25rem;
-    line-height: 1;
-    opacity: 0.95;
     white-space: nowrap;
     text-align: right;
+    opacity: 0.95;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    align-self: center;
+    min-height: 24px;
+    line-height: 1.2;
   }
 
   .range-row-half {
@@ -4625,15 +4623,6 @@
   .range-row .range-field input[type="range"] {
     display: block;
     margin: 0;
-  }
-
-  .range-value {
-    display: inline-flex;
-    align-items: center;
-    justify-content: flex-end;
-    align-self: center;
-    min-height: 24px;
-    line-height: 1.2;
   }
 
   @media (max-width: 420px) {
