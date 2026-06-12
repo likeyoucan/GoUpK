@@ -1804,6 +1804,23 @@
       border: none;
     }
 
+    /* Tabata: divider must span full bottom-half width, while content width stays unchanged */
+    #view-tabata #tb-list-section > .flex-1.app-border {
+      position: relative;
+      border-top-width: 0;
+    }
+
+    #view-tabata #tb-list-section > .flex-1.app-border::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: var(--border-color);
+      pointer-events: none;
+    }
+
     /* handler stays on its rail, pill visually moved left of divider */
     .resizer_handler {
       top: 0;
