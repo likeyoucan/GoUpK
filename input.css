@@ -1804,22 +1804,30 @@
       border: none;
     }
 
-    /* Tabata: divider must span full bottom-half width, while content width stays unchanged */
-    #view-tabata #tb-list-section > .flex-1.app-border {
-      position: relative;
-      border-top-width: 0;
-    }
+/* Tabata: top divider full width, content width unchanged */
+#view-tabata #tb-list-section > .flex-1.border-t.app-border {
+  position: relative;
+  border-top-width: 0; /* hide inset border */
+  --tb-divider-bleed: 0.5rem; /* matches px-2 */
+}
 
-    #view-tabata #tb-list-section > .flex-1.app-border::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 1px;
-      background: var(--border-color);
-      pointer-events: none;
-    }
+#view-tabata #tb-list-section > .flex-1.border-t.app-border::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: calc(-1 * var(--tb-divider-bleed));
+  right: calc(-1 * var(--tb-divider-bleed));
+  height: 1px;
+  background: var(--border-color);
+  pointer-events: none;
+}
+
+/* matches sm:px-4 */
+@media (min-width: 640px) {
+  #view-tabata #tb-list-section > .flex-1.border-t.app-border {
+    --tb-divider-bleed: 1rem;
+  }
+}
 
     /* handler stays on its rail, pill visually moved left of divider */
     .resizer_handler {
