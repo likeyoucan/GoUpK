@@ -1786,10 +1786,39 @@
     }
 
     #view-tabata .mid_content {
+      --tb-mid-inline-pad: clamp(10px, 2vw, 24px);
       display: flex;
       justify-content: center;
       align-items: stretch;
-      padding-inline: clamp(10px, 2vw, 24px);
+      padding-inline: var(--tb-mid-inline-pad);
+    }
+
+    /* Tabata: full-width divider in 2-column layout while keeping inner content paddings */
+    #view-tabata #tb-list-section > .flex-1.border-t.app-border {
+      position: relative;
+      border-top-width: 0;
+      --tb-divider-bleed: calc(
+        var(--tb-mid-inline-pad, 0px) + 0.5rem
+      ); /* + px-2 */
+    }
+
+    #view-tabata #tb-list-section > .flex-1.border-t.app-border::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: calc(-1 * var(--tb-divider-bleed));
+      right: calc(-1 * var(--tb-divider-bleed));
+      height: 1px;
+      background: var(--border-color);
+      pointer-events: none;
+    }
+
+    @media (min-width: 640px) {
+      #view-tabata #tb-list-section > .flex-1.border-t.app-border {
+        --tb-divider-bleed: calc(
+          var(--tb-mid-inline-pad, 0px) + 1rem
+        ); /* + sm:px-4 */
+      }
     }
 
     #view-tabata #tb-list-section,
@@ -2538,19 +2567,19 @@
   }
 
   #view-settings .app-surface .p-4 {
-    padding: var(--space-4) !important;
+    padding: var(--space-4);
   }
 
   #view-settings .app-surface .gap-2 {
-    gap: var(--space-2) !important;
+    gap: var(--space-2);
   }
 
   #view-settings .app-surface .gap-3 {
-    gap: var(--space-3) !important;
+    gap: var(--space-3);
   }
 
   #view-settings .app-surface .gap-4 {
-    gap: var(--space-4) !important;
+    gap: var(--space-4);
   }
 
   #sw-lapsContainer,
@@ -3895,12 +3924,8 @@
 
   /* Single source of truth for checked toggle accent */
   input:checked + .custom-toggle {
-    background-color: var(--primary-color) !important;
-    border-color: color-mix(
-      in srgb,
-      var(--primary-color) 72%,
-      transparent
-    ) !important;
+    background-color: var(--primary-color);
+    border-color: color-mix(in srgb, var(--primary-color) 72%, transparent);
   }
 
   input:checked + .custom-toggle::after {
@@ -3913,11 +3938,7 @@
   }
 
   html:not(.dark) input:checked + .custom-toggle {
-    border-color: color-mix(
-      in srgb,
-      var(--text-color) 24%,
-      transparent
-    ) !important;
+    border-color: color-mix(in srgb, var(--text-color) 24%, transparent);
   }
 
   #sw-lapsContainer,
@@ -4249,7 +4270,7 @@
   }
 
   .ring-offset-surface {
-    --tw-ring-offset-color: var(--surface-color) !important;
+    --tw-ring-offset-color: var(--surface-color);
   }
 
   .injected-checkmark {
