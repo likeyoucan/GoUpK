@@ -1829,6 +1829,49 @@
       flex-shrink: 0;
     }
 
+    /* Tabata: when bottom pane is fully expanded, use full width */
+    #view-tabata.split-top-hidden .mid_content,
+    #view-tabata.split-live[data-split-target="top"] .mid_content,
+    #view-tabata.split-animating[data-split-target="top"] .mid_content {
+      padding-inline: 0;
+    }
+
+    #view-tabata.split-top-hidden #tb-list-section,
+    #view-tabata.split-top-hidden #tb-runningControls,
+    #view-tabata.split-live[data-split-target="top"] #tb-list-section,
+    #view-tabata.split-live[data-split-target="top"] #tb-runningControls,
+    #view-tabata.split-animating[data-split-target="top"] #tb-list-section,
+    #view-tabata.split-animating[data-split-target="top"] #tb-runningControls {
+      width: 100%;
+      min-width: 0;
+      margin-inline: 0;
+    }
+
+    /* In full-width mode use native border line (no pseudo bleed) */
+    #view-tabata.split-top-hidden
+      #tb-list-section
+      > .flex-1.border-t.app-border,
+    #view-tabata.split-live[data-split-target="top"]
+      #tb-list-section
+      > .flex-1.border-t.app-border,
+    #view-tabata.split-animating[data-split-target="top"]
+      #tb-list-section
+      > .flex-1.border-t.app-border {
+      border-top-width: 1px;
+    }
+
+    #view-tabata.split-top-hidden
+      #tb-list-section
+      > .flex-1.border-t.app-border::before,
+    #view-tabata.split-live[data-split-target="top"]
+      #tb-list-section
+      > .flex-1.border-t.app-border::before,
+    #view-tabata.split-animating[data-split-target="top"]
+      #tb-list-section
+      > .flex-1.border-t.app-border::before {
+      content: none;
+    }
+
     .mid_content > div.app-border {
       border: none;
     }
