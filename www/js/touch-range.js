@@ -77,10 +77,25 @@ if (!document.getElementById(STYLE_ID)) {
   document.head.appendChild(style);
 }
 
+const enhancedInputs = new Set();
+
+function markEnhanced(input) {
+  enhancedInputs.add(input);
+}
+
+function unmarkEnhanced(input) {
+  enhancedInputs.delete(input);
+}
+
 export function enhanceNativeRange(input) {
-  if (!input || input.type !== "range") return;
-  if (input.dataset.trEnhanced) return;
+  if (!input || input.type !== "range") return null;
+
+  if (input.dataset.trEnhanced === "1") {
+    return input.closest(".tr-wrap") || null;
+  }
+
   input.dataset.trEnhanced = "1";
+  markEnhanced(input);
 
   const min = parseFloat(input.min) || 0;
   const max = parseFloat(input.max) || 100;
@@ -88,10 +103,8 @@ export function enhanceNativeRange(input) {
   let value = parseFloat(input.value);
   if (!Number.isFinite(value)) value = min;
 
-  // Prevent duplicate click right after drag end
   let suppressTrackClickUntil = 0;
 
-  // Haptic throttle (uses sm.vibroLevel internally)
   const VIBRO_THROTTLE_MS = 75;
   let lastVibroTime = 0;
   const vibrateIfNeeded = () => {
@@ -126,8 +139,8 @@ export function enhanceNativeRange(input) {
   track.append(fill, thumb);
 
   input.classList.add("tr-native");
-  wrap.appendChild(track);
   input.parentNode.insertBefore(wrap, input);
+  wrap.appendChild(track);
   wrap.appendChild(input);
 
   const originalDescriptor = Object.getOwnPropertyDescriptor(
@@ -152,7 +165,6 @@ export function enhanceNativeRange(input) {
     return Math.max(min, Math.min(max, parseFloat(stepped.toFixed(10))));
   };
 
-  // Returns true only if value actually changed
   const applyValue = (val, eventType = "input") => {
     const clamped = Math.max(min, Math.min(max, val));
     const snapped = Math.round((clamped - min) / step) * step + min;
@@ -178,7 +190,6 @@ export function enhanceNativeRange(input) {
     input.dispatchEvent(new Event("change", { bubbles: true }));
   };
 
-  // ---------- TOUCH ----------
   let touchState = {
     active: false,
     decided: false,
@@ -236,7 +247,6 @@ export function enhanceNativeRange(input) {
 
     if (!touchState.isHoriz) return;
 
-    // No preventDefault: avoids Intervention warning
     const changed = applyValue(valueFromX(touch.clientX), "input");
     if (changed) {
       touchState.moved = true;
@@ -264,7 +274,6 @@ export function enhanceNativeRange(input) {
   wrap.addEventListener("touchend", onTouchEnd, { passive: true });
   wrap.addEventListener("touchcancel", onTouchEnd, { passive: true });
 
-  // ---------- MOUSE ----------
   let mouseDown = false;
   let mouseMoved = false;
   let mouseStartX = 0;
@@ -306,32 +315,29 @@ export function enhanceNativeRange(input) {
     document.removeEventListener("mouseup", onMouseUp);
   };
 
-  wrap.addEventListener("mousedown", (e) => {
+  const onMouseDown = (e) => {
     if (e.button !== 0) return;
     mouseDown = true;
     mouseMoved = false;
     mouseStartX = e.clientX;
     mouseStartY = e.clientY;
 
-    // Do not update value on down (prevents phantom first input)
     e.preventDefault();
 
     document.addEventListener("mousemove", onMouseMove);
     document.addEventListener("mouseup", onMouseUp);
-  });
+  };
 
-  // Track click: exactly one input + one change if changed
-  wrap.addEventListener("click", (e) => {
+  const onClick = (e) => {
     if (performance.now() < suppressTrackClickUntil) return;
     const changed = applyValue(valueFromX(e.clientX), "input");
     if (changed) {
       vibrateIfNeeded();
       emitChange();
     }
-  });
+  };
 
-  // ---------- KEYBOARD ----------
-  wrap.addEventListener("keydown", (e) => {
+  const onKeydown = (e) => {
     let newVal = value;
     const bigStep = (max - min) / 10;
 
@@ -366,10 +372,16 @@ export function enhanceNativeRange(input) {
       vibrateIfNeeded();
       emitChange();
     }
-  });
+  };
 
-  wrap.addEventListener("focus", () => wrap.classList.add("tr-focused"));
-  wrap.addEventListener("blur", () => wrap.classList.remove("tr-focused"));
+  const onFocus = () => wrap.classList.add("tr-focused");
+  const onBlur = () => wrap.classList.remove("tr-focused");
+
+  wrap.addEventListener("mousedown", onMouseDown);
+  wrap.addEventListener("click", onClick);
+  wrap.addEventListener("keydown", onKeydown);
+  wrap.addEventListener("focus", onFocus);
+  wrap.addEventListener("blur", onBlur);
 
   if (originalDescriptor) {
     Object.defineProperty(input, "value", {
@@ -392,6 +404,17 @@ export function enhanceNativeRange(input) {
     document.removeEventListener("mousemove", onMouseMove);
     document.removeEventListener("mouseup", onMouseUp);
 
+    wrap.removeEventListener("touchstart", onTouchStart);
+    wrap.removeEventListener("touchmove", onTouchMove);
+    wrap.removeEventListener("touchend", onTouchEnd);
+    wrap.removeEventListener("touchcancel", onTouchEnd);
+
+    wrap.removeEventListener("mousedown", onMouseDown);
+    wrap.removeEventListener("click", onClick);
+    wrap.removeEventListener("keydown", onKeydown);
+    wrap.removeEventListener("focus", onFocus);
+    wrap.removeEventListener("blur", onBlur);
+
     if (originalDescriptor) {
       Object.defineProperty(input, "value", originalDescriptor);
     }
@@ -403,8 +426,11 @@ export function enhanceNativeRange(input) {
 
     input.classList.remove("tr-native");
     delete input.dataset.trEnhanced;
+    delete input._trDestroy;
+    unmarkEnhanced(input);
   };
 
+  input._trDestroy = destroy;
   wrap._trDestroy = destroy;
 
   if (originalDescriptor?.set) {
@@ -421,7 +447,33 @@ export function initTouchRanges(
   selector = 'input[type="range"]',
   root = document,
 ) {
+  const enhancedNow = [];
+
   root.querySelectorAll(selector).forEach((input) => {
-    enhanceNativeRange(input);
+    const wrap = enhanceNativeRange(input);
+    if (wrap) enhancedNow.push(input);
+  });
+
+  return () => {
+    enhancedNow.forEach((input) => {
+      try {
+        input?._trDestroy?.();
+      } catch (err) {
+        console.error("[touch-range.cleanup]", err);
+      }
+    });
+  };
+}
+
+export function destroyTouchRanges(
+  selector = 'input[type="range"]',
+  root = document,
+) {
+  root.querySelectorAll(selector).forEach((input) => {
+    try {
+      input?._trDestroy?.();
+    } catch (err) {
+      console.error("[touch-range.destroy]", err);
+    }
   });
 }

@@ -45,6 +45,8 @@ const stopwatchModule = {
   shareResults,
 
   _unbindCore: null,
+  _unbindSessions: null,
+  _unbindShareController: null,
 
   init() {
     this._unbindCore?.();
@@ -179,6 +181,9 @@ const stopwatchModule = {
 
       this._unbindSessions?.();
       this._unbindSessions = null;
+
+      this._unbindShareController?.();
+      this._unbindShareController = null;
     };
   },
 

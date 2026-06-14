@@ -6,6 +6,16 @@ import { uiSettingsManager } from "../ui-settings.js?v=VERSION";
 import { adsManager } from "../ads.js?v=VERSION";
 
 export function setupStopwatchShareController(sw) {
+  sw._unbindShareController?.();
+  sw._unbindShareController = null;
+
+  const disposers = [];
+  const bind = (el, event, handler, options) => {
+    if (!el) return;
+    el.addEventListener(event, handler, options);
+    disposers.push(() => el.removeEventListener(event, handler, options));
+  };
+
   sw._buildSessionLapsForSave = () => {
     let sessionLaps = [...sw.laps];
     const lastLapTotal = sw.laps.length > 0 ? sw.laps[0].total : 0;
@@ -45,9 +55,7 @@ export function setupStopwatchShareController(sw) {
     const session = sw.getCurrentSessionForShare();
     if (!session) return;
 
-    // Interstitial scenario: share button press
     adsManager.showInterstitialIfAllowed("share");
-
     await sw.shareSessionWithChoice(session);
   };
 
@@ -55,40 +63,53 @@ export function setupStopwatchShareController(sw) {
     const session = sw.savedSessions.find((s) => s.id === id);
     if (!session) return;
 
-    // Interstitial scenario: share button press
     adsManager.showInterstitialIfAllowed("share");
-
     await sw.shareSessionWithChoice(session);
   };
 
-  sw.bindShareButtons = () => {
-    sw.els.saveBtn?.addEventListener("click", () => sw.prepareSaveSession());
-    sw.els.shareBtn?.addEventListener("click", () => sw.shareCurrentResult());
+  const onSaveClick = () => sw.prepareSaveSession();
+  const onShareClick = () => sw.shareCurrentResult();
 
-    sw.els.shareModeTextBtn?.addEventListener("click", async () => {
-      const session = sw.pendingShareSession;
-      if (!session) return;
+  const onShareTextClick = async () => {
+    const session = sw.pendingShareSession;
+    if (!session) return;
 
-      const payload = sw.shareResults.buildStopwatchPayload(session, {
-        showMs: uiSettingsManager.showMs,
-      });
-
-      await sw.shareResults.shareAsText(payload);
-      sw.pendingShareSession = null;
-      modalManager.closeCurrent();
+    const payload = sw.shareResults.buildStopwatchPayload(session, {
+      showMs: uiSettingsManager.showMs,
     });
 
-    sw.els.shareModeCsvBtn?.addEventListener("click", async () => {
-      const session = sw.pendingShareSession;
-      if (!session) return;
+    await sw.shareResults.shareAsText(payload);
+    sw.pendingShareSession = null;
+    modalManager.closeCurrent();
+  };
 
-      const payload = sw.shareResults.buildStopwatchPayload(session, {
-        showMs: uiSettingsManager.showMs,
-      });
+  const onShareCsvClick = async () => {
+    const session = sw.pendingShareSession;
+    if (!session) return;
 
-      await sw.shareResults.shareAsFile(payload, { format: "csv" });
-      sw.pendingShareSession = null;
-      modalManager.closeCurrent();
+    const payload = sw.shareResults.buildStopwatchPayload(session, {
+      showMs: uiSettingsManager.showMs,
+    });
+
+    await sw.shareResults.shareAsFile(payload, { format: "csv" });
+    sw.pendingShareSession = null;
+    modalManager.closeCurrent();
+  };
+
+  sw.bindShareButtons = () => {
+    bind(sw.els.saveBtn, "click", onSaveClick);
+    bind(sw.els.shareBtn, "click", onShareClick);
+    bind(sw.els.shareModeTextBtn, "click", onShareTextClick);
+    bind(sw.els.shareModeCsvBtn, "click", onShareCsvClick);
+  };
+
+  sw._unbindShareController = () => {
+    disposers.forEach((off) => {
+      try {
+        off?.();
+      } catch (err) {
+        console.error("[stopwatch-share-controller.dispose]", err);
+      }
     });
   };
 }

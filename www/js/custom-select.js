@@ -142,6 +142,7 @@ export class CustomSelect {
     this.currentValue = initialValue;
 
     this.isOpen = false;
+    this._scrollLocked = false;
 
     /** @type {number} */
     this.focusedIndex = -1;
@@ -217,6 +218,12 @@ export class CustomSelect {
     }
 
     this.close({ immediate: true });
+
+    // Safety unlock in case close path was interrupted.
+    if (this._scrollLocked) {
+      unlockPageScroll();
+      this._scrollLocked = false;
+    }
 
     this._instanceAbort.abort();
 
@@ -540,6 +547,7 @@ export class CustomSelect {
     });
 
     lockPageScroll();
+    this._scrollLocked = true;
 
     requestAnimationFrame(() => {
       if (!this.isOpen || !this._hasCoreNodes()) return;
@@ -569,7 +577,14 @@ export class CustomSelect {
 
   close({ immediate = false } = {}) {
     if (!this.isOpen && !immediate) return;
-    if (!this._hasCoreNodes()) return;
+    if (!this._hasCoreNodes()) {
+      if (this._scrollLocked) {
+        unlockPageScroll();
+        this._scrollLocked = false;
+      }
+      this.isOpen = false;
+      return;
+    }
 
     const { trigger, optionsPanel, container } = this._getCoreNodesOrThrow();
     this.isOpen = false;
@@ -585,7 +600,10 @@ export class CustomSelect {
     trigger.removeAttribute("aria-activedescendant");
     container.classList.remove("is-open");
 
-    unlockPageScroll();
+    if (this._scrollLocked) {
+      unlockPageScroll();
+      this._scrollLocked = false;
+    }
 
     const finalize = () => {
       if (this.isOpen || !this.optionsPanel) return;

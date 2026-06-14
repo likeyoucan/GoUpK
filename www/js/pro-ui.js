@@ -211,7 +211,7 @@ function bindProPaywallToasts(t, showToast) {
     app_icon: () => tr(t, "pro_feature_name_app_icon", "Pro icon"),
   };
 
-  document.addEventListener(APP_EVENTS.PRO_PAYWALL_REQUESTED, (e) => {
+  const handler = (e) => {
     const feature = e?.detail?.feature || "";
     const label = featureNameByKey[feature]?.();
 
@@ -222,8 +222,16 @@ function bindProPaywallToasts(t, showToast) {
     } else {
       showToast(tr(t, "pro_required", "Feature available in Pro"));
     }
-  });
+  };
+
+  document.addEventListener(APP_EVENTS.PRO_PAYWALL_REQUESTED, handler);
+
+  return () => {
+    document.removeEventListener(APP_EVENTS.PRO_PAYWALL_REQUESTED, handler);
+  };
 }
+
+let disposeProUi = null;
 
 export function initProUi({
   t,
@@ -232,6 +240,9 @@ export function initProUi({
   config,
   showToast,
 }) {
+  disposeProUi?.();
+  disposeProUi = null;
+
   const sync = () => {
     if (!hasProUiNodes()) return;
     renderProBadgesFromConfig(config, t);
@@ -239,9 +250,25 @@ export function initProUi({
     renderProPurchaseUI(config, t, langManager, appProManager);
   };
 
-  document.addEventListener(APP_EVENTS.PRO_STATUS_CHANGED, sync);
-  document.addEventListener(APP_EVENTS.LANGUAGE_CHANGED, sync);
+  const onProStatusChanged = () => sync();
+  const onLanguageChanged = () => sync();
 
-  bindProPaywallToasts(t, showToast);
+  document.addEventListener(APP_EVENTS.PRO_STATUS_CHANGED, onProStatusChanged);
+  document.addEventListener(APP_EVENTS.LANGUAGE_CHANGED, onLanguageChanged);
+
+  const offToasts = bindProPaywallToasts(t, showToast);
+
+  disposeProUi = () => {
+    document.removeEventListener(
+      APP_EVENTS.PRO_STATUS_CHANGED,
+      onProStatusChanged,
+    );
+    document.removeEventListener(
+      APP_EVENTS.LANGUAGE_CHANGED,
+      onLanguageChanged,
+    );
+    offToasts?.();
+  };
+
   sync();
 }

@@ -248,7 +248,13 @@ function getInertiaTuning(pointerType) {
 
 function setupOneView(ctx) {
   const { viewEl, handler } = ctx;
-  if (!viewEl || !handler) return;
+  if (!viewEl || !handler) return () => {};
+
+  const localDisposers = [];
+  const on = (el, event, fn, options) => {
+    el.addEventListener(event, fn, options);
+    localDisposers.push(() => el.removeEventListener(event, fn, options));
+  };
 
   const SNAP_THRESHOLD = 10;
 
@@ -260,6 +266,21 @@ function setupOneView(ctx) {
   let lastRawForVel = lastRaw;
   let velocity = 0;
   let tapTimer = null;
+
+  let windowMoveHandler = null;
+  let windowUpHandler = null;
+
+  const removeWindowDragListeners = () => {
+    if (windowMoveHandler) {
+      window.removeEventListener("pointermove", windowMoveHandler);
+      windowMoveHandler = null;
+    }
+    if (windowUpHandler) {
+      window.removeEventListener("pointerup", windowUpHandler);
+      window.removeEventListener("pointercancel", windowUpHandler);
+      windowUpHandler = null;
+    }
+  };
 
   const getAnchors = () => {
     const forced = getForcedTargetForViewport();
@@ -386,7 +407,7 @@ function setupOneView(ctx) {
   handler.setAttribute("tabindex", "0");
   handler.setAttribute("aria-label", "Split view size");
 
-  handler.addEventListener("pointerdown", (e) => {
+  const onPointerDown = (e) => {
     if (e.button !== undefined && e.button !== 0) return;
     e.preventDefault();
 
@@ -428,17 +449,18 @@ function setupOneView(ctx) {
       handler.classList.remove("is-dragging");
       snapFromCurrent();
 
-      window.removeEventListener("pointermove", onMove);
-      window.removeEventListener("pointerup", onUp);
-      window.removeEventListener("pointercancel", onUp);
+      removeWindowDragListeners();
     };
+
+    windowMoveHandler = onMove;
+    windowUpHandler = onUp;
 
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerup", onUp);
     window.addEventListener("pointercancel", onUp);
-  });
+  };
 
-  handler.addEventListener("click", () => {
+  const onClick = () => {
     if (dragging) return;
 
     if (tapTimer) {
@@ -451,9 +473,9 @@ function setupOneView(ctx) {
     tapTimer = setTimeout(() => {
       tapTimer = null;
     }, 260);
-  });
+  };
 
-  handler.addEventListener("keydown", (e) => {
+  const onKeydown = (e) => {
     const forced = getForcedTargetForViewport();
     if (forced != null) {
       e.preventDefault();
@@ -498,7 +520,29 @@ function setupOneView(ctx) {
       e.preventDefault();
       applySnapToAll(middle, { animate: true, duration: 220 });
     }
-  });
+  };
+
+  on(handler, "pointerdown", onPointerDown);
+  on(handler, "click", onClick);
+  on(handler, "keydown", onKeydown);
+
+  return () => {
+    if (tapTimer) {
+      clearTimeout(tapTimer);
+      tapTimer = null;
+    }
+
+    dragging = false;
+    removeWindowDragListeners();
+
+    localDisposers.forEach((off) => {
+      try {
+        off?.();
+      } catch (err) {
+        console.error("[split-resizer.dispose.view]", err);
+      }
+    });
+  };
 }
 
 export function initSplitResizer() {
@@ -516,7 +560,7 @@ export function initSplitResizer() {
     };
   }).filter(Boolean);
 
-  views.forEach(setupOneView);
+  const viewDisposers = views.map(setupOneView).filter(Boolean);
 
   applySnapToAll(getTargetFromGlobalSnap(), { animate: false });
 
@@ -543,6 +587,14 @@ export function initSplitResizer() {
   detachViewportListeners = () => {
     window.removeEventListener("resize", onViewportResize);
     window.removeEventListener("orientationchange", onViewportResize);
+
+    viewDisposers.forEach((off) => {
+      try {
+        off?.();
+      } catch (err) {
+        console.error("[split-resizer.dispose]", err);
+      }
+    });
   };
 
   return detachViewportListeners;

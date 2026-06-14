@@ -18,7 +18,6 @@ export const tb = {
   currentRound: 1,
   status: "STOPPED",
   phaseDuration: 0,
-  // IMPORTANT: for Tabata this is now epoch milliseconds (Date.now base)
   phaseEndTime: 0,
   remainingAtPause: 0,
   rAF: null,
@@ -30,18 +29,14 @@ export const tb = {
   ringLength: 282.74,
   ringCtrl: null,
 
-  // Phase marker to handle ring reset at phase boundaries without reverse sweep
   phaseStamp: 0,
   lastRenderedPhaseStamp: -1,
 
-  // Completion guard (prevents repeated complete logic in background race)
   completionHandled: false,
 
-  // Visual close-hold at phase edge (foreground only)
   phaseClosing: false,
   phaseCloseTimer: null,
 
-  // Runtime unbind bridges
   _unbindRuntime: null,
   _unbindCoreEvents: null,
   _unbindBackgroundSync: null,
@@ -143,6 +138,9 @@ export const tb = {
           console.error("[tabata.dispose]", err);
         }
       });
+
+      this.phaseClosing = false;
+      this.completionHandled = false;
     };
   },
 };
