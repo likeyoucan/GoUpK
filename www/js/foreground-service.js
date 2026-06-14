@@ -30,6 +30,12 @@ import {
   buildForegroundPayload,
 } from "./foreground/fg-state.js?v=VERSION";
 
+import {
+  getThemeSnapshot,
+  buildSignature,
+  buildForegroundOptions,
+} from "./foreground/fg-notification.js?v=VERSION";
+
 const FG_ID = 101;
 const ACTION_TOGGLE = 1;
 const POLL_MS = 700;
@@ -70,25 +76,6 @@ function fgDebug(...args) {
       console.log("[fg]", ...args);
     }
   } catch {}
-}
-
-function getThemeSnapshot() {
-  const isDarkTheme = document.documentElement.classList.contains("dark");
-  return {
-    isDarkTheme,
-    themeToken: isDarkTheme ? "dark" : "light",
-  };
-}
-
-function buildSignature(state, payload, themeToken) {
-  return [
-    state.mode,
-    state.running ? "1" : "0",
-    state.metaKey || "",
-    payload.title,
-    payload.body,
-    themeToken,
-  ].join("|");
 }
 
 function getCurrentForegroundState() {
@@ -216,18 +203,14 @@ export async function syncNotification({ reason = "unknown" } = {}) {
   if (signature === lastSignature) return;
 
   const toggleTitle = state.running ? "⏸" : "▶";
-
-  const options = {
-    id: FG_ID,
-    title: payload.title,
-    body: payload.body,
+  const options = buildForegroundOptions({
+    fgId: FG_ID,
+    channelId: CHANNEL.id,
     smallIcon: SMALL_ICON,
-    notificationChannelId: CHANNEL.id,
-    silent: true,
-    serviceType: "specialUse",
-    buttons: [{ id: ACTION_TOGGLE, title: toggleTitle }],
+    payload,
     isDarkTheme,
-  };
+    toggleTitle,
+  });
 
   fgDebug("sync notification", {
     reason,

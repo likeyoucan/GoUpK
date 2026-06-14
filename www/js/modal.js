@@ -2,6 +2,12 @@
 
 import { $ } from "./utils.js?v=VERSION";
 import { BottomSheetDragController } from "./modal/bottom-sheet-drag.js?v=VERSION";
+import { ModalStackStore } from "./modal/modal-stack-store.js?v=VERSION";
+import {
+  showBottomSheetOverlay,
+  hideBottomSheetOverlay,
+  setMainInert,
+} from "./modal/modal-overlay.js?v=VERSION";
 
 /**
  * @typedef {"bottom-sheet" | "alert"} ModalType
@@ -29,9 +35,7 @@ class ModalManager {
     /** @type {Record<string, ModalEntry>} */
     this.modals = {};
 
-    /** @type {string[]} */
-    this.activeStack = [];
-
+    this.stack = new ModalStackStore();
     this.lastFocusedElement = null;
 
     /** @type {Record<string, number | null>} */
@@ -44,7 +48,6 @@ class ModalManager {
     this._onKeydown = null;
 
     this._overlayClickHandler = null;
-
     this._boundModalListeners = [];
 
     this.dragController = new BottomSheetDragController({
@@ -81,7 +84,7 @@ class ModalManager {
     }
 
     this.modals = {};
-    this.activeStack = [];
+    this.stack.clear();
     this.closeTimeouts = {};
     this.lastFocusedElement = null;
 
@@ -143,19 +146,19 @@ class ModalManager {
     this._removeBoundListeners();
     this.dragController.destroy();
 
-    this.activeStack = [];
+    this.stack.clear();
     this.lastFocusedElement = null;
     this.modals = {};
     this.closeTimeouts = {};
   }
 
   hasActiveModal() {
-    return this.activeStack.length > 0;
+    return this.stack.hasAny();
   }
 
   open(id, data = {}) {
     const modal = this.modals[id];
-    if (!modal || this.activeStack.includes(id)) return;
+    if (!modal || this.stack.has(id)) return;
 
     if (this.closeTimeouts[id]) {
       clearTimeout(this.closeTimeouts[id]);
@@ -164,13 +167,13 @@ class ModalManager {
       modal.el.classList.add("flex");
     }
 
-    if (this.activeStack.length === 0) {
+    if (!this.stack.hasAny()) {
       this.lastFocusedElement = document.activeElement;
-      this._toggleInert(true);
+      setMainInert($("app"), true);
       this.modalContainer.classList.add("active");
     }
 
-    this.activeStack.push(id);
+    this.stack.push(id);
     this._syncEscListener();
 
     modal.el.classList.remove("hidden");
@@ -204,7 +207,7 @@ class ModalManager {
 
   close(id) {
     const modal = this.modals[id];
-    if (!modal || !this.activeStack.includes(id)) return;
+    if (!modal || !this.stack.has(id)) return;
 
     if (this.closeTimeouts[id]) {
       clearTimeout(this.closeTimeouts[id]);
@@ -229,15 +232,15 @@ class ModalManager {
       }
     }
 
-    this.activeStack = this.activeStack.filter((activeId) => activeId !== id);
+    this.stack.remove(id);
     this._syncEscListener();
 
-    const isLastModal = this.activeStack.length === 0;
+    const isLastModal = !this.stack.hasAny();
     const delay = modal.type === "bottom-sheet" ? 400 : 300;
 
     if (isLastModal) {
       this._detachOverlayClick();
-      this._hideBottomSheetOverlay();
+      hideBottomSheetOverlay(this.bottomSheetOverlay);
       this.modalContainer.classList.remove("active");
     } else {
       const top = this._getTopModal();
@@ -245,12 +248,12 @@ class ModalManager {
         this._showBottomSheetOverlayFor(top.id);
       } else {
         this._detachOverlayClick();
-        this._hideBottomSheetOverlay();
+        hideBottomSheetOverlay(this.bottomSheetOverlay);
       }
     }
 
     this.closeTimeouts[id] = setTimeout(() => {
-      if (this.activeStack.includes(id)) {
+      if (this.stack.has(id)) {
         this.closeTimeouts[id] = null;
         return;
       }
@@ -266,7 +269,7 @@ class ModalManager {
       this.closeTimeouts[id] = null;
 
       if (isLastModal) {
-        this._toggleInert(false);
+        setMainInert($("app"), false);
 
         if (
           this.lastFocusedElement &&
@@ -288,38 +291,19 @@ class ModalManager {
     if (currentId) this.close(currentId);
   }
 
-  /**
-   * @returns {string | null}
-   */
   _getTopModalId() {
-    return this.activeStack.length
-      ? this.activeStack[this.activeStack.length - 1]
-      : null;
+    return this.stack.topId();
   }
 
-  /**
-   * @returns {ModalEntry | null}
-   */
   _getTopModal() {
     const id = this._getTopModalId();
     if (!id) return null;
     return this.modals[id] || null;
   }
 
-  _toggleInert(shouldBeInert) {
-    const appEl = $("app");
-    if (!appEl) return;
-
-    const mainContent = appEl.querySelector(".app-bg");
-    if (mainContent) mainContent.inert = shouldBeInert;
-  }
-
   _syncEscListener() {
-    if (this.hasActiveModal()) {
-      this._ensureEscListener();
-    } else {
-      this._removeEscListener();
-    }
+    if (this.hasActiveModal()) this._ensureEscListener();
+    else this._removeEscListener();
   }
 
   _ensureEscListener() {
@@ -347,8 +331,7 @@ class ModalManager {
   _showBottomSheetOverlayFor(modalId) {
     if (!this.bottomSheetOverlay) return;
 
-    this.bottomSheetOverlay.classList.remove("opacity-0");
-    this.bottomSheetOverlay.removeAttribute("aria-hidden");
+    showBottomSheetOverlay(this.bottomSheetOverlay);
 
     this._detachOverlayClick();
     this._overlayClickHandler = () => {
@@ -361,12 +344,6 @@ class ModalManager {
       "click",
       this._overlayClickHandler,
     );
-  }
-
-  _hideBottomSheetOverlay() {
-    if (!this.bottomSheetOverlay) return;
-    this.bottomSheetOverlay.classList.add("opacity-0");
-    this.bottomSheetOverlay.setAttribute("aria-hidden", "true");
   }
 
   _detachOverlayClick() {
