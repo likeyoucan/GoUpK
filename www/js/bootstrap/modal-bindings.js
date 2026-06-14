@@ -3,6 +3,7 @@
 import { APP_EVENTS } from "../constants/events.js?v=VERSION";
 import { appProManager } from "../app-pro.js?v=VERSION";
 import { resolveToastText } from "../constants/toast-fallbacks.js?v=VERSION";
+import { emitAppEvent, onAppEvent } from "../events/app-events.js?v=VERSION";
 
 export function bindModalActions({
   $,
@@ -27,6 +28,7 @@ export function bindModalActions({
     resolveToastText(t, "pro_already_active");
 
   const handlers = [];
+  const unsubs = [];
 
   const bind = (id, event, fn) => {
     const el = $(id);
@@ -113,33 +115,32 @@ export function bindModalActions({
       return;
     }
 
-    document.dispatchEvent(
-      new CustomEvent(APP_EVENTS.PRO_PAYWALL_REQUESTED, {
-        detail: { feature },
-      }),
-    );
+    emitAppEvent(APP_EVENTS.PRO_PAYWALL_REQUESTED, { feature });
     modalManager.open("pro-subscribe-modal");
   };
 
   document.addEventListener("click", onProBadgeClick);
   handlers.push({ el: document, event: "click", fn: onProBadgeClick });
 
-  const onPaywallRequested = () => {
-    modalManager.open("pro-subscribe-modal");
-  };
-  document.addEventListener(
+  const unsubPaywallRequested = onAppEvent(
     APP_EVENTS.PRO_PAYWALL_REQUESTED,
-    onPaywallRequested,
+    () => {
+      modalManager.open("pro-subscribe-modal");
+    },
   );
-  handlers.push({
-    el: document,
-    event: APP_EVENTS.PRO_PAYWALL_REQUESTED,
-    fn: onPaywallRequested,
-  });
+  unsubs.push(unsubPaywallRequested);
 
   return () => {
     handlers.forEach(({ el, event, fn }) => {
       el.removeEventListener(event, fn);
+    });
+
+    unsubs.forEach((off) => {
+      try {
+        off?.();
+      } catch (err) {
+        console.error("[modal-bindings.dispose]", err);
+      }
     });
   };
 }

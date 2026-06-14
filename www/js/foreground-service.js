@@ -14,6 +14,7 @@ import { uiSettingsManager } from "./ui-settings.js?v=VERSION";
 import { sm } from "./sound.js?v=VERSION";
 import { t } from "./i18n.js?v=VERSION";
 import { APP_EVENTS } from "./constants/events.js?v=VERSION";
+import { onAppEvent } from "./events/app-events.js?v=VERSION";
 
 import {
   isNative,
@@ -63,11 +64,7 @@ const PERMISSION_CHECK_TTL_MS = 15000;
 const listeners = {
   appState: null,
   appVisibility: null,
-  activeTimerChanged: null,
-  timerStarted: null,
-  msChanged: null,
-  languageChanged: null,
-  foregroundSettingChanged: null,
+  unsubs: [],
 };
 
 function fgDebug(...args) {
@@ -266,68 +263,46 @@ function stopPolling() {
 }
 
 function bindDocumentEvents() {
-  listeners.activeTimerChanged = () =>
-    syncNotification({ reason: "active_timer_changed" });
-
-  listeners.timerStarted = () =>
-    syncNotification({ reason: "timer_started_event" });
-
-  listeners.msChanged = () => syncNotification({ reason: "ms_changed" });
-  listeners.languageChanged = () =>
-    syncNotification({ reason: "language_changed" });
-  listeners.foregroundSettingChanged = () =>
-    syncNotification({ reason: "foreground_setting_changed" });
-
-  document.addEventListener(
-    APP_EVENTS.ACTIVE_TIMER_CHANGED,
-    listeners.activeTimerChanged,
+  listeners.unsubs.push(
+    onAppEvent(APP_EVENTS.ACTIVE_TIMER_CHANGED, () =>
+      syncNotification({ reason: "active_timer_changed" }),
+    ),
   );
-  document.addEventListener(APP_EVENTS.TIMER_STARTED, listeners.timerStarted);
-  document.addEventListener(APP_EVENTS.MS_CHANGED, listeners.msChanged);
-  document.addEventListener(
-    APP_EVENTS.LANGUAGE_CHANGED,
-    listeners.languageChanged,
+
+  listeners.unsubs.push(
+    onAppEvent(APP_EVENTS.TIMER_STARTED, () =>
+      syncNotification({ reason: "timer_started_event" }),
+    ),
   );
-  document.addEventListener(
-    APP_EVENTS.FOREGROUND_NOTIFICATION_SETTING_CHANGED,
-    listeners.foregroundSettingChanged,
+
+  listeners.unsubs.push(
+    onAppEvent(APP_EVENTS.MS_CHANGED, () =>
+      syncNotification({ reason: "ms_changed" }),
+    ),
+  );
+
+  listeners.unsubs.push(
+    onAppEvent(APP_EVENTS.LANGUAGE_CHANGED, () =>
+      syncNotification({ reason: "language_changed" }),
+    ),
+  );
+
+  listeners.unsubs.push(
+    onAppEvent(APP_EVENTS.FOREGROUND_NOTIFICATION_SETTING_CHANGED, () =>
+      syncNotification({ reason: "foreground_setting_changed" }),
+    ),
   );
 }
 
 function unbindDocumentEvents() {
-  if (listeners.activeTimerChanged) {
-    document.removeEventListener(
-      APP_EVENTS.ACTIVE_TIMER_CHANGED,
-      listeners.activeTimerChanged,
-    );
-  }
-  if (listeners.timerStarted) {
-    document.removeEventListener(
-      APP_EVENTS.TIMER_STARTED,
-      listeners.timerStarted,
-    );
-  }
-  if (listeners.msChanged) {
-    document.removeEventListener(APP_EVENTS.MS_CHANGED, listeners.msChanged);
-  }
-  if (listeners.languageChanged) {
-    document.removeEventListener(
-      APP_EVENTS.LANGUAGE_CHANGED,
-      listeners.languageChanged,
-    );
-  }
-  if (listeners.foregroundSettingChanged) {
-    document.removeEventListener(
-      APP_EVENTS.FOREGROUND_NOTIFICATION_SETTING_CHANGED,
-      listeners.foregroundSettingChanged,
-    );
-  }
-
-  listeners.activeTimerChanged = null;
-  listeners.timerStarted = null;
-  listeners.msChanged = null;
-  listeners.languageChanged = null;
-  listeners.foregroundSettingChanged = null;
+  listeners.unsubs.forEach((off) => {
+    try {
+      off?.();
+    } catch (err) {
+      console.error("[fg.unbind]", err);
+    }
+  });
+  listeners.unsubs = [];
 }
 
 function bindVisibilityFallback() {

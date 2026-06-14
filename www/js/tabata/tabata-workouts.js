@@ -12,6 +12,7 @@ import { t } from "../i18n.js?v=VERSION";
 import { modalManager } from "../modal.js?v=VERSION";
 import { APP_EVENTS } from "../constants/events.js?v=VERSION";
 import { STORAGE_KEYS } from "../constants/storage-keys.js?v=VERSION";
+import { onAppEvent } from "../events/app-events.js?v=VERSION";
 
 export function setupTabataWorkouts(tb) {
   tb.prepareEdit = (idToEdit = null) => {
@@ -253,7 +254,12 @@ export function setupTabataWorkouts(tb) {
       }
     });
 
-    document.addEventListener(APP_EVENTS.LANGUAGE_CHANGED, () => {
+    if (tb._unbindLangChanged) {
+      tb._unbindLangChanged();
+      tb._unbindLangChanged = null;
+    }
+
+    tb._unbindLangChanged = onAppEvent(APP_EVENTS.LANGUAGE_CHANGED, () => {
       tb.renderList();
       if (tb.selectedId) tb.selectWorkout(tb.selectedId);
     });

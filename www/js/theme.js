@@ -7,6 +7,7 @@ import { appProManager } from "./app-pro.js?v=VERSION";
 import { APP_EVENTS } from "./constants/events.js?v=VERSION";
 import { CustomSelect } from "./custom-select.js?v=VERSION";
 import { t } from "./i18n.js?v=VERSION";
+import { emitAppEvent, onAppEvent } from "./events/app-events.js?v=VERSION";
 
 import {
   applyModeToDocument,
@@ -45,6 +46,7 @@ export const themeManager = {
   _unbindSystemThemeListener: null,
   _history: createColorHistory(20),
   themeModeSelect: null,
+  _unsubs: [],
 
   _getThemeModeOptions() {
     return [
@@ -133,56 +135,65 @@ export const themeManager = {
       if (this.currentMode === "system") this.setMode("system");
     });
 
-    document.addEventListener(APP_EVENTS.LANGUAGE_CHANGED, () => {
-      this._refreshThemeModeSelectTexts();
-    });
+    this._unsubs.push(
+      onAppEvent(APP_EVENTS.LANGUAGE_CHANGED, () => {
+        this._refreshThemeModeSelectTexts();
+      }),
+    );
 
-    document.addEventListener(APP_EVENTS.ADAPTIVE_BG_CHANGED, () => {
-      document.body.classList.add("is-updating-theme");
-      this.setMode(this.currentMode, false);
-      requestAnimationFrame(() =>
-        document.body.classList.remove("is-updating-theme"),
-      );
-    });
+    this._unsubs.push(
+      onAppEvent(APP_EVENTS.ADAPTIVE_BG_CHANGED, () => {
+        document.body.classList.add("is-updating-theme");
+        this.setMode(this.currentMode, false);
+        requestAnimationFrame(() =>
+          document.body.classList.remove("is-updating-theme"),
+        );
+      }),
+    );
 
-    document.addEventListener(APP_EVENTS.COLOR_SELECTED, (e) => {
-      const { type, color, fromPicker } = e.detail;
-      if (type === "accent") this.setColor(color, !fromPicker);
-      else this.setBgColor(color, !fromPicker);
-    });
+    this._unsubs.push(
+      onAppEvent(APP_EVENTS.COLOR_SELECTED, (e) => {
+        const { type, color, fromPicker } = e.detail;
+        if (type === "accent") this.setColor(color, !fromPicker);
+        else this.setBgColor(color, !fromPicker);
+      }),
+    );
 
-    document.addEventListener(APP_EVENTS.COLOR_DELETED, (e) => {
-      const { type, color } = e.detail;
+    this._unsubs.push(
+      onAppEvent(APP_EVENTS.COLOR_DELETED, (e) => {
+        const { type, color } = e.detail;
 
-      if (type === "accent") {
-        const isDeletedActive =
-          String(this.currentAccent).toLowerCase() ===
-          String(color).toLowerCase();
+        if (type === "accent") {
+          const isDeletedActive =
+            String(this.currentAccent).toLowerCase() ===
+            String(color).toLowerCase();
 
-        this._history.removeFromHistory("accent", color);
+          this._history.removeFromHistory("accent", color);
 
-        if (isDeletedActive) {
-          const fallback = this._getLastValidColor("accent");
-          this.setColor(fallback || "default", true, {
-            recordHistory: false,
-            skipProCheck: true,
-          });
+          if (isDeletedActive) {
+            const fallback = this._getLastValidColor("accent");
+            this.setColor(fallback || "default", true, {
+              recordHistory: false,
+              skipProCheck: true,
+            });
+          }
+        } else if (type === "bg") {
+          const isDeletedActive =
+            String(this.currentBg).toLowerCase() ===
+            String(color).toLowerCase();
+
+          this._history.removeFromHistory("bg", color);
+
+          if (isDeletedActive) {
+            const fallback = this._getLastValidColor("bg");
+            this.setBgColor(fallback || "default", true, {
+              recordHistory: false,
+              skipProCheck: true,
+            });
+          }
         }
-      } else if (type === "bg") {
-        const isDeletedActive =
-          String(this.currentBg).toLowerCase() === String(color).toLowerCase();
-
-        this._history.removeFromHistory("bg", color);
-
-        if (isDeletedActive) {
-          const fallback = this._getLastValidColor("bg");
-          this.setBgColor(fallback || "default", true, {
-            recordHistory: false,
-            skipProCheck: true,
-          });
-        }
-      }
-    });
+      }),
+    );
   },
 
   destroy() {
@@ -190,6 +201,15 @@ export const themeManager = {
       this._unbindSystemThemeListener();
       this._unbindSystemThemeListener = null;
     }
+
+    this._unsubs.forEach((off) => {
+      try {
+        off?.();
+      } catch (err) {
+        console.error("[theme.destroy]", err);
+      }
+    });
+    this._unsubs = [];
 
     if (this.themeModeSelect) {
       this.themeModeSelect.destroy();
@@ -216,7 +236,6 @@ export const themeManager = {
 
     colorManager.syncPickers(this.currentAccent, this.currentBg);
 
-    // setMode already applies bg + accent in correct order
     this.setMode(this.currentMode, false);
   },
 
@@ -249,10 +268,8 @@ export const themeManager = {
     applyModeToDocument(mode);
     this._syncThemeModeSelectValue();
 
-    // 1) background and mode classes first
     this.applyBgTheme(this.currentBg);
 
-    // 2) accent recalculation in actual mode
     this.setColor(this.currentAccent, false, {
       recordHistory: false,
       skipProCheck: true,
@@ -309,7 +326,7 @@ export const themeManager = {
       hexToHSL,
     });
 
-    document.dispatchEvent(new CustomEvent(APP_EVENTS.ACCENT_COLOR_CHANGED));
+    emitAppEvent(APP_EVENTS.ACCENT_COLOR_CHANGED);
 
     colorManager.updateSelectionUI("accent", hex, doScroll);
     colorManager.syncPickers(this.currentAccent, this.currentBg);
@@ -343,7 +360,6 @@ export const themeManager = {
 
     this.applyBgTheme(hex);
 
-    // Recompute accent after bg class changes
     this.setColor(this.currentAccent, false, {
       recordHistory: false,
       skipProCheck: true,

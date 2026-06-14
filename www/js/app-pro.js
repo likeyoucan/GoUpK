@@ -6,6 +6,7 @@ import { STORAGE_KEYS } from "./constants/storage-keys.js?v=VERSION";
 import { APP_EVENTS } from "./constants/events.js?v=VERSION";
 import { proSecurity } from "./app-pro-security.js?v=VERSION";
 import { resolveToastText } from "./constants/toast-fallbacks.js?v=VERSION";
+import { emitAppEvent } from "./events/app-events.js?v=VERSION";
 
 const DEFAULT_MODE = "subscription"; // subscription | lifetime | disabled
 const DEFAULT_FEATURES = {
@@ -22,10 +23,6 @@ function parseJson(raw, fallback) {
   } catch {
     return fallback;
   }
-}
-
-function dispatch(name, detail = {}) {
-  document.dispatchEvent(new CustomEvent(name, { detail }));
 }
 
 export const appProManager = {
@@ -66,7 +63,9 @@ export const appProManager = {
       await this.persist();
       this.initialized = true;
       this.applyProIcon();
-      dispatch(APP_EVENTS.PRO_STATUS_CHANGED, { purchased: this.purchased });
+      emitAppEvent(APP_EVENTS.PRO_STATUS_CHANGED, {
+        purchased: this.purchased,
+      });
       return;
     }
 
@@ -78,7 +77,7 @@ export const appProManager = {
 
     this.initialized = true;
     this.applyProIcon();
-    dispatch(APP_EVENTS.PRO_STATUS_CHANGED, { purchased: this.purchased });
+    emitAppEvent(APP_EVENTS.PRO_STATUS_CHANGED, { purchased: this.purchased });
   },
 
   async resetToSafeState(reason = "unknown") {
@@ -97,8 +96,8 @@ export const appProManager = {
     this.applyProIcon();
 
     showToast(resolveToastText(t, "pro_integrity_reset"));
-    dispatch(APP_EVENTS.PRO_TAMPER_DETECTED, { reason });
-    dispatch(APP_EVENTS.PRO_STATUS_CHANGED, { purchased: false });
+    emitAppEvent(APP_EVENTS.PRO_TAMPER_DETECTED, { reason });
+    emitAppEvent(APP_EVENTS.PRO_STATUS_CHANGED, { purchased: false });
   },
 
   async persist() {
@@ -119,7 +118,7 @@ export const appProManager = {
     const signature = await proSecurity.sign(payload);
     safeSetLS(STORAGE_KEYS.APP_PRO_SIGNATURE, signature);
 
-    dispatch(APP_EVENTS.PRO_STATUS_CHANGED, {
+    emitAppEvent(APP_EVENTS.PRO_STATUS_CHANGED, {
       purchased: this.purchased,
       mode: this.mode,
       features: this.features,
@@ -156,7 +155,7 @@ export const appProManager = {
     const allowed = this.canUse(featureKey);
     if (allowed) return true;
 
-    dispatch(APP_EVENTS.PRO_PAYWALL_REQUESTED, { feature: featureKey });
+    emitAppEvent(APP_EVENTS.PRO_PAYWALL_REQUESTED, { feature: featureKey });
     if (typeof onBlocked === "function") onBlocked(featureKey);
     return false;
   },

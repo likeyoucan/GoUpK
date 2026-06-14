@@ -3,24 +3,19 @@
 import { safeSetLS, safeGetLS, safeRemoveLS } from "./utils.js?v=VERSION";
 import { APP_EVENTS } from "./constants/events.js?v=VERSION";
 import { STORAGE_KEYS } from "./constants/storage-keys.js?v=VERSION";
+import { emitAppEvent } from "./events/app-events.js?v=VERSION";
 
 const storeData = {
   activeTimer: safeGetLS(STORAGE_KEYS.ACTIVE_TIMER) || null,
 };
 
 function emitActiveTimerChanged(value) {
-  document.dispatchEvent(
-    new CustomEvent(APP_EVENTS.ACTIVE_TIMER_CHANGED, {
-      detail: { activeTimer: value },
-    }),
-  );
+  emitAppEvent(APP_EVENTS.ACTIVE_TIMER_CHANGED, { activeTimer: value });
 }
 
 export const store = {
   activate(timerName) {
-    document.dispatchEvent(
-      new CustomEvent(APP_EVENTS.TIMER_STARTED, { detail: timerName }),
-    );
+    emitAppEvent(APP_EVENTS.TIMER_STARTED, timerName);
     this.setActiveTimer(timerName);
   },
 

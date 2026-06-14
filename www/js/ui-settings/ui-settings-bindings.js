@@ -7,6 +7,7 @@ import { adsManager } from "../ads.js?v=VERSION";
 import { appProManager } from "../app-pro.js?v=VERSION";
 import { APP_EVENTS } from "../constants/events.js?v=VERSION";
 import { STORAGE_KEYS } from "../constants/storage-keys.js?v=VERSION";
+import { emitAppEvent } from "../events/app-events.js?v=VERSION";
 
 import {
   setFontSize,
@@ -36,14 +37,12 @@ export function bindUiSettingsEvents(state) {
     "toggle-ms": (val) => {
       state.showMs = val;
       safeSetLS(STORAGE_KEYS.APP_SHOW_MS, val);
-      document.dispatchEvent(new CustomEvent(APP_EVENTS.MS_CHANGED));
+      emitAppEvent(APP_EVENTS.MS_CHANGED);
     },
     "toggle-foreground-banner": (val) => {
       state.showForegroundBanner = val;
       safeSetLS(STORAGE_KEYS.APP_SHOW_FOREGROUND_BANNER, val);
-      document.dispatchEvent(
-        new CustomEvent(APP_EVENTS.FOREGROUND_NOTIFICATION_SETTING_CHANGED),
-      );
+      emitAppEvent(APP_EVENTS.FOREGROUND_NOTIFICATION_SETTING_CHANGED);
     },
     "toggle-nav-labels": (val) => {
       state.hideNavLabels = val;
@@ -64,7 +63,7 @@ export function bindUiSettingsEvents(state) {
     "toggle-adaptive-bg": (val) => {
       state.isAdaptiveBg = val;
       safeSetLS(STORAGE_KEYS.APP_ADAPTIVE_BG, val);
-      document.dispatchEvent(new CustomEvent(APP_EVENTS.ADAPTIVE_BG_CHANGED));
+      emitAppEvent(APP_EVENTS.ADAPTIVE_BG_CHANGED);
     },
     "toggle-sw-minute-beep": (val) => {
       state.swMinuteBeep = val;
@@ -90,7 +89,7 @@ export function bindUiSettingsEvents(state) {
         showToast(state.adsEnabled ? t("ads_enabled") : t("ads_disabled"));
       }
 
-      document.dispatchEvent(new CustomEvent(APP_EVENTS.ADS_SETTINGS_CHANGED));
+      emitAppEvent(APP_EVENTS.ADS_SETTINGS_CHANGED);
     },
   };
 
@@ -156,7 +155,6 @@ export function bindUiSettingsEvents(state) {
     updateRangeValueByDataset(e.target);
   });
 
-  // Universal support for future range sliders with data-range-* attributes.
   document.addEventListener("input", (e) => {
     const input = e.target;
     if (!(input instanceof HTMLInputElement) || input.type !== "range") return;

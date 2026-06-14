@@ -16,6 +16,7 @@ import { sm } from "./sound.js?v=VERSION";
 import { themeManager } from "./theme.js?v=VERSION";
 import { appProManager } from "./app-pro.js?v=VERSION";
 import { APP_EVENTS } from "./constants/events.js?v=VERSION";
+import { emitAppEvent } from "./events/app-events.js?v=VERSION";
 
 import {
   MAX_CUSTOM_COLORS,
@@ -211,11 +212,11 @@ export const colorManager = {
       picker.addEventListener("change", (e) => {
         if (!appProManager.canUse("custom_colors")) return;
 
-        document.dispatchEvent(
-          new CustomEvent(APP_EVENTS.COLOR_SELECTED, {
-            detail: { type, color: e.target.value, fromPicker: true },
-          }),
-        );
+        emitAppEvent(APP_EVENTS.COLOR_SELECTED, {
+          type,
+          color: e.target.value,
+          fromPicker: true,
+        });
       });
 
       picker.addEventListener("input", (e) => {
@@ -307,11 +308,11 @@ export const colorManager = {
     }
 
     const color = swatchWrapper.dataset.color;
-    document.dispatchEvent(
-      new CustomEvent(APP_EVENTS.COLOR_SELECTED, {
-        detail: { type, color, fromPicker: false },
-      }),
-    );
+    emitAppEvent(APP_EVENTS.COLOR_SELECTED, {
+      type,
+      color,
+      fromPicker: false,
+    });
 
     if (isCustom) {
       this._showActionButton(swatchWrapper, "delete");
@@ -448,11 +449,11 @@ export const colorManager = {
       }, 420);
     });
 
-    document.dispatchEvent(
-      new CustomEvent(APP_EVENTS.COLOR_SELECTED, {
-        detail: { type, color: newColor, fromPicker: false },
-      }),
-    );
+    emitAppEvent(APP_EVENTS.COLOR_SELECTED, {
+      type,
+      color: newColor,
+      fromPicker: false,
+    });
   },
 
   _deleteColor(color, type) {
@@ -484,9 +485,7 @@ export const colorManager = {
           null
         : null;
 
-    document.dispatchEvent(
-      new CustomEvent(APP_EVENTS.COLOR_DELETED, { detail: { type, color } }),
-    );
+    emitAppEvent(APP_EVENTS.COLOR_DELETED, { type, color });
 
     const customColors = isAccent
       ? this.customAccentColors
