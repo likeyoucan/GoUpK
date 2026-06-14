@@ -1793,43 +1793,36 @@
       padding-inline: var(--tb-mid-inline-pad);
     }
 
-    /* Tabata: full-width divider in 2-column layout while keeping inner content paddings */
+    /* Tabata divider: smooth full-width expansion while top pane collapses */
     #view-tabata #tb-list-section > .flex-1.border-t.app-border {
       position: relative;
       border-top-width: 0;
-      --tb-divider-bleed: calc(
+      --tb-divider-base-bleed: calc(
         var(--tb-mid-inline-pad, 0px) + 0.5rem
       ); /* + px-2 */
+      --tb-divider-expand-bleed: calc(
+        (100vw + 100vh) * var(--collapse-top-k, 0)
+      );
     }
 
     #view-tabata #tb-list-section > .flex-1.border-t.app-border::before {
       content: "";
       position: absolute;
       top: 0;
-      left: calc(-1 * var(--tb-divider-bleed));
-      right: calc(-1 * var(--tb-divider-bleed));
+      left: calc(
+        -1 * (var(--tb-divider-base-bleed) + var(--tb-divider-expand-bleed))
+      );
+      right: calc(
+        -1 * (var(--tb-divider-base-bleed) + var(--tb-divider-expand-bleed))
+      );
       height: 1px;
       background: var(--border-color);
       pointer-events: none;
     }
 
-    /* When top is collapsed (bottom pane 100%), extend divider through centered container margins */
-    #view-tabata.split-top-hidden
-      #tb-list-section
-      > .flex-1.border-t.app-border::before,
-    #view-tabata.split-live[data-split-target="top"]
-      #tb-list-section
-      > .flex-1.border-t.app-border::before,
-    #view-tabata.split-animating[data-split-target="top"]
-      #tb-list-section
-      > .flex-1.border-t.app-border::before {
-      left: -200vw;
-      right: -200vw;
-    }
-
     @media (min-width: 640px) {
       #view-tabata #tb-list-section > .flex-1.border-t.app-border {
-        --tb-divider-bleed: calc(
+        --tb-divider-base-bleed: calc(
           var(--tb-mid-inline-pad, 0px) + 1rem
         ); /* + sm:px-4 */
       }
