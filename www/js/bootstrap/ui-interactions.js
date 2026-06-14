@@ -46,18 +46,21 @@ export function bindUiInteractions({
     bindNavSwipe({
       appContainer: $("app"),
       bottomNav: $("app")?.querySelector("nav"),
-      navigation,
+      navigation,jr
       modalManager,
     }),
   );
 
   unbinders.push(bindStopwatchDoubleTapLap({ $, sw }));
-
   unbinders.push(initSplitResizer());
 
   return () => {
     unbinders.forEach((fn) => {
-      if (typeof fn === "function") fn();
+      try {
+        if (typeof fn === "function") fn();
+      } catch (err) {
+        console.error("[ui-interactions.dispose]", err);
+      }
     });
   };
 }

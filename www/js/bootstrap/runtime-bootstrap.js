@@ -3,6 +3,7 @@
 import { initializeApp } from "./app-init.js?v=VERSION";
 import { bindAppLifecycle } from "./app-lifecycle.js?v=VERSION";
 import { bindUiInteractions } from "./ui-interactions.js?v=VERSION";
+import { createDisposerBag } from "./disposer-bag.js?v=VERSION";
 
 export function initRuntimeBootstrap({
   applyPerformanceProfile,
@@ -24,6 +25,8 @@ export function initRuntimeBootstrap({
   t,
   getById,
 }) {
+  const bag = createDisposerBag();
+
   initializeApp({
     applyPerformanceProfile,
     initRingSvg,
@@ -38,26 +41,33 @@ export function initRuntimeBootstrap({
     modalManager,
   });
 
-  bindAppLifecycle({
-    preload,
-    initForegroundService,
-    destroyForegroundService,
-    modalManager,
-    navigation,
-    adsManager,
-  });
+  bag.add(
+    bindAppLifecycle({
+      preload,
+      initForegroundService,
+      destroyForegroundService,
+      modalManager,
+      navigation,
+      adsManager,
+    }),
+  );
 
-  bindUiInteractions({
-    $: getById,
-    showToast,
-    t,
-    modalManager,
-    themeManager,
-    sm,
-    langManager,
-    sw,
-    tm,
-    tb,
-    navigation,
-  });
+  bag.add(
+    bindUiInteractions({
+      $: getById,
+      showToast,
+      t,
+      modalManager,
+      themeManager,
+      sm,
+      langManager,
+      sw,
+      tm,
+      tb,
+      navigation,
+    }),
+  );
+
+  // Важно: теперь bootstrap возвращает destroy
+  return () => bag.run();
 }

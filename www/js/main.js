@@ -22,6 +22,7 @@ import { applyPerformanceProfile } from "./bootstrap/performance-profile.js?v=VE
 import { initRuntimeBootstrap } from "./bootstrap/runtime-bootstrap.js?v=VERSION";
 import { initMonetizationBootstrap } from "./bootstrap/monetization-bootstrap.js?v=VERSION";
 import { bindLayoutOverlay } from "./bootstrap/layout-overlay.js?v=VERSION";
+import { createDisposerBag } from "./bootstrap/disposer-bag.js?v=VERSION";
 import { initErudaTapToggle } from "./debug-eruda-toggle.js?v=VERSION";
 import { initImageSkeletons } from "./ui/image-skeletons.js?v=VERSION";
 
@@ -122,6 +123,8 @@ async function reconcileNativeTimerAlarm() {
 }
 
 let bootStarted = false;
+let bootDispose = null;
+const appBag = createDisposerBag();
 
 async function bootstrap() {
   if (bootStarted) return;
@@ -140,7 +143,7 @@ async function bootstrap() {
     config: APP_MONETIZATION_CONFIG,
   });
 
-  initRuntimeBootstrap({
+  bootDispose = initRuntimeBootstrap({
     applyPerformanceProfile,
     initRingSvg,
     langManager,
@@ -161,22 +164,44 @@ async function bootstrap() {
     getById: (id) => document.getElementById(id),
   });
 
-  requestAnimationFrame(() => {
-    initImageSkeletons({ timeoutMs: 3000 });
+  appBag.add(() => {
+    if (typeof bootDispose === "function") {
+      bootDispose();
+      bootDispose = null;
+    }
   });
 
-  bindLayoutOverlay({
+  let skeletonRaf = requestAnimationFrame(() => {
+    skeletonRaf = 0;
+    const disposeSkeletons = initImageSkeletons({ timeoutMs: 3000 });
+    appBag.add(disposeSkeletons);
+  });
+
+  appBag.add(() => {
+    if (skeletonRaf) {
+      cancelAnimationFrame(skeletonRaf);
+      skeletonRaf = 0;
+    }
+  });
+
+  const unbindLayoutOverlay = bindLayoutOverlay({
     minDeltaPx: 18,
     settleDelayMs: 220,
     holdMs: 100,
   });
+  appBag.add(unbindLayoutOverlay);
 
-  document.addEventListener("visibilitychange", () => {
+  const onVisibilityRevalidate = () => {
     if (document.visibilityState === "visible") {
       appProManager.revalidateOrReset().catch((err) => {
         console.error("[pro-revalidate] failed", err);
       });
     }
+  };
+
+  document.addEventListener("visibilitychange", onVisibilityRevalidate);
+  appBag.add(() => {
+    document.removeEventListener("visibilitychange", onVisibilityRevalidate);
   });
 }
 
@@ -217,6 +242,17 @@ window.addEventListener(
   },
   true,
 );
+
+function destroyAppRuntime() {
+  try {
+    appBag.run();
+  } catch (err) {
+    console.error("[destroy-runtime]", err);
+  }
+}
+
+window.addEventListener("pagehide", destroyAppRuntime, { once: true });
+window.addEventListener("beforeunload", destroyAppRuntime, { once: true });
 
 async function startBoot() {
   try {
