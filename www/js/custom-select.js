@@ -27,19 +27,8 @@ import {
 
 const TRANSITION_DURATION = 200;
 let globalHandlersBound = false;
-
-/**
- * @typedef {Object} SelectOption
- * @property {string} value
- * @property {string} text
- * @property {string[]} [iconPaths]
- */
-
-/**
- * @callback OnSelectCallback
- * @param {string} value
- * @returns {void}
- */
+let globalSelectInstances = 0;
+let unbindGlobalHandlers = () => {};
 
 function hasOpenSelects() {
   let hasOpen = false;
@@ -73,27 +62,65 @@ function bindGlobalHandlersOnce() {
   if (globalHandlersBound) return;
   globalHandlersBound = true;
 
-  // Single global outside-click closer.
-  // Prevents duplicate close logic per instance and removes flicker/race.
-  document.addEventListener("click", (e) => {
+  const onDocClick = (e) => {
     if (!hasOpenSelects()) return;
     if (isTargetInsideAnySelect(e.target)) return;
     closeAllOpenSelects();
-  });
+  };
 
-  document.addEventListener("keydown", (e) => {
+  const onDocKeydown = (e) => {
     if (e.key === "Escape" && hasOpenSelects()) {
       closeAllOpenSelects();
     }
-  });
+  };
 
-  document.addEventListener(APP_EVENTS.ACCENT_COLOR_CHANGED, () => {
+  const onAccentChanged = () => {
     forEachActiveSelect((select) => {
       const selectedEl = select.optionsPanel?.querySelector(".is-selected");
       if (selectedEl) select.updateSelectedTextColor(selectedEl);
     });
-  });
+  };
+
+  document.addEventListener("click", onDocClick);
+  document.addEventListener("keydown", onDocKeydown);
+  document.addEventListener(APP_EVENTS.ACCENT_COLOR_CHANGED, onAccentChanged);
+
+  unbindGlobalHandlers = () => {
+    document.removeEventListener("click", onDocClick);
+    document.removeEventListener("keydown", onDocKeydown);
+    document.removeEventListener(
+      APP_EVENTS.ACCENT_COLOR_CHANGED,
+      onAccentChanged,
+    );
+  };
 }
+
+function maybeUnbindGlobalHandlers() {
+  if (!globalHandlersBound) return;
+  if (globalSelectInstances > 0) return;
+
+  try {
+    unbindGlobalHandlers();
+  } catch (err) {
+    console.error("[CustomSelect] global unbind failed", err);
+  }
+
+  unbindGlobalHandlers = () => {};
+  globalHandlersBound = false;
+}
+
+/**
+ * @typedef {Object} SelectOption
+ * @property {string} value
+ * @property {string} text
+ * @property {string[]} [iconPaths]
+ */
+
+/**
+ * @callback OnSelectCallback
+ * @param {string} value
+ * @returns {void}
+ */
 
 export class CustomSelect {
   /**
@@ -153,6 +180,8 @@ export class CustomSelect {
     }
 
     bindGlobalHandlersOnce();
+    globalSelectInstances += 1;
+
     this.render();
     this.attachBaseListeners();
 
@@ -212,6 +241,9 @@ export class CustomSelect {
         "is-open",
       );
     }
+
+    globalSelectInstances = Math.max(0, globalSelectInstances - 1);
+    maybeUnbindGlobalHandlers();
   }
 
   render() {
@@ -426,7 +458,6 @@ export class CustomSelect {
       this._resizeObserver.observe(this._portalRoot);
     }
 
-    // keep reference used by typings / future migration
     void container;
   }
 

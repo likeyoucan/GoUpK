@@ -41,9 +41,18 @@ export const tb = {
   phaseClosing: false,
   phaseCloseTimer: null,
 
+  // Runtime unbind bridges
+  _unbindRuntime: null,
+  _unbindCoreEvents: null,
+  _unbindBackgroundSync: null,
+  _unbindWorkouts: null,
+
   formatTime,
 
   init() {
+    this._unbindRuntime?.();
+    this._unbindRuntime = null;
+
     this.els = {
       listSection: $("tb-list-section"),
       runningControls: $("tb-runningControls"),
@@ -69,6 +78,7 @@ export const tb = {
       this.els.ring.style.strokeDasharray = this.ringLength;
       this.els.ring.style.strokeDashoffset = this.ringLength;
 
+      this.ringCtrl?.stop?.();
       this.ringCtrl = createRingController({
         ringEl: this.els.ring,
         initialOffset: this.ringLength,
@@ -85,16 +95,54 @@ export const tb = {
     this.bindCoreEvents();
     this.bindWorkoutEvents();
 
-    document.querySelectorAll("[data-tb-adj]").forEach((btn) =>
-      btn.addEventListener("click", (e) => {
-        sm.vibrate(20, "light");
-        const [id, delta] = e.currentTarget
-          .getAttribute("data-tb-adj")
-          .split(",");
-        adjustVal(id, parseInt(delta, 10));
-      }),
-    );
+    const disposers = [];
+    const bind = (el, event, handler, options) => {
+      if (!el) return;
+      el.addEventListener(event, handler, options);
+      disposers.push(() => el.removeEventListener(event, handler, options));
+    };
+
+    const onAdjClick = (e) => {
+      sm.vibrate(20, "light");
+      const [id, delta] = e.currentTarget
+        .getAttribute("data-tb-adj")
+        .split(",");
+      adjustVal(id, parseInt(delta, 10));
+    };
+
+    document.querySelectorAll("[data-tb-adj]").forEach((btn) => {
+      bind(btn, "click", onAdjClick);
+    });
 
     this.loadWorkoutsFromStorage();
+
+    this._unbindRuntime = () => {
+      if (this.rAF) {
+        cancelAnimationFrame(this.rAF);
+        this.rAF = null;
+      }
+
+      if (this.phaseCloseTimer) {
+        clearTimeout(this.phaseCloseTimer);
+        this.phaseCloseTimer = null;
+      }
+
+      this._unbindCoreEvents?.();
+      this._unbindCoreEvents = null;
+
+      this._unbindBackgroundSync?.();
+      this._unbindBackgroundSync = null;
+
+      this._unbindWorkouts?.();
+      this._unbindWorkouts = null;
+
+      disposers.forEach((off) => {
+        try {
+          off?.();
+        } catch (err) {
+          console.error("[tabata.dispose]", err);
+        }
+      });
+    };
   },
 };

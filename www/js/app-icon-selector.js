@@ -5,7 +5,7 @@ import { STORAGE_KEYS } from "./constants/storage-keys.js?v=VERSION";
 import { APP_EVENTS } from "./constants/events.js?v=VERSION";
 import { APP_MONETIZATION_CONFIG } from "./app-monetization-config.js?v=VERSION";
 import { resolveToastText } from "./constants/toast-fallbacks.js?v=VERSION";
-import { emitAppEvent } from "./events/app-events.js?v=VERSION";
+import { emitAppEvent, onAppEvent } from "./events/app-events.js?v=VERSION";
 
 const ICON_CFG = APP_MONETIZATION_CONFIG.ui?.appIcons || {};
 const ICON_OPTIONS = Array.isArray(ICON_CFG.options) ? ICON_CFG.options : [];
@@ -14,6 +14,7 @@ const PRELOAD_TIMEOUT_MS = Number(ICON_CFG.preloadTimeoutMs) || 3000;
 
 // Cache resolved preview state per icon id to avoid visual reload on rerender.
 const ICON_PREVIEW_CACHE = new Map();
+let disposeAppIconSelector = null;
 
 function getNativePlugin() {
   return window.Capacitor?.Plugins?.AppIconSwitcher || null;
@@ -143,9 +144,15 @@ function dispatchIconChanged(t, appProManager) {
 }
 
 export function initAppIconSelector({ t, appProManager }) {
-  const container = document.getElementById("app-icon-options");
-  if (!container) return;
+  disposeAppIconSelector?.();
 
+  const container = document.getElementById("app-icon-options");
+  if (!container) {
+    disposeAppIconSelector = null;
+    return;
+  }
+
+  const unsubs = [];
   let current = safeGetLS(STORAGE_KEYS.APP_ICON_NAME) || ICON_OPTIONS[0]?.id;
   if (!ICON_OPTIONS.find((x) => x.id === current)) {
     current = ICON_OPTIONS[0]?.id;
@@ -264,14 +271,29 @@ export function initAppIconSelector({ t, appProManager }) {
     dispatchIconChanged(t, appProManager);
   };
 
-  document.addEventListener(APP_EVENTS.PRO_STATUS_CHANGED, () => {
-    syncByProState();
-  });
+  unsubs.push(
+    onAppEvent(APP_EVENTS.PRO_STATUS_CHANGED, () => {
+      syncByProState();
+    }),
+  );
 
-  document.addEventListener(APP_EVENTS.LANGUAGE_CHANGED, () => {
-    render();
-    dispatchIconChanged(t, appProManager);
-  });
+  unsubs.push(
+    onAppEvent(APP_EVENTS.LANGUAGE_CHANGED, () => {
+      render();
+      dispatchIconChanged(t, appProManager);
+    }),
+  );
+
+  disposeAppIconSelector = () => {
+    unsubs.forEach((off) => {
+      try {
+        off?.();
+      } catch (err) {
+        console.error("[app-icon-selector.dispose]", err);
+      }
+    });
+    unsubs.length = 0;
+  };
 
   syncByProState();
 }

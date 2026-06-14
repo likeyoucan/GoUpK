@@ -14,8 +14,14 @@ import { CustomSelect } from "../custom-select.js?v=VERSION";
 import { APP_EVENTS } from "../constants/events.js?v=VERSION";
 import { STORAGE_KEYS } from "../constants/storage-keys.js?v=VERSION";
 import { adsManager } from "../ads.js?v=VERSION";
+import { onAppEvent } from "../events/app-events.js?v=VERSION";
 
 export function setupStopwatchSessions(sw) {
+  sw._unbindSessions?.();
+  sw._unbindSessions = null;
+
+  const disposers = [];
+
   try {
     const stored = safeGetLS(STORAGE_KEYS.SW_SAVED_SESSIONS);
     sw.savedSessions = stored ? JSON.parse(stored) : [];
@@ -31,18 +37,22 @@ export function setupStopwatchSessions(sw) {
     { value: "name_za", text: t("name_za") },
   ];
 
+  sw.sortSelect?.destroy?.();
   sw.sortSelect = new CustomSelect(
     "swSortSelectContainer",
     sortOptions,
     (value) => sw.sortSessions(value),
     sw.currentSort,
   );
+  disposers.push(() => sw.sortSelect?.destroy?.());
 
-  sw.els.nameInput?.addEventListener("input", () =>
-    sw.els.nameError?.classList.add("hidden"),
+  const onNameInput = () => sw.els.nameError?.classList.add("hidden");
+  sw.els.nameInput?.addEventListener("input", onNameInput);
+  disposers.push(() =>
+    sw.els.nameInput?.removeEventListener("input", onNameInput),
   );
 
-  sw.els.sessionsList?.addEventListener("click", (e) => {
+  const onSessionsListClick = (e) => {
     const header = e.target.closest(".sw-session-header");
     const shareBtn = e.target.closest(".sw-share-btn");
     const renameBtn = e.target.closest(".sw-rename-btn");
@@ -69,7 +79,12 @@ export function setupStopwatchSessions(sw) {
     if (header) {
       sw.toggleSessionDetails(Number(header.dataset.id));
     }
-  });
+  };
+
+  sw.els.sessionsList?.addEventListener("click", onSessionsListClick);
+  disposers.push(() =>
+    sw.els.sessionsList?.removeEventListener("click", onSessionsListClick),
+  );
 
   sw.prepareSaveSession = () => {
     if (sw.laps.length === 0 && sw.elapsedTime === 0) return;
@@ -154,7 +169,6 @@ export function setupStopwatchSessions(sw) {
       );
       showToast(t("session_saved"));
 
-      // Interstitial scenario: save result
       adsManager.showInterstitialIfAllowed("save_result");
     } else if (sw.nameModalState.action === "rename") {
       const session = sw.savedSessions.find(
@@ -222,7 +236,18 @@ export function setupStopwatchSessions(sw) {
     sw.updateSaveButtonVisibility();
   };
 
-  document.addEventListener(APP_EVENTS.LANGUAGE_CHANGED, () => {
+  const offLangChanged = onAppEvent(APP_EVENTS.LANGUAGE_CHANGED, () => {
     sw.onLanguageChangedForSessions();
   });
+  disposers.push(offLangChanged);
+
+  sw._unbindSessions = () => {
+    disposers.forEach((off) => {
+      try {
+        off?.();
+      } catch (err) {
+        console.error("[stopwatch-sessions.dispose]", err);
+      }
+    });
+  };
 }

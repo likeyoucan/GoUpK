@@ -126,10 +126,57 @@ let bootStarted = false;
 let bootDispose = null;
 const appBag = createDisposerBag();
 
+function installGlobalErrorHandlers() {
+  const onGlobalError = (e) => {
+    if (isErudaNoiseFromErrorEvent(e)) return;
+    console.error("[GLOBAL ERROR]", e.error || e.message);
+  };
+
+  const onUnhandledRejection = (e) => {
+    if (isErudaNoiseFromRejection(e)) return;
+    console.error("[UNHANDLED PROMISE]", e.reason);
+  };
+
+  const onResourceError = (e) => {
+    const target = e.target;
+    if (
+      target instanceof HTMLScriptElement ||
+      target instanceof HTMLLinkElement ||
+      target instanceof HTMLImageElement
+    ) {
+      const url =
+        target.src ||
+        target.href ||
+        target.currentSrc ||
+        target.getAttribute("src") ||
+        target.getAttribute("href") ||
+        "";
+
+      if (isOptionalResourceUrl(url)) {
+        console.warn("[RESOURCE OPTIONAL FAILED]", url);
+        return;
+      }
+
+      console.error("[RESOURCE LOAD ERROR]", url || target);
+    }
+  };
+
+  window.addEventListener("error", onGlobalError);
+  window.addEventListener("unhandledrejection", onUnhandledRejection);
+  window.addEventListener("error", onResourceError, true);
+
+  appBag.add(() => window.removeEventListener("error", onGlobalError));
+  appBag.add(() =>
+    window.removeEventListener("unhandledrejection", onUnhandledRejection),
+  );
+  appBag.add(() => window.removeEventListener("error", onResourceError, true));
+}
+
 async function bootstrap() {
   if (bootStarted) return;
   bootStarted = true;
 
+  installGlobalErrorHandlers();
   initErudaTapToggle();
 
   store.reconcileActiveTimer({ sw, tm, tb });
@@ -200,48 +247,10 @@ async function bootstrap() {
   };
 
   document.addEventListener("visibilitychange", onVisibilityRevalidate);
-  appBag.add(() => {
-    document.removeEventListener("visibilitychange", onVisibilityRevalidate);
-  });
+  appBag.add(() =>
+    document.removeEventListener("visibilitychange", onVisibilityRevalidate),
+  );
 }
-
-window.addEventListener("error", (e) => {
-  if (isErudaNoiseFromErrorEvent(e)) return;
-  console.error("[GLOBAL ERROR]", e.error || e.message);
-});
-
-window.addEventListener("unhandledrejection", (e) => {
-  if (isErudaNoiseFromRejection(e)) return;
-  console.error("[UNHANDLED PROMISE]", e.reason);
-});
-
-window.addEventListener(
-  "error",
-  (e) => {
-    const target = e.target;
-    if (
-      target instanceof HTMLScriptElement ||
-      target instanceof HTMLLinkElement ||
-      target instanceof HTMLImageElement
-    ) {
-      const url =
-        target.src ||
-        target.href ||
-        target.currentSrc ||
-        target.getAttribute("src") ||
-        target.getAttribute("href") ||
-        "";
-
-      if (isOptionalResourceUrl(url)) {
-        console.warn("[RESOURCE OPTIONAL FAILED]", url);
-        return;
-      }
-
-      console.error("[RESOURCE LOAD ERROR]", url || target);
-    }
-  },
-  true,
-);
 
 function destroyAppRuntime() {
   try {
@@ -251,8 +260,14 @@ function destroyAppRuntime() {
   }
 }
 
-window.addEventListener("pagehide", destroyAppRuntime, { once: true });
-window.addEventListener("beforeunload", destroyAppRuntime, { once: true });
+const onPageHide = () => destroyAppRuntime();
+const onBeforeUnload = () => destroyAppRuntime();
+
+window.addEventListener("pagehide", onPageHide, { once: true });
+window.addEventListener("beforeunload", onBeforeUnload, { once: true });
+
+appBag.add(() => window.removeEventListener("pagehide", onPageHide));
+appBag.add(() => window.removeEventListener("beforeunload", onBeforeUnload));
 
 async function startBoot() {
   try {

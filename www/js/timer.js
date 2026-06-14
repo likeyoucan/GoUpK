@@ -52,7 +52,12 @@ export const tm = {
   formatTime,
   announceToScreenReader,
 
+  _unbindRuntime: null,
+
   init() {
+    this._unbindRuntime?.();
+    this._unbindRuntime = null;
+
     this.els = {
       form: $("tm-form"),
       inputs: $("tm-inputs"),
@@ -78,6 +83,7 @@ export const tm = {
       this.els.ring.style.strokeDasharray = this.ringLength;
       this.els.ring.style.strokeDashoffset = this.ringLength;
 
+      this.ringCtrl?.stop?.();
       this.ringCtrl = createRingController({
         ringEl: this.els.ring,
         initialOffset: this.ringLength,
@@ -93,7 +99,8 @@ export const tm = {
     this.bindInputEvents();
     this.bindCoreEvents();
 
-    document.addEventListener("visibilitychange", () => {
+    const disposers = [];
+    const onVisibilityChange = () => {
       if (document.visibilityState === "hidden") {
         this.stopUiLoop?.();
         return;
@@ -117,6 +124,32 @@ export const tm = {
         this.updateDisplay(rem);
         this.updateUIState();
       }
-    });
+    };
+
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    disposers.push(() =>
+      document.removeEventListener("visibilitychange", onVisibilityChange),
+    );
+
+    this._unbindRuntime = () => {
+      if (this.rAF) {
+        cancelAnimationFrame(this.rAF);
+        this.rAF = null;
+      }
+
+      this._unbindCoreEvents?.();
+      this._unbindCoreEvents = null;
+
+      this._unbindInputEvents?.();
+      this._unbindInputEvents = null;
+
+      disposers.forEach((off) => {
+        try {
+          off?.();
+        } catch (err) {
+          console.error("[timer.dispose]", err);
+        }
+      });
+    };
   },
 };

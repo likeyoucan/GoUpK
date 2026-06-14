@@ -15,6 +15,11 @@ import { STORAGE_KEYS } from "../constants/storage-keys.js?v=VERSION";
 import { onAppEvent } from "../events/app-events.js?v=VERSION";
 
 export function setupTabataWorkouts(tb) {
+  tb._unbindWorkouts?.();
+  tb._unbindWorkouts = null;
+
+  const disposers = [];
+
   tb.prepareEdit = (idToEdit = null) => {
     tb.els.nameError?.classList.add("hidden");
     tb.editingWorkoutId = idToEdit;
@@ -234,11 +239,22 @@ export function setupTabataWorkouts(tb) {
   };
 
   tb.bindWorkoutEvents = () => {
-    tb.els.editName?.addEventListener("input", () =>
-      tb.els.nameError?.classList.add("hidden"),
-    );
+    tb._unbindWorkouts?.();
 
-    tb.els.list?.addEventListener("click", (e) => {
+    const localDisposers = [];
+
+    const bind = (el, event, handler, options) => {
+      if (!el) return;
+      el.addEventListener(event, handler, options);
+      localDisposers.push(() =>
+        el.removeEventListener(event, handler, options),
+      );
+    };
+
+    const onEditNameInput = () => tb.els.nameError?.classList.add("hidden");
+    bind(tb.els.editName, "input", onEditNameInput);
+
+    const onListClick = (e) => {
       const delBtn = e.target.closest(".tb-del-btn");
       const editBtn = e.target.closest(".tb-edit-btn");
       const row = e.target.closest(".tb-workout-row");
@@ -252,16 +268,35 @@ export function setupTabataWorkouts(tb) {
       } else if (row) {
         tb.selectWorkout(Number(row.dataset.id));
       }
-    });
+    };
+    bind(tb.els.list, "click", onListClick);
 
-    if (tb._unbindLangChanged) {
-      tb._unbindLangChanged();
-      tb._unbindLangChanged = null;
-    }
-
-    tb._unbindLangChanged = onAppEvent(APP_EVENTS.LANGUAGE_CHANGED, () => {
+    const offLangChanged = onAppEvent(APP_EVENTS.LANGUAGE_CHANGED, () => {
       tb.renderList();
       if (tb.selectedId) tb.selectWorkout(tb.selectedId);
+    });
+    localDisposers.push(offLangChanged);
+
+    tb._unbindWorkouts = () => {
+      localDisposers.forEach((off) => {
+        try {
+          off?.();
+        } catch (err) {
+          console.error("[tabata-workouts.dispose]", err);
+        }
+      });
+    };
+
+    disposers.push(tb._unbindWorkouts);
+  };
+
+  tb._unbindWorkouts = () => {
+    disposers.forEach((off) => {
+      try {
+        off?.();
+      } catch (err) {
+        console.error("[tabata-workouts.dispose.root]", err);
+      }
     });
   };
 }

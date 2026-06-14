@@ -1,10 +1,21 @@
 // Файл: www/js/timer/timer-inputs.js
 
 export function setupTimerInputs(tm, { pad }) {
+  tm._scrollInputDisposers = tm._scrollInputDisposers || [];
+
   tm.setupScrollInteraction = (input, max, isWrap) => {
-    if (!input) return;
+    if (!input) return () => {};
+
     let startY = 0;
     const threshold = 15;
+    const localDisposers = [];
+
+    const on = (el, event, handler, options) => {
+      el.addEventListener(event, handler, options);
+      localDisposers.push(() =>
+        el.removeEventListener(event, handler, options),
+      );
+    };
 
     const updateVal = (delta) => {
       let val = parseInt(input.value || 0, 10);
@@ -22,38 +33,29 @@ export function setupTimerInputs(tm, { pad }) {
       tm.sm.vibrate(10, "tactile");
     };
 
-    input.addEventListener(
-      "wheel",
-      (e) => {
+    const onWheel = (e) => {
+      e.preventDefault();
+      updateVal(e.deltaY > 0 ? -1 : 1);
+    };
+    on(input, "wheel", onWheel, { passive: false });
+
+    const onTouchStart = (e) => {
+      startY = e.touches[0].clientY;
+    };
+    on(input, "touchstart", onTouchStart, { passive: true });
+
+    const onTouchMove = (e) => {
+      const currentY = e.touches[0].clientY;
+      const diff = startY - currentY;
+
+      if (Math.abs(diff) > threshold) {
         e.preventDefault();
-        updateVal(e.deltaY > 0 ? -1 : 1);
-      },
-      { passive: false },
-    );
-
-    input.addEventListener(
-      "touchstart",
-      (e) => {
-        startY = e.touches[0].clientY;
-      },
-      { passive: true },
-    );
-
-    input.addEventListener(
-      "touchmove",
-      (e) => {
-        const currentY = e.touches[0].clientY;
-        const diff = startY - currentY;
-
-        if (Math.abs(diff) > threshold) {
-          e.preventDefault();
-          if (document.activeElement === input) input.blur();
-          updateVal(diff > 0 ? 1 : -1);
-          startY = currentY;
-        }
-      },
-      { passive: false },
-    );
+        if (document.activeElement === input) input.blur();
+        updateVal(diff > 0 ? 1 : -1);
+        startY = currentY;
+      }
+    };
+    on(input, "touchmove", onTouchMove, { passive: false });
 
     let isDragging = false;
 
@@ -78,58 +80,115 @@ export function setupTimerInputs(tm, { pad }) {
       window.removeEventListener("blur", onMouseUp);
     };
 
-    input.addEventListener("mousedown", (e) => {
+    const onMouseDown = (e) => {
       isDragging = true;
       startY = e.clientY;
       window.addEventListener("mousemove", onMouseMove);
       window.addEventListener("mouseup", onMouseUp);
       document.addEventListener("mouseleave", onMouseUp);
       window.addEventListener("blur", onMouseUp);
-    });
+    };
+    on(input, "mousedown", onMouseDown);
+
+    const dispose = () => {
+      onMouseUp();
+      localDisposers.forEach((off) => {
+        try {
+          off?.();
+        } catch (err) {
+          console.error("[timer-inputs.scroll.dispose]", err);
+        }
+      });
+    };
+
+    tm._scrollInputDisposers.push(dispose);
+    return dispose;
   };
 
   tm.bindInputEvents = () => {
-    tm.els.form?.addEventListener("submit", (e) => {
+    tm._unbindInputEvents?.();
+
+    const disposers = [];
+    const bind = (el, event, handler, options) => {
+      if (!el) return;
+      el.addEventListener(event, handler, options);
+      disposers.push(() => el.removeEventListener(event, handler, options));
+    };
+
+    const onFormSubmit = (e) => {
       e.preventDefault();
       document.activeElement?.blur();
-    });
+    };
+    bind(tm.els.form, "submit", onFormSubmit);
 
     [tm.els.m, tm.els.s].forEach((i) => {
       if (!i) return;
 
-      i.addEventListener("focus", () => {
+      const onFocus = () => {
         if (i.value === "00" || i.value === "0") i.value = "";
-      });
+      };
 
-      i.addEventListener("input", () => {
+      const onInput = () => {
         i.value = i.value.replace(/\D/g, "").slice(0, 2);
         if (parseInt(i.value, 10) > 59) i.value = "59";
-      });
+      };
 
-      i.addEventListener("blur", () => {
+      const onBlur = () => {
         i.value = pad(i.value || 0);
-      });
+      };
+
+      bind(i, "focus", onFocus);
+      bind(i, "input", onInput);
+      bind(i, "blur", onBlur);
     });
 
     if (tm.els.h) {
-      tm.els.h.addEventListener("focus", () => {
+      const onHFocus = () => {
         if (tm.els.h.value === "00" || tm.els.h.value === "0") {
           tm.els.h.value = "";
         }
-      });
+      };
 
-      tm.els.h.addEventListener("input", () => {
+      const onHInput = () => {
         tm.els.h.value = tm.els.h.value.replace(/\D/g, "").slice(0, 2);
         if (parseInt(tm.els.h.value, 10) > 99) tm.els.h.value = "99";
-      });
+      };
 
-      tm.els.h.addEventListener("blur", () => {
+      const onHBlur = () => {
         tm.els.h.value = pad(tm.els.h.value || 0);
-      });
+      };
+
+      bind(tm.els.h, "focus", onHFocus);
+      bind(tm.els.h, "input", onHInput);
+      bind(tm.els.h, "blur", onHBlur);
     }
+
+    tm._scrollInputDisposers.forEach((off) => {
+      try {
+        off?.();
+      } catch {}
+    });
+    tm._scrollInputDisposers = [];
 
     tm.setupScrollInteraction(tm.els.h, 99, false);
     tm.setupScrollInteraction(tm.els.m, 59, true);
     tm.setupScrollInteraction(tm.els.s, 59, true);
+
+    tm._unbindInputEvents = () => {
+      disposers.forEach((off) => {
+        try {
+          off?.();
+        } catch (err) {
+          console.error("[timer-inputs.dispose]", err);
+        }
+      });
+
+      tm._scrollInputDisposers.forEach((off) => {
+        try {
+          off?.();
+        } catch {}
+      });
+      tm._scrollInputDisposers = [];
+    };
   };
 }

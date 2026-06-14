@@ -44,7 +44,12 @@ const stopwatchModule = {
   pendingLapsRerender: false,
   shareResults,
 
+  _unbindCore: null,
+
   init() {
+    this._unbindCore?.();
+    this._unbindCore = null;
+
     this.els = {
       display: $("sw-mainDisplay"),
       extendedDisplay: $("sw-extendedDisplay"),
@@ -82,6 +87,7 @@ const stopwatchModule = {
       this.els.ring.style.strokeDasharray = this.ringLength;
       this.els.ring.style.strokeDashoffset = this.ringLength;
 
+      this.ringCtrl?.stop?.();
       this.ringCtrl = createRingController({
         ringEl: this.els.ring,
         initialOffset: this.ringLength,
@@ -94,28 +100,51 @@ const stopwatchModule = {
     setupStopwatchSessions(this);
     setupStopwatchShareController(this);
 
-    this.els.btn?.addEventListener("click", () => this.toggle());
-    this.els.lapBtn?.addEventListener("click", () => this.recordLapOrReset());
+    const disposers = [];
+    const bind = (el, event, handler, options) => {
+      if (!el) return;
+      el.addEventListener(event, handler, options);
+      disposers.push(() => el.removeEventListener(event, handler, options));
+    };
+
+    const onStartStopClick = () => this.toggle();
+    bind(this.els.btn, "click", onStartStopClick);
+
+    const onLapClick = () => this.recordLapOrReset();
+    bind(this.els.lapBtn, "click", onLapClick);
+
     this.bindShareButtons();
 
-    document.addEventListener(APP_EVENTS.TIMER_STARTED, (e) => {
+    const onTimerStarted = (e) => {
       if (e.detail !== "stopwatch" && this.isRunning) this.toggle();
-    });
+    };
+    document.addEventListener(APP_EVENTS.TIMER_STARTED, onTimerStarted);
+    disposers.push(() =>
+      document.removeEventListener(APP_EVENTS.TIMER_STARTED, onTimerStarted),
+    );
 
-    bgWorker.addEventListener("message", (e) => {
+    const onWorkerMessage = (e) => {
       if (e.data?.type === "heartbeat" && this.isRunning && document.hidden) {
         this.tick(true);
       }
-    });
+    };
+    bgWorker.addEventListener("message", onWorkerMessage);
+    disposers.push(() =>
+      bgWorker.removeEventListener("message", onWorkerMessage),
+    );
 
-    document.addEventListener("visibilitychange", () => {
+    const onVisibilityChange = () => {
       if (document.visibilityState === "visible" && this.isRunning) {
         this.lastRender = 0;
         this.tick();
       }
-    });
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    disposers.push(() =>
+      document.removeEventListener("visibilitychange", onVisibilityChange),
+    );
 
-    document.addEventListener(APP_EVENTS.MS_CHANGED, () => {
+    const onMsChanged = () => {
       if (!this.isRunning && this.elapsedTime > 0) this.updateDisplay();
 
       if (this.laps.length === 0) return;
@@ -126,9 +155,31 @@ const stopwatchModule = {
       }
 
       this.reRenderCurrentLaps();
-    });
+    };
+    document.addEventListener(APP_EVENTS.MS_CHANGED, onMsChanged);
+    disposers.push(() =>
+      document.removeEventListener(APP_EVENTS.MS_CHANGED, onMsChanged),
+    );
 
     this.updateSaveButtonVisibility();
+
+    this._unbindCore = () => {
+      if (this.rAF) {
+        cancelAnimationFrame(this.rAF);
+        this.rAF = null;
+      }
+
+      disposers.forEach((off) => {
+        try {
+          off?.();
+        } catch (err) {
+          console.error("[stopwatch.dispose]", err);
+        }
+      });
+
+      this._unbindSessions?.();
+      this._unbindSessions = null;
+    };
   },
 
   toggle() {

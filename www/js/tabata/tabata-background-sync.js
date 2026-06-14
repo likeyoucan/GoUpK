@@ -7,6 +7,7 @@ export function setupTabataBackgroundSync(
   const worker = bgWorker || {
     postMessage: () => {},
     addEventListener: () => {},
+    removeEventListener: () => {},
   };
 
   tb.tick = (isBackground = false) => {
@@ -57,16 +58,33 @@ export function setupTabataBackgroundSync(
   };
 
   tb.bindCoreEvents = () => {
-    tb.els.startBtn?.addEventListener("click", () => tb.toggle());
-    tb.els.stopBtn?.addEventListener("click", () => tb.stop());
+    tb._unbindBackgroundSync?.();
 
-    document.addEventListener(APP_EVENTS.TIMER_STARTED, (e) => {
+    const disposers = [];
+
+    const onStartClick = () => tb.toggle();
+    tb.els.startBtn?.addEventListener("click", onStartClick);
+    disposers.push(() =>
+      tb.els.startBtn?.removeEventListener("click", onStartClick),
+    );
+
+    const onStopClick = () => tb.stop();
+    tb.els.stopBtn?.addEventListener("click", onStopClick);
+    disposers.push(() =>
+      tb.els.stopBtn?.removeEventListener("click", onStopClick),
+    );
+
+    const onTimerStarted = (e) => {
       if (e.detail !== "tabata" && tb.status !== "STOPPED" && !tb.paused) {
         tb.pause();
       }
-    });
+    };
+    document.addEventListener(APP_EVENTS.TIMER_STARTED, onTimerStarted);
+    disposers.push(() =>
+      document.removeEventListener(APP_EVENTS.TIMER_STARTED, onTimerStarted),
+    );
 
-    worker.addEventListener("message", (e) => {
+    const onWorkerMessage = (e) => {
       if (
         e.data?.type === "heartbeat" &&
         tb.status !== "STOPPED" &&
@@ -76,9 +94,13 @@ export function setupTabataBackgroundSync(
       ) {
         tb.tick(true);
       }
-    });
+    };
+    worker.addEventListener("message", onWorkerMessage);
+    disposers.push(() =>
+      worker.removeEventListener("message", onWorkerMessage),
+    );
 
-    document.addEventListener("visibilitychange", () => {
+    const onVisibilityChange = () => {
       if (document.visibilityState !== "visible") return;
 
       if (tb.status === "STOPPED") {
@@ -108,6 +130,21 @@ export function setupTabataBackgroundSync(
         tb.render(rem);
         tb.tick();
       }
-    });
+    };
+
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    disposers.push(() =>
+      document.removeEventListener("visibilitychange", onVisibilityChange),
+    );
+
+    tb._unbindBackgroundSync = () => {
+      disposers.forEach((off) => {
+        try {
+          off?.();
+        } catch (err) {
+          console.error("[tabata-background-sync.dispose]", err);
+        }
+      });
+    };
   };
 }

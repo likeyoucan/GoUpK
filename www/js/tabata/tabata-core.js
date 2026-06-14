@@ -17,6 +17,10 @@ import { setupTabataLifecycle } from "./tabata-lifecycle.js?v=VERSION";
 import { setupTabataBackgroundSync } from "./tabata-background-sync.js?v=VERSION";
 
 export function setupTabataCore(tb) {
+  // If core is re-mounted, clean previous layer first
+  tb._unbindCoreEvents?.();
+  tb._unbindCoreEvents = null;
+
   setupTabataLifecycle(tb, {
     sm,
     store,
@@ -34,4 +38,14 @@ export function setupTabataCore(tb) {
     updateTitle,
     bgWorker,
   });
+
+  // Merge nested unbinders into one core disposer
+  tb._unbindCoreEvents = () => {
+    try {
+      tb._unbindBackgroundSync?.();
+      tb._unbindBackgroundSync = null;
+    } catch (err) {
+      console.error("[tabata-core.dispose.background]", err);
+    }
+  };
 }

@@ -13,7 +13,17 @@ function notifySoundThemeProLocked(t) {
 }
 
 export function bindSoundControls(sm, { $, safeSetLS, CustomSelect, t }) {
-  $("toggle-sound")?.addEventListener("change", (e) => {
+  sm._unbindSoundControls?.();
+
+  const disposers = [];
+
+  const bind = (el, event, handler, options) => {
+    if (!el) return;
+    el.addEventListener(event, handler, options);
+    disposers.push(() => el.removeEventListener(event, handler, options));
+  };
+
+  const onToggleSound = (e) => {
     const enabled = e.target.checked;
 
     sm.setSoundEnabled(enabled, {
@@ -26,20 +36,29 @@ export function bindSoundControls(sm, { $, safeSetLS, CustomSelect, t }) {
     if (enabled) {
       sm.play("click");
     }
-  });
+  };
+  bind($("toggle-sound"), "change", onToggleSound);
 
-  $("toggle-vibro")?.addEventListener("change", (e) => {
+  const onToggleVibro = (e) => {
     sm.vibroEnabled = e.target.checked;
     safeSetLS(STORAGE_KEYS.APP_VIBRO, sm.vibroEnabled);
 
-    emitAppEvent(APP_EVENTS.VIBRO_TOGGLED, { enabled: sm.vibroEnabled });
+    emitAppEvent(APP_EVENTS.VIBRO_TOGGLED, {
+      enabled: sm.vibroEnabled,
+    });
 
     if (sm.vibroEnabled) sm.vibrate(50, "medium");
-  });
+  };
+  bind($("toggle-vibro"), "change", onToggleVibro);
 
   const volumeSlider = $("volumeSlider");
-  if (volumeSlider && volumeSlider.dataset.boundSound !== "1") {
-    volumeSlider.dataset.boundSound = "1";
+  if (volumeSlider) {
+    if (sm._onVolumeInput) {
+      volumeSlider.removeEventListener("input", sm._onVolumeInput);
+    }
+    if (sm._onVolumeChange) {
+      volumeSlider.removeEventListener("change", sm._onVolumeChange);
+    }
 
     sm._onVolumeInput = (e) => {
       sm._applySliderVolume(e.target.value, { withPreview: true });
@@ -49,8 +68,8 @@ export function bindSoundControls(sm, { $, safeSetLS, CustomSelect, t }) {
       sm._applySliderVolume(e.target.value, { withPreview: false });
     };
 
-    volumeSlider.addEventListener("input", sm._onVolumeInput);
-    volumeSlider.addEventListener("change", sm._onVolumeChange);
+    bind(volumeSlider, "input", sm._onVolumeInput);
+    bind(volumeSlider, "change", sm._onVolumeChange);
   }
 
   const soundThemeOptions = [
@@ -63,6 +82,7 @@ export function bindSoundControls(sm, { $, safeSetLS, CustomSelect, t }) {
 
   const soundThemeContainer = $("soundThemeSelectContainer");
   if (soundThemeContainer) {
+    sm.soundThemeSelect?.destroy?.();
     sm.soundThemeSelect = new CustomSelect(
       "soundThemeSelectContainer",
       soundThemeOptions,
@@ -98,9 +118,27 @@ export function bindSoundControls(sm, { $, safeSetLS, CustomSelect, t }) {
     once: true,
     capture: true,
   });
-
   document.addEventListener("touchstart", unlockHandler, {
     once: true,
     passive: true,
   });
+
+  disposers.push(() =>
+    document.removeEventListener("click", unlockHandler, true),
+  );
+  disposers.push(() =>
+    document.removeEventListener("touchstart", unlockHandler, true),
+  );
+
+  sm._unbindSoundControls = () => {
+    disposers.forEach((off) => {
+      try {
+        off?.();
+      } catch (err) {
+        console.error("[sound-bindings.dispose]", err);
+      }
+    });
+  };
+
+  return sm._unbindSoundControls;
 }

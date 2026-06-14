@@ -10,6 +10,8 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     tm.alarmScheduler || createTimerAlarmScheduler({ requestCode: 1001 });
   tm.alarmScheduler = alarmScheduler;
 
+  tm._unbindCoreEvents = tm._unbindCoreEvents || null;
+
   tm.getRemainingTime = () => {
     if (!tm.isRunning && !tm.isPaused && !tm.isFinished) return 0;
     return tm.timeRemainingMs;
@@ -295,20 +297,41 @@ export function setupTimerCore(tm, { showToast, updateText }) {
   };
 
   tm.bindCoreEvents = () => {
-    document.addEventListener(APP_EVENTS.TIMER_STARTED, (e) => {
-      if (e.detail !== "timer" && tm.isRunning) tm.toggle();
-    });
+    tm._unbindCoreEvents?.();
 
-    tm.els.circleBtn?.addEventListener("click", () => tm.toggle());
-    tm.els.resetBtn?.addEventListener("click", () => tm.reset(true));
-    tm.els.restartBtn?.addEventListener("click", () => tm.restart());
+    const disposers = [];
 
-    tm.bgWorker.addEventListener("message", async (e) => {
-      if (e.data?.type !== "tick") return;
-
-      if (!tm.isRunning) {
-        return;
+    const onTimerStarted = (e) => {
+      if (e.detail !== "timer" && tm.isRunning) {
+        void tm.toggle();
       }
+    };
+    document.addEventListener(APP_EVENTS.TIMER_STARTED, onTimerStarted);
+    disposers.push(() =>
+      document.removeEventListener(APP_EVENTS.TIMER_STARTED, onTimerStarted),
+    );
+
+    const onCircleClick = () => void tm.toggle();
+    tm.els.circleBtn?.addEventListener("click", onCircleClick);
+    disposers.push(() =>
+      tm.els.circleBtn?.removeEventListener("click", onCircleClick),
+    );
+
+    const onResetClick = () => void tm.reset(true);
+    tm.els.resetBtn?.addEventListener("click", onResetClick);
+    disposers.push(() =>
+      tm.els.resetBtn?.removeEventListener("click", onResetClick),
+    );
+
+    const onRestartClick = () => void tm.restart();
+    tm.els.restartBtn?.addEventListener("click", onRestartClick);
+    disposers.push(() =>
+      tm.els.restartBtn?.removeEventListener("click", onRestartClick),
+    );
+
+    const onWorkerMessage = async (e) => {
+      if (e.data?.type !== "tick") return;
+      if (!tm.isRunning) return;
 
       const remaining = e.data.time;
       const nowPerf = performance.now();
@@ -338,9 +361,14 @@ export function setupTimerCore(tm, { showToast, updateText }) {
       if (remaining <= 0) {
         tm.finishAsCompleted();
       }
-    });
+    };
 
-    tm.els.adjustPlusBtn?.addEventListener("click", async () => {
+    tm.bgWorker.addEventListener("message", onWorkerMessage);
+    disposers.push(() =>
+      tm.bgWorker.removeEventListener("message", onWorkerMessage),
+    );
+
+    const onAdjustPlus = async () => {
       tm.sm.play("tick");
       tm.sm.vibrate(50, "medium");
 
@@ -366,9 +394,14 @@ export function setupTimerCore(tm, { showToast, updateText }) {
 
       tm.bgWorker.postMessage({ command: "adjust", time: adjustmentMs });
       await scheduleExactAlarmAndHandleHint(tm.targetEpochMs);
-    });
+    };
 
-    tm.els.adjustMinusBtn?.addEventListener("click", async () => {
+    tm.els.adjustPlusBtn?.addEventListener("click", onAdjustPlus);
+    disposers.push(() =>
+      tm.els.adjustPlusBtn?.removeEventListener("click", onAdjustPlus),
+    );
+
+    const onAdjustMinus = async () => {
       tm.sm.play("tick");
       tm.sm.vibrate(50, "medium");
 
@@ -400,6 +433,21 @@ export function setupTimerCore(tm, { showToast, updateText }) {
 
       tm.bgWorker.postMessage({ command: "adjust", time: adjustmentMs });
       await scheduleExactAlarmAndHandleHint(tm.targetEpochMs);
-    });
+    };
+
+    tm.els.adjustMinusBtn?.addEventListener("click", onAdjustMinus);
+    disposers.push(() =>
+      tm.els.adjustMinusBtn?.removeEventListener("click", onAdjustMinus),
+    );
+
+    tm._unbindCoreEvents = () => {
+      disposers.forEach((off) => {
+        try {
+          off?.();
+        } catch (err) {
+          console.error("[timer-core.dispose]", err);
+        }
+      });
+    };
   };
 }
