@@ -1813,6 +1813,20 @@
       pointer-events: none;
     }
 
+    /* When top is collapsed (bottom pane 100%), extend divider through centered container margins */
+    #view-tabata.split-top-hidden
+      #tb-list-section
+      > .flex-1.border-t.app-border::before,
+    #view-tabata.split-live[data-split-target="top"]
+      #tb-list-section
+      > .flex-1.border-t.app-border::before,
+    #view-tabata.split-animating[data-split-target="top"]
+      #tb-list-section
+      > .flex-1.border-t.app-border::before {
+      left: -200vw;
+      right: -200vw;
+    }
+
     @media (min-width: 640px) {
       #view-tabata #tb-list-section > .flex-1.border-t.app-border {
         --tb-divider-bleed: calc(
