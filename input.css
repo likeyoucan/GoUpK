@@ -2121,12 +2121,9 @@
       transform: scale(1.05);
     }
 
-    #tm-form,
-    #tm-adjust-controls,
-    #tm-resetBtn-wrap,
-    #tm-restartBtn-wrap {
-      flex: 1;
-    }
+:is(#tm-form, #tm-adjust-controls, #tm-resetBtn-wrap, #tm-restartBtn-wrap) {
+  flex: 1;
+}
 
     .view-top-half h2 {
       font-size: 0.85rem;
@@ -3335,9 +3332,7 @@
     color: color-mix(in srgb, var(--text-color) 92%, transparent);
   }
 
-  body.force-light-text .custom-select-trigger,
-  body.force-light-text .custom-select-trigger .custom-select-value,
-  body.force-light-text .custom-select-option {
+body.force-light-text :is(.custom-select-trigger, .custom-select-trigger .custom-select-value, .custom-select-option) {
     color: rgb(255 255 255 / 0.92) !important;
   }
 
@@ -3345,9 +3340,7 @@
     color: rgb(255 255 255 / 0.72) !important;
   }
 
-  body.force-dark-text .custom-select-trigger,
-  body.force-dark-text .custom-select-trigger .custom-select-value,
-  body.force-dark-text .custom-select-option {
+body.force-dark-text :is(.custom-select-trigger, .custom-select-trigger .custom-select-value, .custom-select-option) {
     color: rgb(17 24 39 / 0.92) !important;
   }
 
@@ -3854,29 +3847,29 @@
   }
 
   @media (hover: hover) {
-    #sw-modal-handler:hover .modal-drag-pill,
-    #tb-modal-handler:hover .modal-drag-pill {
+    :is(#sw-modal-handler, #tb-modal-handler):hover .modal-drag-pill {
       opacity: 0.88;
       background: color-mix(in srgb, var(--text-color) 40%, transparent);
     }
   }
 
-  #sw-modal-handler:active .modal-drag-pill,
-  #tb-modal-handler:active .modal-drag-pill {
+  :is(#sw-modal-handler, #tb-modal-handler):active .modal-drag-pill {
     opacity: 1;
     background: color-mix(in srgb, var(--primary-color) 70%, var(--text-color));
     transform: scale(1.05);
   }
 
+:is(
   #reset-modal-content,
   #sw-clear-modal-content,
   #sw-name-modal-content,
   #sw-share-mode-content,
   #legal-modal-content,
   #pro-subscribe-modal-content,
-  #toast {
-    will-change: transform, opacity;
-  }
+  #toast
+) {
+  will-change: transform, opacity;
+}
 
   .nav-btn > div,
   .custom-select-options,
@@ -4165,8 +4158,11 @@
       );
     }
 
-    .glass-effect #sw-share-mode-content .app-btn:not([data-modal-close]):hover,
-    .glass-effect #legal-modal-content .app-btn[href]:hover {
+    .glass-effect
+      :is(
+        #sw-share-mode-content .app-btn:not([data-modal-close]),
+        #legal-modal-content .app-btn[href]
+      ):hover {
       background-color: color-mix(
         in srgb,
         var(--surface-color) 46%,
@@ -4336,18 +4332,15 @@
     border-top-color: color-mix(in srgb, #ffffff 10%, transparent) !important;
   }
 
-  html.dark nav .nav-btn:hover > div:not(.primary-text),
-  html.dark nav .nav-btn:hover > span:not(.primary-text) {
+html.dark nav .nav-btn:hover > :is(div, span):not(.primary-text){
     color: color-mix(in srgb, #ffffff 82%, transparent) !important;
   }
 
-  body.force-light-text nav .nav-btn > div:not(.primary-text),
-  body.force-light-text nav .nav-btn > span:not(.primary-text) {
+body.force-light-text nav .nav-btn > :is(div, span):not(.primary-text) {
     color: rgb(255 255 255 / 0.78) !important;
   }
 
-  body.force-dark-text nav .nav-btn > div:not(.primary-text),
-  body.force-dark-text nav .nav-btn > span:not(.primary-text) {
+body.force-dark-text nav .nav-btn > :is(div, span):not(.primary-text) {
     color: rgb(17 24 39 / 0.74) !important;
   }
 
@@ -4398,12 +4391,10 @@
       background-color: var(--ui-hover-bg);
     }
 
-    #sw-saveBtn:hover,
-    #sw-saveBtn:focus-visible,
-    #sw-openResultsBtn:hover,
-    #sw-openResultsBtn:focus-visible,
-    #sw-shareBtn:hover,
-    #sw-shareBtn:focus-visible {
+    :is(#sw-saveBtn, #sw-openResultsBtn, #sw-shareBtn):is(
+      :hover,
+      :focus-visible
+    ) {
       color: var(--primary-color) !important;
       background-color: color-mix(
         in srgb,
@@ -4531,11 +4522,10 @@
   }
 
   /* Подстраховка для +/- в таймере */
-  #tm-adjust-minus svg,
-  #tm-adjust-plus svg {
-    display: block;
-    margin: 0 auto;
-  }
+:is(#tm-adjust-minus, #tm-adjust-plus) svg {
+  display: block;
+  margin: 0 auto;
+}
 
   /* 2) Анимированный placeholder, если изображение иконки не загрузилось */
   .app-icon-preview-wrap {
@@ -4654,16 +4644,18 @@
     }
   }
 
-  @media (hover: none) {
-    .settings-action-btn:hover,
-    .tb-del-btn:hover,
-    .sw-share-btn:hover,
-    .sw-rename-btn:hover,
-    .sw-delete-btn:hover,
-    .icon-action-share:hover,
-    .icon-action-edit:hover,
-    .icon-action-delete:hover,
-    #btn-open-legal-inline:hover {
+@media (hover: none) {
+  :is(
+    .settings-action-btn,
+    .tb-del-btn,
+    .sw-share-btn,
+    .sw-rename-btn,
+    .sw-delete-btn,
+    .icon-action-share,
+    .icon-action-edit,
+    .icon-action-delete,
+    #btn-open-legal-inline
+  ):hover  {
       background-color: inherit;
       opacity: inherit;
       border-color: inherit;
