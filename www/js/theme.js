@@ -1,23 +1,12 @@
 // Файл: www/js/theme.js
 
-import {
-  $,
-  safeGetLS,
-  safeSetLS,
-  safeRemoveLS,
-  hexToHSL,
-  hexToRGB,
-  getLuminance,
-  showToast,
-} from "./utils.js?v=VERSION";
+import { hexToHSL, hexToRGB, getLuminance } from "./utils.js?v=VERSION";
 import { uiSettingsManager } from "./ui-settings.js?v=VERSION";
 import { colorManager } from "./color-manager.js?v=VERSION";
 import { appProManager } from "./app-pro.js?v=VERSION";
 import { APP_EVENTS } from "./constants/events.js?v=VERSION";
-import { STORAGE_KEYS } from "./constants/storage-keys.js?v=VERSION";
 import { CustomSelect } from "./custom-select.js?v=VERSION";
 import { t } from "./i18n.js?v=VERSION";
-import { resolveToastText } from "./constants/toast-fallbacks.js?v=VERSION";
 
 import {
   applyModeToDocument,
@@ -28,6 +17,15 @@ import {
   applyAccentVars,
   applyBgTheme as applyBgThemeVars,
 } from "./theme/theme-colors.js?v=VERSION";
+import {
+  loadThemeSettings,
+  saveThemeMode,
+  saveThemeAccent,
+  saveThemeBg,
+  resetThemeSettings,
+} from "./theme/theme-repository.js?v=VERSION";
+import { notifyProBlocked } from "./theme/theme-guards.js?v=VERSION";
+import { buildColorSet } from "./theme/theme-history.js?v=VERSION";
 
 /**
  * @typedef {"system" | "light" | "dark"} ThemeMode
@@ -38,15 +36,6 @@ import {
  * @property {boolean} [recordHistory=true]
  * @property {boolean} [skipProCheck=false]
  */
-
-function notifyProBlocked(feature = "accent_bg") {
-  showToast(resolveToastText(t, "pro_required"));
-  document.dispatchEvent(
-    new CustomEvent(APP_EVENTS.PRO_PAYWALL_REQUESTED, {
-      detail: { feature },
-    }),
-  );
-}
 
 export const themeManager = {
   currentMode: "system",
@@ -211,29 +200,28 @@ export const themeManager = {
   applySettings() {
     this._history.reset();
 
-    this.currentAccent = safeGetLS(STORAGE_KEYS.THEME_COLOR) || "default";
-    this.currentBg = safeGetLS(STORAGE_KEYS.THEME_BG_COLOR) || "default";
-    this.currentMode = safeGetLS(STORAGE_KEYS.THEME_MODE) || "system";
+    const stored = loadThemeSettings();
+    this.currentMode = stored.mode;
+    this.currentAccent = stored.accent;
+    this.currentBg = stored.bg;
 
     if (appProManager.initialized && !appProManager.canUse("accent_bg")) {
       if (this.currentAccent !== "default" || this.currentBg !== "default") {
         this.currentAccent = "default";
         this.currentBg = "default";
-        safeSetLS(STORAGE_KEYS.THEME_COLOR, "default");
-        safeSetLS(STORAGE_KEYS.THEME_BG_COLOR, "default");
+        saveThemeAccent("default");
+        saveThemeBg("default");
       }
     }
 
     colorManager.syncPickers(this.currentAccent, this.currentBg);
 
-    // setMode уже применяет фон и акцент в правильном порядке
+    // setMode already applies bg + accent in correct order
     this.setMode(this.currentMode, false);
   },
 
   resetSettings() {
-    safeRemoveLS(STORAGE_KEYS.THEME_MODE);
-    safeRemoveLS(STORAGE_KEYS.THEME_COLOR);
-    safeRemoveLS(STORAGE_KEYS.THEME_BG_COLOR);
+    resetThemeSettings();
 
     this._history.reset();
     uiSettingsManager.resetSettings();
@@ -256,21 +244,20 @@ export const themeManager = {
     if (useTransition) document.body.classList.add("is-updating-theme");
 
     this.currentMode = mode;
-    safeSetLS(STORAGE_KEYS.THEME_MODE, mode);
+    saveThemeMode(mode);
 
     applyModeToDocument(mode);
     this._syncThemeModeSelectValue();
 
-    // 1) Сначала фон и классы режима (no-adaptive/bg-red-zone/bg-deep-dark)
+    // 1) background and mode classes first
     this.applyBgTheme(this.currentBg);
 
-    // 2) Потом акцент, чтобы он считался уже в актуальном режиме
+    // 2) accent recalculation in actual mode
     this.setColor(this.currentAccent, false, {
       recordHistory: false,
       skipProCheck: true,
     });
 
-    // Синхронизируем bg-селектор после смены mode
     colorManager.updateSelectionUI("bg", this.currentBg, false);
 
     this._applyMetaThemeColor();
@@ -283,15 +270,7 @@ export const themeManager = {
   },
 
   _getAvailableColorSet(type) {
-    const base =
-      type === "accent"
-        ? [
-            ...colorManager.standardAccentColors,
-            ...colorManager.customAccentColors,
-          ]
-        : [...colorManager.standardBgColors, ...colorManager.customBgColors];
-
-    return new Set(base.map((c) => String(c).toLowerCase()));
+    return buildColorSet(type, colorManager);
   },
 
   _getLastValidColor(type) {
@@ -311,7 +290,7 @@ export const themeManager = {
       hex !== "default" &&
       !appProManager.canUse("accent_bg")
     ) {
-      notifyProBlocked("accent_bg");
+      notifyProBlocked(t, "accent_bg");
       colorManager.updateSelectionUI("accent", this.currentAccent, false);
       colorManager.syncPickers(this.currentAccent, this.currentBg);
       return;
@@ -322,7 +301,7 @@ export const themeManager = {
     }
 
     this.currentAccent = hex;
-    safeSetLS(STORAGE_KEYS.THEME_COLOR, hex);
+    saveThemeAccent(hex);
 
     applyAccentVars({
       hex,
@@ -349,7 +328,7 @@ export const themeManager = {
       hex !== "default" &&
       !appProManager.canUse("accent_bg")
     ) {
-      notifyProBlocked("accent_bg");
+      notifyProBlocked(t, "accent_bg");
       colorManager.updateSelectionUI("bg", this.currentBg, false);
       colorManager.syncPickers(this.currentAccent, this.currentBg);
       return;
@@ -360,11 +339,11 @@ export const themeManager = {
     }
 
     this.currentBg = hex;
-    safeSetLS(STORAGE_KEYS.THEME_BG_COLOR, hex);
+    saveThemeBg(hex);
 
     this.applyBgTheme(hex);
 
-    // Пересчитываем акцент после смены bg-классов (red-zone/adaptive)
+    // Recompute accent after bg class changes
     this.setColor(this.currentAccent, false, {
       recordHistory: false,
       skipProCheck: true,
