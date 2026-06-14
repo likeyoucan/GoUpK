@@ -42,11 +42,12 @@ export function bindUiInteractions({
 
   unbinders.push(bindBottomNav({ navigation, modalManager, sm }));
 
+  const appEl = $("app");
   unbinders.push(
     bindNavSwipe({
-      appContainer: $("app"),
-      bottomNav: $("app")?.querySelector("nav"),
-      navigation,jr
+      appContainer: appEl,
+      bottomNav: appEl ? appEl.querySelector("nav") : null,
+      navigation,
       modalManager,
     }),
   );
