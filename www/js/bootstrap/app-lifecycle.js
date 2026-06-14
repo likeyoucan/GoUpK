@@ -1,12 +1,9 @@
 // Файл: www/js/bootstrap/app-lifecycle.js
 
-function isNativePlatform() {
-  return !!(window.Capacitor && window.Capacitor.isNativePlatform());
-}
-
-function getCapacitorPlugins() {
-  return window.Capacitor?.Plugins || {};
-}
+import {
+  isNativePlatform,
+  getPlugins,
+} from "../platform/capacitor-adapter.js?v=VERSION";
 
 function bindPreloaderLifecycle(preload) {
   let hidden = false;
@@ -54,7 +51,7 @@ function bindCapacitorLifecycle({ modalManager, navigation, adsManager }) {
     return () => {};
   }
 
-  const { StatusBar, App } = getCapacitorPlugins();
+  const { StatusBar, App } = getPlugins();
 
   if (StatusBar) {
     StatusBar.setOverlaysWebView({ overlay: true }).catch(() => {});
@@ -75,7 +72,6 @@ function bindCapacitorLifecycle({ modalManager, navigation, adsManager }) {
       }
     });
 
-    // Treat app background/minimize as app_close monetization scenario.
     appStateHandle = App.addListener("appStateChange", ({ isActive }) => {
       if (isActive === false) {
         adsManager?.showInterstitialIfAllowed?.("app_close");

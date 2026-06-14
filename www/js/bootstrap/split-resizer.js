@@ -1,18 +1,15 @@
 // Файл: www/js/bootstrap/split-resizer.js
 
 const VIEW_IDS = ["view-stopwatch", "view-timer", "view-tabata"];
+
 let views = [];
 let detachViewportListeners = null;
-
 let globalSnap = "middle"; // "top" | "middle" | "bottom"
 
-// Explicit behavior when bottom is hidden in landscape.
-// true: bottom is treated as overlay layer (CSS reads data-split-overlay-bottom="1")
 const SPLIT_BEHAVIOR = {
   overlayWhenBottomHidden: true,
 };
 
-// Viewport policy: force only in emergency tiny-height mode.
 const VIEWPORT_POLICY = {
   emergencyHeightMax: 320,
 };
@@ -25,13 +22,6 @@ function isRowLayout(viewEl) {
   return getComputedStyle(viewEl).flexDirection.startsWith("row");
 }
 
-function isMobilePortrait() {
-  return (
-    window.matchMedia("(max-width: 767px)").matches &&
-    window.matchMedia("(orientation: portrait)").matches
-  );
-}
-
 function getViewportRatio() {
   const w = window.innerWidth || 0;
   const h = window.innerHeight || 0;
@@ -42,45 +32,29 @@ function getViewportRatio() {
 function isNearSquareLandscape() {
   const w = window.innerWidth || 0;
   const ratio = getViewportRatio();
-  // Example: 712x654 (~1.09)
   return ratio > 1 && ratio <= 1.2 && w < 900;
 }
 
 function getViewportRawMax() {
-  // In near-square landscape don't allow full collapse to keep handler reachable.
   return isNearSquareLandscape() ? 92 : 100;
 }
 
 function getMiddleAnchor() {
   const ratio = getViewportRatio();
-
-  // Landscape
   if (ratio >= 1.15) return 50;
-
-  // Near-square
   if (ratio >= 0.9 && ratio <= 1.1) return 55;
-
-  // Portrait
   return 60;
 }
 
-/**
- * Returns forced target for current viewport:
- * - middle: only for emergency tiny-height mode
- * - null: normal behavior
- */
 function getForcedTargetForViewport() {
   const h = window.innerHeight || 0;
-
   if (h <= VIEWPORT_POLICY.emergencyHeightMax) {
     return getMiddleAnchor();
   }
-
   return null;
 }
 
 function normalizeTargetForGeometry(target) {
-  // Prevent bottom-hidden state in near-square landscape
   if (isNearSquareLandscape() && target === 100) {
     return getMiddleAnchor();
   }
@@ -91,6 +65,19 @@ function normalizeTargetForViewport(target) {
   const forced = getForcedTargetForViewport();
   const base = forced == null ? target : forced;
   return normalizeTargetForGeometry(base);
+}
+
+function targetToName(target, middle) {
+  if (target === 0) return "top";
+  if (target === 100) return "bottom";
+  if (target === middle) return "middle";
+  return "middle";
+}
+
+function nameToTarget(name, middle) {
+  if (name === "top") return 0;
+  if (name === "bottom") return 100;
+  return middle;
 }
 
 function nearestAnchor(value, anchors) {
@@ -121,7 +108,6 @@ function setStateClass(viewEl, target) {
 
 function setCollapseFx(viewEl, raw) {
   const middle = getMiddleAnchor();
-
   const topLinear = clamp((middle - raw) / middle, 0, 1);
   const bottomLinear = clamp((raw - middle) / (100 - middle), 0, 1);
 
@@ -148,11 +134,7 @@ function setHandlerA11y(handler, snapValue) {
 
 function getTargetFromGlobalSnap() {
   const middle = getMiddleAnchor();
-
-  let target = middle;
-  if (globalSnap === "top") target = 0;
-  else if (globalSnap === "bottom") target = 100;
-
+  const target = nameToTarget(globalSnap, middle);
   return normalizeTargetForViewport(target);
 }
 
@@ -189,30 +171,23 @@ function updateAllA11y() {
 
 function applySnapToAll(target, { animate = true, duration = 240 } = {}) {
   const forcedTarget = getForcedTargetForViewport();
-
-  if (forcedTarget != null) {
-    target = forcedTarget;
-  }
+  if (forcedTarget != null) target = forcedTarget;
 
   target = normalizeTargetForViewport(target);
 
+  const middle = getMiddleAnchor();
   const forcedMiddle =
     forcedTarget !== null && forcedTarget !== 0 && forcedTarget !== 100;
 
-  if (forcedMiddle) {
-    target = getMiddleAnchor();
-  }
+  if (forcedMiddle) target = middle;
 
-  const middle = getMiddleAnchor();
   const visualTarget = target === 0 ? 0.15 : target === 100 ? 99.85 : middle;
-  const targetName =
-    target === 0 ? "top" : target === 100 ? "bottom" : "middle";
+  const targetName = targetToName(target, middle);
 
   views.forEach(({ viewEl, topHalf }) => {
     if (!viewEl || !topHalf) return;
 
     viewEl.classList.toggle("split-force-middle", forcedMiddle);
-
     viewEl.dataset.splitTarget = targetName;
     applyOverlayFlag(viewEl, target);
 
@@ -276,6 +251,7 @@ function setupOneView(ctx) {
   if (!viewEl || !handler) return;
 
   const SNAP_THRESHOLD = 10;
+
   let dragging = false;
   let activePointerType = "touch";
   let lastRaw = getTargetFromGlobalSnap();
@@ -316,13 +292,10 @@ function setupOneView(ctx) {
 
   const applyLive = (raw) => {
     const rawMax = getViewportRawMax();
-    lastRaw = clamp(raw, 0, rawMax);
-
     const forced = getForcedTargetForViewport();
-    if (forced != null) {
-      lastRaw = forced;
-    }
 
+    lastRaw = clamp(raw, 0, rawMax);
+    if (forced != null) lastRaw = forced;
     lastRaw = Math.min(lastRaw, rawMax);
 
     viewEl.classList.toggle(
@@ -337,11 +310,7 @@ function setupOneView(ctx) {
       "split-bottom-hidden",
     );
 
-    if (isMobilePortrait() && lastRaw >= 96.5) {
-      viewEl.dataset.splitTarget = "bottom";
-    } else {
-      viewEl.dataset.splitTarget = "";
-    }
+    viewEl.dataset.splitTarget = lastRaw >= 96.5 ? "bottom" : "";
 
     applyOverlayFlag(viewEl, null, { liveRaw: lastRaw });
 
@@ -370,9 +339,7 @@ function setupOneView(ctx) {
     const middle = getMiddleAnchor();
 
     let target;
-
     if (isNearSquareLandscape()) {
-      // In near-square landscape never snap to bottom-hidden extreme.
       if (Math.abs(projected - 0) <= SNAP_THRESHOLD) target = 0;
       else target = middle;
     } else {
@@ -396,12 +363,10 @@ function setupOneView(ctx) {
     const currentTarget = getTargetFromGlobalSnap();
 
     if (isNearSquareLandscape()) {
-      // Two-state cycle keeps handler always visible
-      if (currentTarget === 0) {
-        applySnapToAll(middle, { animate: true, duration: 240 });
-      } else {
-        applySnapToAll(0, { animate: true, duration: 240 });
-      }
+      applySnapToAll(currentTarget === 0 ? middle : 0, {
+        animate: true,
+        duration: 240,
+      });
       return;
     }
 
@@ -409,10 +374,12 @@ function setupOneView(ctx) {
       applySnapToAll(middle, { animate: true, duration: 240 });
       return;
     }
+
     if (currentTarget === middle) {
       applySnapToAll(100, { animate: true, duration: 240 });
       return;
     }
+
     applySnapToAll(0, { animate: true, duration: 240 });
   };
 
@@ -535,7 +502,6 @@ function setupOneView(ctx) {
 }
 
 export function initSplitResizer() {
-  // Guard against duplicate init
   detachViewportListeners?.();
   detachViewportListeners = null;
 
@@ -552,34 +518,20 @@ export function initSplitResizer() {
 
   views.forEach(setupOneView);
 
-  const initialTarget = getTargetFromGlobalSnap();
-  applySnapToAll(initialTarget, { animate: false });
-
-  function isUltraCompactViewport() {
-    const h = window.innerHeight || 0;
-    return h <= VIEWPORT_POLICY.emergencyHeightMax;
-  }
+  applySnapToAll(getTargetFromGlobalSnap(), { animate: false });
 
   const onViewportResize = () => {
-    if (isUltraCompactViewport()) {
-      globalSnap = "middle";
-      applySnapToAll(getMiddleAnchor(), { animate: false });
-      return;
-    }
-
-    // Critical fix:
-    // when layout becomes row (two-column landscape), avoid stale "bottom"
-    // state that can hide divider/border visuals.
-    const anyRow = views.some((v) => v?.viewEl && isRowLayout(v.viewEl));
-    if (anyRow && globalSnap === "bottom") {
-      globalSnap = "middle";
-    }
-
     const forced = getForcedTargetForViewport();
+
     if (forced != null) {
       globalSnap = forced === 0 ? "top" : "middle";
       applySnapToAll(forced, { animate: false });
       return;
+    }
+
+    const anyRow = views.some((v) => v?.viewEl && isRowLayout(v.viewEl));
+    if (anyRow && globalSnap === "bottom") {
+      globalSnap = "middle";
     }
 
     applySnapToAll(getTargetFromGlobalSnap(), { animate: false });

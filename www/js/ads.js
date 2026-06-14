@@ -4,6 +4,10 @@ import { $, safeGetLS, safeSetLS } from "./utils.js?v=VERSION";
 import { STORAGE_KEYS } from "./constants/storage-keys.js?v=VERSION";
 import { APP_EVENTS } from "./constants/events.js?v=VERSION";
 import { appProManager } from "./app-pro.js?v=VERSION";
+import {
+  isNativePlatform,
+  getPlugin,
+} from "./platform/capacitor-adapter.js?v=VERSION";
 
 const DEFAULT_COOLDOWN_MS = 5 * 60 * 1000;
 const DEFAULT_PROVIDER = "yandex"; // yandex | admob | mediation
@@ -24,13 +28,11 @@ const DEFAULT_INTERSTITIAL_MIN_COOLDOWN_MS = 30_000;
 const DESKTOP_FIXED_MIN_WIDTH = 1281;
 
 function isNative() {
-  return !!(window.Capacitor && window.Capacitor.isNativePlatform());
+  return isNativePlatform();
 }
 
 function getAdsPlugin() {
-  // Optional native bridge plugin:
-  // window.Capacitor.Plugins.AdsBridge
-  return window.Capacitor?.Plugins?.AdsBridge || null;
+  return getPlugin("AdsBridge");
 }
 
 function readBool(key, fallback = true) {
@@ -75,7 +77,6 @@ function isDesktopAdLayout() {
 }
 
 function shouldApplyMobileOffsetWhenAdsOff() {
-  // Offset is needed only in mobile portrait single-column layout.
   return window.matchMedia("(max-width: 767px) and (orientation: portrait)")
     .matches;
 }
@@ -86,7 +87,6 @@ function updateMobileOffsetClass(isBannerVisible) {
 
   if (!app) return;
 
-  // Cleanup legacy class if still present.
   viewsContainer?.classList.remove("ads-mobile-offset");
 
   const shouldOffset = !isBannerVisible && shouldApplyMobileOffsetWhenAdsOff();
@@ -98,7 +98,6 @@ export const adsManager = {
   provider: DEFAULT_PROVIDER,
   interstitialCooldownMs: DEFAULT_COOLDOWN_MS,
 
-  // JS-side config only (not user settings)
   bannerMode: DEFAULT_BANNER_MODE,
   interstitialTriggers: { ...DEFAULT_INTERSTITIAL_TRIGGERS },
 
@@ -107,7 +106,6 @@ export const adsManager = {
   _viewportListenerBound: false,
 
   init() {
-    // User-level settings kept only for global ads on/off and provider
     this.enabled = readBool(STORAGE_KEYS.APP_ADS_ENABLED, true);
 
     const p = safeGetLS(STORAGE_KEYS.APP_ADS_PROVIDER) || DEFAULT_PROVIDER;
@@ -175,7 +173,6 @@ export const adsManager = {
   },
 
   setEnabled(next) {
-    // remove_ads is a Pro feature.
     const canDisableAds = appProManager.canUse("remove_ads");
     const finalValue = canDisableAds ? !!next : true;
 
@@ -207,14 +204,12 @@ export const adsManager = {
     dispatch(APP_EVENTS.ADS_SETTINGS_CHANGED, { provider });
   },
 
-  // JS-side control only
   setBannerMode(mode) {
     this.bannerMode = normalizeBannerMode(mode);
     this.renderBanner();
     dispatch(APP_EVENTS.ADS_BANNER_MODE_CHANGED, { mode: this.bannerMode });
   },
 
-  // JS-side control only
   setInterstitialTriggers(map = {}) {
     this.interstitialTriggers = normalizeTriggers(map);
     dispatch(APP_EVENTS.ADS_INTERSTITIAL_TRIGGERS_CHANGED, {
@@ -260,11 +255,9 @@ export const adsManager = {
           .catch(() => {});
       }
 
-      // Ads OFF: slot must be fully removed from layout.
       slot.replaceChildren();
       slot.classList.add("hidden");
 
-      // Compensate only on mobile portrait through app variable class.
       updateMobileOffsetClass(false);
 
       dispatch(APP_EVENTS.ADS_BANNER_VISIBILITY_CHANGED, { visible: false });
@@ -288,7 +281,6 @@ export const adsManager = {
         .catch(() => {});
     }
 
-    // Banner visible -> no compensation.
     updateMobileOffsetClass(true);
 
     dispatch(APP_EVENTS.ADS_BANNER_VISIBILITY_CHANGED, { visible: true });

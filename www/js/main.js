@@ -28,17 +28,10 @@ import { initImageSkeletons } from "./ui/image-skeletons.js?v=VERSION";
 import { appProManager } from "./app-pro.js?v=VERSION";
 import { store } from "./store.js?v=VERSION";
 import { APP_MONETIZATION_CONFIG } from "./app-monetization-config.js?v=VERSION";
+import { getTimerAlarmBridge } from "./platform/capacitor-adapter.js?v=VERSION";
 
 const ERUDA_CDN_MARKER = "cdn.jsdelivr.net/npm/eruda";
 const OPTIONAL_RESOURCE_MARKERS = [ERUDA_CDN_MARKER, "/js/eruda.js"];
-
-function getCapacitorPlugins() {
-  return window.Capacitor?.Plugins || {};
-}
-
-function getTimerAlarmBridge() {
-  return getCapacitorPlugins().TimerAlarmBridge || null;
-}
 
 function isErudaNoiseFromErrorEvent(event) {
   const src = String(event?.filename || "");
