@@ -2121,9 +2121,9 @@
       transform: scale(1.05);
     }
 
-:is(#tm-form, #tm-adjust-controls, #tm-resetBtn-wrap, #tm-restartBtn-wrap) {
-  flex: 1;
-}
+    :is(#tm-form, #tm-adjust-controls, #tm-resetBtn-wrap, #tm-restartBtn-wrap) {
+      flex: 1;
+    }
 
     .view-top-half h2 {
       font-size: 0.85rem;
@@ -3332,7 +3332,12 @@
     color: color-mix(in srgb, var(--text-color) 92%, transparent);
   }
 
-body.force-light-text :is(.custom-select-trigger, .custom-select-trigger .custom-select-value, .custom-select-option) {
+  body.force-light-text
+    :is(
+      .custom-select-trigger,
+      .custom-select-trigger .custom-select-value,
+      .custom-select-option
+    ) {
     color: rgb(255 255 255 / 0.92) !important;
   }
 
@@ -3340,7 +3345,12 @@ body.force-light-text :is(.custom-select-trigger, .custom-select-trigger .custom
     color: rgb(255 255 255 / 0.72) !important;
   }
 
-body.force-dark-text :is(.custom-select-trigger, .custom-select-trigger .custom-select-value, .custom-select-option) {
+  body.force-dark-text
+    :is(
+      .custom-select-trigger,
+      .custom-select-trigger .custom-select-value,
+      .custom-select-option
+    ) {
     color: rgb(17 24 39 / 0.92) !important;
   }
 
@@ -3859,17 +3869,17 @@ body.force-dark-text :is(.custom-select-trigger, .custom-select-trigger .custom-
     transform: scale(1.05);
   }
 
-:is(
-  #reset-modal-content,
-  #sw-clear-modal-content,
-  #sw-name-modal-content,
-  #sw-share-mode-content,
-  #legal-modal-content,
-  #pro-subscribe-modal-content,
-  #toast
-) {
-  will-change: transform, opacity;
-}
+  :is(
+    #reset-modal-content,
+    #sw-clear-modal-content,
+    #sw-name-modal-content,
+    #sw-share-mode-content,
+    #legal-modal-content,
+    #pro-subscribe-modal-content,
+    #toast
+  ) {
+    will-change: transform, opacity;
+  }
 
   .nav-btn > div,
   .custom-select-options,
@@ -4332,15 +4342,15 @@ body.force-dark-text :is(.custom-select-trigger, .custom-select-trigger .custom-
     border-top-color: color-mix(in srgb, #ffffff 10%, transparent) !important;
   }
 
-html.dark nav .nav-btn:hover > :is(div, span):not(.primary-text){
+  html.dark nav .nav-btn:hover > :is(div, span):not(.primary-text) {
     color: color-mix(in srgb, #ffffff 82%, transparent) !important;
   }
 
-body.force-light-text nav .nav-btn > :is(div, span):not(.primary-text) {
+  body.force-light-text nav .nav-btn > :is(div, span):not(.primary-text) {
     color: rgb(255 255 255 / 0.78) !important;
   }
 
-body.force-dark-text nav .nav-btn > :is(div, span):not(.primary-text) {
+  body.force-dark-text nav .nav-btn > :is(div, span):not(.primary-text) {
     color: rgb(17 24 39 / 0.74) !important;
   }
 
@@ -4522,10 +4532,10 @@ body.force-dark-text nav .nav-btn > :is(div, span):not(.primary-text) {
   }
 
   /* Подстраховка для +/- в таймере */
-:is(#tm-adjust-minus, #tm-adjust-plus) svg {
-  display: block;
-  margin: 0 auto;
-}
+  :is(#tm-adjust-minus, #tm-adjust-plus) svg {
+    display: block;
+    margin: 0 auto;
+  }
 
   /* 2) Анимированный placeholder, если изображение иконки не загрузилось */
   .app-icon-preview-wrap {
@@ -4644,18 +4654,18 @@ body.force-dark-text nav .nav-btn > :is(div, span):not(.primary-text) {
     }
   }
 
-@media (hover: none) {
-  :is(
-    .settings-action-btn,
-    .tb-del-btn,
-    .sw-share-btn,
-    .sw-rename-btn,
-    .sw-delete-btn,
-    .icon-action-share,
-    .icon-action-edit,
-    .icon-action-delete,
-    #btn-open-legal-inline
-  ):hover  {
+  @media (hover: none) {
+    :is(
+      .settings-action-btn,
+      .tb-del-btn,
+      .sw-share-btn,
+      .sw-rename-btn,
+      .sw-delete-btn,
+      .icon-action-share,
+      .icon-action-edit,
+      .icon-action-delete,
+      #btn-open-legal-inline
+    ):hover {
       background-color: inherit;
       opacity: inherit;
       border-color: inherit;
