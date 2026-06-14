@@ -106,7 +106,12 @@ export const adsManager = {
   initialized: false,
   _viewportListenerBound: false,
 
+  _unbinds: [],
+  _viewportHandler: null,
+
   init() {
+    this._cleanupBindings();
+
     this.enabled = readBool(STORAGE_KEYS.APP_ADS_ENABLED, true);
 
     const p = safeGetLS(STORAGE_KEYS.APP_ADS_PROVIDER) || DEFAULT_PROVIDER;
@@ -133,44 +138,101 @@ export const adsManager = {
     this.renderBanner();
   },
 
+  _cleanupBindings() {
+    this._unbinds.forEach((off) => {
+      try {
+        off?.();
+      } catch (err) {
+        console.error("[ads.cleanup]", err);
+      }
+    });
+    this._unbinds = [];
+    this._viewportListenerBound = false;
+    this._viewportHandler = null;
+  },
+
   _bindViewportListener() {
     if (this._viewportListenerBound) return;
     this._viewportListenerBound = true;
 
-    const onViewportChange = () => this.renderBanner();
+    this._viewportHandler = () => this.renderBanner();
 
-    window.addEventListener("resize", onViewportChange, { passive: true });
-    window.addEventListener("orientationchange", onViewportChange, {
+    window.addEventListener("resize", this._viewportHandler, { passive: true });
+    window.addEventListener("orientationchange", this._viewportHandler, {
       passive: true,
     });
+
+    this._unbinds.push(() =>
+      window.removeEventListener("resize", this._viewportHandler),
+    );
+    this._unbinds.push(() =>
+      window.removeEventListener("orientationchange", this._viewportHandler),
+    );
   },
 
   bindAutoRefresh() {
-    document.addEventListener(APP_EVENTS.ADS_SETTINGS_CHANGED, () =>
-      this.renderBanner(),
+    const onAdsChanged = () => this.renderBanner();
+    const onBannerModeChanged = () => this.renderBanner();
+    const onProChanged = () => this.renderBanner();
+
+    document.addEventListener(APP_EVENTS.ADS_SETTINGS_CHANGED, onAdsChanged);
+    document.addEventListener(
+      APP_EVENTS.ADS_BANNER_MODE_CHANGED,
+      onBannerModeChanged,
     );
-    document.addEventListener(APP_EVENTS.ADS_BANNER_MODE_CHANGED, () =>
-      this.renderBanner(),
+    document.addEventListener(APP_EVENTS.PRO_STATUS_CHANGED, onProChanged);
+
+    this._unbinds.push(() =>
+      document.removeEventListener(
+        APP_EVENTS.ADS_SETTINGS_CHANGED,
+        onAdsChanged,
+      ),
     );
-    document.addEventListener(APP_EVENTS.PRO_STATUS_CHANGED, () =>
-      this.renderBanner(),
+    this._unbinds.push(() =>
+      document.removeEventListener(
+        APP_EVENTS.ADS_BANNER_MODE_CHANGED,
+        onBannerModeChanged,
+      ),
+    );
+    this._unbinds.push(() =>
+      document.removeEventListener(APP_EVENTS.PRO_STATUS_CHANGED, onProChanged),
     );
   },
 
   bindLifecycleMonetization() {
-    document.addEventListener(APP_EVENTS.TIMER_COMPLETED, () => {
+    const onTimerCompleted = () => {
       this.showInterstitialIfAllowed("timer_complete");
-    });
+    };
 
-    document.addEventListener(APP_EVENTS.TABATA_COMPLETED, () => {
+    const onTabataCompleted = () => {
       this.showInterstitialIfAllowed("tabata_complete");
-    });
+    };
 
-    document.addEventListener(APP_EVENTS.TIMER_STARTED, (e) => {
+    const onTimerStarted = (e) => {
       if (e?.detail === "timer") {
         this.showInterstitialIfAllowed("timer_start");
       }
-    });
+    };
+
+    document.addEventListener(APP_EVENTS.TIMER_COMPLETED, onTimerCompleted);
+    document.addEventListener(APP_EVENTS.TABATA_COMPLETED, onTabataCompleted);
+    document.addEventListener(APP_EVENTS.TIMER_STARTED, onTimerStarted);
+
+    this._unbinds.push(() =>
+      document.removeEventListener(
+        APP_EVENTS.TIMER_COMPLETED,
+        onTimerCompleted,
+      ),
+    );
+    this._unbinds.push(() =>
+      document.removeEventListener(
+        APP_EVENTS.TABATA_COMPLETED,
+        onTabataCompleted,
+      ),
+    );
+    this._unbinds.push(() =>
+      document.removeEventListener(APP_EVENTS.TIMER_STARTED, onTimerStarted),
+    );
   },
 
   setEnabled(next) {

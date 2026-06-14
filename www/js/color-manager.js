@@ -50,6 +50,7 @@ export const colorManager = {
   customAccentColors: [],
   customBgColors: [],
   activeActionTarget: null,
+  _unbindColorManager: null,
 
   standardAccentColors: [
     "default",
@@ -73,40 +74,43 @@ export const colorManager = {
   ],
 
   init() {
+    this._unbindColorManager?.();
+    this._unbindColorManager = null;
+
     this.loadColors();
     this.populateColorSection("accent");
     this.populateColorSection("bg");
 
-    this._bindDesktopHorizontalScroll($("accent-colors-container"));
-    this._bindDesktopHorizontalScroll($("bg-colors-container"));
+    const disposers = [];
 
-    this._bindEvents();
+    const offAccentScroll = this._bindDesktopHorizontalScroll(
+      $("accent-colors-container"),
+    );
+    if (typeof offAccentScroll === "function") disposers.push(offAccentScroll);
+
+    const offBgScroll = this._bindDesktopHorizontalScroll(
+      $("bg-colors-container"),
+    );
+    if (typeof offBgScroll === "function") disposers.push(offBgScroll);
+
+    const offEvents = this._bindEvents();
+    if (typeof offEvents === "function") disposers.push(offEvents);
+
+    this._unbindColorManager = () => {
+      disposers.forEach((off) => {
+        try {
+          off?.();
+        } catch (err) {
+          console.error("[color-manager.dispose]", err);
+        }
+      });
+    };
   },
 
   _bindDesktopHorizontalScroll(container) {
-    if (!container) return;
-    if (container.dataset.wheelXBound === "1") return;
+    if (!container) return () => {};
+    if (container.dataset.wheelXBound === "1") return () => {};
     container.dataset.wheelXBound = "1";
-
-    container.addEventListener(
-      "wheel",
-      (e) => {
-        const canScrollX = container.scrollWidth > container.clientWidth;
-        if (!canScrollX) return;
-
-        const mostlyVerticalWheel = Math.abs(e.deltaY) >= Math.abs(e.deltaX);
-        const delta = mostlyVerticalWheel ? e.deltaY : e.deltaX;
-        if (!delta) return;
-
-        const prevLeft = container.scrollLeft;
-        container.scrollLeft += delta;
-
-        if (container.scrollLeft !== prevLeft) {
-          e.preventDefault();
-        }
-      },
-      { passive: false },
-    );
 
     let isDown = false;
     let moved = false;
@@ -135,7 +139,23 @@ export const colorManager = {
       window.removeEventListener("blur", onUp);
     };
 
-    container.addEventListener("mousedown", (e) => {
+    const onWheelRef = (e) => {
+      const canScrollX = container.scrollWidth > container.clientWidth;
+      if (!canScrollX) return;
+
+      const mostlyVerticalWheel = Math.abs(e.deltaY) >= Math.abs(e.deltaX);
+      const delta = mostlyVerticalWheel ? e.deltaY : e.deltaX;
+      if (!delta) return;
+
+      const prevLeft = container.scrollLeft;
+      container.scrollLeft += delta;
+
+      if (container.scrollLeft !== prevLeft) {
+        e.preventDefault();
+      }
+    };
+
+    const onMouseDownRef = (e) => {
       if (e.button !== 0) return;
 
       const canScrollX = container.scrollWidth > container.clientWidth;
@@ -160,18 +180,31 @@ export const colorManager = {
       window.addEventListener("blur", onUp);
 
       e.preventDefault();
-    });
+    };
 
-    container.addEventListener(
-      "click",
-      (e) => {
-        if (!moved) return;
-        e.preventDefault();
-        e.stopPropagation();
-        moved = false;
-      },
-      true,
-    );
+    const onClickCaptureRef = (e) => {
+      if (!moved) return;
+      e.preventDefault();
+      e.stopPropagation();
+      moved = false;
+    };
+
+    container.addEventListener("wheel", onWheelRef, { passive: false });
+    container.addEventListener("mousedown", onMouseDownRef);
+    container.addEventListener("click", onClickCaptureRef, true);
+
+    return () => {
+      container.removeEventListener("wheel", onWheelRef, { passive: false });
+      container.removeEventListener("mousedown", onMouseDownRef);
+      container.removeEventListener("click", onClickCaptureRef, true);
+
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+      window.removeEventListener("mouseleave", onUp);
+      window.removeEventListener("blur", onUp);
+
+      container.dataset.wheelXBound = "";
+    };
   },
 
   loadColors() {
@@ -181,73 +214,110 @@ export const colorManager = {
   },
 
   _bindEvents() {
-    this._bindContainerEvents("accent-colors-container", "accent");
-    this._bindContainerEvents("bg-colors-container", "bg");
+    const disposers = [];
 
-    const bindPicker = (type) => {
-      const picker = $(
-        type === "accent" ? "customColorInput" : "customBgInput",
-      );
-      if (!picker) return;
+    const offAccent = this._bindContainerEvents(
+      "accent-colors-container",
+      "accent",
+    );
+    if (typeof offAccent === "function") disposers.push(offAccent);
 
-      const blockIfNoPro = (e) => {
-        if (appProManager.canUse("custom_colors")) return;
+    const offBg = this._bindContainerEvents("bg-colors-container", "bg");
+    if (typeof offBg === "function") disposers.push(offBg);
 
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation?.();
+    const offPickerAccent = this._bindPicker("accent");
+    if (typeof offPickerAccent === "function") disposers.push(offPickerAccent);
 
-        showProMessage("custom_colors");
-        return false;
-      };
+    const offPickerBg = this._bindPicker("bg");
+    if (typeof offPickerBg === "function") disposers.push(offPickerBg);
 
-      picker.addEventListener("pointerdown", blockIfNoPro, { capture: true });
-      picker.addEventListener("mousedown", blockIfNoPro, { capture: true });
-      picker.addEventListener("touchstart", blockIfNoPro, {
-        capture: true,
-        passive: false,
-      });
-      picker.addEventListener("click", blockIfNoPro, { capture: true });
-
-      picker.addEventListener("change", (e) => {
-        if (!appProManager.canUse("custom_colors")) return;
-
-        emitAppEvent(APP_EVENTS.COLOR_SELECTED, {
-          type,
-          color: e.target.value,
-          fromPicker: true,
-        });
-      });
-
-      picker.addEventListener("input", (e) => {
-        if (!appProManager.canUse("custom_colors")) return;
-
-        const pickerWrapper = picker.closest(".color-picker-wrapper");
-        if (this.activeActionTarget === pickerWrapper) {
-          const actionBtn = pickerWrapper.querySelector(
-            '.color-action-btn[data-action="add"]',
-          );
-          if (actionBtn) {
-            updateAddButtonColor({
-              button: actionBtn,
-              color: e.target.value,
-              hexToRGB,
-              getLuminance,
-            });
-          }
+    return () => {
+      disposers.forEach((off) => {
+        try {
+          off?.();
+        } catch (err) {
+          console.error("[color-manager.events.dispose]", err);
         }
       });
     };
+  },
 
-    bindPicker("accent");
-    bindPicker("bg");
+  _bindPicker(type) {
+    const picker = $(type === "accent" ? "customColorInput" : "customBgInput");
+    if (!picker) return () => {};
+
+    const blockIfNoPro = (e) => {
+      if (appProManager.canUse("custom_colors")) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation?.();
+
+      showProMessage("custom_colors");
+      return false;
+    };
+
+    const onPickerChange = (e) => {
+      if (!appProManager.canUse("custom_colors")) return;
+
+      emitAppEvent(APP_EVENTS.COLOR_SELECTED, {
+        type,
+        color: e.target.value,
+        fromPicker: true,
+      });
+    };
+
+    const onPickerInput = (e) => {
+      if (!appProManager.canUse("custom_colors")) return;
+
+      const pickerWrapper = picker.closest(".color-picker-wrapper");
+      if (this.activeActionTarget === pickerWrapper) {
+        const actionBtn = pickerWrapper.querySelector(
+          '.color-action-btn[data-action="add"]',
+        );
+        if (actionBtn) {
+          updateAddButtonColor({
+            button: actionBtn,
+            color: e.target.value,
+            hexToRGB,
+            getLuminance,
+          });
+        }
+      }
+    };
+
+    picker.addEventListener("pointerdown", blockIfNoPro, { capture: true });
+    picker.addEventListener("mousedown", blockIfNoPro, { capture: true });
+    picker.addEventListener("touchstart", blockIfNoPro, {
+      capture: true,
+      passive: false,
+    });
+    picker.addEventListener("click", blockIfNoPro, { capture: true });
+
+    picker.addEventListener("change", onPickerChange);
+    picker.addEventListener("input", onPickerInput);
+
+    return () => {
+      picker.removeEventListener("pointerdown", blockIfNoPro, {
+        capture: true,
+      });
+      picker.removeEventListener("mousedown", blockIfNoPro, { capture: true });
+      picker.removeEventListener("touchstart", blockIfNoPro, { capture: true });
+      picker.removeEventListener("click", blockIfNoPro, { capture: true });
+
+      picker.removeEventListener("change", onPickerChange);
+      picker.removeEventListener("input", onPickerInput);
+    };
   },
 
   _bindContainerEvents(containerId, type) {
     const container = $(containerId);
-    if (!container) return;
+    if (!container) return () => {};
 
-    container.addEventListener("click", (e) => this._handleClick(e, type));
+    const onClick = (e) => this._handleClick(e, type);
+    container.addEventListener("click", onClick);
+
+    return () => container.removeEventListener("click", onClick);
   },
 
   _handleClick(event, type) {
