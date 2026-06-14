@@ -8,6 +8,7 @@ import {
   isNativePlatform,
   getPlugin,
 } from "./platform/capacitor-adapter.js?v=VERSION";
+import { emitAppEvent } from "./events/app-events.js?v=VERSION";
 
 const DEFAULT_COOLDOWN_MS = 5 * 60 * 1000;
 const DEFAULT_PROVIDER = "yandex"; // yandex | admob | mediation
@@ -51,7 +52,7 @@ function nowMs() {
 }
 
 function dispatch(name, detail = {}) {
-  document.dispatchEvent(new CustomEvent(name, { detail }));
+  emitAppEvent(name, detail);
 }
 
 function createWebPlaceholder(provider) {

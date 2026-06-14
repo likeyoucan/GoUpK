@@ -5,6 +5,7 @@ import { STORAGE_KEYS } from "./constants/storage-keys.js?v=VERSION";
 import { APP_EVENTS } from "./constants/events.js?v=VERSION";
 import { APP_MONETIZATION_CONFIG } from "./app-monetization-config.js?v=VERSION";
 import { resolveToastText } from "./constants/toast-fallbacks.js?v=VERSION";
+import { emitAppEvent } from "./events/app-events.js?v=VERSION";
 
 const ICON_CFG = APP_MONETIZATION_CONFIG.ui?.appIcons || {};
 const ICON_OPTIONS = Array.isArray(ICON_CFG.options) ? ICON_CFG.options : [];
@@ -132,17 +133,13 @@ export function getResolvedAppIconMeta(t, appProManager) {
 function dispatchIconChanged(t, appProManager) {
   const meta = getResolvedAppIconMeta(t, appProManager);
 
-  document.dispatchEvent(
-    new CustomEvent(APP_EVENTS.APP_ICON_CHANGED, {
-      detail: {
-        id: meta.id,
-        src: meta.src,
-        label: meta.label,
-        labelKey: meta.labelKey,
-        proRequired: meta.proRequired,
-      },
-    }),
-  );
+  emitAppEvent(APP_EVENTS.APP_ICON_CHANGED, {
+    id: meta.id,
+    src: meta.src,
+    label: meta.label,
+    labelKey: meta.labelKey,
+    proRequired: meta.proRequired,
+  });
 }
 
 export function initAppIconSelector({ t, appProManager }) {
@@ -238,11 +235,9 @@ export function initAppIconSelector({ t, appProManager }) {
       btn.addEventListener("click", async () => {
         if (locked) {
           showToast(resolveToastText(t, "pro_required"));
-          document.dispatchEvent(
-            new CustomEvent(APP_EVENTS.PRO_PAYWALL_REQUESTED, {
-              detail: { feature: "app_icon" },
-            }),
-          );
+          emitAppEvent(APP_EVENTS.PRO_PAYWALL_REQUESTED, {
+            feature: "app_icon",
+          });
           return;
         }
 

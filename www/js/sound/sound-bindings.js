@@ -5,14 +5,11 @@ import { STORAGE_KEYS } from "../constants/storage-keys.js?v=VERSION";
 import { appProManager } from "../app-pro.js?v=VERSION";
 import { showToast } from "../utils.js?v=VERSION";
 import { resolveToastText } from "../constants/toast-fallbacks.js?v=VERSION";
+import { emitAppEvent } from "../events/app-events.js?v=VERSION";
 
 function notifySoundThemeProLocked(t) {
   showToast(resolveToastText(t, "pro_sound_themes_locked"));
-  document.dispatchEvent(
-    new CustomEvent(APP_EVENTS.PRO_PAYWALL_REQUESTED, {
-      detail: { feature: "sound_themes" },
-    }),
-  );
+  emitAppEvent(APP_EVENTS.PRO_PAYWALL_REQUESTED, { feature: "sound_themes" });
 }
 
 export function bindSoundControls(sm, { $, safeSetLS, CustomSelect, t }) {
@@ -35,11 +32,7 @@ export function bindSoundControls(sm, { $, safeSetLS, CustomSelect, t }) {
     sm.vibroEnabled = e.target.checked;
     safeSetLS(STORAGE_KEYS.APP_VIBRO, sm.vibroEnabled);
 
-    document.dispatchEvent(
-      new CustomEvent(APP_EVENTS.VIBRO_TOGGLED, {
-        detail: { enabled: sm.vibroEnabled },
-      }),
-    );
+    emitAppEvent(APP_EVENTS.VIBRO_TOGGLED, { enabled: sm.vibroEnabled });
 
     if (sm.vibroEnabled) sm.vibrate(50, "medium");
   });

@@ -4,6 +4,7 @@ import { safeGetLS, safeSetLS, safeRemoveLS } from "../utils.js?v=VERSION";
 import { CustomSelect } from "../custom-select.js?v=VERSION";
 import { APP_EVENTS } from "../constants/events.js?v=VERSION";
 import { STORAGE_KEYS } from "../constants/storage-keys.js?v=VERSION";
+import { emitAppEvent } from "../events/app-events.js?v=VERSION";
 
 import { en } from "./locales/en.js?v=VERSION";
 import { ru } from "./locales/ru.js?v=VERSION";
@@ -99,7 +100,7 @@ export const langManager = {
       }
     });
 
-    document.dispatchEvent(new CustomEvent(APP_EVENTS.LANGUAGE_CHANGED));
+    emitAppEvent(APP_EVENTS.LANGUAGE_CHANGED, undefined);
   },
 };
 

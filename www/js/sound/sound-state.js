@@ -2,6 +2,7 @@
 
 import { APP_EVENTS } from "../constants/events.js?v=VERSION";
 import { STORAGE_KEYS } from "../constants/storage-keys.js?v=VERSION";
+import { emitAppEvent } from "../events/app-events.js?v=VERSION";
 
 export function syncVolumeUI(sm, $, value = sm.volume) {
   const volumeSlider = $("volumeSlider");
@@ -162,11 +163,7 @@ export function applySettings(sm, { $, safeGetLS, safeSetLS }) {
 
   updateVolumeUI($);
 
-  document.dispatchEvent(
-    new CustomEvent(APP_EVENTS.VIBRO_TOGGLED, {
-      detail: { enabled: sm.vibroEnabled },
-    }),
-  );
+  emitAppEvent(APP_EVENTS.VIBRO_TOGGLED, { enabled: sm.vibroEnabled });
 }
 
 export function resetSettings(sm, { safeRemoveLS, applySettings, initAudio }) {

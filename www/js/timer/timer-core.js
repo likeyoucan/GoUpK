@@ -3,6 +3,7 @@
 import { APP_EVENTS } from "../constants/events.js?v=VERSION";
 import { createTimerAlarmScheduler } from "./timer-alarm.js?v=VERSION";
 import { animateGoEnter } from "../utils.js?v=VERSION";
+import { emitAppEvent } from "../events/app-events.js?v=VERSION";
 
 export function setupTimerCore(tm, { showToast, updateText }) {
   const alarmScheduler =
@@ -87,14 +88,10 @@ export function setupTimerCore(tm, { showToast, updateText }) {
       showToast(tm.t("timer_finished"));
     });
 
-    document.dispatchEvent(
-      new CustomEvent(APP_EVENTS.TIMER_COMPLETED, {
-        detail: {
-          at: Date.now(),
-          duration: tm.totalDuration,
-        },
-      }),
-    );
+    emitAppEvent(APP_EVENTS.TIMER_COMPLETED, {
+      at: Date.now(),
+      duration: tm.totalDuration,
+    });
   };
 
   function logExactAlarmHintOnce() {
