@@ -1829,65 +1829,8 @@
       flex-shrink: 0;
     }
 
-    /* Full-width divider when top is collapsed, but keep workout container inset */
-    #view-tabata.split-top-hidden
-      #tb-list-section
-      > .flex-1.border-t.app-border,
-    #view-tabata.split-live[data-split-target="top"]
-      #tb-list-section
-      > .flex-1.border-t.app-border,
-    #view-tabata.split-animating[data-split-target="top"]
-      #tb-list-section
-      > .flex-1.border-t.app-border {
-      position: relative;
-      border-top-width: 0;
-    }
-
-    #view-tabata.split-top-hidden
-      #tb-list-section
-      > .flex-1.border-t.app-border::before,
-    #view-tabata.split-live[data-split-target="top"]
-      #tb-list-section
-      > .flex-1.border-t.app-border::before,
-    #view-tabata.split-animating[data-split-target="top"]
-      #tb-list-section
-      > .flex-1.border-t.app-border::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: -200vw;
-      right: -200vw;
-      height: 1px;
-      background: var(--border-color);
-      pointer-events: none;
-    }
-
-    /* In full-width mode use native border line (no pseudo bleed) */
-    #view-tabata.split-top-hidden
-      #tb-list-section
-      > .flex-1.border-t.app-border,
-    #view-tabata.split-live[data-split-target="top"]
-      #tb-list-section
-      > .flex-1.border-t.app-border,
-    #view-tabata.split-animating[data-split-target="top"]
-      #tb-list-section
-      > .flex-1.border-t.app-border {
-      border-top-width: 1px;
-    }
-
-    #view-tabata.split-top-hidden
-      #tb-list-section
-      > .flex-1.border-t.app-border::before,
-    #view-tabata.split-live[data-split-target="top"]
-      #tb-list-section
-      > .flex-1.border-t.app-border::before,
-    #view-tabata.split-animating[data-split-target="top"]
-      #tb-list-section
-      > .flex-1.border-t.app-border::before {
-      content: none;
-    }
-
-    .mid_content > div.app-border {
+    #view-stopwatch .mid_content > div.app-border,
+    #view-timer .mid_content > div.app-border {
       border: none;
     }
 
