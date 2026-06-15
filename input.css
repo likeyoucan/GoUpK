@@ -1163,19 +1163,16 @@
   }
 
   body.force-light-text .secondary-accent-text {
-    color: color-mix(in srgb, #93c5fd 88%, #ffffff 12%) !important;
+    color: color-mix(in srgb, #93c5fd 88%, #ffffff 12%);
   }
-
   body.force-light-text .secondary-accent-stroke {
-    stroke: color-mix(in srgb, #93c5fd 88%, #ffffff 12%) !important;
+    stroke: color-mix(in srgb, #93c5fd 88%, #ffffff 12%);
   }
-
   body.force-dark-text .secondary-accent-text {
-    color: color-mix(in srgb, #2563eb 84%, #111827 16%) !important;
+    color: color-mix(in srgb, #2563eb 84%, #111827 16%);
   }
-
   body.force-dark-text .secondary-accent-stroke {
-    stroke: color-mix(in srgb, #2563eb 84%, #111827 16%) !important;
+    stroke: color-mix(in srgb, #2563eb 84%, #111827 16%);
   }
 
   body.force-light-text .tr-track,
@@ -4688,6 +4685,7 @@
   height: 100%;
   position: fixed;
   inset: 0;
+  z-in
   &::before,
   &::after {
     content: "";
