@@ -4685,14 +4685,16 @@
   height: 100%;
   position: fixed;
   inset: 0;
-  z-in
+  z-index: 111111111111111111111111111111111111111111111111111111111111;
   &::before,
   &::after {
     content: "";
+    display: block;
     width: 100%;
     height: 40%;
     position: fixed;
     background-color: #ff3333a8;
+    z-index: 111111111111111111111111111111111111111111111111111111111111;
   }
   &::before {
     right: 0;
