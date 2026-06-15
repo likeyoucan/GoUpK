@@ -185,6 +185,14 @@
     --icon-share-hover-bg: color-mix(in srgb, #16a34a 16%, transparent);
     --icon-edit-hover-color: #2563eb;
     --icon-edit-hover-bg: color-mix(in srgb, #2563eb 16%, transparent);
+
+    --forced-secondary-light: color-mix(in srgb, #93c5fd 88%, #ffffff 12%);
+    --forced-secondary-dark: color-mix(in srgb, #2563eb 84%, #111827 16%);
+
+    --nav-contrast-dark: color-mix(in srgb, #ffffff 68%, transparent);
+    --nav-contrast-dark-hover: color-mix(in srgb, #ffffff 82%, transparent);
+    --nav-contrast-force-light: rgb(255 255 255 / 0.78);
+    --nav-contrast-force-dark: rgb(17 24 39 / 0.74);
   }
 
   :root.dark {
@@ -1164,16 +1172,19 @@
   }
 
   body.force-light-text .secondary-accent-text {
-    color: color-mix(in srgb, #93c5fd 88%, #ffffff 12%);
+    color: var(--forced-secondary-light);
   }
+
   body.force-light-text .secondary-accent-stroke {
-    stroke: color-mix(in srgb, #93c5fd 88%, #ffffff 12%);
+    stroke: var(--forced-secondary-light);
   }
+
   body.force-dark-text .secondary-accent-text {
-    color: color-mix(in srgb, #2563eb 84%, #111827 16%);
+    color: var(--forced-secondary-dark);
   }
+
   body.force-dark-text .secondary-accent-stroke {
-    stroke: color-mix(in srgb, #2563eb 84%, #111827 16%);
+    stroke: var(--forced-secondary-dark);
   }
 
   body.force-light-text .tr-track,
@@ -2093,17 +2104,17 @@
       transform: none !important;
     }
 
-    :is(#view-stopwatch, #view-timer, #view-tabata).split-force-middle
-      .resizer_handler {
-      pointer-events: auto !important;
-    }
+:is(#view-stopwatch, #view-timer, #view-tabata).split-force-middle
+  .resizer_handler {
+  pointer-events: auto;
+}
 
     @media (orientation: landscape) {
-      :is(#view-stopwatch, #view-timer, #view-tabata).split-force-middle
-        .view-top-half {
-        min-width: 0 !important;
-        max-width: none !important;
-      }
+     :is(#view-stopwatch, #view-timer, #view-tabata).split-force-middle
+  .view-top-half {
+  min-width: 0;
+  max-width: none;
+}
 
       :is(#view-stopwatch, #view-timer, #view-tabata).split-force-middle
         .view-bottom-half {
@@ -3193,7 +3204,7 @@
   }
 
   .custom-select-trigger .app-text-sec {
-    color: color-mix(in srgb, var(--text-color) 62%, transparent) !important;
+    color: color-mix(in srgb, var(--text-color) 62%, transparent);
   }
 
   .custom-select-option {
@@ -3206,11 +3217,11 @@
       .custom-select-trigger .custom-select-value,
       .custom-select-option
     ) {
-    color: rgb(255 255 255 / 0.92) !important;
+    color: rgb(255 255 255 / 0.92);
   }
 
   body.force-light-text .custom-select-trigger .app-text-sec {
-    color: rgb(255 255 255 / 0.72) !important;
+    color: rgb(255 255 255 / 0.72);
   }
 
   body.force-dark-text
@@ -3219,11 +3230,11 @@
       .custom-select-trigger .custom-select-value,
       .custom-select-option
     ) {
-    color: rgb(17 24 39 / 0.92) !important;
+    color: rgb(17 24 39 / 0.92);
   }
 
   body.force-dark-text .custom-select-trigger .app-text-sec {
-    color: rgb(17 24 39 / 0.64) !important;
+    color: rgb(17 24 39 / 0.64);
   }
 
   @media (hover: hover) {
@@ -4169,11 +4180,11 @@
     color: color-mix(in srgb, var(--primary-color) 82%, #111827 18%);
   }
 
-  html.dark nav .nav-btn > div:not(.primary-text),
-  html.dark nav .nav-btn > span:not(.primary-text) {
-    color: color-mix(in srgb, #ffffff 68%, transparent);
-    opacity: 0.92;
-  }
+html.dark nav .nav-btn > div:not(.primary-text),
+html.dark nav .nav-btn > span:not(.primary-text) {
+  color: var(--nav-contrast-dark);
+  opacity: 0.92;
+}
 
   html.dark nav .nav-btn .primary-text {
     color: color-mix(in srgb, var(--primary-color) 88%, #ffffff 12%);
@@ -4184,17 +4195,17 @@
     border-top-color: color-mix(in srgb, #ffffff 10%, transparent);
   }
 
-  html.dark nav .nav-btn:hover > :is(div, span):not(.primary-text) {
-    color: color-mix(in srgb, #ffffff 82%, transparent);
-  }
+html.dark nav .nav-btn:hover > :is(div, span):not(.primary-text) {
+  color: var(--nav-contrast-dark-hover);
+}
 
-  body.force-light-text nav .nav-btn > :is(div, span):not(.primary-text) {
-    color: rgb(255 255 255 / 0.78);
-  }
+body.force-light-text nav .nav-btn > :is(div, span):not(.primary-text) {
+  color: var(--nav-contrast-force-light);
+}
 
-  body.force-dark-text nav .nav-btn > :is(div, span):not(.primary-text) {
-    color: rgb(17 24 39 / 0.74);
-  }
+body.force-dark-text nav .nav-btn > :is(div, span):not(.primary-text) {
+  color: var(--nav-contrast-force-dark);
+}
 
   /* ACCESSIBILITY + REDUCED MOTION */
   #btn-open-reset {
@@ -4247,7 +4258,7 @@
       :hover,
       :focus-visible
     ) {
-      color: var(--primary-color) !important;
+      color: var(--primary-color);
       background-color: color-mix(
         in srgb,
         var(--primary-color) 14%,
