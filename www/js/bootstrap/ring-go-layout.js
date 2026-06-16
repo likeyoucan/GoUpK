@@ -1,4 +1,6 @@
-// www/js/bootstrap/ring-go-layout.js
+// Файл: www/js/bootstrap/ring-go-layout.js
+
+
 function clamp(v, min, max) {
   return Math.max(min, Math.min(max, v));
 }
@@ -240,8 +242,30 @@ function centerGoDisplay(displayEl) {
   }
 
   const wrap = getRingWrapForDisplay(displayEl);
-  const wrapRect = wrap?.getBoundingClientRect?.();
+  if (!wrap) return;
+
+  const wrapRect = wrap.getBoundingClientRect();
   if (!wrapRect || !wrapRect.width || !wrapRect.height) return;
+
+  const topHalf = getTopHalfEl(wrap);
+  const topRect = topHalf?.getBoundingClientRect?.();
+
+  const targetCx = wrapRect.left + wrapRect.width / 2;
+  const fallbackCy = wrapRect.top + wrapRect.height / 2;
+  const targetCyRaw =
+    topRect && topRect.height > 0
+      ? topRect.top + topRect.height / 2
+      : fallbackCy;
+
+  const targetCy = clamp(targetCyRaw, wrapRect.top + 4, wrapRect.bottom - 4);
+
+  const prevX = displayEl.style.getPropertyValue("--go-nudge-x");
+  const prevY = displayEl.style.getPropertyValue("--go-nudge-y");
+
+  // Measure text in neutral position to avoid cumulative drift.
+  displayEl.style.setProperty("--go-nudge-x", "0px");
+  displayEl.style.setProperty("--go-nudge-y", "0px");
+  void displayEl.offsetWidth;
 
   let inkRect = null;
   const textNode = displayEl.firstChild;
@@ -256,29 +280,20 @@ function centerGoDisplay(displayEl) {
   }
 
   const txtRect = inkRect || displayEl.getBoundingClientRect();
-  if (!txtRect || !txtRect.width || !txtRect.height) return;
+  if (!txtRect || !txtRect.width || !txtRect.height) {
+    displayEl.style.setProperty("--go-nudge-x", prevX || "0px");
+    displayEl.style.setProperty("--go-nudge-y", prevY || "0px");
+    return;
+  }
 
-  const wrapCx = wrapRect.left + wrapRect.width / 2;
-  const wrapCy = wrapRect.top + wrapRect.height / 2;
-  const txtCx = txtRect.left + txtRect.width / 2;
-  const txtCy = txtRect.top + txtRect.height / 2;
-
-  let dx = wrapCx - txtCx;
-  let dy = wrapCy - txtCy;
+  let dx = targetCx - (txtRect.left + txtRect.width / 2);
+  let dy = targetCy - (txtRect.top + txtRect.height / 2);
 
   const opticalUp = Math.max(1.5, txtRect.height * 0.06);
   dy -= opticalUp;
 
-  const prevX = Number(displayEl.dataset.goNudgeX || "0");
-  const prevY = Number(displayEl.dataset.goNudgeY || "0");
-
-  let nextX = snap2(clamp(prevX + dx, -36, 36));
-  let nextY = snap2(clamp(prevY + dy, -36, 36));
-
-  if (Math.abs(dx) < 0.08) nextX = prevX;
-  if (Math.abs(dy) < 0.08) nextY = prevY;
-
-  if (nextX === prevX && nextY === prevY) return;
+  const nextX = snap2(clamp(dx, -36, 36));
+  const nextY = snap2(clamp(dy, -36, 36));
 
   displayEl.style.setProperty("--go-nudge-x", `${nextX}px`);
   displayEl.style.setProperty("--go-nudge-y", `${nextY}px`);
@@ -433,12 +448,24 @@ export function initDynamicRingAndGoLayout() {
     return mo;
   });
 
+  const resetGoNudges = () => {
+    displays.forEach((displayEl) => {
+      if (!displayEl) return;
+      displayEl.style.setProperty("--go-nudge-x", "0px");
+      displayEl.style.setProperty("--go-nudge-y", "0px");
+      displayEl.dataset.goNudgeX = "0";
+      displayEl.dataset.goNudgeY = "0";
+    });
+  };
+
   const onResize = () => {
+    resetGoNudges();
     startSplitTracking(300);
     scheduleRefresh();
   };
 
   const onOrientation = () => {
+    resetGoNudges();
     startSplitTracking(520);
     scheduleRefresh();
   };
