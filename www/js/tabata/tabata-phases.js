@@ -1,4 +1,4 @@
-// Файл: www/js/tabata/tabata-phases.js
+// Файл: www/js/tabata/tabata-phases.js 1
 
 import { showToast, announceToScreenReader } from "../utils.js?v=VERSION";
 import { sm } from "../sound.js?v=VERSION";
