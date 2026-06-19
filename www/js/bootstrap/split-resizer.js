@@ -1,555 +1,25 @@
 // Файл: www/js/bootstrap/split-resizer.js
 
-const VIEW_IDS = ["view-stopwatch", "view-timer", "view-tabata"];
+import { VIEW_IDS, SPLIT_BEHAVIOR } from "./split-resizer/constants.js?v=VERSION";
+import {
+  isRowLayout,
+  getForcedTargetForViewport,
+} from "./split-resizer/viewport.js?v=VERSION";
+import { applySnapToAll, getTargetFromGlobalSnap } from "./split-resizer/apply.js?v=VERSION";
+import { setupOneView } from "./split-resizer/view-controller.js?v=VERSION";
 
-let views = [];
-let detachViewportListeners = null;
-let globalSnap = "middle"; // "top" | "middle" | "bottom"
-
-const SPLIT_BEHAVIOR = {
-  overlayWhenBottomHidden: true,
+const ctx = {
+  views: [],
+  detachViewportListeners: null,
+  globalSnap: "middle",
+  behavior: SPLIT_BEHAVIOR,
 };
-
-const VIEWPORT_POLICY = {
-  emergencyHeightMax: 320,
-};
-
-function clamp(v, min, max) {
-  return Math.max(min, Math.min(max, v));
-}
-
-function isRowLayout(viewEl) {
-  return getComputedStyle(viewEl).flexDirection.startsWith("row");
-}
-
-function getViewportRatio() {
-  const w = window.innerWidth || 0;
-  const h = window.innerHeight || 0;
-  if (!w || !h) return 1;
-  return w / h;
-}
-
-function isNearSquareLandscape() {
-  const w = window.innerWidth || 0;
-  const ratio = getViewportRatio();
-  return ratio > 1 && ratio <= 1.2 && w < 900;
-}
-
-function getViewportRawMax() {
-  return isNearSquareLandscape() ? 92 : 100;
-}
-
-function getMiddleAnchor() {
-  const ratio = getViewportRatio();
-  if (ratio >= 1.15) return 50;
-  if (ratio >= 0.9 && ratio <= 1.1) return 55;
-  return 60;
-}
-
-function getForcedTargetForViewport() {
-  const h = window.innerHeight || 0;
-  if (h <= VIEWPORT_POLICY.emergencyHeightMax) {
-    return getMiddleAnchor();
-  }
-  return null;
-}
-
-function normalizeTargetForGeometry(target) {
-  if (isNearSquareLandscape() && target === 100) {
-    return getMiddleAnchor();
-  }
-  return target;
-}
-
-function normalizeTargetForViewport(target) {
-  const forced = getForcedTargetForViewport();
-  const base = forced == null ? target : forced;
-  return normalizeTargetForGeometry(base);
-}
-
-function targetToName(target, middle) {
-  if (target === 0) return "top";
-  if (target === 100) return "bottom";
-  if (target === middle) return "middle";
-  return "middle";
-}
-
-function nameToTarget(name, middle) {
-  if (name === "top") return 0;
-  if (name === "bottom") return 100;
-  return middle;
-}
-
-function nearestAnchor(value, anchors) {
-  let best = anchors[0];
-  let bestDist = Math.abs(value - best);
-
-  for (let i = 1; i < anchors.length; i += 1) {
-    const d = Math.abs(value - anchors[i]);
-    if (d < bestDist) {
-      bestDist = d;
-      best = anchors[i];
-    }
-  }
-
-  return best;
-}
-
-function setStateClass(viewEl, target) {
-  viewEl.classList.remove(
-    "split-top-hidden",
-    "split-middle",
-    "split-bottom-hidden",
-  );
-  if (target === 0) viewEl.classList.add("split-top-hidden");
-  else if (target === 100) viewEl.classList.add("split-bottom-hidden");
-  else viewEl.classList.add("split-middle");
-}
-
-function setCollapseFx(viewEl, raw) {
-  const middle = getMiddleAnchor();
-  const topLinear = clamp((middle - raw) / middle, 0, 1);
-  const bottomLinear = clamp((raw - middle) / (100 - middle), 0, 1);
-
-  const topK = Math.pow(topLinear, 1.15);
-  const bottomK = Math.pow(bottomLinear, 1.15);
-
-  viewEl.style.setProperty("--collapse-top-k", topK.toFixed(3));
-  viewEl.style.setProperty("--collapse-bottom-k", bottomK.toFixed(3));
-}
-
-function setHandlerA11y(handler, snapValue) {
-  const middle = getMiddleAnchor();
-  const normalized = snapValue === middle ? middle : snapValue === 0 ? 0 : 100;
-
-  handler.setAttribute("role", "slider");
-  handler.setAttribute("aria-valuemin", "0");
-  handler.setAttribute("aria-valuemax", "100");
-  handler.setAttribute("aria-valuenow", String(normalized));
-  handler.setAttribute(
-    "aria-valuetext",
-    normalized === middle ? `middle ${middle}%` : `${normalized}%`,
-  );
-}
-
-function getTargetFromGlobalSnap() {
-  const middle = getMiddleAnchor();
-  const target = nameToTarget(globalSnap, middle);
-  return normalizeTargetForViewport(target);
-}
-
-function applyOverlayFlag(viewEl, target, { liveRaw = null } = {}) {
-  if (!SPLIT_BEHAVIOR.overlayWhenBottomHidden) {
-    viewEl.dataset.splitOverlayBottom = "0";
-    return;
-  }
-
-  if (!isRowLayout(viewEl)) {
-    viewEl.dataset.splitOverlayBottom = "0";
-    return;
-  }
-
-  if (target === 100) {
-    viewEl.dataset.splitOverlayBottom = "1";
-    return;
-  }
-
-  if (typeof liveRaw === "number" && liveRaw >= 94) {
-    viewEl.dataset.splitOverlayBottom = "1";
-    return;
-  }
-
-  viewEl.dataset.splitOverlayBottom = "0";
-}
-
-function updateAllA11y() {
-  const target = getTargetFromGlobalSnap();
-  views.forEach((v) => {
-    if (v.handler) setHandlerA11y(v.handler, target);
-  });
-}
-
-function applySnapToAll(target, { animate = true, duration = 240 } = {}) {
-  const forcedTarget = getForcedTargetForViewport();
-  if (forcedTarget != null) target = forcedTarget;
-
-  target = normalizeTargetForViewport(target);
-
-  const middle = getMiddleAnchor();
-  const forcedMiddle =
-    forcedTarget !== null && forcedTarget !== 0 && forcedTarget !== 100;
-
-  if (forcedMiddle) target = middle;
-
-  const visualTarget = target === 0 ? 0.15 : target === 100 ? 99.85 : middle;
-  const targetName = targetToName(target, middle);
-
-  views.forEach(({ viewEl, topHalf }) => {
-    if (!viewEl || !topHalf) return;
-
-    viewEl.classList.toggle("split-force-middle", forcedMiddle);
-    viewEl.dataset.splitTarget = targetName;
-    applyOverlayFlag(viewEl, target);
-
-    if (!animate) {
-      viewEl.classList.remove("split-live", "split-animating");
-      viewEl.style.setProperty("--split", `${visualTarget}%`);
-      setStateClass(viewEl, target);
-      setCollapseFx(viewEl, target === 0 ? 0 : target === 100 ? 100 : middle);
-      viewEl.dataset.splitTarget = "";
-      return;
-    }
-
-    viewEl.style.setProperty("--split-snap-duration", `${duration}ms`);
-    viewEl.classList.remove("split-live");
-    viewEl.classList.add("split-animating");
-
-    setStateClass(viewEl, middle);
-    viewEl.style.setProperty("--split", `${visualTarget}%`);
-    setCollapseFx(viewEl, visualTarget);
-
-    let done = false;
-    const finish = () => {
-      if (done) return;
-      done = true;
-      viewEl.classList.remove("split-animating");
-      setStateClass(viewEl, target);
-      setCollapseFx(viewEl, target === 0 ? 0 : target === 100 ? 100 : middle);
-      applyOverlayFlag(viewEl, target);
-      viewEl.dataset.splitTarget = "";
-    };
-
-    const onEnd = (e) => {
-      if (e.target !== topHalf || e.propertyName !== "flex-basis") return;
-      topHalf.removeEventListener("transitionend", onEnd);
-      finish();
-    };
-
-    topHalf.addEventListener("transitionend", onEnd);
-    setTimeout(() => {
-      topHalf.removeEventListener("transitionend", onEnd);
-      finish();
-    }, duration + 90);
-  });
-
-  globalSnap = targetName;
-  updateAllA11y();
-}
-
-function getInertiaTuning(pointerType) {
-  if (pointerType === "mouse") {
-    return { gain: 55, maxShift: 4, keep: 0.9, add: 0.1, duration: 220 };
-  }
-  if (pointerType === "pen") {
-    return { gain: 90, maxShift: 7, keep: 0.82, add: 0.18, duration: 240 };
-  }
-  return { gain: 130, maxShift: 9, keep: 0.76, add: 0.24, duration: 280 };
-}
-
-function setupOneView(ctx) {
-  const { viewEl, handler } = ctx;
-  if (!viewEl || !handler) return () => {};
-
-  const localDisposers = [];
-  const on = (el, event, fn, options) => {
-    el.addEventListener(event, fn, options);
-    localDisposers.push(() => el.removeEventListener(event, fn, options));
-  };
-
-  const SNAP_THRESHOLD = 10;
-
-  let dragging = false;
-  let activePointerType = "touch";
-  let lastRaw = getTargetFromGlobalSnap();
-
-  let lastTs = 0;
-  let lastRawForVel = lastRaw;
-  let velocity = 0;
-  let tapTimer = null;
-
-  let windowMoveHandler = null;
-  let windowUpHandler = null;
-
-  const removeWindowDragListeners = () => {
-    if (windowMoveHandler) {
-      window.removeEventListener("pointermove", windowMoveHandler);
-      windowMoveHandler = null;
-    }
-    if (windowUpHandler) {
-      window.removeEventListener("pointerup", windowUpHandler);
-      window.removeEventListener("pointercancel", windowUpHandler);
-      windowUpHandler = null;
-    }
-  };
-
-  const getAnchors = () => {
-    const forced = getForcedTargetForViewport();
-    if (forced != null) return [forced];
-    return [0, getMiddleAnchor(), 100];
-  };
-
-  const pointerToRaw = (ev) => {
-    const rect = viewEl.getBoundingClientRect();
-    const rawMax = getViewportRawMax();
-
-    if (isRowLayout(viewEl)) {
-      return clamp(
-        ((ev.clientX - rect.left) / Math.max(1, rect.width)) * 100,
-        0,
-        rawMax,
-      );
-    }
-
-    const bottomHalf = viewEl.querySelector(".view-bottom-half");
-    const bottomPad = bottomHalf
-      ? parseFloat(getComputedStyle(bottomHalf).paddingBottom || "0")
-      : 0;
-
-    const handlerPx = handler.getBoundingClientRect().height || 16;
-    const usableHeight = Math.max(1, rect.height - bottomPad - handlerPx);
-
-    return clamp(((ev.clientY - rect.top) / usableHeight) * 100, 0, rawMax);
-  };
-
-  const applyLive = (raw) => {
-    const rawMax = getViewportRawMax();
-    const forced = getForcedTargetForViewport();
-
-    lastRaw = clamp(raw, 0, rawMax);
-    if (forced != null) lastRaw = forced;
-    lastRaw = Math.min(lastRaw, rawMax);
-
-    viewEl.classList.toggle(
-      "split-force-middle",
-      forced !== null && forced !== 0 && forced !== 100,
-    );
-
-    viewEl.classList.add("split-live");
-    viewEl.classList.remove(
-      "split-top-hidden",
-      "split-middle",
-      "split-bottom-hidden",
-    );
-
-    viewEl.dataset.splitTarget = lastRaw >= 96.5 ? "bottom" : "";
-
-    applyOverlayFlag(viewEl, null, { liveRaw: lastRaw });
-
-    viewEl.style.setProperty("--split", `${lastRaw}%`);
-    setCollapseFx(viewEl, lastRaw);
-
-    handler.setAttribute("aria-valuenow", String(Math.round(lastRaw)));
-  };
-
-  const snapFromCurrent = () => {
-    const anchors = getAnchors();
-    const tuning = getInertiaTuning(activePointerType);
-
-    if (anchors.length === 1) {
-      applySnapToAll(anchors[0], { animate: true, duration: 220 });
-      return;
-    }
-
-    const inertiaShift = clamp(
-      velocity * tuning.gain,
-      -tuning.maxShift,
-      tuning.maxShift,
-    );
-
-    const projected = clamp(lastRaw + inertiaShift, 0, getViewportRawMax());
-    const middle = getMiddleAnchor();
-
-    let target;
-    if (isNearSquareLandscape()) {
-      if (Math.abs(projected - 0) <= SNAP_THRESHOLD) target = 0;
-      else target = middle;
-    } else {
-      if (Math.abs(projected - 0) <= SNAP_THRESHOLD) target = 0;
-      else if (Math.abs(projected - middle) <= SNAP_THRESHOLD) target = middle;
-      else if (Math.abs(projected - 100) <= SNAP_THRESHOLD) target = 100;
-      else target = nearestAnchor(projected, anchors);
-    }
-
-    applySnapToAll(target, { animate: true, duration: tuning.duration });
-  };
-
-  const cycleState = () => {
-    const forced = getForcedTargetForViewport();
-    if (forced != null) {
-      applySnapToAll(forced, { animate: true, duration: 220 });
-      return;
-    }
-
-    const middle = getMiddleAnchor();
-    const currentTarget = getTargetFromGlobalSnap();
-
-    if (isNearSquareLandscape()) {
-      applySnapToAll(currentTarget === 0 ? middle : 0, {
-        animate: true,
-        duration: 240,
-      });
-      return;
-    }
-
-    if (currentTarget === 0) {
-      applySnapToAll(middle, { animate: true, duration: 240 });
-      return;
-    }
-
-    if (currentTarget === middle) {
-      applySnapToAll(100, { animate: true, duration: 240 });
-      return;
-    }
-
-    applySnapToAll(0, { animate: true, duration: 240 });
-  };
-
-  handler.setAttribute("tabindex", "0");
-  handler.setAttribute("aria-label", "Split view size");
-
-  const onPointerDown = (e) => {
-    if (e.button !== undefined && e.button !== 0) return;
-    e.preventDefault();
-
-    dragging = true;
-    activePointerType = e.pointerType || "touch";
-    velocity = 0;
-    lastTs = performance.now();
-
-    lastRaw =
-      parseFloat(viewEl.style.getPropertyValue("--split")) ||
-      getTargetFromGlobalSnap();
-
-    lastRawForVel = lastRaw;
-
-    handler.classList.add("is-dragging");
-    handler.setPointerCapture?.(e.pointerId);
-
-    const onMove = (ev) => {
-      if (!dragging) return;
-
-      const raw = pointerToRaw(ev);
-      const now = performance.now();
-      const dt = Math.max(1, now - lastTs);
-      const instV = (raw - lastRawForVel) / dt;
-
-      const tune = getInertiaTuning(activePointerType);
-      velocity = velocity * tune.keep + instV * tune.add;
-
-      lastTs = now;
-      lastRawForVel = raw;
-
-      applyLive(raw);
-    };
-
-    const onUp = () => {
-      if (!dragging) return;
-
-      dragging = false;
-      handler.classList.remove("is-dragging");
-      snapFromCurrent();
-
-      removeWindowDragListeners();
-    };
-
-    windowMoveHandler = onMove;
-    windowUpHandler = onUp;
-
-    window.addEventListener("pointermove", onMove);
-    window.addEventListener("pointerup", onUp);
-    window.addEventListener("pointercancel", onUp);
-  };
-
-  const onClick = () => {
-    if (dragging) return;
-
-    if (tapTimer) {
-      clearTimeout(tapTimer);
-      tapTimer = null;
-      cycleState();
-      return;
-    }
-
-    tapTimer = setTimeout(() => {
-      tapTimer = null;
-    }, 260);
-  };
-
-  const onKeydown = (e) => {
-    const forced = getForcedTargetForViewport();
-    if (forced != null) {
-      e.preventDefault();
-      applySnapToAll(forced, { animate: true, duration: 220 });
-      return;
-    }
-
-    const middle = getMiddleAnchor();
-    const endTarget = isNearSquareLandscape() ? middle : 100;
-
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      cycleState();
-      return;
-    }
-
-    if (e.key === "Home") {
-      e.preventDefault();
-      applySnapToAll(0, { animate: true, duration: 220 });
-      return;
-    }
-
-    if (e.key === "End") {
-      e.preventDefault();
-      applySnapToAll(endTarget, { animate: true, duration: 220 });
-      return;
-    }
-
-    if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
-      e.preventDefault();
-      applySnapToAll(0, { animate: true, duration: 220 });
-      return;
-    }
-
-    if (e.key === "ArrowRight" || e.key === "ArrowDown") {
-      e.preventDefault();
-      applySnapToAll(endTarget, { animate: true, duration: 220 });
-      return;
-    }
-
-    if (e.key === "m" || e.key === "M") {
-      e.preventDefault();
-      applySnapToAll(middle, { animate: true, duration: 220 });
-    }
-  };
-
-  on(handler, "pointerdown", onPointerDown);
-  on(handler, "click", onClick);
-  on(handler, "keydown", onKeydown);
-
-  return () => {
-    if (tapTimer) {
-      clearTimeout(tapTimer);
-      tapTimer = null;
-    }
-
-    dragging = false;
-    removeWindowDragListeners();
-
-    localDisposers.forEach((off) => {
-      try {
-        off?.();
-      } catch (err) {
-        console.error("[split-resizer.dispose.view]", err);
-      }
-    });
-  };
-}
 
 export function initSplitResizer() {
-  detachViewportListeners?.();
-  detachViewportListeners = null;
+  ctx.detachViewportListeners?.();
+  ctx.detachViewportListeners = null;
 
-  views = VIEW_IDS.map((id) => {
+  ctx.views = VIEW_IDS.map((id) => {
     const viewEl = document.getElementById(id);
     if (!viewEl) return null;
 
@@ -560,31 +30,31 @@ export function initSplitResizer() {
     };
   }).filter(Boolean);
 
-  const viewDisposers = views.map(setupOneView).filter(Boolean);
+  const viewDisposers = ctx.views.map((v) => setupOneView(ctx, v)).filter(Boolean);
 
-  applySnapToAll(getTargetFromGlobalSnap(), { animate: false });
+  applySnapToAll(ctx, getTargetFromGlobalSnap(ctx), { animate: false });
 
   const onViewportResize = () => {
     const forced = getForcedTargetForViewport();
 
     if (forced != null) {
-      globalSnap = forced === 0 ? "top" : "middle";
-      applySnapToAll(forced, { animate: false });
+      ctx.globalSnap = forced === 0 ? "top" : "middle";
+      applySnapToAll(ctx, forced, { animate: false });
       return;
     }
 
-    const anyRow = views.some((v) => v?.viewEl && isRowLayout(v.viewEl));
-    if (anyRow && globalSnap === "bottom") {
-      globalSnap = "middle";
+    const anyRow = ctx.views.some((v) => v?.viewEl && isRowLayout(v.viewEl));
+    if (anyRow && ctx.globalSnap === "bottom") {
+      ctx.globalSnap = "middle";
     }
 
-    applySnapToAll(getTargetFromGlobalSnap(), { animate: false });
+    applySnapToAll(ctx, getTargetFromGlobalSnap(ctx), { animate: false });
   };
 
   window.addEventListener("resize", onViewportResize);
   window.addEventListener("orientationchange", onViewportResize);
 
-  detachViewportListeners = () => {
+  ctx.detachViewportListeners = () => {
     window.removeEventListener("resize", onViewportResize);
     window.removeEventListener("orientationchange", onViewportResize);
 
@@ -597,5 +67,5 @@ export function initSplitResizer() {
     });
   };
 
-  return detachViewportListeners;
+  return ctx.detachViewportListeners;
 }

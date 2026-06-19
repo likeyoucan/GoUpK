@@ -1,305 +1,22 @@
 // Файл: www/js/bootstrap/ring-go-layout.js
 
-
-function clamp(v, min, max) {
-  return Math.max(min, Math.min(max, v));
-}
-
-function snap2(px) {
-  return Math.round(px * 2) / 2;
-}
-
-function snap4(px) {
-  return Math.round(px / 4) * 4;
-}
-
-function getTopHalfEl(wrap) {
-  return wrap.closest(".view-top-half");
-}
-
-function getViewElFromWrap(wrap) {
-  return wrap.closest("#view-stopwatch, #view-timer, #view-tabata");
-}
-
-function getRingWrapForDisplay(displayEl) {
-  if (!displayEl) return null;
-  return displayEl.closest(".timer-circle-wrap");
-}
-
-function isRowLayout(topHalfEl) {
-  if (!topHalfEl) return false;
-
-  const parentView = topHalfEl.closest(
-    "#view-stopwatch, #view-timer, #view-tabata",
-  );
-  if (!parentView) return false;
-
-  return getComputedStyle(parentView).flexDirection.startsWith("row");
-}
-
-function isCompactViewport() {
-  return window.innerHeight < 430 || window.innerWidth < 280;
-}
-
-function isCompactRing(ringPx) {
-  return ringPx < 180 || isCompactViewport();
-}
-
-function isGoDisplay(displayEl) {
-  if (!displayEl) return false;
-  const text = String(displayEl.textContent || "")
-    .trim()
-    .toUpperCase();
-  return displayEl.classList.contains("is-go") && text === "GO";
-}
-
-function triggerGoEnter(displayEl) {
-  if (!isGoDisplay(displayEl)) return;
-  displayEl.classList.remove("go-enter");
-  void displayEl.offsetWidth;
-  displayEl.classList.add("go-enter");
-}
-
-function triggerTimeEnter(displayEl) {
-  if (!displayEl) return;
-
-  const text = String(displayEl.textContent || "")
-    .trim()
-    .toUpperCase();
-  const isTimeLike = text !== "GO" && /[:\d]/.test(text);
-  if (!isTimeLike) return;
-
-  displayEl.classList.remove("time-enter");
-  void displayEl.offsetWidth;
-  displayEl.classList.add("time-enter");
-}
-
-function calcDynamicRingSizePx(wrap) {
-  const topHalfEl = getTopHalfEl(wrap);
-  const rect = topHalfEl?.getBoundingClientRect?.();
-
-  if (!rect) {
-    const fallback = Math.min(wrap.clientWidth || 0, wrap.clientHeight || 0);
-    const row = isRowLayout(topHalfEl);
-    const isMobilePortrait = window.matchMedia(
-      "(max-width: 767px) and (orientation: portrait)",
-    ).matches;
-
-    if (isMobilePortrait) {
-      return snap4(clamp(fallback * 0.62, 148, 380));
-    }
-
-    return snap4(clamp(fallback * 0.68, 172, row ? 580 : 680));
-  }
-
-  const limitingSide = Math.min(rect.width, rect.height);
-  const row = isRowLayout(topHalfEl);
-
-  const isMobilePortrait = window.matchMedia(
-    "(max-width: 767px) and (orientation: portrait)",
-  ).matches;
-
-  let k = row ? 0.64 : 0.92;
-  if (isMobilePortrait) {
-    k = 0.8;
-  }
-
-  const maxPx = row ? 580 : isMobilePortrait ? 560 : 680;
-  const minPx = row ? 200 : isMobilePortrait ? 180 : 220;
-
-  return snap4(clamp(limitingSide * k, minPx, maxPx));
-}
-
-function getRenderedRingPx(wrap, fallback) {
-  const r = wrap.getBoundingClientRect();
-  const v = Math.min(r.width || 0, r.height || 0);
-  return v > 0 ? v : fallback;
-}
-
-function setGoFontStable(displayEl, nextPx) {
-  const prev = Number(displayEl.dataset.goFontPx || "0");
-
-  if (prev > 0 && Math.abs(nextPx - prev) < 0.8) {
-    return;
-  }
-
-  displayEl.style.setProperty("--go-font-dynamic", `${nextPx}px`);
-  displayEl.dataset.goFontPx = String(nextPx);
-}
-
-function applyMetaTextScale(wrap, ringPx, rowLayout) {
-  if (!wrap || !ringPx) return;
-
-  const compact = isCompactRing(ringPx);
-
-  const metaFontPx = snap2(
-    clamp(
-      ringPx *
-        (compact ? (rowLayout ? 0.044 : 0.046) : rowLayout ? 0.054 : 0.05),
-      compact ? 8 : 10,
-      compact ? 12 : rowLayout ? 17 : 20,
-    ),
-  );
-
-  const statusOffsetPx = snap2(
-    clamp(
-      ringPx * (compact ? 0.22 : rowLayout ? 0.26 : 0.28),
-      compact ? 20 : 48,
-      compact ? 56 : rowLayout ? 112 : 140,
-    ),
-  );
-
-  const extendedOffsetPx = snap2(
-    clamp(
-      ringPx * (compact ? 0.22 : rowLayout ? 0.26 : 0.28),
-      compact ? 20 : 48,
-      compact ? 56 : rowLayout ? 112 : 140,
-    ),
-  );
-
-  const statusNudgePx = rowLayout ? 4 : 2;
-  const extendedNudgePx = rowLayout ? 1 : 0;
-
-  wrap.style.setProperty("--ring-meta-font-px", `${metaFontPx}px`);
-  wrap.style.setProperty("--ring-status-offset-px", `${statusOffsetPx}px`);
-  wrap.style.setProperty("--ring-extended-offset-px", `${extendedOffsetPx}px`);
-  wrap.style.setProperty("--ring-status-nudge-y", `${statusNudgePx}px`);
-  wrap.style.setProperty("--ring-extended-nudge-y", `${extendedNudgePx}px`);
-}
-
-function applyDisplayScale(displayEl, ringPx, rowLayout, renderedRingPx) {
-  if (!displayEl || !ringPx) return;
-
-  const text = String(displayEl.textContent || "").trim();
-  const isGo =
-    displayEl.classList.contains("is-go") && text.toUpperCase() === "GO";
-
-  if (isGo) {
-    const ringForGo = renderedRingPx || ringPx;
-    const compact = isCompactRing(ringForGo);
-
-    const minGo = compact ? 28 : rowLayout ? 44 : 48;
-    const maxGo = compact ? 76 : rowLayout ? 132 : 168;
-
-    let goPx = ringForGo * 0.258;
-    goPx = clamp(goPx, minGo, maxGo);
-
-    displayEl.style.setProperty("--go-skew-deg", "-11deg");
-
-    const renderedWordW = displayEl.getBoundingClientRect().width || 0;
-    if (renderedWordW > 0) {
-      const targetWordW = ringForGo * (compact ? 0.42 : 0.355);
-      const k = clamp(targetWordW / renderedWordW, 0.88, 1.14);
-      goPx = clamp(goPx * k, minGo, maxGo);
-    }
-
-    goPx = snap2(goPx);
-    setGoFontStable(displayEl, goPx);
-    return;
-  }
-
-  const compact = isCompactRing(ringPx);
-  const hasMs = text.includes(".");
-
-  const base = compact
-    ? hasMs
-      ? 0.155
-      : 0.175
-    : rowLayout
-      ? hasMs
-        ? 0.132
-        : 0.152
-      : hasMs
-        ? 0.128
-        : 0.148;
-
-  const rawTimer = ringPx * base;
-  const minPx = compact ? 10 : rowLayout ? 12 : 14;
-  const hardMaxPx = compact ? 36 : rowLayout ? 64 : 84;
-  const ratioMaxPx = ringPx * (hasMs ? 0.24 : 0.27);
-
-  const timerPx = snap2(
-    clamp(rawTimer, minPx, Math.min(hardMaxPx, ratioMaxPx)),
-  );
-
-  displayEl.style.setProperty("--timer-font-dynamic", `${timerPx}px`);
-}
-
-function centerGoDisplay(displayEl) {
-  if (!displayEl) return;
-
-  const text = String(displayEl.textContent || "")
-    .trim()
-    .toUpperCase();
-  const isGo = displayEl.classList.contains("is-go") && text === "GO";
-
-  if (!isGo) {
-    displayEl.style.setProperty("--go-nudge-x", "0px");
-    displayEl.style.setProperty("--go-nudge-y", "0px");
-    displayEl.dataset.goNudgeX = "0";
-    displayEl.dataset.goNudgeY = "0";
-    return;
-  }
-
-  const wrap = getRingWrapForDisplay(displayEl);
-  if (!wrap) return;
-
-  const wrapRect = wrap.getBoundingClientRect();
-  if (!wrapRect || !wrapRect.width || !wrapRect.height) return;
-
-  const topHalf = getTopHalfEl(wrap);
-  const topRect = topHalf?.getBoundingClientRect?.();
-
-  const targetCx = wrapRect.left + wrapRect.width / 2;
-  const fallbackCy = wrapRect.top + wrapRect.height / 2;
-  const targetCyRaw =
-    topRect && topRect.height > 0
-      ? topRect.top + topRect.height / 2
-      : fallbackCy;
-
-  const targetCy = clamp(targetCyRaw, wrapRect.top + 4, wrapRect.bottom - 4);
-
-  const prevX = displayEl.style.getPropertyValue("--go-nudge-x");
-  const prevY = displayEl.style.getPropertyValue("--go-nudge-y");
-
-  // Measure text in neutral position to avoid cumulative drift.
-  displayEl.style.setProperty("--go-nudge-x", "0px");
-  displayEl.style.setProperty("--go-nudge-y", "0px");
-  void displayEl.offsetWidth;
-
-  let inkRect = null;
-  const textNode = displayEl.firstChild;
-  if (textNode && textNode.nodeType === Node.TEXT_NODE) {
-    const range = document.createRange();
-    range.selectNodeContents(displayEl);
-    const r = range.getBoundingClientRect();
-    if (r && r.width > 0 && r.height > 0) {
-      inkRect = r;
-    }
-    range.detach?.();
-  }
-
-  const txtRect = inkRect || displayEl.getBoundingClientRect();
-  if (!txtRect || !txtRect.width || !txtRect.height) {
-    displayEl.style.setProperty("--go-nudge-x", prevX || "0px");
-    displayEl.style.setProperty("--go-nudge-y", prevY || "0px");
-    return;
-  }
-
-  let dx = targetCx - (txtRect.left + txtRect.width / 2);
-  let dy = targetCy - (txtRect.top + txtRect.height / 2);
-
-  const opticalUp = Math.max(1.5, txtRect.height * 0.06);
-  dy -= opticalUp;
-
-  const nextX = snap2(clamp(dx, -36, 36));
-  const nextY = snap2(clamp(dy, -36, 36));
-
-  displayEl.style.setProperty("--go-nudge-x", `${nextX}px`);
-  displayEl.style.setProperty("--go-nudge-y", `${nextY}px`);
-  displayEl.dataset.goNudgeX = String(nextX);
-  displayEl.dataset.goNudgeY = String(nextY);
-}
+import {
+  calcDynamicRingSizePx,
+  getRenderedRingPx,
+  getRingWrapForDisplay,
+  getTopHalfEl,
+  getViewElFromWrap,
+} from "./ring-go-layout/geometry.js?v=VERSION";
+import { applyMetaTextScale, applyDisplayScale } from "./ring-go-layout/scale.js?v=VERSION";
+import {
+  isGoDisplay,
+  getDisplayState,
+  setDisplayState,
+  triggerGoEnter,
+  triggerTimeEnter,
+  centerGoDisplay,
+  resetGoNudges,
+} from "./ring-go-layout/go-center.js?v=VERSION";
 
 export function initDynamicRingAndGoLayout() {
   const wraps = Array.from(document.querySelectorAll(".timer-circle-wrap"));
@@ -310,13 +27,14 @@ export function initDynamicRingAndGoLayout() {
   ].filter(Boolean);
 
   if (!wraps.length && !displays.length) {
-    return () => {};
+    return () => { };
   }
 
   let rafId = 0;
   let splitTrackRaf = 0;
   let splitTrackUntil = 0;
   let settleCenterRaf = 0;
+  let needsSettleCenter = false;
 
   const refreshNow = () => {
     rafId = 0;
@@ -331,25 +49,25 @@ export function initDynamicRingAndGoLayout() {
       wrap.style.setProperty("--ring-size-dynamic", `${px.toFixed(2)}px`);
       const renderedRingPx = getRenderedRingPx(wrap, px);
 
-      const topHalf = getTopHalfEl(wrap);
-      const rowLayout = isRowLayout(topHalf);
-
-      applyMetaTextScale(wrap, renderedRingPx, rowLayout);
+      applyMetaTextScale(wrap, renderedRingPx);
 
       displays.forEach((displayEl) => {
         const ownWrap = getRingWrapForDisplay(displayEl);
         if (ownWrap === wrap) {
-          applyDisplayScale(displayEl, px, rowLayout, renderedRingPx);
+          applyDisplayScale(displayEl, px, renderedRingPx);
         }
       });
     });
 
     displays.forEach((displayEl) => {
       if (!getRingWrapForDisplay(displayEl)) {
-        applyDisplayScale(displayEl, 320, false, 320);
+        applyDisplayScale(displayEl, 320, 320);
       }
       centerGoDisplay(displayEl);
     });
+
+    if (!needsSettleCenter) return;
+    needsSettleCenter = false;
 
     if (settleCenterRaf) cancelAnimationFrame(settleCenterRaf);
     settleCenterRaf = requestAnimationFrame(() => {
@@ -358,7 +76,8 @@ export function initDynamicRingAndGoLayout() {
     });
   };
 
-  const scheduleRefresh = () => {
+  const scheduleRefresh = ({ settleCenter = false } = {}) => {
+    if (settleCenter) needsSettleCenter = true;
     if (rafId) return;
     rafId = requestAnimationFrame(refreshNow);
   };
@@ -369,7 +88,7 @@ export function initDynamicRingAndGoLayout() {
 
     const loop = () => {
       splitTrackRaf = 0;
-      scheduleRefresh();
+      scheduleRefresh({ settleCenter: false });
 
       if (performance.now() < splitTrackUntil) {
         splitTrackRaf = requestAnimationFrame(loop);
@@ -381,7 +100,7 @@ export function initDynamicRingAndGoLayout() {
 
   const ro =
     typeof ResizeObserver !== "undefined"
-      ? new ResizeObserver(scheduleRefresh)
+      ? new ResizeObserver(() => scheduleRefresh({ settleCenter: false }))
       : null;
 
   wraps.forEach((wrap) => {
@@ -397,34 +116,37 @@ export function initDynamicRingAndGoLayout() {
   });
 
   displays.forEach((displayEl) => {
-    displayEl.dataset.wasGo = isGoDisplay(displayEl) ? "1" : "0";
+    setDisplayState(displayEl, {
+      wasGo: isGoDisplay(displayEl),
+      text: String(displayEl.textContent || "").trim(),
+    });
   });
 
   requestAnimationFrame(() => {
     displays.forEach((displayEl) => {
-      if (isGoDisplay(displayEl)) {
-        triggerGoEnter(displayEl);
-      }
+      if (isGoDisplay(displayEl)) triggerGoEnter(displayEl);
     });
   });
 
   const handleDisplayMutation = (displayEl) => {
-    const wasGo = displayEl.dataset.wasGo === "1";
+    const prev = getDisplayState(displayEl);
+    const text = String(displayEl.textContent || "").trim();
     const nowGo = isGoDisplay(displayEl);
 
-    if (nowGo && !wasGo) {
+    if (nowGo && !prev.wasGo) {
       triggerGoEnter(displayEl);
-    } else if (!nowGo && wasGo) {
+    } else if (!nowGo && prev.wasGo) {
       requestAnimationFrame(() => {
-        if (!isGoDisplay(displayEl)) {
-          triggerTimeEnter(displayEl);
-        }
+        if (!isGoDisplay(displayEl)) triggerTimeEnter(displayEl);
       });
+    } else if (text !== prev.text && !nowGo) {
+      triggerTimeEnter(displayEl);
     }
 
-    displayEl.dataset.wasGo = nowGo ? "1" : "0";
+    setDisplayState(displayEl, { wasGo: nowGo, text });
+
     startSplitTracking(120);
-    scheduleRefresh();
+    scheduleRefresh({ settleCenter: false });
   };
 
   const classObservers = displays.map((displayEl) => {
@@ -438,41 +160,29 @@ export function initDynamicRingAndGoLayout() {
 
   const textObservers = displays.map((displayEl) => {
     const mo = new MutationObserver(() => handleDisplayMutation(displayEl));
-
     mo.observe(displayEl, {
       characterData: true,
       childList: true,
       subtree: true,
     });
-
     return mo;
   });
 
-  const resetGoNudges = () => {
-    displays.forEach((displayEl) => {
-      if (!displayEl) return;
-      displayEl.style.setProperty("--go-nudge-x", "0px");
-      displayEl.style.setProperty("--go-nudge-y", "0px");
-      displayEl.dataset.goNudgeX = "0";
-      displayEl.dataset.goNudgeY = "0";
-    });
-  };
-
   const onResize = () => {
-    resetGoNudges();
+    resetGoNudges(displays);
     startSplitTracking(300);
-    scheduleRefresh();
+    scheduleRefresh({ settleCenter: true });
   };
 
   const onOrientation = () => {
-    resetGoNudges();
+    resetGoNudges(displays);
     startSplitTracking(520);
-    scheduleRefresh();
+    scheduleRefresh({ settleCenter: true });
   };
 
   const onMsChanged = () => {
     startSplitTracking(120);
-    scheduleRefresh();
+    scheduleRefresh({ settleCenter: false });
   };
 
   window.addEventListener("resize", onResize, { passive: true });
@@ -485,24 +195,30 @@ export function initDynamicRingAndGoLayout() {
     document.fonts.ready
       .then(() => {
         startSplitTracking(260);
-        scheduleRefresh();
+        scheduleRefresh({ settleCenter: true });
       })
-      .catch(() => {});
+      .catch(() => { });
   }
 
+  const onFontsChanged = () => scheduleRefresh({ settleCenter: true });
+
   if (document.fonts?.addEventListener) {
-    document.fonts.addEventListener("loadingdone", scheduleRefresh);
-    document.fonts.addEventListener("loadingerror", scheduleRefresh);
+    document.fonts.addEventListener("loadingdone", onFontsChanged);
+    document.fonts.addEventListener("loadingerror", onFontsChanged);
   }
 
   const splitViews = Array.from(
     new Set(wraps.map((w) => getViewElFromWrap(w)).filter(Boolean)),
   );
 
-  const onSplitTransitionStart = () => startSplitTracking(520);
+  const onSplitTransitionStart = () => {
+    startSplitTracking(520);
+    scheduleRefresh({ settleCenter: false });
+  };
+
   const onSplitTransitionEnd = () => {
     startSplitTracking(180);
-    scheduleRefresh();
+    scheduleRefresh({ settleCenter: true });
   };
 
   splitViews.forEach((viewEl) => {
@@ -512,7 +228,7 @@ export function initDynamicRingAndGoLayout() {
     viewEl.addEventListener("transitioncancel", onSplitTransitionEnd);
   });
 
-  scheduleRefresh();
+  scheduleRefresh({ settleCenter: true });
 
   return () => {
     if (rafId) {
@@ -539,8 +255,8 @@ export function initDynamicRingAndGoLayout() {
     document.removeEventListener("msChanged", onMsChanged);
 
     if (document.fonts?.removeEventListener) {
-      document.fonts.removeEventListener("loadingdone", scheduleRefresh);
-      document.fonts.removeEventListener("loadingerror", scheduleRefresh);
+      document.fonts.removeEventListener("loadingdone", onFontsChanged);
+      document.fonts.removeEventListener("loadingerror", onFontsChanged);
     }
 
     splitViews.forEach((viewEl) => {
