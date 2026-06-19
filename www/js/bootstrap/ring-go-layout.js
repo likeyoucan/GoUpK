@@ -7,7 +7,10 @@ import {
   getTopHalfEl,
   getViewElFromWrap,
 } from "./ring-go-layout/geometry.js?v=VERSION";
-import { applyMetaTextScale, applyDisplayScale } from "./ring-go-layout/scale.js?v=VERSION";
+import {
+  applyMetaTextScale,
+  applyDisplayScale,
+} from "./ring-go-layout/scale.js?v=VERSION";
 import {
   isGoDisplay,
   getDisplayState,
@@ -27,7 +30,7 @@ export function initDynamicRingAndGoLayout() {
   ].filter(Boolean);
 
   if (!wraps.length && !displays.length) {
-    return () => { };
+    return () => {};
   }
 
   let rafId = 0;
@@ -197,7 +200,7 @@ export function initDynamicRingAndGoLayout() {
         startSplitTracking(260);
         scheduleRefresh({ settleCenter: true });
       })
-      .catch(() => { });
+      .catch(() => {});
   }
 
   const onFontsChanged = () => scheduleRefresh({ settleCenter: true });

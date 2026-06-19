@@ -9,20 +9,20 @@ import { t } from "../i18n.js?v=VERSION";
 import { emitAppEvent } from "../events/app-events.js?v=VERSION";
 
 import {
-    applyModeToDocument,
-    bindSystemThemeListener,
+  applyModeToDocument,
+  bindSystemThemeListener,
 } from "./theme-mode.js?v=VERSION";
 import { createColorHistory } from "./theme-color-history.js?v=VERSION";
 import {
-    applyAccentVars,
-    applyBgTheme as applyBgThemeVars,
+  applyAccentVars,
+  applyBgTheme as applyBgThemeVars,
 } from "./theme-colors.js?v=VERSION";
 import {
-    loadThemeSettings,
-    saveThemeMode,
-    saveThemeAccent,
-    saveThemeBg,
-    resetThemeSettings,
+  loadThemeSettings,
+  saveThemeMode,
+  saveThemeAccent,
+  saveThemeBg,
+  resetThemeSettings,
 } from "./theme-repository.js?v=VERSION";
 import { notifyProBlocked } from "./theme-guards.js?v=VERSION";
 import { buildColorSet } from "./theme-history.js?v=VERSION";
@@ -42,250 +42,250 @@ const modeSelect = createThemeModeSelectController();
  */
 
 export const themeManager = {
-    currentMode: "system",
-    currentAccent: "default",
-    currentBg: "default",
+  currentMode: "system",
+  currentAccent: "default",
+  currentBg: "default",
 
-    _unbindSystemThemeListener: null,
-    _history: createColorHistory(20),
-    _unbindEvents: null,
-    _isInitialized: false,
+  _unbindSystemThemeListener: null,
+  _history: createColorHistory(20),
+  _unbindEvents: null,
+  _isInitialized: false,
 
-    init() {
-        if (this._isInitialized) return;
+  init() {
+    if (this._isInitialized) return;
 
-        uiSettingsManager.init();
-        colorManager.init();
+    uiSettingsManager.init();
+    colorManager.init();
 
-        this.applySettings();
+    this.applySettings();
 
-        modeSelect.init({
-            currentMode: this.currentMode,
-            onSelectMode: (value) => this.setMode(value),
-        });
-        modeSelect.syncValue(this.currentMode);
+    modeSelect.init({
+      currentMode: this.currentMode,
+      onSelectMode: (value) => this.setMode(value),
+    });
+    modeSelect.syncValue(this.currentMode);
 
-        this._unbindEvents = bindThemeEvents(this);
-        this._isInitialized = true;
-    },
+    this._unbindEvents = bindThemeEvents(this);
+    this._isInitialized = true;
+  },
 
-    destroy() {
-        if (!this._isInitialized) return;
+  destroy() {
+    if (!this._isInitialized) return;
 
-        if (this._unbindEvents) {
-            this._unbindEvents();
-            this._unbindEvents = null;
-        }
+    if (this._unbindEvents) {
+      this._unbindEvents();
+      this._unbindEvents = null;
+    }
 
-        if (this._unbindSystemThemeListener) {
-            this._unbindSystemThemeListener();
-            this._unbindSystemThemeListener = null;
-        }
+    if (this._unbindSystemThemeListener) {
+      this._unbindSystemThemeListener();
+      this._unbindSystemThemeListener = null;
+    }
 
-        modeSelect.destroy();
-        this._isInitialized = false;
-    },
+    modeSelect.destroy();
+    this._isInitialized = false;
+  },
 
-    onSystemThemeChanged() {
-        if (this._unbindSystemThemeListener) {
-            this._unbindSystemThemeListener();
-            this._unbindSystemThemeListener = null;
-        }
+  onSystemThemeChanged() {
+    if (this._unbindSystemThemeListener) {
+      this._unbindSystemThemeListener();
+      this._unbindSystemThemeListener = null;
+    }
 
-        this._unbindSystemThemeListener = bindSystemThemeListener(() => {
-            if (this.currentMode === "system") this.setMode("system");
-        });
+    this._unbindSystemThemeListener = bindSystemThemeListener(() => {
+      if (this.currentMode === "system") this.setMode("system");
+    });
 
-        return () => {
-            if (this._unbindSystemThemeListener) {
-                this._unbindSystemThemeListener();
-                this._unbindSystemThemeListener = null;
-            }
-        };
-    },
+    return () => {
+      if (this._unbindSystemThemeListener) {
+        this._unbindSystemThemeListener();
+        this._unbindSystemThemeListener = null;
+      }
+    };
+  },
 
-    refreshThemeSelectTexts() {
-        modeSelect.refreshTexts(this.currentMode);
-    },
+  refreshThemeSelectTexts() {
+    modeSelect.refreshTexts(this.currentMode);
+  },
 
-    syncThemeSelectValue() {
-        modeSelect.syncValue(this.currentMode);
-    },
+  syncThemeSelectValue() {
+    modeSelect.syncValue(this.currentMode);
+  },
 
-    applySettings() {
-        this._history.reset();
+  applySettings() {
+    this._history.reset();
 
-        const stored = loadThemeSettings();
-        this.currentMode = stored.mode;
-        this.currentAccent = stored.accent;
-        this.currentBg = stored.bg;
+    const stored = loadThemeSettings();
+    this.currentMode = stored.mode;
+    this.currentAccent = stored.accent;
+    this.currentBg = stored.bg;
 
-        if (appProManager.initialized && !appProManager.canUse("accent_bg")) {
-            if (this.currentAccent !== "default" || this.currentBg !== "default") {
-                this.currentAccent = "default";
-                this.currentBg = "default";
-                saveThemeAccent("default");
-                saveThemeBg("default");
-            }
-        }
+    if (appProManager.initialized && !appProManager.canUse("accent_bg")) {
+      if (this.currentAccent !== "default" || this.currentBg !== "default") {
+        this.currentAccent = "default";
+        this.currentBg = "default";
+        saveThemeAccent("default");
+        saveThemeBg("default");
+      }
+    }
 
-        colorManager.syncPickers(this.currentAccent, this.currentBg);
-        this.setMode(this.currentMode, false);
-    },
+    colorManager.syncPickers(this.currentAccent, this.currentBg);
+    this.setMode(this.currentMode, false);
+  },
 
-    resetSettings() {
-        resetThemeSettings();
+  resetSettings() {
+    resetThemeSettings();
 
-        this._history.reset();
-        uiSettingsManager.resetSettings();
+    this._history.reset();
+    uiSettingsManager.resetSettings();
 
-        this.applySettings();
-        this.syncThemeSelectValue();
-    },
+    this.applySettings();
+    this.syncThemeSelectValue();
+  },
 
-    getCurrentTheme() {
-        return document.documentElement.classList.contains("dark")
-            ? "dark"
-            : "light";
-    },
+  getCurrentTheme() {
+    return document.documentElement.classList.contains("dark")
+      ? "dark"
+      : "light";
+  },
 
-    /**
-     * @param {ThemeMode} mode
-     * @param {boolean} [useTransition=true]
-     */
-    setMode(mode, useTransition = true) {
-        if (useTransition) document.body.classList.add("is-updating-theme");
+  /**
+   * @param {ThemeMode} mode
+   * @param {boolean} [useTransition=true]
+   */
+  setMode(mode, useTransition = true) {
+    if (useTransition) document.body.classList.add("is-updating-theme");
 
-        this.currentMode = mode;
-        saveThemeMode(mode);
+    this.currentMode = mode;
+    saveThemeMode(mode);
 
-        applyModeToDocument(mode);
-        this.syncThemeSelectValue();
+    applyModeToDocument(mode);
+    this.syncThemeSelectValue();
 
-        this.applyBgTheme(this.currentBg);
+    this.applyBgTheme(this.currentBg);
 
-        this.setColor(this.currentAccent, false, {
-            recordHistory: false,
-            skipProCheck: true,
-        });
+    this.setColor(this.currentAccent, false, {
+      recordHistory: false,
+      skipProCheck: true,
+    });
 
-        colorManager.updateSelectionUI("bg", this.currentBg, false);
-        this.applyMetaThemeColor();
+    colorManager.updateSelectionUI("bg", this.currentBg, false);
+    this.applyMetaThemeColor();
 
-        if (useTransition) {
-            requestAnimationFrame(() =>
-                document.body.classList.remove("is-updating-theme"),
-            );
-        }
-    },
+    if (useTransition) {
+      requestAnimationFrame(() =>
+        document.body.classList.remove("is-updating-theme"),
+      );
+    }
+  },
 
-    getAvailableColorSet(type) {
-        return buildColorSet(type, colorManager);
-    },
+  getAvailableColorSet(type) {
+    return buildColorSet(type, colorManager);
+  },
 
-    getLastValidColor(type) {
-        return this._history.getLastValid(type, this.getAvailableColorSet(type));
-    },
+  getLastValidColor(type) {
+    return this._history.getLastValid(type, this.getAvailableColorSet(type));
+  },
 
-    /**
-     * @param {string} hex
-     * @param {boolean} [doScroll=true]
-     * @param {ThemeColorSetOptions} [options]
-     */
-    setColor(hex, doScroll = true, options = {}) {
-        const { recordHistory = true, skipProCheck = false } = options;
+  /**
+   * @param {string} hex
+   * @param {boolean} [doScroll=true]
+   * @param {ThemeColorSetOptions} [options]
+   */
+  setColor(hex, doScroll = true, options = {}) {
+    const { recordHistory = true, skipProCheck = false } = options;
 
-        if (
-            !skipProCheck &&
-            hex !== "default" &&
-            !appProManager.canUse("accent_bg")
-        ) {
-            notifyProBlocked(t, "accent_bg");
-            colorManager.updateSelectionUI("accent", this.currentAccent, false);
-            colorManager.syncPickers(this.currentAccent, this.currentBg);
-            return;
-        }
+    if (
+      !skipProCheck &&
+      hex !== "default" &&
+      !appProManager.canUse("accent_bg")
+    ) {
+      notifyProBlocked(t, "accent_bg");
+      colorManager.updateSelectionUI("accent", this.currentAccent, false);
+      colorManager.syncPickers(this.currentAccent, this.currentBg);
+      return;
+    }
 
-        if (recordHistory) {
-            this._history.remember("accent", this.currentAccent, hex);
-        }
+    if (recordHistory) {
+      this._history.remember("accent", this.currentAccent, hex);
+    }
 
-        this.currentAccent = hex;
-        saveThemeAccent(hex);
+    this.currentAccent = hex;
+    saveThemeAccent(hex);
 
-        applyAccentVars({
-            hex,
-            rootEl: document.documentElement,
-            hexToHSL,
-        });
+    applyAccentVars({
+      hex,
+      rootEl: document.documentElement,
+      hexToHSL,
+    });
 
-        emitAppEvent(APP_EVENTS.ACCENT_COLOR_CHANGED);
+    emitAppEvent(APP_EVENTS.ACCENT_COLOR_CHANGED);
 
-        colorManager.updateSelectionUI("accent", hex, doScroll);
-        colorManager.syncPickers(this.currentAccent, this.currentBg);
-    },
+    colorManager.updateSelectionUI("accent", hex, doScroll);
+    colorManager.syncPickers(this.currentAccent, this.currentBg);
+  },
 
-    /**
-     * @param {string} hex
-     * @param {boolean} [doScroll=true]
-     * @param {ThemeColorSetOptions} [options]
-     */
-    setBgColor(hex, doScroll = true, options = {}) {
-        const { recordHistory = true, skipProCheck = false } = options;
+  /**
+   * @param {string} hex
+   * @param {boolean} [doScroll=true]
+   * @param {ThemeColorSetOptions} [options]
+   */
+  setBgColor(hex, doScroll = true, options = {}) {
+    const { recordHistory = true, skipProCheck = false } = options;
 
-        if (
-            !skipProCheck &&
-            hex !== "default" &&
-            !appProManager.canUse("accent_bg")
-        ) {
-            notifyProBlocked(t, "accent_bg");
-            colorManager.updateSelectionUI("bg", this.currentBg, false);
-            colorManager.syncPickers(this.currentAccent, this.currentBg);
-            return;
-        }
+    if (
+      !skipProCheck &&
+      hex !== "default" &&
+      !appProManager.canUse("accent_bg")
+    ) {
+      notifyProBlocked(t, "accent_bg");
+      colorManager.updateSelectionUI("bg", this.currentBg, false);
+      colorManager.syncPickers(this.currentAccent, this.currentBg);
+      return;
+    }
 
-        if (recordHistory) {
-            this._history.remember("bg", this.currentBg, hex);
-        }
+    if (recordHistory) {
+      this._history.remember("bg", this.currentBg, hex);
+    }
 
-        this.currentBg = hex;
-        saveThemeBg(hex);
+    this.currentBg = hex;
+    saveThemeBg(hex);
 
-        this.applyBgTheme(hex);
+    this.applyBgTheme(hex);
 
-        this.setColor(this.currentAccent, false, {
-            recordHistory: false,
-            skipProCheck: true,
-        });
+    this.setColor(this.currentAccent, false, {
+      recordHistory: false,
+      skipProCheck: true,
+    });
 
-        colorManager.updateSelectionUI("bg", hex, doScroll);
-        colorManager.syncPickers(this.currentAccent, this.currentBg);
-    },
+    colorManager.updateSelectionUI("bg", hex, doScroll);
+    colorManager.syncPickers(this.currentAccent, this.currentBg);
+  },
 
-    applyBgTheme(hex) {
-        applyBgThemeVars({
-            hex,
-            uiSettingsManager,
-            hexToRGB,
-            hexToHSL,
-            getLuminance,
-        });
+  applyBgTheme(hex) {
+    applyBgThemeVars({
+      hex,
+      uiSettingsManager,
+      hexToRGB,
+      hexToHSL,
+      getLuminance,
+    });
 
-        this.applyMetaThemeColor();
-    },
+    this.applyMetaThemeColor();
+  },
 
-    applyMetaThemeColor() {
-        const root = document.documentElement;
-        const cssBg = getComputedStyle(root).getPropertyValue("--bg-color").trim();
-        const fallback = root.classList.contains("dark") ? "#000000" : "#f3f4f6";
-        const color = cssBg || fallback;
+  applyMetaThemeColor() {
+    const root = document.documentElement;
+    const cssBg = getComputedStyle(root).getPropertyValue("--bg-color").trim();
+    const fallback = root.classList.contains("dark") ? "#000000" : "#f3f4f6";
+    const color = cssBg || fallback;
 
-        document.querySelectorAll('meta[name="theme-color"]').forEach((meta) => {
-            meta.setAttribute("content", color);
-        });
-    },
+    document.querySelectorAll('meta[name="theme-color"]').forEach((meta) => {
+      meta.setAttribute("content", color);
+    });
+  },
 
-    syncSliderUIs() {
-        uiSettingsManager.syncSliderUIs();
-    },
+  syncSliderUIs() {
+    uiSettingsManager.syncSliderUIs();
+  },
 };

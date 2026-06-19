@@ -1,11 +1,17 @@
 // Файл: www/js/bootstrap/split-resizer.js
 
-import { VIEW_IDS, SPLIT_BEHAVIOR } from "./split-resizer/constants.js?v=VERSION";
+import {
+  VIEW_IDS,
+  SPLIT_BEHAVIOR,
+} from "./split-resizer/constants.js?v=VERSION";
 import {
   isRowLayout,
   getForcedTargetForViewport,
 } from "./split-resizer/viewport.js?v=VERSION";
-import { applySnapToAll, getTargetFromGlobalSnap } from "./split-resizer/apply.js?v=VERSION";
+import {
+  applySnapToAll,
+  getTargetFromGlobalSnap,
+} from "./split-resizer/apply.js?v=VERSION";
 import { setupOneView } from "./split-resizer/view-controller.js?v=VERSION";
 
 const ctx = {
@@ -30,7 +36,9 @@ export function initSplitResizer() {
     };
   }).filter(Boolean);
 
-  const viewDisposers = ctx.views.map((v) => setupOneView(ctx, v)).filter(Boolean);
+  const viewDisposers = ctx.views
+    .map((v) => setupOneView(ctx, v))
+    .filter(Boolean);
 
   applySnapToAll(ctx, getTargetFromGlobalSnap(ctx), { animate: false });
 
