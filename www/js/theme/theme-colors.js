@@ -362,6 +362,3 @@ export function applyBgTheme({
     `hsl(${h} ${sat}% ${isDarkLocal ? 14 : 98}%)`,
   );
 }
-
-// Explicit re-export to avoid ESM named export mismatch in some cached deploy states.
-export { applyAccentVars, applyBgTheme };
