@@ -5,15 +5,9 @@ import { sm } from "../sound.js?v=VERSION";
 import { t } from "../i18n.js?v=VERSION";
 import { APP_EVENTS } from "../constants/events.js?v=VERSION";
 import { emitAppEvent } from "../events/app-events.js?v=VERSION";
+import { applyTabataEngineSnapshot } from "../core/engine-adapters.js?v=VERSION";
 
 export function setupTabataPhases(tb) {
-  function syncFromEngine(snap) {
-    tb.status = snap.status;
-    tb.currentRound = snap.currentRound;
-    tb.phaseDuration = snap.phaseDuration;
-    tb.phaseEndTime = snap.phaseEndTime;
-  }
-
   function playPhaseStartSound() {
     if (tb.status === "WORK") sm.play("work_start");
     else if (tb.status === "REST") sm.play("rest_start");
@@ -42,7 +36,7 @@ export function setupTabataPhases(tb) {
 
     if (step.completed) return "complete";
 
-    syncFromEngine(step.snapshot);
+    applyTabataEngineSnapshot(tb, step.snapshot);
     tb.phaseStamp += 1;
     playPhaseStartSound();
     return "ok";
@@ -77,7 +71,10 @@ export function setupTabataPhases(tb) {
         overshoot -= currentPhaseDuration;
         if (!enterNextPhase()) return;
       } else {
-        syncFromEngine(tb.tabataEngine.shortenCurrentPhase(overshoot));
+        applyTabataEngineSnapshot(
+          tb,
+          tb.tabataEngine.shortenCurrentPhase(overshoot),
+        );
         overshoot = 0;
       }
     }

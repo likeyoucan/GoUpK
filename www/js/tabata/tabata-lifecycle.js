@@ -1,6 +1,7 @@
 // Файл: www/js/tabata/tabata-lifecycle.js
 
 import { clearPhaseClose } from "../core/phase-close.js?v=VERSION";
+import { applyTabataEngineSnapshot } from "../core/engine-adapters.js?v=VERSION";
 
 export function setupTabataLifecycle(tb, deps) {
   const {
@@ -18,13 +19,6 @@ export function setupTabataLifecycle(tb, deps) {
     postMessage: () => {},
     addEventListener: () => {},
   };
-
-  function syncFromEngine(snap) {
-    tb.status = snap.status;
-    tb.currentRound = snap.currentRound;
-    tb.phaseDuration = snap.phaseDuration;
-    tb.phaseEndTime = snap.phaseEndTime;
-  }
 
   function configureEnginePlan() {
     tb.tabataEngine.configure({
@@ -63,7 +57,7 @@ export function setupTabataLifecycle(tb, deps) {
     }
 
     configureEnginePlan();
-    syncFromEngine(tb.tabataEngine.startReady());
+    applyTabataEngineSnapshot(tb, tb.tabataEngine.startReady());
 
     tb.paused = false;
     tb.remainingAtPause = 0;
@@ -116,7 +110,8 @@ export function setupTabataLifecycle(tb, deps) {
     tb.paused = false;
     tb.completionHandled = false;
 
-    syncFromEngine(
+    applyTabataEngineSnapshot(
+      tb,
       tb.tabataEngine.resume(Math.max(0, tb.remainingAtPause || 0)),
     );
 
@@ -154,7 +149,7 @@ export function setupTabataLifecycle(tb, deps) {
     clearPhaseClose(tb);
     tb.phaseClosing = false;
 
-    syncFromEngine(tb.tabataEngine.stop());
+    applyTabataEngineSnapshot(tb, tb.tabataEngine.stop());
     tb.paused = false;
     tb.remainingAtPause = 0;
     tb.completionHandled = true;

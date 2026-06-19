@@ -20,6 +20,7 @@ import { APP_EVENTS } from "../constants/events.js?v=VERSION";
 
 import { createRingController } from "../ring/ring-controller.js?v=VERSION";
 import { createStopwatchEngine } from "../core/stopwatch-engine.js?v=VERSION";
+import { applyStopwatchEngineSnapshot } from "../core/engine-adapters.js?v=VERSION";
 import { setupStopwatchRender } from "./stopwatch-render.js?v=VERSION";
 import { setupStopwatchSessions } from "./stopwatch-sessions.js?v=VERSION";
 import { setupStopwatchShareController } from "./stopwatch-share-controller.js?v=VERSION";
@@ -204,10 +205,10 @@ const stopwatchModule = {
       store.clearActiveTimer();
 
       const snap = this.stopwatchEngine.pause();
-      this.elapsedTime = snap.elapsedMs;
+      applyStopwatchEngineSnapshot(this, snap);
+      this.isRunning = false;
       this.startEpochMs = 0;
 
-      this.isRunning = false;
       this.pauseTime = Date.now();
       bgWorker.postMessage({ command: "stop" });
 
@@ -238,8 +239,7 @@ const stopwatchModule = {
       store.activate("stopwatch");
 
       const snap = this.stopwatchEngine.start(this.elapsedTime);
-      this.startEpochMs = snap.startEpochMs;
-      this.elapsedTime = snap.elapsedMs;
+      applyStopwatchEngineSnapshot(this, snap);
       this.lastMinuteBeep = Math.floor(this.elapsedTime / 60000);
 
       this.isRunning = true;
@@ -349,10 +349,11 @@ const stopwatchModule = {
     if (this.elapsedTime > 0) {
       if (store.isActive("stopwatch")) store.clearActiveTimer();
 
-      this.stopwatchEngine.reset();
+      applyStopwatchEngineSnapshot(this, this.stopwatchEngine.reset());
 
       this.elapsedTime = 0;
       this.startEpochMs = 0;
+      this.isRunning = false;
       this.laps = [];
       this.pauseTime = 0;
       this.lastMinuteBeep = 0;

@@ -5,11 +5,9 @@ import { createTimerAlarmScheduler } from "./timer-alarm.js?v=VERSION";
 import { animateGoEnter } from "../utils.js?v=VERSION";
 import { emitAppEvent } from "../events/app-events.js?v=VERSION";
 import { getProgressOffset } from "../core/timers-runtime.js?v=VERSION";
-import {
-  shouldSkipWorkerTick,
-  resolveRunningRemaining,
-} from "../core/runtime-reconcile.js?v=VERSION";
+import { shouldSkipWorkerTick } from "../core/runtime-reconcile.js?v=VERSION";
 import { createCountdownEngine } from "../core/timer-engine.js?v=VERSION";
+import { applyTimerEngineSnapshot } from "../core/engine-adapters.js?v=VERSION";
 
 export function setupTimerCore(tm, { showToast, updateText }) {
   const alarmScheduler =
@@ -24,12 +22,6 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     });
 
   tm._unbindCoreEvents = tm._unbindCoreEvents || null;
-
-  const syncFromEngine = (snap = tm.countdownEngine.snapshot()) => {
-    tm.timeRemainingMs = Math.max(0, snap.remainingMs || 0);
-    tm.targetEpochMs = snap.targetEpochMs || 0;
-    if ((snap.totalMs || 0) > 0) tm.totalDuration = snap.totalMs;
-  };
 
   tm.getRemainingTime = () => {
     if (!tm.isRunning && !tm.isPaused && !tm.isFinished) return 0;
@@ -153,7 +145,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
       tm.store.clearActiveTimer();
 
       const pausedSnap = tm.countdownEngine.pause();
-      syncFromEngine(pausedSnap);
+      applyTimerEngineSnapshot(tm, pausedSnap);
 
       tm.remainingAtPause = pausedSnap.remainingMs;
       tm.lastUiRem = pausedSnap.remainingMs;
@@ -177,7 +169,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
 
     if (tm.isPaused) {
       const snap = tm.countdownEngine.resume();
-      syncFromEngine(snap);
+      applyTimerEngineSnapshot(tm, snap);
       duration = snap.remainingMs;
       tm.timeRemainingMs = duration;
     } else {
@@ -204,7 +196,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
 
     if (!tm.isPaused) {
       const startSnap = tm.countdownEngine.start(duration);
-      syncFromEngine(startSnap);
+      applyTimerEngineSnapshot(tm, startSnap);
     }
 
     tm.store.activate("timer");
@@ -258,7 +250,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     }
 
     const startSnap = tm.countdownEngine.start(duration);
-    syncFromEngine(startSnap);
+    applyTimerEngineSnapshot(tm, startSnap);
 
     tm.totalDuration = duration;
     tm.store.activate("timer");
@@ -383,7 +375,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
 
       const prevTarget = tm.targetEpochMs;
       const snap = tm.countdownEngine.rebaseFromWorker(remaining);
-      syncFromEngine(snap);
+      applyTimerEngineSnapshot(tm, snap);
 
       if (snap.rebased && tm.targetEpochMs !== prevTarget) {
         await scheduleExactAlarmAndHandleHint(tm.targetEpochMs);
@@ -410,7 +402,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
 
       const adjustmentMs = tm.currentAdjustmentSec * 1000;
       const snap = tm.countdownEngine.adjust(adjustmentMs);
-      syncFromEngine(snap);
+      applyTimerEngineSnapshot(tm, snap);
 
       tm.skipWorkerTickUntil = performance.now() + 180;
       tm.lastUiRem = tm.timeRemainingMs;
@@ -442,7 +434,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
 
       const adjustmentMs = -tm.currentAdjustmentSec * 1000;
       const snap = tm.countdownEngine.adjust(adjustmentMs);
-      syncFromEngine(snap);
+      applyTimerEngineSnapshot(tm, snap);
 
       tm.skipWorkerTickUntil = performance.now() + 180;
       tm.lastUiRem = tm.timeRemainingMs;
