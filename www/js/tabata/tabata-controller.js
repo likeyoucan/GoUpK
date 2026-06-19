@@ -10,6 +10,9 @@ import { setupTabataPhases } from "./tabata-phases.js?v=VERSION";
 import { setupTabataWorkouts } from "./tabata-workouts.js?v=VERSION";
 import { setupTabataCore } from "./tabata-core.js?v=VERSION";
 
+/** @typedef {import("../types/app-contracts.js").TabataModule} TabataModule */
+
+/** @type {TabataModule} */
 export const tb = {
   workouts: [],
   selectedId: null,

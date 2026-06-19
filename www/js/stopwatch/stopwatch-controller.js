@@ -25,6 +25,9 @@ import { setupStopwatchRender } from "./stopwatch-render.js?v=VERSION";
 import { setupStopwatchSessions } from "./stopwatch-sessions.js?v=VERSION";
 import { setupStopwatchShareController } from "./stopwatch-share-controller.js?v=VERSION";
 
+/** @typedef {import("../types/app-contracts.js").StopwatchModule} StopwatchModule */
+
+/** @type {StopwatchModule} */
 const stopwatchModule = {
   startEpochMs: 0,
 

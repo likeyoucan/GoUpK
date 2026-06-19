@@ -25,6 +25,9 @@ import { setupTimerRender } from "./timer-render.js?v=VERSION";
 import { setupTimerInputs } from "./timer-inputs.js?v=VERSION";
 import { setupTimerCore } from "./timer-core.js?v=VERSION";
 
+/** @typedef {import("../types/app-contracts.js").TimerModule} TimerModule */
+
+/** @type {TimerModule} */
 export const tm = {
   totalDuration: 0,
   initialDurationMs: 0,
