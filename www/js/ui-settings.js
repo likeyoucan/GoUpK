@@ -22,6 +22,9 @@ import { adsManager } from "./ads.js?v=VERSION";
 const state = createUiSettingsState();
 
 export const uiSettingsManager = {
+  _unbindEvents: null,
+  _isInitialized: false,
+
   get showMs() {
     return state.showMs;
   },
@@ -124,8 +127,24 @@ export const uiSettingsManager = {
   },
 
   init() {
+    if (this._isInitialized) return;
+
     this.applySettings();
-    bindUiSettingsEvents(state);
+    this._unbindEvents = bindUiSettingsEvents(state);
+    this._isInitialized = true;
+  },
+
+  destroy() {
+    if (!this._isInitialized) return;
+
+    try {
+      this._unbindEvents?.();
+    } catch (err) {
+      console.error("[ui-settings.destroy]", err);
+    }
+
+    this._unbindEvents = null;
+    this._isInitialized = false;
   },
 
   applySettings() {

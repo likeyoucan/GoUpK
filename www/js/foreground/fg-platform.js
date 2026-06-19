@@ -1,5 +1,11 @@
 // Файл: www/js/foreground/fg-platform.js
 
+import {
+  getCapacitorBridge,
+  isNativeCapacitorPlatform,
+  getCapacitorPluginsMap,
+} from "../core/platform-bridge.js?v=VERSION";
+
 /** @typedef {{
  * App: any,
  * FgService: any,
@@ -14,20 +20,15 @@ let pluginsRef = null;
 let handles = [];
 
 function getCapacitor() {
-  return window.Capacitor || null;
+  return getCapacitorBridge();
 }
 
 function isNativePlatform() {
-  const c = getCapacitor();
-  return !!(
-    c &&
-    typeof c.isNativePlatform === "function" &&
-    c.isNativePlatform()
-  );
+  return isNativeCapacitorPlatform();
 }
 
 function getCapacitorPlugins() {
-  return getCapacitor()?.Plugins || {};
+  return getCapacitorPluginsMap();
 }
 
 function debugLog(...args) {
@@ -169,7 +170,6 @@ export async function ensureNotificationChannel(FgService, channel) {
 export function rememberHandle(handleOrPromise) {
   if (!handleOrPromise) return;
 
-  // Promise<PluginListenerHandle>
   if (typeof handleOrPromise.then === "function") {
     handleOrPromise
       .then((h) => {
@@ -183,7 +183,6 @@ export function rememberHandle(handleOrPromise) {
     return;
   }
 
-  // PluginListenerHandle
   if (typeof handleOrPromise.remove === "function") {
     handles.push(handleOrPromise);
     return;

@@ -13,7 +13,6 @@ import {
 } from "./utils.js?v=VERSION";
 import { t } from "./i18n.js?v=VERSION";
 import { sm } from "./sound.js?v=VERSION";
-import { themeManager } from "./theme.js?v=VERSION";
 import { appProManager } from "./app-pro.js?v=VERSION";
 import { APP_EVENTS } from "./constants/events.js?v=VERSION";
 import { emitAppEvent } from "./events/app-events.js?v=VERSION";
@@ -51,6 +50,15 @@ export const colorManager = {
   customBgColors: [],
   activeActionTarget: null,
   _unbindColorManager: null,
+
+  _getCurrentTheme: () =>
+    document.documentElement.classList.contains("dark") ? "dark" : "light",
+
+  setThemeApi({ getCurrentTheme } = {}) {
+    if (typeof getCurrentTheme === "function") {
+      this._getCurrentTheme = getCurrentTheme;
+    }
+  },
 
   standardAccentColors: [
     "default",
@@ -470,7 +478,7 @@ export const colorManager = {
       return;
     }
 
-    const currentTheme = themeManager.getCurrentTheme();
+    const currentTheme = this._getCurrentTheme();
     const cssVarName = isAccent
       ? `--default-accent-${currentTheme}`
       : `--default-bg-${currentTheme}`;
@@ -613,7 +621,7 @@ export const colorManager = {
       color,
       doScroll,
       normalizeColor: normalize,
-      themeManager,
+      getCurrentTheme: this._getCurrentTheme,
       getCssVariable,
       hexToRGB,
       getLuminance,
@@ -624,7 +632,7 @@ export const colorManager = {
   syncPickers(accentColor, bgColor) {
     const accentPicker = $("customColorInput");
     const bgPicker = $("customBgInput");
-    const currentTheme = themeManager.getCurrentTheme();
+    const currentTheme = this._getCurrentTheme();
 
     if (accentPicker) {
       const resolvedAccent =

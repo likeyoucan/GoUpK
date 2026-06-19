@@ -116,7 +116,7 @@ export function updateSelectionUI({
   color,
   doScroll,
   normalizeColor,
-  themeManager,
+  getCurrentTheme,
   getCssVariable,
   hexToRGB,
   getLuminance,
@@ -165,7 +165,12 @@ export function updateSelectionUI({
 
     if (isDefault) {
       const cssVar = type === "accent" ? "--primary-color" : "--bg-color";
-      const currentTheme = themeManager.getCurrentTheme();
+      const currentTheme =
+        typeof getCurrentTheme === "function"
+          ? getCurrentTheme()
+          : document.documentElement.classList.contains("dark")
+            ? "dark"
+            : "light";
       const defaultVarForTheme =
         type === "accent"
           ? getCssVariable(`--default-accent-${currentTheme}`)

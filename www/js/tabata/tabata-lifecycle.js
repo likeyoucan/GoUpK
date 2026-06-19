@@ -1,5 +1,7 @@
 // Файл: www/js/tabata/tabata-lifecycle.js
 
+import { clearPhaseClose } from "../core/phase-close.js?v=VERSION";
+
 export function setupTabataLifecycle(tb, deps) {
   const {
     sm,
@@ -16,6 +18,22 @@ export function setupTabataLifecycle(tb, deps) {
     postMessage: () => {},
     addEventListener: () => {},
   };
+
+  function syncFromEngine(snap) {
+    tb.status = snap.status;
+    tb.currentRound = snap.currentRound;
+    tb.phaseDuration = snap.phaseDuration;
+    tb.phaseEndTime = snap.phaseEndTime;
+  }
+
+  function configureEnginePlan() {
+    tb.tabataEngine.configure({
+      workMs: tb.work,
+      restMs: tb.rest,
+      rounds: tb.rounds,
+      readyMs: 5000,
+    });
+  }
 
   function startTimerContext() {
     requestWakeLock();
@@ -44,10 +62,9 @@ export function setupTabataLifecycle(tb, deps) {
       updateText(tb.els.runningWorkoutName, workout.name);
     }
 
-    tb.currentRound = 1;
-    tb.status = "READY";
-    tb.phaseDuration = 5000;
-    tb.phaseEndTime = Date.now() + tb.phaseDuration;
+    configureEnginePlan();
+    syncFromEngine(tb.tabataEngine.startReady());
+
     tb.paused = false;
     tb.remainingAtPause = 0;
     tb.lastBeepSec = 0;
@@ -55,10 +72,7 @@ export function setupTabataLifecycle(tb, deps) {
     tb.completionHandled = false;
 
     tb.phaseClosing = false;
-    if (tb.phaseCloseTimer) {
-      clearTimeout(tb.phaseCloseTimer);
-      tb.phaseCloseTimer = null;
-    }
+    clearPhaseClose(tb);
 
     tb.phaseStamp += 1;
     tb.lastRenderedPhaseStamp = -1;
@@ -89,7 +103,7 @@ export function setupTabataLifecycle(tb, deps) {
     if (tb.rAF) cancelAnimationFrame(tb.rAF);
     tb.rAF = null;
 
-    tb.remainingAtPause = Math.max(0, tb.phaseEndTime - Date.now());
+    tb.remainingAtPause = tb.tabataEngine.pause();
     updateText(tb.els.status, t("pause"));
 
     stopTimerContext();
@@ -101,15 +115,16 @@ export function setupTabataLifecycle(tb, deps) {
     store.activate("tabata");
     tb.paused = false;
     tb.completionHandled = false;
-    tb.phaseEndTime = Date.now() + Math.max(0, tb.remainingAtPause || 0);
+
+    syncFromEngine(
+      tb.tabataEngine.resume(Math.max(0, tb.remainingAtPause || 0)),
+    );
+
     tb.lastBeepSec = 0;
     tb.lastRender = 0;
 
     tb.phaseClosing = false;
-    if (tb.phaseCloseTimer) {
-      clearTimeout(tb.phaseCloseTimer);
-      tb.phaseCloseTimer = null;
-    }
+    clearPhaseClose(tb);
 
     tb.phaseStamp += 1;
     tb.lastRenderedPhaseStamp = -1;
@@ -136,13 +151,10 @@ export function setupTabataLifecycle(tb, deps) {
     if (tb.rAF) cancelAnimationFrame(tb.rAF);
     tb.rAF = null;
 
-    if (tb.phaseCloseTimer) {
-      clearTimeout(tb.phaseCloseTimer);
-      tb.phaseCloseTimer = null;
-    }
+    clearPhaseClose(tb);
     tb.phaseClosing = false;
 
-    tb.status = "STOPPED";
+    syncFromEngine(tb.tabataEngine.stop());
     tb.paused = false;
     tb.remainingAtPause = 0;
     tb.completionHandled = true;

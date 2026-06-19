@@ -3,6 +3,7 @@
 import { updateText, updateTitle, formatTime } from "../utils.js?v=VERSION";
 import { t } from "../i18n.js?v=VERSION";
 import { sm } from "../sound.js?v=VERSION";
+import { getProgressOffset } from "../core/timers-runtime.js?v=VERSION";
 
 export function setupTabataRender(tb) {
   tb.updatePhaseStyles = () => {
@@ -58,16 +59,12 @@ export function setupTabataRender(tb) {
 
     if (!tb.ringCtrl) return;
 
-    const elapsed = Math.max(0, tb.phaseDuration - safeRem);
-    const progress =
-      tb.phaseDuration > 0
-        ? Math.max(0, Math.min(1, elapsed / tb.phaseDuration))
-        : 0;
+    const targetOffset = getProgressOffset({
+      remainingMs: safeRem,
+      totalMs: tb.phaseDuration,
+      ringLength: tb.ringLength,
+    });
 
-    const targetOffset = tb.ringLength - progress * tb.ringLength;
-
-    // На смене фазы избегаем резких артефактов:
-    // snap только если скачок действительно большой.
     if (tb.lastRenderedPhaseStamp !== tb.phaseStamp) {
       tb.lastRenderedPhaseStamp = tb.phaseStamp;
       const visual = tb.ringCtrl.getVisual
@@ -83,7 +80,6 @@ export function setupTabataRender(tb) {
       return;
     }
 
-    // Важно: без принудительного snap(0) -> финиш выглядит равномернее
     tb.ringCtrl.setTarget(targetOffset);
   };
 }

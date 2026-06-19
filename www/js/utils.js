@@ -240,15 +240,23 @@ export const createSVGIcon = (pathData, classes = []) => {
 
 const createWorker = () => {
   try {
-    return new Worker("./js/worker.js?v=VERSION");
-  } catch (e) {
-    console.error("Failed to create background worker:", e);
-    return {
-      postMessage: () => {},
-      addEventListener: () => {},
-      removeEventListener: () => {},
-      terminate: () => {},
-    };
+    // Vite/ESM-safe worker creation
+    return new Worker(new URL("./worker.js", import.meta.url), {
+      type: "module",
+    });
+  } catch (eVite) {
+    try {
+      // Legacy fallback for current www runtime
+      return new Worker("./js/worker.js?v=VERSION");
+    } catch (eLegacy) {
+      console.error("Failed to create background worker:", eVite, eLegacy);
+      return {
+        postMessage: () => {},
+        addEventListener: () => {},
+        removeEventListener: () => {},
+        terminate: () => {},
+      };
+    }
   }
 };
 

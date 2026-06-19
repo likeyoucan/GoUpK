@@ -16,6 +16,10 @@ import { sm } from "../sound.js?v=VERSION";
 import { t } from "../i18n.js?v=VERSION";
 import { store } from "../store.js?v=VERSION";
 import { createRingController } from "../ring/ring-controller.js?v=VERSION";
+import {
+  resolveRunningRemaining,
+  resolvePausedRemaining,
+} from "../core/runtime-reconcile.js?v=VERSION";
 
 import { setupTimerRender } from "./timer-render.js?v=VERSION";
 import { setupTimerInputs } from "./timer-inputs.js?v=VERSION";
@@ -107,7 +111,7 @@ export const tm = {
       }
 
       if (this.isRunning) {
-        const rem = Math.max(0, this.targetEpochMs - Date.now());
+        const rem = resolveRunningRemaining(this.targetEpochMs);
         this.timeRemainingMs = rem;
         this.lastUiRem = rem;
         this.updateDisplay(rem);
@@ -116,9 +120,9 @@ export const tm = {
       }
 
       if (this.isPaused) {
-        const rem = Math.max(
-          0,
-          this.remainingAtPause || this.timeRemainingMs || 0,
+        const rem = resolvePausedRemaining(
+          this.remainingAtPause,
+          this.timeRemainingMs,
         );
         this.timeRemainingMs = rem;
         this.updateDisplay(rem);

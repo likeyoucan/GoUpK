@@ -1,5 +1,7 @@
 // Файл: www/js/tabata/tabata-background-sync.js
 
+import { getRemainingMs } from "../core/timers-runtime.js?v=VERSION";
+
 export function setupTabataBackgroundSync(
   tb,
   { APP_EVENTS, updateTitle, bgWorker },
@@ -14,7 +16,7 @@ export function setupTabataBackgroundSync(
     if (tb.status === "STOPPED" || tb.paused || tb.completionHandled) return;
     if (tb.phaseClosing) return;
 
-    const rem = tb.phaseEndTime - Date.now();
+    const rem = getRemainingMs(tb.phaseEndTime);
 
     if (rem <= 0) {
       const missed = Math.abs(rem);
@@ -114,7 +116,7 @@ export function setupTabataBackgroundSync(
       }
 
       if (!tb.paused && !tb.completionHandled) {
-        const rem = tb.phaseEndTime - Date.now();
+        const rem = getRemainingMs(tb.phaseEndTime);
 
         if (rem <= 0) {
           tb.nextPhase(Math.abs(rem));

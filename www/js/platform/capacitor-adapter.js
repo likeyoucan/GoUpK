@@ -1,25 +1,26 @@
 // Файл www/js/platform/capacitor-adapter.js
 
+import {
+  getCapacitorBridge,
+  isNativeCapacitorPlatform,
+  getCapacitorPluginsMap,
+  getCapacitorPluginByName,
+} from "../core/platform-bridge.js?v=VERSION";
+
 export function getCapacitor() {
-  return window.Capacitor || null;
+  return getCapacitorBridge();
 }
 
 export function isNativePlatform() {
-  const c = getCapacitor();
-  return !!(
-    c &&
-    typeof c.isNativePlatform === "function" &&
-    c.isNativePlatform()
-  );
+  return isNativeCapacitorPlatform();
 }
 
 export function getPlugins() {
-  return getCapacitor()?.Plugins || {};
+  return getCapacitorPluginsMap();
 }
 
 export function getPlugin(name) {
-  if (!name) return null;
-  return getPlugins()[name] || null;
+  return getCapacitorPluginByName(name);
 }
 
 export function getTimerAlarmBridge() {

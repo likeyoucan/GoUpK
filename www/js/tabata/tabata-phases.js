@@ -7,6 +7,18 @@ import { APP_EVENTS } from "../constants/events.js?v=VERSION";
 import { emitAppEvent } from "../events/app-events.js?v=VERSION";
 
 export function setupTabataPhases(tb) {
+  function syncFromEngine(snap) {
+    tb.status = snap.status;
+    tb.currentRound = snap.currentRound;
+    tb.phaseDuration = snap.phaseDuration;
+    tb.phaseEndTime = snap.phaseEndTime;
+  }
+
+  function playPhaseStartSound() {
+    if (tb.status === "WORK") sm.play("work_start");
+    else if (tb.status === "REST") sm.play("rest_start");
+  }
+
   const handleCompletion = () => {
     if (tb.completionHandled) return;
     tb.completionHandled = true;
@@ -26,31 +38,13 @@ export function setupTabataPhases(tb) {
   };
 
   tb.advancePhase = () => {
-    if (tb.status === "READY") {
-      tb.status = "WORK";
-      tb.phaseDuration = tb.work;
-      tb.phaseStamp += 1;
-      sm.play("work_start");
-      return "ok";
-    }
+    const step = tb.tabataEngine.advanceOnce();
 
-    if (tb.status === "WORK") {
-      if (tb.currentRound >= tb.rounds) {
-        return "complete";
-      }
-      tb.status = "REST";
-      tb.phaseDuration = tb.rest;
-      tb.phaseStamp += 1;
-      sm.play("rest_start");
-      return "ok";
-    }
+    if (step.completed) return "complete";
 
-    // REST -> next WORK
-    tb.currentRound += 1;
-    tb.status = "WORK";
-    tb.phaseDuration = tb.work;
+    syncFromEngine(step.snapshot);
     tb.phaseStamp += 1;
-    sm.play("work_start");
+    playPhaseStartSound();
     return "ok";
   };
 
@@ -77,16 +71,17 @@ export function setupTabataPhases(tb) {
 
     // Consume additional overshoot across multiple phases.
     while (overshoot > 0 && tb.status !== "STOPPED" && !tb.completionHandled) {
-      if (overshoot >= tb.phaseDuration) {
-        overshoot -= tb.phaseDuration;
+      const currentPhaseDuration = tb.tabataEngine.getPhaseDuration();
+
+      if (overshoot >= currentPhaseDuration) {
+        overshoot -= currentPhaseDuration;
         if (!enterNextPhase()) return;
       } else {
-        tb.phaseDuration -= overshoot;
+        syncFromEngine(tb.tabataEngine.shortenCurrentPhase(overshoot));
         overshoot = 0;
       }
     }
 
-    tb.phaseEndTime = Date.now() + tb.phaseDuration;
     tb.updatePhaseStyles();
     tb.tick();
   };

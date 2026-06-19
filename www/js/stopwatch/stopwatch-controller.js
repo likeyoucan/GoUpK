@@ -19,6 +19,7 @@ import { shareResults } from "../share-results.js?v=VERSION";
 import { APP_EVENTS } from "../constants/events.js?v=VERSION";
 
 import { createRingController } from "../ring/ring-controller.js?v=VERSION";
+import { createStopwatchEngine } from "../core/stopwatch-engine.js?v=VERSION";
 import { setupStopwatchRender } from "./stopwatch-render.js?v=VERSION";
 import { setupStopwatchSessions } from "./stopwatch-sessions.js?v=VERSION";
 import { setupStopwatchShareController } from "./stopwatch-share-controller.js?v=VERSION";
@@ -43,6 +44,7 @@ const stopwatchModule = {
   pendingShareSession: null,
   pendingLapsRerender: false,
   shareResults,
+  stopwatchEngine: null,
 
   _unbindCore: null,
   _unbindSessions: null,
@@ -51,6 +53,12 @@ const stopwatchModule = {
   init() {
     this._unbindCore?.();
     this._unbindCore = null;
+
+    if (!this.stopwatchEngine) {
+      this.stopwatchEngine = createStopwatchEngine({
+        now: () => Date.now(),
+      });
+    }
 
     this.els = {
       display: $("sw-mainDisplay"),
@@ -194,6 +202,11 @@ const stopwatchModule = {
 
     if (this.isRunning) {
       store.clearActiveTimer();
+
+      const snap = this.stopwatchEngine.pause();
+      this.elapsedTime = snap.elapsedMs;
+      this.startEpochMs = 0;
+
       this.isRunning = false;
       this.pauseTime = Date.now();
       bgWorker.postMessage({ command: "stop" });
@@ -224,8 +237,11 @@ const stopwatchModule = {
     } else {
       store.activate("stopwatch");
 
-      this.startEpochMs = Date.now() - this.elapsedTime;
+      const snap = this.stopwatchEngine.start(this.elapsedTime);
+      this.startEpochMs = snap.startEpochMs;
+      this.elapsedTime = snap.elapsedMs;
       this.lastMinuteBeep = Math.floor(this.elapsedTime / 60000);
+
       this.isRunning = true;
       this.pauseTime = 0;
 
@@ -249,7 +265,7 @@ const stopwatchModule = {
   tick(isBackground = false) {
     if (!this.isRunning) return;
 
-    this.elapsedTime = Math.max(0, Date.now() - this.startEpochMs);
+    this.elapsedTime = this.stopwatchEngine.getElapsed();
 
     const currentMinute = Math.floor(this.elapsedTime / 60000);
     if (
@@ -332,6 +348,8 @@ const stopwatchModule = {
 
     if (this.elapsedTime > 0) {
       if (store.isActive("stopwatch")) store.clearActiveTimer();
+
+      this.stopwatchEngine.reset();
 
       this.elapsedTime = 0;
       this.startEpochMs = 0;

@@ -4,6 +4,7 @@ import { initializeApp } from "./app-init.js?v=VERSION";
 import { bindAppLifecycle } from "./app-lifecycle.js?v=VERSION";
 import { bindUiInteractions } from "./ui-interactions.js?v=VERSION";
 import { createDisposerBag } from "./disposer-bag.js?v=VERSION";
+import { createRuntimeHub } from "../core/runtime-hub.js?v=VERSION";
 
 export function initRuntimeBootstrap({
   applyPerformanceProfile,
@@ -26,48 +27,64 @@ export function initRuntimeBootstrap({
   getById,
 }) {
   const bag = createDisposerBag();
+  const runtimeHub = createRuntimeHub();
 
-  initializeApp({
-    applyPerformanceProfile,
-    initRingSvg,
-    langManager,
-    initTouchRanges,
-    themeManager,
-    sm,
-    sw,
-    tm,
-    tb,
-    navigation,
-    modalManager,
-  });
-
-  bag.add(
-    bindAppLifecycle({
-      preload,
-      initForegroundService,
-      destroyForegroundService,
-      modalManager,
-      navigation,
-      adsManager,
-    }),
-  );
-
-  bag.add(
-    bindUiInteractions({
-      $: getById,
-      showToast,
-      t,
-      modalManager,
+  runtimeHub.register("app-init", () => {
+    initializeApp({
+      applyPerformanceProfile,
+      initRingSvg,
+      langManager,
+      initTouchRanges,
       themeManager,
       sm,
-      langManager,
       sw,
       tm,
       tb,
       navigation,
-    }),
-  );
+      modalManager,
+    });
+  });
 
-  // Важно: теперь bootstrap возвращает destroy
-  return () => bag.run();
+  runtimeHub.register("app-lifecycle", () => {
+    bag.add(
+      bindAppLifecycle({
+        preload,
+        initForegroundService,
+        destroyForegroundService,
+        modalManager,
+        navigation,
+        adsManager,
+      }),
+    );
+  });
+
+  runtimeHub.register("ui-interactions", () => {
+    bag.add(
+      bindUiInteractions({
+        $: getById,
+        showToast,
+        t,
+        modalManager,
+        themeManager,
+        sm,
+        langManager,
+        sw,
+        tm,
+        tb,
+        navigation,
+      }),
+    );
+  });
+
+  runtimeHub.start();
+
+  return () => {
+    try {
+      runtimeHub.stop();
+    } catch (err) {
+      console.error("[runtime-bootstrap.runtime-hub.stop]", err);
+    }
+
+    bag.run();
+  };
 }

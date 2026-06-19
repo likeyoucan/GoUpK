@@ -3,6 +3,7 @@
 import { $, adjustVal, formatTime } from "../utils.js?v=VERSION";
 import { sm } from "../sound.js?v=VERSION";
 import { createRingController } from "../ring/ring-controller.js?v=VERSION";
+import { createTabataEngine } from "../core/tabata-engine.js?v=VERSION";
 
 import { setupTabataRender } from "./tabata-render.js?v=VERSION";
 import { setupTabataPhases } from "./tabata-phases.js?v=VERSION";
@@ -29,6 +30,8 @@ export const tb = {
   ringLength: 282.74,
   ringCtrl: null,
 
+  tabataEngine: null,
+
   phaseStamp: 0,
   lastRenderedPhaseStamp: -1,
 
@@ -47,6 +50,12 @@ export const tb = {
   init() {
     this._unbindRuntime?.();
     this._unbindRuntime = null;
+
+    if (!this.tabataEngine) {
+      this.tabataEngine = createTabataEngine({
+        now: () => Date.now(),
+      });
+    }
 
     this.els = {
       listSection: $("tb-list-section"),

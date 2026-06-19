@@ -55,6 +55,10 @@ export const themeManager = {
     if (this._isInitialized) return;
 
     uiSettingsManager.init();
+
+    colorManager.setThemeApi({
+      getCurrentTheme: () => this.getCurrentTheme(),
+    });
     colorManager.init();
 
     this.applySettings();
