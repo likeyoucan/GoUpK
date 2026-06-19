@@ -1,4 +1,4 @@
-// Файл: www/js/core/kernel.js
+// Файл: www/js/core/runtime-hub.js
 
 export function createRuntimeHub() {
   const modules = [];
