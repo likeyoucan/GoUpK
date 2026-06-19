@@ -3,6 +3,9 @@
 import { $ } from "./utils.js?v=VERSION";
 import { themeManager } from "./theme.js?v=VERSION";
 
+/** @typedef {import("./types/managers-contracts.js").NavigationManagerContract} NavigationManagerContract */
+/** @typedef {import("./types/managers-contracts.js").AppView} AppView */
+
 const VIEWS = ["stopwatch", "timer", "tabata", "settings"];
 
 function prefersReducedMotion() {
@@ -15,6 +18,7 @@ function stripIds(root) {
   root.querySelectorAll?.("[id]").forEach((el) => el.removeAttribute("id"));
 }
 
+/** @type {NavigationManagerContract} */
 export const navigation = {
   activeView: "stopwatch",
   clockInterval: null,
@@ -26,6 +30,11 @@ export const navigation = {
     this.updateIcons(this.activeView);
   },
 
+  /**
+   * @param {AppView} viewId
+   * @param {{source?: "tap" | "swipe"}} [options]
+   * @returns {boolean}
+   */
   switchView(viewId, options = {}) {
     const { source = "tap" } = options;
 
@@ -52,7 +61,6 @@ export const navigation = {
     this.isTransitioning = true;
     appEl?.classList.add("is-view-transitioning");
 
-    // Чистим старые snapshot
     viewsContainer
       .querySelectorAll(".nav-snapshot-layer")
       .forEach((n) => n.remove());
@@ -70,7 +78,6 @@ export const navigation = {
     snapshot.setAttribute("aria-hidden", "true");
     snapshot.setAttribute("inert", "");
 
-    // КЛЮЧЕВОЕ: всегда на весь контейнер, без rect-вычислений
     snapshot.style.position = "absolute";
     snapshot.style.inset = "0";
     snapshot.style.width = "100%";
@@ -82,7 +89,6 @@ export const navigation = {
 
     viewsContainer.appendChild(snapshot);
 
-    // Реальные экраны сразу переключаем в итоговое состояние
     this.updateDOM(viewId, { instant: true });
     this.updateIcons(viewId);
 
@@ -98,10 +104,8 @@ export const navigation = {
 
     requestAnimationFrame(() => {
       if (!isSwipe) {
-        // Тап: просто fade-out старого snapshot
         snapshot.style.opacity = "0";
       } else {
-        // Свайп: сдвиг snapshot в сторону жеста
         snapshot.style.transform = `translateX(${dirForward ? "-100%" : "100%"})`;
         snapshot.style.opacity = "1";
       }
@@ -126,6 +130,10 @@ export const navigation = {
     return true;
   },
 
+  /**
+   * @param {AppView} viewId
+   * @param {{instant?: boolean}} [options]
+   */
   updateDOM(viewId, options = {}) {
     const { instant = false } = options;
     this.activeView = viewId;
@@ -157,6 +165,9 @@ export const navigation = {
     }
   },
 
+  /**
+   * @param {AppView} activeId
+   */
   updateIcons(activeId) {
     document.querySelectorAll("[data-nav]").forEach((btn) => {
       const id = btn.getAttribute("data-nav");

@@ -9,27 +9,11 @@ import {
   setMainInert,
 } from "./modal/modal-overlay.js?v=VERSION";
 
-/**
- * @typedef {"bottom-sheet" | "alert"} ModalType
- *
- * @typedef {Object} ModalConfig
- * @property {string} id
- * @property {ModalType} type
- * @property {string} [handlerId]
- * @property {string} [contentId]
- * @property {(data?: any) => void} [onOpen]
- * @property {() => void} [onClose]
- *
- * @typedef {Object} ModalEntry
- * @property {string} id
- * @property {ModalType} type
- * @property {HTMLElement} el
- * @property {HTMLElement | null} content
- * @property {HTMLElement | null} handlerEl
- * @property {(data?: any) => void} [onOpen]
- * @property {() => void} [onClose]
- */
+/** @typedef {import("./types/managers-contracts.js").ModalConfig} ModalConfig */
+/** @typedef {import("./types/managers-contracts.js").ModalEntry} ModalEntry */
+/** @typedef {import("./types/managers-contracts.js").ModalManagerContract} ModalManagerContract */
 
+/** @implements {ModalManagerContract} */
 class ModalManager {
   constructor() {
     /** @type {Record<string, ModalEntry>} */

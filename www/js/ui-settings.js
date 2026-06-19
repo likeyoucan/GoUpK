@@ -19,8 +19,11 @@ import {
 import { bindUiSettingsEvents } from "./ui-settings/ui-settings-bindings.js?v=VERSION";
 import { adsManager } from "./ads.js?v=VERSION";
 
+/** @typedef {import("./types/managers-contracts.js").UiSettingsManagerContract} UiSettingsManagerContract */
+
 const state = createUiSettingsState();
 
+/** @type {UiSettingsManagerContract} */
 export const uiSettingsManager = {
   _unbindEvents: null,
   _isInitialized: false,
