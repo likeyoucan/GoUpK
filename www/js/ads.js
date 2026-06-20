@@ -108,6 +108,11 @@ export const adsManager = {
 
   _unbinds: [],
   _viewportHandler: null,
+  _viewportRaf: 0,
+
+  _lastBannerVisible: null,
+  _lastBannerSignature: "",
+  _lastBannerPlacement: "",
 
   init() {
     this._cleanupBindings();
@@ -123,6 +128,9 @@ export const adsManager = {
     );
 
     this.initialized = true;
+    this._lastBannerVisible = null;
+    this._lastBannerSignature = "";
+    this._lastBannerPlacement = "";
 
     if (isNative()) {
       const plugin = getAdsPlugin();
@@ -135,7 +143,7 @@ export const adsManager = {
     }
 
     this._bindViewportListener();
-    this.renderBanner();
+    this.renderBanner({ force: true });
   },
 
   _cleanupBindings() {
@@ -149,13 +157,24 @@ export const adsManager = {
     this._unbinds = [];
     this._viewportListenerBound = false;
     this._viewportHandler = null;
+
+    if (this._viewportRaf) {
+      cancelAnimationFrame(this._viewportRaf);
+      this._viewportRaf = 0;
+    }
   },
 
   _bindViewportListener() {
     if (this._viewportListenerBound) return;
     this._viewportListenerBound = true;
 
-    this._viewportHandler = () => this.renderBanner();
+    this._viewportHandler = () => {
+      if (this._viewportRaf) return;
+      this._viewportRaf = requestAnimationFrame(() => {
+        this._viewportRaf = 0;
+        this.renderBanner();
+      });
+    };
 
     window.addEventListener("resize", this._viewportHandler, { passive: true });
     window.addEventListener("orientationchange", this._viewportHandler, {
@@ -171,9 +190,9 @@ export const adsManager = {
   },
 
   bindAutoRefresh() {
-    const onAdsChanged = () => this.renderBanner();
-    const onBannerModeChanged = () => this.renderBanner();
-    const onProChanged = () => this.renderBanner();
+    const onAdsChanged = () => this.renderBanner({ force: true });
+    const onBannerModeChanged = () => this.renderBanner({ force: true });
+    const onProChanged = () => this.renderBanner({ force: true });
 
     document.addEventListener(APP_EVENTS.ADS_SETTINGS_CHANGED, onAdsChanged);
     document.addEventListener(
@@ -248,7 +267,7 @@ export const adsManager = {
         .catch(() => {});
     }
 
-    this.renderBanner();
+    this.renderBanner({ force: true });
     dispatch(APP_EVENTS.ADS_SETTINGS_CHANGED, { enabled: finalValue });
   },
 
@@ -263,13 +282,13 @@ export const adsManager = {
         .catch(() => {});
     }
 
-    this.renderBanner();
+    this.renderBanner({ force: true });
     dispatch(APP_EVENTS.ADS_SETTINGS_CHANGED, { provider });
   },
 
   setBannerMode(mode) {
     this.bannerMode = normalizeBannerMode(mode);
-    this.renderBanner();
+    this.renderBanner({ force: true });
     dispatch(APP_EVENTS.ADS_BANNER_MODE_CHANGED, { mode: this.bannerMode });
   },
 
@@ -299,31 +318,56 @@ export const adsManager = {
     return true;
   },
 
-  renderBanner() {
+  _emitBannerVisibility(visible) {
+    if (this._lastBannerVisible === visible) return;
+    this._lastBannerVisible = visible;
+    dispatch(APP_EVENTS.ADS_BANNER_VISIBILITY_CHANGED, { visible });
+  },
+
+  renderBanner({ force = false } = {}) {
     const slot = $("app-ad-slot");
     const visible = this.shouldShowBanner();
 
     if (!slot) {
       updateMobileOffsetClass(false);
-      dispatch(APP_EVENTS.ADS_BANNER_VISIBILITY_CHANGED, { visible: false });
+      this._emitBannerVisibility(false);
       return;
     }
 
-    if (!visible) {
-      this.bannerMounted = false;
+    const placement = isDesktopAdLayout()
+      ? "fixed_top_banner"
+      : "inline_top_banner";
 
-      if (isNative()) {
+    const signature = JSON.stringify({
+      visible,
+      native: isNative(),
+      provider: this.provider,
+      placement,
+      bannerMode: this.bannerMode,
+    });
+
+    if (!force && signature === this._lastBannerSignature) {
+      updateMobileOffsetClass(visible);
+      this._emitBannerVisibility(visible);
+      return;
+    }
+
+    this._lastBannerSignature = signature;
+    this._lastBannerPlacement = placement;
+
+    if (!visible) {
+      if (this.bannerMounted && isNative()) {
         getAdsPlugin()
           ?.hideBanner?.()
           .catch(() => {});
       }
 
+      this.bannerMounted = false;
       slot.replaceChildren();
       slot.classList.add("hidden");
 
       updateMobileOffsetClass(false);
-
-      dispatch(APP_EVENTS.ADS_BANNER_VISIBILITY_CHANGED, { visible: false });
+      this._emitBannerVisibility(false);
       return;
     }
 
@@ -336,17 +380,14 @@ export const adsManager = {
     } else {
       getAdsPlugin()
         ?.showBanner?.({
-          placement: isDesktopAdLayout()
-            ? "fixed_top_banner"
-            : "inline_top_banner",
+          placement,
           provider: this.provider,
         })
         .catch(() => {});
     }
 
     updateMobileOffsetClass(true);
-
-    dispatch(APP_EVENTS.ADS_BANNER_VISIBILITY_CHANGED, { visible: true });
+    this._emitBannerVisibility(true);
   },
 
   isInterstitialTriggerEnabled(context) {

@@ -53,6 +53,31 @@ class ModalManager {
     this._boundModalListeners = [];
   }
 
+  _syncAppInteractivity() {
+    const appEl = $("app");
+    const hasActive = this.stack.hasAny();
+
+    if (this.modalContainer) {
+      this.modalContainer.classList.toggle("active", hasActive);
+    }
+
+    setMainInert(appEl, hasActive);
+
+    if (!hasActive) {
+      this._detachOverlayClick();
+      hideBottomSheetOverlay(this.bottomSheetOverlay);
+      return;
+    }
+
+    const top = this._getTopModal();
+    if (top?.type === "bottom-sheet") {
+      this._showBottomSheetOverlayFor(top.id);
+    } else {
+      this._detachOverlayClick();
+      hideBottomSheetOverlay(this.bottomSheetOverlay);
+    }
+  }
+
   /**
    * @param {ModalConfig[]} config
    */
@@ -134,6 +159,8 @@ class ModalManager {
     this.lastFocusedElement = null;
     this.modals = {};
     this.closeTimeouts = {};
+
+    this._syncAppInteractivity();
   }
 
   hasActiveModal() {
@@ -153,12 +180,11 @@ class ModalManager {
 
     if (!this.stack.hasAny()) {
       this.lastFocusedElement = document.activeElement;
-      setMainInert($("app"), true);
-      this.modalContainer.classList.add("active");
     }
 
     this.stack.push(id);
     this._syncEscListener();
+    this._syncAppInteractivity();
 
     modal.el.classList.remove("hidden");
     modal.el.classList.add("flex");
@@ -166,7 +192,6 @@ class ModalManager {
     modal.el.removeAttribute("aria-hidden");
 
     if (modal.type === "bottom-sheet") {
-      this._showBottomSheetOverlayFor(id);
       modal.el.style.transition = "none";
       modal.el.style.transform = "translateY(100%)";
 
@@ -218,23 +243,9 @@ class ModalManager {
 
     this.stack.remove(id);
     this._syncEscListener();
+    this._syncAppInteractivity();
 
-    const isLastModal = !this.stack.hasAny();
     const delay = modal.type === "bottom-sheet" ? 400 : 300;
-
-    if (isLastModal) {
-      this._detachOverlayClick();
-      hideBottomSheetOverlay(this.bottomSheetOverlay);
-      this.modalContainer.classList.remove("active");
-    } else {
-      const top = this._getTopModal();
-      if (top?.type === "bottom-sheet") {
-        this._showBottomSheetOverlayFor(top.id);
-      } else {
-        this._detachOverlayClick();
-        hideBottomSheetOverlay(this.bottomSheetOverlay);
-      }
-    }
 
     this.closeTimeouts[id] = setTimeout(() => {
       if (this.stack.has(id)) {
@@ -252,9 +263,7 @@ class ModalManager {
 
       this.closeTimeouts[id] = null;
 
-      if (isLastModal) {
-        setMainInert($("app"), false);
-
+      if (!this.stack.hasAny()) {
         if (
           this.lastFocusedElement &&
           typeof this.lastFocusedElement.focus === "function"
@@ -263,6 +272,8 @@ class ModalManager {
         }
         this.lastFocusedElement = null;
       }
+
+      this._syncAppInteractivity();
 
       if (typeof modal.onClose === "function") {
         modal.onClose();
