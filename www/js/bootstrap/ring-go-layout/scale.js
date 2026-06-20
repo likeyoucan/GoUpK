@@ -17,6 +17,19 @@ function setGoFontStable(displayEl, nextPx) {
   displayEl.dataset.goFontPx = String(nextPx);
 }
 
+function isBottomCollapsedInRow(displayEl) {
+  const viewEl = displayEl?.closest(
+    "#view-stopwatch, #view-timer, #view-tabata",
+  );
+  if (!viewEl) return false;
+
+  // split-bottom-hidden is final state, data-split-target="bottom" is transitional/live state
+  return (
+    viewEl.classList.contains("split-bottom-hidden") ||
+    viewEl.dataset.splitTarget === "bottom"
+  );
+}
+
 export function applyMetaTextScale(wrap, ringPx) {
   if (!wrap || !ringPx) return;
 
@@ -95,6 +108,10 @@ export function applyDisplayScale(displayEl, ringPx, renderedRingPx) {
   const compact = isCompactRing(ringPx);
   const hasMs = text.includes(".");
 
+  // Special case: in 2-column layout when bottom panel is collapsed to 100% top,
+  // ring grows a lot, so reduce numeric time scale.
+  const rowBottomCollapsed = rowLayout && isBottomCollapsedInRow(displayEl);
+
   const base = compact
     ? hasMs
       ? 0.155
@@ -107,10 +124,27 @@ export function applyDisplayScale(displayEl, ringPx, renderedRingPx) {
         ? 0.128
         : 0.148;
 
-  const rawTimer = ringPx * base;
+  let rawTimer = ringPx * base;
+
+  if (rowBottomCollapsed) {
+    rawTimer *= 0.84;
+  }
+
   const minPx = compact ? 10 : rowLayout ? 12 : 14;
-  const hardMaxPx = compact ? 36 : rowLayout ? 64 : 84;
-  const ratioMaxPx = ringPx * (hasMs ? 0.24 : 0.27);
+
+  const hardMaxPx = rowBottomCollapsed
+    ? hasMs
+      ? 52
+      : 56
+    : compact
+      ? 36
+      : rowLayout
+        ? 64
+        : 84;
+
+  const ratioMaxPx = rowBottomCollapsed
+    ? ringPx * (hasMs ? 0.2 : 0.22)
+    : ringPx * (hasMs ? 0.24 : 0.27);
 
   const timerPx = snap2(
     clamp(rawTimer, minPx, Math.min(hardMaxPx, ratioMaxPx)),

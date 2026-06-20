@@ -1,4 +1,6 @@
-// Файл: www/js/navigation.js 
+// Файл: www/js/navigation.js
+
+// Файл: www/js/navigation.js
 
 import { $ } from "./utils.js?v=VERSION";
 import { themeManager } from "./theme.js?v=VERSION";
@@ -18,7 +20,7 @@ function stripIds(root) {
   root.querySelectorAll?.("[id]").forEach((el) => el.removeAttribute("id"));
 }
 
-/** @type {NavigationManagerContract} */
+/** @type {NavigationManagerContract & {destroy?: () => void}} */
 export const navigation = {
   activeView: "stopwatch",
   clockInterval: null,
@@ -28,6 +30,14 @@ export const navigation = {
     this.initClock();
     this.updateDOM(this.activeView, { instant: true });
     this.updateIcons(this.activeView);
+  },
+
+  destroy() {
+    if (this.clockInterval) {
+      clearInterval(this.clockInterval);
+      this.clockInterval = null;
+    }
+    this.isTransitioning = false;
   },
 
   /**
@@ -107,7 +117,7 @@ export const navigation = {
         snapshot.style.opacity = "0";
       } else {
         snapshot.style.transform = `translateX(${dirForward ? "-100%" : "100%"})`;
-        snapshot.style.opacity = "1";
+        snapshot.style.opacity = "0.95";
       }
     });
 
