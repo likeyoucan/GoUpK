@@ -79,28 +79,38 @@ export function centerGoDisplay(displayEl) {
   const topRect = topHalf?.getBoundingClientRect?.();
 
   const targetCx = wrapRect.left + wrapRect.width / 2;
+  const fallbackCy = wrapRect.top + wrapRect.height / 2;
 
-  // ВАЖНО: центр считаем по top-half (его видимой части в пределах wrap),
-  // а не по экрану/viewport.
-  let targetCy = wrapRect.top + wrapRect.height / 2;
-  if (topRect && topRect.height > 0) {
-    const visibleTop = Math.max(wrapRect.top, topRect.top);
-    const visibleBottom = Math.min(wrapRect.bottom, topRect.bottom);
+  // ВАЖНО: центр берем от top-half (как в старом рабочем коде),
+  // а затем ограничиваем в пределах кольца.
+  const targetCyRaw =
+    topRect && topRect.height > 0
+      ? topRect.top + topRect.height / 2
+      : fallbackCy;
 
-    if (visibleBottom > visibleTop) {
-      targetCy = visibleTop + (visibleBottom - visibleTop) / 2;
-    }
-  }
+  const targetCy = clamp(targetCyRaw, wrapRect.top + 4, wrapRect.bottom - 4);
 
   const prevX = displayEl.style.getPropertyValue("--go-nudge-x");
   const prevY = displayEl.style.getPropertyValue("--go-nudge-y");
 
+  // Меряем текст в нейтральной позиции, чтобы не накапливать дрейф.
   displayEl.style.setProperty("--go-nudge-x", "0px");
   displayEl.style.setProperty("--go-nudge-y", "0px");
   void displayEl.offsetWidth;
 
-  // Более стабильное измерение для трансформируемого текста
-  const txtRect = displayEl.getBoundingClientRect();
+  let inkRect = null;
+  const textNode = displayEl.firstChild;
+  if (textNode && textNode.nodeType === Node.TEXT_NODE) {
+    const range = document.createRange();
+    range.selectNodeContents(displayEl);
+    const r = range.getBoundingClientRect();
+    if (r && r.width > 0 && r.height > 0) {
+      inkRect = r;
+    }
+    range.detach?.();
+  }
+
+  const txtRect = inkRect || displayEl.getBoundingClientRect();
   if (!txtRect || !txtRect.width || !txtRect.height) {
     displayEl.style.setProperty("--go-nudge-x", prevX || "0px");
     displayEl.style.setProperty("--go-nudge-y", prevY || "0px");
@@ -110,8 +120,7 @@ export function centerGoDisplay(displayEl) {
   let dx = targetCx - (txtRect.left + txtRect.width / 2);
   let dy = targetCy - (txtRect.top + txtRect.height / 2);
 
-  // Оптическая компенсация (чуть вверх для визуального центра)
-  const opticalUp = Math.max(2, txtRect.height * 0.09);
+  const opticalUp = Math.max(1.5, txtRect.height * 0.06);
   dy -= opticalUp;
 
   const nextX = snap2(clamp(dx, -36, 36));
