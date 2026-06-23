@@ -116,136 +116,82 @@ function bindHorizontalScrollArea(container) {
   let startX = 0;
   let startLeft = 0;
 
-  let touchActive = false;
-  let touchMoved = false;
-  let touchStartX = 0;
-  let touchStartY = 0;
-  let touchLockHorizontal = false;
-
   const canScroll = () => container.scrollWidth > container.clientWidth;
 
-  const onWheel = (e) => {
-    if (!canScroll()) return;
-    const mostlyVertical = Math.abs(e.deltaY) >= Math.abs(e.deltaX);
-    const delta = mostlyVertical ? e.deltaY : e.deltaX;
-    if (!delta) return;
-
-    const prev = container.scrollLeft;
-    container.scrollLeft += delta;
-    if (container.scrollLeft !== prev) e.preventDefault();
-  };
-
-  const onMouseMove = (e) => {
+  const onMove = (e) => {
     if (!isDown) return;
+
     const dx = e.clientX - startX;
     if (Math.abs(dx) > 2) moved = true;
+
     container.scrollLeft = startLeft - dx;
   };
 
-  const stopMouse = () => {
+  const onUp = () => {
     if (!isDown) return;
+
     isDown = false;
     container.classList.remove("is-dragging-x");
 
-    window.removeEventListener("mousemove", onMouseMove);
-    window.removeEventListener("mouseup", stopMouse);
-    window.removeEventListener("mouseleave", stopMouse);
-    window.removeEventListener("blur", stopMouse);
+    window.removeEventListener("mousemove", onMove);
+    window.removeEventListener("mouseup", onUp);
+    window.removeEventListener("mouseleave", onUp);
+    window.removeEventListener("blur", onUp);
+  };
+
+  const onWheel = (e) => {
+    if (!canScroll()) return;
+
+    const mostlyVerticalWheel = Math.abs(e.deltaY) >= Math.abs(e.deltaX);
+    const delta = mostlyVerticalWheel ? e.deltaY : e.deltaX;
+    if (!delta) return;
+
+    const prevLeft = container.scrollLeft;
+    container.scrollLeft += delta;
+
+    if (container.scrollLeft !== prevLeft) {
+      e.preventDefault();
+    }
   };
 
   const onMouseDown = (e) => {
     if (e.button !== 0) return;
     if (!canScroll()) return;
 
+    const interactiveTarget = e.target.closest(".app-icon-option");
+    if (interactiveTarget) return;
+
     isDown = true;
     moved = false;
     startX = e.clientX;
     startLeft = container.scrollLeft;
+
     container.classList.add("is-dragging-x");
 
-    window.addEventListener("mousemove", onMouseMove);
-    window.addEventListener("mouseup", stopMouse);
-    window.addEventListener("mouseleave", stopMouse);
-    window.addEventListener("blur", stopMouse);
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    window.addEventListener("mouseleave", onUp);
+    window.addEventListener("blur", onUp);
 
     e.preventDefault();
   };
 
   const onClickCapture = (e) => {
-    if (!moved && !touchMoved) return;
+    if (!moved) return;
     e.preventDefault();
     e.stopPropagation();
     moved = false;
-    touchMoved = false;
-  };
-
-  const onTouchStart = (e) => {
-    if (!canScroll()) return;
-    const t = e.touches[0];
-    if (!t) return;
-
-    touchActive = true;
-    touchMoved = false;
-    touchLockHorizontal = false;
-    touchStartX = t.clientX;
-    touchStartY = t.clientY;
-    startLeft = container.scrollLeft;
-  };
-
-  const onTouchMove = (e) => {
-    if (!touchActive) return;
-    const t = e.touches[0];
-    if (!t) return;
-
-    const dx = t.clientX - touchStartX;
-    const dy = t.clientY - touchStartY;
-
-    if (!touchLockHorizontal) {
-      if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
-
-      touchLockHorizontal = Math.abs(dx) >= Math.abs(dy);
-      if (!touchLockHorizontal) {
-        touchActive = false;
-        return;
-      }
-
-      container.classList.add("is-dragging-x");
-    }
-
-    e.preventDefault();
-    touchMoved = true;
-    container.scrollLeft = startLeft - dx;
-  };
-
-  const stopTouch = () => {
-    if (!touchActive && !touchLockHorizontal) return;
-    touchActive = false;
-    touchLockHorizontal = false;
-    container.classList.remove("is-dragging-x");
   };
 
   container.addEventListener("wheel", onWheel, { passive: false });
   container.addEventListener("mousedown", onMouseDown);
   container.addEventListener("click", onClickCapture, true);
 
-  container.addEventListener("touchstart", onTouchStart, { passive: true });
-  container.addEventListener("touchmove", onTouchMove, { passive: false });
-  container.addEventListener("touchend", stopTouch, { passive: true });
-  container.addEventListener("touchcancel", stopTouch, { passive: true });
-
   return () => {
-    stopMouse();
-    stopTouch();
-
-    container.removeEventListener("wheel", onWheel);
+    onUp();
+    container.removeEventListener("wheel", onWheel, { passive: false });
     container.removeEventListener("mousedown", onMouseDown);
     container.removeEventListener("click", onClickCapture, true);
-
-    container.removeEventListener("touchstart", onTouchStart);
-    container.removeEventListener("touchmove", onTouchMove);
-    container.removeEventListener("touchend", stopTouch);
-    container.removeEventListener("touchcancel", stopTouch);
-
     delete container.dataset.dragScrollBound;
   };
 }

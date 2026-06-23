@@ -211,37 +211,65 @@ export const APP_MONETIZATION_CONFIG = {
           labelKey: "app_icon_pro",
           proRequired: true,
         },
-                {
+        {
           id: "pro_1",
           nativeName: "pro_1",
           image: "img/app_img.png",
           labelKey: "app_icon_pro",
           proRequired: true,
         },
-                        {
+        {
           id: "pro_2",
           nativeName: "pro_2",
           image: "img/app_img.png",
           labelKey: "app_icon_pro",
           proRequired: true,
         },
-                        {
+        {
           id: "pro_3",
           nativeName: "pro_3",
           image: "img/app_img.png",
           labelKey: "app_icon_pro",
           proRequired: true,
         },
-                        {
+        {
           id: "pro_4",
           nativeName: "pro_4",
           image: "img/app_img.png",
           labelKey: "app_icon_pro",
           proRequired: true,
         },
-                        {
+        {
           id: "pro_5",
+          nativeName: "pro_5",
+          image: "img/app_img.png",
+          labelKey: "app_icon_pro",
+          proRequired: true,
+        },
+        {
+          id: "pro_6",
           nativeName: "pro_6",
+          image: "img/app_img.png",
+          labelKey: "app_icon_pro",
+          proRequired: true,
+        },
+        {
+          id: "pro_7",
+          nativeName: "pro_7",
+          image: "img/app_img.png",
+          labelKey: "app_icon_pro",
+          proRequired: true,
+        },
+        {
+          id: "pro_8",
+          nativeName: "pro_8",
+          image: "img/app_img.png",
+          labelKey: "app_icon_pro",
+          proRequired: true,
+        },
+        {
+          id: "pro_9",
+          nativeName: "pro_9",
           image: "img/app_img.png",
           labelKey: "app_icon_pro",
           proRequired: true,
