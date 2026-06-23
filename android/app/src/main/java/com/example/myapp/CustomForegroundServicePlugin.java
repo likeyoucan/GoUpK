@@ -33,6 +33,10 @@ public class CustomForegroundServicePlugin extends Plugin {
 
     private BroadcastReceiver actionReceiver;
 
+    private static final String ACTION_PREFS = "fg_actions";
+    private static final String KEY_PENDING_BUTTON_ID = "pending_button_id";
+    private static final String KEY_PENDING_AT = "pending_at";
+
     @Override
     public void load() {
         actionReceiver = new BroadcastReceiver() {
@@ -42,10 +46,12 @@ public class CustomForegroundServicePlugin extends Plugin {
                 if (!ForegroundActionReceiver.ACTION_BRIDGE_EVENT.equals(intent.getAction())) return;
 
                 int buttonId = intent.getIntExtra(ForegroundActionReceiver.EXTRA_BUTTON_ID, 0);
+                long eventAt = intent.getLongExtra(ForegroundActionReceiver.EXTRA_EVENT_AT, 0L);
                 if (buttonId == 0) return;
 
                 JSObject payload = new JSObject();
                 payload.put("buttonId", buttonId);
+                payload.put("eventAt", eventAt);
                 notifyListeners("buttonClicked", payload, true);
             }
         };
@@ -168,6 +174,31 @@ public class CustomForegroundServicePlugin extends Plugin {
         JSObject out = new JSObject();
         out.put("error", err);
         out.put("at", at);
+        call.resolve(out);
+    }
+
+    @PluginMethod
+    public void readAndClearPendingButton(PluginCall call) {
+        Context ctx = getContext();
+
+        int buttonId = ctx
+            .getSharedPreferences(ACTION_PREFS, Context.MODE_PRIVATE)
+            .getInt(KEY_PENDING_BUTTON_ID, 0);
+
+        long eventAt = ctx
+            .getSharedPreferences(ACTION_PREFS, Context.MODE_PRIVATE)
+            .getLong(KEY_PENDING_AT, 0L);
+
+        ctx.getSharedPreferences(ACTION_PREFS, Context.MODE_PRIVATE)
+            .edit()
+            .remove(KEY_PENDING_BUTTON_ID)
+            .remove(KEY_PENDING_AT)
+            .apply();
+
+        JSObject out = new JSObject();
+        out.put("hasPending", buttonId > 0);
+        out.put("buttonId", buttonId);
+        out.put("eventAt", eventAt);
         call.resolve(out);
     }
 

@@ -11,6 +11,11 @@ import java.util.List;
 public class ForegroundActionReceiver extends BroadcastReceiver {
     public static final String ACTION_BRIDGE_EVENT = "com.example.myapp.FG_BRIDGE_EVENT";
     public static final String EXTRA_BUTTON_ID = "buttonId";
+    public static final String EXTRA_EVENT_AT = "eventAt";
+
+    private static final String PREFS = "fg_actions";
+    private static final String KEY_PENDING_BUTTON_ID = "pending_button_id";
+    private static final String KEY_PENDING_AT = "pending_at";
 
     private boolean isAppInForeground(Context context) {
         ActivityManager am = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
@@ -30,13 +35,21 @@ public class ForegroundActionReceiver extends BroadcastReceiver {
         return false;
     }
 
-    private void dispatchBridgeEvent(Context context, int buttonId) {
+    private void persistPendingAction(Context context, int buttonId, long eventAt) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .edit()
+            .putInt(KEY_PENDING_BUTTON_ID, buttonId)
+            .putLong(KEY_PENDING_AT, eventAt)
+            .apply();
+    }
+
+    private void dispatchBridgeEvent(Context context, int buttonId, long eventAt) {
         Intent bridge = new Intent(ACTION_BRIDGE_EVENT);
         bridge.setPackage(context.getPackageName());
         bridge.putExtra(EXTRA_BUTTON_ID, buttonId);
+        bridge.putExtra(EXTRA_EVENT_AT, eventAt);
         bridge.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
 
-        // On some devices this helps delivery when app was idle.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1) {
             bridge.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
         }
@@ -44,7 +57,7 @@ public class ForegroundActionReceiver extends BroadcastReceiver {
         context.sendBroadcast(bridge);
     }
 
-    private void wakeAppIfNeeded(Context context, int buttonId) {
+    private void wakeAppIfNeeded(Context context, int buttonId, long eventAt) {
         if (isAppInForeground(context)) return;
 
         Intent open = new Intent(context, MainActivity.class);
@@ -54,6 +67,7 @@ public class ForegroundActionReceiver extends BroadcastReceiver {
                 | Intent.FLAG_ACTIVITY_CLEAR_TOP
         );
         open.putExtra(EXTRA_BUTTON_ID, buttonId);
+        open.putExtra(EXTRA_EVENT_AT, eventAt);
         context.startActivity(open);
     }
 
@@ -70,7 +84,12 @@ public class ForegroundActionReceiver extends BroadcastReceiver {
 
         if (buttonId == 0) return;
 
-        dispatchBridgeEvent(context, buttonId);
-        wakeAppIfNeeded(context, buttonId);
+        long eventAt = System.currentTimeMillis();
+
+        // Гарантия: даже если bridge-событие потеряется, JS потом заберет pending action.
+        persistPendingAction(context, buttonId, eventAt);
+
+        dispatchBridgeEvent(context, buttonId, eventAt);
+        wakeAppIfNeeded(context, buttonId, eventAt);
     }
 }

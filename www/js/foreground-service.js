@@ -40,7 +40,7 @@ import {
 
 const FG_ID = 101;
 const ACTION_TOGGLE = 1;
-const POLL_MS = 400;
+const POLL_MS = 250;
 const FOREGROUND_STOP_DEBOUNCE_MS = 1200;
 
 const CHANNEL = {
@@ -61,6 +61,9 @@ let pendingStopTimer = null;
 let permissionGranted = null;
 let permissionCheckedAt = 0;
 const PERMISSION_CHECK_TTL_MS = 15000;
+
+// Deduplicate repeated button events (bridge + pending fallback).
+let lastHandledButtonAt = 0;
 
 const listeners = {
   appState: null,
@@ -163,6 +166,15 @@ async function stopForeground() {
   fgDebug("foreground stopped");
 }
 
+function shouldHandleButtonEvent(eventAtRaw) {
+  const eventAt = Number(eventAtRaw) || Date.now();
+  if (Math.abs(eventAt - lastHandledButtonAt) < 250) {
+    return false;
+  }
+  lastHandledButtonAt = eventAt;
+  return true;
+}
+
 async function handleNotificationToggle() {
   const state = getCurrentForegroundState();
   if (!state) return;
@@ -171,22 +183,28 @@ async function handleNotificationToggle() {
 
   if (state.mode === "stopwatch") {
     sw.toggle();
-    await syncNotification({ reason: "button_toggle_stopwatch" });
+    syncNotification({ reason: "button_toggle_stopwatch_fast" });
     return;
   }
 
   if (state.mode === "timer") {
-    // Optimistic update first, then final update after toggle promise resolves.
     const p = tm.toggle();
-    await syncNotification({ reason: "button_toggle_timer_optimistic" });
-    await p;
-    await syncNotification({ reason: "button_toggle_timer_final" });
+
+    syncNotification({ reason: "button_toggle_timer_fast_0" });
+    setTimeout(
+      () => syncNotification({ reason: "button_toggle_timer_fast_1" }),
+      40,
+    );
+
+    Promise.resolve(p)
+      .then(() => syncNotification({ reason: "button_toggle_timer_final" }))
+      .catch(() => {});
     return;
   }
 
   if (state.mode === "tabata") {
     tb.toggle();
-    await syncNotification({ reason: "button_toggle_tabata" });
+    syncNotification({ reason: "button_toggle_tabata_fast" });
   }
 }
 
@@ -427,6 +445,28 @@ export async function initForegroundService() {
     document.removeEventListener("visibilitychange", onVisibilityResync),
   );
 
+  const consumePendingButton = async () => {
+    try {
+      const pending = await plugins.FgService?.readAndClearPendingButton?.();
+      if (!pending?.hasPending) return;
+
+      const id = Number(pending.buttonId);
+      const at = Number(pending.eventAt) || Date.now();
+
+      if (id === ACTION_TOGGLE && shouldHandleButtonEvent(at)) {
+        handleNotificationToggle();
+        syncNotification({ reason: "pending_button_post_toggle_fast_0" });
+        setTimeout(
+          () =>
+            syncNotification({ reason: "pending_button_post_toggle_fast_1" }),
+          60,
+        );
+      }
+    } catch (err) {
+      console.warn("[fg] readAndClearPendingButton failed", err);
+    }
+  };
+
   if (plugins.App?.addListener) {
     listeners.appState = async ({ isActive }) => {
       if (!isActive) {
@@ -451,18 +491,23 @@ export async function initForegroundService() {
   }
 
   rememberHandle(
-    plugins.FgService.addListener?.("buttonClicked", async ({ buttonId }) => {
-      const id = Number(buttonId);
-      if (id === ACTION_TOGGLE) {
-        await handleNotificationToggle();
-        // Extra resync after action to avoid stale banner state.
-        syncNotification({ reason: "button_clicked_post_toggle_0" });
-        setTimeout(
-          () => syncNotification({ reason: "button_clicked_post_toggle_1" }),
-          90,
-        );
-      }
-    }),
+    plugins.FgService.addListener?.(
+      "buttonClicked",
+      ({ buttonId, eventAt }) => {
+        const id = Number(buttonId);
+        const at = Number(eventAt) || Date.now();
+
+        if (id === ACTION_TOGGLE && shouldHandleButtonEvent(at)) {
+          handleNotificationToggle();
+          syncNotification({ reason: "button_clicked_post_toggle_fast_0" });
+          setTimeout(
+            () =>
+              syncNotification({ reason: "button_clicked_post_toggle_fast_1" }),
+            60,
+          );
+        }
+      },
+    ),
   );
 
   rememberHandle(
@@ -471,6 +516,7 @@ export async function initForegroundService() {
     }),
   );
 
+  await consumePendingButton();
   await syncNotification({ reason: "init" });
   startPolling();
 }
