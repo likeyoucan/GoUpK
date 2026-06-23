@@ -176,6 +176,7 @@ async function handleNotificationToggle() {
   }
 
   if (state.mode === "timer") {
+    // Optimistic update first, then final update after toggle promise resolves.
     const p = tm.toggle();
     await syncNotification({ reason: "button_toggle_timer_optimistic" });
     await p;
@@ -204,7 +205,7 @@ export async function syncNotification({ reason = "unknown" } = {}) {
     return;
   }
 
-  // Есть активное состояние - держим polling включенным всегда.
+  // Keep polling active while any foreground state exists.
   startPolling();
 
   const granted = await ensurePermissionIfNeeded(false);
@@ -393,6 +394,39 @@ export async function initForegroundService() {
   bindDocumentEvents();
   bindVisibilityFallback();
 
+  const forceResyncBurst = () => {
+    // Fast burst for devices that delay JS timers right after wake.
+    syncNotification({ reason: "wake_from_notif_button_0" });
+    setTimeout(
+      () => syncNotification({ reason: "wake_from_notif_button_1" }),
+      80,
+    );
+    setTimeout(
+      () => syncNotification({ reason: "wake_from_notif_button_2" }),
+      220,
+    );
+  };
+
+  const onWindowFocus = () => {
+    forceResyncBurst();
+  };
+
+  const onVisibilityResync = () => {
+    if (document.visibilityState === "visible") {
+      forceResyncBurst();
+    }
+  };
+
+  window.addEventListener("focus", onWindowFocus, { passive: true });
+  document.addEventListener("visibilitychange", onVisibilityResync);
+
+  listeners.unsubs.push(() =>
+    window.removeEventListener("focus", onWindowFocus),
+  );
+  listeners.unsubs.push(() =>
+    document.removeEventListener("visibilitychange", onVisibilityResync),
+  );
+
   if (plugins.App?.addListener) {
     listeners.appState = async ({ isActive }) => {
       if (!isActive) {
@@ -421,6 +455,12 @@ export async function initForegroundService() {
       const id = Number(buttonId);
       if (id === ACTION_TOGGLE) {
         await handleNotificationToggle();
+        // Extra resync after action to avoid stale banner state.
+        syncNotification({ reason: "button_clicked_post_toggle_0" });
+        setTimeout(
+          () => syncNotification({ reason: "button_clicked_post_toggle_1" }),
+          90,
+        );
       }
     }),
   );
