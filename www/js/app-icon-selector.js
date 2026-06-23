@@ -125,7 +125,7 @@ function bindHorizontalScrollArea(container) {
     if (!isDown) return;
 
     const dx = e.clientX - startX;
-    if (Math.abs(dx) > 2) moved = true;
+    if (Math.abs(dx) > 4) moved = true;
 
     container.scrollLeft = startLeft - dx;
   };
@@ -160,9 +160,6 @@ function bindHorizontalScrollArea(container) {
   const onMouseDown = (e) => {
     if (e.button !== 0) return;
     if (!canScroll()) return;
-
-    const interactiveTarget = e.target.closest(".app-icon-option");
-    if (interactiveTarget) return;
 
     isDown = true;
     moved = false;
