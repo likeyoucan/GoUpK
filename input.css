@@ -4309,16 +4309,16 @@
   }
 
   #app-icon-options {
-  min-height: 4.9rem;
-  gap: 0.5rem;
-  padding-top: 0.35rem;
-  padding-bottom: 0.35rem;
-  overflow-x: auto;
-  overflow-y: visible;
-  overscroll-behavior-x: contain;
-  -webkit-overflow-scrolling: touch;
-  touch-action: auto;
-  cursor: auto;
+    min-height: 4.9rem;
+    gap: 0.5rem;
+    padding-top: 0.35rem;
+    padding-bottom: 0.35rem;
+    overflow-x: auto;
+    overflow-y: visible;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    touch-action: auto;
+    cursor: auto;
   }
 
   #app-icon-options.is-dragging-x .app-icon-option {
@@ -4362,6 +4362,13 @@
     border-radius: 12px;
     object-fit: cover;
     box-shadow: 0 1px 4px rgb(0 0 0 / 0.16);
+  }
+
+  .app-icon-preview,
+  .app-icon-preview-wrap img {
+    -webkit-user-drag: none;
+    user-drag: none;
+    user-select: none;
   }
 
   .app-icon-label {

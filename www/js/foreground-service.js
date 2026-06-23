@@ -33,13 +33,14 @@ import {
 
 import {
   getThemeSnapshot,
+  getAccentSnapshot,
   buildSignature,
   buildForegroundOptions,
 } from "./foreground/fg-notification.js?v=VERSION";
 
 const FG_ID = 101;
 const ACTION_TOGGLE = 1;
-const POLL_MS = 700;
+const POLL_MS = 400;
 const FOREGROUND_STOP_DEBOUNCE_MS = 1200;
 
 const CHANNEL = {
@@ -134,7 +135,22 @@ async function ensurePermissionIfNeeded(force = false) {
   return permissionGranted;
 }
 
+function startPolling() {
+  if (poller) return;
+  poller = setInterval(() => {
+    syncNotification({ reason: "poll" });
+  }, POLL_MS);
+}
+
+function stopPolling() {
+  if (!poller) return;
+  clearInterval(poller);
+  poller = null;
+}
+
 async function stopForeground() {
+  stopPolling();
+
   const plugins = getPlugins();
   if (!plugins || !isForegroundShown) return;
 
@@ -151,17 +167,26 @@ async function handleNotificationToggle() {
   const state = getCurrentForegroundState();
   if (!state) return;
 
+  cancelPendingStop();
+
   if (state.mode === "stopwatch") {
     sw.toggle();
-  } else if (state.mode === "timer") {
-    await tm.toggle();
-  } else if (state.mode === "tabata") {
-    tb.toggle();
+    await syncNotification({ reason: "button_toggle_stopwatch" });
+    return;
   }
 
-  setTimeout(() => {
-    syncNotification({ reason: "button_toggle" });
-  }, 80);
+  if (state.mode === "timer") {
+    const p = tm.toggle();
+    await syncNotification({ reason: "button_toggle_timer_optimistic" });
+    await p;
+    await syncNotification({ reason: "button_toggle_timer_final" });
+    return;
+  }
+
+  if (state.mode === "tabata") {
+    tb.toggle();
+    await syncNotification({ reason: "button_toggle_tabata" });
+  }
 }
 
 export async function syncNotification({ reason = "unknown" } = {}) {
@@ -178,6 +203,9 @@ export async function syncNotification({ reason = "unknown" } = {}) {
     await stopForeground();
     return;
   }
+
+  // Есть активное состояние - держим polling включенным всегда.
+  startPolling();
 
   const granted = await ensurePermissionIfNeeded(false);
   if (!granted) {
@@ -196,7 +224,13 @@ export async function syncNotification({ reason = "unknown" } = {}) {
   });
 
   const { isDarkTheme, themeToken } = getThemeSnapshot();
-  const signature = buildSignature(state, payload, themeToken);
+  const { accentColor, onAccentColor, accentToken } = getAccentSnapshot();
+
+  const signature = buildSignature(state, payload, {
+    themeToken,
+    accentToken,
+  });
+
   if (signature === lastSignature) return;
 
   const toggleTitle = state.running ? "⏸" : "▶";
@@ -207,6 +241,8 @@ export async function syncNotification({ reason = "unknown" } = {}) {
     payload,
     isDarkTheme,
     toggleTitle,
+    accentColor,
+    onAccentColor,
   });
 
   fgDebug("sync notification", {
@@ -215,6 +251,7 @@ export async function syncNotification({ reason = "unknown" } = {}) {
     running: state.running,
     payload,
     isDarkTheme,
+    accentColor,
   });
 
   if (!isForegroundShown) {
@@ -249,19 +286,6 @@ export async function syncNotification({ reason = "unknown" } = {}) {
     });
 }
 
-function startPolling() {
-  if (poller) return;
-  poller = setInterval(() => {
-    syncNotification({ reason: "poll" });
-  }, POLL_MS);
-}
-
-function stopPolling() {
-  if (!poller) return;
-  clearInterval(poller);
-  poller = null;
-}
-
 function bindDocumentEvents() {
   listeners.unsubs.push(
     onAppEvent(APP_EVENTS.ACTIVE_TIMER_CHANGED, () =>
@@ -290,6 +314,18 @@ function bindDocumentEvents() {
   listeners.unsubs.push(
     onAppEvent(APP_EVENTS.FOREGROUND_NOTIFICATION_SETTING_CHANGED, () =>
       syncNotification({ reason: "foreground_setting_changed" }),
+    ),
+  );
+
+  listeners.unsubs.push(
+    onAppEvent(APP_EVENTS.ACCENT_COLOR_CHANGED, () =>
+      syncNotification({ reason: "accent_changed" }),
+    ),
+  );
+
+  listeners.unsubs.push(
+    onAppEvent(APP_EVENTS.ADAPTIVE_BG_CHANGED, () =>
+      syncNotification({ reason: "adaptive_bg_changed" }),
     ),
   );
 }
@@ -321,10 +357,10 @@ function bindVisibilityFallback() {
       return;
     }
 
-    stopPolling();
     scheduleForegroundStop();
     await syncNotification({ reason: "visibility_visible" });
     releaseWakeLock();
+    startPolling();
   };
 
   document.addEventListener("visibilitychange", listeners.appVisibility);
@@ -369,10 +405,10 @@ export async function initForegroundService() {
         return;
       }
 
-      stopPolling();
       scheduleForegroundStop();
       await syncNotification({ reason: "appstate_foreground" });
       releaseWakeLock();
+      startPolling();
     };
 
     rememberHandle(
@@ -396,6 +432,7 @@ export async function initForegroundService() {
   );
 
   await syncNotification({ reason: "init" });
+  startPolling();
 }
 
 export async function destroyForegroundService() {

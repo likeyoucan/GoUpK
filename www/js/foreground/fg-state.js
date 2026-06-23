@@ -5,6 +5,13 @@ export function getForegroundState({ sw, tm, tb, activeView }) {
   const canResumeTimer = tm.isPaused && tm.getRemainingTime() > 0;
   const canResumeTabata = tb.status !== "STOPPED" && tb.paused;
 
+  const timerRemainingNow = () => {
+    if (tm.isRunning) {
+      return Math.max(0, (tm.targetEpochMs || 0) - Date.now());
+    }
+    return Math.max(0, tm.remainingAtPause || tm.timeRemainingMs || 0);
+  };
+
   const tabataMeta = () =>
     `${tb.selectedId || "na"}|${tb.currentRound || 0}|${tb.rounds || 0}|${tb.status || "STOPPED"}|${Math.floor(
       (tb.status !== "STOPPED"
@@ -18,7 +25,7 @@ export function getForegroundState({ sw, tm, tb, activeView }) {
 
   const timerMeta = () =>
     `${tm.initialDurationMs || tm.totalDuration || 0}|${Math.floor(
-      (tm.getRemainingTime() || 0) / 1000,
+      timerRemainingNow() / 1000,
     )}|${tm.isPaused ? "p" : "r"}`;
 
   const makeState = (mode, running) => {
@@ -70,7 +77,10 @@ export function buildForegroundPayload({
   }
 
   if (state.mode === "timer") {
-    const rem = tm.getRemainingTime();
+    const rem = state.running
+      ? Math.max(0, (tm.targetEpochMs || 0) - Date.now())
+      : Math.max(0, tm.remainingAtPause || tm.timeRemainingMs || 0);
+
     const total = tm.initialDurationMs || tm.totalDuration || 0;
 
     const titleLeft = total

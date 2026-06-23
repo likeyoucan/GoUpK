@@ -43,23 +43,23 @@
             android:id="@+id/notif_btn_toggle_wrap"
             android:layout_width="44dp"
             android:layout_height="44dp"
-            android:layout_marginStart="8dp">
+            android:layout_marginStart="8dp"
+            android:clickable="true"
+            android:focusable="true">
 
             <ImageView
                 android:id="@+id/notif_btn_toggle_bg"
                 android:layout_width="44dp"
                 android:layout_height="44dp"
                 android:layout_gravity="center"
-                android:src="@drawable/ic_notif_btn_circle"
-                android:tint="#E2EAFF" />
+                android:src="@drawable/ic_notif_btn_circle" />
 
             <ImageView
                 android:id="@+id/notif_btn_toggle_icon"
                 android:layout_width="20dp"
                 android:layout_height="20dp"
                 android:layout_gravity="center"
-                android:src="@drawable/ic_notif_play"
-                android:tint="#2B3038" />
+                android:src="@drawable/ic_notif_play" />
         </FrameLayout>
     </LinearLayout>
 </LinearLayout>

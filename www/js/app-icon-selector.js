@@ -186,9 +186,14 @@ function bindHorizontalScrollArea(container) {
     moved = false;
   };
 
+  const onDragStart = (e) => {
+    e.preventDefault();
+  };
+
   container.addEventListener("wheel", onWheel, { passive: false });
   container.addEventListener("mousedown", onMouseDown);
   container.addEventListener("click", onClickCapture, true);
+  container.addEventListener("dragstart", onDragStart);
 
   return () => {
     onUp();
@@ -196,6 +201,7 @@ function bindHorizontalScrollArea(container) {
     container.removeEventListener("wheel", onWheel, { passive: false });
     container.removeEventListener("mousedown", onMouseDown);
     container.removeEventListener("click", onClickCapture, true);
+    container.removeEventListener("dragstart", onDragStart);
 
     delete container.dataset.dragScrollBound;
   };
@@ -287,6 +293,7 @@ export function initAppIconSelector({ t, appProManager }) {
       img.alt = optionLabel;
       img.className = "app-icon-preview";
       img.decoding = "async";
+      img.draggable = false; // prevent browser drag ghost while horizontal drag-scroll
 
       const missingOverlay = document.createElement("span");
       missingOverlay.className = "app-icon-missing";

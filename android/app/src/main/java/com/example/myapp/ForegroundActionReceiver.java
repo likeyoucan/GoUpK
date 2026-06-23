@@ -24,6 +24,7 @@ public class ForegroundActionReceiver extends BroadcastReceiver {
         Intent bridge = new Intent(ACTION_BRIDGE_EVENT);
         bridge.setPackage(context.getPackageName());
         bridge.putExtra(EXTRA_BUTTON_ID, buttonId);
+        bridge.addFlags(Intent.FLAG_RECEIVER_FOREGROUND); // более приоритетная доставка
         context.sendBroadcast(bridge);
     }
 }

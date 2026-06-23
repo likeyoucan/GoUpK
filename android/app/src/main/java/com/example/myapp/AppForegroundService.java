@@ -29,6 +29,10 @@ public class AppForegroundService extends Service {
     public static final String EXTRA_CHANNEL_ID = "channelId";
     public static final String EXTRA_IS_DARK_THEME = "isDarkTheme";
 
+    // Accent colors passed from JS layer.
+    public static final String EXTRA_ACCENT_COLOR = "accentColor";
+    public static final String EXTRA_ON_ACCENT_COLOR = "onAccentColor";
+
     private static final String DIAG_PREFS = "fg_diag";
     private static final String KEY_LAST_ERROR = "last_error";
     private static final String KEY_LAST_ERROR_AT = "last_error_at";
@@ -60,6 +64,9 @@ public class AppForegroundService extends Service {
                 ? intent.getBooleanExtra(EXTRA_IS_DARK_THEME, false)
                 : isDeviceDarkTheme();
 
+            String accentColorHex = intent.getStringExtra(EXTRA_ACCENT_COLOR);
+            String onAccentColorHex = intent.getStringExtra(EXTRA_ON_ACCENT_COLOR);
+
             if (channelId == null || channelId.trim().isEmpty()) {
                 channelId = CHANNEL_ID;
             }
@@ -71,7 +78,9 @@ public class AppForegroundService extends Service {
                 title != null ? title : "Stopwatch",
                 body != null ? body : "00:00",
                 toggle != null ? toggle : "Pause",
-                isDarkTheme
+                isDarkTheme,
+                accentColorHex,
+                onAccentColorHex
             );
 
             startForeground(NOTIFICATION_ID, notification);
@@ -94,17 +103,32 @@ public class AppForegroundService extends Service {
         return nightModeFlags == Configuration.UI_MODE_NIGHT_YES;
     }
 
+    private int parseColorOr(String hex, int fallback) {
+        if (hex == null) return fallback;
+        try {
+            return Color.parseColor(hex);
+        } catch (Exception ignored) {
+            return fallback;
+        }
+    }
+
     private Notification buildNotification(
         String channelId,
         String title,
         String body,
         String toggleText,
-        boolean isDarkTheme
+        boolean isDarkTheme,
+        String accentColorHex,
+        String onAccentColorHex
     ) {
         int textPrimaryColor = isDarkTheme ? Color.parseColor("#F3F5FF") : Color.parseColor("#1F2D5A");
         int textSecondaryColor = isDarkTheme ? Color.parseColor("#BDC5DA") : Color.parseColor("#5D6781");
-        int buttonBgColor = isDarkTheme ? Color.parseColor("#2C3F8B") : Color.parseColor("#273469");
-        int buttonIconColor = Color.parseColor("#FFFFFF");
+
+        int defaultButtonBg = isDarkTheme ? Color.parseColor("#2C3F8B") : Color.parseColor("#273469");
+        int defaultButtonIcon = Color.parseColor("#FFFFFF");
+
+        int buttonBgColor = parseColorOr(accentColorHex, defaultButtonBg);
+        int buttonIconColor = parseColorOr(onAccentColorHex, defaultButtonIcon);
 
         RemoteViews compact = new RemoteViews(getPackageName(), R.layout.notification_timer);
         compact.setTextViewText(R.id.notif_title, title);
@@ -151,7 +175,8 @@ public class AppForegroundService extends Service {
             .setShowWhen(false)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
-            .setColorized(false)
+            .setColor(buttonBgColor)
+            .setColorized(true)
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
             .build();
     }

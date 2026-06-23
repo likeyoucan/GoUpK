@@ -178,12 +178,26 @@ public class CustomForegroundServicePlugin extends Plugin {
         boolean isDarkTheme = call.getBoolean("isDarkTheme", false);
 
         String toggleText = "Pause";
+        String buttonColor = call.getString("buttonColor", call.getString("color", null));
+        String buttonTextColor = call.getString("buttonTextColor", null);
 
         JSArray buttons = call.getArray("buttons");
         if (buttons != null && buttons.length() > 0) {
             try {
                 JSONObject btn0 = buttons.getJSONObject(0);
-                if (btn0 != null) toggleText = btn0.optString("title", toggleText);
+                if (btn0 != null) {
+                    toggleText = btn0.optString("title", toggleText);
+
+                    String btnColorFromArray = btn0.optString("color", null);
+                    String btnTextColorFromArray = btn0.optString("textColor", null);
+
+                    if (btnColorFromArray != null && !btnColorFromArray.isEmpty()) {
+                        buttonColor = btnColorFromArray;
+                    }
+                    if (btnTextColorFromArray != null && !btnTextColorFromArray.isEmpty()) {
+                        buttonTextColor = btnTextColorFromArray;
+                    }
+                }
             } catch (Exception ignored) {}
         }
 
@@ -194,6 +208,13 @@ public class CustomForegroundServicePlugin extends Plugin {
         i.putExtra(AppForegroundService.EXTRA_TOGGLE, toggleText);
         i.putExtra(AppForegroundService.EXTRA_CHANNEL_ID, channelId);
         i.putExtra(AppForegroundService.EXTRA_IS_DARK_THEME, isDarkTheme);
+
+        if (buttonColor != null) {
+            i.putExtra(AppForegroundService.EXTRA_ACCENT_COLOR, buttonColor);
+        }
+        if (buttonTextColor != null) {
+            i.putExtra(AppForegroundService.EXTRA_ON_ACCENT_COLOR, buttonTextColor);
+        }
 
         startServiceCompat(i);
 
