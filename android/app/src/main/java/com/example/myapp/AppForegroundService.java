@@ -29,7 +29,7 @@ public class AppForegroundService extends Service {
     public static final String EXTRA_CHANNEL_ID = "channelId";
     public static final String EXTRA_IS_DARK_THEME = "isDarkTheme";
 
-    // Accent colors passed from JS layer.
+    // Accent colors from JS/CSS resolved theme
     public static final String EXTRA_ACCENT_COLOR = "accentColor";
     public static final String EXTRA_ON_ACCENT_COLOR = "onAccentColor";
 
@@ -112,6 +112,34 @@ public class AppForegroundService extends Service {
         }
     }
 
+    private void applyRemoteViewsState(
+        RemoteViews views,
+        String title,
+        String body,
+        boolean isPlay,
+        int titleColor,
+        int bodyColor,
+        int buttonBgColor,
+        int buttonIconColor,
+        PendingIntent togglePi
+    ) {
+        views.setTextViewText(R.id.notif_title, title);
+        views.setTextViewText(R.id.notif_body, body);
+
+        views.setTextColor(R.id.notif_title, titleColor);
+        views.setTextColor(R.id.notif_body, bodyColor);
+
+        views.setInt(R.id.notif_btn_toggle_bg, "setColorFilter", buttonBgColor);
+        views.setInt(R.id.notif_btn_toggle_icon, "setColorFilter", buttonIconColor);
+
+        views.setImageViewResource(
+            R.id.notif_btn_toggle_icon,
+            isPlay ? R.drawable.ic_notif_play : R.drawable.ic_notif_pause
+        );
+
+        views.setOnClickPendingIntent(R.id.notif_btn_toggle_wrap, togglePi);
+    }
+
     private Notification buildNotification(
         String channelId,
         String title,
@@ -121,29 +149,18 @@ public class AppForegroundService extends Service {
         String accentColorHex,
         String onAccentColorHex
     ) {
-        int textPrimaryColor = isDarkTheme ? Color.parseColor("#F3F5FF") : Color.parseColor("#1F2D5A");
         int textSecondaryColor = isDarkTheme ? Color.parseColor("#BDC5DA") : Color.parseColor("#5D6781");
 
-        int defaultButtonBg = isDarkTheme ? Color.parseColor("#2C3F8B") : Color.parseColor("#273469");
-        int defaultButtonIcon = Color.parseColor("#FFFFFF");
+        int defaultAccent = isDarkTheme ? Color.parseColor("#4ade80") : Color.parseColor("#3399FF");
+        int defaultOnAccent = Color.parseColor("#FFFFFF");
 
-        int buttonBgColor = parseColorOr(accentColorHex, defaultButtonBg);
-        int buttonIconColor = parseColorOr(onAccentColorHex, defaultButtonIcon);
+        int accentColor = parseColorOr(accentColorHex, defaultAccent);
+        int onAccentColor = parseColorOr(onAccentColorHex, defaultOnAccent);
 
-        RemoteViews compact = new RemoteViews(getPackageName(), R.layout.notification_timer);
-        compact.setTextViewText(R.id.notif_title, title);
-        compact.setTextViewText(R.id.notif_body, body);
-
-        compact.setTextColor(R.id.notif_title, textSecondaryColor);
-        compact.setTextColor(R.id.notif_body, textPrimaryColor);
-        compact.setInt(R.id.notif_btn_toggle_bg, "setColorFilter", buttonBgColor);
-        compact.setInt(R.id.notif_btn_toggle_icon, "setColorFilter", buttonIconColor);
+        // Время окрашиваем в акцент
+        int timeColor = accentColor;
 
         boolean isPlay = "▶".equals(toggleText) || "Play".equalsIgnoreCase(toggleText);
-        compact.setImageViewResource(
-            R.id.notif_btn_toggle_icon,
-            isPlay ? R.drawable.ic_notif_play : R.drawable.ic_notif_pause
-        );
 
         PendingIntent togglePi = PendingIntent.getBroadcast(
             this,
@@ -162,12 +179,38 @@ public class AppForegroundService extends Service {
             pendingFlags()
         );
 
-        compact.setOnClickPendingIntent(R.id.notif_btn_toggle_wrap, togglePi);
+        // Separate compact/big layouts reduce visual jump when expanding/collapsing.
+        RemoteViews compact = new RemoteViews(getPackageName(), R.layout.notification_timer);
+        RemoteViews expanded = new RemoteViews(getPackageName(), R.layout.notification_timer_big);
+
+        applyRemoteViewsState(
+            compact,
+            title,
+            body,
+            isPlay,
+            textSecondaryColor,
+            timeColor,
+            accentColor,
+            onAccentColor,
+            togglePi
+        );
+
+        applyRemoteViewsState(
+            expanded,
+            title,
+            body,
+            isPlay,
+            textSecondaryColor,
+            timeColor,
+            accentColor,
+            onAccentColor,
+            togglePi
+        );
 
         return new NotificationCompat.Builder(this, channelId)
             .setSmallIcon(R.drawable.ic_stat_name)
             .setCustomContentView(compact)
-            .setCustomBigContentView(compact)
+            .setCustomBigContentView(expanded)
             .setContentIntent(contentPi)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
@@ -175,7 +218,7 @@ public class AppForegroundService extends Service {
             .setShowWhen(false)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
-            .setColor(buttonBgColor)
+            .setColor(accentColor)
             .setColorized(true)
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
             .build();
