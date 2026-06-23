@@ -115,25 +115,35 @@ function bindHorizontalScrollArea(container) {
   container.dataset.dragScrollBound = "1";
 
   let isDown = false;
+  let isDragging = false;
   let moved = false;
   let startX = 0;
   let startLeft = 0;
 
+  const DRAG_THRESHOLD = 5;
   const canScroll = () => container.scrollWidth > container.clientWidth;
 
   const onMove = (e) => {
     if (!isDown) return;
 
     const dx = e.clientX - startX;
-    if (Math.abs(dx) > 4) moved = true;
 
+    if (!isDragging) {
+      if (Math.abs(dx) < DRAG_THRESHOLD) return;
+      isDragging = true;
+      container.classList.add("is-dragging-x");
+    }
+
+    moved = true;
     container.scrollLeft = startLeft - dx;
+    e.preventDefault();
   };
 
   const onUp = () => {
     if (!isDown) return;
 
     isDown = false;
+    isDragging = false;
     container.classList.remove("is-dragging-x");
 
     window.removeEventListener("mousemove", onMove);
@@ -162,21 +172,19 @@ function bindHorizontalScrollArea(container) {
     if (!canScroll()) return;
 
     isDown = true;
+    isDragging = false;
     moved = false;
     startX = e.clientX;
     startLeft = container.scrollLeft;
-
-    container.classList.add("is-dragging-x");
 
     window.addEventListener("mousemove", onMove);
     window.addEventListener("mouseup", onUp);
     window.addEventListener("mouseleave", onUp);
     window.addEventListener("blur", onUp);
-
-    e.preventDefault();
   };
 
   const onClickCapture = (e) => {
+    // Block only click-after-drag; keep normal click/tap behavior.
     if (!moved) return;
     e.preventDefault();
     e.stopPropagation();
