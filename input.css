@@ -4320,6 +4320,10 @@
     touch-action: pan-x;
   }
 
+  #app-icon-options.is-dragging-x .app-icon-option {
+    pointer-events: none;
+  }
+
   .app-icon-option {
     width: 78px;
     flex: 0 0 auto;
