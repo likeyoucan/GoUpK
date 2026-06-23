@@ -106,6 +106,9 @@ async function resolvePreviewForOption(option) {
   return { src: readySrc, missing };
 }
 
+// Same interaction model as custom colors:
+// - desktop: wheel + mouse drag for horizontal scrolling
+// - touch: native browser behavior (no touch handlers here)
 function bindHorizontalScrollArea(container) {
   if (!container) return () => {};
   if (container.dataset.dragScrollBound === "1") return () => {};
@@ -189,9 +192,11 @@ function bindHorizontalScrollArea(container) {
 
   return () => {
     onUp();
+
     container.removeEventListener("wheel", onWheel, { passive: false });
     container.removeEventListener("mousedown", onMouseDown);
     container.removeEventListener("click", onClickCapture, true);
+
     delete container.dataset.dragScrollBound;
   };
 }
