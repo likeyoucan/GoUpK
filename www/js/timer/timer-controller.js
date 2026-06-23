@@ -123,11 +123,16 @@ export const tm = {
       }
 
       if (this.isPaused) {
-        const rem = resolvePausedRemaining(
-          this.remainingAtPause,
-          this.timeRemainingMs,
-        );
+        const engineRem = Number(this.countdownEngine?.getRemaining?.());
+        const rem = Number.isFinite(engineRem)
+          ? Math.max(0, engineRem)
+          : resolvePausedRemaining(this.remainingAtPause, this.timeRemainingMs);
+
+        // Синхронизируем все поля одного состояния.
+        this.remainingAtPause = rem;
         this.timeRemainingMs = rem;
+        this.lastUiRem = rem;
+
         this.updateDisplay(rem);
         this.updateUIState();
       }

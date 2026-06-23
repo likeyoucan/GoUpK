@@ -1,16 +1,20 @@
 // Файл: www/js/foreground/fg-state.js
 
+function getTimerRemaining(tm) {
+  const engineRem = Number(tm?.countdownEngine?.getRemaining?.());
+  if (Number.isFinite(engineRem)) return Math.max(0, engineRem);
+
+  if (tm?.isRunning) {
+    return Math.max(0, (tm.targetEpochMs || 0) - Date.now());
+  }
+
+  return Math.max(0, tm?.remainingAtPause || tm?.timeRemainingMs || 0);
+}
+
 export function getForegroundState({ sw, tm, tb, activeView }) {
   const canResumeStopwatch = !sw.isRunning && sw.elapsedTime > 0;
-  const canResumeTimer = tm.isPaused && tm.getRemainingTime() > 0;
+  const canResumeTimer = tm.isPaused && getTimerRemaining(tm) > 0;
   const canResumeTabata = tb.status !== "STOPPED" && tb.paused;
-
-  const timerRemainingNow = () => {
-    if (tm.isRunning) {
-      return Math.max(0, (tm.targetEpochMs || 0) - Date.now());
-    }
-    return Math.max(0, tm.remainingAtPause || tm.timeRemainingMs || 0);
-  };
 
   const tabataMeta = () =>
     `${tb.selectedId || "na"}|${tb.currentRound || 0}|${tb.rounds || 0}|${tb.status || "STOPPED"}|${Math.floor(
@@ -25,7 +29,7 @@ export function getForegroundState({ sw, tm, tb, activeView }) {
 
   const timerMeta = () =>
     `${tm.initialDurationMs || tm.totalDuration || 0}|${Math.floor(
-      timerRemainingNow() / 1000,
+      getTimerRemaining(tm) / 1000,
     )}|${tm.isPaused ? "p" : "r"}`;
 
   const makeState = (mode, running) => {
@@ -77,10 +81,7 @@ export function buildForegroundPayload({
   }
 
   if (state.mode === "timer") {
-    const rem = state.running
-      ? Math.max(0, (tm.targetEpochMs || 0) - Date.now())
-      : Math.max(0, tm.remainingAtPause || tm.timeRemainingMs || 0);
-
+    const rem = getTimerRemaining(tm);
     const total = tm.initialDurationMs || tm.totalDuration || 0;
 
     const titleLeft = total
@@ -101,7 +102,10 @@ export function buildForegroundPayload({
 
   const remTb = state.running
     ? Math.max(0, tb.phaseEndTime - Date.now())
-    : Math.max(0, tb.remainingAtPause || 0);
+    : Math.max(
+        0,
+        tb.remainingAtPause || tb.tabataEngine?.getRemaining?.() || 0,
+      );
 
   const phaseText = state.running
     ? tb.status === "WORK"

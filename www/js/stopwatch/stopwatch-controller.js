@@ -148,9 +148,23 @@ const stopwatchModule = {
     );
 
     const onVisibilityChange = () => {
-      if (document.visibilityState === "visible" && this.isRunning) {
+      if (document.visibilityState !== "visible") return;
+
+      // Always pull latest elapsed from engine after wake/background,
+      // including paused state changes triggered from notification.
+      if (this.stopwatchEngine?.getElapsed) {
+        this.elapsedTime = this.stopwatchEngine.getElapsed();
+      }
+
+      if (this.isRunning) {
         this.lastRender = 0;
         this.tick();
+        return;
+      }
+
+      // Important paused case: refresh UI after returning to app.
+      if (this.elapsedTime > 0) {
+        this.updateDisplay();
       }
     };
     document.addEventListener("visibilitychange", onVisibilityChange);
@@ -209,6 +223,8 @@ const stopwatchModule = {
 
       const snap = this.stopwatchEngine.pause();
       applyStopwatchEngineSnapshot(this, snap);
+      this.updateDisplay();
+
       this.isRunning = false;
       this.startEpochMs = 0;
 

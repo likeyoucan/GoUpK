@@ -65,6 +65,12 @@ const PERMISSION_CHECK_TTL_MS = 15000;
 // Deduplicate repeated button events (bridge + pending fallback).
 let lastHandledButtonAt = 0;
 
+// If button was clicked while JS state was not ready, retry after wake.
+let deferredToggleAt = 0;
+
+// Prevent concurrent pending-read races.
+let pendingReadInFlight = false;
+
 const listeners = {
   appState: null,
   appVisibility: null,
@@ -175,16 +181,21 @@ function shouldHandleButtonEvent(eventAtRaw) {
   return true;
 }
 
+function setDeferredToggle(eventAtRaw) {
+  const at = Number(eventAtRaw) || Date.now();
+  if (at > deferredToggleAt) deferredToggleAt = at;
+}
+
 async function handleNotificationToggle() {
   const state = getCurrentForegroundState();
-  if (!state) return;
+  if (!state) return false;
 
   cancelPendingStop();
 
   if (state.mode === "stopwatch") {
     sw.toggle();
     syncNotification({ reason: "button_toggle_stopwatch_fast" });
-    return;
+    return true;
   }
 
   if (state.mode === "timer") {
@@ -199,13 +210,84 @@ async function handleNotificationToggle() {
     Promise.resolve(p)
       .then(() => syncNotification({ reason: "button_toggle_timer_final" }))
       .catch(() => {});
-    return;
+    return true;
   }
 
   if (state.mode === "tabata") {
     tb.toggle();
     syncNotification({ reason: "button_toggle_tabata_fast" });
+    return true;
   }
+
+  return false;
+}
+
+async function flushDeferredToggle() {
+  if (!deferredToggleAt) return false;
+
+  const at = deferredToggleAt;
+  const state = getCurrentForegroundState();
+  if (!state) return false;
+
+  deferredToggleAt = 0;
+
+  if (!shouldHandleButtonEvent(at)) return true;
+
+  const handled = await handleNotificationToggle();
+  if (handled) {
+    syncNotification({ reason: "deferred_toggle_post_0" });
+    setTimeout(
+      () => syncNotification({ reason: "deferred_toggle_post_1" }),
+      60,
+    );
+  }
+
+  return handled;
+}
+
+async function consumePendingButton() {
+  const plugins = getPlugins();
+  if (!plugins?.FgService?.readAndClearPendingButton) return;
+
+  if (pendingReadInFlight) return;
+  pendingReadInFlight = true;
+
+  try {
+    const pending = await plugins.FgService.readAndClearPendingButton();
+    if (!pending?.hasPending) return;
+
+    const id = Number(pending.buttonId);
+    const at = Number(pending.eventAt) || Date.now();
+
+    if (id === ACTION_TOGGLE) {
+      if (!shouldHandleButtonEvent(at)) return;
+
+      const handled = await handleNotificationToggle();
+      if (handled) {
+        syncNotification({ reason: "pending_button_post_toggle_fast_0" });
+        setTimeout(
+          () =>
+            syncNotification({ reason: "pending_button_post_toggle_fast_1" }),
+          60,
+        );
+      } else {
+        setDeferredToggle(at);
+      }
+    }
+  } catch (err) {
+    console.warn("[fg] readAndClearPendingButton failed", err);
+  } finally {
+    pendingReadInFlight = false;
+  }
+}
+
+async function wakeResync(reasonBase = "wake") {
+  await consumePendingButton();
+  await flushDeferredToggle();
+
+  syncNotification({ reason: `${reasonBase}_0` });
+  setTimeout(() => syncNotification({ reason: `${reasonBase}_1` }), 80);
+  setTimeout(() => syncNotification({ reason: `${reasonBase}_2` }), 220);
 }
 
 export async function syncNotification({ reason = "unknown" } = {}) {
@@ -377,7 +459,7 @@ function bindVisibilityFallback() {
     }
 
     scheduleForegroundStop();
-    await syncNotification({ reason: "visibility_visible" });
+    await wakeResync("visibility_visible");
     releaseWakeLock();
     startPolling();
   };
@@ -412,26 +494,13 @@ export async function initForegroundService() {
   bindDocumentEvents();
   bindVisibilityFallback();
 
-  const forceResyncBurst = () => {
-    // Fast burst for devices that delay JS timers right after wake.
-    syncNotification({ reason: "wake_from_notif_button_0" });
-    setTimeout(
-      () => syncNotification({ reason: "wake_from_notif_button_1" }),
-      80,
-    );
-    setTimeout(
-      () => syncNotification({ reason: "wake_from_notif_button_2" }),
-      220,
-    );
-  };
-
   const onWindowFocus = () => {
-    forceResyncBurst();
+    wakeResync("window_focus");
   };
 
   const onVisibilityResync = () => {
     if (document.visibilityState === "visible") {
-      forceResyncBurst();
+      wakeResync("doc_visibility_visible");
     }
   };
 
@@ -444,28 +513,6 @@ export async function initForegroundService() {
   listeners.unsubs.push(() =>
     document.removeEventListener("visibilitychange", onVisibilityResync),
   );
-
-  const consumePendingButton = async () => {
-    try {
-      const pending = await plugins.FgService?.readAndClearPendingButton?.();
-      if (!pending?.hasPending) return;
-
-      const id = Number(pending.buttonId);
-      const at = Number(pending.eventAt) || Date.now();
-
-      if (id === ACTION_TOGGLE && shouldHandleButtonEvent(at)) {
-        handleNotificationToggle();
-        syncNotification({ reason: "pending_button_post_toggle_fast_0" });
-        setTimeout(
-          () =>
-            syncNotification({ reason: "pending_button_post_toggle_fast_1" }),
-          60,
-        );
-      }
-    } catch (err) {
-      console.warn("[fg] readAndClearPendingButton failed", err);
-    }
-  };
 
   if (plugins.App?.addListener) {
     listeners.appState = async ({ isActive }) => {
@@ -480,7 +527,7 @@ export async function initForegroundService() {
       }
 
       scheduleForegroundStop();
-      await syncNotification({ reason: "appstate_foreground" });
+      await wakeResync("appstate_foreground");
       releaseWakeLock();
       startPolling();
     };
@@ -498,13 +545,25 @@ export async function initForegroundService() {
         const at = Number(eventAt) || Date.now();
 
         if (id === ACTION_TOGGLE && shouldHandleButtonEvent(at)) {
-          handleNotificationToggle();
-          syncNotification({ reason: "button_clicked_post_toggle_fast_0" });
-          setTimeout(
-            () =>
-              syncNotification({ reason: "button_clicked_post_toggle_fast_1" }),
-            60,
-          );
+          Promise.resolve(handleNotificationToggle())
+            .then((handled) => {
+              if (!handled) {
+                setDeferredToggle(at);
+                return;
+              }
+
+              syncNotification({ reason: "button_clicked_post_toggle_fast_0" });
+              setTimeout(
+                () =>
+                  syncNotification({
+                    reason: "button_clicked_post_toggle_fast_1",
+                  }),
+                60,
+              );
+            })
+            .catch(() => {
+              setDeferredToggle(at);
+            });
         }
       },
     ),
@@ -513,10 +572,12 @@ export async function initForegroundService() {
   rememberHandle(
     plugins.FgService.addListener?.("notificationTapped", () => {
       plugins.FgService.moveToForeground?.().catch(() => {});
+      wakeResync("notification_tapped");
     }),
   );
 
   await consumePendingButton();
+  await flushDeferredToggle();
   await syncNotification({ reason: "init" });
   startPolling();
 }
@@ -539,6 +600,9 @@ export async function destroyForegroundService() {
 
   permissionGranted = null;
   permissionCheckedAt = 0;
+  pendingReadInFlight = false;
+  deferredToggleAt = 0;
+  lastHandledButtonAt = 0;
 
   isInitialized = false;
 }
