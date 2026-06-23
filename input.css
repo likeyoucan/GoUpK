@@ -4309,15 +4309,16 @@
   }
 
   #app-icon-options {
-    min-height: 4.9rem;
-    gap: 0.5rem;
-    padding-top: 0.35rem;
-    padding-bottom: 0.35rem;
-    overflow-x: auto;
-    overflow-y: visible;
-    overscroll-behavior-x: contain;
-    -webkit-overflow-scrolling: touch;
-    touch-action: pan-x;
+  min-height: 4.9rem;
+  gap: 0.5rem;
+  padding-top: 0.35rem;
+  padding-bottom: 0.35rem;
+  overflow-x: auto;
+  overflow-y: visible;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: auto;
+  cursor: auto;
   }
 
   #app-icon-options.is-dragging-x .app-icon-option {
