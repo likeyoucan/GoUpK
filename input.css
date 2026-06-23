@@ -2104,17 +2104,17 @@
       transform: none !important;
     }
 
-:is(#view-stopwatch, #view-timer, #view-tabata).split-force-middle
-  .resizer_handler {
-  pointer-events: auto;
-}
+    :is(#view-stopwatch, #view-timer, #view-tabata).split-force-middle
+      .resizer_handler {
+      pointer-events: auto;
+    }
 
     @media (orientation: landscape) {
-     :is(#view-stopwatch, #view-timer, #view-tabata).split-force-middle
-  .view-top-half {
-  min-width: 0;
-  max-width: none;
-}
+      :is(#view-stopwatch, #view-timer, #view-tabata).split-force-middle
+        .view-top-half {
+        min-width: 0;
+        max-width: none;
+      }
 
       :is(#view-stopwatch, #view-timer, #view-tabata).split-force-middle
         .view-bottom-half {
@@ -4180,11 +4180,11 @@
     color: color-mix(in srgb, var(--primary-color) 82%, #111827 18%);
   }
 
-html.dark nav .nav-btn > div:not(.primary-text),
-html.dark nav .nav-btn > span:not(.primary-text) {
-  color: var(--nav-contrast-dark);
-  opacity: 0.92;
-}
+  html.dark nav .nav-btn > div:not(.primary-text),
+  html.dark nav .nav-btn > span:not(.primary-text) {
+    color: var(--nav-contrast-dark);
+    opacity: 0.92;
+  }
 
   html.dark nav .nav-btn .primary-text {
     color: color-mix(in srgb, var(--primary-color) 88%, #ffffff 12%);
@@ -4195,17 +4195,17 @@ html.dark nav .nav-btn > span:not(.primary-text) {
     border-top-color: color-mix(in srgb, #ffffff 10%, transparent);
   }
 
-html.dark nav .nav-btn:hover > :is(div, span):not(.primary-text) {
-  color: var(--nav-contrast-dark-hover);
-}
+  html.dark nav .nav-btn:hover > :is(div, span):not(.primary-text) {
+    color: var(--nav-contrast-dark-hover);
+  }
 
-body.force-light-text nav .nav-btn > :is(div, span):not(.primary-text) {
-  color: var(--nav-contrast-force-light);
-}
+  body.force-light-text nav .nav-btn > :is(div, span):not(.primary-text) {
+    color: var(--nav-contrast-force-light);
+  }
 
-body.force-dark-text nav .nav-btn > :is(div, span):not(.primary-text) {
-  color: var(--nav-contrast-force-dark);
-}
+  body.force-dark-text nav .nav-btn > :is(div, span):not(.primary-text) {
+    color: var(--nav-contrast-force-dark);
+  }
 
   /* ACCESSIBILITY + REDUCED MOTION */
   #btn-open-reset {
@@ -4313,7 +4313,10 @@ body.force-dark-text nav .nav-btn > :is(div, span):not(.primary-text) {
     gap: 0.5rem;
     padding-top: 0.35rem;
     padding-bottom: 0.35rem;
+    overflow-x: auto;
+    overflow-y: visible;
     overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
     touch-action: pan-x;
   }
 

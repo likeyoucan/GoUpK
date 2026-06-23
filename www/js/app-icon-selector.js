@@ -106,6 +106,150 @@ async function resolvePreviewForOption(option) {
   return { src: readySrc, missing };
 }
 
+function bindHorizontalScrollArea(container) {
+  if (!container) return () => {};
+  if (container.dataset.dragScrollBound === "1") return () => {};
+  container.dataset.dragScrollBound = "1";
+
+  let isDown = false;
+  let moved = false;
+  let startX = 0;
+  let startLeft = 0;
+
+  let touchActive = false;
+  let touchMoved = false;
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let touchLockHorizontal = false;
+
+  const canScroll = () => container.scrollWidth > container.clientWidth;
+
+  const onWheel = (e) => {
+    if (!canScroll()) return;
+    const mostlyVertical = Math.abs(e.deltaY) >= Math.abs(e.deltaX);
+    const delta = mostlyVertical ? e.deltaY : e.deltaX;
+    if (!delta) return;
+
+    const prev = container.scrollLeft;
+    container.scrollLeft += delta;
+    if (container.scrollLeft !== prev) e.preventDefault();
+  };
+
+  const onMouseMove = (e) => {
+    if (!isDown) return;
+    const dx = e.clientX - startX;
+    if (Math.abs(dx) > 2) moved = true;
+    container.scrollLeft = startLeft - dx;
+  };
+
+  const stopMouse = () => {
+    if (!isDown) return;
+    isDown = false;
+    container.classList.remove("is-dragging-x");
+
+    window.removeEventListener("mousemove", onMouseMove);
+    window.removeEventListener("mouseup", stopMouse);
+    window.removeEventListener("mouseleave", stopMouse);
+    window.removeEventListener("blur", stopMouse);
+  };
+
+  const onMouseDown = (e) => {
+    if (e.button !== 0) return;
+    if (!canScroll()) return;
+
+    isDown = true;
+    moved = false;
+    startX = e.clientX;
+    startLeft = container.scrollLeft;
+    container.classList.add("is-dragging-x");
+
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", stopMouse);
+    window.addEventListener("mouseleave", stopMouse);
+    window.addEventListener("blur", stopMouse);
+
+    e.preventDefault();
+  };
+
+  const onClickCapture = (e) => {
+    if (!moved && !touchMoved) return;
+    e.preventDefault();
+    e.stopPropagation();
+    moved = false;
+    touchMoved = false;
+  };
+
+  const onTouchStart = (e) => {
+    if (!canScroll()) return;
+    const t = e.touches[0];
+    if (!t) return;
+
+    touchActive = true;
+    touchMoved = false;
+    touchLockHorizontal = false;
+    touchStartX = t.clientX;
+    touchStartY = t.clientY;
+    startLeft = container.scrollLeft;
+  };
+
+  const onTouchMove = (e) => {
+    if (!touchActive) return;
+    const t = e.touches[0];
+    if (!t) return;
+
+    const dx = t.clientX - touchStartX;
+    const dy = t.clientY - touchStartY;
+
+    if (!touchLockHorizontal) {
+      if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+
+      touchLockHorizontal = Math.abs(dx) >= Math.abs(dy);
+      if (!touchLockHorizontal) {
+        touchActive = false;
+        return;
+      }
+
+      container.classList.add("is-dragging-x");
+    }
+
+    e.preventDefault();
+    touchMoved = true;
+    container.scrollLeft = startLeft - dx;
+  };
+
+  const stopTouch = () => {
+    if (!touchActive && !touchLockHorizontal) return;
+    touchActive = false;
+    touchLockHorizontal = false;
+    container.classList.remove("is-dragging-x");
+  };
+
+  container.addEventListener("wheel", onWheel, { passive: false });
+  container.addEventListener("mousedown", onMouseDown);
+  container.addEventListener("click", onClickCapture, true);
+
+  container.addEventListener("touchstart", onTouchStart, { passive: true });
+  container.addEventListener("touchmove", onTouchMove, { passive: false });
+  container.addEventListener("touchend", stopTouch, { passive: true });
+  container.addEventListener("touchcancel", stopTouch, { passive: true });
+
+  return () => {
+    stopMouse();
+    stopTouch();
+
+    container.removeEventListener("wheel", onWheel);
+    container.removeEventListener("mousedown", onMouseDown);
+    container.removeEventListener("click", onClickCapture, true);
+
+    container.removeEventListener("touchstart", onTouchStart);
+    container.removeEventListener("touchmove", onTouchMove);
+    container.removeEventListener("touchend", stopTouch);
+    container.removeEventListener("touchcancel", stopTouch);
+
+    delete container.dataset.dragScrollBound;
+  };
+}
+
 export function getResolvedAppIconId(appProManager) {
   const preferred =
     safeGetLS(STORAGE_KEYS.APP_ICON_NAME) || ICON_OPTIONS[0]?.id;
@@ -151,6 +295,8 @@ export function initAppIconSelector({ t, appProManager }) {
     disposeAppIconSelector = null;
     return;
   }
+
+  const offHorizontalScroll = bindHorizontalScrollArea(container);
 
   const unsubs = [];
   let current = safeGetLS(STORAGE_KEYS.APP_ICON_NAME) || ICON_OPTIONS[0]?.id;
@@ -285,6 +431,8 @@ export function initAppIconSelector({ t, appProManager }) {
   );
 
   disposeAppIconSelector = () => {
+    offHorizontalScroll?.();
+
     unsubs.forEach((off) => {
       try {
         off?.();
