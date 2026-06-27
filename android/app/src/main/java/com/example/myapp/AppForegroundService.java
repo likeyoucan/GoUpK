@@ -9,7 +9,9 @@ import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.os.Build;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.widget.RemoteViews;
 
 import androidx.core.app.NotificationCompat;
@@ -29,7 +31,6 @@ public class AppForegroundService extends Service {
     public static final String EXTRA_CHANNEL_ID = "channelId";
     public static final String EXTRA_IS_DARK_THEME = "isDarkTheme";
 
-    // Accent colors from JS/CSS resolved theme
     public static final String EXTRA_ACCENT_COLOR = "accentColor";
     public static final String EXTRA_ON_ACCENT_COLOR = "onAccentColor";
 
@@ -37,10 +38,17 @@ public class AppForegroundService extends Service {
     private static final String KEY_LAST_ERROR = "last_error";
     private static final String KEY_LAST_ERROR_AT = "last_error_at";
 
+    private static final long TICK_MS = 250L;
+
+    private Handler tickerHandler;
+    private Runnable tickerRunnable;
+    private boolean tickerStarted = false;
+
     @Override
     public void onCreate() {
         super.onCreate();
         ensureChannel(CHANNEL_ID, "Stopwatch Pro", "Foreground timer controls");
+        tickerHandler = new Handler(Looper.getMainLooper());
     }
 
     @Override
@@ -51,9 +59,13 @@ public class AppForegroundService extends Service {
             String action = intent.getAction();
 
             if (ACTION_STOP_SERVICE.equals(action)) {
+                stopTicker();
                 stopServiceSafe();
                 return START_NOT_STICKY;
             }
+
+            ForegroundStateStore store = new ForegroundStateStore(this);
+            ForegroundStateStore.RuntimeState state = store.read();
 
             String title = intent.getStringExtra(EXTRA_TITLE);
             String body = intent.getStringExtra(EXTRA_BODY);
@@ -61,32 +73,53 @@ public class AppForegroundService extends Service {
             String channelId = intent.getStringExtra(EXTRA_CHANNEL_ID);
 
             boolean isDarkTheme = intent.hasExtra(EXTRA_IS_DARK_THEME)
-                ? intent.getBooleanExtra(EXTRA_IS_DARK_THEME, false)
-                : isDeviceDarkTheme();
+                ? intent.getBooleanExtra(EXTRA_IS_DARK_THEME, state.isDarkTheme)
+                : state.isDarkTheme;
 
             String accentColorHex = intent.getStringExtra(EXTRA_ACCENT_COLOR);
             String onAccentColorHex = intent.getStringExtra(EXTRA_ON_ACCENT_COLOR);
 
-            if (channelId == null || channelId.trim().isEmpty()) {
-                channelId = CHANNEL_ID;
-            }
+            if (isBlank(channelId)) channelId = state.channelId;
+            if (isBlank(channelId)) channelId = CHANNEL_ID;
+
+            // Если пришли payload-поля — обновляем кеш рендера в state.
+            if (!isBlank(title)) state.notifTitle = title;
+            if (!isBlank(body)) state.notifBody = body;
+            if (!isBlank(toggle)) state.toggleTitle = toggle;
+            state.channelId = channelId;
+            state.isDarkTheme = isDarkTheme;
+            if (!isBlank(accentColorHex)) state.accentColor = accentColorHex;
+            if (!isBlank(onAccentColorHex)) state.onAccentColor = onAccentColorHex;
+            state.updatedAt = System.currentTimeMillis();
+            store.write(state);
 
             ensureChannel(channelId, "Stopwatch Pro", "Foreground timer controls");
 
+            ForegroundStateStore.NotificationPayload payload = store.computeDisplayNow();
+
             Notification notification = buildNotification(
-                channelId,
-                title != null ? title : "Stopwatch",
-                body != null ? body : "00:00",
-                toggle != null ? toggle : "Pause",
-                isDarkTheme,
-                accentColorHex,
-                onAccentColorHex
+                payload.channelId,
+                payload.title,
+                payload.body,
+                payload.toggleTitle,
+                payload.isDarkTheme,
+                payload.accentColor,
+                payload.onAccentColor
             );
 
             startForeground(NOTIFICATION_ID, notification);
+
+            ForegroundStateStore.RuntimeState nowState = store.read();
+            if (nowState.running) {
+                startTicker();
+            } else {
+                stopTicker();
+            }
+
             return START_NOT_STICKY;
         } catch (Throwable t) {
             saveLastError(t);
+            stopTicker();
             stopServiceSafe();
             return START_NOT_STICKY;
         }
@@ -94,8 +127,68 @@ public class AppForegroundService extends Service {
 
     @Override
     public void onTaskRemoved(Intent rootIntent) {
+        stopTicker();
         stopServiceSafe();
         super.onTaskRemoved(rootIntent);
+    }
+
+    @Override
+    public void onDestroy() {
+        stopTicker();
+        super.onDestroy();
+    }
+
+    private void startTicker() {
+        if (tickerStarted) return;
+        tickerStarted = true;
+
+        if (tickerRunnable == null) {
+            tickerRunnable = new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        ForegroundStateStore store = new ForegroundStateStore(AppForegroundService.this);
+                        ForegroundStateStore.RuntimeState s = store.read();
+
+                        if (!s.running) {
+                            tickerStarted = false;
+                            return;
+                        }
+
+                        ForegroundStateStore.NotificationPayload payload = store.computeDisplayNow();
+
+                        Notification n = buildNotification(
+                            payload.channelId,
+                            payload.title,
+                            payload.body,
+                            payload.toggleTitle,
+                            payload.isDarkTheme,
+                            payload.accentColor,
+                            payload.onAccentColor
+                        );
+
+                        NotificationManager nm = getSystemService(NotificationManager.class);
+                        if (nm != null) {
+                            nm.notify(NOTIFICATION_ID, n);
+                        }
+
+                        tickerHandler.postDelayed(this, TICK_MS);
+                    } catch (Throwable t) {
+                        saveLastError(t);
+                        tickerStarted = false;
+                    }
+                }
+            };
+        }
+
+        tickerHandler.postDelayed(tickerRunnable, TICK_MS);
+    }
+
+    private void stopTicker() {
+        tickerStarted = false;
+        if (tickerHandler != null && tickerRunnable != null) {
+            tickerHandler.removeCallbacks(tickerRunnable);
+        }
     }
 
     private boolean isDeviceDarkTheme() {
@@ -157,7 +250,6 @@ public class AppForegroundService extends Service {
         int accentColor = parseColorOr(accentColorHex, defaultAccent);
         int onAccentColor = parseColorOr(onAccentColorHex, defaultOnAccent);
 
-        // Время окрашиваем в акцент
         int timeColor = accentColor;
 
         boolean isPlay = "▶".equals(toggleText) || "Play".equalsIgnoreCase(toggleText);
@@ -179,7 +271,6 @@ public class AppForegroundService extends Service {
             pendingFlags()
         );
 
-        // Separate compact/big layouts reduce visual jump when expanding/collapsing.
         RemoteViews compact = new RemoteViews(getPackageName(), R.layout.notification_timer);
         RemoteViews expanded = new RemoteViews(getPackageName(), R.layout.notification_timer_big);
 
@@ -267,6 +358,10 @@ public class AppForegroundService extends Service {
             .putString(KEY_LAST_ERROR, msg)
             .putLong(KEY_LAST_ERROR_AT, System.currentTimeMillis())
             .apply();
+    }
+
+    private boolean isBlank(String v) {
+        return v == null || v.trim().isEmpty();
     }
 
     @Override

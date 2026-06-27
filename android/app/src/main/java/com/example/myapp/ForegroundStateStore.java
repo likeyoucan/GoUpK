@@ -26,28 +26,28 @@ public class ForegroundStateStore {
 
         // Stopwatch
         public long swElapsedMs = 0L;
-        public long swStartedAt = 0L;       // epoch when running started
-        public long swBaseElapsedMs = 0L;   // elapsed at run start
+        public long swStartedAt = 0L;
+        public long swBaseElapsedMs = 0L;
 
         // Timer
         public long tmRemainingMs = 0L;
         public long tmTotalMs = 0L;
-        public long tmEndsAt = 0L;          // epoch when timer ends while running
+        public long tmEndsAt = 0L;
 
-        // Tabata (minimal runtime shape)
+        // Tabata
         public String tbStatus = "STOPPED";
         public int tbRound = 1;
         public int tbRounds = 1;
         public String tbWorkoutName = "Tabata";
         public long tbRemainingMs = 0L;
-        public long tbEndsAt = 0L;          // epoch when phase ends while running
+        public long tbEndsAt = 0L;
 
-        // Notification render cache
+        // Notification
         public String notifTitle = "Stopwatch";
         public String notifBody = "00:00";
         public String toggleTitle = "▶";
 
-        // UI/channel colors
+        // Style/channel
         public String channelId = AppForegroundService.CHANNEL_ID;
         public boolean isDarkTheme = false;
         public String accentColor = "#3399ff";
@@ -216,7 +216,8 @@ public class ForegroundStateStore {
             }
 
             if (isBlank(s.notifTitle)) s.notifTitle = "Stopwatch";
-            s.notifBody = formatTime(getStopwatchElapsedNow(s, now), getStopwatchElapsedNow(s, now) >= 3600000L);
+            long elapsed = getStopwatchElapsedNow(s, now);
+            s.notifBody = formatTime(elapsed, elapsed >= 3600000L);
         } else if (MODE_TIMER.equals(s.mode)) {
             if (s.running) {
                 long rem = Math.max(0L, s.tmEndsAt - now);
@@ -233,7 +234,8 @@ public class ForegroundStateStore {
             }
 
             if (isBlank(s.notifTitle)) s.notifTitle = "Timer";
-            s.notifBody = formatTime(getTimerRemainingNow(s, now), s.tmTotalMs >= 3600000L);
+            long rem = getTimerRemainingNow(s, now);
+            s.notifBody = formatTime(rem, s.tmTotalMs >= 3600000L);
         } else if (MODE_TABATA.equals(s.mode)) {
             if (s.running) {
                 long rem = Math.max(0L, s.tbEndsAt - now);
@@ -252,7 +254,8 @@ public class ForegroundStateStore {
             String workout = isBlank(s.tbWorkoutName) ? "Tabata" : s.tbWorkoutName;
             String phase = "STOPPED".equals(s.tbStatus) ? "Pause" : s.tbStatus;
             s.notifTitle = "Tabata - " + workout + " • ROUND " + s.tbRound + "/" + s.tbRounds + " • " + phase;
-            s.notifBody = formatTime(getTabataRemainingNow(s, now), false);
+            long rem = getTabataRemainingNow(s, now);
+            s.notifBody = formatTime(rem, false);
         } else {
             s.running = false;
             s.toggleTitle = "▶";
@@ -266,6 +269,11 @@ public class ForegroundStateStore {
     public NotificationPayload computeDisplayNow() {
         RuntimeState s = read();
         long now = System.currentTimeMillis();
+
+        boolean changed = normalizeCompletionIfNeeded(s, now);
+        if (changed) {
+            write(s);
+        }
 
         NotificationPayload p = new NotificationPayload();
         p.channelId = isBlank(s.channelId) ? AppForegroundService.CHANNEL_ID : s.channelId;
@@ -298,6 +306,36 @@ public class ForegroundStateStore {
         p.title = isBlank(s.notifTitle) ? "Stopwatch" : s.notifTitle;
         p.body = isBlank(s.notifBody) ? "00:00" : s.notifBody;
         return p;
+    }
+
+    private boolean normalizeCompletionIfNeeded(RuntimeState s, long now) {
+        boolean changed = false;
+
+        if (MODE_TIMER.equals(s.mode) && s.running) {
+            long rem = Math.max(0L, s.tmEndsAt - now);
+            if (rem <= 0L) {
+                s.running = false;
+                s.tmRemainingMs = 0L;
+                s.tmEndsAt = 0L;
+                s.toggleTitle = "▶";
+                s.updatedAt = now;
+                changed = true;
+            }
+        }
+
+        if (MODE_TABATA.equals(s.mode) && s.running) {
+            long rem = Math.max(0L, s.tbEndsAt - now);
+            if (rem <= 0L) {
+                s.running = false;
+                s.tbRemainingMs = 0L;
+                s.tbEndsAt = 0L;
+                s.toggleTitle = "▶";
+                s.updatedAt = now;
+                changed = true;
+            }
+        }
+
+        return changed;
     }
 
     private long getStopwatchElapsedNow(RuntimeState s, long now) {

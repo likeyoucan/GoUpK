@@ -13,6 +13,7 @@ import { navigation } from "./navigation.js?v=VERSION";
 import { uiSettingsManager } from "./ui-settings.js?v=VERSION";
 import { sm } from "./sound.js?v=VERSION";
 import { t } from "./i18n.js?v=VERSION";
+import { store } from "./store.js?v=VERSION";
 import { APP_EVENTS } from "./constants/events.js?v=VERSION";
 import { onAppEvent } from "./events/app-events.js?v=VERSION";
 
@@ -69,8 +70,8 @@ let pendingReadInFlight = false;
 let pendingRerunRequested = false;
 let lastPendingEventAt = 0;
 
-let runtimeSyncInFlight = false;
-let runtimeSyncQueued = false;
+let runtimePullInFlight = false;
+let runtimePullQueued = false;
 
 const listeners = {
   appState: null,
@@ -152,7 +153,6 @@ function getFallbackForegroundState() {
 
   if (tb.status !== "STOPPED") {
     const rem = getTabataRemainingMs();
-
     return {
       mode: "tabata",
       running: !tb.paused,
@@ -230,18 +230,10 @@ async function stopForeground() {
   fgDebug("foreground stopped");
 }
 
-function buildRuntimeStateForNative({
-  mode,
-  running,
-  payload,
-  channelId,
-  isDarkTheme,
-  accentColor,
-  onAccentColor,
-}) {
+function buildRuntimeStateFromJs(payload, state, theme, accent) {
   return {
-    mode: mode || "none",
-    running: !!running,
+    mode: state?.mode || "none",
+    running: !!state?.running,
     updatedAt: Date.now(),
 
     swElapsedMs: Math.max(0, sw.elapsedTime || 0),
@@ -261,20 +253,41 @@ function buildRuntimeStateForNative({
     notifTitle: payload?.title || "Stopwatch",
     notifBody: payload?.body || "00:00",
 
-    channelId: channelId || CHANNEL.id,
-    isDarkTheme: !!isDarkTheme,
-    accentColor: accentColor || "#3399ff",
-    onAccentColor: onAccentColor || "#ffffff",
+    channelId: CHANNEL.id,
+    isDarkTheme: !!theme?.isDarkTheme,
+    accentColor: accent?.accentColor || "#3399ff",
+    onAccentColor: accent?.onAccentColor || "#ffffff",
   };
 }
 
-async function pushRuntimeStateToNative(runtimeState) {
+async function pushRuntimeStateToNative(reason = "unknown") {
   const plugins = getPlugins();
   const api = plugins?.FgService?.setRuntimeState;
   if (typeof api !== "function") return;
 
+  if (document.visibilityState !== "visible") return;
+
+  const state = getResolvedForegroundState();
+  if (!state) return;
+
+  const payload = buildForegroundPayload({
+    state,
+    sw,
+    tm,
+    tb,
+    t,
+    $,
+    formatTime,
+  });
+
+  const theme = getThemeSnapshot();
+  const accent = getAccentSnapshot();
+
+  const runtimeState = buildRuntimeStateFromJs(payload, state, theme, accent);
+
   try {
     await api({ runtimeState });
+    fgDebug("setRuntimeState ok", { reason, runtimeState });
   } catch (err) {
     console.warn("[fg] setRuntimeState failed", err);
   }
@@ -284,19 +297,45 @@ function applyStopwatchRuntimeToJs(nativeState) {
   const elapsed = Math.max(0, Number(nativeState.swElapsedMs) || 0);
 
   sw.elapsedTime = elapsed;
-  sw.startEpochMs = 0;
+  sw.startEpochMs = Date.now() - elapsed;
   sw.pauseTime = Date.now();
 
   if (nativeState.running) {
     sw.stopwatchEngine?.start?.(elapsed);
     sw.isRunning = true;
-    sw.startEpochMs = Date.now() - elapsed;
+    sw.els.status?.classList.add("hidden");
+    sw.els.display?.classList.remove("is-go");
+    sw.els.lapBtn?.classList.remove("hidden");
+    if (sw.els.lapBtn) {
+      sw.els.lapBtn.classList.remove("main_btn_red");
+      sw.els.lapBtn.classList.add("main_btn");
+      sw.els.lapBtn.textContent = t("lap");
+    }
+
+    requestWakeLock();
+    sw.bgWorker?.postMessage?.({ command: "start" });
     sw.lastRender = 0;
     sw.tick?.();
   } else {
     sw.stopwatchEngine?.setElapsed?.(elapsed);
     sw.stopwatchEngine?.pause?.();
     sw.isRunning = false;
+
+    if (sw.rAF) {
+      cancelAnimationFrame(sw.rAF);
+      sw.rAF = null;
+    }
+
+    sw.bgWorker?.postMessage?.({ command: "stop" });
+    releaseWakeLock();
+
+    sw.els.status?.classList.remove("hidden");
+    if (sw.els.lapBtn) {
+      sw.els.lapBtn.classList.remove("main_btn");
+      sw.els.lapBtn.classList.add("main_btn_red");
+      sw.els.lapBtn.classList.remove("hidden");
+      sw.els.lapBtn.textContent = t("reset");
+    }
     sw.updateDisplay?.();
   }
 
@@ -314,18 +353,28 @@ function applyTimerRuntimeToJs(nativeState) {
   tm.targetEpochMs = 0;
 
   if (nativeState.running && rem > 0) {
-    tm.countdownEngine?.start?.(Math.max(1, rem));
+    const snap = tm.countdownEngine?.start?.(Math.max(1, rem));
+    if (snap?.targetEpochMs) tm.targetEpochMs = snap.targetEpochMs;
+
     tm.isRunning = true;
     tm.isPaused = false;
     tm.isFinished = false;
     tm.lastUiRem = rem;
+    tm._lastUiPaintTs = 0;
+
+    requestWakeLock();
+    tm.bgWorker?.postMessage?.({ command: "start", time: rem });
     tm.startUiLoop?.();
   } else {
     tm.countdownEngine?.setPausedRemaining?.(rem);
+
     tm.isRunning = false;
     tm.isPaused = rem > 0;
     tm.isFinished = rem <= 0;
+
     tm.stopUiLoop?.();
+    tm.bgWorker?.postMessage?.({ command: "stop" });
+    releaseWakeLock();
   }
 
   tm.updateDisplay?.(rem);
@@ -347,14 +396,25 @@ function applyTabataRuntimeToJs(nativeState) {
     tb.remainingAtPause = 0;
     tb.phaseEndTime = Date.now() + rem;
     tb.lastRender = 0;
+
+    requestWakeLock();
+    tb.bgWorker?.postMessage?.({ command: "start" });
+
     tb.updatePhaseStyles?.();
     tb.tick?.();
   } else {
     tb.paused = tb.status !== "STOPPED";
     tb.remainingAtPause = rem;
     tb.phaseEndTime = 0;
-    if (tb.rAF) cancelAnimationFrame(tb.rAF);
-    tb.rAF = null;
+
+    if (tb.rAF) {
+      cancelAnimationFrame(tb.rAF);
+      tb.rAF = null;
+    }
+
+    tb.bgWorker?.postMessage?.({ command: "stop" });
+    releaseWakeLock();
+
     tb.updatePhaseStyles?.();
     if (tb.status !== "STOPPED") {
       tb.render?.(rem);
@@ -367,15 +427,15 @@ async function pullRuntimeStateIntoJs(reason = "unknown") {
   const api = plugins?.FgService?.getRuntimeState;
   if (typeof api !== "function") return false;
 
-  if (runtimeSyncInFlight) {
-    runtimeSyncQueued = true;
+  if (runtimePullInFlight) {
+    runtimePullQueued = true;
     return false;
   }
 
-  runtimeSyncInFlight = true;
+  runtimePullInFlight = true;
   try {
     do {
-      runtimeSyncQueued = false;
+      runtimePullQueued = false;
 
       let nativeState;
       try {
@@ -404,11 +464,11 @@ async function pullRuntimeStateIntoJs(reason = "unknown") {
       } else {
         store.clearActiveTimer();
       }
-    } while (runtimeSyncQueued);
+    } while (runtimePullQueued);
 
     return true;
   } finally {
-    runtimeSyncInFlight = false;
+    runtimePullInFlight = false;
   }
 }
 
@@ -430,8 +490,7 @@ async function processButtonAction(
   fgDebug("process action", { id, ts, source });
 
   if (id === ACTION_TOGGLE) {
-    // Кнопка уже обработана native-слоем в receiver.
-    // Здесь только подтягиваем актуальный native runtime в JS.
+    // Основной путь: native уже toggled. JS только подтягивает runtime.
     await pullRuntimeStateIntoJs(`button:${source}`);
     await syncNotification({
       reason: "button_toggle_synced_from_native",
@@ -491,53 +550,6 @@ async function drainPendingButtonActions(reason = "unknown") {
   }
 }
 
-async function handleNotificationToggleLegacy() {
-  if (toggleInFlight) return;
-  toggleInFlight = true;
-
-  try {
-    const state = getResolvedForegroundState();
-    const mode = state?.mode || resolveToggleModeFallback();
-
-    if (!mode) {
-      await syncNotification({
-        reason: "button_toggle_no_mode",
-        force: true,
-      });
-      return;
-    }
-
-    if (mode === "stopwatch") {
-      sw.toggle();
-    } else if (mode === "timer") {
-      await tm.toggle();
-    } else if (mode === "tabata") {
-      tb.toggle();
-    }
-
-    await syncNotification({
-      reason: "button_toggle_legacy_immediate",
-      force: true,
-    });
-
-    setTimeout(() => {
-      syncNotification({
-        reason: "button_toggle_legacy_settle_1",
-        force: true,
-      });
-    }, 180);
-
-    setTimeout(() => {
-      syncNotification({
-        reason: "button_toggle_legacy_settle_2",
-        force: true,
-      });
-    }, 700);
-  } finally {
-    toggleInFlight = false;
-  }
-}
-
 export async function syncNotification({
   reason = "unknown",
   force = false,
@@ -575,20 +587,7 @@ export async function syncNotification({
   const { isDarkTheme, themeToken } = getThemeSnapshot();
   const { accentColor, onAccentColor, accentToken } = getAccentSnapshot();
 
-  const runtimeState = buildRuntimeStateForNative({
-    mode: state.mode,
-    running: state.running,
-    payload,
-    channelId: CHANNEL.id,
-    isDarkTheme,
-    accentColor,
-    onAccentColor,
-  });
-
-  await pushRuntimeStateToNative(runtimeState);
-
   const signature = buildSignature(state, payload, { themeToken, accentToken });
-
   if (!force && signature === lastSignature) return;
 
   const toggleTitle = state.running ? "⏸" : "▶";
@@ -616,10 +615,7 @@ export async function syncNotification({
 
   if (!isForegroundShown) {
     try {
-      await plugins.start?.({
-        ...options,
-        runtimeState,
-      });
+      await plugins.start?.(options);
       isForegroundShown = true;
       lastSignature = signature;
       return;
@@ -631,10 +627,7 @@ export async function syncNotification({
   }
 
   await plugins
-    .update?.({
-      ...options,
-      runtimeState,
-    })
+    .update?.(options)
     .then(() => {
       lastSignature = signature;
     })
@@ -645,10 +638,7 @@ export async function syncNotification({
       isForegroundShown = false;
 
       try {
-        await plugins.start?.({
-          ...options,
-          runtimeState,
-        });
+        await plugins.start?.(options);
         isForegroundShown = true;
         lastSignature = signature;
       } catch (startErr) {
@@ -673,15 +663,17 @@ function stopPolling() {
 
 function bindDocumentEvents() {
   listeners.unsubs.push(
-    onAppEvent(APP_EVENTS.ACTIVE_TIMER_CHANGED, () =>
-      syncNotification({ reason: "active_timer_changed" }),
-    ),
+    onAppEvent(APP_EVENTS.ACTIVE_TIMER_CHANGED, async () => {
+      await pushRuntimeStateToNative("active_timer_changed");
+      await syncNotification({ reason: "active_timer_changed" });
+    }),
   );
 
   listeners.unsubs.push(
-    onAppEvent(APP_EVENTS.TIMER_STARTED, () =>
-      syncNotification({ reason: "timer_started_event" }),
-    ),
+    onAppEvent(APP_EVENTS.TIMER_STARTED, async () => {
+      await pushRuntimeStateToNative("timer_started_event");
+      await syncNotification({ reason: "timer_started_event" });
+    }),
   );
 
   listeners.unsubs.push(
@@ -797,8 +789,6 @@ export async function initForegroundService() {
     plugins.FgService.addListener?.("buttonClicked", async (payload) => {
       const raw = payload?.buttonId ?? payload?.id ?? payload?.actionId;
       const eventAt = payload?.eventAt ?? Date.now();
-
-      // Основной путь: native уже toggled, JS только синхронизируется.
       await processButtonAction(raw, eventAt, "live");
     }),
   );
@@ -811,26 +801,8 @@ export async function initForegroundService() {
 
   await pullRuntimeStateIntoJs("init:pull_runtime");
   await drainPendingButtonActions("init:pending");
+  await pushRuntimeStateToNative("init");
   await syncNotification({ reason: "init", force: true });
-
-  // Если native-runtime API недоступен, fallback на старый JS-toggle путь.
-  if (typeof plugins.FgService?.getRuntimeState !== "function") {
-    fgDebug("native runtime API missing; fallback legacy toggle enabled");
-    processButtonAction = async (
-      buttonId,
-      eventAt = Date.now(),
-      source = "unknown",
-    ) => {
-      const id = Number(buttonId);
-      const ts = Number(eventAt) || Date.now();
-      if (!id) return;
-      if (ts <= lastHandledActionAt) return;
-      lastHandledActionAt = ts;
-      if (id === ACTION_TOGGLE) {
-        await handleNotificationToggleLegacy();
-      }
-    };
-  }
 }
 
 export async function destroyForegroundService() {
@@ -858,8 +830,8 @@ export async function destroyForegroundService() {
   pendingRerunRequested = false;
   lastPendingEventAt = 0;
 
-  runtimeSyncInFlight = false;
-  runtimeSyncQueued = false;
+  runtimePullInFlight = false;
+  runtimePullQueued = false;
 
   isInitialized = false;
 }
