@@ -62,6 +62,9 @@ public class CustomForegroundServicePlugin extends Plugin {
         } else {
             getContext().registerReceiver(actionReceiver, filter);
         }
+
+        // Если событие кнопки пришло, пока WebView спал — отдаем его сразу при загрузке плагина.
+        emitPendingButtonIfExists();
     }
 
     @Override
@@ -202,6 +205,100 @@ public class CustomForegroundServicePlugin extends Plugin {
         call.resolve(out);
     }
 
+    // ===== Runtime state bridge =====
+
+    @PluginMethod
+    public void getRuntimeState(PluginCall call) {
+        ForegroundStateStore store = new ForegroundStateStore(getContext());
+        ForegroundStateStore.RuntimeState s = store.read();
+
+        JSObject out = new JSObject();
+        out.put("mode", s.mode);
+        out.put("running", s.running);
+        out.put("updatedAt", s.updatedAt);
+
+        out.put("swElapsedMs", s.swElapsedMs);
+
+        out.put("tmRemainingMs", s.tmRemainingMs);
+        out.put("tmTotalMs", s.tmTotalMs);
+
+        out.put("tbStatus", s.tbStatus);
+        out.put("tbRound", s.tbRound);
+        out.put("tbRounds", s.tbRounds);
+        out.put("tbWorkoutName", s.tbWorkoutName);
+        out.put("tbRemainingMs", s.tbRemainingMs);
+
+        out.put("notifTitle", s.notifTitle);
+        out.put("notifBody", s.notifBody);
+        out.put("toggleTitle", s.toggleTitle);
+
+        out.put("channelId", s.channelId);
+        out.put("isDarkTheme", s.isDarkTheme);
+        out.put("accentColor", s.accentColor);
+        out.put("onAccentColor", s.onAccentColor);
+
+        call.resolve(out);
+    }
+
+    @PluginMethod
+    public void setRuntimeState(PluginCall call) {
+        JSObject runtime = call.getObject("runtimeState");
+        if (runtime == null) {
+            call.reject("runtimeState is required");
+            return;
+        }
+
+        ForegroundStateStore store = new ForegroundStateStore(getContext());
+        store.updateFromJson(runtime);
+
+        JSObject out = new JSObject();
+        out.put("saved", true);
+        call.resolve(out);
+    }
+
+    @PluginMethod
+    public void applyToggleNative(PluginCall call) {
+        ForegroundStateStore store = new ForegroundStateStore(getContext());
+        ForegroundStateStore.RuntimeState s = store.toggle();
+
+        Intent i = new Intent(getContext(), AppForegroundService.class);
+        i.setAction(AppForegroundService.ACTION_START_OR_UPDATE);
+        i.putExtra(AppForegroundService.EXTRA_TITLE, s.notifTitle);
+        i.putExtra(AppForegroundService.EXTRA_BODY, s.notifBody);
+        i.putExtra(AppForegroundService.EXTRA_TOGGLE, s.toggleTitle);
+        i.putExtra(AppForegroundService.EXTRA_CHANNEL_ID, s.channelId);
+        i.putExtra(AppForegroundService.EXTRA_IS_DARK_THEME, s.isDarkTheme);
+        i.putExtra(AppForegroundService.EXTRA_ACCENT_COLOR, s.accentColor);
+        i.putExtra(AppForegroundService.EXTRA_ON_ACCENT_COLOR, s.onAccentColor);
+        startServiceCompat(i);
+
+        JSObject out = new JSObject();
+        out.put("ok", true);
+        out.put("mode", s.mode);
+        out.put("running", s.running);
+        out.put("updatedAt", s.updatedAt);
+        call.resolve(out);
+    }
+
+    private void emitPendingButtonIfExists() {
+        Context ctx = getContext();
+
+        int buttonId = ctx
+            .getSharedPreferences(ACTION_PREFS, Context.MODE_PRIVATE)
+            .getInt(KEY_PENDING_BUTTON_ID, 0);
+
+        long eventAt = ctx
+            .getSharedPreferences(ACTION_PREFS, Context.MODE_PRIVATE)
+            .getLong(KEY_PENDING_AT, 0L);
+
+        if (buttonId <= 0) return;
+
+        JSObject payload = new JSObject();
+        payload.put("buttonId", buttonId);
+        payload.put("eventAt", eventAt);
+        notifyListeners("buttonClicked", payload, true);
+    }
+
     private void startOrUpdate(PluginCall call) {
         String title = call.getString("title", "Stopwatch");
         String body = call.getString("body", "00:00");
@@ -230,6 +327,13 @@ public class CustomForegroundServicePlugin extends Plugin {
                     }
                 }
             } catch (Exception ignored) {}
+        }
+
+        // Если JS передал runtimeState — сохраняем его в native store.
+        JSObject runtime = call.getObject("runtimeState");
+        if (runtime != null) {
+            ForegroundStateStore store = new ForegroundStateStore(getContext());
+            store.updateFromJson(runtime);
         }
 
         Intent i = new Intent(getContext(), AppForegroundService.class);

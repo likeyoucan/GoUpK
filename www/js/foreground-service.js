@@ -65,10 +65,12 @@ const PERMISSION_CHECK_TTL_MS = 15000;
 let toggleInFlight = false;
 let lastHandledActionAt = 0;
 
-// Pending-drain race guards
 let pendingReadInFlight = false;
 let pendingRerunRequested = false;
 let lastPendingEventAt = 0;
+
+let runtimeSyncInFlight = false;
+let runtimeSyncQueued = false;
 
 const listeners = {
   appState: null,
@@ -82,6 +84,17 @@ function fgDebug(...args) {
       console.log("[fg]", ...args);
     }
   } catch {}
+}
+
+function getTimerRemainingMs() {
+  if (tm.isRunning) return Math.max(0, (tm.targetEpochMs || 0) - Date.now());
+  return Math.max(0, tm.remainingAtPause || tm.timeRemainingMs || 0);
+}
+
+function getTabataRemainingMs() {
+  if (tb.status === "STOPPED") return 0;
+  if (tb.paused) return Math.max(0, tb.remainingAtPause || 0);
+  return Math.max(0, (tb.phaseEndTime || 0) - Date.now());
 }
 
 function getCurrentForegroundState() {
@@ -116,8 +129,7 @@ function getFallbackForegroundState() {
   }
 
   if (tm.isRunning) {
-    const rem =
-      typeof tm.getRemainingTime === "function" ? tm.getRemainingTime() : 0;
+    const rem = getTimerRemainingMs();
     const total = tm.initialDurationMs || tm.totalDuration || 0;
     return {
       mode: "timer",
@@ -127,8 +139,7 @@ function getFallbackForegroundState() {
   }
 
   if (tm.isPaused) {
-    const rem =
-      typeof tm.getRemainingTime === "function" ? tm.getRemainingTime() : 0;
+    const rem = getTimerRemainingMs();
     const total = tm.initialDurationMs || tm.totalDuration || 0;
     if (rem > 0) {
       return {
@@ -140,14 +151,7 @@ function getFallbackForegroundState() {
   }
 
   if (tb.status !== "STOPPED") {
-    const rem =
-      tb.status !== "STOPPED"
-        ? Math.max(
-            0,
-            (tb.paused ? tb.remainingAtPause : tb.phaseEndTime - Date.now()) ||
-              0,
-          )
-        : 0;
+    const rem = getTabataRemainingMs();
 
     return {
       mode: "tabata",
@@ -226,6 +230,188 @@ async function stopForeground() {
   fgDebug("foreground stopped");
 }
 
+function buildRuntimeStateForNative({
+  mode,
+  running,
+  payload,
+  channelId,
+  isDarkTheme,
+  accentColor,
+  onAccentColor,
+}) {
+  return {
+    mode: mode || "none",
+    running: !!running,
+    updatedAt: Date.now(),
+
+    swElapsedMs: Math.max(0, sw.elapsedTime || 0),
+
+    tmRemainingMs: getTimerRemainingMs(),
+    tmTotalMs: tm.initialDurationMs || tm.totalDuration || 0,
+
+    tbStatus: tb.status || "STOPPED",
+    tbRound: tb.currentRound || 1,
+    tbRounds: tb.rounds || 1,
+    tbWorkoutName:
+      $("tb-runningWorkoutName")?.textContent?.trim() ||
+      $("tb-activeName")?.textContent?.trim() ||
+      t("tabata"),
+    tbRemainingMs: getTabataRemainingMs(),
+
+    notifTitle: payload?.title || "Stopwatch",
+    notifBody: payload?.body || "00:00",
+
+    channelId: channelId || CHANNEL.id,
+    isDarkTheme: !!isDarkTheme,
+    accentColor: accentColor || "#3399ff",
+    onAccentColor: onAccentColor || "#ffffff",
+  };
+}
+
+async function pushRuntimeStateToNative(runtimeState) {
+  const plugins = getPlugins();
+  const api = plugins?.FgService?.setRuntimeState;
+  if (typeof api !== "function") return;
+
+  try {
+    await api({ runtimeState });
+  } catch (err) {
+    console.warn("[fg] setRuntimeState failed", err);
+  }
+}
+
+function applyStopwatchRuntimeToJs(nativeState) {
+  const elapsed = Math.max(0, Number(nativeState.swElapsedMs) || 0);
+
+  sw.elapsedTime = elapsed;
+  sw.startEpochMs = 0;
+  sw.pauseTime = Date.now();
+
+  if (nativeState.running) {
+    sw.stopwatchEngine?.start?.(elapsed);
+    sw.isRunning = true;
+    sw.startEpochMs = Date.now() - elapsed;
+    sw.lastRender = 0;
+    sw.tick?.();
+  } else {
+    sw.stopwatchEngine?.setElapsed?.(elapsed);
+    sw.stopwatchEngine?.pause?.();
+    sw.isRunning = false;
+    sw.updateDisplay?.();
+  }
+
+  sw.updateSaveButtonVisibility?.();
+}
+
+function applyTimerRuntimeToJs(nativeState) {
+  const rem = Math.max(0, Number(nativeState.tmRemainingMs) || 0);
+  const total = Math.max(0, Number(nativeState.tmTotalMs) || 0);
+
+  tm.totalDuration = total;
+  tm.initialDurationMs = total;
+  tm.timeRemainingMs = rem;
+  tm.remainingAtPause = rem;
+  tm.targetEpochMs = 0;
+
+  if (nativeState.running && rem > 0) {
+    tm.countdownEngine?.start?.(Math.max(1, rem));
+    tm.isRunning = true;
+    tm.isPaused = false;
+    tm.isFinished = false;
+    tm.lastUiRem = rem;
+    tm.startUiLoop?.();
+  } else {
+    tm.countdownEngine?.setPausedRemaining?.(rem);
+    tm.isRunning = false;
+    tm.isPaused = rem > 0;
+    tm.isFinished = rem <= 0;
+    tm.stopUiLoop?.();
+  }
+
+  tm.updateDisplay?.(rem);
+  tm.updateAdjustButtons?.();
+  tm.updateUIState?.();
+}
+
+function applyTabataRuntimeToJs(nativeState) {
+  const rem = Math.max(0, Number(nativeState.tbRemainingMs) || 0);
+
+  tb.status = nativeState.tbStatus || "STOPPED";
+  tb.currentRound = Math.max(1, Number(nativeState.tbRound) || 1);
+  tb.rounds = Math.max(1, Number(nativeState.tbRounds) || tb.rounds || 1);
+  tb.phaseDuration = Math.max(0, rem);
+
+  if (nativeState.running && tb.status !== "STOPPED") {
+    tb.paused = false;
+    tb.completionHandled = false;
+    tb.remainingAtPause = 0;
+    tb.phaseEndTime = Date.now() + rem;
+    tb.lastRender = 0;
+    tb.updatePhaseStyles?.();
+    tb.tick?.();
+  } else {
+    tb.paused = tb.status !== "STOPPED";
+    tb.remainingAtPause = rem;
+    tb.phaseEndTime = 0;
+    if (tb.rAF) cancelAnimationFrame(tb.rAF);
+    tb.rAF = null;
+    tb.updatePhaseStyles?.();
+    if (tb.status !== "STOPPED") {
+      tb.render?.(rem);
+    }
+  }
+}
+
+async function pullRuntimeStateIntoJs(reason = "unknown") {
+  const plugins = getPlugins();
+  const api = plugins?.FgService?.getRuntimeState;
+  if (typeof api !== "function") return false;
+
+  if (runtimeSyncInFlight) {
+    runtimeSyncQueued = true;
+    return false;
+  }
+
+  runtimeSyncInFlight = true;
+  try {
+    do {
+      runtimeSyncQueued = false;
+
+      let nativeState;
+      try {
+        nativeState = await api();
+      } catch (err) {
+        console.warn("[fg] getRuntimeState failed", err);
+        return false;
+      }
+
+      if (!nativeState || typeof nativeState !== "object") return false;
+
+      const mode = String(nativeState.mode || "none");
+      const running = !!nativeState.running;
+
+      fgDebug("pull runtime state", { reason, mode, running, nativeState });
+
+      if (mode === "stopwatch") {
+        applyStopwatchRuntimeToJs(nativeState);
+        store.setActiveTimer("stopwatch");
+      } else if (mode === "timer") {
+        applyTimerRuntimeToJs(nativeState);
+        store.setActiveTimer("timer");
+      } else if (mode === "tabata") {
+        applyTabataRuntimeToJs(nativeState);
+        store.setActiveTimer("tabata");
+      } else {
+        store.clearActiveTimer();
+      }
+    } while (runtimeSyncQueued);
+
+    return true;
+  } finally {
+    runtimeSyncInFlight = false;
+  }
+}
+
 async function processButtonAction(
   buttonId,
   eventAt = Date.now(),
@@ -244,7 +430,13 @@ async function processButtonAction(
   fgDebug("process action", { id, ts, source });
 
   if (id === ACTION_TOGGLE) {
-    await handleNotificationToggle();
+    // Кнопка уже обработана native-слоем в receiver.
+    // Здесь только подтягиваем актуальный native runtime в JS.
+    await pullRuntimeStateIntoJs(`button:${source}`);
+    await syncNotification({
+      reason: "button_toggle_synced_from_native",
+      force: true,
+    });
   }
 }
 
@@ -253,7 +445,6 @@ async function drainPendingButtonActions(reason = "unknown") {
   const api = plugins?.FgService?.readAndClearPendingButton;
   if (typeof api !== "function") return;
 
-  // Prevent parallel reads; queue one rerun if needed.
   if (pendingReadInFlight) {
     pendingRerunRequested = true;
     fgDebug("pending read already in flight; rerun requested", { reason });
@@ -300,7 +491,7 @@ async function drainPendingButtonActions(reason = "unknown") {
   }
 }
 
-async function handleNotificationToggle() {
+async function handleNotificationToggleLegacy() {
   if (toggleInFlight) return;
   toggleInFlight = true;
 
@@ -325,20 +516,20 @@ async function handleNotificationToggle() {
     }
 
     await syncNotification({
-      reason: "button_toggle_immediate",
+      reason: "button_toggle_legacy_immediate",
       force: true,
     });
 
     setTimeout(() => {
       syncNotification({
-        reason: "button_toggle_settle_1",
+        reason: "button_toggle_legacy_settle_1",
         force: true,
       });
     }, 180);
 
     setTimeout(() => {
       syncNotification({
-        reason: "button_toggle_settle_2",
+        reason: "button_toggle_legacy_settle_2",
         force: true,
       });
     }, 700);
@@ -384,6 +575,18 @@ export async function syncNotification({
   const { isDarkTheme, themeToken } = getThemeSnapshot();
   const { accentColor, onAccentColor, accentToken } = getAccentSnapshot();
 
+  const runtimeState = buildRuntimeStateForNative({
+    mode: state.mode,
+    running: state.running,
+    payload,
+    channelId: CHANNEL.id,
+    isDarkTheme,
+    accentColor,
+    onAccentColor,
+  });
+
+  await pushRuntimeStateToNative(runtimeState);
+
   const signature = buildSignature(state, payload, { themeToken, accentToken });
 
   if (!force && signature === lastSignature) return;
@@ -413,7 +616,10 @@ export async function syncNotification({
 
   if (!isForegroundShown) {
     try {
-      await plugins.start?.(options);
+      await plugins.start?.({
+        ...options,
+        runtimeState,
+      });
       isForegroundShown = true;
       lastSignature = signature;
       return;
@@ -425,7 +631,10 @@ export async function syncNotification({
   }
 
   await plugins
-    .update?.(options)
+    .update?.({
+      ...options,
+      runtimeState,
+    })
     .then(() => {
       lastSignature = signature;
     })
@@ -436,7 +645,10 @@ export async function syncNotification({
       isForegroundShown = false;
 
       try {
-        await plugins.start?.(options);
+        await plugins.start?.({
+          ...options,
+          runtimeState,
+        });
         isForegroundShown = true;
         lastSignature = signature;
       } catch (startErr) {
@@ -504,7 +716,10 @@ function unbindDocumentEvents() {
 
 async function handleAppBecameForeground(reason) {
   stopPolling();
-  await drainPendingButtonActions(reason);
+
+  await pullRuntimeStateIntoJs(`${reason}:pull_runtime`);
+  await drainPendingButtonActions(`${reason}:pending`);
+
   scheduleForegroundStop();
   await syncNotification({ reason, force: true });
   releaseWakeLock();
@@ -582,6 +797,8 @@ export async function initForegroundService() {
     plugins.FgService.addListener?.("buttonClicked", async (payload) => {
       const raw = payload?.buttonId ?? payload?.id ?? payload?.actionId;
       const eventAt = payload?.eventAt ?? Date.now();
+
+      // Основной путь: native уже toggled, JS только синхронизируется.
       await processButtonAction(raw, eventAt, "live");
     }),
   );
@@ -592,8 +809,28 @@ export async function initForegroundService() {
     }),
   );
 
-  await drainPendingButtonActions("init");
+  await pullRuntimeStateIntoJs("init:pull_runtime");
+  await drainPendingButtonActions("init:pending");
   await syncNotification({ reason: "init", force: true });
+
+  // Если native-runtime API недоступен, fallback на старый JS-toggle путь.
+  if (typeof plugins.FgService?.getRuntimeState !== "function") {
+    fgDebug("native runtime API missing; fallback legacy toggle enabled");
+    processButtonAction = async (
+      buttonId,
+      eventAt = Date.now(),
+      source = "unknown",
+    ) => {
+      const id = Number(buttonId);
+      const ts = Number(eventAt) || Date.now();
+      if (!id) return;
+      if (ts <= lastHandledActionAt) return;
+      lastHandledActionAt = ts;
+      if (id === ACTION_TOGGLE) {
+        await handleNotificationToggleLegacy();
+      }
+    };
+  }
 }
 
 export async function destroyForegroundService() {
@@ -620,6 +857,9 @@ export async function destroyForegroundService() {
   pendingReadInFlight = false;
   pendingRerunRequested = false;
   lastPendingEventAt = 0;
+
+  runtimeSyncInFlight = false;
+  runtimeSyncQueued = false;
 
   isInitialized = false;
 }

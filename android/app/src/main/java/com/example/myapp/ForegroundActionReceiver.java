@@ -5,6 +5,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 
+import androidx.core.content.ContextCompat;
+
 public class ForegroundActionReceiver extends BroadcastReceiver {
     public static final String ACTION_BRIDGE_EVENT = "com.example.myapp.FG_BRIDGE_EVENT";
     public static final String EXTRA_BUTTON_ID = "buttonId";
@@ -36,6 +38,24 @@ public class ForegroundActionReceiver extends BroadcastReceiver {
         context.sendBroadcast(bridge);
     }
 
+    private void startOrUpdateServiceFromState(Context context, ForegroundStateStore.RuntimeState s) {
+        Intent i = new Intent(context, AppForegroundService.class);
+        i.setAction(AppForegroundService.ACTION_START_OR_UPDATE);
+        i.putExtra(AppForegroundService.EXTRA_TITLE, s.notifTitle);
+        i.putExtra(AppForegroundService.EXTRA_BODY, s.notifBody);
+        i.putExtra(AppForegroundService.EXTRA_TOGGLE, s.toggleTitle);
+        i.putExtra(AppForegroundService.EXTRA_CHANNEL_ID, s.channelId);
+        i.putExtra(AppForegroundService.EXTRA_IS_DARK_THEME, s.isDarkTheme);
+        i.putExtra(AppForegroundService.EXTRA_ACCENT_COLOR, s.accentColor);
+        i.putExtra(AppForegroundService.EXTRA_ON_ACCENT_COLOR, s.onAccentColor);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            ContextCompat.startForegroundService(context, i);
+        } else {
+            context.startService(i);
+        }
+    }
+
     @Override
     public void onReceive(Context context, Intent intent) {
         if (intent == null || intent.getAction() == null) return;
@@ -51,15 +71,20 @@ public class ForegroundActionReceiver extends BroadcastReceiver {
 
         long eventAt = System.currentTimeMillis();
 
-        // Гарантия доставки: даже если live-событие до JS не дошло,
-        // pending action будет прочитан позже через readAndClearPendingButton().
+        // 1) Гарантированная доставка в JS через pending fallback
         persistPendingAction(context, buttonId, eventAt);
 
-        // Отправляем live bridge-событие в плагин/JS.
+        // 2) Моментальный нативный toggle (без ожидания WebView)
+        ForegroundStateStore store = new ForegroundStateStore(context);
+        ForegroundStateStore.RuntimeState stateAfterToggle = store.toggle();
+
+        // 3) Моментально обновляем шторку из native-state
+        startOrUpdateServiceFromState(context, stateAfterToggle);
+
+        // 4) Дополнительно отправляем live-событие в bridge
         dispatchBridgeEvent(context, buttonId, eventAt);
 
-        // ВАЖНО: не поднимаем Activity на каждую кнопку Play/Pause,
-        // это добавляет заметную задержку и лишние lifecycle-переходы.
-        // UI поднимается по tap на нотификацию (notificationTapped/moveToForeground).
+        // ВАЖНО: Activity не поднимаем — это добавляет заметный лаг.
+        // Открытие приложения остается по тапу на notificationTapped.
     }
 }
