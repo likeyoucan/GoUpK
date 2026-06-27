@@ -65,6 +65,11 @@ const PERMISSION_CHECK_TTL_MS = 15000;
 let toggleInFlight = false;
 let lastHandledActionAt = 0;
 
+// Pending-drain race guards
+let pendingReadInFlight = false;
+let pendingRerunRequested = false;
+let lastPendingEventAt = 0;
+
 const listeners = {
   appState: null,
   appVisibility: null,
@@ -104,7 +109,6 @@ function resolveToggleModeFallback() {
   return null;
 }
 
-// Fallback state for cases where primary selector returns null after deep sleep/throttle.
 function getFallbackForegroundState() {
   if (sw.isRunning) return { mode: "stopwatch", running: true, metaKey: "" };
   if (!sw.isRunning && sw.elapsedTime > 0) {
@@ -249,17 +253,50 @@ async function drainPendingButtonActions(reason = "unknown") {
   const api = plugins?.FgService?.readAndClearPendingButton;
   if (typeof api !== "function") return;
 
-  try {
-    const pending = await api();
-    if (!pending?.hasPending) return;
+  // Prevent parallel reads; queue one rerun if needed.
+  if (pendingReadInFlight) {
+    pendingRerunRequested = true;
+    fgDebug("pending read already in flight; rerun requested", { reason });
+    return;
+  }
 
-    await processButtonAction(
-      pending.buttonId,
-      pending.eventAt,
-      `pending:${reason}`,
-    );
-  } catch (err) {
-    console.warn("[fg] readAndClearPendingButton failed", err);
+  pendingReadInFlight = true;
+  try {
+    do {
+      pendingRerunRequested = false;
+
+      let pending = null;
+      try {
+        pending = await api();
+      } catch (err) {
+        console.warn("[fg] readAndClearPendingButton failed", err);
+        break;
+      }
+
+      if (!pending?.hasPending) continue;
+
+      const eventAt = Number(pending.eventAt) || 0;
+      if (eventAt > 0 && eventAt <= lastPendingEventAt) {
+        fgDebug("skip stale pending action", {
+          reason,
+          eventAt,
+          lastPendingEventAt,
+        });
+        continue;
+      }
+
+      if (eventAt > 0) {
+        lastPendingEventAt = eventAt;
+      }
+
+      await processButtonAction(
+        pending.buttonId,
+        pending.eventAt,
+        `pending:${reason}`,
+      );
+    } while (pendingRerunRequested);
+  } finally {
+    pendingReadInFlight = false;
   }
 }
 
@@ -287,7 +324,6 @@ async function handleNotificationToggle() {
       tb.toggle();
     }
 
-    // Без recreate, чтобы не мигало. Просто форсируем update несколько раз.
     await syncNotification({
       reason: "button_toggle_immediate",
       force: true,
@@ -394,7 +430,6 @@ export async function syncNotification({
       lastSignature = signature;
     })
     .catch(async (err) => {
-      // Если update у плагина нестабилен в deep sleep — мягкий fallback на restart.
       console.warn("[fg] update failed, fallback to restart", err);
 
       await plugins.stop?.().catch(() => {});
@@ -467,6 +502,23 @@ function unbindDocumentEvents() {
   listeners.unsubs = [];
 }
 
+async function handleAppBecameForeground(reason) {
+  stopPolling();
+  await drainPendingButtonActions(reason);
+  scheduleForegroundStop();
+  await syncNotification({ reason, force: true });
+  releaseWakeLock();
+}
+
+async function handleAppBecameBackground(reason) {
+  cancelPendingStop();
+  sm.unlock();
+  requestWakeLock();
+  await ensurePermissionIfNeeded(true);
+  await syncNotification({ reason });
+  startPolling();
+}
+
 function bindVisibilityFallback() {
   if (listeners.appVisibility) return;
 
@@ -474,20 +526,11 @@ function bindVisibilityFallback() {
     const isActive = document.visibilityState === "visible";
 
     if (!isActive) {
-      cancelPendingStop();
-      sm.unlock();
-      requestWakeLock();
-      await ensurePermissionIfNeeded(true);
-      await syncNotification({ reason: "visibility_hidden" });
-      startPolling();
+      await handleAppBecameBackground("visibility_hidden");
       return;
     }
 
-    stopPolling();
-    await drainPendingButtonActions("visibility_visible");
-    scheduleForegroundStop();
-    await syncNotification({ reason: "visibility_visible", force: true });
-    releaseWakeLock();
+    await handleAppBecameForeground("visibility_visible");
   };
 
   document.addEventListener("visibilitychange", listeners.appVisibility);
@@ -523,20 +566,11 @@ export async function initForegroundService() {
   if (plugins.App?.addListener) {
     listeners.appState = async ({ isActive }) => {
       if (!isActive) {
-        cancelPendingStop();
-        sm.unlock();
-        requestWakeLock();
-        await ensurePermissionIfNeeded(true);
-        await syncNotification({ reason: "appstate_background" });
-        startPolling();
+        await handleAppBecameBackground("appstate_background");
         return;
       }
 
-      stopPolling();
-      await drainPendingButtonActions("appstate_foreground");
-      scheduleForegroundStop();
-      await syncNotification({ reason: "appstate_foreground", force: true });
-      releaseWakeLock();
+      await handleAppBecameForeground("appstate_foreground");
     };
 
     rememberHandle(
@@ -582,6 +616,10 @@ export async function destroyForegroundService() {
   permissionCheckedAt = 0;
   toggleInFlight = false;
   lastHandledActionAt = 0;
+
+  pendingReadInFlight = false;
+  pendingRerunRequested = false;
+  lastPendingEventAt = 0;
 
   isInitialized = false;
 }
