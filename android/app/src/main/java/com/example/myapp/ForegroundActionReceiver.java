@@ -1,12 +1,9 @@
 package com.example.myapp;
 
-import android.app.ActivityManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
-
-import java.util.List;
 
 public class ForegroundActionReceiver extends BroadcastReceiver {
     public static final String ACTION_BRIDGE_EVENT = "com.example.myapp.FG_BRIDGE_EVENT";
@@ -16,24 +13,6 @@ public class ForegroundActionReceiver extends BroadcastReceiver {
     private static final String PREFS = "fg_actions";
     private static final String KEY_PENDING_BUTTON_ID = "pending_button_id";
     private static final String KEY_PENDING_AT = "pending_at";
-
-    private boolean isAppInForeground(Context context) {
-        ActivityManager am = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
-        if (am == null) return false;
-
-        List<ActivityManager.RunningAppProcessInfo> processes = am.getRunningAppProcesses();
-        if (processes == null) return false;
-
-        String pkg = context.getPackageName();
-        for (ActivityManager.RunningAppProcessInfo p : processes) {
-            if (p == null || p.processName == null) continue;
-            if (!pkg.equals(p.processName)) continue;
-
-            return p.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND
-                || p.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_VISIBLE;
-        }
-        return false;
-    }
 
     private void persistPendingAction(Context context, int buttonId, long eventAt) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -57,20 +36,6 @@ public class ForegroundActionReceiver extends BroadcastReceiver {
         context.sendBroadcast(bridge);
     }
 
-    private void wakeAppIfNeeded(Context context, int buttonId, long eventAt) {
-        if (isAppInForeground(context)) return;
-
-        Intent open = new Intent(context, MainActivity.class);
-        open.setFlags(
-            Intent.FLAG_ACTIVITY_NEW_TASK
-                | Intent.FLAG_ACTIVITY_SINGLE_TOP
-                | Intent.FLAG_ACTIVITY_CLEAR_TOP
-        );
-        open.putExtra(EXTRA_BUTTON_ID, buttonId);
-        open.putExtra(EXTRA_EVENT_AT, eventAt);
-        context.startActivity(open);
-    }
-
     @Override
     public void onReceive(Context context, Intent intent) {
         if (intent == null || intent.getAction() == null) return;
@@ -86,10 +51,15 @@ public class ForegroundActionReceiver extends BroadcastReceiver {
 
         long eventAt = System.currentTimeMillis();
 
-        // Гарантия: даже если bridge-событие потеряется, JS потом заберет pending action.
+        // Гарантия доставки: даже если live-событие до JS не дошло,
+        // pending action будет прочитан позже через readAndClearPendingButton().
         persistPendingAction(context, buttonId, eventAt);
 
+        // Отправляем live bridge-событие в плагин/JS.
         dispatchBridgeEvent(context, buttonId, eventAt);
-        wakeAppIfNeeded(context, buttonId, eventAt);
+
+        // ВАЖНО: не поднимаем Activity на каждую кнопку Play/Pause,
+        // это добавляет заметную задержку и лишние lifecycle-переходы.
+        // UI поднимается по tap на нотификацию (notificationTapped/moveToForeground).
     }
 }
