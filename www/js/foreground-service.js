@@ -33,6 +33,7 @@ import {
 
 import {
   getThemeSnapshot,
+  getAccentSnapshot,
   buildSignature,
   buildForegroundOptions,
 } from "./foreground/fg-notification.js?v=VERSION";
@@ -62,6 +63,7 @@ let permissionCheckedAt = 0;
 const PERMISSION_CHECK_TTL_MS = 15000;
 
 let toggleInFlight = false;
+let lastHandledActionAt = 0;
 
 const listeners = {
   appState: null,
@@ -220,6 +222,47 @@ async function stopForeground() {
   fgDebug("foreground stopped");
 }
 
+async function processButtonAction(
+  buttonId,
+  eventAt = Date.now(),
+  source = "unknown",
+) {
+  const id = Number(buttonId);
+  const ts = Number(eventAt) || Date.now();
+
+  if (!id) return;
+  if (ts <= lastHandledActionAt) {
+    fgDebug("skip duplicated action", { id, ts, source, lastHandledActionAt });
+    return;
+  }
+
+  lastHandledActionAt = ts;
+  fgDebug("process action", { id, ts, source });
+
+  if (id === ACTION_TOGGLE) {
+    await handleNotificationToggle();
+  }
+}
+
+async function drainPendingButtonActions(reason = "unknown") {
+  const plugins = getPlugins();
+  const api = plugins?.FgService?.readAndClearPendingButton;
+  if (typeof api !== "function") return;
+
+  try {
+    const pending = await api();
+    if (!pending?.hasPending) return;
+
+    await processButtonAction(
+      pending.buttonId,
+      pending.eventAt,
+      `pending:${reason}`,
+    );
+  } catch (err) {
+    console.warn("[fg] readAndClearPendingButton failed", err);
+  }
+}
+
 async function handleNotificationToggle() {
   if (toggleInFlight) return;
   toggleInFlight = true;
@@ -303,7 +346,9 @@ export async function syncNotification({
   });
 
   const { isDarkTheme, themeToken } = getThemeSnapshot();
-  const signature = buildSignature(state, payload, themeToken);
+  const { accentColor, onAccentColor, accentToken } = getAccentSnapshot();
+
+  const signature = buildSignature(state, payload, { themeToken, accentToken });
 
   if (!force && signature === lastSignature) return;
 
@@ -315,6 +360,8 @@ export async function syncNotification({
     payload,
     isDarkTheme,
     toggleTitle,
+    accentColor,
+    onAccentColor,
   });
 
   fgDebug("sync notification", {
@@ -323,6 +370,8 @@ export async function syncNotification({
     running: state.running,
     payload,
     isDarkTheme,
+    accentColor,
+    onAccentColor,
     force,
   });
 
@@ -435,6 +484,7 @@ function bindVisibilityFallback() {
     }
 
     stopPolling();
+    await drainPendingButtonActions("visibility_visible");
     scheduleForegroundStop();
     await syncNotification({ reason: "visibility_visible", force: true });
     releaseWakeLock();
@@ -483,6 +533,7 @@ export async function initForegroundService() {
       }
 
       stopPolling();
+      await drainPendingButtonActions("appstate_foreground");
       scheduleForegroundStop();
       await syncNotification({ reason: "appstate_foreground", force: true });
       releaseWakeLock();
@@ -496,11 +547,8 @@ export async function initForegroundService() {
   rememberHandle(
     plugins.FgService.addListener?.("buttonClicked", async (payload) => {
       const raw = payload?.buttonId ?? payload?.id ?? payload?.actionId;
-      const id = Number(raw);
-
-      if (id === ACTION_TOGGLE || String(raw) === String(ACTION_TOGGLE)) {
-        await handleNotificationToggle();
-      }
+      const eventAt = payload?.eventAt ?? Date.now();
+      await processButtonAction(raw, eventAt, "live");
     }),
   );
 
@@ -510,6 +558,7 @@ export async function initForegroundService() {
     }),
   );
 
+  await drainPendingButtonActions("init");
   await syncNotification({ reason: "init", force: true });
 }
 
@@ -532,6 +581,7 @@ export async function destroyForegroundService() {
   permissionGranted = null;
   permissionCheckedAt = 0;
   toggleInFlight = false;
+  lastHandledActionAt = 0;
 
   isInitialized = false;
 }
