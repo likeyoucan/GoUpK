@@ -174,7 +174,11 @@ async function handleNotificationToggle() {
     const mode = state?.mode || resolveToggleModeFallback();
 
     if (!mode) {
-      await syncNotification({ reason: "button_toggle_no_mode" });
+      await syncNotification({
+        reason: "button_toggle_no_mode",
+        force: true,
+        recreate: true,
+      });
       return;
     }
 
@@ -186,21 +190,35 @@ async function handleNotificationToggle() {
       tb.toggle();
     }
 
-    await syncNotification({ reason: "button_toggle_immediate" });
+    await syncNotification({
+      reason: "button_toggle_immediate",
+      force: true,
+      recreate: true,
+    });
 
     setTimeout(() => {
-      syncNotification({ reason: "button_toggle_settle_1" });
-    }, 120);
+      syncNotification({
+        reason: "button_toggle_settle_1",
+        force: true,
+      });
+    }, 180);
 
     setTimeout(() => {
-      syncNotification({ reason: "button_toggle_settle_2" });
-    }, 450);
+      syncNotification({
+        reason: "button_toggle_settle_2",
+        force: true,
+      });
+    }, 600);
   } finally {
     toggleInFlight = false;
   }
 }
 
-export async function syncNotification({ reason = "unknown" } = {}) {
+export async function syncNotification({
+  reason = "unknown",
+  force = false,
+  recreate = false,
+} = {}) {
   const plugins = getPlugins();
   if (!plugins) return;
 
@@ -233,7 +251,8 @@ export async function syncNotification({ reason = "unknown" } = {}) {
 
   const { isDarkTheme, themeToken } = getThemeSnapshot();
   const signature = buildSignature(state, payload, themeToken);
-  if (signature === lastSignature) return;
+
+  if (!force && signature === lastSignature) return;
 
   const toggleTitle = state.running ? "⏸" : "▶";
   const options = buildForegroundOptions({
@@ -251,7 +270,15 @@ export async function syncNotification({ reason = "unknown" } = {}) {
     running: state.running,
     payload,
     isDarkTheme,
+    force,
+    recreate,
   });
+
+  if (recreate && isForegroundShown) {
+    await plugins.stop?.().catch(() => {});
+    isForegroundShown = false;
+    lastSignature = "";
+  }
 
   if (!isForegroundShown) {
     try {
@@ -272,14 +299,17 @@ export async function syncNotification({ reason = "unknown" } = {}) {
       lastSignature = signature;
     })
     .catch(async (err) => {
-      console.warn("[fg] update failed, fallback to start", err);
+      console.warn("[fg] update failed, fallback to recreate", err);
+
+      await plugins.stop?.().catch(() => {});
+      isForegroundShown = false;
 
       try {
         await plugins.start?.(options);
         isForegroundShown = true;
         lastSignature = signature;
       } catch (startErr) {
-        console.warn("[fg] fallback start failed", startErr);
+        console.warn("[fg] recreate start failed", startErr);
         isForegroundShown = false;
       }
     });
