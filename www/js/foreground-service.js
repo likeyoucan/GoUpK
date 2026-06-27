@@ -102,6 +102,61 @@ function resolveToggleModeFallback() {
   return null;
 }
 
+// Fallback state for cases where primary selector returns null after deep sleep/throttle.
+function getFallbackForegroundState() {
+  if (sw.isRunning) return { mode: "stopwatch", running: true, metaKey: "" };
+  if (!sw.isRunning && sw.elapsedTime > 0) {
+    return { mode: "stopwatch", running: false, metaKey: "" };
+  }
+
+  if (tm.isRunning) {
+    const rem =
+      typeof tm.getRemainingTime === "function" ? tm.getRemainingTime() : 0;
+    const total = tm.initialDurationMs || tm.totalDuration || 0;
+    return {
+      mode: "timer",
+      running: true,
+      metaKey: `${total}|${Math.floor(rem / 1000)}|r`,
+    };
+  }
+
+  if (tm.isPaused) {
+    const rem =
+      typeof tm.getRemainingTime === "function" ? tm.getRemainingTime() : 0;
+    const total = tm.initialDurationMs || tm.totalDuration || 0;
+    if (rem > 0) {
+      return {
+        mode: "timer",
+        running: false,
+        metaKey: `${total}|${Math.floor(rem / 1000)}|p`,
+      };
+    }
+  }
+
+  if (tb.status !== "STOPPED") {
+    const rem =
+      tb.status !== "STOPPED"
+        ? Math.max(
+            0,
+            (tb.paused ? tb.remainingAtPause : tb.phaseEndTime - Date.now()) ||
+              0,
+          )
+        : 0;
+
+    return {
+      mode: "tabata",
+      running: !tb.paused,
+      metaKey: `${tb.selectedId || "na"}|${tb.currentRound || 0}|${tb.rounds || 0}|${tb.status || "STOPPED"}|${Math.floor(rem / 1000)}`,
+    };
+  }
+
+  return null;
+}
+
+function getResolvedForegroundState() {
+  return getCurrentForegroundState() || getFallbackForegroundState();
+}
+
 function shouldShowForegroundBanner() {
   return !!uiSettingsManager.showForegroundBanner;
 }
@@ -119,7 +174,7 @@ function scheduleForegroundStop(delay = FOREGROUND_STOP_DEBOUNCE_MS) {
   pendingStopTimer = setTimeout(async () => {
     pendingStopTimer = null;
 
-    const state = getCurrentForegroundState();
+    const state = getResolvedForegroundState();
     if (!state) {
       await stopForeground();
       return;
@@ -170,14 +225,13 @@ async function handleNotificationToggle() {
   toggleInFlight = true;
 
   try {
-    const state = getCurrentForegroundState();
+    const state = getResolvedForegroundState();
     const mode = state?.mode || resolveToggleModeFallback();
 
     if (!mode) {
       await syncNotification({
         reason: "button_toggle_no_mode",
         force: true,
-        recreate: true,
       });
       return;
     }
@@ -190,10 +244,10 @@ async function handleNotificationToggle() {
       tb.toggle();
     }
 
+    // Без recreate, чтобы не мигало. Просто форсируем update несколько раз.
     await syncNotification({
       reason: "button_toggle_immediate",
       force: true,
-      recreate: true,
     });
 
     setTimeout(() => {
@@ -208,7 +262,7 @@ async function handleNotificationToggle() {
         reason: "button_toggle_settle_2",
         force: true,
       });
-    }, 600);
+    }, 700);
   } finally {
     toggleInFlight = false;
   }
@@ -217,7 +271,6 @@ async function handleNotificationToggle() {
 export async function syncNotification({
   reason = "unknown",
   force = false,
-  recreate = false,
 } = {}) {
   const plugins = getPlugins();
   if (!plugins) return;
@@ -227,7 +280,7 @@ export async function syncNotification({
     return;
   }
 
-  const state = getCurrentForegroundState();
+  const state = getResolvedForegroundState();
   if (!state) {
     await stopForeground();
     return;
@@ -271,14 +324,7 @@ export async function syncNotification({
     payload,
     isDarkTheme,
     force,
-    recreate,
   });
-
-  if (recreate && isForegroundShown) {
-    await plugins.stop?.().catch(() => {});
-    isForegroundShown = false;
-    lastSignature = "";
-  }
 
   if (!isForegroundShown) {
     try {
@@ -299,7 +345,8 @@ export async function syncNotification({
       lastSignature = signature;
     })
     .catch(async (err) => {
-      console.warn("[fg] update failed, fallback to recreate", err);
+      // Если update у плагина нестабилен в deep sleep — мягкий fallback на restart.
+      console.warn("[fg] update failed, fallback to restart", err);
 
       await plugins.stop?.().catch(() => {});
       isForegroundShown = false;
@@ -309,7 +356,7 @@ export async function syncNotification({
         isForegroundShown = true;
         lastSignature = signature;
       } catch (startErr) {
-        console.warn("[fg] recreate start failed", startErr);
+        console.warn("[fg] restart start failed", startErr);
         isForegroundShown = false;
       }
     });
@@ -389,7 +436,7 @@ function bindVisibilityFallback() {
 
     stopPolling();
     scheduleForegroundStop();
-    await syncNotification({ reason: "visibility_visible" });
+    await syncNotification({ reason: "visibility_visible", force: true });
     releaseWakeLock();
   };
 
@@ -437,7 +484,7 @@ export async function initForegroundService() {
 
       stopPolling();
       scheduleForegroundStop();
-      await syncNotification({ reason: "appstate_foreground" });
+      await syncNotification({ reason: "appstate_foreground", force: true });
       releaseWakeLock();
     };
 
@@ -463,7 +510,7 @@ export async function initForegroundService() {
     }),
   );
 
-  await syncNotification({ reason: "init" });
+  await syncNotification({ reason: "init", force: true });
 }
 
 export async function destroyForegroundService() {
