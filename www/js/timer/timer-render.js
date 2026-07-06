@@ -1,6 +1,9 @@
 // Файл: www/js/timer/timer-render.js
 
 export function setupTimerRender(tm, { updateText, updateTitle }) {
+  let lastAdjustText = "";
+  let lastDisplayText = "";
+
   function getAdjustmentAmount(remainingSeconds) {
     if (remainingSeconds > 3600) return 900;
     if (remainingSeconds > 1800) return 300;
@@ -61,6 +64,9 @@ export function setupTimerRender(tm, { updateText, updateTitle }) {
     updateText(tm.els.display, "GO");
     tm.els.adjustControls?.classList.add("hidden");
     tm.els.adjustControls?.classList.remove("flex");
+
+    // Reset display cache in idle "GO" state.
+    lastDisplayText = "";
   };
 
   tm.updateAdjustButtons = () => {
@@ -69,10 +75,14 @@ export function setupTimerRender(tm, { updateText, updateTitle }) {
     const remainingSeconds = Math.ceil(tm.timeRemainingMs / 1000);
     const newAdjustmentSec = getAdjustmentAmount(remainingSeconds);
 
-    if (newAdjustmentSec === tm.currentAdjustmentSec) return;
+    if (newAdjustmentSec !== tm.currentAdjustmentSec) {
+      tm.currentAdjustmentSec = newAdjustmentSec;
+    }
 
-    tm.currentAdjustmentSec = newAdjustmentSec;
     const text = formatAdjustmentText(tm.currentAdjustmentSec);
+    if (text === lastAdjustText) return;
+
+    lastAdjustText = text;
     updateText(tm.els.plusValueSpan, `+ ${text}`);
     updateText(tm.els.minusValueSpan, `- ${text}`);
   };
@@ -82,13 +92,19 @@ export function setupTimerRender(tm, { updateText, updateTitle }) {
     const forceHours = hInput > 0 || tm.totalDuration >= 3600000;
 
     const timeStr = tm.formatTime(rem, { forceHours });
-    updateText(tm.els.display, timeStr);
+
+    if (timeStr !== lastDisplayText) {
+      lastDisplayText = timeStr;
+      updateText(tm.els.display, timeStr);
+    }
 
     if (!tm.els.display.classList.contains("is-go")) {
       tm.els.display.style.transform = "translateX(0px)";
     }
 
-    // Keep title updates out of hot path on active screen
-    if (document.hidden) updateTitle(timeStr);
+    // Keep title updates out of hot path on active screen.
+    if (document.hidden && timeStr) {
+      updateTitle(timeStr);
+    }
   };
 }

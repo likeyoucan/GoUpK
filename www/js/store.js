@@ -15,15 +15,21 @@ function emitActiveTimerChanged(value) {
   emitAppEvent(APP_EVENTS.ACTIVE_TIMER_CHANGED, { activeTimer: value });
 }
 
+function normalizeTimerName(timerName) {
+  return VALID_TIMERS.has(timerName) ? timerName : null;
+}
+
 export const store = {
   activate(timerName) {
-    if (!VALID_TIMERS.has(timerName)) return;
-    this.setActiveTimer(timerName);
-    emitAppEvent(APP_EVENTS.TIMER_STARTED, timerName);
+    const normalized = normalizeTimerName(timerName);
+    if (!normalized) return;
+
+    this.setActiveTimer(normalized);
+    emitAppEvent(APP_EVENTS.TIMER_STARTED, normalized);
   },
 
   setActiveTimer(timerName) {
-    const next = VALID_TIMERS.has(timerName) ? timerName : null;
+    const next = normalizeTimerName(timerName);
     if (storeData.activeTimer === next) return;
 
     storeData.activeTimer = next;
@@ -53,11 +59,49 @@ export const store = {
     const hasRunningTabata =
       !!tb?.status && tb.status !== "STOPPED" && !tb?.paused;
 
-    const hasRealActive =
-      hasRunningStopwatch || hasRunningTimer || hasRunningTabata;
+    const hasPausedStopwatch = !sw?.isRunning && (sw?.elapsedTime || 0) > 0;
+    const hasPausedTimer =
+      !!tm?.isPaused &&
+      (typeof tm?.getRemainingTime === "function"
+        ? tm.getRemainingTime() > 0
+        : (tm?.remainingAtPause || tm?.timeRemainingMs || 0) > 0);
 
-    if (!hasRealActive && storeData.activeTimer) {
-      this.clearActiveTimer();
+    const hasPausedTabata =
+      !!tb?.paused &&
+      tb?.status !== "STOPPED" &&
+      (tb?.remainingAtPause || 0) > 0;
+
+    if (hasRunningStopwatch) {
+      this.setActiveTimer("stopwatch");
+      return;
     }
+
+    if (hasRunningTimer) {
+      this.setActiveTimer("timer");
+      return;
+    }
+
+    if (hasRunningTabata) {
+      this.setActiveTimer("tabata");
+      return;
+    }
+
+    // If nothing is actively running, keep only resumable states.
+    if (hasPausedStopwatch) {
+      this.setActiveTimer("stopwatch");
+      return;
+    }
+
+    if (hasPausedTimer) {
+      this.setActiveTimer("timer");
+      return;
+    }
+
+    if (hasPausedTabata) {
+      this.setActiveTimer("tabata");
+      return;
+    }
+
+    this.clearActiveTimer();
   },
 };

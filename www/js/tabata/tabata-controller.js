@@ -42,6 +42,8 @@ export const tb = {
 
   phaseClosing: false,
   phaseCloseTimer: null,
+  _phaseCloseToken: 0,
+  _phaseTransitionLock: false,
 
   _unbindRuntime: null,
   _unbindCoreEvents: null,
@@ -59,6 +61,11 @@ export const tb = {
         now: () => Date.now(),
       });
     }
+
+    this.phaseClosing = false;
+    this.phaseCloseTimer = null;
+    this._phaseCloseToken = 0;
+    this._phaseTransitionLock = false;
 
     this.els = {
       listSection: $("tb-list-section"),
@@ -133,6 +140,9 @@ export const tb = {
         clearTimeout(this.phaseCloseTimer);
         this.phaseCloseTimer = null;
       }
+
+      this._phaseCloseToken = 0;
+      this._phaseTransitionLock = false;
 
       this._unbindCoreEvents?.();
       this._unbindCoreEvents = null;

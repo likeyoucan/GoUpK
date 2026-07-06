@@ -63,6 +63,8 @@ let permissionGranted = null;
 let permissionCheckedAt = 0;
 const PERMISSION_CHECK_TTL_MS = 15000;
 
+let lastHandledActionAt = 0;
+
 let pendingReadInFlight = false;
 let pendingRerunRequested = false;
 let lastPendingEventAt = 0;
@@ -75,6 +77,11 @@ let syncInFlight = false;
 let syncQueued = false;
 let lastSyncAt = 0;
 const MIN_SYNC_GAP_MS = 120;
+
+// Extra dedupe for repeated reasons in short bursts.
+let lastSyncReason = "";
+let lastSyncReasonAt = 0;
+const SAME_REASON_GAP_MS = 80;
 
 const listeners = {
   appState: null,
@@ -108,22 +115,6 @@ function getCurrentForegroundState() {
     tb,
     activeView: navigation.activeView,
   });
-}
-
-function resolveToggleModeFallback() {
-  if (sw.isRunning || sw.elapsedTime > 0) return "stopwatch";
-
-  if (
-    tm.isRunning ||
-    tm.isPaused ||
-    (typeof tm.getRemainingTime === "function" && tm.getRemainingTime() > 0)
-  ) {
-    return "timer";
-  }
-
-  if (tb.status !== "STOPPED") return "tabata";
-
-  return null;
 }
 
 function getFallbackForegroundState() {
@@ -493,7 +484,7 @@ async function processButtonAction(
   fgDebug("process action", { id, ts, source });
 
   if (id === ACTION_TOGGLE) {
-    // Основной путь: native уже toggled. JS только подтягивает runtime.
+    // Основной путь: native already toggled. JS only pulls runtime.
     await pullRuntimeStateIntoJs(`button:${source}`);
     await syncNotification({
       reason: "button_toggle_synced_from_native",
@@ -666,10 +657,22 @@ export async function syncNotification({
       syncQueued = false;
 
       const now = Date.now();
+
+      if (
+        !force &&
+        reason === lastSyncReason &&
+        now - lastSyncReasonAt < SAME_REASON_GAP_MS
+      ) {
+        continue;
+      }
+
       if (!force && now - lastSyncAt < MIN_SYNC_GAP_MS) {
         continue;
       }
+
       lastSyncAt = now;
+      lastSyncReason = reason;
+      lastSyncReasonAt = now;
 
       await syncNotificationInternal({ reason, force });
     } while (syncQueued);
@@ -865,6 +868,8 @@ export async function destroyForegroundService() {
   syncInFlight = false;
   syncQueued = false;
   lastSyncAt = 0;
+  lastSyncReason = "";
+  lastSyncReasonAt = 0;
 
   isInitialized = false;
 }

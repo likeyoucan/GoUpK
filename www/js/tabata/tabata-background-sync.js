@@ -12,9 +12,23 @@ export function setupTabataBackgroundSync(
     removeEventListener: () => {},
   };
 
+  tb._phaseTransitionLock = false;
+
+  const advancePhaseSafely = (missed = 0) => {
+    if (tb._phaseTransitionLock) return;
+    if (tb.status === "STOPPED" || tb.paused || tb.completionHandled) return;
+
+    tb._phaseTransitionLock = true;
+    try {
+      tb.nextPhase(missed);
+    } finally {
+      tb._phaseTransitionLock = false;
+    }
+  };
+
   tb.tick = (isBackground = false) => {
     if (tb.status === "STOPPED" || tb.paused || tb.completionHandled) return;
-    if (tb.phaseClosing) return;
+    if (tb.phaseClosing || tb._phaseTransitionLock) return;
 
     const rem = getRemainingMs(tb.phaseEndTime);
 
@@ -22,7 +36,7 @@ export function setupTabataBackgroundSync(
       const missed = Math.abs(rem);
 
       if (document.hidden || missed > 2000) {
-        tb.nextPhase(missed);
+        advancePhaseSafely(missed);
         return;
       }
 
@@ -31,12 +45,17 @@ export function setupTabataBackgroundSync(
       if (!isBackground) tb.render(0);
       tb.ringCtrl?.setTarget(0);
 
+      const closeToken = Date.now();
+      tb._phaseCloseToken = closeToken;
+
       tb.phaseCloseTimer = setTimeout(() => {
+        if (tb._phaseCloseToken !== closeToken) return;
+
         tb.phaseClosing = false;
         tb.phaseCloseTimer = null;
 
         if (tb.status !== "STOPPED" && !tb.paused && !tb.completionHandled) {
-          tb.nextPhase(0);
+          advancePhaseSafely(0);
         }
       }, 120);
 
@@ -111,6 +130,7 @@ export function setupTabataBackgroundSync(
           tb.phaseCloseTimer = null;
         }
         tb.phaseClosing = false;
+        tb._phaseTransitionLock = false;
         tb.ringCtrl?.snap(tb.ringLength);
         return;
       }
@@ -119,16 +139,19 @@ export function setupTabataBackgroundSync(
         const rem = getRemainingMs(tb.phaseEndTime);
 
         if (rem <= 0) {
-          tb.nextPhase(Math.abs(rem));
+          advancePhaseSafely(Math.abs(rem));
           return;
         }
 
         tb.lastRender = 0;
         tb.phaseClosing = false;
+        tb._phaseTransitionLock = false;
+
         if (tb.phaseCloseTimer) {
           clearTimeout(tb.phaseCloseTimer);
           tb.phaseCloseTimer = null;
         }
+
         tb.render(rem);
         tb.tick();
       }

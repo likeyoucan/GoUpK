@@ -50,6 +50,10 @@ const stopwatchModule = {
   shareResults,
   stopwatchEngine: null,
 
+  // Render throttling caches
+  lastVisualBucket: -1,
+  lastBgTitleText: "",
+
   _unbindCore: null,
   _unbindSessions: null,
   _unbindShareController: null,
@@ -63,6 +67,9 @@ const stopwatchModule = {
         now: () => Date.now(),
       });
     }
+
+    this.lastVisualBucket = -1;
+    this.lastBgTitleText = "";
 
     this.els = {
       display: $("sw-mainDisplay"),
@@ -156,6 +163,9 @@ const stopwatchModule = {
         this.elapsedTime = this.stopwatchEngine.getElapsed();
       }
 
+      this.lastVisualBucket = -1;
+      this.lastBgTitleText = "";
+
       if (this.isRunning) {
         this.lastRender = 0;
         this.tick();
@@ -173,6 +183,8 @@ const stopwatchModule = {
     );
 
     const onMsChanged = () => {
+      this.lastVisualBucket = -1;
+
       if (!this.isRunning && this.elapsedTime > 0) this.updateDisplay();
 
       if (this.laps.length === 0) return;
@@ -243,6 +255,9 @@ const stopwatchModule = {
       this.els.lapBtn.classList.remove("main_btn");
       this.els.lapBtn.classList.add("main_btn_red");
 
+      this.lastVisualBucket = -1;
+      this.lastBgTitleText = "";
+
       announceToScreenReader(
         `${t("stopwatch")} ${t("pause")}. ${formatTime(this.elapsedTime, {
           showMs: false,
@@ -266,6 +281,9 @@ const stopwatchModule = {
 
       requestWakeLock();
       bgWorker.postMessage({ command: "start" });
+
+      this.lastVisualBucket = -1;
+      this.lastBgTitleText = "";
       requestAnimationFrame(() => this.tick());
 
       this.els.status.classList.add("hidden");
@@ -299,8 +317,17 @@ const stopwatchModule = {
 
     const nowPerf = performance.now();
     if (nowPerf - this.lastRender >= 16 || isBackground) {
+      const bucket = uiSettingsManager.showMs
+        ? Math.floor(this.elapsedTime / 10)
+        : Math.floor(this.elapsedTime / 1000);
+
+      const shouldPaint = isBackground || bucket !== this.lastVisualBucket;
+
       if (!isBackground) {
-        this.updateDisplay();
+        if (shouldPaint) {
+          this.updateDisplay();
+          this.lastVisualBucket = bucket;
+        }
 
         if (this.ringCtrl) {
           const targetOffset =
@@ -308,13 +335,18 @@ const stopwatchModule = {
             ((this.elapsedTime % 60000) / 60000) * this.ringLength;
           this.ringCtrl.setTarget(targetOffset);
         }
-      } else {
-        updateTitle(
-          formatTime(this.elapsedTime, {
-            showMs: false,
-            forceHours: this.elapsedTime >= 3600000,
-          }),
-        );
+      } else if (shouldPaint) {
+        const titleText = formatTime(this.elapsedTime, {
+          showMs: false,
+          forceHours: this.elapsedTime >= 3600000,
+        });
+
+        if (titleText !== this.lastBgTitleText) {
+          this.lastBgTitleText = titleText;
+          updateTitle(titleText);
+        }
+
+        this.lastVisualBucket = bucket;
       }
 
       this.lastRender = nowPerf;
@@ -377,6 +409,8 @@ const stopwatchModule = {
       this.pauseTime = 0;
       this.lastMinuteBeep = 0;
       this.pendingLapsRerender = false;
+      this.lastVisualBucket = -1;
+      this.lastBgTitleText = "";
 
       updateText(this.els.display, "GO");
       this.els.display.classList.add("is-go");

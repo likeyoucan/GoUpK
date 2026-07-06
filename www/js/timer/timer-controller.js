@@ -48,6 +48,9 @@ export const tm = {
   _lastUiPaintTs: 0,
   skipWorkerTickUntil: 0,
 
+  // Rendering cache used by timer-core/timer-render to avoid redundant DOM writes
+  _lastDisplayBucket: null,
+
   $,
   t,
   sm,
@@ -64,6 +67,11 @@ export const tm = {
   init() {
     this._unbindRuntime?.();
     this._unbindRuntime = null;
+
+    this._lastDisplayBucket = null;
+    this.lastUiRem = 0;
+    this._lastUiPaintTs = 0;
+    this.skipWorkerTickUntil = 0;
 
     this.els = {
       form: $("tm-form"),
@@ -113,6 +121,9 @@ export const tm = {
         return;
       }
 
+      // Reset paint cache after returning to foreground to avoid stale throttling.
+      this._lastDisplayBucket = null;
+
       if (this.isRunning) {
         const rem = resolveRunningRemaining(this.targetEpochMs);
         this.timeRemainingMs = rem;
@@ -128,7 +139,7 @@ export const tm = {
           ? Math.max(0, engineRem)
           : resolvePausedRemaining(this.remainingAtPause, this.timeRemainingMs);
 
-        // Синхронизируем все поля одного состояния.
+        // Keep all fields in sync for paused state.
         this.remainingAtPause = rem;
         this.timeRemainingMs = rem;
         this.lastUiRem = rem;

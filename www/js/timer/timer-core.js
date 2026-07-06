@@ -22,6 +22,25 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     });
 
   tm._unbindCoreEvents = tm._unbindCoreEvents || null;
+  tm._lastDisplayBucket = null;
+
+  const getDisplayBucket = (ms) =>
+    Math.ceil(Math.max(0, Number(ms) || 0) / 1000);
+
+  const shouldUpdateDisplay = (ms, force = false) => {
+    const bucket = getDisplayBucket(ms);
+    if (force || bucket !== tm._lastDisplayBucket) {
+      tm._lastDisplayBucket = bucket;
+      return true;
+    }
+    return false;
+  };
+
+  const forceDisplaySync = (rem) => {
+    tm._lastDisplayBucket = null;
+    tm.updateDisplay(rem);
+    tm._lastDisplayBucket = getDisplayBucket(rem);
+  };
 
   tm.getRemainingTime = () => {
     if (!tm.isRunning && !tm.isPaused && !tm.isFinished) return 0;
@@ -53,7 +72,11 @@ export function setupTimerCore(tm, { showToast, updateText }) {
       const nowPerf = performance.now();
       if (nowPerf - (tm._lastUiPaintTs || 0) >= 33) {
         tm._lastUiPaintTs = nowPerf;
-        tm.updateDisplay(rem);
+
+        if (shouldUpdateDisplay(rem, false)) {
+          tm.updateDisplay(rem);
+        }
+
         tm.updateAdjustButtons();
       }
 
@@ -83,8 +106,10 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     tm.timeRemainingMs = 0;
     tm.remainingAtPause = 0;
     tm.targetEpochMs = 0;
+    tm._lastDisplayBucket = null;
 
-    tm.updateDisplay(0);
+    forceDisplaySync(0);
+
     if (tm.ringCtrl) tm.ringCtrl.snap(0);
     else if (tm.els?.ring) tm.els.ring.style.strokeDashoffset = 0;
 
@@ -150,6 +175,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
       tm.remainingAtPause = pausedSnap.remainingMs;
       tm.lastUiRem = pausedSnap.remainingMs;
       tm.targetEpochMs = 0;
+      tm._lastDisplayBucket = null;
 
       tm.isRunning = false;
       tm.isPaused = true;
@@ -160,7 +186,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
       await alarmScheduler.cancel();
       tm.releaseWakeLock();
       tm.updateTitle("");
-      tm.updateDisplay(pausedSnap.remainingMs);
+      forceDisplaySync(pausedSnap.remainingMs);
       tm.updateUIState();
       return;
     }
@@ -206,12 +232,13 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     tm.lastUiRem = tm.timeRemainingMs;
     tm._lastUiPaintTs = 0;
     tm.skipWorkerTickUntil = 0;
+    tm._lastDisplayBucket = null;
 
     tm.requestWakeLock();
     tm.updateUIState();
 
     requestAnimationFrame(() => {
-      tm.updateDisplay(tm.timeRemainingMs);
+      forceDisplaySync(tm.timeRemainingMs);
       tm.updateAdjustButtons();
 
       if (tm.ringCtrl && tm.totalDuration > 0) {
@@ -262,12 +289,13 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     tm.currentAdjustmentSec = 0;
     tm._lastUiPaintTs = 0;
     tm.skipWorkerTickUntil = 0;
+    tm._lastDisplayBucket = null;
 
     tm.requestWakeLock();
     tm.updateUIState();
 
     requestAnimationFrame(() => {
-      tm.updateDisplay(startSnap.remainingMs);
+      forceDisplaySync(startSnap.remainingMs);
       tm.updateAdjustButtons();
 
       if (tm.ringCtrl) tm.ringCtrl.snap(tm.ringLength);
@@ -297,6 +325,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     tm.lastUiRem = 0;
     tm._lastUiPaintTs = 0;
     tm.skipWorkerTickUntil = 0;
+    tm._lastDisplayBucket = null;
 
     tm.bgWorker.postMessage({ command: "reset" });
     await alarmScheduler.cancel();
@@ -406,6 +435,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
 
       tm.skipWorkerTickUntil = performance.now() + 180;
       tm.lastUiRem = tm.timeRemainingMs;
+      tm._lastDisplayBucket = null;
 
       if (tm.ringCtrl && tm.totalDuration > 0) {
         const targetOffset = getProgressOffset({
@@ -416,7 +446,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
         tm.ringCtrl.setTarget(targetOffset);
       }
 
-      tm.updateDisplay(tm.timeRemainingMs);
+      forceDisplaySync(tm.timeRemainingMs);
       tm.updateAdjustButtons();
 
       tm.bgWorker.postMessage({ command: "adjust", time: adjustmentMs });
@@ -438,6 +468,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
 
       tm.skipWorkerTickUntil = performance.now() + 180;
       tm.lastUiRem = tm.timeRemainingMs;
+      tm._lastDisplayBucket = null;
 
       if (tm.timeRemainingMs <= 0 && tm.isRunning) {
         tm.bgWorker.postMessage({ command: "reset" });
@@ -454,7 +485,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
         tm.ringCtrl.setTarget(targetOffset);
       }
 
-      tm.updateDisplay(tm.timeRemainingMs);
+      forceDisplaySync(tm.timeRemainingMs);
       tm.updateAdjustButtons();
 
       tm.bgWorker.postMessage({ command: "adjust", time: adjustmentMs });
