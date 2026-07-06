@@ -45,41 +45,54 @@ export function setupTabataPhases(tb) {
   // Fully Date.now-driven fast-forward logic.
   tb.nextPhase = (missedTime = 0) => {
     if (tb.status === "STOPPED" || tb.completionHandled) return;
+    if (tb.phaseClosing) return;
 
-    if (missedTime === 0) sm.vibrate([100, 50, 100], "strong");
-    tb.lastBeepSec = 0;
+    // Allow externally acquired lock (background sync) and prevent re-entrant lock leaks.
+    const hadLock = !!tb._phaseTransitionLock;
+    if (!hadLock) tb._phaseTransitionLock = true;
 
-    let overshoot = Math.max(0, missedTime);
+    try {
+      if (missedTime === 0) sm.vibrate([100, 50, 100], "strong");
+      tb.lastBeepSec = 0;
 
-    const enterNextPhase = () => {
-      const result = tb.advancePhase();
-      if (result === "complete") {
-        handleCompletion();
-        return false;
+      let overshoot = Math.max(0, missedTime);
+
+      const enterNextPhase = () => {
+        const result = tb.advancePhase();
+        if (result === "complete") {
+          handleCompletion();
+          return false;
+        }
+        return true;
+      };
+
+      // Current phase has ended -> move to next phase at least once.
+      if (!enterNextPhase()) return;
+
+      // Consume additional overshoot across multiple phases.
+      while (
+        overshoot > 0 &&
+        tb.status !== "STOPPED" &&
+        !tb.completionHandled
+      ) {
+        const currentPhaseDuration = tb.tabataEngine.getPhaseDuration();
+
+        if (overshoot >= currentPhaseDuration) {
+          overshoot -= currentPhaseDuration;
+          if (!enterNextPhase()) return;
+        } else {
+          applyTabataEngineSnapshot(
+            tb,
+            tb.tabataEngine.shortenCurrentPhase(overshoot),
+          );
+          overshoot = 0;
+        }
       }
-      return true;
-    };
 
-    // Current phase has ended -> move to next phase at least once.
-    if (!enterNextPhase()) return;
-
-    // Consume additional overshoot across multiple phases.
-    while (overshoot > 0 && tb.status !== "STOPPED" && !tb.completionHandled) {
-      const currentPhaseDuration = tb.tabataEngine.getPhaseDuration();
-
-      if (overshoot >= currentPhaseDuration) {
-        overshoot -= currentPhaseDuration;
-        if (!enterNextPhase()) return;
-      } else {
-        applyTabataEngineSnapshot(
-          tb,
-          tb.tabataEngine.shortenCurrentPhase(overshoot),
-        );
-        overshoot = 0;
-      }
+      tb.updatePhaseStyles();
+      tb.tick();
+    } finally {
+      if (!hadLock) tb._phaseTransitionLock = false;
     }
-
-    tb.updatePhaseStyles();
-    tb.tick();
   };
 }

@@ -53,6 +53,32 @@ class ModalManager {
     this._boundModalListeners = [];
   }
 
+  _clearAllCloseTimeouts() {
+    Object.keys(this.closeTimeouts).forEach((id) => {
+      if (this.closeTimeouts[id]) {
+        clearTimeout(this.closeTimeouts[id]);
+      }
+      this.closeTimeouts[id] = null;
+    });
+  }
+
+  _forceHideAllModals() {
+    Object.values(this.modals).forEach((modal) => {
+      const el = modal?.el;
+      if (!el) return;
+
+      el.classList.add("hidden");
+      el.classList.remove("flex");
+      el.setAttribute("inert", "");
+      el.setAttribute("aria-hidden", "true");
+
+      if (modal.type === "bottom-sheet") {
+        el.style.transition = "";
+        el.style.transform = "";
+      }
+    });
+  }
+
   _syncAppInteractivity() {
     const appEl = $("app");
     const hasActive = this.stack.hasAny();
@@ -143,17 +169,13 @@ class ModalManager {
   }
 
   destroy() {
-    Object.keys(this.closeTimeouts).forEach((id) => {
-      if (this.closeTimeouts[id]) {
-        clearTimeout(this.closeTimeouts[id]);
-        this.closeTimeouts[id] = null;
-      }
-    });
-
+    this._clearAllCloseTimeouts();
     this._removeEscListener();
     this._detachOverlayClick();
     this._removeBoundListeners();
     this.dragController.destroy();
+
+    this._forceHideAllModals();
 
     this.stack.clear();
     this.lastFocusedElement = null;
@@ -253,12 +275,19 @@ class ModalManager {
         return;
       }
 
-      modal.el.classList.add("hidden");
-      modal.el.classList.remove("flex");
+      // Modal might already be destroyed/re-initialized.
+      const current = this.modals[id];
+      if (!current || !current.el) {
+        this.closeTimeouts[id] = null;
+        return;
+      }
 
-      if (modal.type === "bottom-sheet") {
-        modal.el.style.transition = "";
-        modal.el.style.transform = "";
+      current.el.classList.add("hidden");
+      current.el.classList.remove("flex");
+
+      if (current.type === "bottom-sheet") {
+        current.el.style.transition = "";
+        current.el.style.transform = "";
       }
 
       this.closeTimeouts[id] = null;
@@ -275,8 +304,8 @@ class ModalManager {
 
       this._syncAppInteractivity();
 
-      if (typeof modal.onClose === "function") {
-        modal.onClose();
+      if (typeof current.onClose === "function") {
+        current.onClose();
       }
     }, delay);
   }

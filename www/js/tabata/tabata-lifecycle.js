@@ -38,6 +38,13 @@ export function setupTabataLifecycle(tb, deps) {
     updateTitle("");
   }
 
+  function resetPhaseLocks() {
+    tb.phaseClosing = false;
+    tb._phaseTransitionLock = false;
+    tb._phaseCloseToken = 0;
+    clearPhaseClose(tb);
+  }
+
   tb.toggle = () => {
     sm.vibrate(40, "light");
     sm.play("click");
@@ -65,8 +72,7 @@ export function setupTabataLifecycle(tb, deps) {
     tb.lastRender = 0;
     tb.completionHandled = false;
 
-    tb.phaseClosing = false;
-    clearPhaseClose(tb);
+    resetPhaseLocks();
 
     tb.phaseStamp += 1;
     tb.lastRenderedPhaseStamp = -1;
@@ -100,6 +106,9 @@ export function setupTabataLifecycle(tb, deps) {
     tb.remainingAtPause = tb.tabataEngine.pause();
     updateText(tb.els.status, t("pause"));
 
+    // Prevent stale delayed phase close while paused.
+    resetPhaseLocks();
+
     stopTimerContext();
   };
 
@@ -118,8 +127,7 @@ export function setupTabataLifecycle(tb, deps) {
     tb.lastBeepSec = 0;
     tb.lastRender = 0;
 
-    tb.phaseClosing = false;
-    clearPhaseClose(tb);
+    resetPhaseLocks();
 
     tb.phaseStamp += 1;
     tb.lastRenderedPhaseStamp = -1;
@@ -146,8 +154,7 @@ export function setupTabataLifecycle(tb, deps) {
     if (tb.rAF) cancelAnimationFrame(tb.rAF);
     tb.rAF = null;
 
-    clearPhaseClose(tb);
-    tb.phaseClosing = false;
+    resetPhaseLocks();
 
     applyTabataEngineSnapshot(tb, tb.tabataEngine.stop());
     tb.paused = false;

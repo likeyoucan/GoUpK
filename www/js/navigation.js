@@ -18,11 +18,13 @@ function stripIds(root) {
   root.querySelectorAll?.("[id]").forEach((el) => el.removeAttribute("id"));
 }
 
-/** @type {NavigationManagerContract & {destroy?: () => void}} */
+/** @type {NavigationManagerContract & {destroy?: () => void, _transitionTimeout?: number | null, _activeSnapshot?: HTMLElement | null, _cleanupTransition?: () => void}} */
 export const navigation = {
   activeView: "stopwatch",
   clockInterval: null,
   isTransitioning: false,
+  _transitionTimeout: null,
+  _activeSnapshot: null,
 
   init() {
     this.initClock();
@@ -30,12 +32,29 @@ export const navigation = {
     this.updateIcons(this.activeView);
   },
 
+  _cleanupTransition() {
+    if (this._transitionTimeout) {
+      clearTimeout(this._transitionTimeout);
+      this._transitionTimeout = null;
+    }
+
+    if (this._activeSnapshot && this._activeSnapshot.isConnected) {
+      this._activeSnapshot.remove();
+    }
+    this._activeSnapshot = null;
+
+    const appEl = $("app");
+    appEl?.classList.remove("is-view-transitioning");
+    this.isTransitioning = false;
+  },
+
   destroy() {
     if (this.clockInterval) {
       clearInterval(this.clockInterval);
       this.clockInterval = null;
     }
-    this.isTransitioning = false;
+
+    this._cleanupTransition();
   },
 
   /**
@@ -69,11 +88,17 @@ export const navigation = {
     this.isTransitioning = true;
     appEl?.classList.add("is-view-transitioning");
 
+    // Clean stale snapshots/timers before creating a new one.
+    this._cleanupTransition();
+    this.isTransitioning = true;
+    appEl?.classList.add("is-view-transitioning");
+
     viewsContainer
       .querySelectorAll(".nav-snapshot-layer")
       .forEach((n) => n.remove());
 
     const snapshot = fromEl.cloneNode(true);
+    this._activeSnapshot = snapshot;
     stripIds(snapshot);
 
     snapshot.classList.remove(
@@ -123,7 +148,15 @@ export const navigation = {
     const finish = () => {
       if (done) return;
       done = true;
-      snapshot.remove();
+
+      if (snapshot.isConnected) {
+        snapshot.remove();
+      }
+
+      if (this._activeSnapshot === snapshot) {
+        this._activeSnapshot = null;
+      }
+
       this.isTransitioning = false;
       appEl?.classList.remove("is-view-transitioning");
 
@@ -133,7 +166,10 @@ export const navigation = {
     };
 
     snapshot.addEventListener("transitionend", finish, { once: true });
-    setTimeout(finish, duration + 80);
+    this._transitionTimeout = setTimeout(() => {
+      this._transitionTimeout = null;
+      finish();
+    }, duration + 80);
 
     return true;
   },

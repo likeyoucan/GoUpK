@@ -40,6 +40,7 @@ function fitStopwatchDisplay(el) {
   el.style.transformOrigin = "center center";
   if (isGo) {
     el.style.transform = "";
+    el.dataset.scaleX = "1";
     return;
   }
 
@@ -55,7 +56,7 @@ function fitStopwatchDisplay(el) {
   const prev = Number(el.dataset.scaleX || "1");
   const next = Math.round(target * 1000) / 1000;
 
-  // Гистерезис: убирает визуальный микроджиттер
+  // Hysteresis: removes micro-jitter.
   if (Math.abs(prev - next) < 0.012) return;
 
   el.style.transform = `translateX(0px) scaleX(${next})`;
@@ -97,6 +98,15 @@ function createSavedSessionTableHead() {
 }
 
 export function setupStopwatchRender(sw) {
+  // Render caches to reduce redundant writes.
+  sw._lastMainDisplayText = "";
+  sw._lastExtendedDisplayText = "";
+  sw._lastExtendedVisible = null;
+  sw._lastLapsMode = null;
+  sw._lastShareVisible = null;
+  sw._lastRenderedSessionsSignature = "";
+  sw._lastCurrentLapsSignature = "";
+
   sw.createLapElement = (lap, isLatest = false) => {
     const lapTemplate = $("sw-lap-row-template");
     if (!lapTemplate) return document.createElement("div");
@@ -137,10 +147,21 @@ export function setupStopwatchRender(sw) {
   };
 
   sw.reRenderCurrentLaps = () => {
+    const currentSig = JSON.stringify({
+      showMs: uiSettingsManager.showMs,
+      laps: sw.laps.map((l) => [l.index, l.total, l.diff]),
+    });
+
+    if (currentSig === sw._lastCurrentLapsSignature) return;
+    sw._lastCurrentLapsSignature = currentSig;
+
     sw.els.lapsContainer.replaceChildren();
 
     if (sw.laps.length === 0) {
-      setLapsTableMode(false);
+      if (sw._lastLapsMode !== false) {
+        setLapsTableMode(false);
+        sw._lastLapsMode = false;
+      }
 
       const noLapsDiv = document.createElement("div");
       noLapsDiv.className = "text-center app-text-sec opacity-50 mt-4 text-sm";
@@ -150,7 +171,10 @@ export function setupStopwatchRender(sw) {
       return;
     }
 
-    setLapsTableMode(true);
+    if (sw._lastLapsMode !== true) {
+      setLapsTableMode(true);
+      sw._lastLapsMode = true;
+    }
 
     [...sw.laps].reverse().forEach((lap, i, arr) => {
       sw.els.lapsContainer.prepend(
@@ -161,6 +185,8 @@ export function setupStopwatchRender(sw) {
 
   sw.updateSaveButtonVisibility = () => {
     const canShare = sw.shareResults.canShowShareButton(sw.laps.length);
+    if (sw._lastShareVisible === canShare) return;
+    sw._lastShareVisible = canShare;
 
     if (sw.els.saveBtn) {
       sw.els.saveBtn.classList.toggle("hidden", !canShare);
@@ -175,6 +201,21 @@ export function setupStopwatchRender(sw) {
 
   sw.renderSavedSessions = () => {
     if (!sw.els || !sw.els.sessionsList) return;
+
+    const signature = JSON.stringify({
+      sort: sw.currentSort,
+      showMs: uiSettingsManager.showMs,
+      sessions: sw.savedSessions.map((s) => ({
+        id: s.id,
+        name: s.name || "",
+        date: s.date || s.id,
+        totalTime: s.totalTime || 0,
+        laps: (s.laps || []).map((l) => [l.index, l.total, l.diff]),
+      })),
+    });
+
+    if (signature === sw._lastRenderedSessionsSignature) return;
+    sw._lastRenderedSessionsSignature = signature;
 
     const hasSessions = sw.savedSessions.length > 0;
 
@@ -327,19 +368,40 @@ export function setupStopwatchRender(sw) {
     const showMs = uiSettingsManager.showMs;
     const mainDisplayStr = formatStopwatchMain(sw.elapsedTime, { showMs });
 
-    updateText(sw.els.display, mainDisplayStr);
-    fitStopwatchDisplay(sw.els.display);
+    if (mainDisplayStr !== sw._lastMainDisplayText) {
+      updateText(sw.els.display, mainDisplayStr);
+      sw._lastMainDisplayText = mainDisplayStr;
+      fitStopwatchDisplay(sw.els.display);
+    } else if (!sw.els.display.classList.contains("is-go")) {
+      // Keep fitting resilient to layout changes even with same text.
+      fitStopwatchDisplay(sw.els.display);
+    }
 
     if (sw.els.extendedDisplay) {
       const extStr = formatStopwatchExtended(sw.elapsedTime);
+      const shouldShow = !!extStr;
 
-      if (extStr) {
-        updateText(sw.els.extendedDisplay, extStr);
-        sw.els.extendedDisplay.classList.remove("hidden", "opacity-0");
+      if (shouldShow) {
+        if (extStr !== sw._lastExtendedDisplayText) {
+          updateText(sw.els.extendedDisplay, extStr);
+          sw._lastExtendedDisplayText = extStr;
+        }
+
+        if (sw._lastExtendedVisible !== true) {
+          sw.els.extendedDisplay.classList.remove("hidden", "opacity-0");
+          sw._lastExtendedVisible = true;
+        }
       } else {
-        updateText(sw.els.extendedDisplay, " ");
-        sw.els.extendedDisplay.classList.remove("hidden");
-        sw.els.extendedDisplay.classList.add("opacity-0");
+        if (sw._lastExtendedDisplayText !== " ") {
+          updateText(sw.els.extendedDisplay, " ");
+          sw._lastExtendedDisplayText = " ";
+        }
+
+        if (sw._lastExtendedVisible !== false) {
+          sw.els.extendedDisplay.classList.remove("hidden");
+          sw.els.extendedDisplay.classList.add("opacity-0");
+          sw._lastExtendedVisible = false;
+        }
       }
     }
   };
