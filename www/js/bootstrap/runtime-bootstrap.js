@@ -29,6 +29,9 @@ export function initRuntimeBootstrap({
   const bag = createDisposerBag();
   const runtimeHub = createRuntimeHub();
 
+  let started = false;
+  let disposed = false;
+
   runtimeHub.register("app-init", () => {
     initializeApp({
       applyPerformanceProfile,
@@ -76,11 +79,20 @@ export function initRuntimeBootstrap({
     );
   });
 
-  runtimeHub.start();
+  if (!started) {
+    runtimeHub.start();
+    started = true;
+  }
 
   return () => {
+    if (disposed) return;
+    disposed = true;
+
     try {
-      runtimeHub.stop();
+      if (started) {
+        runtimeHub.stop();
+        started = false;
+      }
     } catch (err) {
       console.error("[runtime-bootstrap.runtime-hub.stop]", err);
     }

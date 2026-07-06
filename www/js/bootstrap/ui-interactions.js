@@ -21,8 +21,15 @@ export function bindUiInteractions({
   navigation,
 }) {
   const unbinders = [];
+  let disposed = false;
 
-  unbinders.push(
+  const pushUnbinder = (fn) => {
+    if (typeof fn === "function") {
+      unbinders.push(fn);
+    }
+  };
+
+  pushUnbinder(
     bindModalActions({
       $,
       showToast,
@@ -36,14 +43,12 @@ export function bindUiInteractions({
     }),
   );
 
-  unbinders.push(
-    bindKeyboardShortcuts({ navigation, modalManager, sw, tm, tb }),
-  );
+  pushUnbinder(bindKeyboardShortcuts({ navigation, modalManager, sw, tm, tb }));
 
-  unbinders.push(bindBottomNav({ navigation, modalManager, sm }));
+  pushUnbinder(bindBottomNav({ navigation, modalManager, sm }));
 
   const appEl = $("app");
-  unbinders.push(
+  pushUnbinder(
     bindNavSwipe({
       appContainer: appEl,
       bottomNav: appEl ? appEl.querySelector("nav") : null,
@@ -52,16 +57,22 @@ export function bindUiInteractions({
     }),
   );
 
-  unbinders.push(bindStopwatchDoubleTapLap({ $, sw }));
-  unbinders.push(initSplitResizer());
+  pushUnbinder(bindStopwatchDoubleTapLap({ $, sw }));
+  pushUnbinder(initSplitResizer());
 
   return () => {
-    unbinders.forEach((fn) => {
+    if (disposed) return;
+    disposed = true;
+
+    for (let i = unbinders.length - 1; i >= 0; i -= 1) {
+      const fn = unbinders[i];
       try {
-        if (typeof fn === "function") fn();
+        fn?.();
       } catch (err) {
         console.error("[ui-interactions.dispose]", err);
       }
-    });
+    }
+
+    unbinders.length = 0;
   };
 }

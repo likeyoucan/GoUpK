@@ -20,6 +20,22 @@ export function initializeApp({
   navigation,
   modalManager,
 }) {
+  if (
+    !applyPerformanceProfile ||
+    !initRingSvg ||
+    !langManager ||
+    !initTouchRanges ||
+    !themeManager ||
+    !sm ||
+    !sw ||
+    !tm ||
+    !tb ||
+    !navigation ||
+    !modalManager
+  ) {
+    throw new Error("[app-init] missing required dependency");
+  }
+
   // 1) Базовые визуальные оптимизации
   applyPerformanceProfile();
 

@@ -138,6 +138,12 @@ export function enhanceNativeRange(input) {
   thumb.className = "tr-thumb";
   track.append(fill, thumb);
 
+  if (!input.parentNode) {
+    delete input.dataset.trEnhanced;
+    unmarkEnhanced(input);
+    return null;
+  }
+
   input.classList.add("tr-native");
   input.parentNode.insertBefore(wrap, input);
   wrap.appendChild(track);
@@ -419,7 +425,7 @@ export function enhanceNativeRange(input) {
       Object.defineProperty(input, "value", originalDescriptor);
     }
 
-    if (wrap.parentNode) {
+    if (wrap.parentNode && input) {
       wrap.parentNode.insertBefore(input, wrap);
       wrap.remove();
     }

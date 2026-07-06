@@ -122,9 +122,14 @@ async function reconcileNativeTimerAlarm() {
   }
 }
 
-let bootStarted = false;
-let bootDispose = null;
 const appBag = createDisposerBag();
+
+let bootStarted = false;
+let bootPromise = null;
+let bootDispose = null;
+
+let runtimeDestroyed = false;
+let destroyStarted = false;
 
 function installGlobalErrorHandlers() {
   const onGlobalError = (e) => {
@@ -253,10 +258,15 @@ async function bootstrap() {
 }
 
 function destroyAppRuntime() {
+  if (destroyStarted || runtimeDestroyed) return;
+  destroyStarted = true;
+
   try {
     appBag.run();
   } catch (err) {
     console.error("[destroy-runtime]", err);
+  } finally {
+    runtimeDestroyed = true;
   }
 }
 
@@ -270,15 +280,29 @@ appBag.add(() => window.removeEventListener("pagehide", onPageHide));
 appBag.add(() => window.removeEventListener("beforeunload", onBeforeUnload));
 
 async function startBoot() {
-  try {
-    await bootstrap();
-  } catch (error) {
-    renderBootError(error);
-  }
+  if (bootPromise) return bootPromise;
+
+  bootPromise = (async () => {
+    try {
+      await bootstrap();
+    } catch (error) {
+      renderBootError(error);
+      // Allow explicit retry path if needed.
+      bootStarted = false;
+    }
+  })();
+
+  return bootPromise;
 }
 
 if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", startBoot, { once: true });
+  document.addEventListener(
+    "DOMContentLoaded",
+    () => {
+      void startBoot();
+    },
+    { once: true },
+  );
 } else {
   void startBoot();
 }

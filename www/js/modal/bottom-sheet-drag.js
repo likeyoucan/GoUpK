@@ -19,10 +19,16 @@ export class BottomSheetDragController {
 
     this._onMove = null;
     this._onEnd = null;
+
+    this._destroyed = false;
   }
 
   bindStart(handleEl, modalId, getSheetEl) {
+    if (this._destroyed) return;
     if (!handleEl) return;
+
+    // Rebind safely if init is called again for same modal id.
+    this.unbindStart(modalId);
 
     const onTouchStart = (e) => {
       this._start(e.touches?.[0]?.clientY, "touch", modalId, getSheetEl);
@@ -55,12 +61,16 @@ export class BottomSheetDragController {
   }
 
   destroy() {
+    if (this._destroyed) return;
+    this._destroyed = true;
+
     [...this.startBindings.keys()].forEach((id) => this.unbindStart(id));
     this._removeDocListeners();
     this._reset();
   }
 
   _start(y, pointerType, modalId, getSheetEl) {
+    if (this._destroyed) return;
     if (typeof y !== "number") return;
     if (this.isDragging) return;
 
