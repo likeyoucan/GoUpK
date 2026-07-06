@@ -5,6 +5,8 @@ import { APP_EVENTS } from "./constants/events.js?v=VERSION";
 import { STORAGE_KEYS } from "./constants/storage-keys.js?v=VERSION";
 import { emitAppEvent } from "./events/app-events.js?v=VERSION";
 
+const VALID_TIMERS = new Set(["stopwatch", "timer", "tabata"]);
+
 const storeData = {
   activeTimer: safeGetLS(STORAGE_KEYS.ACTIVE_TIMER) || null,
 };
@@ -15,12 +17,13 @@ function emitActiveTimerChanged(value) {
 
 export const store = {
   activate(timerName) {
-    emitAppEvent(APP_EVENTS.TIMER_STARTED, timerName);
+    if (!VALID_TIMERS.has(timerName)) return;
     this.setActiveTimer(timerName);
+    emitAppEvent(APP_EVENTS.TIMER_STARTED, timerName);
   },
 
   setActiveTimer(timerName) {
-    const next = timerName || null;
+    const next = VALID_TIMERS.has(timerName) ? timerName : null;
     if (storeData.activeTimer === next) return;
 
     storeData.activeTimer = next;

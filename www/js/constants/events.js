@@ -35,3 +35,7 @@ export const APP_EVENTS = {
   PRO_PAYWALL_REQUESTED: "proPaywallRequested",
   PRO_TAMPER_DETECTED: "proTamperDetected",
 };
+
+// Payload contracts used across app:
+// - TIMER_STARTED detail: "stopwatch" | "timer" | "tabata"
+// - ACTIVE_TIMER_CHANGED detail: { activeTimer: "stopwatch" | "timer" | "tabata" | null }

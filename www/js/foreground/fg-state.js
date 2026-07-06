@@ -11,30 +11,43 @@ function getTimerRemaining(tm) {
   return Math.max(0, tm?.remainingAtPause || tm?.timeRemainingMs || 0);
 }
 
+function getTabataRemaining(tb) {
+  if (!tb || tb.status === "STOPPED") return 0;
+
+  if (tb.paused) {
+    return Math.max(
+      0,
+      tb.remainingAtPause || tb.tabataEngine?.getRemaining?.() || 0,
+    );
+  }
+
+  return Math.max(0, (tb.phaseEndTime || 0) - Date.now());
+}
+
+function getTabataMeta(tb) {
+  const remSec = Math.floor(getTabataRemaining(tb) / 1000);
+  return `${tb.selectedId || "na"}|${tb.currentRound || 0}|${tb.rounds || 0}|${tb.status || "STOPPED"}|${remSec}`;
+}
+
+function getTimerMeta(tm) {
+  const total = tm.initialDurationMs || tm.totalDuration || 0;
+  const remSec = Math.floor(getTimerRemaining(tm) / 1000);
+  const state = tm.isPaused ? "p" : "r";
+  return `${total}|${remSec}|${state}`;
+}
+
 export function getForegroundState({ sw, tm, tb, activeView }) {
   const canResumeStopwatch = !sw.isRunning && sw.elapsedTime > 0;
-  const canResumeTimer = tm.isPaused && getTimerRemaining(tm) > 0;
-  const canResumeTabata = tb.status !== "STOPPED" && tb.paused;
+  const timerRemaining = getTimerRemaining(tm);
+  const canResumeTimer = tm.isPaused && timerRemaining > 0;
 
-  const tabataMeta = () =>
-    `${tb.selectedId || "na"}|${tb.currentRound || 0}|${tb.rounds || 0}|${tb.status || "STOPPED"}|${Math.floor(
-      (tb.status !== "STOPPED"
-        ? Math.max(
-            0,
-            (tb.paused ? tb.remainingAtPause : tb.phaseEndTime - Date.now()) ||
-              0,
-          )
-        : 0) / 1000,
-    )}`;
-
-  const timerMeta = () =>
-    `${tm.initialDurationMs || tm.totalDuration || 0}|${Math.floor(
-      getTimerRemaining(tm) / 1000,
-    )}|${tm.isPaused ? "p" : "r"}`;
+  const tabataRemaining = getTabataRemaining(tb);
+  const canResumeTabata =
+    tb.status !== "STOPPED" && tb.paused && tabataRemaining > 0;
 
   const makeState = (mode, running) => {
-    if (mode === "tabata") return { mode, running, metaKey: tabataMeta() };
-    if (mode === "timer") return { mode, running, metaKey: timerMeta() };
+    if (mode === "tabata") return { mode, running, metaKey: getTabataMeta(tb) };
+    if (mode === "timer") return { mode, running, metaKey: getTimerMeta(tm) };
     return { mode, running, metaKey: "" };
   };
 
@@ -100,12 +113,7 @@ export function buildForegroundPayload({
     };
   }
 
-  const remTb = state.running
-    ? Math.max(0, tb.phaseEndTime - Date.now())
-    : Math.max(
-        0,
-        tb.remainingAtPause || tb.tabataEngine?.getRemaining?.() || 0,
-      );
+  const remTb = getTabataRemaining(tb);
 
   const phaseText = state.running
     ? tb.status === "WORK"

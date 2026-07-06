@@ -63,15 +63,18 @@ let permissionGranted = null;
 let permissionCheckedAt = 0;
 const PERMISSION_CHECK_TTL_MS = 15000;
 
-let toggleInFlight = false;
-let lastHandledActionAt = 0;
-
 let pendingReadInFlight = false;
 let pendingRerunRequested = false;
 let lastPendingEventAt = 0;
 
 let runtimePullInFlight = false;
 let runtimePullQueued = false;
+
+// Serialized notification sync queue.
+let syncInFlight = false;
+let syncQueued = false;
+let lastSyncAt = 0;
+const MIN_SYNC_GAP_MS = 120;
 
 const listeners = {
   appState: null,
@@ -550,7 +553,7 @@ async function drainPendingButtonActions(reason = "unknown") {
   }
 }
 
-export async function syncNotification({
+async function syncNotificationInternal({
   reason = "unknown",
   force = false,
 } = {}) {
@@ -646,6 +649,33 @@ export async function syncNotification({
         isForegroundShown = false;
       }
     });
+}
+
+export async function syncNotification({
+  reason = "unknown",
+  force = false,
+} = {}) {
+  if (syncInFlight) {
+    syncQueued = true;
+    return;
+  }
+
+  syncInFlight = true;
+  try {
+    do {
+      syncQueued = false;
+
+      const now = Date.now();
+      if (!force && now - lastSyncAt < MIN_SYNC_GAP_MS) {
+        continue;
+      }
+      lastSyncAt = now;
+
+      await syncNotificationInternal({ reason, force });
+    } while (syncQueued);
+  } finally {
+    syncInFlight = false;
+  }
 }
 
 function startPolling() {
@@ -823,7 +853,6 @@ export async function destroyForegroundService() {
 
   permissionGranted = null;
   permissionCheckedAt = 0;
-  toggleInFlight = false;
   lastHandledActionAt = 0;
 
   pendingReadInFlight = false;
@@ -832,6 +861,10 @@ export async function destroyForegroundService() {
 
   runtimePullInFlight = false;
   runtimePullQueued = false;
+
+  syncInFlight = false;
+  syncQueued = false;
+  lastSyncAt = 0;
 
   isInitialized = false;
 }
