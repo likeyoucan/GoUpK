@@ -15,15 +15,8 @@ export function setupTabataBackgroundSync(
   tb._phaseTransitionLock = false;
 
   const advancePhaseSafely = (missed = 0) => {
-    if (tb._phaseTransitionLock) return;
     if (tb.status === "STOPPED" || tb.paused || tb.completionHandled) return;
-
-    tb._phaseTransitionLock = true;
-    try {
-      tb.nextPhase(missed);
-    } finally {
-      tb._phaseTransitionLock = false;
-    }
+    tb.nextPhase(missed);
   };
 
   tb.tick = (isBackground = false) => {

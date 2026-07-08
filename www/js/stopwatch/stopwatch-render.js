@@ -56,7 +56,7 @@ function fitStopwatchDisplay(el) {
   const prev = Number(el.dataset.scaleX || "1");
   const next = Math.round(target * 1000) / 1000;
 
-  // Hysteresis: removes micro-jitter.
+  // Гистерезис: убирает визуальный микроджиттер
   if (Math.abs(prev - next) < 0.012) return;
 
   el.style.transform = `translateX(0px) scaleX(${next})`;
@@ -98,14 +98,12 @@ function createSavedSessionTableHead() {
 }
 
 export function setupStopwatchRender(sw) {
-  // Render caches to reduce redundant writes.
+  // Только легкие кеши без тяжелых JSON.stringify
   sw._lastMainDisplayText = "";
   sw._lastExtendedDisplayText = "";
   sw._lastExtendedVisible = null;
   sw._lastLapsMode = null;
   sw._lastShareVisible = null;
-  sw._lastRenderedSessionsSignature = "";
-  sw._lastCurrentLapsSignature = "";
 
   sw.createLapElement = (lap, isLatest = false) => {
     const lapTemplate = $("sw-lap-row-template");
@@ -147,14 +145,6 @@ export function setupStopwatchRender(sw) {
   };
 
   sw.reRenderCurrentLaps = () => {
-    const currentSig = JSON.stringify({
-      showMs: uiSettingsManager.showMs,
-      laps: sw.laps.map((l) => [l.index, l.total, l.diff]),
-    });
-
-    if (currentSig === sw._lastCurrentLapsSignature) return;
-    sw._lastCurrentLapsSignature = currentSig;
-
     sw.els.lapsContainer.replaceChildren();
 
     if (sw.laps.length === 0) {
@@ -201,21 +191,6 @@ export function setupStopwatchRender(sw) {
 
   sw.renderSavedSessions = () => {
     if (!sw.els || !sw.els.sessionsList) return;
-
-    const signature = JSON.stringify({
-      sort: sw.currentSort,
-      showMs: uiSettingsManager.showMs,
-      sessions: sw.savedSessions.map((s) => ({
-        id: s.id,
-        name: s.name || "",
-        date: s.date || s.id,
-        totalTime: s.totalTime || 0,
-        laps: (s.laps || []).map((l) => [l.index, l.total, l.diff]),
-      })),
-    });
-
-    if (signature === sw._lastRenderedSessionsSignature) return;
-    sw._lastRenderedSessionsSignature = signature;
 
     const hasSessions = sw.savedSessions.length > 0;
 
@@ -373,7 +348,6 @@ export function setupStopwatchRender(sw) {
       sw._lastMainDisplayText = mainDisplayStr;
       fitStopwatchDisplay(sw.els.display);
     } else if (!sw.els.display.classList.contains("is-go")) {
-      // Keep fitting resilient to layout changes even with same text.
       fitStopwatchDisplay(sw.els.display);
     }
 

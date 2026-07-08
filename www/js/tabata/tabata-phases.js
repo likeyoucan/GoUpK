@@ -46,11 +46,9 @@ export function setupTabataPhases(tb) {
   tb.nextPhase = (missedTime = 0) => {
     if (tb.status === "STOPPED" || tb.completionHandled) return;
     if (tb.phaseClosing) return;
+    if (tb._phaseTransitionLock) return;
 
-    // Allow externally acquired lock (background sync) and prevent re-entrant lock leaks.
-    const hadLock = !!tb._phaseTransitionLock;
-    if (!hadLock) tb._phaseTransitionLock = true;
-
+    tb._phaseTransitionLock = true;
     try {
       if (missedTime === 0) sm.vibrate([100, 50, 100], "strong");
       tb.lastBeepSec = 0;
@@ -92,7 +90,7 @@ export function setupTabataPhases(tb) {
       tb.updatePhaseStyles();
       tb.tick();
     } finally {
-      if (!hadLock) tb._phaseTransitionLock = false;
+      tb._phaseTransitionLock = false;
     }
   };
 }
