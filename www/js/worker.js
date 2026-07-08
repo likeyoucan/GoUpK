@@ -1,4 +1,4 @@
-// Файл: www/js/worker.js
+// Файл: www/js/worker.jss
 
 /**
  * @typedef {Object} WorkerCommandMessage
