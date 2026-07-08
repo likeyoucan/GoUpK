@@ -376,6 +376,21 @@ function applyTimerRuntimeToJs(nativeState) {
   tm.updateUIState?.();
 }
 
+function syncTabataPanelsFromState() {
+  const listSection = $("tb-list-section");
+  const runningControls = $("tb-runningControls");
+  const isActiveSession = tb.status !== "STOPPED";
+
+  if (listSection) {
+    listSection.classList.toggle("hidden", isActiveSession);
+  }
+
+  if (runningControls) {
+    runningControls.classList.toggle("hidden", !isActiveSession);
+    runningControls.classList.toggle("flex", isActiveSession);
+  }
+}
+
 function applyTabataRuntimeToJs(nativeState) {
   const rem = Math.max(0, Number(nativeState.tbRemainingMs) || 0);
 
@@ -383,6 +398,11 @@ function applyTabataRuntimeToJs(nativeState) {
   tb.currentRound = Math.max(1, Number(nativeState.tbRound) || 1);
   tb.rounds = Math.max(1, Number(nativeState.tbRounds) || tb.rounds || 1);
   tb.phaseDuration = Math.max(0, rem);
+
+  const runningNameEl = $("tb-runningWorkoutName");
+  if (runningNameEl && nativeState.tbWorkoutName) {
+    runningNameEl.textContent = String(nativeState.tbWorkoutName);
+  }
 
   if (nativeState.running && tb.status !== "STOPPED") {
     tb.paused = false;
@@ -395,24 +415,28 @@ function applyTabataRuntimeToJs(nativeState) {
     tb.bgWorker?.postMessage?.({ command: "start" });
 
     tb.updatePhaseStyles?.();
+    syncTabataPanelsFromState();
     tb.tick?.();
-  } else {
-    tb.paused = tb.status !== "STOPPED";
-    tb.remainingAtPause = rem;
-    tb.phaseEndTime = 0;
+    return;
+  }
 
-    if (tb.rAF) {
-      cancelAnimationFrame(tb.rAF);
-      tb.rAF = null;
-    }
+  tb.paused = tb.status !== "STOPPED";
+  tb.remainingAtPause = rem;
+  tb.phaseEndTime = 0;
 
-    tb.bgWorker?.postMessage?.({ command: "stop" });
-    releaseWakeLock();
+  if (tb.rAF) {
+    cancelAnimationFrame(tb.rAF);
+    tb.rAF = null;
+  }
 
-    tb.updatePhaseStyles?.();
-    if (tb.status !== "STOPPED") {
-      tb.render?.(rem);
-    }
+  tb.bgWorker?.postMessage?.({ command: "stop" });
+  releaseWakeLock();
+
+  tb.updatePhaseStyles?.();
+  syncTabataPanelsFromState();
+
+  if (tb.status !== "STOPPED") {
+    tb.render?.(rem);
   }
 }
 

@@ -45,6 +45,16 @@ export function setupTabataLifecycle(tb, deps) {
     clearPhaseClose(tb);
   }
 
+  // Single source of truth for list/running panels visibility.
+  function syncPanels() {
+    const isActiveSession = tb.status !== "STOPPED";
+
+    tb.els.listSection?.classList.toggle("hidden", isActiveSession);
+
+    tb.els.runningControls?.classList.toggle("hidden", !isActiveSession);
+    tb.els.runningControls?.classList.toggle("flex", isActiveSession);
+  }
+
   tb.toggle = () => {
     sm.vibrate(40, "light");
     sm.play("click");
@@ -79,9 +89,7 @@ export function setupTabataLifecycle(tb, deps) {
 
     tb.ringCtrl?.snap(tb.ringLength);
 
-    tb.els.listSection.classList.add("hidden");
-    tb.els.runningControls.classList.remove("hidden");
-    tb.els.runningControls.classList.add("flex");
+    syncPanels();
 
     updateText(tb.els.totalRoundsDisplay, tb.rounds);
     tb.els.status.classList.remove("hidden");
@@ -110,6 +118,7 @@ export function setupTabataLifecycle(tb, deps) {
     resetPhaseLocks();
 
     stopTimerContext();
+    syncPanels();
   };
 
   tb.resume = () => {
@@ -136,6 +145,7 @@ export function setupTabataLifecycle(tb, deps) {
     worker.postMessage({ command: "start" });
 
     tb.updatePhaseStyles();
+    syncPanels();
     requestAnimationFrame(() => tb.tick());
   };
 
@@ -163,9 +173,8 @@ export function setupTabataLifecycle(tb, deps) {
 
     stopTimerContext();
 
-    tb.els.listSection.classList.remove("hidden");
-    tb.els.runningControls.classList.remove("flex");
-    tb.els.runningControls.classList.add("hidden");
+    syncPanels();
+
     tb.els.status.classList.add("hidden");
 
     updateText(tb.els.timer, "GO");

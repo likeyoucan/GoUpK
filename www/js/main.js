@@ -287,8 +287,10 @@ async function startBoot() {
       await bootstrap();
     } catch (error) {
       renderBootError(error);
-      // Allow explicit retry path if needed.
+
+      // Allow explicit retry without hard reload.
       bootStarted = false;
+      bootPromise = null;
     }
   })();
 

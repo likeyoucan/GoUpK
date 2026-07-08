@@ -231,8 +231,14 @@ class ModalManager {
       });
     }
 
+    // Important: defer heavy onOpen work to next frame so first modal open
+    // doesn't block the initial paint and animation start.
     if (typeof modal.onOpen === "function") {
-      modal.onOpen(data);
+      requestAnimationFrame(() => {
+        if (this.stack.has(id)) {
+          modal.onOpen(data);
+        }
+      });
     }
   }
 

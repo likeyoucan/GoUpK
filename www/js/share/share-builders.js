@@ -2,8 +2,14 @@
 
 const CSV_SEPARATOR = ";";
 
-function escapeCsv(value) {
+// Prevent CSV formula injection in spreadsheet apps.
+function sanitizeCsvCell(value) {
   const str = String(value ?? "");
+  return /^[=+\-@]/.test(str) ? `'${str}` : str;
+}
+
+function escapeCsv(value) {
+  const str = sanitizeCsvCell(value);
   if (str.includes('"') || str.includes(CSV_SEPARATOR) || str.includes("\n")) {
     return `"${str.replace(/"/g, '""')}"`;
   }
