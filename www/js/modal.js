@@ -35,10 +35,10 @@ class ModalManager {
     this._boundModalListeners = [];
 
     this._warmedBottomSheets = new Set();
+    this._warmLoadHandler = null;
     this._warmTimeout = 0;
-    this._warmStagedTimeout = 0;
-    this._warmPreloadLoopTimer = 0;
-    this._warmPreloadLoopTries = 0;
+
+    this._firstBottomSheetShown = false;
 
     this.dragController = new BottomSheetDragController({
       getTopModal: () => this._getTopModal(),
@@ -132,13 +132,12 @@ class ModalManager {
 
     entries.forEach((modal) => {
       if (!modal || modal.type !== "bottom-sheet" || !modal.el) return;
-      // Rewarming is cheap and helps under startup contention.
+      if (this._warmedBottomSheets.has(modal.id)) return;
       this._warmBottomSheetElement(modal.id, modal.el);
     });
 
     if (this.bottomSheetOverlay) {
       const ov = this.bottomSheetOverlay;
-
       const prevOpacity = ov.style.opacity;
       const prevTransition = ov.style.transition;
       const prevPointer = ov.style.pointerEvents;
@@ -148,7 +147,6 @@ class ModalManager {
       ov.style.opacity = "0.001";
       ov.style.pointerEvents = "none";
       ov.style.backdropFilter = "none";
-
       void ov.getBoundingClientRect();
       void ov.offsetHeight;
 
@@ -160,36 +158,17 @@ class ModalManager {
   }
 
   _schedulePrewarm() {
-    // 1) Immediate frame warm.
     requestAnimationFrame(() => this._prewarmBottomSheets());
 
-    // 2) Staged warm shortly after (still before first user tap usually).
-    this._warmStagedTimeout = window.setTimeout(() => {
+    this._warmTimeout = window.setTimeout(() => {
       this._prewarmBottomSheets();
-      this._warmStagedTimeout = 0;
-    }, 160);
+      this._warmTimeout = 0;
+    }, 180);
 
-    // 3) Keep warming while preload is visible (startup heavy period).
-    this._warmPreloadLoopTries = 0;
-    this._warmPreloadLoopTimer = window.setInterval(() => {
-      this._warmPreloadLoopTries += 1;
-
+    this._warmLoadHandler = () => {
       this._prewarmBottomSheets();
-
-      const stillPreloading = document.body.classList.contains("preload");
-      const tooManyTries = this._warmPreloadLoopTries >= 16; // ~5.6s
-
-      if (!stillPreloading || tooManyTries) {
-        clearInterval(this._warmPreloadLoopTimer);
-        this._warmPreloadLoopTimer = 0;
-
-        // Final warm right after preload phase.
-        this._warmTimeout = window.setTimeout(() => {
-          this._prewarmBottomSheets();
-          this._warmTimeout = 0;
-        }, 120);
-      }
-    }, 350);
+    };
+    window.addEventListener("load", this._warmLoadHandler, { once: true });
   }
 
   _clearPrewarmHooks() {
@@ -198,17 +177,40 @@ class ModalManager {
       this._warmTimeout = 0;
     }
 
-    if (this._warmStagedTimeout) {
-      clearTimeout(this._warmStagedTimeout);
-      this._warmStagedTimeout = 0;
+    if (this._warmLoadHandler) {
+      window.removeEventListener("load", this._warmLoadHandler);
+      this._warmLoadHandler = null;
     }
+  }
 
-    if (this._warmPreloadLoopTimer) {
-      clearInterval(this._warmPreloadLoopTimer);
-      this._warmPreloadLoopTimer = 0;
-    }
+  _applyFirstOpenOverlayOptimization() {
+    if (this._firstBottomSheetShown || !this.bottomSheetOverlay)
+      return () => {};
 
-    this._warmPreloadLoopTries = 0;
+    const ov = this.bottomSheetOverlay;
+    const prevFilter = ov.style.backdropFilter;
+    const prevWillChange = ov.style.willChange;
+
+    // Most common first-open stutter source on mobile is first blur compilation.
+    ov.style.backdropFilter = "none";
+    ov.style.willChange = "opacity";
+
+    let restored = false;
+    const restore = () => {
+      if (restored) return;
+      restored = true;
+      ov.style.backdropFilter = prevFilter;
+      ov.style.willChange = prevWillChange;
+      this._firstBottomSheetShown = true;
+    };
+
+    // Restore shortly after transition starts.
+    const timer = setTimeout(restore, 520);
+
+    return () => {
+      clearTimeout(timer);
+      restore();
+    };
   }
 
   /**
@@ -230,6 +232,7 @@ class ModalManager {
     this.closeTimeouts = {};
     this.lastFocusedElement = null;
     this._warmedBottomSheets.clear();
+    this._firstBottomSheetShown = false;
 
     config.forEach((modalConfig) => {
       const modalEl = $(modalConfig.id);
@@ -335,10 +338,10 @@ class ModalManager {
         this._warmBottomSheetElement(id, modal.el);
       }
 
+      const restoreFirstOpenOverlay = this._applyFirstOpenOverlayOptimization();
+
       modal.el.style.transition = "none";
       modal.el.style.transform = "translateY(100%)";
-
-      // Force layout flush before transition to avoid first-frame hitch.
       void modal.el.offsetHeight;
 
       requestAnimationFrame(() => {
@@ -346,6 +349,9 @@ class ModalManager {
           "transform 400ms cubic-bezier(0.32, 0.72, 0, 1)";
         modal.el.style.transform = "translateY(0%)";
       });
+
+      // Ensure overlay optimization restored even if callbacks are skipped.
+      setTimeout(() => restoreFirstOpenOverlay(), 560);
     } else if (modal.type === "alert") {
       requestAnimationFrame(() => {
         modal.el.classList.remove("opacity-0");
