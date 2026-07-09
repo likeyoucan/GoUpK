@@ -20,6 +20,23 @@ export function setupTabataWorkouts(tb) {
 
   const disposers = [];
 
+  let listRenderRaf = 0;
+  const scheduleListRender = () => {
+    if (listRenderRaf) return;
+    listRenderRaf = requestAnimationFrame(() => {
+      listRenderRaf = 0;
+      tb.renderList();
+    });
+  };
+
+  const flushListRender = () => {
+    if (listRenderRaf) {
+      cancelAnimationFrame(listRenderRaf);
+      listRenderRaf = 0;
+    }
+    tb.renderList();
+  };
+
   tb.prepareEdit = (idToEdit = null) => {
     tb.els.nameError?.classList.add("hidden");
     tb.editingWorkoutId = idToEdit;
@@ -72,10 +89,10 @@ export function setupTabataWorkouts(tb) {
       return;
     }
 
+    const finalLower = finalName.toLowerCase();
     const exists = tb.workouts.some(
       (w) =>
-        w.name.toLowerCase() === finalName.toLowerCase() &&
-        w.id !== tb.editingWorkoutId,
+        w.name.toLowerCase() === finalLower && w.id !== tb.editingWorkoutId,
     );
 
     if (exists) {
@@ -116,8 +133,8 @@ export function setupTabataWorkouts(tb) {
     }
 
     safeSetLS(STORAGE_KEYS.TB_WORKOUTS, JSON.stringify(tb.workouts));
-    tb.renderList();
     tb.selectWorkout(workoutIdToSelect);
+    scheduleListRender();
     modalManager.closeCurrent();
   };
 
@@ -132,11 +149,14 @@ export function setupTabataWorkouts(tb) {
       return;
     }
 
-    tb.workouts = tb.workouts.filter((w) => w.id !== id);
+    const next = tb.workouts.filter((w) => w.id !== id);
+    if (next.length === tb.workouts.length) return;
+
+    tb.workouts = next;
     safeSetLS(STORAGE_KEYS.TB_WORKOUTS, JSON.stringify(tb.workouts));
 
     if (tb.selectedId === id) tb.selectWorkout(tb.workouts[0].id);
-    tb.renderList();
+    scheduleListRender();
   };
 
   tb.selectWorkout = (id) => {
@@ -154,12 +174,11 @@ export function setupTabataWorkouts(tb) {
 
     updateText(tb.els.activeName, w.name);
 
-    const detailsText = `${w.work}${t("sec").toLowerCase()} / ${w.rest}${t(
-      "sec",
-    ).toLowerCase()} • ${w.rounds} ${t("rds")}`;
+    const secShort = t("sec").toLowerCase();
+    const detailsText = `${w.work}${secShort} / ${w.rest}${secShort} • ${w.rounds} ${t("rds")}`;
     updateText(tb.els.activeDetail, detailsText);
 
-    tb.renderList();
+    scheduleListRender();
   };
 
   tb.renderList = () => {
@@ -169,6 +188,11 @@ export function setupTabataWorkouts(tb) {
     const fragment = document.createDocumentFragment();
     const template = $("tb-workout-template");
     if (!template) return;
+
+    const secShort = t("sec").toLowerCase();
+    const rds = t("rds");
+    const trEdit = t("edit");
+    const trDelete = t("delete");
 
     tb.workouts.forEach((w) => {
       const clone = template.content.cloneNode(true);
@@ -197,18 +221,16 @@ export function setupTabataWorkouts(tb) {
       nameEl.classList.toggle("primary-text", isAct);
       nameEl.classList.toggle("app-text", !isAct);
 
-      const detailsText = `${w.work}${t("sec").toLowerCase()} / ${w.rest}${t(
-        "sec",
-      ).toLowerCase()} • ${w.rounds} ${t("rds")}`;
+      const detailsText = `${w.work}${secShort} / ${w.rest}${secShort} • ${w.rounds} ${rds}`;
       workoutElement.querySelector('[data-template="details"]').textContent =
         detailsText;
 
       workoutElement
         .querySelector('[data-template-id="editBtn"]')
-        .setAttribute("aria-label", t("edit"));
+        .setAttribute("aria-label", trEdit);
       workoutElement
         .querySelector('[data-template-id="deleteBtn"]')
-        .setAttribute("aria-label", t("delete"));
+        .setAttribute("aria-label", trDelete);
 
       fragment.appendChild(workoutElement);
     });
@@ -231,11 +253,11 @@ export function setupTabataWorkouts(tb) {
       safeSetLS(STORAGE_KEYS.TB_WORKOUTS, JSON.stringify(tb.workouts));
     }
 
-    const lastSelectedId = safeGetLS(STORAGE_KEYS.TB_SELECTED_ID);
-    const exists = tb.workouts.find((w) => w.id === Number(lastSelectedId));
+    const lastSelectedId = Number(safeGetLS(STORAGE_KEYS.TB_SELECTED_ID));
+    const exists = tb.workouts.find((w) => w.id === lastSelectedId);
 
-    tb.selectWorkout(exists ? Number(lastSelectedId) : tb.workouts[0]?.id);
-    tb.renderList();
+    tb.selectWorkout(exists ? lastSelectedId : tb.workouts[0]?.id);
+    flushListRender();
   };
 
   tb.bindWorkoutEvents = () => {
@@ -272,7 +294,7 @@ export function setupTabataWorkouts(tb) {
     bind(tb.els.list, "click", onListClick);
 
     const offLangChanged = onAppEvent(APP_EVENTS.LANGUAGE_CHANGED, () => {
-      tb.renderList();
+      flushListRender();
       if (tb.selectedId) tb.selectWorkout(tb.selectedId);
     });
     localDisposers.push(offLangChanged);
@@ -291,6 +313,11 @@ export function setupTabataWorkouts(tb) {
   };
 
   tb._unbindWorkouts = () => {
+    if (listRenderRaf) {
+      cancelAnimationFrame(listRenderRaf);
+      listRenderRaf = 0;
+    }
+
     disposers.forEach((off) => {
       try {
         off?.();

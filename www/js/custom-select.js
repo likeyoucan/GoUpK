@@ -153,6 +153,8 @@ export class CustomSelect {
     this._resizeObserver = null;
     this._rafReposition = 0;
     this._closeTimer = 0;
+    this._lastPositionSig = "";
+    this._lastSelectedTextSig = "";
 
     /** @type {"top" | "bottom"} */
     this._placement = "bottom";
@@ -219,7 +221,6 @@ export class CustomSelect {
 
     this.close({ immediate: true });
 
-    // Safety unlock in case close path was interrupted.
     if (this._scrollLocked) {
       unlockPageScroll();
       this._scrollLocked = false;
@@ -301,10 +302,16 @@ export class CustomSelect {
     });
 
     this.optionsPanel.appendChild(fragment);
+    this._lastSelectedTextSig = "";
   }
 
   renderSelectedValue(option) {
     if (!this.selectedValueEl) return;
+
+    const sig = `${option?.value || ""}|${option?.text || ""}`;
+    if (this._lastSelectedTextSig === sig) return;
+    this._lastSelectedTextSig = sig;
+
     appendOptionContent(this.selectedValueEl, option, createOptionIcon);
   }
 
@@ -495,6 +502,7 @@ export class CustomSelect {
     this.optionsPanel.style.position = "";
     this._originalParent = null;
     this._nextSibling = null;
+    this._lastPositionSig = "";
   }
 
   scheduleReposition() {
@@ -503,6 +511,13 @@ export class CustomSelect {
 
     this._rafReposition = requestAnimationFrame(() => {
       this._rafReposition = 0;
+
+      const triggerRect = this.trigger.getBoundingClientRect();
+      const sig = `${Math.round(triggerRect.left)}|${Math.round(triggerRect.top)}|${Math.round(triggerRect.width)}|${Math.round(triggerRect.height)}|${window.innerWidth}|${window.innerHeight}`;
+
+      if (this._lastPositionSig === sig) return;
+      this._lastPositionSig = sig;
+
       this._placement = decidePlacement(
         this.trigger,
         this.optionsPanel,
