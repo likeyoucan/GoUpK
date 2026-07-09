@@ -40,12 +40,19 @@ function fitStopwatchDisplay(el) {
   el.style.transformOrigin = "center center";
   if (isGo) {
     el.style.transform = "";
+    el.dataset.scaleX = "1";
+    el.dataset.fitSig = "";
     return;
   }
 
+  const text = el.textContent || "";
   const available = el.clientWidth || el.parentElement?.clientWidth || 0;
   const needed = el.scrollWidth || 0;
   if (!available || !needed) return;
+
+  const sig = `${text}|${Math.round(available)}`;
+  if (el.dataset.fitSig === sig) return;
+  el.dataset.fitSig = sig;
 
   let target = 1;
   if (needed > available + 1) {
@@ -55,7 +62,7 @@ function fitStopwatchDisplay(el) {
   const prev = Number(el.dataset.scaleX || "1");
   const next = Math.round(target * 1000) / 1000;
 
-  // Гистерезис: убирает визуальный микроджиттер
+  // Hysteresis to avoid micro-jitter.
   if (Math.abs(prev - next) < 0.012) return;
 
   el.style.transform = `translateX(0px) scaleX(${next})`;
@@ -104,14 +111,14 @@ export function setupStopwatchRender(sw) {
     const clone = lapTemplate.content.cloneNode(true);
     const div = clone.firstElementChild;
 
-    // Unified table row look (no cards).
     div.className =
       "lap-row sw-current-lap-row flex justify-between items-center px-3 py-2 border-b app-border";
 
     const shouldForceHours = sw.elapsedTime >= 3600000;
+    const trLap = t("lap_text");
 
     div.querySelector('[data-template="lap-index"]').textContent =
-      `${t("lap_text")} ${lap.index}`;
+      `${trLap} ${lap.index}`;
 
     div.querySelector('[data-template="lap-total"]').textContent = formatTime(
       lap.total,
@@ -197,6 +204,13 @@ export function setupStopwatchRender(sw) {
       return;
     }
 
+    const trLap = t("lap_text");
+    const trTotal = t("total_time");
+    const trSplit = t("split_time");
+    const trShare = t("share");
+    const trRename = t("rename");
+    const trDelete = t("delete");
+
     const fragment = document.createDocumentFragment();
     const sessionTemplate = $("sw-session-template");
     const lapTemplate = $("sw-lap-row-template");
@@ -253,21 +267,18 @@ export function setupStopwatchRender(sw) {
       iconEl.id = `sw-icon-${id}`;
 
       if (share) {
-        const s = t("share");
-        share.setAttribute("aria-label", s);
-        share.setAttribute("title", s);
+        share.setAttribute("aria-label", trShare);
+        share.setAttribute("title", trShare);
       }
 
       if (rename) {
-        const r = t("rename");
-        rename.setAttribute("aria-label", r);
-        rename.setAttribute("title", r);
+        rename.setAttribute("aria-label", trRename);
+        rename.setAttribute("title", trRename);
       }
 
       if (del) {
-        const d = t("delete");
-        del.setAttribute("aria-label", d);
-        del.setAttribute("title", d);
+        del.setAttribute("aria-label", trDelete);
+        del.setAttribute("title", trDelete);
       }
 
       const lapsContainer = sessionElement.querySelector(
@@ -275,7 +286,11 @@ export function setupStopwatchRender(sw) {
       );
       lapsContainer.classList.add("sw-session-laps-table");
 
-      lapsContainer.appendChild(createSavedSessionTableHead());
+      const headerDiv = createSavedSessionTableHead();
+      headerDiv.querySelectorAll("span")[0].textContent = trLap;
+      headerDiv.querySelectorAll("span")[1].textContent = trTotal;
+      headerDiv.querySelectorAll("span")[2].textContent = trSplit;
+      lapsContainer.appendChild(headerDiv);
 
       const laps = Array.isArray(session.laps) ? session.laps : [];
       laps.forEach((lap) => {
@@ -286,7 +301,7 @@ export function setupStopwatchRender(sw) {
           "lap-row sw-laps-table-row flex justify-between items-center px-3";
 
         lapElement.querySelector('[data-template="lap-index"]').textContent =
-          `${t("lap_text")} ${lap.index}`;
+          `${trLap} ${lap.index}`;
 
         lapElement.querySelector('[data-template="lap-total"]').textContent =
           formatTime(lap.total, {

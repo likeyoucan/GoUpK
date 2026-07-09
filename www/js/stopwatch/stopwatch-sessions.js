@@ -21,6 +21,24 @@ export function setupStopwatchSessions(sw) {
   sw._unbindSessions = null;
 
   const disposers = [];
+  const collator = new Intl.Collator(undefined, { sensitivity: "base" });
+
+  let renderRaf = 0;
+  const scheduleSessionsRender = () => {
+    if (renderRaf) return;
+    renderRaf = requestAnimationFrame(() => {
+      renderRaf = 0;
+      sw.renderSavedSessions();
+    });
+  };
+
+  const flushSessionsRender = () => {
+    if (renderRaf) {
+      cancelAnimationFrame(renderRaf);
+      renderRaf = 0;
+    }
+    sw.renderSavedSessions();
+  };
 
   try {
     const stored = safeGetLS(STORAGE_KEYS.SW_SAVED_SESSIONS);
@@ -168,8 +186,8 @@ export function setupStopwatchSessions(sw) {
         JSON.stringify(sw.savedSessions),
       );
       showToast(t("session_saved"));
-
       adsManager.showInterstitialIfAllowed("save_result");
+      scheduleSessionsRender();
     } else if (sw.nameModalState.action === "rename") {
       const session = sw.savedSessions.find(
         (s) => s.id === sw.nameModalState.targetId,
@@ -190,7 +208,7 @@ export function setupStopwatchSessions(sw) {
   sw.confirmClearAll = () => {
     sw.savedSessions = [];
     safeRemoveLS(STORAGE_KEYS.SW_SAVED_SESSIONS);
-    sw.renderSavedSessions();
+    flushSessionsRender();
     modalManager.closeCurrent();
     showToast(t("history_cleared"));
   };
@@ -199,26 +217,30 @@ export function setupStopwatchSessions(sw) {
     sw.currentSort = type;
     if (sw.sortSelect) sw.sortSelect.setValue(type, false);
 
-    sw.savedSessions.sort((a, b) => {
-      if (type === "date_desc") return b.date - a.date;
-      if (type === "date_asc") return a.date - b.date;
-      if (type === "name_az") return a.name.localeCompare(b.name);
-      if (type === "name_za") return b.name.localeCompare(a.name);
-      if (type === "result_fast") return a.totalTime - b.totalTime;
-      return 0;
-    });
+    if (sw.savedSessions.length > 1) {
+      sw.savedSessions.sort((a, b) => {
+        if (type === "date_desc") return b.date - a.date;
+        if (type === "date_asc") return a.date - b.date;
+        if (type === "name_az") return collator.compare(a.name, b.name);
+        if (type === "name_za") return collator.compare(b.name, a.name);
+        if (type === "result_fast") return a.totalTime - b.totalTime;
+        return 0;
+      });
+    }
 
-    sw.renderSavedSessions();
+    scheduleSessionsRender();
   };
 
   sw.deleteSession = (id) => {
-    sw.savedSessions = sw.savedSessions.filter((s) => s.id !== id);
+    const next = sw.savedSessions.filter((s) => s.id !== id);
+    if (next.length === sw.savedSessions.length) return;
+
+    sw.savedSessions = next;
     safeSetLS(STORAGE_KEYS.SW_SAVED_SESSIONS, JSON.stringify(sw.savedSessions));
-    sw.renderSavedSessions();
+    scheduleSessionsRender();
   };
 
   sw.onLanguageChangedForSessions = () => {
-    sw.renderSavedSessions();
     if (sw.laps.length > 0) sw.reRenderCurrentLaps();
 
     if (sw.sortSelect) {
@@ -234,6 +256,7 @@ export function setupStopwatchSessions(sw) {
     }
 
     sw.updateSaveButtonVisibility();
+    flushSessionsRender();
   };
 
   const offLangChanged = onAppEvent(APP_EVENTS.LANGUAGE_CHANGED, () => {
@@ -241,33 +264,12 @@ export function setupStopwatchSessions(sw) {
   });
   disposers.push(offLangChanged);
 
-  // Warm up heavy saved sessions DOM offscreen after init,
-  // so first modal open is smoother.
-  let warmTimer = 0;
-  const warmRender = () => {
-    try {
-      sw.sortSessions(sw.currentSort || "date_desc");
-    } catch (err) {
-      console.error("[stopwatch-sessions.warm-render]", err);
-    }
-  };
-
-  if (typeof window.requestIdleCallback === "function") {
-    const idleId = window.requestIdleCallback(warmRender, { timeout: 1200 });
-    disposers.push(() => {
-      try {
-        window.cancelIdleCallback?.(idleId);
-      } catch {}
-    });
-  } else {
-    warmTimer = window.setTimeout(warmRender, 350);
-    disposers.push(() => {
-      if (warmTimer) clearTimeout(warmTimer);
-      warmTimer = 0;
-    });
-  }
-
   sw._unbindSessions = () => {
+    if (renderRaf) {
+      cancelAnimationFrame(renderRaf);
+      renderRaf = 0;
+    }
+
     disposers.forEach((off) => {
       try {
         off?.();
