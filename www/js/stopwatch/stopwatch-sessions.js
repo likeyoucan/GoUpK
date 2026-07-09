@@ -241,6 +241,32 @@ export function setupStopwatchSessions(sw) {
   });
   disposers.push(offLangChanged);
 
+  // Warm up heavy saved sessions DOM offscreen after init,
+  // so first modal open is smoother.
+  let warmTimer = 0;
+  const warmRender = () => {
+    try {
+      sw.sortSessions(sw.currentSort || "date_desc");
+    } catch (err) {
+      console.error("[stopwatch-sessions.warm-render]", err);
+    }
+  };
+
+  if (typeof window.requestIdleCallback === "function") {
+    const idleId = window.requestIdleCallback(warmRender, { timeout: 1200 });
+    disposers.push(() => {
+      try {
+        window.cancelIdleCallback?.(idleId);
+      } catch {}
+    });
+  } else {
+    warmTimer = window.setTimeout(warmRender, 350);
+    disposers.push(() => {
+      if (warmTimer) clearTimeout(warmTimer);
+      warmTimer = 0;
+    });
+  }
+
   sw._unbindSessions = () => {
     disposers.forEach((off) => {
       try {

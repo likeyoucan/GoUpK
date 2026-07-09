@@ -19,22 +19,6 @@ import {
 
 const ADS_AUTO_DISABLE_MARKER = "app_ads_auto_disabled_after_pro";
 
-function runDeferred(task, { delay = 0, timeout = 2500 } = {}) {
-  const run = () => {
-    if (typeof window.requestIdleCallback === "function") {
-      window.requestIdleCallback(() => task(), { timeout });
-    } else {
-      setTimeout(task, 0);
-    }
-  };
-
-  if (delay > 0) {
-    setTimeout(run, delay);
-  } else {
-    run();
-  }
-}
-
 function syncAdsToggleUi(checked) {
   const toggleAds = document.getElementById("toggle-ads");
   if (toggleAds) toggleAds.checked = !!checked;
@@ -121,6 +105,43 @@ async function applyMonetizationConfig(config) {
   }
 }
 
+function createLazyAppIconInit({ t, appProManager }) {
+  let initialized = false;
+  let fallbackTimer = 0;
+
+  const initOnce = () => {
+    if (initialized) return;
+    initialized = true;
+
+    if (fallbackTimer) {
+      clearTimeout(fallbackTimer);
+      fallbackTimer = 0;
+    }
+
+    initAppIconSelector({ t, appProManager });
+  };
+
+  const onSettingsNavClick = (e) => {
+    const btn = e.target?.closest?.('[data-nav="settings"]');
+    if (!btn) return;
+    initOnce();
+  };
+
+  // Init only when user actually goes to settings.
+  document.addEventListener("click", onSettingsNavClick, true);
+
+  // Safety fallback: very late idle init so it doesn't hit first interactions.
+  fallbackTimer = window.setTimeout(() => {
+    if (typeof window.requestIdleCallback === "function") {
+      window.requestIdleCallback(() => initOnce(), { timeout: 2000 });
+    } else {
+      setTimeout(() => initOnce(), 0);
+    }
+  }, 8000);
+
+  return initOnce;
+}
+
 export async function initMonetizationBootstrap({
   preload,
   t,
@@ -152,20 +173,17 @@ export async function initMonetizationBootstrap({
     showToast,
   });
 
-  // Defer heavy icon previews from critical startup path.
-  // This removes first-seconds jank affecting first modal animation.
-  runDeferred(
-    () => {
-      initAppIconSelector({
-        t,
-        appProManager,
-      });
-    },
-    { delay: 2200, timeout: 3000 },
-  );
+  const initAppIconsIfNeeded = createLazyAppIconInit({ t, appProManager });
 
   document.addEventListener(APP_EVENTS.APP_ICON_CHANGED, () => {
     syncPreloaderIconMeta({ preload, t, config: validatedConfig });
+  });
+
+  // If Pro state changes and selector is already initialized later, no issue.
+  // If not initialized yet, preloader meta still stays correct via resolved icon.
+  document.addEventListener(APP_EVENTS.PRO_STATUS_CHANGED, () => {
+    // Keep this no-op guard for potential future proactive init.
+    void initAppIconsIfNeeded;
   });
 
   return { config: validatedConfig };
