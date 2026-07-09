@@ -28,9 +28,12 @@ export function setupTimerInputs(tm, { pad }) {
         val = Math.max(0, Math.min(max, val));
       }
 
-      input.value = pad(val);
-      tm.sm.play("click");
-      tm.sm.vibrate(10, "tactile");
+      const next = pad(val);
+      if (input.value !== next) {
+        input.value = next;
+        tm.sm.play("click");
+        tm.sm.vibrate(10, "tactile");
+      }
     };
 
     const onWheel = (e) => {
@@ -40,12 +43,17 @@ export function setupTimerInputs(tm, { pad }) {
     on(input, "wheel", onWheel, { passive: false });
 
     const onTouchStart = (e) => {
-      startY = e.touches[0].clientY;
+      const t = e.touches?.[0];
+      if (!t) return;
+      startY = t.clientY;
     };
     on(input, "touchstart", onTouchStart, { passive: true });
 
     const onTouchMove = (e) => {
-      const currentY = e.touches[0].clientY;
+      const t = e.touches?.[0];
+      if (!t) return;
+
+      const currentY = t.clientY;
       const diff = startY - currentY;
 
       if (Math.abs(diff) > threshold) {
@@ -115,6 +123,15 @@ export function setupTimerInputs(tm, { pad }) {
       disposers.push(() => el.removeEventListener(event, handler, options));
     };
 
+    const normalizeInput = (el, max) => {
+      if (!el) return;
+      const digits = String(el.value || "")
+        .replace(/\D/g, "")
+        .slice(0, 2);
+      const num = digits === "" ? 0 : Math.min(max, parseInt(digits, 10) || 0);
+      el.value = digits === "" ? "" : String(num);
+    };
+
     const onFormSubmit = (e) => {
       e.preventDefault();
       document.activeElement?.blur();
@@ -129,8 +146,7 @@ export function setupTimerInputs(tm, { pad }) {
       };
 
       const onInput = () => {
-        i.value = i.value.replace(/\D/g, "").slice(0, 2);
-        if (parseInt(i.value, 10) > 59) i.value = "59";
+        normalizeInput(i, 59);
       };
 
       const onBlur = () => {
@@ -150,8 +166,7 @@ export function setupTimerInputs(tm, { pad }) {
       };
 
       const onHInput = () => {
-        tm.els.h.value = tm.els.h.value.replace(/\D/g, "").slice(0, 2);
-        if (parseInt(tm.els.h.value, 10) > 99) tm.els.h.value = "99";
+        normalizeInput(tm.els.h, 99);
       };
 
       const onHBlur = () => {
