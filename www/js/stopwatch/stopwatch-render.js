@@ -32,7 +32,6 @@ function formatStopwatchExtended(ms) {
 }
 
 // Keep text inside the ring without changing font-size.
-// If content is wider than available width, compress only by X scale.
 function fitStopwatchDisplay(el) {
   if (!el) return;
 
@@ -62,7 +61,6 @@ function fitStopwatchDisplay(el) {
   const prev = Number(el.dataset.scaleX || "1");
   const next = Math.round(target * 1000) / 1000;
 
-  // Hysteresis to avoid micro-jitter.
   if (Math.abs(prev - next) < 0.012) return;
 
   el.style.transform = `translateX(0px) scaleX(${next})`;
@@ -104,6 +102,8 @@ function createSavedSessionTableHead() {
 }
 
 export function setupStopwatchRender(sw) {
+  sw._sessionDataById = new Map();
+
   sw.createLapElement = (lap, isLatest = false) => {
     const lapTemplate = $("sw-lap-row-template");
     if (!lapTemplate) return document.createElement("div");
@@ -180,6 +180,58 @@ export function setupStopwatchRender(sw) {
     }
   };
 
+  sw._hydrateSessionDetails = (id) => {
+    const detailsEl = $(`sw-details-${id}`);
+    if (!detailsEl) return;
+
+    const lapsContainer = detailsEl.querySelector('[data-template="lapsContainer"]');
+    if (!lapsContainer) return;
+
+    if (lapsContainer.dataset.hydrated === "1") return;
+
+    const data = sw._sessionDataById.get(id);
+    if (!data) return;
+
+    lapsContainer.classList.add("sw-session-laps-table");
+    lapsContainer.replaceChildren();
+
+    lapsContainer.appendChild(createSavedSessionTableHead());
+
+    const lapTemplate = $("sw-lap-row-template");
+    if (!lapTemplate) return;
+
+    const fragment = document.createDocumentFragment();
+    const laps = Array.isArray(data.laps) ? data.laps : [];
+
+    laps.forEach((lap) => {
+      const lapClone = lapTemplate.content.cloneNode(true);
+      const lapElement = lapClone.firstElementChild;
+
+      lapElement.className =
+        "lap-row sw-laps-table-row flex justify-between items-center px-3";
+
+      lapElement.querySelector('[data-template="lap-index"]').textContent =
+        `${t("lap_text")} ${lap.index}`;
+
+      lapElement.querySelector('[data-template="lap-total"]').textContent =
+        formatTime(lap.total, {
+          showMs: uiSettingsManager.showMs,
+          forceHours: !!data.shouldForceHours,
+        });
+
+      lapElement.querySelector('[data-template="lap-split"]').textContent =
+        formatTime(lap.diff, {
+          showMs: uiSettingsManager.showMs,
+          forceHours: !!data.shouldForceHours,
+        });
+
+      fragment.appendChild(lapElement);
+    });
+
+    lapsContainer.appendChild(fragment);
+    lapsContainer.dataset.hydrated = "1";
+  };
+
   sw.renderSavedSessions = () => {
     if (!sw.els || !sw.els.sessionsList) return;
 
@@ -193,6 +245,7 @@ export function setupStopwatchRender(sw) {
     if (clearAllBtn) clearAllBtn.disabled = !hasSessions;
 
     sw.els.sessionsList.replaceChildren();
+    sw._sessionDataById.clear();
 
     if (!hasSessions) {
       const emptyDiv = document.createElement("div");
@@ -204,17 +257,13 @@ export function setupStopwatchRender(sw) {
       return;
     }
 
-    const trLap = t("lap_text");
-    const trTotal = t("total_time");
-    const trSplit = t("split_time");
     const trShare = t("share");
     const trRename = t("rename");
     const trDelete = t("delete");
 
     const fragment = document.createDocumentFragment();
     const sessionTemplate = $("sw-session-template");
-    const lapTemplate = $("sw-lap-row-template");
-    if (!sessionTemplate || !lapTemplate) return;
+    if (!sessionTemplate) return;
 
     sw.savedSessions.forEach((session) => {
       const clone = sessionTemplate.content.cloneNode(true);
@@ -240,18 +289,12 @@ export function setupStopwatchRender(sw) {
           forceHours: shouldForceHours,
         });
 
-      const header = sessionElement.querySelector(
-        '[data-template-id="header"]',
-      );
-      const share = sessionElement.querySelector(
-        '[data-template-id="shareBtn"]',
-      );
+      const header = sessionElement.querySelector('[data-template-id="header"]');
+      const share = sessionElement.querySelector('[data-template-id="shareBtn"]');
       const rename = sessionElement.querySelector(
         '[data-template-id="renameBtn"]',
       );
-      const del = sessionElement.querySelector(
-        '[data-template-id="deleteBtn"]',
-      );
+      const del = sessionElement.querySelector('[data-template-id="deleteBtn"]');
 
       const id = Number(session.id);
       header.dataset.id = id;
@@ -265,6 +308,20 @@ export function setupStopwatchRender(sw) {
       const iconEl = sessionElement.querySelector('[data-template-id="icon"]');
       detailsEl.id = `sw-details-${id}`;
       iconEl.id = `sw-icon-${id}`;
+
+      // Prepare lazy data for details hydration.
+      sw._sessionDataById.set(id, {
+        laps: Array.isArray(session.laps) ? session.laps : [],
+        shouldForceHours,
+      });
+
+      // Keep container empty until user expands this session.
+      const lapsContainer = detailsEl.querySelector('[data-template="lapsContainer"]');
+      if (lapsContainer) {
+        lapsContainer.classList.add("sw-session-laps-table");
+        lapsContainer.replaceChildren();
+        lapsContainer.dataset.hydrated = "0";
+      }
 
       if (share) {
         share.setAttribute("aria-label", trShare);
@@ -281,43 +338,6 @@ export function setupStopwatchRender(sw) {
         del.setAttribute("title", trDelete);
       }
 
-      const lapsContainer = sessionElement.querySelector(
-        '[data-template="lapsContainer"]',
-      );
-      lapsContainer.classList.add("sw-session-laps-table");
-
-      const headerDiv = createSavedSessionTableHead();
-      headerDiv.querySelectorAll("span")[0].textContent = trLap;
-      headerDiv.querySelectorAll("span")[1].textContent = trTotal;
-      headerDiv.querySelectorAll("span")[2].textContent = trSplit;
-      lapsContainer.appendChild(headerDiv);
-
-      const laps = Array.isArray(session.laps) ? session.laps : [];
-      laps.forEach((lap) => {
-        const lapClone = lapTemplate.content.cloneNode(true);
-        const lapElement = lapClone.firstElementChild;
-
-        lapElement.className =
-          "lap-row sw-laps-table-row flex justify-between items-center px-3";
-
-        lapElement.querySelector('[data-template="lap-index"]').textContent =
-          `${trLap} ${lap.index}`;
-
-        lapElement.querySelector('[data-template="lap-total"]').textContent =
-          formatTime(lap.total, {
-            showMs: uiSettingsManager.showMs,
-            forceHours: shouldForceHours,
-          });
-
-        lapElement.querySelector('[data-template="lap-split"]').textContent =
-          formatTime(lap.diff, {
-            showMs: uiSettingsManager.showMs,
-            forceHours: shouldForceHours,
-          });
-
-        lapsContainer.appendChild(lapElement);
-      });
-
       fragment.appendChild(sessionElement);
     });
 
@@ -329,13 +349,17 @@ export function setupStopwatchRender(sw) {
     const iconEl = $(`sw-icon-${id}`);
     if (!detailsEl) return;
 
-    if (detailsEl.classList.contains("hidden")) {
+    const isHidden = detailsEl.classList.contains("hidden");
+
+    if (isHidden) {
+      sw._hydrateSessionDetails(id);
       detailsEl.classList.remove("hidden");
       if (iconEl) iconEl.style.transform = "rotate(180deg)";
-    } else {
-      detailsEl.classList.add("hidden");
-      if (iconEl) iconEl.style.transform = "rotate(0deg)";
+      return;
     }
+
+    detailsEl.classList.add("hidden");
+    if (iconEl) iconEl.style.transform = "rotate(0deg)";
   };
 
   sw.updateDisplay = () => {
