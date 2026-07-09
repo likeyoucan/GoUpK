@@ -38,6 +38,8 @@ class ModalManager {
     this._warmLoadHandler = null;
     this._warmTimeout = 0;
 
+    this._firstBottomSheetShown = false;
+
     this.dragController = new BottomSheetDragController({
       getTopModal: () => this._getTopModal(),
       closeCurrent: () => this.closeCurrent(),
@@ -97,7 +99,6 @@ class ModalManager {
       pointerEvents: el.style.pointerEvents,
     };
 
-    // Offscreen + invisible render pass to compile layer/layout before first visible open.
     el.classList.remove("hidden");
     el.classList.add("flex");
     el.style.transition = "none";
@@ -135,36 +136,35 @@ class ModalManager {
       this._warmBottomSheetElement(modal.id, modal.el);
     });
 
-    // Warm overlay layer too.
     if (this.bottomSheetOverlay) {
       const ov = this.bottomSheetOverlay;
       const prevOpacity = ov.style.opacity;
       const prevTransition = ov.style.transition;
       const prevPointer = ov.style.pointerEvents;
+      const prevFilter = ov.style.backdropFilter;
 
       ov.style.transition = "none";
       ov.style.opacity = "0.001";
       ov.style.pointerEvents = "none";
+      ov.style.backdropFilter = "none";
       void ov.getBoundingClientRect();
       void ov.offsetHeight;
 
       ov.style.opacity = prevOpacity;
       ov.style.transition = prevTransition;
       ov.style.pointerEvents = prevPointer;
+      ov.style.backdropFilter = prevFilter;
     }
   }
 
   _schedulePrewarm() {
-    // Early warm.
     requestAnimationFrame(() => this._prewarmBottomSheets());
 
-    // Slight delayed warm (covers startup contention).
     this._warmTimeout = window.setTimeout(() => {
       this._prewarmBottomSheets();
       this._warmTimeout = 0;
     }, 180);
 
-    // Warm again after full load.
     this._warmLoadHandler = () => {
       this._prewarmBottomSheets();
     };
@@ -181,6 +181,36 @@ class ModalManager {
       window.removeEventListener("load", this._warmLoadHandler);
       this._warmLoadHandler = null;
     }
+  }
+
+  _applyFirstOpenOverlayOptimization() {
+    if (this._firstBottomSheetShown || !this.bottomSheetOverlay)
+      return () => {};
+
+    const ov = this.bottomSheetOverlay;
+    const prevFilter = ov.style.backdropFilter;
+    const prevWillChange = ov.style.willChange;
+
+    // Most common first-open stutter source on mobile is first blur compilation.
+    ov.style.backdropFilter = "none";
+    ov.style.willChange = "opacity";
+
+    let restored = false;
+    const restore = () => {
+      if (restored) return;
+      restored = true;
+      ov.style.backdropFilter = prevFilter;
+      ov.style.willChange = prevWillChange;
+      this._firstBottomSheetShown = true;
+    };
+
+    // Restore shortly after transition starts.
+    const timer = setTimeout(restore, 520);
+
+    return () => {
+      clearTimeout(timer);
+      restore();
+    };
   }
 
   /**
@@ -202,6 +232,7 @@ class ModalManager {
     this.closeTimeouts = {};
     this.lastFocusedElement = null;
     this._warmedBottomSheets.clear();
+    this._firstBottomSheetShown = false;
 
     config.forEach((modalConfig) => {
       const modalEl = $(modalConfig.id);
@@ -303,15 +334,14 @@ class ModalManager {
     modal.el.removeAttribute("aria-hidden");
 
     if (modal.type === "bottom-sheet") {
-      // If still not warmed (very early tap), warm just-in-time.
       if (!this._warmedBottomSheets.has(id)) {
         this._warmBottomSheetElement(id, modal.el);
       }
 
+      const restoreFirstOpenOverlay = this._applyFirstOpenOverlayOptimization();
+
       modal.el.style.transition = "none";
       modal.el.style.transform = "translateY(100%)";
-
-      // Flush before transition.
       void modal.el.offsetHeight;
 
       requestAnimationFrame(() => {
@@ -319,6 +349,9 @@ class ModalManager {
           "transform 400ms cubic-bezier(0.32, 0.72, 0, 1)";
         modal.el.style.transform = "translateY(0%)";
       });
+
+      // Ensure overlay optimization restored even if callbacks are skipped.
+      setTimeout(() => restoreFirstOpenOverlay(), 560);
     } else if (modal.type === "alert") {
       requestAnimationFrame(() => {
         modal.el.classList.remove("opacity-0");
