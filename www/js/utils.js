@@ -21,56 +21,68 @@ export const escapeHTML = (str = "") =>
   );
 
 export const updateText = (el, text) => {
-  if (el && el.textContent !== String(text)) el.textContent = text;
+  if (!el) return;
+  const next = String(text);
+  if (el.textContent !== next) el.textContent = next;
 };
 
 export const updateTitle = (text) => {
-  const newTitle = text ? `${text} - Stopwatch Pro` : "Stopwatch Pro";
-  if (document.title !== newTitle) {
-    document.title = newTitle;
+  const nextTitle = text ? `${text} - Stopwatch Pro` : "Stopwatch Pro";
+  if (document.title !== nextTitle) {
+    document.title = nextTitle;
   }
 };
 
 let wakeLock = null;
 
 export const requestWakeLock = async () => {
-  if ("wakeLock" in navigator && !wakeLock) {
-    try {
-      wakeLock = await navigator.wakeLock.request("screen");
-      wakeLock.addEventListener("release", () => {
-        wakeLock = null;
-      });
-    } catch {}
-  }
+  if (!("wakeLock" in navigator)) return;
+  if (wakeLock) return;
+
+  try {
+    wakeLock = await navigator.wakeLock.request("screen");
+    wakeLock.addEventListener("release", () => {
+      wakeLock = null;
+    });
+  } catch {}
 };
 
 export const releaseWakeLock = () => {
-  if (wakeLock !== null) {
-    wakeLock
-      .release()
-      .then(() => {
-        wakeLock = null;
-      })
-      .catch(() => {
-        wakeLock = null;
-      });
-  }
+  if (!wakeLock) return;
+
+  const current = wakeLock;
+  wakeLock = null;
+
+  current
+    .release()
+    .then(() => {})
+    .catch(() => {});
 };
 
-let toastTimeout = null;
+let toastTimeout = 0;
+let lastToastText = "";
 
 export const showToast = (message) => {
   const toast = $("toast");
-  if (!toast) return;
+  const msgEl = $("toast-msg");
+  if (!toast || !msgEl) return;
 
-  if (toastTimeout) clearTimeout(toastTimeout);
+  const nextMsg = String(message || "");
+  if (lastToastText !== nextMsg) {
+    msgEl.textContent = nextMsg;
+    lastToastText = nextMsg;
+  }
 
-  $("toast-msg").textContent = message;
+  if (toastTimeout) {
+    clearTimeout(toastTimeout);
+    toastTimeout = 0;
+  }
+
   toast.classList.remove("opacity-0", "-translate-y-4");
 
-  toastTimeout = setTimeout(() => {
+  toastTimeout = window.setTimeout(() => {
     toast.classList.add("opacity-0", "-translate-y-4");
-    toastTimeout = null;
+    toastTimeout = 0;
   }, 3000);
 };
 
@@ -94,28 +106,32 @@ export const adjustVal = (id, delta) => {
   const currentValue = parseInt(el.value, 10) || 0;
 
   if (delta > 1 && currentValue < delta) {
-    el.value = delta;
+    el.value = String(delta);
     return;
   }
 
   if (delta < -1 && currentValue > 1 && currentValue <= Math.abs(delta)) {
-    el.value = 1;
+    el.value = "1";
     return;
   }
 
   const newValue = currentValue + delta;
-  el.value = Math.max(1, newValue);
+  el.value = String(Math.max(1, newValue));
 };
 
 export const pad = (num) => String(num).padStart(2, "0");
 
 export function getUniqueName(baseName, items, key = "name") {
-  let name = baseName;
+  const base = String(baseName || "").trim() || "Item";
+  let name = base;
   let counter = 1;
-  const lowerCaseNames = items.map((item) => item[key].toLowerCase());
+
+  const lowerCaseNames = items.map((item) =>
+    String(item?.[key] || "").toLowerCase(),
+  );
 
   while (lowerCaseNames.includes(name.toLowerCase())) {
-    name = `${baseName} ${counter++}`;
+    name = `${base} ${counter++}`;
   }
 
   return name;
@@ -130,8 +146,10 @@ export function formatTime(ms, options = {}) {
     hourSuffix = "h",
   } = options;
 
+  const safeMs = Math.max(0, Number(ms) || 0);
+
   if (showDays) {
-    const totalS = Math.floor(ms / 1000);
+    const totalS = Math.floor(safeMs / 1000);
     const d = Math.floor(totalS / 86400);
     const h = Math.floor((totalS % 86400) / 3600);
 
@@ -140,21 +158,20 @@ export function formatTime(ms, options = {}) {
     return "";
   }
 
-  const totalS = Math.floor(ms / 1000);
+  const totalS = Math.floor(safeMs / 1000);
   const h = Math.floor(totalS / 3600);
   const m = Math.floor((totalS % 3600) / 60);
   const s = totalS % 60;
 
-  const timeParts = [];
-  if (h > 0 || forceHours) timeParts.push(h);
-  timeParts.push(pad(m));
-  timeParts.push(pad(s));
+  const parts = [];
+  if (h > 0 || forceHours) parts.push(String(h));
+  parts.push(pad(m), pad(s));
 
-  let result = timeParts.join(":");
+  let result = parts.join(":");
 
   if (showMs) {
-    const milli = Math.floor((ms % 1000) / 10);
-    result += `.${pad(milli)}`;
+    const centis = Math.floor((safeMs % 1000) / 10);
+    result += `.${pad(centis)}`;
   }
 
   return result;
@@ -162,35 +179,39 @@ export function formatTime(ms, options = {}) {
 
 export const getLuminance = (r, g, b) => {
   const a = [r, g, b].map((v) => {
-    v /= 255;
-    return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+    const x = (Number(v) || 0) / 255;
+    return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4);
   });
 
   return a[0] * 0.2126 + a[1] * 0.7152 + a[2] * 0.0722;
 };
 
-export const hexToRGB = (H) => {
-  if (!H || !H.startsWith("#")) return { r: 0, g: 0, b: 0 };
-
-  let r = 0;
-  let g = 0;
-  let b = 0;
+export const hexToRGB = (hex) => {
+  const H = String(hex || "").trim();
+  if (!H.startsWith("#")) return { r: 0, g: 0, b: 0 };
 
   if (H.length === 4) {
-    r = parseInt(H[1] + H[1], 16);
-    g = parseInt(H[2] + H[2], 16);
-    b = parseInt(H[3] + H[3], 16);
-  } else if (H.length === 7) {
-    r = parseInt(H[1] + H[2], 16);
-    g = parseInt(H[3] + H[4], 16);
-    b = parseInt(H[5] + H[6], 16);
+    return {
+      r: parseInt(H[1] + H[1], 16),
+      g: parseInt(H[2] + H[2], 16),
+      b: parseInt(H[3] + H[3], 16),
+    };
   }
 
-  return { r, g, b };
+  if (H.length === 7) {
+    return {
+      r: parseInt(H.slice(1, 3), 16),
+      g: parseInt(H.slice(3, 5), 16),
+      b: parseInt(H.slice(5, 7), 16),
+    };
+  }
+
+  return { r: 0, g: 0, b: 0 };
 };
 
-export const hexToHSL = (H) => {
-  if (!H || !H.startsWith("#")) return { h: 142, s: 50, l: 50 };
+export const hexToHSL = (hex) => {
+  const H = String(hex || "").trim();
+  if (!H.startsWith("#")) return { h: 142, s: 50, l: 50 };
 
   const { r: r255, g: g255, b: b255 } = hexToRGB(H);
   const r = r255 / 255;
@@ -263,12 +284,11 @@ const createWorker = () => {
 export const bgWorker = createWorker();
 
 export const normalizeHexColor = (hex) => {
-  if (!hex || hex.length !== 4 || hex[0] !== "#") {
-    return hex;
-  }
+  const v = String(hex || "").trim();
+  if (v.length !== 4 || v[0] !== "#") return v;
 
-  const r = hex[1];
-  const g = hex[2];
-  const b = hex[3];
+  const r = v[1];
+  const g = v[2];
+  const b = v[3];
   return `#${r}${r}${g}${g}${b}${b}`;
 };

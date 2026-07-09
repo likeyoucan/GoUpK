@@ -5,8 +5,20 @@ import { APP_EVENTS } from "./constants/events.js?v=VERSION";
 import { STORAGE_KEYS } from "./constants/storage-keys.js?v=VERSION";
 import { emitAppEvent } from "./events/app-events.js?v=VERSION";
 
+const KNOWN_TIMERS = new Set(["stopwatch", "timer", "tabata"]);
+
+/**
+ * @param {string | null} value
+ * @returns {string | null}
+ */
+function normalizeActiveTimer(value) {
+  if (!value) return null;
+  const v = String(value).trim();
+  return KNOWN_TIMERS.has(v) ? v : null;
+}
+
 const storeData = {
-  activeTimer: safeGetLS(STORAGE_KEYS.ACTIVE_TIMER) || null,
+  activeTimer: normalizeActiveTimer(safeGetLS(STORAGE_KEYS.ACTIVE_TIMER)),
 };
 
 function emitActiveTimerChanged(value) {
@@ -15,12 +27,16 @@ function emitActiveTimerChanged(value) {
 
 export const store = {
   activate(timerName) {
-    emitAppEvent(APP_EVENTS.TIMER_STARTED, timerName);
-    this.setActiveTimer(timerName);
+    const normalized = normalizeActiveTimer(timerName);
+    if (!normalized) return;
+
+    emitAppEvent(APP_EVENTS.TIMER_STARTED, normalized);
+    this.setActiveTimer(normalized);
   },
 
   setActiveTimer(timerName) {
-    const next = timerName || null;
+    const next = normalizeActiveTimer(timerName);
+
     if (storeData.activeTimer === next) return;
 
     storeData.activeTimer = next;
@@ -36,7 +52,7 @@ export const store = {
   },
 
   isActive(timerName) {
-    return storeData.activeTimer === timerName;
+    return storeData.activeTimer === normalizeActiveTimer(timerName);
   },
 
   clearActiveTimer() {
