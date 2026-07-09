@@ -78,6 +78,55 @@ class ModalManager {
     }
   }
 
+  _prewarmBottomSheets() {
+    const entries = Object.values(this.modals);
+    if (!entries.length) return;
+
+    entries.forEach((modal) => {
+      if (!modal || modal.type !== "bottom-sheet" || !modal.el) return;
+
+      const el = modal.el;
+
+      const wasHidden = el.classList.contains("hidden");
+      const hadFlex = el.classList.contains("flex");
+      const prevInert = el.hasAttribute("inert");
+      const prevAriaHidden = el.getAttribute("aria-hidden");
+
+      const prevStyle = {
+        transition: el.style.transition,
+        transform: el.style.transform,
+        visibility: el.style.visibility,
+        pointerEvents: el.style.pointerEvents,
+      };
+
+      // Temporarily reveal offscreen and invisible to force first layout/compositor.
+      el.classList.remove("hidden");
+      el.classList.add("flex");
+      el.style.transition = "none";
+      el.style.transform = "translateY(100%)";
+      el.style.visibility = "hidden";
+      el.style.pointerEvents = "none";
+
+      void el.getBoundingClientRect();
+      void el.offsetHeight;
+
+      // Restore styles/classes/attrs.
+      el.style.transition = prevStyle.transition;
+      el.style.transform = prevStyle.transform;
+      el.style.visibility = prevStyle.visibility;
+      el.style.pointerEvents = prevStyle.pointerEvents;
+
+      if (wasHidden) el.classList.add("hidden");
+      if (!hadFlex) el.classList.remove("flex");
+
+      if (prevInert) el.setAttribute("inert", "");
+      else el.removeAttribute("inert");
+
+      if (prevAriaHidden === null) el.removeAttribute("aria-hidden");
+      else el.setAttribute("aria-hidden", prevAriaHidden);
+    });
+  }
+
   /**
    * @param {ModalConfig[]} config
    */
@@ -140,6 +189,9 @@ class ModalManager {
         this.dragController.bindStart(handlerEl, modalConfig.id, () => modalEl);
       }
     });
+
+    // Prewarm bottom-sheet layout/compositor once to remove first-open jank.
+    requestAnimationFrame(() => this._prewarmBottomSheets());
   }
 
   destroy() {
@@ -194,6 +246,9 @@ class ModalManager {
     if (modal.type === "bottom-sheet") {
       modal.el.style.transition = "none";
       modal.el.style.transform = "translateY(100%)";
+
+      // Force layout flush before starting transition to avoid first-frame hitch.
+      void modal.el.offsetHeight;
 
       requestAnimationFrame(() => {
         modal.el.style.transition =

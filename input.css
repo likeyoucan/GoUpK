@@ -3692,7 +3692,16 @@
 
   #tb-modal,
   #sw-sessions-modal {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    contain: layout paint;
     will-change: transform;
+  }
+
+  #bottom-sheet-overlay {
+    will-change: opacity;
+    transform: translateZ(0);
+    backface-visibility: hidden;
   }
 
   @media (min-width: 768px) {

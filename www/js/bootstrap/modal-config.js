@@ -6,13 +6,25 @@ export function createModalConfig({ sw, tb }) {
       id: "sw-sessions-modal",
       type: "bottom-sheet",
       handlerId: "sw-modal-handler",
-      onOpen: () => sw.sortSessions(sw.currentSort),
+      onOpen: () => {
+        // Delay heavy list sorting/render to let sheet transition start smoothly.
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            sw.sortSessions(sw.currentSort);
+          });
+        });
+      },
     },
     {
       id: "tb-modal",
       type: "bottom-sheet",
       handlerId: "tb-modal-handler",
-      onOpen: (data) => tb.prepareEdit(data.idToEdit),
+      onOpen: (data) => {
+        // Defer form preparation by one frame to reduce first-open hitch.
+        requestAnimationFrame(() => {
+          tb.prepareEdit(data.idToEdit);
+        });
+      },
       onClose: () => {
         tb.editingWorkoutId = null;
       },
