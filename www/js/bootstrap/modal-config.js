@@ -7,12 +7,16 @@ export function createModalConfig({ sw, tb }) {
       type: "bottom-sheet",
       handlerId: "sw-modal-handler",
       onOpen: () => {
-        // Delay heavy list sorting/render to let sheet transition start smoothly.
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            sw.sortSessions(sw.currentSort);
-          });
-        });
+        const run = () => sw.sortSessions(sw.currentSort);
+
+        // Let sheet animation start first, then do heavy list work.
+        setTimeout(() => {
+          if (typeof window.requestIdleCallback === "function") {
+            window.requestIdleCallback(run, { timeout: 500 });
+          } else {
+            setTimeout(run, 0);
+          }
+        }, 160);
       },
     },
     {
@@ -20,10 +24,8 @@ export function createModalConfig({ sw, tb }) {
       type: "bottom-sheet",
       handlerId: "tb-modal-handler",
       onOpen: (data) => {
-        // Defer form preparation by one frame to reduce first-open hitch.
-        requestAnimationFrame(() => {
-          tb.prepareEdit(data.idToEdit);
-        });
+        // Small defer to reduce first-open startup contention.
+        setTimeout(() => tb.prepareEdit(data.idToEdit), 80);
       },
       onClose: () => {
         tb.editingWorkoutId = null;

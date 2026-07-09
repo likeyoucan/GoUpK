@@ -34,6 +34,10 @@ class ModalManager {
     this._overlayClickHandler = null;
     this._boundModalListeners = [];
 
+    this._warmedBottomSheets = new Set();
+    this._warmLoadHandler = null;
+    this._warmTimeout = 0;
+
     this.dragController = new BottomSheetDragController({
       getTopModal: () => this._getTopModal(),
       closeCurrent: () => this.closeCurrent(),
@@ -78,53 +82,105 @@ class ModalManager {
     }
   }
 
+  _warmBottomSheetElement(modalId, el) {
+    if (!modalId || !el) return;
+
+    const wasHidden = el.classList.contains("hidden");
+    const hadFlex = el.classList.contains("flex");
+    const prevInert = el.hasAttribute("inert");
+    const prevAriaHidden = el.getAttribute("aria-hidden");
+
+    const prevStyle = {
+      transition: el.style.transition,
+      transform: el.style.transform,
+      visibility: el.style.visibility,
+      pointerEvents: el.style.pointerEvents,
+    };
+
+    // Offscreen + invisible render pass to compile layer/layout before first visible open.
+    el.classList.remove("hidden");
+    el.classList.add("flex");
+    el.style.transition = "none";
+    el.style.transform = "translateY(100%)";
+    el.style.visibility = "hidden";
+    el.style.pointerEvents = "none";
+
+    void el.getBoundingClientRect();
+    void el.offsetHeight;
+
+    el.style.transition = prevStyle.transition;
+    el.style.transform = prevStyle.transform;
+    el.style.visibility = prevStyle.visibility;
+    el.style.pointerEvents = prevStyle.pointerEvents;
+
+    if (wasHidden) el.classList.add("hidden");
+    if (!hadFlex) el.classList.remove("flex");
+
+    if (prevInert) el.setAttribute("inert", "");
+    else el.removeAttribute("inert");
+
+    if (prevAriaHidden === null) el.removeAttribute("aria-hidden");
+    else el.setAttribute("aria-hidden", prevAriaHidden);
+
+    this._warmedBottomSheets.add(modalId);
+  }
+
   _prewarmBottomSheets() {
     const entries = Object.values(this.modals);
     if (!entries.length) return;
 
     entries.forEach((modal) => {
       if (!modal || modal.type !== "bottom-sheet" || !modal.el) return;
-
-      const el = modal.el;
-
-      const wasHidden = el.classList.contains("hidden");
-      const hadFlex = el.classList.contains("flex");
-      const prevInert = el.hasAttribute("inert");
-      const prevAriaHidden = el.getAttribute("aria-hidden");
-
-      const prevStyle = {
-        transition: el.style.transition,
-        transform: el.style.transform,
-        visibility: el.style.visibility,
-        pointerEvents: el.style.pointerEvents,
-      };
-
-      // Temporarily reveal offscreen and invisible to force first layout/compositor.
-      el.classList.remove("hidden");
-      el.classList.add("flex");
-      el.style.transition = "none";
-      el.style.transform = "translateY(100%)";
-      el.style.visibility = "hidden";
-      el.style.pointerEvents = "none";
-
-      void el.getBoundingClientRect();
-      void el.offsetHeight;
-
-      // Restore styles/classes/attrs.
-      el.style.transition = prevStyle.transition;
-      el.style.transform = prevStyle.transform;
-      el.style.visibility = prevStyle.visibility;
-      el.style.pointerEvents = prevStyle.pointerEvents;
-
-      if (wasHidden) el.classList.add("hidden");
-      if (!hadFlex) el.classList.remove("flex");
-
-      if (prevInert) el.setAttribute("inert", "");
-      else el.removeAttribute("inert");
-
-      if (prevAriaHidden === null) el.removeAttribute("aria-hidden");
-      else el.setAttribute("aria-hidden", prevAriaHidden);
+      if (this._warmedBottomSheets.has(modal.id)) return;
+      this._warmBottomSheetElement(modal.id, modal.el);
     });
+
+    // Warm overlay layer too.
+    if (this.bottomSheetOverlay) {
+      const ov = this.bottomSheetOverlay;
+      const prevOpacity = ov.style.opacity;
+      const prevTransition = ov.style.transition;
+      const prevPointer = ov.style.pointerEvents;
+
+      ov.style.transition = "none";
+      ov.style.opacity = "0.001";
+      ov.style.pointerEvents = "none";
+      void ov.getBoundingClientRect();
+      void ov.offsetHeight;
+
+      ov.style.opacity = prevOpacity;
+      ov.style.transition = prevTransition;
+      ov.style.pointerEvents = prevPointer;
+    }
+  }
+
+  _schedulePrewarm() {
+    // Early warm.
+    requestAnimationFrame(() => this._prewarmBottomSheets());
+
+    // Slight delayed warm (covers startup contention).
+    this._warmTimeout = window.setTimeout(() => {
+      this._prewarmBottomSheets();
+      this._warmTimeout = 0;
+    }, 180);
+
+    // Warm again after full load.
+    this._warmLoadHandler = () => {
+      this._prewarmBottomSheets();
+    };
+    window.addEventListener("load", this._warmLoadHandler, { once: true });
+  }
+
+  _clearPrewarmHooks() {
+    if (this._warmTimeout) {
+      clearTimeout(this._warmTimeout);
+      this._warmTimeout = 0;
+    }
+
+    if (this._warmLoadHandler) {
+      window.removeEventListener("load", this._warmLoadHandler);
+      this._warmLoadHandler = null;
+    }
   }
 
   /**
@@ -145,6 +201,7 @@ class ModalManager {
     this.stack.clear();
     this.closeTimeouts = {};
     this.lastFocusedElement = null;
+    this._warmedBottomSheets.clear();
 
     config.forEach((modalConfig) => {
       const modalEl = $(modalConfig.id);
@@ -190,8 +247,7 @@ class ModalManager {
       }
     });
 
-    // Prewarm bottom-sheet layout/compositor once to remove first-open jank.
-    requestAnimationFrame(() => this._prewarmBottomSheets());
+    this._schedulePrewarm();
   }
 
   destroy() {
@@ -201,6 +257,9 @@ class ModalManager {
         this.closeTimeouts[id] = null;
       }
     });
+
+    this._clearPrewarmHooks();
+    this._warmedBottomSheets.clear();
 
     this._removeEscListener();
     this._detachOverlayClick();
@@ -244,10 +303,15 @@ class ModalManager {
     modal.el.removeAttribute("aria-hidden");
 
     if (modal.type === "bottom-sheet") {
+      // If still not warmed (very early tap), warm just-in-time.
+      if (!this._warmedBottomSheets.has(id)) {
+        this._warmBottomSheetElement(id, modal.el);
+      }
+
       modal.el.style.transition = "none";
       modal.el.style.transform = "translateY(100%)";
 
-      // Force layout flush before starting transition to avoid first-frame hitch.
+      // Flush before transition.
       void modal.el.offsetHeight;
 
       requestAnimationFrame(() => {
