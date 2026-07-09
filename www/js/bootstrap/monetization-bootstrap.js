@@ -19,6 +19,22 @@ import {
 
 const ADS_AUTO_DISABLE_MARKER = "app_ads_auto_disabled_after_pro";
 
+function runDeferred(task, { delay = 0, timeout = 2500 } = {}) {
+  const run = () => {
+    if (typeof window.requestIdleCallback === "function") {
+      window.requestIdleCallback(() => task(), { timeout });
+    } else {
+      setTimeout(task, 0);
+    }
+  };
+
+  if (delay > 0) {
+    setTimeout(run, delay);
+  } else {
+    run();
+  }
+}
+
 function syncAdsToggleUi(checked) {
   const toggleAds = document.getElementById("toggle-ads");
   if (toggleAds) toggleAds.checked = !!checked;
@@ -136,10 +152,17 @@ export async function initMonetizationBootstrap({
     showToast,
   });
 
-  initAppIconSelector({
-    t,
-    appProManager,
-  });
+  // Defer heavy icon previews from critical startup path.
+  // This removes first-seconds jank affecting first modal animation.
+  runDeferred(
+    () => {
+      initAppIconSelector({
+        t,
+        appProManager,
+      });
+    },
+    { delay: 2200, timeout: 3000 },
+  );
 
   document.addEventListener(APP_EVENTS.APP_ICON_CHANGED, () => {
     syncPreloaderIconMeta({ preload, t, config: validatedConfig });

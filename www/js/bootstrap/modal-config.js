@@ -9,14 +9,15 @@ export function createModalConfig({ sw, tb }) {
       onOpen: () => {
         const run = () => sw.sortSessions(sw.currentSort);
 
-        // Let sheet animation start first, then do heavy list work.
+        // Wait until sheet opening transition is mostly done.
+        // Prevents animation hitch on weak devices during first launch.
         setTimeout(() => {
           if (typeof window.requestIdleCallback === "function") {
             window.requestIdleCallback(run, { timeout: 500 });
           } else {
             setTimeout(run, 0);
           }
-        }, 160);
+        }, 420);
       },
     },
     {
@@ -24,8 +25,8 @@ export function createModalConfig({ sw, tb }) {
       type: "bottom-sheet",
       handlerId: "tb-modal-handler",
       onOpen: (data) => {
-        // Small defer to reduce first-open startup contention.
-        setTimeout(() => tb.prepareEdit(data.idToEdit), 80);
+        // Slight defer to keep first frame smooth.
+        setTimeout(() => tb.prepareEdit(data.idToEdit), 120);
       },
       onClose: () => {
         tb.editingWorkoutId = null;
