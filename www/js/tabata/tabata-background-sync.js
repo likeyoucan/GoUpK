@@ -12,9 +12,14 @@ export function setupTabataBackgroundSync(
     removeEventListener: () => {},
   };
 
+  const canTick = () =>
+    tb.status !== "STOPPED" &&
+    !tb.paused &&
+    !tb.completionHandled &&
+    !tb.phaseClosing;
+
   tb.tick = (isBackground = false) => {
-    if (tb.status === "STOPPED" || tb.paused || tb.completionHandled) return;
-    if (tb.phaseClosing) return;
+    if (!canTick()) return;
 
     const rem = getRemainingMs(tb.phaseEndTime);
 
@@ -31,11 +36,16 @@ export function setupTabataBackgroundSync(
       if (!isBackground) tb.render(0);
       tb.ringCtrl?.setTarget(0);
 
+      if (tb.phaseCloseTimer) {
+        clearTimeout(tb.phaseCloseTimer);
+        tb.phaseCloseTimer = null;
+      }
+
       tb.phaseCloseTimer = setTimeout(() => {
         tb.phaseClosing = false;
         tb.phaseCloseTimer = null;
 
-        if (tb.status !== "STOPPED" && !tb.paused && !tb.completionHandled) {
+        if (canTick()) {
           tb.nextPhase(0);
         }
       }, 120);
@@ -64,27 +74,21 @@ export function setupTabataBackgroundSync(
 
     const disposers = [];
 
-    const onStartClick = () => tb.toggle();
-    tb.els.startBtn?.addEventListener("click", onStartClick);
-    disposers.push(() =>
-      tb.els.startBtn?.removeEventListener("click", onStartClick),
-    );
+    const bind = (el, event, handler, options) => {
+      if (!el) return;
+      el.addEventListener(event, handler, options);
+      disposers.push(() => el.removeEventListener(event, handler, options));
+    };
 
-    const onStopClick = () => tb.stop();
-    tb.els.stopBtn?.addEventListener("click", onStopClick);
-    disposers.push(() =>
-      tb.els.stopBtn?.removeEventListener("click", onStopClick),
-    );
+    bind(tb.els.startBtn, "click", () => tb.toggle());
+    bind(tb.els.stopBtn, "click", () => tb.stop());
 
     const onTimerStarted = (e) => {
       if (e.detail !== "tabata" && tb.status !== "STOPPED" && !tb.paused) {
         tb.pause();
       }
     };
-    document.addEventListener(APP_EVENTS.TIMER_STARTED, onTimerStarted);
-    disposers.push(() =>
-      document.removeEventListener(APP_EVENTS.TIMER_STARTED, onTimerStarted),
-    );
+    bind(document, APP_EVENTS.TIMER_STARTED, onTimerStarted);
 
     const onWorkerMessage = (e) => {
       if (
@@ -125,19 +129,17 @@ export function setupTabataBackgroundSync(
 
         tb.lastRender = 0;
         tb.phaseClosing = false;
+
         if (tb.phaseCloseTimer) {
           clearTimeout(tb.phaseCloseTimer);
           tb.phaseCloseTimer = null;
         }
+
         tb.render(rem);
         tb.tick();
       }
     };
-
-    document.addEventListener("visibilitychange", onVisibilityChange);
-    disposers.push(() =>
-      document.removeEventListener("visibilitychange", onVisibilityChange),
-    );
+    bind(document, "visibilitychange", onVisibilityChange);
 
     tb._unbindBackgroundSync = () => {
       disposers.forEach((off) => {
