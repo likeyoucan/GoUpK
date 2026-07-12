@@ -6,26 +6,22 @@ export function createModalConfig({ sw, tb }) {
       id: "sw-sessions-modal",
       type: "bottom-sheet",
       handlerId: "sw-modal-handler",
-      onOpen: () => {
-        const run = () => sw.sortSessions(sw.currentSort);
-
-        // Heavier delay for first interaction window to avoid animation hitch.
-        setTimeout(() => {
-          if (typeof window.requestIdleCallback === "function") {
-            window.requestIdleCallback(run, { timeout: 700 });
-          } else {
-            setTimeout(run, 0);
-          }
-        }, 520);
-      },
     },
     {
       id: "tb-modal",
       type: "bottom-sheet",
       handlerId: "tb-modal-handler",
       onOpen: (data) => {
-        // Give animation the first frame budget.
-        setTimeout(() => tb.prepareEdit(data.idToEdit), 180);
+        const run = () => tb.prepareEdit(data?.idToEdit ?? null);
+
+        // Run after bottom-sheet transition to avoid first-open hitch.
+        setTimeout(() => {
+          if (typeof window.requestIdleCallback === "function") {
+            window.requestIdleCallback(run, { timeout: 800 });
+          } else {
+            requestAnimationFrame(run);
+          }
+        }, 460);
       },
       onClose: () => {
         tb.editingWorkoutId = null;
