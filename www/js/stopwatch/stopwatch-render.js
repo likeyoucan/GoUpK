@@ -270,7 +270,7 @@ export function setupStopwatchRender(sw) {
 
     const sessions = sw.savedSessions;
     const total = sessions.length;
-    const chunkSize = 30;
+    const chunkSize = 20;
     let index = 0;
 
     const renderChunk = () => {
@@ -368,7 +368,6 @@ export function setupStopwatchRender(sw) {
     };
 
     requestAnimationFrame(renderChunk);
-    
   };
 
   sw.toggleSessionDetails = (id) => {
