@@ -89,7 +89,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     else if (tm.els?.ring) tm.els.ring.style.strokeDashoffset = 0;
 
     tm.bgWorker.postMessage({ command: "reset" });
-    alarmScheduler.cancel();
+    cancelExactAlarmSilently();
 
     tm.store.clearActiveTimer();
     tm.stopUiLoop();
@@ -126,15 +126,23 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     }
   }
 
-  async function scheduleExactAlarmAndHandleHint(targetEpochMs) {
-    const scheduled = await alarmScheduler.schedule(targetEpochMs);
-    if (
-      scheduled?.scheduled === false &&
-      scheduled?.reason === "cannot_schedule_exact_alarm"
-    ) {
-      logExactAlarmHintOnce();
-    }
-  }
+function scheduleExactAlarmAndHandleHint(targetEpochMs) {
+  void alarmScheduler
+    .schedule(targetEpochMs)
+    .then((scheduled) => {
+      if (
+        scheduled?.scheduled === false &&
+        scheduled?.reason === "cannot_schedule_exact_alarm"
+      ) {
+        logExactAlarmHintOnce();
+      }
+    })
+    .catch(() => {});
+}
+
+function cancelExactAlarmSilently() {
+  void alarmScheduler.cancel().catch(() => {});
+}
 
   tm.toggle = async () => {
     tm.sm.vibrate(40, "light");
@@ -157,7 +165,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
 
       tm.bgWorker.postMessage({ command: "stop" });
       tm.stopUiLoop();
-      await alarmScheduler.cancel();
+      cancelExactAlarmSilently();
       tm.releaseWakeLock();
       tm.updateTitle("");
       tm.updateDisplay(pausedSnap.remainingMs);
@@ -227,7 +235,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     });
 
     tm.bgWorker.postMessage({ command: "start", time: tm.timeRemainingMs });
-    await scheduleExactAlarmAndHandleHint(tm.targetEpochMs);
+    scheduleExactAlarmAndHandleHint(tm.targetEpochMs);
   };
 
   tm.restart = async () => {
@@ -276,7 +284,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     });
 
     tm.bgWorker.postMessage({ command: "start", time: startSnap.remainingMs });
-    await scheduleExactAlarmAndHandleHint(tm.targetEpochMs);
+    scheduleExactAlarmAndHandleHint(tm.targetEpochMs);
   };
 
   tm.reset = async (clearInputs = true) => {
@@ -299,7 +307,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     tm.skipWorkerTickUntil = 0;
 
     tm.bgWorker.postMessage({ command: "reset" });
-    await alarmScheduler.cancel();
+    cancelExactAlarmSilently();
     tm.stopUiLoop();
     tm.releaseWakeLock();
     tm.updateTitle("");
@@ -354,7 +362,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
       tm.els.restartBtn?.removeEventListener("click", onRestartClick),
     );
 
-    const onWorkerMessage = async (e) => {
+    const onWorkerMessage = (e) => {
       if (e.data?.type !== "tick") return;
       if (!tm.isRunning) return;
 
@@ -378,7 +386,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
       applyTimerEngineSnapshot(tm, snap);
 
       if (snap.rebased && tm.targetEpochMs !== prevTarget) {
-        await scheduleExactAlarmAndHandleHint(tm.targetEpochMs);
+        scheduleExactAlarmAndHandleHint(tm.targetEpochMs);
       }
 
       if (document.hidden) {
@@ -396,7 +404,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
       tm.bgWorker.removeEventListener("message", onWorkerMessage),
     );
 
-    const onAdjustPlus = async () => {
+    const onAdjustPlus = () => {
       tm.sm.play("tick");
       tm.sm.vibrate(50, "medium");
 
@@ -420,7 +428,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
       tm.updateAdjustButtons();
 
       tm.bgWorker.postMessage({ command: "adjust", time: adjustmentMs });
-      await scheduleExactAlarmAndHandleHint(tm.targetEpochMs);
+      scheduleExactAlarmAndHandleHint(tm.targetEpochMs);
     };
 
     tm.els.adjustPlusBtn?.addEventListener("click", onAdjustPlus);
@@ -428,7 +436,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
       tm.els.adjustPlusBtn?.removeEventListener("click", onAdjustPlus),
     );
 
-    const onAdjustMinus = async () => {
+    const onAdjustMinus = () => {
       tm.sm.play("tick");
       tm.sm.vibrate(50, "medium");
 
@@ -458,7 +466,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
       tm.updateAdjustButtons();
 
       tm.bgWorker.postMessage({ command: "adjust", time: adjustmentMs });
-      await scheduleExactAlarmAndHandleHint(tm.targetEpochMs);
+      scheduleExactAlarmAndHandleHint(tm.targetEpochMs);
     };
 
     tm.els.adjustMinusBtn?.addEventListener("click", onAdjustMinus);

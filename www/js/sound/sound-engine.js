@@ -17,12 +17,18 @@ export function unlockAudio(sm) {
   }
 }
 
+let __lastVibrateAt = 0;
+const VIBRATE_MIN_INTERVAL_MS = 85;
+
 export function vibrate(sm, basePattern, intensityKey = "medium") {
   if (!sm.vibroEnabled || !navigator.vibrate) return;
   if (window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) return;
 
+  const now = performance.now();
+  if (now - __lastVibrateAt < VIBRATE_MIN_INTERVAL_MS) return;
+  __lastVibrateAt = now;
+
   try {
-    // Softer profile than before, keeps semantics of levels/types.
     const intensityMap = {
       light: 0.55,
       medium: 0.78,

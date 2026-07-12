@@ -15,6 +15,16 @@ export function setupTabataLifecycle(tb, deps) {
     bgWorker,
   } = deps;
 
+  let lastLifecycleHapticAt = 0;
+  const LIFECYCLE_HAPTIC_MIN_INTERVAL_MS = 100;
+
+  function vibrateLifecycle(pattern, level = "medium") {
+    const now = performance.now();
+    if (now - lastLifecycleHapticAt < LIFECYCLE_HAPTIC_MIN_INTERVAL_MS) return;
+    lastLifecycleHapticAt = now;
+    sm.vibrate(pattern, level);
+  }
+
   const worker = bgWorker || {
     postMessage: () => {},
     addEventListener: () => {},
@@ -39,7 +49,7 @@ export function setupTabataLifecycle(tb, deps) {
   }
 
   tb.toggle = () => {
-    sm.vibrate(40, "light");
+    vibrateLifecycle(40, "light");
     sm.play("click");
     sm.unlock();
 
@@ -133,7 +143,7 @@ export function setupTabataLifecycle(tb, deps) {
 
   tb.stop = ({ resetRing = true, silent = false } = {}) => {
     if (!silent) {
-      sm.vibrate(30, "medium");
+      vibrateLifecycle(30, "medium");
       sm.play("click");
     }
 
