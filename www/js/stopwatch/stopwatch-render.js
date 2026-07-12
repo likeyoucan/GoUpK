@@ -184,7 +184,9 @@ export function setupStopwatchRender(sw) {
     const detailsEl = $(`sw-details-${id}`);
     if (!detailsEl) return;
 
-    const lapsContainer = detailsEl.querySelector('[data-template="lapsContainer"]');
+    const lapsContainer = detailsEl.querySelector(
+      '[data-template="lapsContainer"]',
+    );
     if (!lapsContainer) return;
 
     if (lapsContainer.dataset.hydrated === "1") return;
@@ -289,12 +291,18 @@ export function setupStopwatchRender(sw) {
           forceHours: shouldForceHours,
         });
 
-      const header = sessionElement.querySelector('[data-template-id="header"]');
-      const share = sessionElement.querySelector('[data-template-id="shareBtn"]');
+      const header = sessionElement.querySelector(
+        '[data-template-id="header"]',
+      );
+      const share = sessionElement.querySelector(
+        '[data-template-id="shareBtn"]',
+      );
       const rename = sessionElement.querySelector(
         '[data-template-id="renameBtn"]',
       );
-      const del = sessionElement.querySelector('[data-template-id="deleteBtn"]');
+      const del = sessionElement.querySelector(
+        '[data-template-id="deleteBtn"]',
+      );
 
       const id = Number(session.id);
       header.dataset.id = id;
@@ -316,7 +324,9 @@ export function setupStopwatchRender(sw) {
       });
 
       // Keep container empty until user expands this session.
-      const lapsContainer = detailsEl.querySelector('[data-template="lapsContainer"]');
+      const lapsContainer = detailsEl.querySelector(
+        '[data-template="lapsContainer"]',
+      );
       if (lapsContainer) {
         lapsContainer.classList.add("sw-session-laps-table");
         lapsContainer.replaceChildren();
