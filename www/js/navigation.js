@@ -23,7 +23,6 @@ export const navigation = {
   activeView: "stopwatch",
   clockInterval: null,
   isTransitioning: false,
-  _lightAnim: null,
 
   init() {
     this.initClock();
@@ -36,14 +35,6 @@ export const navigation = {
       clearInterval(this.clockInterval);
       this.clockInterval = null;
     }
-
-    if (this._lightAnim) {
-      try {
-        this._lightAnim.cancel();
-      } catch {}
-      this._lightAnim = null;
-    }
-
     this.isTransitioning = false;
   },
 
@@ -78,6 +69,7 @@ export const navigation = {
     this.isTransitioning = true;
     appEl?.classList.add("is-view-transitioning");
 
+    // Очищаем старые слепки, если они зависли
     viewsContainer
       .querySelectorAll(".nav-snapshot-layer")
       .forEach((n) => n.remove());
@@ -87,56 +79,7 @@ export const navigation = {
     const isSwipe = source === "swipe";
     const dirForward = toIdx > fromIdx;
 
-    const isHeavyView = (id) => id === "settings" || id === "stopwatch";
-    const useLightTransition = isHeavyView(fromId) || isHeavyView(viewId);
-
-    if (this._lightAnim) {
-      try {
-        this._lightAnim.cancel();
-      } catch {}
-      this._lightAnim = null;
-    }
-
-    if (useLightTransition) {
-      this.updateDOM(viewId, { instant: true });
-
-      // Lightweight animation without deep cloning heavy DOM trees.
-      this._lightAnim = toEl.animate(
-        [
-          {
-            opacity: 0.92,
-            transform: `translateX(${dirForward ? "4%" : "-4%"})`,
-          },
-          { opacity: 1, transform: "translateX(0)" },
-        ],
-        {
-          duration: isSwipe ? 180 : 220,
-          easing: "cubic-bezier(0.32, 0.72, 0, 1)",
-          fill: "both",
-        },
-      );
-
-      let done = false;
-      const finishLight = () => {
-        if (done) return;
-        done = true;
-
-        this._lightAnim = null;
-        this.isTransitioning = false;
-        appEl?.classList.remove("is-view-transitioning");
-
-        if (viewId === "settings") {
-          themeManager.syncSliderUIs();
-        }
-      };
-
-      this._lightAnim.onfinish = finishLight;
-      this._lightAnim.oncancel = finishLight;
-      setTimeout(finishLight, (isSwipe ? 180 : 220) + 100);
-
-      return true;
-    }
-
+    // 1. Создаем слепок текущего (уходящего) экрана
     const snapshot = fromEl.cloneNode(true);
     stripIds(snapshot);
 
@@ -150,6 +93,7 @@ export const navigation = {
     snapshot.setAttribute("aria-hidden", "true");
     snapshot.setAttribute("inert", "");
 
+    // Фиксируем позицию слепка поверх всего
     snapshot.style.position = "absolute";
     snapshot.style.inset = "0";
     snapshot.style.width = "100%";
@@ -161,8 +105,10 @@ export const navigation = {
 
     viewsContainer.appendChild(snapshot);
 
+    // 2. Мгновенно переключаем реальный DOM под слепком
     this.updateDOM(viewId, { instant: true });
 
+    // 3. Запускаем анимацию ухода слепка
     const duration = isSwipe ? 220 : 320;
     const easing = "cubic-bezier(0.32, 0.72, 0, 1)";
 
@@ -191,6 +137,7 @@ export const navigation = {
     };
 
     snapshot.addEventListener("transitionend", finish, { once: true });
+    // Страховочный таймаут на случай сбоя события transitionend
     setTimeout(finish, duration + 80);
 
     return true;
