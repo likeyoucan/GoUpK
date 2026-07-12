@@ -247,6 +247,8 @@ export function setupStopwatchRender(sw) {
     if (clearAllBtn) clearAllBtn.disabled = !hasSessions;
 
     sw.els.sessionsList.replaceChildren();
+    sw._sessionsRenderToken = (sw._sessionsRenderToken || 0) + 1;
+    const renderToken = sw._sessionsRenderToken;
     sw._sessionDataById.clear();
 
     if (!hasSessions) {
@@ -263,95 +265,110 @@ export function setupStopwatchRender(sw) {
     const trRename = t("rename");
     const trDelete = t("delete");
 
-    const fragment = document.createDocumentFragment();
     const sessionTemplate = $("sw-session-template");
     if (!sessionTemplate) return;
 
-    sw.savedSessions.forEach((session) => {
-      const clone = sessionTemplate.content.cloneNode(true);
-      const sessionElement = clone.firstElementChild;
-      const shouldForceHours = (session.totalTime || 0) >= 3600000;
+    const sessions = sw.savedSessions;
+    const total = sessions.length;
+    const chunkSize = 30;
+    let index = 0;
 
-      const dateObj = new Date(session.date || session.id);
-      const dateStr = `${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString(
-        [],
-        {
-          hour: "2-digit",
-          minute: "2-digit",
-        },
-      )}`;
+    const renderChunk = () => {
+      if (renderToken !== sw._sessionsRenderToken) return;
+      const frag = document.createDocumentFragment();
+      const end = Math.min(index + chunkSize, total);
 
-      sessionElement.querySelector('[data-template="name"]').textContent =
-        session.name || t("stopwatch");
-      sessionElement.querySelector('[data-template="date"]').textContent =
-        dateStr;
-      sessionElement.querySelector('[data-template="totalTime"]').textContent =
-        formatTime(session.totalTime || 0, {
+      for (; index < end; index += 1) {
+        const session = sessions[index];
+        const clone = sessionTemplate.content.cloneNode(true);
+        const sessionElement = clone.firstElementChild;
+        const shouldForceHours = (session.totalTime || 0) >= 3600000;
+
+        const dateObj = new Date(session.date || session.id);
+        const dateStr = `${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString(
+          [],
+          { hour: "2-digit", minute: "2-digit" },
+        )}`;
+
+        sessionElement.querySelector('[data-template="name"]').textContent =
+          session.name || t("stopwatch");
+        sessionElement.querySelector('[data-template="date"]').textContent =
+          dateStr;
+        sessionElement.querySelector(
+          '[data-template="totalTime"]',
+        ).textContent = formatTime(session.totalTime || 0, {
           showMs: uiSettingsManager.showMs,
           forceHours: shouldForceHours,
         });
 
-      const header = sessionElement.querySelector(
-        '[data-template-id="header"]',
-      );
-      const share = sessionElement.querySelector(
-        '[data-template-id="shareBtn"]',
-      );
-      const rename = sessionElement.querySelector(
-        '[data-template-id="renameBtn"]',
-      );
-      const del = sessionElement.querySelector(
-        '[data-template-id="deleteBtn"]',
-      );
+        const header = sessionElement.querySelector(
+          '[data-template-id="header"]',
+        );
+        const share = sessionElement.querySelector(
+          '[data-template-id="shareBtn"]',
+        );
+        const rename = sessionElement.querySelector(
+          '[data-template-id="renameBtn"]',
+        );
+        const del = sessionElement.querySelector(
+          '[data-template-id="deleteBtn"]',
+        );
 
-      const id = Number(session.id);
-      header.dataset.id = id;
-      if (share) share.dataset.id = id;
-      if (rename) rename.dataset.id = id;
-      if (del) del.dataset.id = id;
+        const id = Number(session.id);
+        header.dataset.id = id;
+        if (share) share.dataset.id = id;
+        if (rename) rename.dataset.id = id;
+        if (del) del.dataset.id = id;
 
-      const detailsEl = sessionElement.querySelector(
-        '[data-template-id="details"]',
-      );
-      const iconEl = sessionElement.querySelector('[data-template-id="icon"]');
-      detailsEl.id = `sw-details-${id}`;
-      iconEl.id = `sw-icon-${id}`;
+        const detailsEl = sessionElement.querySelector(
+          '[data-template-id="details"]',
+        );
+        const iconEl = sessionElement.querySelector(
+          '[data-template-id="icon"]',
+        );
+        detailsEl.id = `sw-details-${id}`;
+        iconEl.id = `sw-icon-${id}`;
 
-      // Prepare lazy data for details hydration.
-      sw._sessionDataById.set(id, {
-        laps: Array.isArray(session.laps) ? session.laps : [],
-        shouldForceHours,
-      });
+        sw._sessionDataById.set(id, {
+          laps: Array.isArray(session.laps) ? session.laps : [],
+          shouldForceHours,
+        });
 
-      // Keep container empty until user expands this session.
-      const lapsContainer = detailsEl.querySelector(
-        '[data-template="lapsContainer"]',
-      );
-      if (lapsContainer) {
-        lapsContainer.classList.add("sw-session-laps-table");
-        lapsContainer.replaceChildren();
-        lapsContainer.dataset.hydrated = "0";
+        const lapsContainer = detailsEl.querySelector(
+          '[data-template="lapsContainer"]',
+        );
+        if (lapsContainer) {
+          lapsContainer.classList.add("sw-session-laps-table");
+          lapsContainer.replaceChildren();
+          lapsContainer.dataset.hydrated = "0";
+        }
+
+        if (share) {
+          share.setAttribute("aria-label", trShare);
+          share.setAttribute("title", trShare);
+        }
+        if (rename) {
+          rename.setAttribute("aria-label", trRename);
+          rename.setAttribute("title", trRename);
+        }
+        if (del) {
+          del.setAttribute("aria-label", trDelete);
+          del.setAttribute("title", trDelete);
+        }
+
+        frag.appendChild(sessionElement);
       }
 
-      if (share) {
-        share.setAttribute("aria-label", trShare);
-        share.setAttribute("title", trShare);
+      if (renderToken !== sw._sessionsRenderToken) return;
+      sw.els.sessionsList.appendChild(frag);
+
+      if (index < total) {
+        requestAnimationFrame(renderChunk);
       }
+    };
 
-      if (rename) {
-        rename.setAttribute("aria-label", trRename);
-        rename.setAttribute("title", trRename);
-      }
-
-      if (del) {
-        del.setAttribute("aria-label", trDelete);
-        del.setAttribute("title", trDelete);
-      }
-
-      fragment.appendChild(sessionElement);
-    });
-
-    sw.els.sessionsList.appendChild(fragment);
+    requestAnimationFrame(renderChunk);
+    
   };
 
   sw.toggleSessionDetails = (id) => {
