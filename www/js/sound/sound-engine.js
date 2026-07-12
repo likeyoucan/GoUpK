@@ -39,14 +39,28 @@ export function vibrate(sm, basePattern, intensityKey = "medium") {
 
   try {
     const intensityMap = {
-      light: 0.55,
-      medium: 0.78,
-      strong: 1.0,
-      tactile: 0.45,
+      light: 0.52,
+      medium: 0.7,
+      strong: 0.98,
+      tactile: 0.42,
     };
 
-    const typeMultiplier = intensityMap[intensityKey] || 0.78;
-    const levelMultiplier = Math.max(0.5, Math.min(2, sm.vibroLevel || 1));
+    const typeMultiplier = intensityMap[intensityKey] || 0.7;
+
+    const rawLevel = Number(sm.vibroLevel || 1);
+    const levelMap = new Map([
+      [0.5, 0.44], // min
+      [0.75, 0.62], // low
+      [1, 0.82], // medium
+      [1.5, 1.14], // high
+      [2, 1.52], // max
+    ]);
+
+    const nearestLevel = [0.5, 0.75, 1, 1.5, 2].reduce((prev, cur) =>
+      Math.abs(cur - rawLevel) < Math.abs(prev - rawLevel) ? cur : prev,
+    );
+    const levelMultiplier = levelMap.get(nearestLevel) ?? 0.82;
+
     const globalSoftness = 0.72;
     const finalMultiplier = typeMultiplier * levelMultiplier * globalSoftness;
 
