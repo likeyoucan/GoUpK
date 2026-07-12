@@ -18,14 +18,23 @@ export function unlockAudio(sm) {
 }
 
 let __lastVibrateAt = 0;
-const VIBRATE_MIN_INTERVAL_MS = 85;
+const VIBRATE_MIN_INTERVAL_BY_TYPE = {
+  tactile: 85,
+  light: 40,
+  medium: 24,
+  strong: 0,
+};
 
 export function vibrate(sm, basePattern, intensityKey = "medium") {
   if (!sm.vibroEnabled || !navigator.vibrate) return;
   if (window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) return;
 
   const now = performance.now();
-  if (now - __lastVibrateAt < VIBRATE_MIN_INTERVAL_MS) return;
+  const throttleMs =
+    VIBRATE_MIN_INTERVAL_BY_TYPE[intensityKey] ??
+    VIBRATE_MIN_INTERVAL_BY_TYPE.medium;
+
+  if (throttleMs > 0 && now - __lastVibrateAt < throttleMs) return;
   __lastVibrateAt = now;
 
   try {
