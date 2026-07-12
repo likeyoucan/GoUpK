@@ -12,16 +12,26 @@ export function createModalConfig({ sw, tb }) {
       type: "bottom-sheet",
       handlerId: "tb-modal-handler",
       onOpen: (data) => {
-        const run = () => tb.prepareEdit(data?.idToEdit ?? null);
+        const idToEdit = data?.idToEdit ?? null;
 
-        // Run after bottom-sheet transition to avoid first-open hitch.
+        // 1) Быстрая легкая часть (не блокирует анимацию)
+        requestAnimationFrame(() => {
+          const titleEl = document.getElementById("tb-modal-title");
+          if (titleEl) {
+            titleEl.textContent = idToEdit ? "Edit" : "Create Workout";
+          }
+        });
+
+        // 2) Тяжелая часть строго после окончания transition и в idle
+        const runHeavy = () => tb.prepareEdit(idToEdit);
+
         setTimeout(() => {
           if (typeof window.requestIdleCallback === "function") {
-            window.requestIdleCallback(run, { timeout: 800 });
+            window.requestIdleCallback(runHeavy, { timeout: 1200 });
           } else {
-            requestAnimationFrame(run);
+            setTimeout(runHeavy, 0);
           }
-        }, 460);
+        }, 520);
       },
       onClose: () => {
         tb.editingWorkoutId = null;
