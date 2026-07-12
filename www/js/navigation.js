@@ -73,6 +73,43 @@ export const navigation = {
       .querySelectorAll(".nav-snapshot-layer")
       .forEach((n) => n.remove());
 
+    const fromIdx = VIEWS.indexOf(fromId);
+    const toIdx = VIEWS.indexOf(viewId);
+    const isSwipe = source === "swipe";
+    const dirForward = toIdx > fromIdx;
+
+    const isHeavyView = (id) => id === "settings" || id === "stopwatch";
+    const useLightTransition = isHeavyView(fromId) || isHeavyView(viewId);
+
+    if (useLightTransition) {
+      this.updateDOM(viewId, { instant: true });
+
+      // Lightweight animation without deep cloning heavy DOM trees.
+      toEl.animate(
+        [
+          {
+            opacity: 0.92,
+            transform: `translateX(${dirForward ? "4%" : "-4%"})`,
+          },
+          { opacity: 1, transform: "translateX(0)" },
+        ],
+        {
+          duration: isSwipe ? 180 : 220,
+          easing: "cubic-bezier(0.32, 0.72, 0, 1)",
+          fill: "both",
+        },
+      );
+
+      this.isTransitioning = false;
+      appEl?.classList.remove("is-view-transitioning");
+
+      if (viewId === "settings") {
+        themeManager.syncSliderUIs();
+      }
+
+      return true;
+    }
+
     const snapshot = fromEl.cloneNode(true);
     stripIds(snapshot);
 
@@ -98,12 +135,6 @@ export const navigation = {
     viewsContainer.appendChild(snapshot);
 
     this.updateDOM(viewId, { instant: true });
-    this.updateIcons(viewId);
-
-    const fromIdx = VIEWS.indexOf(fromId);
-    const toIdx = VIEWS.indexOf(viewId);
-    const isSwipe = source === "swipe";
-    const dirForward = toIdx > fromIdx;
 
     const duration = isSwipe ? 220 : 320;
     const easing = "cubic-bezier(0.32, 0.72, 0, 1)";
