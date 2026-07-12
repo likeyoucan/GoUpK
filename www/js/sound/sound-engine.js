@@ -19,28 +19,35 @@ export function unlockAudio(sm) {
 
 export function vibrate(sm, basePattern, intensityKey = "medium") {
   if (!sm.vibroEnabled || !navigator.vibrate) return;
+  if (window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) return;
 
   try {
+    // Softer profile than before, keeps semantics of levels/types.
     const intensityMap = {
-      light: 0.7,
-      medium: 1.0,
-      strong: 1.4,
-      tactile: 0.5,
+      light: 0.55,
+      medium: 0.78,
+      strong: 1.0,
+      tactile: 0.45,
     };
 
-    const typeMultiplier = intensityMap[intensityKey] || 1;
-    const levelMultiplier = sm.vibroLevel;
-    const finalMultiplier = typeMultiplier * levelMultiplier;
+    const typeMultiplier = intensityMap[intensityKey] || 0.78;
+    const levelMultiplier = Math.max(0.5, Math.min(2, sm.vibroLevel || 1));
+    const globalSoftness = 0.72;
+    const finalMultiplier = typeMultiplier * levelMultiplier * globalSoftness;
 
-    const applyLevel = (duration) => {
-      const baseDuration = duration * 1.5;
-      const newDuration = Math.round(baseDuration * finalMultiplier);
-      return Math.max(1, Math.min(200, newDuration));
+    const scalePulse = (duration) => {
+      const d = Math.round((Number(duration) || 0) * finalMultiplier);
+      return Math.max(1, Math.min(90, d));
+    };
+
+    const scalePause = (duration) => {
+      const d = Math.round((Number(duration) || 0) * 1.05);
+      return Math.max(1, Math.min(140, d));
     };
 
     const pattern = Array.isArray(basePattern)
-      ? basePattern.map(applyLevel)
-      : applyLevel(basePattern);
+      ? basePattern.map((d, i) => (i % 2 === 0 ? scalePulse(d) : scalePause(d)))
+      : scalePulse(basePattern);
 
     navigator.vibrate(pattern);
   } catch {}
