@@ -23,6 +23,7 @@ export const navigation = {
   activeView: "stopwatch",
   clockInterval: null,
   isTransitioning: false,
+  _lightAnim: null,
 
   init() {
     this.initClock();
@@ -35,6 +36,14 @@ export const navigation = {
       clearInterval(this.clockInterval);
       this.clockInterval = null;
     }
+
+    if (this._lightAnim) {
+      try {
+        this._lightAnim.cancel();
+      } catch {}
+      this._lightAnim = null;
+    }
+
     this.isTransitioning = false;
   },
 
@@ -81,11 +90,18 @@ export const navigation = {
     const isHeavyView = (id) => id === "settings" || id === "stopwatch";
     const useLightTransition = isHeavyView(fromId) || isHeavyView(viewId);
 
+    if (this._lightAnim) {
+      try {
+        this._lightAnim.cancel();
+      } catch {}
+      this._lightAnim = null;
+    }
+
     if (useLightTransition) {
       this.updateDOM(viewId, { instant: true });
 
       // Lightweight animation without deep cloning heavy DOM trees.
-      toEl.animate(
+      this._lightAnim = toEl.animate(
         [
           {
             opacity: 0.92,
@@ -100,12 +116,23 @@ export const navigation = {
         },
       );
 
-      this.isTransitioning = false;
-      appEl?.classList.remove("is-view-transitioning");
+      let done = false;
+      const finishLight = () => {
+        if (done) return;
+        done = true;
 
-      if (viewId === "settings") {
-        themeManager.syncSliderUIs();
-      }
+        this._lightAnim = null;
+        this.isTransitioning = false;
+        appEl?.classList.remove("is-view-transitioning");
+
+        if (viewId === "settings") {
+          themeManager.syncSliderUIs();
+        }
+      };
+
+      this._lightAnim.onfinish = finishLight;
+      this._lightAnim.oncancel = finishLight;
+      setTimeout(finishLight, (isSwipe ? 180 : 220) + 100);
 
       return true;
     }
