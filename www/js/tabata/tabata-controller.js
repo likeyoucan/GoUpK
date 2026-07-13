@@ -47,8 +47,58 @@ export const tb = {
   _unbindCoreEvents: null,
   _unbindBackgroundSync: null,
   _unbindWorkouts: null,
+  _unbindSummaryPlacement: null,
 
   formatTime,
+
+  bindActiveSummaryPlacement() {
+    this._unbindSummaryPlacement?.();
+    this._unbindSummaryPlacement = null;
+
+    const summary = this.els.activeSummary;
+    const hostTop = this.els.activeSummaryHostTop;
+    const hostMid = this.els.activeSummaryHostMid;
+
+    if (!summary || !hostTop || !hostMid) return;
+
+    const place = () => {
+      const isMobile = window.matchMedia("(max-width: 767px)").matches;
+      const target = isMobile ? hostTop : hostMid;
+      if (summary.parentElement !== target) {
+        target.appendChild(summary);
+      }
+    };
+
+    let raf = 0;
+    const onViewportChange = () => {
+      if (raf) cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        place();
+      });
+    };
+
+    place();
+
+    window.addEventListener("resize", onViewportChange, { passive: true });
+    window.addEventListener("orientationchange", onViewportChange, {
+      passive: true,
+    });
+
+    this._unbindSummaryPlacement = () => {
+      if (raf) {
+        cancelAnimationFrame(raf);
+        raf = 0;
+      }
+
+      window.removeEventListener("resize", onViewportChange);
+      window.removeEventListener("orientationchange", onViewportChange);
+
+      if (summary.parentElement !== hostMid) {
+        hostMid.appendChild(summary);
+      }
+    };
+  },
 
   init() {
     this._unbindRuntime?.();
@@ -71,6 +121,9 @@ export const tb = {
       timer: $("tb-mainTimer"),
       activeName: $("tb-activeName"),
       activeDetail: $("tb-activeDetail"),
+      activeSummary: $("tb-active-summary"),
+      activeSummaryHostTop: $("tb-active-summary-host-top"),
+      activeSummaryHostMid: $("tb-active-summary-host-mid"),
       roundDisplay: $("tb-currentRound"),
       totalRoundsDisplay: $("tb-totalRounds"),
       editName: $("tb-edit-name"),
@@ -101,6 +154,7 @@ export const tb = {
 
     this.bindCoreEvents();
     this.bindWorkoutEvents();
+    this.bindActiveSummaryPlacement();
 
     const disposers = [];
     const bind = (el, event, handler, options) => {
@@ -142,6 +196,9 @@ export const tb = {
 
       this._unbindWorkouts?.();
       this._unbindWorkouts = null;
+
+      this._unbindSummaryPlacement?.();
+      this._unbindSummaryPlacement = null;
 
       disposers.forEach((off) => {
         try {
