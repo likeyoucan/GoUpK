@@ -15,6 +15,7 @@ import { t } from "./i18n.js?v=VERSION";
 import { sm } from "./sound.js?v=VERSION";
 import { appProManager } from "./app-pro.js?v=VERSION";
 import { APP_EVENTS } from "./constants/events.js?v=VERSION";
+import { STORAGE_KEYS } from "./constants/storage-keys.js?v=VERSION";
 import { emitAppEvent } from "./events/app-events.js?v=VERSION";
 
 import {
@@ -81,6 +82,49 @@ export const colorManager = {
     "#2dd4bf",
   ],
 
+  _getStripScrollKey(type) {
+    if (type === "accent") return STORAGE_KEYS.UI_ACCENT_SCROLL_LEFT;
+    return STORAGE_KEYS.UI_BG_SCROLL_LEFT;
+  },
+
+  _restoreStripScroll(type) {
+    const container = $(
+      type === "accent" ? "accent-colors-container" : "bg-colors-container",
+    );
+    if (!container) return;
+
+    const raw = safeGetLS(this._getStripScrollKey(type));
+    if (raw == null) return;
+
+    const val = Math.max(0, Number(raw) || 0);
+    container.scrollLeft = val;
+  },
+
+  _bindStripScrollPersistence(type) {
+    const container = $(
+      type === "accent" ? "accent-colors-container" : "bg-colors-container",
+    );
+    if (!container) return () => {};
+
+    const key = this._getStripScrollKey(type);
+    let raf = 0;
+
+    const onScroll = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        safeSetLS(key, String(Math.round(container.scrollLeft)));
+      });
+    };
+
+    container.addEventListener("scroll", onScroll, { passive: true });
+
+    return () => {
+      if (raf) cancelAnimationFrame(raf);
+      container.removeEventListener("scroll", onScroll);
+    };
+  },
+
   init() {
     this._unbindColorManager?.();
     this._unbindColorManager = null;
@@ -89,7 +133,17 @@ export const colorManager = {
     this.populateColorSection("accent");
     this.populateColorSection("bg");
 
+    this._restoreStripScroll("accent");
+    this._restoreStripScroll("bg");
+
     const disposers = [];
+
+    const offAccentPersist = this._bindStripScrollPersistence("accent");
+    if (typeof offAccentPersist === "function")
+      disposers.push(offAccentPersist);
+
+    const offBgPersist = this._bindStripScrollPersistence("bg");
+    if (typeof offBgPersist === "function") disposers.push(offBgPersist);
 
     const offAccentScroll = this._bindDesktopHorizontalScroll(
       $("accent-colors-container"),

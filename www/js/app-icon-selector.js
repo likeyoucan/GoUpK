@@ -106,6 +106,54 @@ async function resolvePreviewForOption(option) {
   return { src: readySrc, missing };
 }
 
+function ensureVisibleNoJump(container, target) {
+  if (!container || !target) return;
+
+  const cRect = container.getBoundingClientRect();
+  const tRect = target.getBoundingClientRect();
+
+  const leftOverflow = tRect.left - cRect.left;
+  const rightOverflow = tRect.right - cRect.right;
+
+  if (leftOverflow < 0) {
+    container.scrollLeft += leftOverflow - 8;
+  } else if (rightOverflow > 0) {
+    container.scrollLeft += rightOverflow + 8;
+  }
+}
+
+function bindIconStripScrollPersistence(container) {
+  let raf = 0;
+
+  const onScroll = () => {
+    if (raf) return;
+    raf = requestAnimationFrame(() => {
+      raf = 0;
+      safeSetLS(
+        STORAGE_KEYS.UI_APP_ICON_SCROLL_LEFT,
+        String(Math.round(container.scrollLeft)),
+      );
+    });
+  };
+
+  container.addEventListener("scroll", onScroll, { passive: true });
+
+  return () => {
+    if (raf) cancelAnimationFrame(raf);
+    container.removeEventListener("scroll", onScroll);
+  };
+}
+
+function restoreIconStripScroll(container, selectedBtn) {
+  const raw = safeGetLS(STORAGE_KEYS.UI_APP_ICON_SCROLL_LEFT);
+  if (raw != null) {
+    container.scrollLeft = Math.max(0, Number(raw) || 0);
+    return;
+  }
+
+  ensureVisibleNoJump(container, selectedBtn);
+}
+
 // Same interaction model as custom colors:
 // - desktop: wheel + mouse drag for horizontal scrolling
 // - touch: native browser behavior (no touch handlers here)
@@ -259,6 +307,7 @@ export function initAppIconSelector({ t, appProManager }) {
   }
 
   const offHorizontalScroll = bindHorizontalScrollArea(container);
+  const offScrollPersist = bindIconStripScrollPersistence(container);
 
   const unsubs = [];
   let current = safeGetLS(STORAGE_KEYS.APP_ICON_NAME) || ICON_OPTIONS[0]?.id;
@@ -363,6 +412,9 @@ export function initAppIconSelector({ t, appProManager }) {
 
       container.appendChild(btn);
     });
+
+    const selectedBtn = container.querySelector(".app-icon-option.is-selected");
+    restoreIconStripScroll(container, selectedBtn);
   };
 
   const syncByProState = async () => {
@@ -395,6 +447,7 @@ export function initAppIconSelector({ t, appProManager }) {
 
   disposeAppIconSelector = () => {
     offHorizontalScroll?.();
+    offScrollPersist?.();
 
     unsubs.forEach((off) => {
       try {

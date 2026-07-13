@@ -1,5 +1,3 @@
-// Файл: www/js/constants/storage-keys.js
-
 export const STORAGE_KEYS = {
   APP_LANG: "app_lang",
   ACTIVE_TIMER: "active_timer",
@@ -34,6 +32,11 @@ export const STORAGE_KEYS = {
   APP_SHOW_MS: "app_show_ms",
   APP_SHOW_FOREGROUND_BANNER: "app_show_foreground_banner",
   APP_SW_MINUTE_BEEP: "app_sw_minute_beep",
+
+  // UI horizontal scroll positions
+  UI_ACCENT_SCROLL_LEFT: "ui_accent_scroll_left",
+  UI_BG_SCROLL_LEFT: "ui_bg_scroll_left",
+  UI_APP_ICON_SCROLL_LEFT: "ui_app_icon_scroll_left",
 
   // Ads
   APP_ADS_ENABLED: "app_ads_enabled",

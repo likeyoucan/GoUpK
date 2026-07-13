@@ -34,6 +34,10 @@ export function bindUiSettingsEvents(state) {
     disposers.push(() => el.removeEventListener(event, handler, options));
   };
 
+  const FONT_APPLY_DELAY_MS = 90;
+  let fontApplyTimer = 0;
+  let pendingFontSize = state.fontSize;
+
   bind(document, APP_EVENTS.LANGUAGE_CHANGED, () => syncSliderUIs(state));
   bind(document, APP_EVENTS.VIBRO_TOGGLED, (e) =>
     updateVibroSliderUI(e.detail.enabled),
@@ -112,15 +116,33 @@ export function bindUiSettingsEvents(state) {
 
   const fontSlider = $("fontSlider");
   if (fontSlider) {
+    const applyFontNow = (val) => {
+      setFontSize(state, val);
+    };
+
     const onFontChange = (e) => {
       const val = Number(e.target.value);
-      setFontSize(state, val);
+      pendingFontSize = val;
+
+      if (fontApplyTimer) {
+        clearTimeout(fontApplyTimer);
+        fontApplyTimer = 0;
+      }
+
+      applyFontNow(val);
       persistFontSize(val);
       updateRangeValueByDataset(e.target);
     };
+
     const onFontInput = (e) => {
-      setFontSize(state, Number(e.target.value));
+      pendingFontSize = Number(e.target.value);
       updateRangeValueByDataset(e.target);
+
+      if (fontApplyTimer) clearTimeout(fontApplyTimer);
+      fontApplyTimer = setTimeout(() => {
+        fontApplyTimer = 0;
+        applyFontNow(pendingFontSize);
+      }, FONT_APPLY_DELAY_MS);
     };
 
     bind(fontSlider, "change", onFontChange);
@@ -227,6 +249,11 @@ export function bindUiSettingsEvents(state) {
   syncAllRangeValuesRight();
 
   return () => {
+    if (fontApplyTimer) {
+      clearTimeout(fontApplyTimer);
+      fontApplyTimer = 0;
+    }
+
     disposers.forEach((off) => {
       try {
         off?.();

@@ -32,6 +32,22 @@ function relativeLumFromRgb({ r, g, b }) {
   return a[0] * 0.2126 + a[1] * 0.7152 + a[2] * 0.0722;
 }
 
+function ensureVisibleNoJump(container, target) {
+  if (!container || !target) return;
+
+  const cRect = container.getBoundingClientRect();
+  const tRect = target.getBoundingClientRect();
+
+  const leftOverflow = tRect.left - cRect.left;
+  const rightOverflow = tRect.right - cRect.right;
+
+  if (leftOverflow < 0) {
+    container.scrollLeft += leftOverflow - 8;
+  } else if (rightOverflow > 0) {
+    container.scrollLeft += rightOverflow + 8;
+  }
+}
+
 export function createColorSwatch({ color, isCustom, type, t }) {
   const wrapper = document.createElement("div");
   wrapper.className = "color-swatch-wrapper relative rounded-full";
@@ -197,5 +213,7 @@ export function updateSelectionUI({
       block: "nearest",
       inline: "center",
     });
+  } else {
+    ensureVisibleNoJump(container, activeWrapper);
   }
 }
