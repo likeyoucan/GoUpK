@@ -3095,6 +3095,39 @@
     justify-self: end;
   }
 
+  @media (max-width: 767px) {
+    /* Mobile: half-rows (vignette/vibro) use same slider geometry as regular rows */
+    #view-settings .range-row-half {
+      display: grid;
+      grid-template-columns: clamp(96px, 38%, 148px) minmax(0, 1fr) 3.25rem;
+      align-items: center;
+      column-gap: var(--space-2);
+      width: 100%;
+    }
+
+    #view-settings .range-row-half > label {
+      min-width: 0;
+      white-space: normal;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+      line-height: 1.2;
+      padding-right: 0;
+    }
+
+    #view-settings .range-row-half .range-field-half {
+      width: 100%;
+      min-width: 0;
+      justify-self: stretch;
+    }
+
+    #view-settings .range-row-half .range-value {
+      width: 3.25rem;
+      flex: 0 0 3.25rem;
+      justify-self: end;
+      text-align: right;
+    }
+  }
+
   #vignette-depth-container .thumb-label-container,
   #vibro-level-container .thumb-label-container {
     display: none;
