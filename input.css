@@ -3096,12 +3096,12 @@
   }
 
   @media (max-width: 767px) {
-    /* Mobile: half-rows (vignette/vibro) use same slider geometry as regular rows */
+    /* Mobile: half-rows (vignette/vibro) match regular slider geometry */
     #view-settings .range-row-half {
       display: grid;
-      grid-template-columns: clamp(96px, 38%, 148px) minmax(0, 1fr) 3.25rem;
+      grid-template-columns: clamp(112px, 34%, 190px) minmax(0, 1fr) 3.25rem;
       align-items: center;
-      column-gap: var(--space-2);
+      column-gap: var(--space-3);
       width: 100%;
     }
 
@@ -3125,6 +3125,13 @@
       flex: 0 0 3.25rem;
       justify-self: end;
       text-align: right;
+    }
+  }
+
+  @media (max-width: 420px) {
+    #view-settings .range-row-half {
+      grid-template-columns: clamp(96px, 38%, 148px) minmax(0, 1fr) 3.25rem;
+      column-gap: var(--space-2);
     }
   }
 
