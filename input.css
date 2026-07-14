@@ -1572,6 +1572,16 @@
       min-width var(--split-snap-duration) var(--ease-standard) !important;
   }
 
+  /* During split animation disable blur on collapsing content to reduce frame spikes */
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-animating
+    .view-top-half
+    .top_content,
+  :is(#view-stopwatch, #view-timer, #view-tabata).split-animating
+    .view-bottom-half
+    .mid_content {
+    filter: none !important;
+  }
+
   :is(#view-stopwatch, #view-timer, #view-tabata).split-live .view-top-half,
   :is(#view-stopwatch, #view-timer, #view-tabata).split-live .view-bottom-half,
   :is(#view-stopwatch, #view-timer, #view-tabata).split-animating

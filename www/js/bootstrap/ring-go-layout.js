@@ -33,6 +33,9 @@ export function initDynamicRingAndGoLayout() {
     return () => {};
   }
 
+  // Filled later, but declared early so refreshNow can safely read it.
+  let splitViews = [];
+
   let rafId = 0;
   let splitTrackRaf = 0;
   let splitTrackUntil = 0;
@@ -44,6 +47,10 @@ export function initDynamicRingAndGoLayout() {
 
     const app = document.getElementById("app");
     if (app?.classList.contains("is-view-transitioning")) return;
+
+    const isAnySplitAnimating = splitViews.some((v) =>
+      v.classList.contains("split-animating"),
+    );
 
     wraps.forEach((wrap) => {
       const px = calcDynamicRingSizePx(wrap);
@@ -66,10 +73,21 @@ export function initDynamicRingAndGoLayout() {
       if (!getRingWrapForDisplay(displayEl)) {
         applyDisplayScale(displayEl, 320, 320);
       }
+    });
+
+    // Heavy path: avoid centering GO while split is actively animating.
+    // It can trigger extra layout work and frame spikes.
+    if (isAnySplitAnimating) {
+      needsSettleCenter = true;
+      return;
+    }
+
+    displays.forEach((displayEl) => {
       centerGoDisplay(displayEl);
     });
 
     if (!needsSettleCenter) return;
+
     needsSettleCenter = false;
 
     if (settleCenterRaf) cancelAnimationFrame(settleCenterRaf);
@@ -210,7 +228,7 @@ export function initDynamicRingAndGoLayout() {
     document.fonts.addEventListener("loadingerror", onFontsChanged);
   }
 
-  const splitViews = Array.from(
+  splitViews = Array.from(
     new Set(wraps.map((w) => getViewElFromWrap(w)).filter(Boolean)),
   );
 
