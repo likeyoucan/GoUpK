@@ -2854,6 +2854,121 @@
     text-shadow: 0 2px 4px rgb(0 0 0 / 0.3);
   }
 
+  /* ===== Unified Glass Surface (safe extension) ===== */
+  :root {
+    --glass-surface-bg-light: color-mix(
+      in srgb,
+      var(--surface-color) 56%,
+      transparent
+    );
+    --glass-surface-bg-dark: color-mix(
+      in srgb,
+      var(--surface-color) 34%,
+      transparent
+    );
+    --glass-surface-border-light: color-mix(
+      in srgb,
+      #ffffff 52%,
+      var(--border-color) 48%
+    );
+    --glass-surface-border-dark: color-mix(
+      in srgb,
+      #ffffff 18%,
+      var(--border-color) 82%
+    );
+    --glass-surface-shadow-light:
+      inset 0 1px 1px rgb(255 255 255 / 0.42), 0 6px 18px rgb(0 0 0 / 0.08);
+    --glass-surface-shadow-dark:
+      inset 0 1px 1px rgb(255 255 255 / 0.08), 0 8px 20px rgb(0 0 0 / 0.24);
+  }
+
+  /* Target only structural surfaces, not control buttons/select popups */
+  .glass-effect
+    :is(
+      #view-settings .app-surface,
+      #sw-sessions-modal .app-surface,
+      #tb-modal .app-surface,
+      .sw-session-details,
+      .sw-session-laps-table,
+      .tb-workout-row,
+      .sw-session-header,
+      #toast
+    ):not(button):not(.app-btn):not(.main_btn):not(.main_btn_red):not(
+      .custom-select-options
+    ):not(.custom-select-trigger):not(.select-wrapper) {
+    background-color: var(--glass-surface-bg-light);
+    border-color: var(--glass-surface-border-light);
+    backdrop-filter: blur(14px) saturate(145%);
+    box-shadow: var(--glass-surface-shadow-light);
+  }
+
+  html.dark.glass-effect
+    :is(
+      #view-settings .app-surface,
+      #sw-sessions-modal .app-surface,
+      #tb-modal .app-surface,
+      .sw-session-details,
+      .sw-session-laps-table,
+      .tb-workout-row,
+      .sw-session-header,
+      #toast
+    ):not(button):not(.app-btn):not(.main_btn):not(.main_btn_red):not(
+      .custom-select-options
+    ):not(.custom-select-trigger):not(.select-wrapper) {
+    background-color: var(--glass-surface-bg-dark);
+    border-color: var(--glass-surface-border-dark);
+    box-shadow: var(--glass-surface-shadow-dark);
+  }
+
+  /* Keep list rows readable and lighter than full cards */
+  .glass-effect .sw-laps-table-row,
+  .glass-effect #sw-lapsContainer .sw-current-lap-row {
+    background-color: color-mix(
+      in srgb,
+      var(--surface-color) 64%,
+      transparent
+    ) !important;
+    border-color: color-mix(
+      in srgb,
+      var(--border-color) 72%,
+      transparent
+    ) !important;
+  }
+
+  html.dark.glass-effect .sw-laps-table-row,
+  html.dark.glass-effect #sw-lapsContainer .sw-current-lap-row {
+    background-color: color-mix(
+      in srgb,
+      var(--surface-color) 26%,
+      transparent
+    ) !important;
+    border-color: color-mix(
+      in srgb,
+      var(--border-color) 78%,
+      transparent
+    ) !important;
+  }
+
+  /* Performance-safe downgrade for low-end profile */
+  .glass-lite.glass-effect
+    :is(
+      #view-settings .app-surface,
+      #sw-sessions-modal .app-surface,
+      #tb-modal .app-surface,
+      .sw-session-details,
+      .sw-session-laps-table,
+      .tb-workout-row,
+      .sw-session-header,
+      #toast
+    ):not(button):not(.app-btn):not(.main_btn):not(.main_btn_red):not(
+      .custom-select-options
+    ):not(.custom-select-trigger):not(.select-wrapper) {
+    backdrop-filter: blur(8px) saturate(120%) !important;
+    box-shadow:
+      inset 0 1px 1px rgb(255 255 255 / 0.22),
+      0 4px 10px rgb(0 0 0 / 0.12) !important;
+  }
+
   /* VIEW TRANSITIONS */
   @keyframes slide-in-from-right {
     from {
