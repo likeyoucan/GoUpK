@@ -42,6 +42,12 @@ export function initDynamicRingAndGoLayout() {
   let settleCenterRaf = 0;
   let needsSettleCenter = false;
 
+  const shouldRunGoPass = ({ force = false } = {}) => {
+    if (force) return true;
+    const modalContainer = document.getElementById("modal-container");
+    return !(modalContainer && modalContainer.classList.contains("active"));
+  };
+
   const refreshNow = () => {
     rafId = 0;
 
@@ -82,6 +88,9 @@ export function initDynamicRingAndGoLayout() {
       return;
     }
 
+    // GO-center pass only when no modal is active (except force flows).
+    if (!shouldRunGoPass()) return;
+
     displays.forEach((displayEl) => {
       centerGoDisplay(displayEl);
     });
@@ -93,6 +102,7 @@ export function initDynamicRingAndGoLayout() {
     if (settleCenterRaf) cancelAnimationFrame(settleCenterRaf);
     settleCenterRaf = requestAnimationFrame(() => {
       settleCenterRaf = 0;
+      if (!shouldRunGoPass({ force: true })) return;
       displays.forEach((displayEl) => centerGoDisplay(displayEl));
     });
   };
@@ -166,8 +176,11 @@ export function initDynamicRingAndGoLayout() {
 
     setDisplayState(displayEl, { wasGo: nowGo, text });
 
-    startSplitTracking(120);
-    scheduleRefresh({ settleCenter: false });
+    // Re-center only on GO-related transitions, not on every time text change.
+    if (nowGo || prev.wasGo) {
+      startSplitTracking(120);
+      scheduleRefresh({ settleCenter: false });
+    }
   };
 
   const classObservers = displays.map((displayEl) => {
@@ -202,6 +215,7 @@ export function initDynamicRingAndGoLayout() {
   };
 
   const onMsChanged = () => {
+    // Scale update is still needed, GO-center can wait.
     startSplitTracking(120);
     scheduleRefresh({ settleCenter: false });
   };
