@@ -1,4 +1,4 @@
-// Файл: www/js/stopwatch/stopwatch-sessions.js 1
+// Файл: www/js/stopwatch/stopwatch-sessions.js
 
 import {
   $,
