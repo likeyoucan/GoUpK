@@ -39,6 +39,7 @@ class ModalManager {
     this._warmTimeout = 0;
 
     this._firstBottomSheetShown = false;
+    this._cheapFirstOpenDone = new Set();
 
     this.dragController = new BottomSheetDragController({
       getTopModal: () => this._getTopModal(),
@@ -191,7 +192,6 @@ class ModalManager {
     const prevFilter = ov.style.backdropFilter;
     const prevWillChange = ov.style.willChange;
 
-    // Most common first-open stutter source on mobile is first blur compilation.
     ov.style.backdropFilter = "none";
     ov.style.willChange = "opacity";
 
@@ -204,8 +204,54 @@ class ModalManager {
       this._firstBottomSheetShown = true;
     };
 
-    // Restore shortly after transition starts.
-    const timer = setTimeout(restore, 520);
+    const timer = setTimeout(restore, 560);
+
+    return () => {
+      clearTimeout(timer);
+      restore();
+    };
+  }
+
+  _applyCheapFirstOpenForModal(modal) {
+    if (!modal || modal.id !== "tb-modal") return () => {};
+    if (this._cheapFirstOpenDone.has(modal.id)) return () => {};
+
+    const sheet = modal.el;
+    const overlay = this.bottomSheetOverlay;
+
+    const prevSheetFilter = sheet.style.backdropFilter;
+    const prevSheetWillChange = sheet.style.willChange;
+
+    let prevOverlayFilter = "";
+    let prevOverlayWillChange = "";
+
+    if (overlay) {
+      prevOverlayFilter = overlay.style.backdropFilter;
+      prevOverlayWillChange = overlay.style.willChange;
+      overlay.style.backdropFilter = "none";
+      overlay.style.willChange = "opacity";
+    }
+
+    sheet.style.backdropFilter = "none";
+    sheet.style.willChange = "transform, opacity";
+
+    let restored = false;
+    const restore = () => {
+      if (restored) return;
+      restored = true;
+
+      sheet.style.backdropFilter = prevSheetFilter;
+      sheet.style.willChange = prevSheetWillChange;
+
+      if (overlay) {
+        overlay.style.backdropFilter = prevOverlayFilter;
+        overlay.style.willChange = prevOverlayWillChange;
+      }
+
+      this._cheapFirstOpenDone.add(modal.id);
+    };
+
+    const timer = setTimeout(restore, 620);
 
     return () => {
       clearTimeout(timer);
@@ -233,6 +279,7 @@ class ModalManager {
     this.lastFocusedElement = null;
     this._warmedBottomSheets.clear();
     this._firstBottomSheetShown = false;
+    this._cheapFirstOpenDone.clear();
 
     config.forEach((modalConfig) => {
       const modalEl = $(modalConfig.id);
@@ -291,6 +338,7 @@ class ModalManager {
 
     this._clearPrewarmHooks();
     this._warmedBottomSheets.clear();
+    this._cheapFirstOpenDone.clear();
 
     this._removeEscListener();
     this._detachOverlayClick();
@@ -339,6 +387,7 @@ class ModalManager {
       }
 
       const restoreFirstOpenOverlay = this._applyFirstOpenOverlayOptimization();
+      const restoreCheapForModal = this._applyCheapFirstOpenForModal(modal);
 
       modal.el.style.transition = "none";
       modal.el.style.transform = "translateY(100%)";
@@ -350,8 +399,10 @@ class ModalManager {
         modal.el.style.transform = "translateY(0%)";
       });
 
-      // Ensure overlay optimization restored even if callbacks are skipped.
-      setTimeout(() => restoreFirstOpenOverlay(), 560);
+      setTimeout(() => {
+        restoreFirstOpenOverlay();
+        restoreCheapForModal();
+      }, 620);
     } else if (modal.type === "alert") {
       requestAnimationFrame(() => {
         modal.el.classList.remove("opacity-0");
