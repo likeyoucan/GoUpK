@@ -20,15 +20,6 @@ export function setupTabataWorkouts(tb) {
 
   const disposers = [];
 
-  const clearPrepareEditFocusTimer = () => {
-    if (tb._editFocusTimer) {
-      clearTimeout(tb._editFocusTimer);
-      tb._editFocusTimer = 0;
-    }
-  };
-
-  tb.cancelPrepareEditFocus = clearPrepareEditFocusTimer;
-
   let listRenderRaf = 0;
   const scheduleListRender = () => {
     if (listRenderRaf) return;
@@ -47,8 +38,6 @@ export function setupTabataWorkouts(tb) {
   };
 
   tb.prepareEdit = (idToEdit = null) => {
-    clearPrepareEditFocusTimer();
-
     tb.els.nameError?.classList.add("hidden");
     tb.editingWorkoutId = idToEdit;
 
@@ -85,10 +74,7 @@ export function setupTabataWorkouts(tb) {
       tb.els.editRounds.value = baseRounds;
     }
 
-    tb._editFocusTimer = setTimeout(() => {
-      tb._editFocusTimer = 0;
-      tb.els.editName?.focus();
-    }, 300);
+    setTimeout(() => tb.els.editName?.focus(), 300);
   };
 
   tb.saveWorkout = () => {
@@ -327,8 +313,6 @@ export function setupTabataWorkouts(tb) {
   };
 
   tb._unbindWorkouts = () => {
-    clearPrepareEditFocusTimer();
-
     if (listRenderRaf) {
       cancelAnimationFrame(listRenderRaf);
       listRenderRaf = 0;
