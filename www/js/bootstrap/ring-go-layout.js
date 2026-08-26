@@ -33,6 +33,16 @@ export function initDynamicRingAndGoLayout() {
     return () => {};
   }
 
+  const isDisplayInActiveView = (displayEl) => {
+    const viewEl = displayEl?.closest?.(
+      "#view-stopwatch, #view-timer, #view-tabata",
+    );
+    if (!viewEl) return true;
+    if (viewEl.hasAttribute("inert")) return false;
+    if (viewEl.getAttribute("aria-hidden") === "true") return false;
+    return true;
+  };
+
   // Filled later, but declared early so refreshNow can safely read it.
   let splitViews = [];
 
@@ -83,6 +93,7 @@ export function initDynamicRingAndGoLayout() {
     }
 
     displays.forEach((displayEl) => {
+      if (!isDisplayInActiveView(displayEl)) return;
       centerGoDisplay(displayEl);
     });
 
@@ -93,7 +104,10 @@ export function initDynamicRingAndGoLayout() {
     if (settleCenterRaf) cancelAnimationFrame(settleCenterRaf);
     settleCenterRaf = requestAnimationFrame(() => {
       settleCenterRaf = 0;
-      displays.forEach((displayEl) => centerGoDisplay(displayEl));
+      displays.forEach((displayEl) => {
+        if (!isDisplayInActiveView(displayEl)) return;
+        centerGoDisplay(displayEl);
+      });
     });
   };
 
@@ -233,11 +247,17 @@ export function initDynamicRingAndGoLayout() {
   );
 
   const onSplitTransitionStart = () => {
+    const modalContainer = document.getElementById("modal-container");
+    if (modalContainer?.classList.contains("active")) return;
+
     startSplitTracking(520);
     scheduleRefresh({ settleCenter: false });
   };
 
   const onSplitTransitionEnd = () => {
+    const modalContainer = document.getElementById("modal-container");
+    if (modalContainer?.classList.contains("active")) return;
+
     startSplitTracking(180);
     scheduleRefresh({ settleCenter: true });
   };
