@@ -20,27 +20,6 @@ export function setupTabataWorkouts(tb) {
 
   const disposers = [];
 
-  // Prewarm workouts list rendering in idle to reduce first-open hitch.
-  let prewarmListTimer = 0;
-  const prewarmList = () => {
-    if (typeof tb.renderList === "function") {
-      tb.renderList();
-    }
-  };
-
-  if (typeof window.requestIdleCallback === "function") {
-    const id = window.requestIdleCallback(prewarmList, { timeout: 1000 });
-    disposers.push(() => window.cancelIdleCallback?.(id));
-  } else {
-    prewarmListTimer = window.setTimeout(prewarmList, 220);
-    disposers.push(() => {
-      if (prewarmListTimer) {
-        clearTimeout(prewarmListTimer);
-        prewarmListTimer = 0;
-      }
-    });
-  }
-
   let listRenderRaf = 0;
   const scheduleListRender = () => {
     if (listRenderRaf) return;

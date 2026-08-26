@@ -64,27 +64,6 @@ export function setupStopwatchSessions(sw) {
   );
   disposers.push(() => sw.sortSelect?.destroy?.());
 
-  // Prewarm sessions list off the first modal open path.
-  const prewarmSessions = () => {
-    if (typeof sw.sortSessions === "function") {
-      sw.sortSessions(sw.currentSort);
-    }
-  };
-
-  let prewarmTimer = 0;
-  if (typeof window.requestIdleCallback === "function") {
-    const id = window.requestIdleCallback(prewarmSessions, { timeout: 1200 });
-    disposers.push(() => window.cancelIdleCallback?.(id));
-  } else {
-    prewarmTimer = window.setTimeout(prewarmSessions, 250);
-    disposers.push(() => {
-      if (prewarmTimer) {
-        clearTimeout(prewarmTimer);
-        prewarmTimer = 0;
-      }
-    });
-  }
-
   const onNameInput = () => sw.els.nameError?.classList.add("hidden");
   sw.els.nameInput?.addEventListener("input", onNameInput);
   disposers.push(() =>

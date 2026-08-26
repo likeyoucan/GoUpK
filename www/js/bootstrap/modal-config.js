@@ -1,5 +1,20 @@
 // Файл: www/js/bootstrap/modal-config.js
 
+let tbPrepareRaf = 0;
+let tbPrepareIdle = 0;
+
+function cancelTbPrepare() {
+  if (tbPrepareRaf) {
+    cancelAnimationFrame(tbPrepareRaf);
+    tbPrepareRaf = 0;
+  }
+
+  if (tbPrepareIdle && typeof window.cancelIdleCallback === "function") {
+    window.cancelIdleCallback(tbPrepareIdle);
+    tbPrepareIdle = 0;
+  }
+}
+
 export function createModalConfig({ sw, tb }) {
   return [
     {
@@ -12,17 +27,28 @@ export function createModalConfig({ sw, tb }) {
       type: "bottom-sheet",
       handlerId: "tb-modal-handler",
       onOpen: (data) => {
+        cancelTbPrepare();
+
         const run = () => tb.prepareEdit(data?.idToEdit ?? null);
 
-        setTimeout(() => {
+        tbPrepareRaf = requestAnimationFrame(() => {
+          tbPrepareRaf = 0;
+
           if (typeof window.requestIdleCallback === "function") {
-            window.requestIdleCallback(run, { timeout: 800 });
+            tbPrepareIdle = window.requestIdleCallback(
+              () => {
+                tbPrepareIdle = 0;
+                run();
+              },
+              { timeout: 250 },
+            );
           } else {
-            requestAnimationFrame(run);
+            run();
           }
-        }, 460);
+        });
       },
       onClose: () => {
+        cancelTbPrepare();
         tb.editingWorkoutId = null;
       },
     },

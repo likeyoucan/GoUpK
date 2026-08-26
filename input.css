@@ -3674,9 +3674,13 @@
   }
 
   /* ADAPTIVE GLASS QUALITY */
+  .glass-lite #bottom-sheet-overlay {
+    backdrop-filter: blur(2px) !important;
+  }
+
   .glass-lite.glass-effect #tb-modal,
   .glass-lite.glass-effect #sw-sessions-modal {
-    backdrop-filter: blur(8px) saturate(120%);
+    backdrop-filter: blur(8px) saturate(115%) !important;
   }
 
   .glass-lite.glass-effect nav {
