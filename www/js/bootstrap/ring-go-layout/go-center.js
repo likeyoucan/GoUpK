@@ -9,19 +9,6 @@ import {
 
 const displayState = new WeakMap();
 
-function setVarIfChanged(el, name, value) {
-  if (!el) return;
-  const prev = el.style.getPropertyValue(name);
-  if (prev === value) return;
-  el.style.setProperty(name, value);
-}
-
-function setDataIfChanged(el, key, value) {
-  if (!el) return;
-  if (el.dataset[key] === value) return;
-  el.dataset[key] = value;
-}
-
 export function isGoDisplay(displayEl) {
   if (!displayEl) return false;
   const text = String(displayEl.textContent || "")
@@ -75,10 +62,10 @@ export function centerGoDisplay(displayEl) {
   const isGo = displayEl.classList.contains("is-go") && text === "GO";
 
   if (!isGo) {
-    setVarIfChanged(displayEl, "--go-nudge-x", "0px");
-    setVarIfChanged(displayEl, "--go-nudge-y", "0px");
-    setDataIfChanged(displayEl, "goNudgeX", "0");
-    setDataIfChanged(displayEl, "goNudgeY", "0");
+    displayEl.style.setProperty("--go-nudge-x", "0px");
+    displayEl.style.setProperty("--go-nudge-y", "0px");
+    displayEl.dataset.goNudgeX = "0";
+    displayEl.dataset.goNudgeY = "0";
     return;
   }
 
@@ -107,8 +94,8 @@ export function centerGoDisplay(displayEl) {
   const prevY = displayEl.style.getPropertyValue("--go-nudge-y");
 
   // Меряем текст в нейтральной позиции, чтобы не накапливать дрейф.
-  setVarIfChanged(displayEl, "--go-nudge-x", "0px");
-  setVarIfChanged(displayEl, "--go-nudge-y", "0px");
+  displayEl.style.setProperty("--go-nudge-x", "0px");
+  displayEl.style.setProperty("--go-nudge-y", "0px");
   void displayEl.offsetWidth;
 
   let inkRect = null;
@@ -125,8 +112,8 @@ export function centerGoDisplay(displayEl) {
 
   const txtRect = inkRect || displayEl.getBoundingClientRect();
   if (!txtRect || !txtRect.width || !txtRect.height) {
-    setVarIfChanged(displayEl, "--go-nudge-x", prevX || "0px");
-    setVarIfChanged(displayEl, "--go-nudge-y", prevY || "0px");
+    displayEl.style.setProperty("--go-nudge-x", prevX || "0px");
+    displayEl.style.setProperty("--go-nudge-y", prevY || "0px");
     return;
   }
 
@@ -139,18 +126,18 @@ export function centerGoDisplay(displayEl) {
   const nextX = snap2(clamp(dx, -36, 36));
   const nextY = snap2(clamp(dy, -36, 36));
 
-  setVarIfChanged(displayEl, "--go-nudge-x", `${nextX}px`);
-  setVarIfChanged(displayEl, "--go-nudge-y", `${nextY}px`);
-  setDataIfChanged(displayEl, "goNudgeX", String(nextX));
-  setDataIfChanged(displayEl, "goNudgeY", String(nextY));
+  displayEl.style.setProperty("--go-nudge-x", `${nextX}px`);
+  displayEl.style.setProperty("--go-nudge-y", `${nextY}px`);
+  displayEl.dataset.goNudgeX = String(nextX);
+  displayEl.dataset.goNudgeY = String(nextY);
 }
 
 export function resetGoNudges(displays) {
   displays.forEach((displayEl) => {
     if (!displayEl) return;
-    setVarIfChanged(displayEl, "--go-nudge-x", "0px");
-    setVarIfChanged(displayEl, "--go-nudge-y", "0px");
-    setDataIfChanged(displayEl, "goNudgeX", "0");
-    setDataIfChanged(displayEl, "goNudgeY", "0");
+    displayEl.style.setProperty("--go-nudge-x", "0px");
+    displayEl.style.setProperty("--go-nudge-y", "0px");
+    displayEl.dataset.goNudgeX = "0";
+    displayEl.dataset.goNudgeY = "0";
   });
 }
