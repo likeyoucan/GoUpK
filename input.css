@@ -4765,3 +4765,43 @@
     font-weight: 600;
   }
 }
+
+/* ===== Tabata Glass Shadow Stabilization =====
+   Решает: слишком сильная тень у шаблонов тренировок в glass-режиме
+   и ее визуальное обрезание внутри scroll-контейнера.
+*/
+.glass-effect #tb-workoutsList {
+  padding-inline: 2px; /* небольшой запас, чтобы тень не резалась по краям */
+}
+
+.glass-effect #tb-workoutsList .tb-workout-row {
+  margin-inline: 1px; /* дополнительный безопасный отступ под тень */
+  border: 1px solid color-mix(in srgb, var(--border-color) 66%, #ffffff 34%);
+  background-color: color-mix(in srgb, var(--surface-color) 54%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.2),
+    0 2px 8px rgb(0 0 0 / 0.14) !important; /* мягче и без большого spread */
+}
+
+html.dark.glass-effect #tb-workoutsList .tb-workout-row {
+  border-color: color-mix(in srgb, var(--border-color) 74%, #ffffff 26%);
+  background-color: color-mix(in srgb, var(--surface-color) 22%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.06),
+    0 2px 8px rgb(0 0 0 / 0.24) !important;
+}
+
+/* Чтобы active row (shadow-md из JS/Tailwind) не пробивал мягкую тень */
+.glass-effect #tb-workoutsList .tb-workout-row.shadow-sm,
+.glass-effect #tb-workoutsList .tb-workout-row.shadow-md {
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.2),
+    0 2px 8px rgb(0 0 0 / 0.14) !important;
+}
+
+html.dark.glass-effect #tb-workoutsList .tb-workout-row.shadow-sm,
+html.dark.glass-effect #tb-workoutsList .tb-workout-row.shadow-md {
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.06),
+    0 2px 8px rgb(0 0 0 / 0.24) !important;
+}
