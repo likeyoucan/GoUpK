@@ -2472,13 +2472,13 @@
     gap: var(--space-4);
   }
 
-#sw-lapsContainer {
-  padding-bottom: var(--nav-height);
-}
+  #sw-lapsContainer {
+    padding-bottom: var(--nav-height);
+  }
 
-#tb-workoutsList {
-  padding: 4px 3px calc(var(--nav-height) + 6px);
-}
+  #tb-workoutsList {
+    padding: 4px 3px calc(var(--nav-height) + 6px);
+  }
 
   #toast {
     top: calc(var(--safe-top) + 1rem);
@@ -2821,7 +2821,26 @@
       0 2px 4px rgb(0 0 0 / 0.2);
   }
 
-  
+  /* ===== Tabata Glass Shadow Stabilization (No Clip) =====
+   Внешнюю тень убираем: она клипается в scroll-контейнере.
+   Оставляем inset + border для эффекта стекла без обрезаний.
+*/
+  .glass-effect #tb-workoutsList .tb-workout-row,
+  .glass-effect #tb-workoutsList .tb-workout-row.shadow-sm,
+  .glass-effect #tb-workoutsList .tb-workout-row.shadow-md {
+    margin-inline: 0;
+    border: 1px solid color-mix(in srgb, var(--border-color) 66%, #ffffff 34%);
+    background-color: color-mix(in srgb, var(--surface-color) 54%, transparent);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.18) !important;
+  }
+
+  html.dark.glass-effect #tb-workoutsList .tb-workout-row,
+  html.dark.glass-effect #tb-workoutsList .tb-workout-row.shadow-sm,
+  html.dark.glass-effect #tb-workoutsList .tb-workout-row.shadow-md {
+    border-color: color-mix(in srgb, var(--border-color) 74%, #ffffff 26%);
+    background-color: color-mix(in srgb, var(--surface-color) 22%, transparent);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06) !important;
+  }
 
   html:not(.dark).glass-effect .sw-session-laps-table .lap-row {
     background-color: color-mix(in srgb, var(--surface-color) 72%, transparent);
@@ -4006,15 +4025,19 @@
     border-color: color-mix(in srgb, var(--text-color) 24%, transparent);
   }
 
-#sw-lapsContainer,
-#sw-sessionsList {
-  contain: layout paint style;
-}
+  #sw-lapsContainer {
+    padding-bottom: var(--nav-height);
+  }
 
-/* В Tabata убираем paint, иначе тени строк режутся границей контейнера */
-#tb-workoutsList {
-  contain: layout style;
-}
+  #tb-workoutsList {
+    padding: 6px 6px calc(var(--nav-height) + 8px);
+    contain: layout style;
+  }
+
+  /* В Tabata убираем paint, иначе тени строк режутся границей контейнера */
+  #tb-workoutsList {
+    contain: layout style;
+  }
 
   /* =========================================
    SAVED LAPS TABLE
