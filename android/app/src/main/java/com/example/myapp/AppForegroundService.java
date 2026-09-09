@@ -38,7 +38,7 @@ public class AppForegroundService extends Service {
     private static final String KEY_LAST_ERROR = "last_error";
     private static final String KEY_LAST_ERROR_AT = "last_error_at";
 
-    private static final long TICK_MS = 250L;
+    private static final long TICK_MS = 750L;
 
     private Handler tickerHandler;
     private Runnable tickerRunnable;
@@ -82,7 +82,6 @@ public class AppForegroundService extends Service {
             if (isBlank(channelId)) channelId = state.channelId;
             if (isBlank(channelId)) channelId = CHANNEL_ID;
 
-            // Если пришли payload-поля — обновляем кеш рендера в state.
             if (!isBlank(title)) state.notifTitle = title;
             if (!isBlank(body)) state.notifBody = body;
             if (!isBlank(toggle)) state.toggleTitle = toggle;
@@ -116,7 +115,13 @@ public class AppForegroundService extends Service {
                 stopTicker();
             }
 
-            return START_NOT_STICKY;
+            boolean hasSession =
+                nowState.running
+                    || ForegroundStateStore.MODE_STOPWATCH.equals(nowState.mode)
+                    || ForegroundStateStore.MODE_TIMER.equals(nowState.mode)
+                    || ForegroundStateStore.MODE_TABATA.equals(nowState.mode);
+
+            return hasSession ? START_STICKY : START_NOT_STICKY;
         } catch (Throwable t) {
             saveLastError(t);
             stopTicker();

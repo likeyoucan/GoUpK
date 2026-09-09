@@ -5,6 +5,7 @@ import {
   formatTime,
   requestWakeLock,
   releaseWakeLock,
+  bgWorker,
 } from "./utils.js?v=VERSION";
 import { sw } from "./stopwatch.js?v=VERSION";
 import { tm } from "./timer.js?v=VERSION";
@@ -43,6 +44,7 @@ const FG_ID = 101;
 const ACTION_TOGGLE = 1;
 const POLL_MS = 700;
 const FOREGROUND_STOP_DEBOUNCE_MS = 1200;
+const TOGGLE_DEBOUNCE_MS = 300;
 
 const CHANNEL = {
   id: "stopwatch_channel_silent_v2",
@@ -65,6 +67,7 @@ const PERMISSION_CHECK_TTL_MS = 15000;
 
 let toggleInFlight = false;
 let lastHandledActionAt = 0;
+let lastToggleProcessedAt = 0;
 
 let pendingReadInFlight = false;
 let pendingRerunRequested = false;
@@ -105,22 +108,6 @@ function getCurrentForegroundState() {
     tb,
     activeView: navigation.activeView,
   });
-}
-
-function resolveToggleModeFallback() {
-  if (sw.isRunning || sw.elapsedTime > 0) return "stopwatch";
-
-  if (
-    tm.isRunning ||
-    tm.isPaused ||
-    (typeof tm.getRemainingTime === "function" && tm.getRemainingTime() > 0)
-  ) {
-    return "timer";
-  }
-
-  if (tb.status !== "STOPPED") return "tabata";
-
-  return null;
 }
 
 function getFallbackForegroundState() {
@@ -313,7 +300,7 @@ function applyStopwatchRuntimeToJs(nativeState) {
     }
 
     requestWakeLock();
-    sw.bgWorker?.postMessage?.({ command: "start" });
+    bgWorker.postMessage({ command: "start" });
     sw.lastRender = 0;
     sw.tick?.();
   } else {
@@ -326,7 +313,7 @@ function applyStopwatchRuntimeToJs(nativeState) {
       sw.rAF = null;
     }
 
-    sw.bgWorker?.postMessage?.({ command: "stop" });
+    bgWorker.postMessage({ command: "stop" });
     releaseWakeLock();
 
     sw.els.status?.classList.remove("hidden");
@@ -398,7 +385,7 @@ function applyTabataRuntimeToJs(nativeState) {
     tb.lastRender = 0;
 
     requestWakeLock();
-    tb.bgWorker?.postMessage?.({ command: "start" });
+    bgWorker.postMessage({ command: "start" });
 
     tb.updatePhaseStyles?.();
     tb.tick?.();
@@ -412,7 +399,7 @@ function applyTabataRuntimeToJs(nativeState) {
       tb.rAF = null;
     }
 
-    tb.bgWorker?.postMessage?.({ command: "stop" });
+    bgWorker.postMessage({ command: "stop" });
     releaseWakeLock();
 
     tb.updatePhaseStyles?.();
@@ -472,6 +459,12 @@ async function pullRuntimeStateIntoJs(reason = "unknown") {
   }
 }
 
+function shouldSkipToggleByDebounce(nowTs) {
+  if (toggleInFlight) return true;
+  if (nowTs - lastToggleProcessedAt < TOGGLE_DEBOUNCE_MS) return true;
+  return false;
+}
+
 async function processButtonAction(
   buttonId,
   eventAt = Date.now(),
@@ -490,12 +483,31 @@ async function processButtonAction(
   fgDebug("process action", { id, ts, source });
 
   if (id === ACTION_TOGGLE) {
-    // Основной путь: native уже toggled. JS только подтягивает runtime.
-    await pullRuntimeStateIntoJs(`button:${source}`);
-    await syncNotification({
-      reason: "button_toggle_synced_from_native",
-      force: true,
-    });
+    const nowTs = Date.now();
+    if (shouldSkipToggleByDebounce(nowTs)) {
+      fgDebug("skip toggle by debounce/in-flight", {
+        source,
+        nowTs,
+        lastToggleProcessedAt,
+        toggleInFlight,
+      });
+      return;
+    }
+
+    toggleInFlight = true;
+    lastToggleProcessedAt = nowTs;
+
+    try {
+      await pullRuntimeStateIntoJs(`button:${source}`);
+      await syncNotification({
+        reason: "button_toggle_synced_from_native",
+        force: true,
+      });
+    } finally {
+      setTimeout(() => {
+        toggleInFlight = false;
+      }, TOGGLE_DEBOUNCE_MS);
+    }
   }
 }
 
@@ -825,6 +837,7 @@ export async function destroyForegroundService() {
   permissionCheckedAt = 0;
   toggleInFlight = false;
   lastHandledActionAt = 0;
+  lastToggleProcessedAt = 0;
 
   pendingReadInFlight = false;
   pendingRerunRequested = false;

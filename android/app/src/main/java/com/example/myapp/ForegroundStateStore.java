@@ -139,9 +139,15 @@ public class ForegroundStateStore {
 
         RuntimeState s = read();
 
+        long incomingUpdatedAt = runtime.optLong("updatedAt", 0L);
+        if (incomingUpdatedAt > 0L && incomingUpdatedAt + 120L < s.updatedAt) {
+            // Ignore stale JS snapshot; keep fresher native runtime state.
+            return;
+        }
+
         s.mode = runtime.optString("mode", s.mode);
         s.running = runtime.has("running") ? runtime.optBoolean("running", s.running) : s.running;
-        s.updatedAt = runtime.optLong("updatedAt", System.currentTimeMillis());
+        s.updatedAt = incomingUpdatedAt > 0L ? incomingUpdatedAt : System.currentTimeMillis();
 
         s.swElapsedMs = runtime.optLong("swElapsedMs", s.swElapsedMs);
 
@@ -317,18 +323,6 @@ public class ForegroundStateStore {
                 s.running = false;
                 s.tmRemainingMs = 0L;
                 s.tmEndsAt = 0L;
-                s.toggleTitle = "▶";
-                s.updatedAt = now;
-                changed = true;
-            }
-        }
-
-        if (MODE_TABATA.equals(s.mode) && s.running) {
-            long rem = Math.max(0L, s.tbEndsAt - now);
-            if (rem <= 0L) {
-                s.running = false;
-                s.tbRemainingMs = 0L;
-                s.tbEndsAt = 0L;
                 s.toggleTitle = "▶";
                 s.updatedAt = now;
                 changed = true;

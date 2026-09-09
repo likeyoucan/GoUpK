@@ -119,6 +119,25 @@ export function setupTabataBackgroundSync(
         return;
       }
 
+      if (tb.paused) {
+        if (tb.phaseCloseTimer) {
+          clearTimeout(tb.phaseCloseTimer);
+          tb.phaseCloseTimer = null;
+        }
+
+        tb.phaseClosing = false;
+
+        const rem = Math.max(
+          0,
+          tb.remainingAtPause || tb.tabataEngine?.getRemaining?.() || 0,
+        );
+        tb.remainingAtPause = rem;
+
+        tb.updatePhaseStyles();
+        tb.render(rem);
+        return;
+      }
+
       if (!tb.paused && !tb.completionHandled) {
         const rem = getRemainingMs(tb.phaseEndTime);
 

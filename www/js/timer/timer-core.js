@@ -74,28 +74,44 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     tm.rAF = null;
   };
 
-  tm.finishAsCompleted = () => {
+  // Centralized hard sync to zero state to prevent residue after native alarm or worker race.
+  const syncTimerToCompletedZero = () => {
     tm.countdownEngine.stop();
 
     tm.isRunning = false;
     tm.isPaused = false;
     tm.isFinished = true;
+
+    tm.totalDuration = Math.max(0, Number(tm.totalDuration) || 0);
+    tm.initialDurationMs = Math.max(
+      tm.initialDurationMs || 0,
+      tm.totalDuration || 0,
+    );
+
     tm.timeRemainingMs = 0;
     tm.remainingAtPause = 0;
     tm.targetEpochMs = 0;
+    tm.lastUiRem = 0;
+    tm._lastUiPaintTs = 0;
+    tm.skipWorkerTickUntil = 0;
 
-    tm.updateDisplay(0);
-    if (tm.ringCtrl) tm.ringCtrl.snap(0);
-    else if (tm.els?.ring) tm.els.ring.style.strokeDashoffset = 0;
-
+    tm.stopUiLoop();
     tm.bgWorker.postMessage({ command: "reset" });
     cancelExactAlarmSilently();
 
     tm.store.clearActiveTimer();
-    tm.stopUiLoop();
     tm.releaseWakeLock();
     tm.updateTitle("");
+    tm.updateDisplay(0);
+    tm.updateAdjustButtons();
     tm.updateUIState();
+
+    if (tm.ringCtrl) tm.ringCtrl.snap(0);
+    else if (tm.els?.ring) tm.els.ring.style.strokeDashoffset = 0;
+  };
+
+  tm.finishAsCompleted = () => {
+    syncTimerToCompletedZero();
 
     tm.sm.vibrate([200, 100, 200, 100, 400], "strong");
     tm.sm.play("complete");
@@ -126,23 +142,23 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     }
   }
 
-function scheduleExactAlarmAndHandleHint(targetEpochMs) {
-  void alarmScheduler
-    .schedule(targetEpochMs)
-    .then((scheduled) => {
-      if (
-        scheduled?.scheduled === false &&
-        scheduled?.reason === "cannot_schedule_exact_alarm"
-      ) {
-        logExactAlarmHintOnce();
-      }
-    })
-    .catch(() => {});
-}
+  function scheduleExactAlarmAndHandleHint(targetEpochMs) {
+    void alarmScheduler
+      .schedule(targetEpochMs)
+      .then((scheduled) => {
+        if (
+          scheduled?.scheduled === false &&
+          scheduled?.reason === "cannot_schedule_exact_alarm"
+        ) {
+          logExactAlarmHintOnce();
+        }
+      })
+      .catch(() => {});
+  }
 
-function cancelExactAlarmSilently() {
-  void alarmScheduler.cancel().catch(() => {});
-}
+  function cancelExactAlarmSilently() {
+    void alarmScheduler.cancel().catch(() => {});
+  }
 
   tm.toggle = async () => {
     tm.sm.vibrate(40, "light");

@@ -147,13 +147,27 @@ const stopwatchModule = {
       bgWorker.removeEventListener("message", onWorkerMessage),
     );
 
+    const syncEngineFromCurrentElapsed = () => {
+      if (!this.stopwatchEngine || this.elapsedTime < 0) return;
+      const snap = this.stopwatchEngine.setElapsed(this.elapsedTime);
+      applyStopwatchEngineSnapshot(this, snap);
+      if (!this.isRunning) {
+        const pausedSnap = this.stopwatchEngine.pause();
+        applyStopwatchEngineSnapshot(this, pausedSnap);
+      }
+    };
+
     const onVisibilityChange = () => {
       if (document.visibilityState !== "visible") return;
 
-      // Always pull latest elapsed from engine after wake/background,
-      // including paused state changes triggered from notification.
       if (this.stopwatchEngine?.getElapsed) {
         this.elapsedTime = this.stopwatchEngine.getElapsed();
+      }
+
+      // Defensive resync: after long background/native toggle ensure
+      // engine and UI share the same elapsed baseline.
+      if (this.elapsedTime > 0) {
+        syncEngineFromCurrentElapsed();
       }
 
       if (this.isRunning) {
@@ -162,7 +176,6 @@ const stopwatchModule = {
         return;
       }
 
-      // Important paused case: refresh UI after returning to app.
       if (this.elapsedTime > 0) {
         this.updateDisplay();
       }
