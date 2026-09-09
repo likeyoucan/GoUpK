@@ -17,6 +17,7 @@ import { uiSettingsManager } from "../ui-settings.js?v=VERSION";
 import { store } from "../store.js?v=VERSION";
 import { shareResults } from "../share-results.js?v=VERSION";
 import { APP_EVENTS } from "../constants/events.js?v=VERSION";
+import { emitAppEvent } from "../events/app-events.js?v=VERSION";
 
 import { createRingController } from "../ring/ring-controller.js?v=VERSION";
 import { createStopwatchEngine } from "../core/stopwatch-engine.js?v=VERSION";
@@ -147,16 +148,6 @@ const stopwatchModule = {
       bgWorker.removeEventListener("message", onWorkerMessage),
     );
 
-    const syncEngineFromCurrentElapsed = () => {
-      if (!this.stopwatchEngine || this.elapsedTime < 0) return;
-      const snap = this.stopwatchEngine.setElapsed(this.elapsedTime);
-      applyStopwatchEngineSnapshot(this, snap);
-      if (!this.isRunning) {
-        const pausedSnap = this.stopwatchEngine.pause();
-        applyStopwatchEngineSnapshot(this, pausedSnap);
-      }
-    };
-
     const onVisibilityChange = () => {
       if (document.visibilityState !== "visible") return;
 
@@ -164,10 +155,9 @@ const stopwatchModule = {
         this.elapsedTime = this.stopwatchEngine.getElapsed();
       }
 
-      // Defensive resync: after long background/native toggle ensure
-      // engine and UI share the same elapsed baseline.
       if (this.elapsedTime > 0) {
-        syncEngineFromCurrentElapsed();
+        const snap = this.stopwatchEngine.setElapsed(this.elapsedTime);
+        applyStopwatchEngineSnapshot(this, snap);
       }
 
       if (this.isRunning) {
@@ -290,6 +280,11 @@ const stopwatchModule = {
       this.els.lapBtn.classList.remove("main_btn_red");
       this.els.lapBtn.classList.add("main_btn");
     }
+
+    // Force post-state sync signal for foreground notification bridge.
+    emitAppEvent(APP_EVENTS.ACTIVE_TIMER_CHANGED, {
+      activeTimer: this.isRunning ? "stopwatch" : null,
+    });
 
     this.updateSaveButtonVisibility();
   },
@@ -415,6 +410,8 @@ const stopwatchModule = {
       noLapsDiv.setAttribute("data-i18n", "no_laps");
       noLapsDiv.textContent = t("no_laps");
       this.els.lapsContainer.replaceChildren(noLapsDiv);
+
+      emitAppEvent(APP_EVENTS.ACTIVE_TIMER_CHANGED, { activeTimer: null });
 
       this.updateSaveButtonVisibility();
     }

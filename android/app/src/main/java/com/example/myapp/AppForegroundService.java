@@ -6,7 +6,6 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
-import android.content.res.Configuration;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Handler;
@@ -38,6 +37,9 @@ public class AppForegroundService extends Service {
     private static final String KEY_LAST_ERROR = "last_error";
     private static final String KEY_LAST_ERROR_AT = "last_error_at";
 
+    private static final String ACTION_PREFS = "fg_actions";
+    private static final String KEY_NOTIFICATION_SUPPRESSED = "notification_suppressed";
+
     private static final long TICK_MS = 750L;
 
     private Handler tickerHandler;
@@ -59,6 +61,13 @@ public class AppForegroundService extends Service {
             String action = intent.getAction();
 
             if (ACTION_STOP_SERVICE.equals(action)) {
+                stopTicker();
+                stopServiceSafe();
+                return START_NOT_STICKY;
+            }
+
+            // If user dismissed notification, do not recreate it in background.
+            if (isNotificationSuppressed()) {
                 stopTicker();
                 stopServiceSafe();
                 return START_NOT_STICKY;
@@ -152,6 +161,12 @@ public class AppForegroundService extends Service {
                 @Override
                 public void run() {
                     try {
+                        if (isNotificationSuppressed()) {
+                            tickerStarted = false;
+                            stopServiceSafe();
+                            return;
+                        }
+
                         ForegroundStateStore store = new ForegroundStateStore(AppForegroundService.this);
                         ForegroundStateStore.RuntimeState s = store.read();
 
@@ -320,6 +335,11 @@ public class AppForegroundService extends Service {
             .setColorized(true)
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
             .build();
+    }
+
+    private boolean isNotificationSuppressed() {
+        return getSharedPreferences(ACTION_PREFS, MODE_PRIVATE)
+            .getBoolean(KEY_NOTIFICATION_SUPPRESSED, false);
     }
 
     private int pendingFlags() {

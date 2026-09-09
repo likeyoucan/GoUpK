@@ -45,7 +45,8 @@ const ACTION_TOGGLE = 1;
 const POLL_MS = 700;
 const FOREGROUND_STOP_DEBOUNCE_MS = 1200;
 const TOGGLE_DEBOUNCE_MS = 120;
-const EVENT_SYNC_DELAY_MS = 50;
+const EVENT_SYNC_DELAY_MS = 60;
+const EVENT_SYNC_TRAIL_DELAY_MS = 220;
 
 const CHANNEL = {
   id: "stopwatch_channel_silent_v2",
@@ -78,6 +79,7 @@ let runtimePullInFlight = false;
 let runtimePullQueued = false;
 
 let eventSyncTimer = 0;
+let eventSyncTrailTimer = 0;
 let eventSyncReason = "";
 
 let notificationSuppressed = false;
@@ -97,31 +99,45 @@ function fgDebug(...args) {
 }
 
 function clearEventSyncTimer() {
-  if (!eventSyncTimer) return;
-  clearTimeout(eventSyncTimer);
-  eventSyncTimer = 0;
+  if (eventSyncTimer) {
+    clearTimeout(eventSyncTimer);
+    eventSyncTimer = 0;
+  }
+  if (eventSyncTrailTimer) {
+    clearTimeout(eventSyncTrailTimer);
+    eventSyncTrailTimer = 0;
+  }
   eventSyncReason = "";
 }
 
-function scheduleStateSync(reason = "event", delayMs = EVENT_SYNC_DELAY_MS) {
+function scheduleStateSync(reason = "event") {
   eventSyncReason = reason;
 
   if (eventSyncTimer) {
     clearTimeout(eventSyncTimer);
     eventSyncTimer = 0;
   }
+  if (eventSyncTrailTimer) {
+    clearTimeout(eventSyncTrailTimer);
+    eventSyncTrailTimer = 0;
+  }
 
-  eventSyncTimer = setTimeout(
-    async () => {
-      eventSyncTimer = 0;
-      const r = eventSyncReason || reason;
-      eventSyncReason = "";
+  eventSyncTimer = setTimeout(async () => {
+    eventSyncTimer = 0;
+    const r = eventSyncReason || reason;
 
-      await pushRuntimeStateToNative(`${r}:push`);
-      await syncNotification({ reason: `${r}:notify`, force: true });
-    },
-    Math.max(0, Number(delayMs) || 0),
-  );
+    await pushRuntimeStateToNative(`${r}:push_fast`);
+    await syncNotification({ reason: `${r}:notify_fast`, force: true });
+  }, EVENT_SYNC_DELAY_MS);
+
+  eventSyncTrailTimer = setTimeout(async () => {
+    eventSyncTrailTimer = 0;
+    const r = eventSyncReason || reason;
+    eventSyncReason = "";
+
+    await pushRuntimeStateToNative(`${r}:push_trail`);
+    await syncNotification({ reason: `${r}:notify_trail`, force: true });
+  }, EVENT_SYNC_TRAIL_DELAY_MS);
 }
 
 async function readNativeSuppressedFlag() {
@@ -168,11 +184,7 @@ function getCurrentForegroundState() {
 }
 
 function getFallbackForegroundState() {
-  if (sw.isRunning) return { mode: "stopwatch", running: true, metaKey: "" };
-  if (!sw.isRunning && sw.elapsedTime > 0) {
-    return { mode: "stopwatch", running: false, metaKey: "" };
-  }
-
+  // Priority: currently running modes first.
   if (tm.isRunning) {
     const rem = getTimerRemainingMs();
     const total = tm.initialDurationMs || tm.totalDuration || 0;
@@ -183,6 +195,20 @@ function getFallbackForegroundState() {
     };
   }
 
+  if (tb.status !== "STOPPED" && !tb.paused) {
+    const rem = getTabataRemainingMs();
+    return {
+      mode: "tabata",
+      running: true,
+      metaKey: `${tb.selectedId || "na"}|${tb.currentRound || 0}|${tb.rounds || 0}|${tb.status || "STOPPED"}|${Math.floor(rem / 1000)}`,
+    };
+  }
+
+  if (sw.isRunning) {
+    return { mode: "stopwatch", running: true, metaKey: "" };
+  }
+
+  // Then paused/resumable states.
   if (tm.isPaused) {
     const rem = getTimerRemainingMs();
     const total = tm.initialDurationMs || tm.totalDuration || 0;
@@ -199,9 +225,13 @@ function getFallbackForegroundState() {
     const rem = getTabataRemainingMs();
     return {
       mode: "tabata",
-      running: !tb.paused,
+      running: false,
       metaKey: `${tb.selectedId || "na"}|${tb.currentRound || 0}|${tb.rounds || 0}|${tb.status || "STOPPED"}|${Math.floor(rem / 1000)}`,
     };
+  }
+
+  if (sw.elapsedTime > 0) {
+    return { mode: "stopwatch", running: false, metaKey: "" };
   }
 
   return null;
@@ -626,7 +656,10 @@ export async function syncNotification({
   const plugins = getPlugins();
   if (!plugins) return;
 
-  if (notificationSuppressed) return;
+  if (notificationSuppressed) {
+    await stopForeground();
+    return;
+  }
 
   if (!shouldShowForegroundBanner()) {
     await stopForeground();
@@ -672,6 +705,17 @@ export async function syncNotification({
     accentColor,
     onAccentColor,
   });
+
+  // Keep native runtime state fresh on every notification sync.
+  options.runtimeState = buildRuntimeStateFromJs(
+    payload,
+    state,
+    { isDarkTheme },
+    {
+      accentColor,
+      onAccentColor,
+    },
+  );
 
   fgDebug("sync notification", {
     reason,
@@ -746,9 +790,7 @@ function bindDocumentEvents() {
   );
 
   listeners.unsubs.push(
-    onAppEvent(APP_EVENTS.MS_CHANGED, () =>
-      syncNotification({ reason: "ms_changed" }),
-    ),
+    onAppEvent(APP_EVENTS.MS_CHANGED, () => scheduleStateSync("ms_changed")),
   );
 
   listeners.unsubs.push(
@@ -879,6 +921,7 @@ export async function initForegroundService() {
       isForegroundShown = false;
       lastSignature = "";
       stopPolling();
+      await stopForeground();
     }),
   );
 
