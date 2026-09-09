@@ -44,7 +44,8 @@ const FG_ID = 101;
 const ACTION_TOGGLE = 1;
 const POLL_MS = 700;
 const FOREGROUND_STOP_DEBOUNCE_MS = 1200;
-const TOGGLE_DEBOUNCE_MS = 300;
+const TOGGLE_DEBOUNCE_MS = 120;
+const EVENT_SYNC_DELAY_MS = 50;
 
 const CHANNEL = {
   id: "stopwatch_channel_silent_v2",
@@ -76,6 +77,9 @@ let lastPendingEventAt = 0;
 let runtimePullInFlight = false;
 let runtimePullQueued = false;
 
+let eventSyncTimer = 0;
+let eventSyncReason = "";
+
 const listeners = {
   appState: null,
   appVisibility: null,
@@ -88,6 +92,34 @@ function fgDebug(...args) {
       console.log("[fg]", ...args);
     }
   } catch {}
+}
+
+function clearEventSyncTimer() {
+  if (!eventSyncTimer) return;
+  clearTimeout(eventSyncTimer);
+  eventSyncTimer = 0;
+  eventSyncReason = "";
+}
+
+function scheduleStateSync(reason = "event", delayMs = EVENT_SYNC_DELAY_MS) {
+  eventSyncReason = reason;
+
+  if (eventSyncTimer) {
+    clearTimeout(eventSyncTimer);
+    eventSyncTimer = 0;
+  }
+
+  eventSyncTimer = setTimeout(
+    async () => {
+      eventSyncTimer = 0;
+      const r = eventSyncReason || reason;
+      eventSyncReason = "";
+
+      await pushRuntimeStateToNative(`${r}:push`);
+      await syncNotification({ reason: `${r}:notify`, force: true });
+    },
+    Math.max(0, Number(delayMs) || 0),
+  );
 }
 
 function getTimerRemainingMs() {
@@ -675,16 +707,14 @@ function stopPolling() {
 
 function bindDocumentEvents() {
   listeners.unsubs.push(
-    onAppEvent(APP_EVENTS.ACTIVE_TIMER_CHANGED, async () => {
-      await pushRuntimeStateToNative("active_timer_changed");
-      await syncNotification({ reason: "active_timer_changed" });
+    onAppEvent(APP_EVENTS.ACTIVE_TIMER_CHANGED, () => {
+      scheduleStateSync("active_timer_changed");
     }),
   );
 
   listeners.unsubs.push(
-    onAppEvent(APP_EVENTS.TIMER_STARTED, async () => {
-      await pushRuntimeStateToNative("timer_started_event");
-      await syncNotification({ reason: "timer_started_event" });
+    onAppEvent(APP_EVENTS.TIMER_STARTED, () => {
+      scheduleStateSync("timer_started_event");
     }),
   );
 
@@ -696,13 +726,13 @@ function bindDocumentEvents() {
 
   listeners.unsubs.push(
     onAppEvent(APP_EVENTS.LANGUAGE_CHANGED, () =>
-      syncNotification({ reason: "language_changed" }),
+      syncNotification({ reason: "language_changed", force: true }),
     ),
   );
 
   listeners.unsubs.push(
     onAppEvent(APP_EVENTS.FOREGROUND_NOTIFICATION_SETTING_CHANGED, () =>
-      syncNotification({ reason: "foreground_setting_changed" }),
+      syncNotification({ reason: "foreground_setting_changed", force: true }),
     ),
   );
 }
@@ -820,6 +850,7 @@ export async function initForegroundService() {
 export async function destroyForegroundService() {
   if (!isInitialized) return;
 
+  clearEventSyncTimer();
   cancelPendingStop();
   stopPolling();
   unbindDocumentEvents();
