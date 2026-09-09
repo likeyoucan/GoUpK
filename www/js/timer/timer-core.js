@@ -74,7 +74,6 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     tm.rAF = null;
   };
 
-  // Centralized hard sync to zero state to prevent residue after native alarm or worker race.
   const syncTimerToCompletedZero = () => {
     tm.countdownEngine.stop();
 
@@ -445,6 +444,8 @@ export function setupTimerCore(tm, { showToast, updateText }) {
 
       tm.bgWorker.postMessage({ command: "adjust", time: adjustmentMs });
       scheduleExactAlarmAndHandleHint(tm.targetEpochMs);
+
+      emitAppEvent(APP_EVENTS.MS_CHANGED, undefined);
     };
 
     tm.els.adjustPlusBtn?.addEventListener("click", onAdjustPlus);
@@ -466,6 +467,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
       if (tm.timeRemainingMs <= 0 && tm.isRunning) {
         tm.bgWorker.postMessage({ command: "reset" });
         tm.finishAsCompleted();
+        emitAppEvent(APP_EVENTS.MS_CHANGED, undefined);
         return;
       }
 
@@ -483,6 +485,8 @@ export function setupTimerCore(tm, { showToast, updateText }) {
 
       tm.bgWorker.postMessage({ command: "adjust", time: adjustmentMs });
       scheduleExactAlarmAndHandleHint(tm.targetEpochMs);
+
+      emitAppEvent(APP_EVENTS.MS_CHANGED, undefined);
     };
 
     tm.els.adjustMinusBtn?.addEventListener("click", onAdjustMinus);

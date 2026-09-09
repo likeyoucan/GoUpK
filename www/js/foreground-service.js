@@ -184,7 +184,6 @@ function getCurrentForegroundState() {
 }
 
 function getFallbackForegroundState() {
-  // Priority: currently running modes first.
   if (tm.isRunning) {
     const rem = getTimerRemainingMs();
     const total = tm.initialDurationMs || tm.totalDuration || 0;
@@ -208,7 +207,6 @@ function getFallbackForegroundState() {
     return { mode: "stopwatch", running: true, metaKey: "" };
   }
 
-  // Then paused/resumable states.
   if (tm.isPaused) {
     const rem = getTimerRemainingMs();
     const total = tm.initialDurationMs || tm.totalDuration || 0;
@@ -377,8 +375,11 @@ function applyStopwatchRuntimeToJs(nativeState) {
   if (nativeState.running) {
     sw.stopwatchEngine?.start?.(elapsed);
     sw.isRunning = true;
-    sw.els.status?.classList.add("hidden");
+
     sw.els.display?.classList.remove("is-go");
+    if (sw.els.display) sw.els.display.style.transform = "translateX(0px)";
+
+    sw.els.status?.classList.add("hidden");
     sw.els.lapBtn?.classList.remove("hidden");
     if (sw.els.lapBtn) {
       sw.els.lapBtn.classList.remove("main_btn_red");
@@ -403,14 +404,27 @@ function applyStopwatchRuntimeToJs(nativeState) {
     bgWorker.postMessage({ command: "stop" });
     releaseWakeLock();
 
-    sw.els.status?.classList.remove("hidden");
-    if (sw.els.lapBtn) {
-      sw.els.lapBtn.classList.remove("main_btn");
-      sw.els.lapBtn.classList.add("main_btn_red");
-      sw.els.lapBtn.classList.remove("hidden");
-      sw.els.lapBtn.textContent = t("reset");
+    if (elapsed > 0) {
+      sw.els.display?.classList.remove("is-go");
+      if (sw.els.display) sw.els.display.style.transform = "translateX(0px)";
+      sw.els.status?.classList.remove("hidden");
+      if (sw.els.lapBtn) {
+        sw.els.lapBtn.classList.remove("main_btn");
+        sw.els.lapBtn.classList.add("main_btn_red");
+        sw.els.lapBtn.classList.remove("hidden");
+        sw.els.lapBtn.textContent = t("reset");
+      }
+      sw.updateDisplay?.();
+    } else {
+      sw.els.status?.classList.add("hidden");
+      if (sw.els.display) {
+        sw.els.display.textContent = "GO";
+        sw.els.display.classList.add("is-go");
+        sw.els.display.style.transform = "";
+      }
+      sw.els.lapBtn?.classList.add("hidden");
+      sw.ringCtrl?.snap?.(sw.ringLength);
     }
-    sw.updateDisplay?.();
   }
 
   sw.updateSaveButtonVisibility?.();
@@ -706,15 +720,11 @@ export async function syncNotification({
     onAccentColor,
   });
 
-  // Keep native runtime state fresh on every notification sync.
   options.runtimeState = buildRuntimeStateFromJs(
     payload,
     state,
     { isDarkTheme },
-    {
-      accentColor,
-      onAccentColor,
-    },
+    { accentColor, onAccentColor },
   );
 
   fgDebug("sync notification", {
@@ -790,7 +800,9 @@ function bindDocumentEvents() {
   );
 
   listeners.unsubs.push(
-    onAppEvent(APP_EVENTS.MS_CHANGED, () => scheduleStateSync("ms_changed")),
+    onAppEvent(APP_EVENTS.MS_CHANGED, () => {
+      scheduleStateSync("ms_changed");
+    }),
   );
 
   listeners.unsubs.push(

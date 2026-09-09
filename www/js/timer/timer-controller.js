@@ -20,6 +20,7 @@ import {
   resolveRunningRemaining,
   resolvePausedRemaining,
 } from "../core/runtime-reconcile.js?v=VERSION";
+import { getProgressOffset } from "../core/timers-runtime.js?v=VERSION";
 
 import { setupTimerRender } from "./timer-render.js?v=VERSION";
 import { setupTimerInputs } from "./timer-inputs.js?v=VERSION";
@@ -118,6 +119,17 @@ export const tm = {
         this.timeRemainingMs = rem;
         this.lastUiRem = rem;
         this.updateDisplay(rem);
+
+        if (this.ringCtrl && this.totalDuration > 0) {
+          const targetOffset = getProgressOffset({
+            remainingMs: rem,
+            totalMs: this.totalDuration,
+            ringLength: this.ringLength,
+          });
+          // Snap on resume to avoid visual reset/re-animate from stale position.
+          this.ringCtrl.snap(targetOffset);
+        }
+
         this.startUiLoop?.();
         return;
       }
@@ -128,12 +140,21 @@ export const tm = {
           ? Math.max(0, engineRem)
           : resolvePausedRemaining(this.remainingAtPause, this.timeRemainingMs);
 
-        // Синхронизируем все поля одного состояния.
         this.remainingAtPause = rem;
         this.timeRemainingMs = rem;
         this.lastUiRem = rem;
 
         this.updateDisplay(rem);
+
+        if (this.ringCtrl && this.totalDuration > 0) {
+          const targetOffset = getProgressOffset({
+            remainingMs: rem,
+            totalMs: this.totalDuration,
+            ringLength: this.ringLength,
+          });
+          this.ringCtrl.snap(targetOffset);
+        }
+
         this.updateUIState();
       }
     };

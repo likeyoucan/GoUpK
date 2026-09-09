@@ -1,6 +1,9 @@
 // Файл: www/js/tabata/tabata-background-sync.js
 
-import { getRemainingMs } from "../core/timers-runtime.js?v=VERSION";
+import {
+  getRemainingMs,
+  getProgressOffset,
+} from "../core/timers-runtime.js?v=VERSION";
 
 export function setupTabataBackgroundSync(
   tb,
@@ -133,6 +136,15 @@ export function setupTabataBackgroundSync(
         );
         tb.remainingAtPause = rem;
 
+        if (tb.ringCtrl && tb.phaseDuration > 0) {
+          const targetOffset = getProgressOffset({
+            remainingMs: rem,
+            totalMs: tb.phaseDuration,
+            ringLength: tb.ringLength,
+          });
+          tb.ringCtrl.snap(targetOffset);
+        }
+
         tb.updatePhaseStyles();
         tb.render(rem);
         return;
@@ -152,6 +164,15 @@ export function setupTabataBackgroundSync(
         if (tb.phaseCloseTimer) {
           clearTimeout(tb.phaseCloseTimer);
           tb.phaseCloseTimer = null;
+        }
+
+        if (tb.ringCtrl && tb.phaseDuration > 0) {
+          const targetOffset = getProgressOffset({
+            remainingMs: rem,
+            totalMs: tb.phaseDuration,
+            ringLength: tb.ringLength,
+          });
+          tb.ringCtrl.snap(targetOffset);
         }
 
         tb.render(rem);
