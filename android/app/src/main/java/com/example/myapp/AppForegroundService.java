@@ -196,11 +196,6 @@ public class AppForegroundService extends Service {
         }
     }
 
-    private boolean isDeviceDarkTheme() {
-        int nightModeFlags = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
-        return nightModeFlags == Configuration.UI_MODE_NIGHT_YES;
-    }
-
     private int parseColorOr(String hex, int fallback) {
         if (hex == null) return fallback;
         try {
@@ -256,13 +251,19 @@ public class AppForegroundService extends Service {
         int onAccentColor = parseColorOr(onAccentColorHex, defaultOnAccent);
 
         int timeColor = accentColor;
-
         boolean isPlay = "▶".equals(toggleText) || "Play".equalsIgnoreCase(toggleText);
 
         PendingIntent togglePi = PendingIntent.getBroadcast(
             this,
             201,
             new Intent(this, ForegroundActionReceiver.class).setAction(ACTION_BTN_TOGGLE),
+            pendingFlags()
+        );
+
+        PendingIntent dismissPi = PendingIntent.getBroadcast(
+            this,
+            204,
+            new Intent(this, ForegroundDismissReceiver.class).setAction(ForegroundDismissReceiver.ACTION_FG_DISMISSED),
             pendingFlags()
         );
 
@@ -308,6 +309,7 @@ public class AppForegroundService extends Service {
             .setCustomContentView(compact)
             .setCustomBigContentView(expanded)
             .setContentIntent(contentPi)
+            .setDeleteIntent(dismissPi)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setSilent(true)

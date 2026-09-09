@@ -46,6 +46,12 @@
             android:enabled="true"
             android:exported="false" />
 
+        <!-- Foreground notification dismiss -->
+        <receiver
+            android:name=".ForegroundDismissReceiver"
+            android:enabled="true"
+            android:exported="false" />
+
         <!-- Foreground service -->
         <service
             android:name=".AppForegroundService"

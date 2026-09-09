@@ -80,6 +80,8 @@ let runtimePullQueued = false;
 let eventSyncTimer = 0;
 let eventSyncReason = "";
 
+let notificationSuppressed = false;
+
 const listeners = {
   appState: null,
   appVisibility: null,
@@ -120,6 +122,29 @@ function scheduleStateSync(reason = "event", delayMs = EVENT_SYNC_DELAY_MS) {
     },
     Math.max(0, Number(delayMs) || 0),
   );
+}
+
+async function readNativeSuppressedFlag() {
+  const plugins = getPlugins();
+  const api = plugins?.FgService?.isNotificationSuppressed;
+  if (typeof api !== "function") return false;
+
+  try {
+    const res = await api();
+    return !!res?.suppressed;
+  } catch {
+    return false;
+  }
+}
+
+async function clearNativeSuppressedFlag() {
+  const plugins = getPlugins();
+  const api = plugins?.FgService?.clearNotificationSuppressed;
+  if (typeof api !== "function") return;
+
+  try {
+    await api();
+  } catch {}
 }
 
 function getTimerRemainingMs() {
@@ -601,6 +626,8 @@ export async function syncNotification({
   const plugins = getPlugins();
   if (!plugins) return;
 
+  if (notificationSuppressed) return;
+
   if (!shouldShowForegroundBanner()) {
     await stopForeground();
     return;
@@ -751,6 +778,9 @@ function unbindDocumentEvents() {
 async function handleAppBecameForeground(reason) {
   stopPolling();
 
+  notificationSuppressed = false;
+  await clearNativeSuppressedFlag();
+
   await pullRuntimeStateIntoJs(`${reason}:pull_runtime`);
   await drainPendingButtonActions(`${reason}:pending`);
 
@@ -763,6 +793,12 @@ async function handleAppBecameBackground(reason) {
   cancelPendingStop();
   sm.unlock();
   requestWakeLock();
+
+  if (notificationSuppressed) {
+    stopPolling();
+    return;
+  }
+
   await ensurePermissionIfNeeded(true);
   await syncNotification({ reason });
   startPolling();
@@ -801,6 +837,8 @@ export async function initForegroundService() {
     id: "stopwatch_channel",
   }).catch(() => {});
 
+  notificationSuppressed = await readNativeSuppressedFlag();
+
   const permissionOk = await ensurePermissionIfNeeded(true);
   await ensureNotificationChannel(plugins.FgService, CHANNEL);
 
@@ -836,6 +874,15 @@ export async function initForegroundService() {
   );
 
   rememberHandle(
+    plugins.FgService.addListener?.("notificationDismissed", async () => {
+      notificationSuppressed = true;
+      isForegroundShown = false;
+      lastSignature = "";
+      stopPolling();
+    }),
+  );
+
+  rememberHandle(
     plugins.FgService.addListener?.("notificationTapped", () => {
       plugins.FgService.moveToForeground?.().catch(() => {});
     }),
@@ -843,8 +890,11 @@ export async function initForegroundService() {
 
   await pullRuntimeStateIntoJs("init:pull_runtime");
   await drainPendingButtonActions("init:pending");
-  await pushRuntimeStateToNative("init");
-  await syncNotification({ reason: "init", force: true });
+
+  if (!notificationSuppressed) {
+    await pushRuntimeStateToNative("init");
+    await syncNotification({ reason: "init", force: true });
+  }
 }
 
 export async function destroyForegroundService() {
@@ -876,6 +926,8 @@ export async function destroyForegroundService() {
 
   runtimePullInFlight = false;
   runtimePullQueued = false;
+
+  notificationSuppressed = false;
 
   isInitialized = false;
 }

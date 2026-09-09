@@ -36,6 +36,8 @@ public class CustomForegroundServicePlugin extends Plugin {
     private static final String ACTION_PREFS = "fg_actions";
     private static final String KEY_PENDING_BUTTON_ID = "pending_button_id";
     private static final String KEY_PENDING_AT = "pending_at";
+    private static final String KEY_NOTIFICATION_SUPPRESSED = "notification_suppressed";
+    private static final String KEY_NOTIFICATION_SUPPRESSED_AT = "notification_suppressed_at";
 
     @Override
     public void load() {
@@ -43,27 +45,39 @@ public class CustomForegroundServicePlugin extends Plugin {
             @Override
             public void onReceive(Context context, Intent intent) {
                 if (intent == null) return;
-                if (!ForegroundActionReceiver.ACTION_BRIDGE_EVENT.equals(intent.getAction())) return;
+                String action = intent.getAction();
+                if (action == null) return;
 
-                int buttonId = intent.getIntExtra(ForegroundActionReceiver.EXTRA_BUTTON_ID, 0);
-                long eventAt = intent.getLongExtra(ForegroundActionReceiver.EXTRA_EVENT_AT, 0L);
-                if (buttonId == 0) return;
+                if (ForegroundActionReceiver.ACTION_BRIDGE_EVENT.equals(action)) {
+                    int buttonId = intent.getIntExtra(ForegroundActionReceiver.EXTRA_BUTTON_ID, 0);
+                    long eventAt = intent.getLongExtra(ForegroundActionReceiver.EXTRA_EVENT_AT, 0L);
+                    if (buttonId == 0) return;
 
-                JSObject payload = new JSObject();
-                payload.put("buttonId", buttonId);
-                payload.put("eventAt", eventAt);
-                notifyListeners("buttonClicked", payload, true);
+                    JSObject payload = new JSObject();
+                    payload.put("buttonId", buttonId);
+                    payload.put("eventAt", eventAt);
+                    notifyListeners("buttonClicked", payload, true);
+                    return;
+                }
+
+                if (ForegroundDismissReceiver.ACTION_BRIDGE_NOTIFICATION_DISMISSED.equals(action)) {
+                    JSObject payload = new JSObject();
+                    payload.put("suppressed", true);
+                    payload.put("at", System.currentTimeMillis());
+                    notifyListeners("notificationDismissed", payload, true);
+                }
             }
         };
 
         IntentFilter filter = new IntentFilter(ForegroundActionReceiver.ACTION_BRIDGE_EVENT);
+        filter.addAction(ForegroundDismissReceiver.ACTION_BRIDGE_NOTIFICATION_DISMISSED);
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             getContext().registerReceiver(actionReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
         } else {
             getContext().registerReceiver(actionReceiver, filter);
         }
 
-        // Если событие кнопки пришло, пока WebView спал — отдаем его сразу при загрузке плагина.
         emitPendingButtonIfExists();
     }
 
@@ -205,6 +219,39 @@ public class CustomForegroundServicePlugin extends Plugin {
         call.resolve(out);
     }
 
+    @PluginMethod
+    public void isNotificationSuppressed(PluginCall call) {
+        Context ctx = getContext();
+
+        boolean suppressed = ctx
+            .getSharedPreferences(ACTION_PREFS, Context.MODE_PRIVATE)
+            .getBoolean(KEY_NOTIFICATION_SUPPRESSED, false);
+
+        long at = ctx
+            .getSharedPreferences(ACTION_PREFS, Context.MODE_PRIVATE)
+            .getLong(KEY_NOTIFICATION_SUPPRESSED_AT, 0L);
+
+        JSObject out = new JSObject();
+        out.put("suppressed", suppressed);
+        out.put("at", at);
+        call.resolve(out);
+    }
+
+    @PluginMethod
+    public void clearNotificationSuppressed(PluginCall call) {
+        Context ctx = getContext();
+
+        ctx.getSharedPreferences(ACTION_PREFS, Context.MODE_PRIVATE)
+            .edit()
+            .remove(KEY_NOTIFICATION_SUPPRESSED)
+            .remove(KEY_NOTIFICATION_SUPPRESSED_AT)
+            .apply();
+
+        JSObject out = new JSObject();
+        out.put("cleared", true);
+        call.resolve(out);
+    }
+
     // ===== Runtime state bridge =====
 
     @PluginMethod
@@ -329,7 +376,6 @@ public class CustomForegroundServicePlugin extends Plugin {
             } catch (Exception ignored) {}
         }
 
-        // Если JS передал runtimeState — сохраняем его в native store.
         JSObject runtime = call.getObject("runtimeState");
         if (runtime != null) {
             ForegroundStateStore store = new ForegroundStateStore(getContext());
