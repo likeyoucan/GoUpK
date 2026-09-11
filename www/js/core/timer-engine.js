@@ -106,6 +106,41 @@ export function createCountdownEngine({
     return snapshot();
   }
 
+  function hydrate({
+    status: nextStatus = "idle",
+    totalMs: nextTotalMs = 0,
+    remainingMs: nextRemainingMs = 0,
+    targetEpochMs: nextTargetEpochMs = 0,
+  } = {}) {
+    const safeStatus =
+      nextStatus === "running" || nextStatus === "paused" ? nextStatus : "idle";
+
+    const safeTotal = Math.max(1, clampMs(nextTotalMs || nextRemainingMs || 1));
+    const safeRemaining = Math.min(
+      safeTotal,
+      Math.max(0, clampMs(nextRemainingMs)),
+    );
+
+    totalMs = safeTotal;
+    remainingMs = safeRemaining;
+    status = safeStatus;
+
+    if (safeStatus === "running") {
+      const target = clampMs(nextTargetEpochMs);
+      targetEpochMs = target > 0 ? target : now() + safeRemaining;
+      return snapshot();
+    }
+
+    targetEpochMs = 0;
+
+    if (safeStatus === "idle") {
+      totalMs = 0;
+      remainingMs = 0;
+    }
+
+    return snapshot();
+  }
+
   function getStatus() {
     return status;
   }
@@ -118,6 +153,7 @@ export function createCountdownEngine({
     adjust,
     rebaseFromWorker,
     setPausedRemaining,
+    hydrate,
     getRemaining,
     getStatus,
     snapshot,
