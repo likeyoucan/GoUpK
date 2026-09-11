@@ -187,7 +187,7 @@ function getCurrentForegroundState() {
 function getFallbackForegroundState() {
   if (tm.isRunning) {
     const rem = getTimerRemainingMs();
-    const total = tm.initialDurationMs || tm.totalDuration || 0;
+    const total = tm.totalDuration || tm.initialDurationMs || 0;
     return {
       mode: "timer",
       running: true,
@@ -210,7 +210,7 @@ function getFallbackForegroundState() {
 
   if (tm.isPaused) {
     const rem = getTimerRemainingMs();
-    const total = tm.initialDurationMs || tm.totalDuration || 0;
+    const total = tm.totalDuration || tm.initialDurationMs || 0;
     if (rem > 0) {
       return {
         mode: "timer",
@@ -312,7 +312,7 @@ function buildRuntimeStateFromJs(payload, state, theme, accent) {
     swElapsedMs: Math.max(0, sw.elapsedTime || 0),
 
     tmRemainingMs: getTimerRemainingMs(),
-    tmTotalMs: tm.initialDurationMs || tm.totalDuration || 0,
+    tmTotalMs: tm.totalDuration || tm.initialDurationMs || 0,
 
     tbStatus: tb.status || "STOPPED",
     tbRound: tb.currentRound || 1,

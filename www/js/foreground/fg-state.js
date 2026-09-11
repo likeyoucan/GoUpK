@@ -28,7 +28,7 @@ export function getForegroundState({ sw, tm, tb, activeView }) {
     )}`;
 
   const timerMeta = () =>
-    `${tm.initialDurationMs || tm.totalDuration || 0}|${Math.floor(
+    `${tm.totalDuration || tm.initialDurationMs || 0}|${Math.floor(
       getTimerRemaining(tm) / 1000,
     )}|${tm.isPaused ? "p" : "r"}`;
 
