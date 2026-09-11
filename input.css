@@ -4192,7 +4192,7 @@
   @media (min-width: 1281px) {
     #app-ad-slot {
       position: fixed;
-      top: calc(var(--safe-top) + 8px);
+      top: calc(var(--ad-top-inset, var(--safe-top)) + 8px);
       left: 50%;
       transform: translateX(-50%);
       width: min(96vw, 960px);

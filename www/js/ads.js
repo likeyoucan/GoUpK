@@ -94,6 +94,47 @@ function updateMobileOffsetClass(isBannerVisible) {
   app.classList.toggle("ads-mobile-offset-var", shouldOffset);
 }
 
+function parsePx(value) {
+  const n = Number.parseFloat(String(value || "").trim());
+  return Number.isFinite(n) ? Math.max(0, n) : 0;
+}
+
+function getCssSafeTopPx() {
+  const rootStyles = getComputedStyle(document.documentElement);
+  const fromVar = parsePx(rootStyles.getPropertyValue("--safe-top"));
+  if (fromVar > 0) return fromVar;
+
+  // Fallback for runtimes where --safe-top is not resolved.
+  return parsePx(rootStyles.getPropertyValue("padding-top"));
+}
+
+function getVisualViewportTopPx() {
+  return Math.max(0, Number(window.visualViewport?.offsetTop) || 0);
+}
+
+function getTabletNativeFallbackTopPx() {
+  const cap = window.Capacitor;
+  const native = !!cap?.isNativePlatform?.();
+  if (!native) return 0;
+
+  const shortestSide = Math.min(
+    window.innerWidth || 0,
+    window.innerHeight || 0,
+  );
+  const isTabletLike = shortestSide >= 700;
+  return isTabletLike ? 24 : 0;
+}
+
+function getAdTopInsetPx() {
+  const safeTop = getCssSafeTopPx();
+  const vvTop = getVisualViewportTopPx();
+
+  // Use fallback only when primary signals are absent.
+  const fallback =
+    safeTop < 1 && vvTop < 1 ? getTabletNativeFallbackTopPx() : 0;
+  return Math.round(Math.max(safeTop, vvTop, fallback));
+}
+
 export const adsManager = {
   enabled: true,
   provider: DEFAULT_PROVIDER,
@@ -143,6 +184,12 @@ export const adsManager = {
     }
 
     this._bindViewportListener();
+
+    const slot = $("app-ad-slot");
+    if (slot) {
+      slot.style.setProperty("--ad-top-inset", `${getAdTopInsetPx()}px`);
+    }
+
     this.renderBanner({ force: true });
   },
 
@@ -187,6 +234,28 @@ export const adsManager = {
     this._unbinds.push(() =>
       window.removeEventListener("orientationchange", this._viewportHandler),
     );
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("resize", this._viewportHandler, {
+        passive: true,
+      });
+      window.visualViewport.addEventListener("scroll", this._viewportHandler, {
+        passive: true,
+      });
+
+      this._unbinds.push(() =>
+        window.visualViewport.removeEventListener(
+          "resize",
+          this._viewportHandler,
+        ),
+      );
+      this._unbinds.push(() =>
+        window.visualViewport.removeEventListener(
+          "scroll",
+          this._viewportHandler,
+        ),
+      );
+    }
   },
 
   bindAutoRefresh() {
@@ -334,6 +403,9 @@ export const adsManager = {
       return;
     }
 
+    // Keep ad top inset synced with system overlays/status bars.
+    slot.style.setProperty("--ad-top-inset", `${getAdTopInsetPx()}px`);
+
     const placement = isDesktopAdLayout()
       ? "fixed_top_banner"
       : "inline_top_banner";
@@ -344,6 +416,7 @@ export const adsManager = {
       provider: this.provider,
       placement,
       bannerMode: this.bannerMode,
+      adTopInset: slot.style.getPropertyValue("--ad-top-inset"),
     });
 
     if (!force && signature === this._lastBannerSignature) {
