@@ -2476,10 +2476,6 @@
     padding-bottom: var(--nav-height);
   }
 
-  #tb-workoutsList {
-    padding: 4px 3px calc(var(--nav-height) + 6px);
-  }
-
   #toast {
     top: calc(var(--safe-top) + 1rem);
   }
@@ -4045,17 +4041,8 @@
     border-color: color-mix(in srgb, var(--text-color) 24%, transparent);
   }
 
-  #sw-lapsContainer {
-    padding-bottom: var(--nav-height);
-  }
-
   #tb-workoutsList {
     padding: 6px 6px calc(var(--nav-height) + 8px);
-    contain: layout style;
-  }
-
-  /* В Tabata убираем paint, иначе тени строк режутся границей контейнера */
-  #tb-workoutsList {
     contain: layout style;
   }
 
@@ -4682,11 +4669,9 @@
     flex: 0 0 52px;
   }
 
-  .app-icon-preview {
+  .app-icon-preview-wrap .app-icon-preview {
     width: 100%;
     height: 100%;
-    object-fit: cover;
-    border-radius: 12px;
     display: block;
   }
 

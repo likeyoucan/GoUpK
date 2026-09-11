@@ -25,6 +25,12 @@ function parseJson(raw, fallback) {
   }
 }
 
+function getStoredIconName() {
+  const raw = safeGetLS(STORAGE_KEYS.APP_ICON_NAME);
+  const value = String(raw || "").trim();
+  return value || "default";
+}
+
 export const appProManager = {
   mode: DEFAULT_MODE,
   purchased: false,
@@ -192,13 +198,11 @@ export const appProManager = {
     const isPro = !!this.purchased;
     document.documentElement.classList.toggle("is-pro-user", isPro);
 
-    const preferred = safeGetLS(STORAGE_KEYS.APP_ICON_NAME) || "default";
-    const normalized = preferred === "pro" ? "pro" : "default";
-
+    const preferred = getStoredIconName();
     const canUseCustomIcon = this.canUse("app_icon");
-    const finalIcon = canUseCustomIcon ? normalized : "default";
+    const finalIcon = canUseCustomIcon ? preferred : "default";
 
-    if (!canUseCustomIcon && normalized !== "default") {
+    if (!canUseCustomIcon && preferred !== "default") {
       safeSetLS(STORAGE_KEYS.APP_ICON_NAME, "default");
     }
 
