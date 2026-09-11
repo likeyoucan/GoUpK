@@ -41,11 +41,11 @@ export const sm = {
   VOLUME_PREVIEW_DELAY: 160,
 
   THEME_VOL_MULTIPLIERS: {
-    classic: 1.0,
-    sport: 1.6,
-    vibe: 2.2,
-    work: 1.9,
-    life: 1.7,
+    classic: 1,
+    sport: 1,
+    vibe: 1,
+    work: 1,
+    life: 1,
   },
 
   vibroIntensities: { light: 0.5, medium: 1, strong: 1.5, tactile: 0.8 },
