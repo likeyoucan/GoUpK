@@ -49,11 +49,11 @@ export function vibrate(sm, basePattern, intensityKey = "medium") {
 
     const rawLevel = Number(sm.vibroLevel || 1);
     const levelMap = new Map([
-      [0.5, 0.44], // min
-      [0.75, 0.62], // low
-      [1, 0.82], // medium
-      [1.5, 1.14], // high
-      [2, 1.52], // max
+      [0.5, 0.44],
+      [0.75, 0.62],
+      [1, 0.82],
+      [1.5, 1.14],
+      [2, 1.52],
     ]);
 
     const nearestLevel = [0.5, 0.75, 1, 1.5, 2].reduce((prev, cur) =>
@@ -161,17 +161,17 @@ export function play(sm, type, options = {}) {
   if (activeTheme === "classic") {
     if (type === "click") {
       playNote(sm, 2000, "sine", 0, 0.05, 0.4);
-    } else     else if (type === "tick") {
+    } else if (type === "tick") {
       playNote(sm, 2500, "square", 0, 0.05, 0.3);
-    } else     else if (type === "work_start") {
+    } else if (type === "work_start") {
       playNote(sm, 2500, "sine", 0, 0.1, 0.4);
       playNote(sm, 2500, "sine", 0.5, 0.1, 0.4);
       playNote(sm, 2500, "sine", 1, 0.1, 0.4);
       playNote(sm, 3000, "sine", 1.5, 0.6, 0.6);
-    } else     else if (type === "rest_start") {
+    } else if (type === "rest_start") {
       playNote(sm, 2500, "sine", 0, 0.1, 0.5);
       playNote(sm, 1500, "sine", 0.15, 0.5, 0.6);
-    } else     else if (type === "complete") {
+    } else if (type === "complete") {
       playNote(sm, 2500, "square", 0, 0.06, 0.4);
       playNote(sm, 2500, "square", 0.1, 0.06, 0.4);
       playNote(sm, 2500, "square", 0.2, 0.06, 0.4);
@@ -181,21 +181,21 @@ export function play(sm, type, options = {}) {
       playNote(sm, 2500, "square", 1.2, 0.06, 0.4);
       playNote(sm, 2500, "square", 1.3, 0.06, 0.4);
       playNote(sm, 2500, "square", 1.4, 0.06, 0.4);
-    } else     else if (type === "minute_beep") {
+    } else if (type === "minute_beep") {
       playNote(sm, 1500, "sine", 0, 0.1, 0.7);
     }
-  } else   else if (activeTheme === "sport") {
+  } else if (activeTheme === "sport") {
     if (type === "click") {
       playNote(sm, 1200, "sine", 0, 0.05, 0.2 * vol, 200, true);
-    } else     else if (type === "tick") {
+    } else if (type === "tick") {
       playNote(sm, 1500, "sine", 0, 0.1, 0.2 * vol, 300, true);
-    } else     else if (type === "work_start") {
+    } else if (type === "work_start") {
       playNote(sm, 2500, "sine", 0, 0.3, 0.2 * vol, 100);
       playNote(sm, 1000, "sine", 0, 0.3, 0.15 * vol, 50, true);
-    } else     else if (type === "rest_start") {
+    } else if (type === "rest_start") {
       playNote(sm, 1200, "sine", 0, 0.3, 0.2 * vol, 100, true);
       playNote(sm, 600, "sine", 0, 0.3, 0.2 * vol, 50);
-    } else     else if (type === "complete") {
+    } else if (type === "complete") {
       playNote(sm, 2500, "sine", 0, 0.25, 0.15 * vol, 100);
       playNote(sm, 1000, "sine", 0, 0.25, 0.2 * vol, 50);
       playNote(sm, 2500, "sine", 0.35, 0.25, 0.15 * vol, 100);
@@ -203,69 +203,69 @@ export function play(sm, type, options = {}) {
       playNote(sm, 3500, "triangle", 0.7, 0.8, 0.15 * vol, 100);
       playNote(sm, 1500, "sine", 0.7, 0.8, 0.2 * vol, 50);
       playNote(sm, 300, "sine", 0.7, 0.8, 0.1 * vol, 20, true);
-    } else     else if (type === "minute_beep") {
+    } else if (type === "minute_beep") {
       playNote(sm, 2000, "sine", 0, 0.08, 0.8 * vol);
     }
-  } else   else if (activeTheme === "vibe") {
+  } else if (activeTheme === "vibe") {
     if (type === "click") {
       playNote(sm, 300, "sine", 0, 0.1, 0.5 * vol);
-    } else     else if (type === "tick") {
+    } else if (type === "tick") {
       playNote(sm, 400, "sine", 0, 0.15, 0.5 * vol);
-    } else     else if (type === "work_start") {
+    } else if (type === "work_start") {
       playNote(sm, 261.63, "sine", 0, 1.5, 0.4 * vol);
       playNote(sm, 329.63, "sine", 0, 1.5, 0.1 * vol);
       playNote(sm, 392, "sine", 0, 1.5, 0.3 * vol);
-    } else     else if (type === "rest_start") {
+    } else if (type === "rest_start") {
       playNote(sm, 392, "sine", 0, 1, 0.4 * vol);
       playNote(sm, 329.63, "sine", 0.1, 1, 0.3 * vol);
       playNote(sm, 261.63, "sine", 0.2, 1.5, 0.4 * vol);
-    } else     else if (type === "complete") {
+    } else if (type === "complete") {
       playNote(sm, 261.63, "sine", 0, 3, 0.2 * vol);
       playNote(sm, 329.63, "sine", 0.1, 3, 0.3 * vol);
       playNote(sm, 392, "sine", 0.2, 3, 0.3 * vol);
       playNote(sm, 493.88, "sine", 0.3, 3, 0.15 * vol);
-    } else     else if (type === "minute_beep") {
+    } else if (type === "minute_beep") {
       playNote(sm, 500, "sine", 0, 1.5, 0.4 * vol);
     }
-  } else   else if (activeTheme === "work") {
+  } else if (activeTheme === "work") {
     if (type === "click") {
       playNote(sm, 500, "sine", 0, 0.03, 0.4 * vol);
-    } else     else if (type === "tick") {
+    } else if (type === "tick") {
       playNote(sm, 700, "sine", 0, 0.05, 0.3 * vol);
-    } else     else if (type === "work_start") {
+    } else if (type === "work_start") {
       playNote(sm, 880, "sine", 0, 1.5, 0.3 * vol);
       playNote(sm, 1760, "sine", 0, 0.5, 0.15 * vol);
-    } else     else if (type === "rest_start") {
+    } else if (type === "rest_start") {
       playNote(sm, 523.25, "sine", 0, 1.5, 0.2 * vol);
       playNote(sm, 261.63, "sine", 0, 2.5, 0.4 * vol);
-    } else     else if (type === "complete") {
+    } else if (type === "complete") {
       playNote(sm, 880, "sine", 0, 1, 0.2 * vol);
       playNote(sm, 783.99, "sine", 0.4, 1, 0.2 * vol);
       playNote(sm, 659.25, "sine", 0.8, 2, 0.2 * vol);
-    } else     else if (type === "minute_beep") {
+    } else if (type === "minute_beep") {
       playNote(sm, 880, "sine", 0, 0.07, 0.3 * vol);
     }
-  } else   else if (activeTheme === "life") {
+  } else if (activeTheme === "life") {
     if (type === "click") {
       playNote(sm, 440, "sine", 0, 0.08, 0.4 * vol);
-    } else     else if (type === "tick") {
+    } else if (type === "tick") {
       playNote(sm, 523.25, "sine", 0, 0.1, 0.4 * vol);
-    } else     else if (type === "work_start") {
+    } else if (type === "work_start") {
       playNote(sm, 523.25, "sine", 0, 0.2, 0.4 * vol);
       playNote(sm, 659.25, "sine", 0.12, 0.2, 0.4 * vol);
       playNote(sm, 783.99, "sine", 0.24, 0.2, 0.4 * vol);
       playNote(sm, 1046.5, "sine", 0.36, 0.6, 0.45 * vol);
-    } else     else if (type === "rest_start") {
+    } else if (type === "rest_start") {
       playNote(sm, 392, "sine", 0, 0.15, 0.4 * vol);
       playNote(sm, 523.25, "sine", 0.15, 0.6, 0.5 * vol);
-    } else     else if (type === "complete") {
+    } else if (type === "complete") {
       playNote(sm, 523.25, "triangle", 0, 0.15, 0.4 * vol);
       playNote(sm, 523.25, "triangle", 0.15, 0.15, 0.4 * vol);
       playNote(sm, 523.25, "triangle", 0.3, 0.15, 0.4 * vol);
       playNote(sm, 659.25, "triangle", 0.45, 0.4, 0.4 * vol);
       playNote(sm, 587.33, "triangle", 0.85, 0.15, 0.4 * vol);
       playNote(sm, 659.25, "triangle", 1, 1, 0.5 * vol);
-    } else     else if (type === "minute_beep") {
+    } else if (type === "minute_beep") {
       playNote(sm, 783.99, "sine", 0, 0.15, 0.4 * vol);
     }
   }
