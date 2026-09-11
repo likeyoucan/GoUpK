@@ -48,6 +48,22 @@ export function setupTabataLifecycle(tb, deps) {
     updateTitle("");
   }
 
+  // Жесткая нормализация текста GO после stop/complete,
+  // чтобы не оставались артефакты динамического масштаба.
+  function normalizeGoDisplayAfterStop() {
+    const display = tb.els?.timer;
+    if (!display) return;
+
+    display.style.transform = "";
+    display.style.removeProperty("--timer-font-dynamic");
+    display.style.removeProperty("--go-font-dynamic");
+    display.dataset.goFontPx = "";
+    display.dataset.fitSig = "";
+
+    // Триггерим пересчет ring-go-layout (слушает msChanged)
+    document.dispatchEvent(new Event("msChanged"));
+  }
+
   tb.toggle = () => {
     vibrateLifecycle(40, "light");
     sm.play("click");
@@ -173,7 +189,7 @@ export function setupTabataLifecycle(tb, deps) {
 
     updateText(tb.els.timer, "GO");
     tb.els.timer.classList.add("is-go");
-    tb.els.timer.style.transform = "";
+    normalizeGoDisplayAfterStop();
 
     if (resetRing) {
       tb.ringCtrl?.snap(tb.ringLength);

@@ -2878,6 +2878,26 @@
     text-shadow: 0 2px 4px rgb(0 0 0 / 0.3);
   }
 
+  /* Keep visible accent border for selected Tabata row in glass mode */
+  .glass-effect
+    #tb-workoutsList
+    .tb-workout-row.border-\[var\(--primary-color\)\] {
+    border-width: 2px;
+    border-color: var(--primary-color) !important;
+    background-color: color-mix(in srgb, var(--primary-color) 10%, transparent);
+  }
+
+  html.dark.glass-effect
+    #tb-workoutsList
+    .tb-workout-row.border-\[var\(--primary-color\)\] {
+    border-color: color-mix(
+      in srgb,
+      var(--primary-color) 86%,
+      #ffffff 14%
+    ) !important;
+    background-color: color-mix(in srgb, var(--primary-color) 14%, transparent);
+  }
+
   /* ===== Unified Glass Surface (safe extension) ===== */
   :root {
     --glass-surface-bg-light: color-mix(
