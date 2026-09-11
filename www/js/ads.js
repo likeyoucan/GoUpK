@@ -28,6 +28,11 @@ const DEFAULT_INTERSTITIAL_TRIGGERS = {
 const DEFAULT_INTERSTITIAL_MIN_COOLDOWN_MS = 30_000;
 const DESKTOP_FIXED_MIN_WIDTH = 1281;
 
+// In practice status/system top inset on mobile/tablet should stay in a sane range.
+// Clamp avoids rare viewport glitches that can push banner off-screen.
+const MAX_AD_TOP_INSET_PX = 64;
+const MAX_REASONABLE_VV_TOP_PX = 80;
+
 function isNative() {
   return isNativePlatform();
 }
@@ -99,6 +104,10 @@ function parsePx(value) {
   return Number.isFinite(n) ? Math.max(0, n) : 0;
 }
 
+function clamp(n, min, max) {
+  return Math.max(min, Math.min(max, n));
+}
+
 function getCssSafeTopPx() {
   const rootStyles = getComputedStyle(document.documentElement);
   const fromVar = parsePx(rootStyles.getPropertyValue("--safe-top"));
@@ -109,7 +118,10 @@ function getCssSafeTopPx() {
 }
 
 function getVisualViewportTopPx() {
-  return Math.max(0, Number(window.visualViewport?.offsetTop) || 0);
+  const raw = Math.max(0, Number(window.visualViewport?.offsetTop) || 0);
+  // Ignore suspiciously large values that may happen during transient viewport states.
+  if (raw > MAX_REASONABLE_VV_TOP_PX) return 0;
+  return raw;
 }
 
 function getTabletNativeFallbackTopPx() {
@@ -132,7 +144,16 @@ function getAdTopInsetPx() {
   // Use fallback only when primary signals are absent.
   const fallback =
     safeTop < 1 && vvTop < 1 ? getTabletNativeFallbackTopPx() : 0;
-  return Math.round(Math.max(safeTop, vvTop, fallback));
+  const raw = Math.max(safeTop, vvTop, fallback);
+
+  return Math.round(clamp(raw, 0, MAX_AD_TOP_INSET_PX));
+}
+
+function getBannerPlacement() {
+  // Native tablet/webview often handles inline placement more reliably
+  // than fixed top placement with system overlays.
+  if (isNative()) return "inline_top_banner";
+  return isDesktopAdLayout() ? "fixed_top_banner" : "inline_top_banner";
 }
 
 export const adsManager = {
@@ -403,12 +424,10 @@ export const adsManager = {
       return;
     }
 
-    // Keep ad top inset synced with system overlays/status bars.
-    slot.style.setProperty("--ad-top-inset", `${getAdTopInsetPx()}px`);
+    const adTopInsetPx = getAdTopInsetPx();
+    slot.style.setProperty("--ad-top-inset", `${adTopInsetPx}px`);
 
-    const placement = isDesktopAdLayout()
-      ? "fixed_top_banner"
-      : "inline_top_banner";
+    const placement = getBannerPlacement();
 
     const signature = JSON.stringify({
       visible,
@@ -416,7 +435,7 @@ export const adsManager = {
       provider: this.provider,
       placement,
       bannerMode: this.bannerMode,
-      adTopInset: slot.style.getPropertyValue("--ad-top-inset"),
+      adTopInset: adTopInsetPx,
     });
 
     if (!force && signature === this._lastBannerSignature) {
@@ -451,10 +470,12 @@ export const adsManager = {
     if (!isNative()) {
       slot.appendChild(createWebPlaceholder(this.provider));
     } else {
+      // Pass top inset as optional hint for native bridges that support it.
       getAdsPlugin()
         ?.showBanner?.({
           placement,
           provider: this.provider,
+          topInsetPx: adTopInsetPx,
         })
         .catch(() => {});
     }
