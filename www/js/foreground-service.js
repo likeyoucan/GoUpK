@@ -167,9 +167,19 @@ async function clearNativeSuppressedFlag() {
 // Some native runtimes may send epoch timestamp instead of remainingMs.
 function normalizeRemainingMsFromNative(value) {
   const raw = Math.max(0, Number(value) || 0);
+  if (!Number.isFinite(raw) || raw <= 0) return 0;
+
+  // Epoch in milliseconds
   if (raw > 1_000_000_000_000) {
     return Math.max(0, raw - Date.now());
   }
+
+  // Epoch in seconds (10-digit style)
+  if (raw > 1_000_000_000 && raw < 1_000_000_000_000) {
+    return Math.max(0, raw * 1000 - Date.now());
+  }
+
+  // Normal remaining ms
   return raw;
 }
 
@@ -571,7 +581,7 @@ function applyTimerRuntimeToJs(nativeState) {
 }
 
 function applyTabataRuntimeToJs(nativeState) {
-  const rem = normalizeRemainingMsFromNative(nativeState.tbRemainingMs);
+  let rem = normalizeRemainingMsFromNative(nativeState.tbRemainingMs);
   const incomingPhaseDuration = Math.max(
     0,
     Number(nativeState.tbPhaseDuration) || 0,
@@ -581,7 +591,31 @@ function applyTabataRuntimeToJs(nativeState) {
   tb.currentRound = Math.max(1, Number(nativeState.tbRound) || 1);
   tb.rounds = Math.max(1, Number(nativeState.tbRounds) || tb.rounds || 1);
 
-  const shouldBeStopped = tb.status === "STOPPED" || rem <= 0;
+  const knownPhaseDuration = Math.max(
+    0,
+    incomingPhaseDuration || tb.phaseDuration || 0,
+  );
+
+  // Guard against stale/invalid paused snapshot from native:
+  // if timer is "not running" but remaining is wildly larger than phase duration,
+  // this is usually epoch-like/stale payload, so treat as STOPPED.
+  const invalidPausedSnapshot =
+    !nativeState.running &&
+    tb.status !== "STOPPED" &&
+    knownPhaseDuration > 0 &&
+    rem > knownPhaseDuration * 2;
+
+  // If running payload is invalidly large, clamp to phase duration.
+  if (
+    nativeState.running &&
+    knownPhaseDuration > 0 &&
+    rem > knownPhaseDuration * 2
+  ) {
+    rem = knownPhaseDuration;
+  }
+
+  const shouldBeStopped =
+    tb.status === "STOPPED" || rem <= 0 || invalidPausedSnapshot;
 
   if (shouldBeStopped) {
     tb.status = "STOPPED";
@@ -616,10 +650,7 @@ function applyTabataRuntimeToJs(nativeState) {
     return;
   }
 
-  tb.phaseDuration = Math.max(
-    rem,
-    incomingPhaseDuration || tb.phaseDuration || 0,
-  );
+  tb.phaseDuration = Math.max(rem, knownPhaseDuration);
 
   if (tb.ringCtrl && tb.phaseDuration > 0) {
     const targetOffset = getProgressOffset({
