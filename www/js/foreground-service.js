@@ -334,6 +334,34 @@ function buildRuntimeStateFromJs(payload, state, theme, accent) {
   };
 }
 
+function buildClearedRuntimeState(theme, accent) {
+  return {
+    mode: "none",
+    running: false,
+    updatedAt: Date.now(),
+
+    swElapsedMs: 0,
+
+    tmRemainingMs: 0,
+    tmTotalMs: 0,
+
+    tbStatus: "STOPPED",
+    tbRound: 1,
+    tbRounds: 1,
+    tbPhaseDuration: 0,
+    tbWorkoutName: t("tabata"),
+    tbRemainingMs: 0,
+
+    notifTitle: "Stopwatch",
+    notifBody: "00:00",
+
+    channelId: CHANNEL.id,
+    isDarkTheme: !!theme?.isDarkTheme,
+    accentColor: accent?.accentColor || "#3399ff",
+    onAccentColor: accent?.onAccentColor || "#ffffff",
+  };
+}
+
 async function pushRuntimeStateToNative(reason = "unknown") {
   const plugins = getPlugins();
   const api = plugins?.FgService?.setRuntimeState;
@@ -342,22 +370,26 @@ async function pushRuntimeStateToNative(reason = "unknown") {
   if (document.visibilityState !== "visible") return;
 
   const state = getResolvedForegroundState();
-  if (!state) return;
-
-  const payload = buildForegroundPayload({
-    state,
-    sw,
-    tm,
-    tb,
-    t,
-    $,
-    formatTime,
-  });
-
   const theme = getThemeSnapshot();
   const accent = getAccentSnapshot();
 
-  const runtimeState = buildRuntimeStateFromJs(payload, state, theme, accent);
+  let runtimeState;
+
+  if (state) {
+    const payload = buildForegroundPayload({
+      state,
+      sw,
+      tm,
+      tb,
+      t,
+      $,
+      formatTime,
+    });
+
+    runtimeState = buildRuntimeStateFromJs(payload, state, theme, accent);
+  } else {
+    runtimeState = buildClearedRuntimeState(theme, accent);
+  }
 
   try {
     await api({ runtimeState });
