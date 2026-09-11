@@ -252,23 +252,6 @@ async function bootstrap() {
   );
 }
 
-function destroyAppRuntime() {
-  try {
-    appBag.run();
-  } catch (err) {
-    console.error("[destroy-runtime]", err);
-  }
-}
-
-const onPageHide = () => destroyAppRuntime();
-const onBeforeUnload = () => destroyAppRuntime();
-
-window.addEventListener("pagehide", onPageHide, { once: true });
-window.addEventListener("beforeunload", onBeforeUnload, { once: true });
-
-appBag.add(() => window.removeEventListener("pagehide", onPageHide));
-appBag.add(() => window.removeEventListener("beforeunload", onBeforeUnload));
-
 async function startBoot() {
   try {
     await bootstrap();

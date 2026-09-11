@@ -35,6 +35,10 @@ function bindForegroundLifecycle({
   initForegroundService();
 
   const onBeforeUnload = () => {
+    // Ignore transient unloads (mailto/intents/background hops).
+    // Run final cleanup only on real document termination.
+    if (document.visibilityState !== "hidden") return;
+
     adsManager?.showInterstitialIfAllowed?.("app_close");
     destroyForegroundService();
   };
