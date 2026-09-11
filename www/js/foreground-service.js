@@ -164,6 +164,15 @@ async function clearNativeSuppressedFlag() {
   } catch {}
 }
 
+// Some native runtimes may send epoch timestamp instead of remainingMs.
+function normalizeRemainingMsFromNative(value) {
+  const raw = Math.max(0, Number(value) || 0);
+  if (raw > 1_000_000_000_000) {
+    return Math.max(0, raw - Date.now());
+  }
+  return raw;
+}
+
 function getTimerRemainingMs() {
   if (tm.isRunning) return Math.max(0, (tm.targetEpochMs || 0) - Date.now());
   return Math.max(0, tm.remainingAtPause || tm.timeRemainingMs || 0);
@@ -465,16 +474,48 @@ function applyStopwatchRuntimeToJs(nativeState) {
 }
 
 function applyTimerRuntimeToJs(nativeState) {
-  const rem = Math.max(0, Number(nativeState.tmRemainingMs) || 0);
-  const total = Math.max(rem, Number(nativeState.tmTotalMs) || 0);
+  const rem = normalizeRemainingMsFromNative(nativeState.tmRemainingMs);
+  const totalRaw = Math.max(0, Number(nativeState.tmTotalMs) || 0);
+  const total = Math.max(rem, totalRaw);
+
+  if (rem <= 0 || total <= 0) {
+    tm.countdownEngine?.stop?.();
+
+    tm.totalDuration = 0;
+    tm.initialDurationMs = 0;
+    tm.timeRemainingMs = 0;
+    tm.remainingAtPause = 0;
+    tm.targetEpochMs = 0;
+
+    tm.isRunning = false;
+    tm.isPaused = false;
+    tm.isFinished = false;
+    tm.lastUiRem = 0;
+    tm._lastUiPaintTs = 0;
+
+    tm.stopUiLoop?.();
+    tm.bgWorker?.postMessage?.({ command: "stop" });
+    releaseWakeLock();
+
+    tm.updateUIState?.();
+    tm.updateAdjustButtons?.();
+
+    if (tm.ringCtrl) tm.ringCtrl.snap(tm.ringLength);
+    if (tm.els?.display) {
+      tm.els.display.style.transform = "";
+      tm.els.display.classList.add("is-go");
+      tm.els.display.style.removeProperty("--timer-font-dynamic");
+      updateText(tm.els.display, "GO");
+    }
+    return;
+  }
 
   tm.totalDuration = total;
   tm.initialDurationMs = total;
   tm.timeRemainingMs = rem;
   tm.remainingAtPause = rem;
 
-  const nextStatus =
-    nativeState.running && rem > 0 ? "running" : rem > 0 ? "paused" : "idle";
+  const nextStatus = nativeState.running ? "running" : "paused";
 
   const snap = tm.countdownEngine?.hydrate?.({
     status: nextStatus,
@@ -495,7 +536,7 @@ function applyTimerRuntimeToJs(nativeState) {
     tm.targetEpochMs = nextStatus === "running" ? Date.now() + rem : 0;
   }
 
-  if (nativeState.running && rem > 0) {
+  if (nativeState.running) {
     tm.isRunning = true;
     tm.isPaused = false;
     tm.isFinished = false;
@@ -507,8 +548,8 @@ function applyTimerRuntimeToJs(nativeState) {
     tm.startUiLoop?.();
   } else {
     tm.isRunning = false;
-    tm.isPaused = rem > 0;
-    tm.isFinished = rem <= 0;
+    tm.isPaused = true;
+    tm.isFinished = false;
 
     tm.stopUiLoop?.();
     tm.bgWorker?.postMessage?.({ command: "stop" });
@@ -530,7 +571,7 @@ function applyTimerRuntimeToJs(nativeState) {
 }
 
 function applyTabataRuntimeToJs(nativeState) {
-  const rem = Math.max(0, Number(nativeState.tbRemainingMs) || 0);
+  const rem = normalizeRemainingMsFromNative(nativeState.tbRemainingMs);
   const incomingPhaseDuration = Math.max(
     0,
     Number(nativeState.tbPhaseDuration) || 0,
@@ -539,6 +580,42 @@ function applyTabataRuntimeToJs(nativeState) {
   tb.status = nativeState.tbStatus || "STOPPED";
   tb.currentRound = Math.max(1, Number(nativeState.tbRound) || 1);
   tb.rounds = Math.max(1, Number(nativeState.tbRounds) || tb.rounds || 1);
+
+  const shouldBeStopped = tb.status === "STOPPED" || rem <= 0;
+
+  if (shouldBeStopped) {
+    tb.status = "STOPPED";
+    tb.paused = false;
+    tb.completionHandled = true;
+    tb.remainingAtPause = 0;
+    tb.phaseEndTime = 0;
+    tb.phaseDuration = 0;
+
+    if (tb.rAF) {
+      cancelAnimationFrame(tb.rAF);
+      tb.rAF = null;
+    }
+
+    bgWorker.postMessage({ command: "stop" });
+    releaseWakeLock();
+
+    tb.els.listSection?.classList.remove("hidden");
+    tb.els.runningControls?.classList.remove("flex");
+    tb.els.runningControls?.classList.add("hidden");
+    tb.els.status?.classList.add("hidden");
+
+    if (tb.els.timer) {
+      tb.els.timer.style.transform = "";
+      tb.els.timer.classList.add("is-go");
+      tb.els.timer.style.removeProperty("--timer-font-dynamic");
+      tb.els.timer.style.removeProperty("--go-font-dynamic");
+      updateText(tb.els.timer, "GO");
+    }
+
+    tb.ringCtrl?.snap(tb.ringLength);
+    return;
+  }
+
   tb.phaseDuration = Math.max(
     rem,
     incomingPhaseDuration || tb.phaseDuration || 0,
@@ -553,7 +630,7 @@ function applyTabataRuntimeToJs(nativeState) {
     tb.ringCtrl.snap(targetOffset);
   }
 
-  if (nativeState.running && tb.status !== "STOPPED") {
+  if (nativeState.running) {
     tb.paused = false;
     tb.completionHandled = false;
     tb.remainingAtPause = 0;
@@ -566,7 +643,7 @@ function applyTabataRuntimeToJs(nativeState) {
     tb.updatePhaseStyles?.();
     tb.tick?.();
   } else {
-    tb.paused = tb.status !== "STOPPED";
+    tb.paused = true;
     tb.remainingAtPause = rem;
     tb.phaseEndTime = 0;
 
@@ -579,9 +656,15 @@ function applyTabataRuntimeToJs(nativeState) {
     releaseWakeLock();
 
     tb.updatePhaseStyles?.();
-    if (tb.status !== "STOPPED") {
-      tb.render?.(rem);
-    }
+    tb.render?.(rem);
+  }
+}
+
+function updateText(el, text) {
+  if (!el) return;
+  const next = String(text);
+  if (el.textContent !== next) {
+    el.textContent = next;
   }
 }
 
