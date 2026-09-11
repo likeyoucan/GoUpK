@@ -42,6 +42,11 @@ export function setupTabataRender(tb) {
   tb.render = (rem) => {
     const safeRem = Math.max(0, rem);
 
+    // Safety guard: time display should not stay in GO visual mode.
+    if (tb.els.timer?.classList.contains("is-go")) {
+      tb.els.timer.classList.remove("is-go");
+    }
+
     const sTotal = Math.ceil(safeRem / 1000);
     if (sTotal <= 3 && sTotal > 0 && tb.lastBeepSec !== sTotal) {
       sm.play("tick");

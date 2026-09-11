@@ -581,6 +581,9 @@ function applyTimerRuntimeToJs(nativeState) {
 }
 
 function applyTabataRuntimeToJs(nativeState) {
+  const COMPLETION_EPS_MS = 900;
+  const LARGE_INVALID_REMAINING_MS = 6 * 60 * 60 * 1000;
+
   let rem = normalizeRemainingMsFromNative(nativeState.tbRemainingMs);
   const incomingPhaseDuration = Math.max(
     0,
@@ -602,8 +605,8 @@ function applyTabataRuntimeToJs(nativeState) {
   const invalidPausedSnapshot =
     !nativeState.running &&
     tb.status !== "STOPPED" &&
-    knownPhaseDuration > 0 &&
-    rem > knownPhaseDuration * 2;
+    ((knownPhaseDuration > 0 && rem > knownPhaseDuration * 2) ||
+      (knownPhaseDuration === 0 && rem > LARGE_INVALID_REMAINING_MS));
 
   // If running payload is invalidly large, clamp to phase duration.
   if (
@@ -615,7 +618,9 @@ function applyTabataRuntimeToJs(nativeState) {
   }
 
   const shouldBeStopped =
-    tb.status === "STOPPED" || rem <= 0 || invalidPausedSnapshot;
+    tb.status === "STOPPED" ||
+    rem <= COMPLETION_EPS_MS ||
+    invalidPausedSnapshot;
 
   if (shouldBeStopped) {
     tb.status = "STOPPED";
@@ -624,6 +629,12 @@ function applyTabataRuntimeToJs(nativeState) {
     tb.remainingAtPause = 0;
     tb.phaseEndTime = 0;
     tb.phaseDuration = 0;
+
+    tb.phaseClosing = false;
+    if (tb.phaseCloseTimer) {
+      clearTimeout(tb.phaseCloseTimer);
+      tb.phaseCloseTimer = null;
+    }
 
     if (tb.rAF) {
       cancelAnimationFrame(tb.rAF);
@@ -643,12 +654,29 @@ function applyTabataRuntimeToJs(nativeState) {
       tb.els.timer.classList.add("is-go");
       tb.els.timer.style.removeProperty("--timer-font-dynamic");
       tb.els.timer.style.removeProperty("--go-font-dynamic");
+      tb.els.timer.dataset.goFontPx = "";
+      tb.els.timer.dataset.fitSig = "";
       updateText(tb.els.timer, "GO");
     }
 
     tb.ringCtrl?.snap(tb.ringLength);
+
+    document.dispatchEvent(new Event(APP_EVENTS.MS_CHANGED));
     return;
   }
+
+  // Time value should never stay in GO visual mode.
+  if (tb.els.timer) {
+    tb.els.timer.classList.remove("is-go");
+    tb.els.timer.style.removeProperty("--go-font-dynamic");
+    tb.els.timer.dataset.goFontPx = "";
+    tb.els.timer.dataset.fitSig = "";
+  }
+
+  tb.els.listSection?.classList.add("hidden");
+  tb.els.runningControls?.classList.remove("hidden");
+  tb.els.runningControls?.classList.add("flex");
+  tb.els.status?.classList.remove("hidden");
 
   tb.phaseDuration = Math.max(rem, knownPhaseDuration);
 
@@ -668,6 +696,12 @@ function applyTabataRuntimeToJs(nativeState) {
     tb.phaseEndTime = Date.now() + rem;
     tb.lastRender = 0;
 
+    tb.phaseClosing = false;
+    if (tb.phaseCloseTimer) {
+      clearTimeout(tb.phaseCloseTimer);
+      tb.phaseCloseTimer = null;
+    }
+
     requestWakeLock();
     bgWorker.postMessage({ command: "start" });
 
@@ -677,6 +711,12 @@ function applyTabataRuntimeToJs(nativeState) {
     tb.paused = true;
     tb.remainingAtPause = rem;
     tb.phaseEndTime = 0;
+
+    tb.phaseClosing = false;
+    if (tb.phaseCloseTimer) {
+      clearTimeout(tb.phaseCloseTimer);
+      tb.phaseCloseTimer = null;
+    }
 
     if (tb.rAF) {
       cancelAnimationFrame(tb.rAF);
