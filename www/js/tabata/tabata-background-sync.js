@@ -24,6 +24,8 @@ export function setupTabataBackgroundSync(
   tb.tick = (isBackground = false) => {
     if (!canTick()) return;
 
+    tb.enforceDisplayState?.();
+
     const rem = getRemainingMs(tb.phaseEndTime);
 
     if (rem <= 0) {
@@ -119,6 +121,7 @@ export function setupTabataBackgroundSync(
         }
         tb.phaseClosing = false;
         tb.ringCtrl?.snap(tb.ringLength);
+        tb.enforceDisplayState?.();
         return;
       }
 
@@ -146,6 +149,7 @@ export function setupTabataBackgroundSync(
         }
 
         tb.updatePhaseStyles();
+        tb.enforceDisplayState?.();
         tb.render(rem);
         return;
       }
@@ -175,6 +179,7 @@ export function setupTabataBackgroundSync(
           tb.ringCtrl.snap(targetOffset);
         }
 
+        tb.enforceDisplayState?.();
         tb.render(rem);
         tb.tick();
       }

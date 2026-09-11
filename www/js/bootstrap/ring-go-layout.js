@@ -20,6 +20,7 @@ import {
   centerGoDisplay,
   resetGoNudges,
 } from "./ring-go-layout/go-center.js?v=VERSION";
+import { APP_EVENTS } from "../constants/events.js?v=VERSION";
 
 export function initDynamicRingAndGoLayout() {
   const wraps = Array.from(document.querySelectorAll(".timer-circle-wrap"));
@@ -33,7 +34,6 @@ export function initDynamicRingAndGoLayout() {
     return () => {};
   }
 
-  // Filled later, but declared early so refreshNow can safely read it.
   let splitViews = [];
 
   let rafId = 0;
@@ -81,14 +81,11 @@ export function initDynamicRingAndGoLayout() {
       }
     });
 
-    // Heavy path: avoid centering GO while split is actively animating.
-    // It can trigger extra layout work and frame spikes.
     if (isAnySplitAnimating) {
       needsSettleCenter = true;
       return;
     }
 
-    // GO-center pass only when no modal is active (except force flows).
     if (!shouldRunGoPass()) return;
 
     displays.forEach((displayEl) => {
@@ -176,7 +173,6 @@ export function initDynamicRingAndGoLayout() {
 
     setDisplayState(displayEl, { wasGo: nowGo, text });
 
-    // Re-center only on GO-related transitions, not on every time text change.
     if (nowGo || prev.wasGo) {
       startSplitTracking(120);
       scheduleRefresh({ settleCenter: false });
@@ -215,7 +211,6 @@ export function initDynamicRingAndGoLayout() {
   };
 
   const onMsChanged = () => {
-    // Scale update is still needed, GO-center can wait.
     startSplitTracking(120);
     scheduleRefresh({ settleCenter: false });
   };
@@ -224,7 +219,7 @@ export function initDynamicRingAndGoLayout() {
   window.addEventListener("orientationchange", onOrientation, {
     passive: true,
   });
-  document.addEventListener("msChanged", onMsChanged);
+  document.addEventListener(APP_EVENTS.MS_CHANGED, onMsChanged);
 
   if (document.fonts?.ready) {
     document.fonts.ready
@@ -287,7 +282,7 @@ export function initDynamicRingAndGoLayout() {
 
     window.removeEventListener("resize", onResize);
     window.removeEventListener("orientationchange", onOrientation);
-    document.removeEventListener("msChanged", onMsChanged);
+    document.removeEventListener(APP_EVENTS.MS_CHANGED, onMsChanged);
 
     if (document.fonts?.removeEventListener) {
       document.fonts.removeEventListener("loadingdone", onFontsChanged);

@@ -6,6 +6,7 @@ import { bindBottomNav } from "./navigation-bindings.js?v=VERSION";
 import { bindNavSwipe } from "./navigation-gesture-controller.js?v=VERSION";
 import { bindStopwatchDoubleTapLap } from "./stopwatch-gestures.js?v=VERSION";
 import { initSplitResizer } from "./split-resizer.js?v=VERSION";
+import { bindExternalLinks } from "./external-links.js?v=VERSION";
 
 export function bindUiInteractions({
   $,
@@ -54,6 +55,9 @@ export function bindUiInteractions({
 
   unbinders.push(bindStopwatchDoubleTapLap({ $, sw }));
   unbinders.push(initSplitResizer());
+
+  // Unified safe handler for mailto/_blank links in web/capacitor runtime.
+  unbinders.push(bindExternalLinks(document));
 
   return () => {
     unbinders.forEach((fn) => {

@@ -1,5 +1,6 @@
 // Файл: www/js/tabata/tabata-lifecycle.js
 
+import { APP_EVENTS } from "../constants/events.js?v=VERSION";
 import { clearPhaseClose } from "../core/phase-close.js?v=VERSION";
 import { applyTabataEngineSnapshot } from "../core/engine-adapters.js?v=VERSION";
 
@@ -48,8 +49,6 @@ export function setupTabataLifecycle(tb, deps) {
     updateTitle("");
   }
 
-  // Жесткая нормализация текста GO после stop/complete,
-  // чтобы не оставались артефакты динамического масштаба.
   function normalizeGoDisplayAfterStop() {
     const display = tb.els?.timer;
     if (!display) return;
@@ -60,8 +59,27 @@ export function setupTabataLifecycle(tb, deps) {
     display.dataset.goFontPx = "";
     display.dataset.fitSig = "";
 
-    // Триггерим пересчет ring-go-layout (слушает msChanged)
-    document.dispatchEvent(new Event("msChanged"));
+    document.dispatchEvent(new Event(APP_EVENTS.MS_CHANGED));
+  }
+
+  function applyRunningUi() {
+    tb.els.listSection.classList.add("hidden");
+    tb.els.runningControls.classList.remove("hidden");
+    tb.els.runningControls.classList.add("flex");
+
+    updateText(tb.els.totalRoundsDisplay, tb.rounds);
+    tb.els.status.classList.remove("hidden");
+    tb.els.timer.classList.remove("is-go");
+  }
+
+  function applyStoppedUi() {
+    tb.els.listSection.classList.remove("hidden");
+    tb.els.runningControls.classList.remove("flex");
+    tb.els.runningControls.classList.add("hidden");
+    tb.els.status.classList.add("hidden");
+
+    tb.enforceDisplayState?.();
+    normalizeGoDisplayAfterStop();
   }
 
   tb.toggle = () => {
@@ -99,16 +117,11 @@ export function setupTabataLifecycle(tb, deps) {
 
     tb.ringCtrl?.snap(tb.ringLength);
 
-    tb.els.listSection.classList.add("hidden");
-    tb.els.runningControls.classList.remove("hidden");
-    tb.els.runningControls.classList.add("flex");
-
-    updateText(tb.els.totalRoundsDisplay, tb.rounds);
-    tb.els.status.classList.remove("hidden");
-    tb.els.timer.classList.remove("is-go");
+    applyRunningUi();
 
     startTimerContext();
     tb.updatePhaseStyles();
+    tb.enforceDisplayState?.();
 
     worker.postMessage({ command: "start" });
     requestAnimationFrame(() => tb.tick());
@@ -127,6 +140,7 @@ export function setupTabataLifecycle(tb, deps) {
     updateText(tb.els.status, t("pause"));
 
     stopTimerContext();
+    tb.enforceDisplayState?.();
   };
 
   tb.resume = () => {
@@ -150,10 +164,13 @@ export function setupTabataLifecycle(tb, deps) {
     tb.phaseStamp += 1;
     tb.lastRenderedPhaseStamp = -1;
 
+    applyRunningUi();
+
     startTimerContext();
     worker.postMessage({ command: "start" });
 
     tb.updatePhaseStyles();
+    tb.enforceDisplayState?.();
     requestAnimationFrame(() => tb.tick());
   };
 
@@ -182,17 +199,10 @@ export function setupTabataLifecycle(tb, deps) {
 
     stopTimerContext();
 
-    tb.els.listSection.classList.remove("hidden");
-    tb.els.runningControls.classList.remove("flex");
-    tb.els.runningControls.classList.add("hidden");
-    tb.els.status.classList.add("hidden");
-
-    updateText(tb.els.timer, "GO");
-    tb.els.timer.classList.add("is-go");
-    normalizeGoDisplayAfterStop();
-
     if (resetRing) {
       tb.ringCtrl?.snap(tb.ringLength);
     }
+
+    applyStoppedUi();
   };
 }

@@ -74,19 +74,20 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     tm.rAF = null;
   };
 
-  const syncTimerToCompletedZero = () => {
-    tm.countdownEngine.stop();
+  function cancelExactAlarmSilently() {
+    void alarmScheduler.cancel().catch(() => {});
+  }
 
-    tm.isRunning = false;
-    tm.isPaused = false;
-    tm.isFinished = true;
+  function stopWorkerAndSystem({ workerCommand = "reset" } = {}) {
+    tm.stopUiLoop();
+    tm.bgWorker.postMessage({ command: workerCommand });
+    cancelExactAlarmSilently();
+    tm.store.clearActiveTimer();
+    tm.releaseWakeLock();
+    tm.updateTitle("");
+  }
 
-    tm.totalDuration = Math.max(0, Number(tm.totalDuration) || 0);
-    tm.initialDurationMs = Math.max(
-      tm.initialDurationMs || 0,
-      tm.totalDuration || 0,
-    );
-
+  function resetRuntimeNumbers({ preserveDurations = false } = {}) {
     tm.timeRemainingMs = 0;
     tm.remainingAtPause = 0;
     tm.targetEpochMs = 0;
@@ -94,13 +95,38 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     tm._lastUiPaintTs = 0;
     tm.skipWorkerTickUntil = 0;
 
-    tm.stopUiLoop();
-    tm.bgWorker.postMessage({ command: "reset" });
-    cancelExactAlarmSilently();
+    if (!preserveDurations) {
+      tm.totalDuration = 0;
+      tm.initialDurationMs = 0;
+    } else {
+      tm.totalDuration = Math.max(0, Number(tm.totalDuration) || 0);
+      tm.initialDurationMs = Math.max(
+        tm.initialDurationMs || 0,
+        tm.totalDuration || 0,
+      );
+    }
+  }
 
-    tm.store.clearActiveTimer();
-    tm.releaseWakeLock();
-    tm.updateTitle("");
+  function applyGoVisualState() {
+    if (tm.ringCtrl) tm.ringCtrl.snap(tm.ringLength);
+    else if (tm.els.ring) tm.els.ring.style.strokeDashoffset = tm.ringLength;
+
+    updateText(tm.els.display, "GO");
+    tm.els.display?.classList.add("is-go");
+    animateGoEnter(tm.els.display);
+    if (tm.els.display) tm.els.display.style.transform = "";
+  }
+
+  const syncTimerToCompletedZero = () => {
+    tm.countdownEngine.stop();
+
+    tm.isRunning = false;
+    tm.isPaused = false;
+    tm.isFinished = true;
+
+    resetRuntimeNumbers({ preserveDurations: true });
+    stopWorkerAndSystem({ workerCommand: "reset" });
+
     tm.updateDisplay(0);
     tm.updateAdjustButtons();
     tm.updateUIState();
@@ -153,10 +179,6 @@ export function setupTimerCore(tm, { showToast, updateText }) {
         }
       })
       .catch(() => {});
-  }
-
-  function cancelExactAlarmSilently() {
-    void alarmScheduler.cancel().catch(() => {});
   }
 
   tm.toggle = async () => {
@@ -306,26 +328,14 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     tm.sm.vibrate(30, "medium");
     tm.sm.play("click");
 
-    tm.store.clearActiveTimer();
     tm.countdownEngine.stop();
 
     tm.isRunning = false;
     tm.isPaused = false;
     tm.isFinished = false;
-    tm.remainingAtPause = 0;
-    tm.totalDuration = 0;
-    tm.initialDurationMs = 0;
-    tm.timeRemainingMs = 0;
-    tm.targetEpochMs = 0;
-    tm.lastUiRem = 0;
-    tm._lastUiPaintTs = 0;
-    tm.skipWorkerTickUntil = 0;
 
-    tm.bgWorker.postMessage({ command: "reset" });
-    cancelExactAlarmSilently();
-    tm.stopUiLoop();
-    tm.releaseWakeLock();
-    tm.updateTitle("");
+    resetRuntimeNumbers({ preserveDurations: false });
+    stopWorkerAndSystem({ workerCommand: "reset" });
 
     if (clearInputs) {
       if (tm.els.h) tm.els.h.value = "00";
@@ -334,14 +344,8 @@ export function setupTimerCore(tm, { showToast, updateText }) {
     }
 
     tm.updateUIState();
-
-    if (tm.ringCtrl) tm.ringCtrl.snap(tm.ringLength);
-    else if (tm.els.ring) tm.els.ring.style.strokeDashoffset = tm.ringLength;
-
-    updateText(tm.els.display, "GO");
-    tm.els.display?.classList.add("is-go");
-    animateGoEnter(tm.els.display);
-    if (tm.els.display) tm.els.display.style.transform = "";
+    tm.updateAdjustButtons();
+    applyGoVisualState();
   };
 
   tm.bindCoreEvents = () => {

@@ -6,6 +6,21 @@ import { sm } from "../sound.js?v=VERSION";
 import { getProgressOffset } from "../core/timers-runtime.js?v=VERSION";
 
 export function setupTabataRender(tb) {
+  tb.enforceDisplayState = () => {
+    if (!tb.els?.timer) return;
+
+    if (tb.status === "STOPPED") {
+      if (tb.els.timer.textContent !== "GO") {
+        updateText(tb.els.timer, "GO");
+      }
+      tb.els.timer.classList.add("is-go");
+      tb.els.timer.style.transform = "";
+      return;
+    }
+
+    tb.els.timer.classList.remove("is-go");
+  };
+
   tb.updatePhaseStyles = () => {
     if (!tb.els.ring) return;
 
@@ -42,10 +57,7 @@ export function setupTabataRender(tb) {
   tb.render = (rem) => {
     const safeRem = Math.max(0, rem);
 
-    // Safety guard: time display should not stay in GO visual mode.
-    if (tb.els.timer?.classList.contains("is-go")) {
-      tb.els.timer.classList.remove("is-go");
-    }
+    tb.enforceDisplayState?.();
 
     const sTotal = Math.ceil(safeRem / 1000);
     if (sTotal <= 3 && sTotal > 0 && tb.lastBeepSec !== sTotal) {

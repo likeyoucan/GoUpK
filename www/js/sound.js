@@ -93,9 +93,6 @@ export const sm = {
   },
 
   init() {
-    if (window.__STOPWATCH_SM_INITED__) return;
-    window.__STOPWATCH_SM_INITED__ = true;
-
     if (this.isInitialized) return;
     this.isInitialized = true;
 
@@ -103,6 +100,19 @@ export const sm = {
     this.initAudio();
 
     bindSoundControls(this, { $, safeSetLS, CustomSelect, t });
+  },
+
+  destroy() {
+    if (!this.isInitialized) return;
+
+    try {
+      this._unbindSoundControls?.();
+    } catch (err) {
+      console.error("[sound.destroy]", err);
+    }
+
+    this._unbindSoundControls = null;
+    this.isInitialized = false;
   },
 
   applySettings() {

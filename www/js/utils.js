@@ -91,7 +91,6 @@ export const announceToScreenReader = (text) => {
   if (el) el.textContent = text;
 };
 
-// iOS-like GO entry animation trigger.
 export function animateGoEnter(el) {
   if (!el) return;
   el.classList.remove("go-enter");
@@ -259,15 +258,45 @@ export const createSVGIcon = (pathData, classes = []) => {
   return svg;
 };
 
+export async function openExternalUrl(url) {
+  const href = String(url || "").trim();
+  if (!href) return;
+
+  const isMail = href.startsWith("mailto:");
+  const isTel = href.startsWith("tel:");
+  const isHttp = /^https?:\/\//i.test(href);
+
+  const plugins = window.Capacitor?.Plugins || null;
+
+  if (isHttp && plugins?.Browser?.open) {
+    try {
+      await plugins.Browser.open({ url: href });
+      return;
+    } catch {}
+  }
+
+  if ((isMail || isTel) && plugins?.AppLauncher?.openUrl) {
+    try {
+      await plugins.AppLauncher.openUrl({ url: href });
+      return;
+    } catch {}
+  }
+
+  if (isHttp) {
+    const w = window.open(href, "_blank", "noopener,noreferrer");
+    if (w) return;
+  }
+
+  window.location.href = href;
+}
+
 const createWorker = () => {
   try {
-    // Vite/ESM-safe worker creation
     return new Worker(new URL("./worker.js", import.meta.url), {
       type: "module",
     });
   } catch (eVite) {
     try {
-      // Legacy fallback for current www runtime
       return new Worker("./js/worker.js?v=VERSION");
     } catch (eLegacy) {
       console.error("Failed to create background worker:", eVite, eLegacy);
