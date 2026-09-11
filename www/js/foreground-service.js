@@ -17,6 +17,7 @@ import { t } from "./i18n.js?v=VERSION";
 import { store } from "./store.js?v=VERSION";
 import { APP_EVENTS } from "./constants/events.js?v=VERSION";
 import { onAppEvent } from "./events/app-events.js?v=VERSION";
+import { getProgressOffset } from "./core/timers-runtime.js?v=VERSION";
 
 import {
   isNative,
@@ -316,6 +317,7 @@ function buildRuntimeStateFromJs(payload, state, theme, accent) {
     tbStatus: tb.status || "STOPPED",
     tbRound: tb.currentRound || 1,
     tbRounds: tb.rounds || 1,
+    tbPhaseDuration: Math.max(0, Number(tb.phaseDuration) || 0),
     tbWorkoutName:
       $("tb-runningWorkoutName")?.textContent?.trim() ||
       $("tb-activeName")?.textContent?.trim() ||
@@ -432,18 +434,36 @@ function applyStopwatchRuntimeToJs(nativeState) {
 
 function applyTimerRuntimeToJs(nativeState) {
   const rem = Math.max(0, Number(nativeState.tmRemainingMs) || 0);
-  const total = Math.max(0, Number(nativeState.tmTotalMs) || 0);
+  const total = Math.max(rem, Number(nativeState.tmTotalMs) || 0);
 
   tm.totalDuration = total;
   tm.initialDurationMs = total;
   tm.timeRemainingMs = rem;
   tm.remainingAtPause = rem;
-  tm.targetEpochMs = 0;
+
+  const nextStatus =
+    nativeState.running && rem > 0 ? "running" : rem > 0 ? "paused" : "idle";
+
+  const snap = tm.countdownEngine?.hydrate?.({
+    status: nextStatus,
+    totalMs: total,
+    remainingMs: rem,
+    targetEpochMs: nextStatus === "running" ? Date.now() + rem : 0,
+  });
+
+  if (snap) {
+    tm.timeRemainingMs = Math.max(0, Number(snap.remainingMs) || rem);
+    tm.targetEpochMs = Number(snap.targetEpochMs) || 0;
+
+    if ((Number(snap.totalMs) || 0) > 0) {
+      tm.totalDuration = Number(snap.totalMs);
+      tm.initialDurationMs = Number(snap.totalMs);
+    }
+  } else {
+    tm.targetEpochMs = nextStatus === "running" ? Date.now() + rem : 0;
+  }
 
   if (nativeState.running && rem > 0) {
-    const snap = tm.countdownEngine?.start?.(Math.max(1, rem));
-    if (snap?.targetEpochMs) tm.targetEpochMs = snap.targetEpochMs;
-
     tm.isRunning = true;
     tm.isPaused = false;
     tm.isFinished = false;
@@ -454,8 +474,6 @@ function applyTimerRuntimeToJs(nativeState) {
     tm.bgWorker?.postMessage?.({ command: "start", time: rem });
     tm.startUiLoop?.();
   } else {
-    tm.countdownEngine?.setPausedRemaining?.(rem);
-
     tm.isRunning = false;
     tm.isPaused = rem > 0;
     tm.isFinished = rem <= 0;
@@ -465,6 +483,15 @@ function applyTimerRuntimeToJs(nativeState) {
     releaseWakeLock();
   }
 
+  if (tm.ringCtrl && tm.totalDuration > 0) {
+    const targetOffset = getProgressOffset({
+      remainingMs: rem,
+      totalMs: tm.totalDuration,
+      ringLength: tm.ringLength,
+    });
+    tm.ringCtrl.snap(targetOffset);
+  }
+
   tm.updateDisplay?.(rem);
   tm.updateAdjustButtons?.();
   tm.updateUIState?.();
@@ -472,11 +499,27 @@ function applyTimerRuntimeToJs(nativeState) {
 
 function applyTabataRuntimeToJs(nativeState) {
   const rem = Math.max(0, Number(nativeState.tbRemainingMs) || 0);
+  const incomingPhaseDuration = Math.max(
+    0,
+    Number(nativeState.tbPhaseDuration) || 0,
+  );
 
   tb.status = nativeState.tbStatus || "STOPPED";
   tb.currentRound = Math.max(1, Number(nativeState.tbRound) || 1);
   tb.rounds = Math.max(1, Number(nativeState.tbRounds) || tb.rounds || 1);
-  tb.phaseDuration = Math.max(0, rem);
+  tb.phaseDuration = Math.max(
+    rem,
+    incomingPhaseDuration || tb.phaseDuration || 0,
+  );
+
+  if (tb.ringCtrl && tb.phaseDuration > 0) {
+    const targetOffset = getProgressOffset({
+      remainingMs: rem,
+      totalMs: tb.phaseDuration,
+      ringLength: tb.ringLength,
+    });
+    tb.ringCtrl.snap(targetOffset);
+  }
 
   if (nativeState.running && tb.status !== "STOPPED") {
     tb.paused = false;
