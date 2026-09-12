@@ -39,6 +39,14 @@ function getAdsPlugin() {
   return getPlugin("AdsBridge");
 }
 
+function adsDebug(...args) {
+  try {
+    if (localStorage.getItem("ads-debug") === "true") {
+      console.log("[ads]", ...args);
+    }
+  } catch {}
+}
+
 function readBool(key, fallback = true) {
   const raw = safeGetLS(key);
   if (raw === null) return fallback;
@@ -92,7 +100,6 @@ function updateMobileOffsetClass(isBannerVisible) {
   if (!app) return;
 
   viewsContainer?.classList.remove("ads-mobile-offset");
-
   const shouldOffset = !isBannerVisible && shouldApplyMobileOffsetWhenAdsOff();
   app.classList.toggle("ads-mobile-offset-var", shouldOffset);
 }
@@ -124,7 +131,10 @@ function getTabletNativeFallbackTopPx() {
   const native = !!cap?.isNativePlatform?.();
   if (!native) return 0;
 
-  const shortestSide = Math.min(window.innerWidth || 0, window.innerHeight || 0);
+  const shortestSide = Math.min(
+    window.innerWidth || 0,
+    window.innerHeight || 0,
+  );
   const isTabletLike = shortestSide >= 700;
   return isTabletLike ? 24 : 0;
 }
@@ -132,7 +142,8 @@ function getTabletNativeFallbackTopPx() {
 function getAdTopInsetPx() {
   const safeTop = getCssSafeTopPx();
   const vvTop = getVisualViewportTopPx();
-  const fallback = safeTop < 1 && vvTop < 1 ? getTabletNativeFallbackTopPx() : 0;
+  const fallback =
+    safeTop < 1 && vvTop < 1 ? getTabletNativeFallbackTopPx() : 0;
   const raw = Math.max(safeTop, vvTop, fallback);
   return Math.round(clamp(raw, 0, MAX_AD_TOP_INSET_PX));
 }
@@ -156,8 +167,6 @@ function applyNativeInlineSlotOverride(slot, adTopInsetPx) {
     slot.style.transform = "none";
     slot.style.width = "100%";
     slot.style.maxWidth = "100%";
-
-    // Reserve visible area in webview so native overlay doesn't overlap content.
     slot.style.marginTop = `${adTopInsetPx}px`;
     slot.style.minHeight = "52px";
     return;
@@ -185,6 +194,31 @@ function getSlotRectPx(slot) {
     width: Math.max(1, Math.round(rect.width)),
     height: Math.max(1, Math.round(rect.height)),
   };
+}
+
+async function showNativeBannerWithFallback(plugin, payloadBase) {
+  const attempts = [
+    // Full payload with coordinates/insets
+    { ...payloadBase },
+    // Common minimal variants used by different bridge implementations
+    { provider: payloadBase.provider, placement: "fixed_top_banner" },
+    { provider: payloadBase.provider, placement: "inline_top_banner" },
+    { provider: payloadBase.provider, placement: "top" },
+    { provider: payloadBase.provider, placement: "banner_top" },
+    { provider: payloadBase.provider },
+  ];
+
+  for (const payload of attempts) {
+    try {
+      const res = await plugin.showBanner(payload);
+      adsDebug("showBanner success", payload, res);
+      return true;
+    } catch (err) {
+      adsDebug("showBanner fail", payload, err);
+    }
+  }
+
+  return false;
 }
 
 export const adsManager = {
@@ -232,11 +266,11 @@ export const adsManager = {
           provider: this.provider,
           testMode: false,
         })
-        .catch(() => {});
+        .catch((err) => adsDebug("initAds failed", err));
     }
 
     this._bindViewportListener();
-    this.renderBanner({ force: true });
+    void this.renderBanner({ force: true });
   },
 
   _cleanupBindings() {
@@ -265,7 +299,7 @@ export const adsManager = {
       if (this._viewportRaf) return;
       this._viewportRaf = requestAnimationFrame(() => {
         this._viewportRaf = 0;
-        this.renderBanner();
+        void this.renderBanner();
       });
     };
 
@@ -305,9 +339,9 @@ export const adsManager = {
   },
 
   bindAutoRefresh() {
-    const onAdsChanged = () => this.renderBanner({ force: true });
-    const onBannerModeChanged = () => this.renderBanner({ force: true });
-    const onProChanged = () => this.renderBanner({ force: true });
+    const onAdsChanged = () => void this.renderBanner({ force: true });
+    const onBannerModeChanged = () => void this.renderBanner({ force: true });
+    const onProChanged = () => void this.renderBanner({ force: true });
 
     document.addEventListener(APP_EVENTS.ADS_SETTINGS_CHANGED, onAdsChanged);
     document.addEventListener(
@@ -379,10 +413,10 @@ export const adsManager = {
     if (isNative()) {
       getAdsPlugin()
         ?.setAdsEnabled?.({ enabled: finalValue })
-        .catch(() => {});
+        .catch((err) => adsDebug("setAdsEnabled failed", err));
     }
 
-    this.renderBanner({ force: true });
+    void this.renderBanner({ force: true });
     dispatch(APP_EVENTS.ADS_SETTINGS_CHANGED, { enabled: finalValue });
   },
 
@@ -394,16 +428,16 @@ export const adsManager = {
     if (isNative()) {
       getAdsPlugin()
         ?.setProvider?.({ provider })
-        .catch(() => {});
+        .catch((err) => adsDebug("setProvider failed", err));
     }
 
-    this.renderBanner({ force: true });
+    void this.renderBanner({ force: true });
     dispatch(APP_EVENTS.ADS_SETTINGS_CHANGED, { provider });
   },
 
   setBannerMode(mode) {
     this.bannerMode = normalizeBannerMode(mode);
-    this.renderBanner({ force: true });
+    void this.renderBanner({ force: true });
     dispatch(APP_EVENTS.ADS_BANNER_MODE_CHANGED, { mode: this.bannerMode });
   },
 
@@ -439,7 +473,7 @@ export const adsManager = {
     dispatch(APP_EVENTS.ADS_BANNER_VISIBILITY_CHANGED, { visible });
   },
 
-  renderBanner({ force = false } = {}) {
+  async renderBanner({ force = false } = {}) {
     const slot = $("app-ad-slot");
     const visible = this.shouldShowBanner();
 
@@ -465,6 +499,8 @@ export const adsManager = {
       adTopInset: adTopInsetPx,
       slotY: slotRect.y,
       slotW: slotRect.width,
+      slotH: slotRect.height,
+      nativeInlineOverride: isNative(),
     });
 
     if (!force && signature === this._lastBannerSignature) {
@@ -478,9 +514,9 @@ export const adsManager = {
 
     if (!visible) {
       if (this.bannerMounted && isNative()) {
-        getAdsPlugin()
+        await getAdsPlugin()
           ?.hideBanner?.()
-          .catch(() => {});
+          .catch((err) => adsDebug("hideBanner failed", err));
       }
 
       this.bannerMounted = false;
@@ -499,11 +535,17 @@ export const adsManager = {
     if (!isNative()) {
       slot.appendChild(createWebPlaceholder(this.provider));
     } else {
-      // Multiple aliases for different AdsBridge implementations.
-      getAdsPlugin()
-        ?.showBanner?.({
-          placement,
+      const plugin = getAdsPlugin();
+
+      if (!plugin?.showBanner) {
+        adsDebug("showBanner method not found on AdsBridge");
+        slot.appendChild(createWebPlaceholder(this.provider));
+      } else {
+        await plugin.hideBanner?.().catch(() => {});
+
+        const ok = await showNativeBannerWithFallback(plugin, {
           provider: this.provider,
+          placement,
           topInsetPx: adTopInsetPx,
           y: slotRect.y,
           top: slotRect.y,
@@ -513,8 +555,13 @@ export const adsManager = {
           slotWidthPx: slotRect.width,
           slotHeightPx: slotRect.height,
           anchor: "top",
-        })
-        .catch(() => {});
+        });
+
+        if (!ok) {
+          // Native banner could not be shown -> keep visible fallback in app.
+          slot.appendChild(createWebPlaceholder(this.provider));
+        }
+      }
     }
 
     updateMobileOffsetClass(true);
@@ -553,7 +600,7 @@ export const adsManager = {
         placement: `interstitial_${context}`,
         provider: this.provider,
       })
-      .catch(() => {});
+      .catch((err) => adsDebug("showInterstitial failed", err));
 
     return true;
   },
