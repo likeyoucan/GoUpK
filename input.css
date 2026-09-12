@@ -2803,14 +2803,14 @@
 
     background: color-mix(
       in srgb,
-      var(--surface-color) 62%,
+      var(--surface-color) 58%,
       transparent
     ) !important;
     color: #ffffff !important;
-    border: 1px solid color-mix(in srgb, var(--alert-color) 62%, #ffffff 38%);
+    border: 1px solid color-mix(in srgb, var(--alert-color) 68%, #ffffff 32%);
 
-    backdrop-filter: blur(26px) saturate(210%) contrast(1.08);
-    -webkit-backdrop-filter: blur(26px) saturate(210%) contrast(1.08);
+    backdrop-filter: blur(24px) saturate(205%) contrast(1.06);
+    -webkit-backdrop-filter: blur(24px) saturate(205%) contrast(1.06);
 
     box-shadow:
       inset 0 1px 1px rgb(255 255 255 / 0.2),
@@ -2824,29 +2824,29 @@
     border-radius: inherit;
     pointer-events: none;
     z-index: 0;
-    background: color-mix(in srgb, var(--alert-color) 62%, transparent);
+    background: color-mix(in srgb, var(--alert-color) 74%, transparent);
   }
 
   .glass-effect .color-action-btn[data-action="delete"] svg {
     position: relative;
     z-index: 1;
     color: #ffffff;
-    filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.62));
+    filter: drop-shadow(0 1px 1px rgb(0 0 0 / 0.28));
   }
 
   .glass-effect .color-action-btn[data-action="delete"] svg path {
-    stroke-width: 3;
+    stroke-width: 2.9;
   }
 
   html.dark.glass-effect .color-action-btn[data-action="delete"] {
     background: color-mix(
       in srgb,
-      var(--surface-color) 52%,
-      #0b0b0c 48%
+      var(--surface-color) 46%,
+      #0b0b0c 54%
     ) !important;
-    border-color: color-mix(in srgb, var(--alert-color) 58%, #ffffff 42%);
-    backdrop-filter: blur(28px) saturate(220%) contrast(1.1);
-    -webkit-backdrop-filter: blur(28px) saturate(220%) contrast(1.1);
+    border-color: color-mix(in srgb, var(--alert-color) 64%, #ffffff 36%);
+    backdrop-filter: blur(26px) saturate(215%) contrast(1.08);
+    -webkit-backdrop-filter: blur(26px) saturate(215%) contrast(1.08);
 
     box-shadow:
       inset 0 1px 1px rgb(255 255 255 / 0.12),
@@ -2854,7 +2854,7 @@
   }
 
   html.dark.glass-effect .color-action-btn[data-action="delete"]::before {
-    background: color-mix(in srgb, var(--alert-color) 56%, transparent);
+    background: color-mix(in srgb, var(--alert-color) 68%, transparent);
   }
 
   /* Toggles in glass mode */
