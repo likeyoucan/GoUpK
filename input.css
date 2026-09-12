@@ -2803,18 +2803,18 @@
 
     background: color-mix(
       in srgb,
-      var(--surface-color) 38%,
+      var(--surface-color) 62%,
       transparent
     ) !important;
     color: #ffffff !important;
-    border: 1px solid color-mix(in srgb, var(--alert-color) 52%, #ffffff 48%);
+    border: 1px solid color-mix(in srgb, var(--alert-color) 62%, #ffffff 38%);
 
-    backdrop-filter: blur(18px) saturate(185%) contrast(1.03);
-    -webkit-backdrop-filter: blur(18px) saturate(185%) contrast(1.03);
+    backdrop-filter: blur(26px) saturate(210%) contrast(1.08);
+    -webkit-backdrop-filter: blur(26px) saturate(210%) contrast(1.08);
 
     box-shadow:
       inset 0 1px 1px rgb(255 255 255 / 0.2),
-      0 10px 22px rgb(0 0 0 / 0.24);
+      0 12px 28px rgb(0 0 0 / 0.28);
   }
 
   .glass-effect .color-action-btn[data-action="delete"]::before {
@@ -2824,38 +2824,37 @@
     border-radius: inherit;
     pointer-events: none;
     z-index: 0;
-    background: color-mix(in srgb, var(--alert-color) 44%, transparent);
+    background: color-mix(in srgb, var(--alert-color) 62%, transparent);
   }
 
-  /* Важно: иконка выше tint-слоя */
   .glass-effect .color-action-btn[data-action="delete"] svg {
     position: relative;
     z-index: 1;
     color: #ffffff;
-    filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.55));
+    filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.62));
   }
 
   .glass-effect .color-action-btn[data-action="delete"] svg path {
-    stroke-width: 2.8;
+    stroke-width: 3;
   }
 
   html.dark.glass-effect .color-action-btn[data-action="delete"] {
     background: color-mix(
       in srgb,
-      var(--surface-color) 26%,
-      transparent
+      var(--surface-color) 52%,
+      #0b0b0c 48%
     ) !important;
-    border-color: color-mix(in srgb, var(--alert-color) 48%, #ffffff 52%);
-    backdrop-filter: blur(20px) saturate(195%) contrast(1.05);
-    -webkit-backdrop-filter: blur(20px) saturate(195%) contrast(1.05);
+    border-color: color-mix(in srgb, var(--alert-color) 58%, #ffffff 42%);
+    backdrop-filter: blur(28px) saturate(220%) contrast(1.1);
+    -webkit-backdrop-filter: blur(28px) saturate(220%) contrast(1.1);
 
     box-shadow:
       inset 0 1px 1px rgb(255 255 255 / 0.12),
-      0 12px 26px rgb(0 0 0 / 0.42);
+      0 14px 30px rgb(0 0 0 / 0.44);
   }
 
   html.dark.glass-effect .color-action-btn[data-action="delete"]::before {
-    background: color-mix(in srgb, var(--alert-color) 40%, transparent);
+    background: color-mix(in srgb, var(--alert-color) 56%, transparent);
   }
 
   /* Toggles in glass mode */
