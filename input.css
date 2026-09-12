@@ -2795,14 +2795,12 @@
   }
 
   /* Color delete floating button in glass mode */
-  /* Color delete floating button in glass mode: dropdown-like glass */
   .glass-effect .color-action-btn[data-action="delete"] {
     position: absolute;
     overflow: hidden;
     isolation: isolate;
     border-radius: 9999px;
 
-    /* стеклянная подложка (чтобы читался backdrop blur) */
     background: color-mix(
       in srgb,
       var(--surface-color) 38%,
@@ -2825,9 +2823,20 @@
     inset: 0;
     border-radius: inherit;
     pointer-events: none;
+    z-index: 0;
+    background: color-mix(in srgb, var(--alert-color) 44%, transparent);
+  }
 
-    /* мягкий красный тинт поверх стекла */
-    background: color-mix(in srgb, var(--alert-color) 56%, transparent);
+  /* Важно: иконка выше tint-слоя */
+  .glass-effect .color-action-btn[data-action="delete"] svg {
+    position: relative;
+    z-index: 1;
+    color: #ffffff;
+    filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.55));
+  }
+
+  .glass-effect .color-action-btn[data-action="delete"] svg path {
+    stroke-width: 2.8;
   }
 
   html.dark.glass-effect .color-action-btn[data-action="delete"] {
@@ -2846,7 +2855,7 @@
   }
 
   html.dark.glass-effect .color-action-btn[data-action="delete"]::before {
-    background: color-mix(in srgb, var(--alert-color) 50%, transparent);
+    background: color-mix(in srgb, var(--alert-color) 40%, transparent);
   }
 
   /* Toggles in glass mode */
