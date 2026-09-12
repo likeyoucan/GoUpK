@@ -431,7 +431,8 @@ export class CustomSelect {
       "mouseout",
       (e) => {
         const target = e.target.closest(".custom-select-option");
-        if (target) target.classList.remove("needs-dark-text");
+        if (!target) return;
+        target.classList.remove("needs-dark-text", "needs-light-text");
       },
       { signal },
     );
@@ -709,7 +710,12 @@ export class CustomSelect {
         const isSelected = el.dataset.value === value;
         el.classList.toggle("is-selected", isSelected);
         el.setAttribute("aria-selected", String(isSelected));
-        if (isSelected) this.updateSelectedTextColor(el);
+
+        if (isSelected) {
+          this.updateSelectedTextColor(el);
+        } else {
+          el.classList.remove("needs-dark-text", "needs-light-text");
+        }
       });
 
     this.focusedIndex = this.options.findIndex((opt) => opt.value === value);
@@ -723,18 +729,21 @@ export class CustomSelect {
   updateSelectedTextColor(selectedEl) {
     if (!selectedEl) return;
 
+    selectedEl.classList.remove("needs-dark-text", "needs-light-text");
+
     const root = document.documentElement;
     const isNoAdaptive = root.classList.contains("no-adaptive");
 
-    if (!isNoAdaptive) {
-      selectedEl.classList.remove("needs-dark-text");
-      return;
-    }
+    if (!isNoAdaptive) return;
 
     const primaryColor = getCssVariable("--primary-color");
     const { r, g, b } = hexToRGB(primaryColor);
     const luminance = getLuminance(r, g, b);
 
-    selectedEl.classList.toggle("needs-dark-text", luminance > 0.55);
+    if (luminance > 0.55) {
+      selectedEl.classList.add("needs-dark-text");
+    } else {
+      selectedEl.classList.add("needs-light-text");
+    }
   }
 }
