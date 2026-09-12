@@ -124,10 +124,7 @@ function getTabletNativeFallbackTopPx() {
   const native = !!cap?.isNativePlatform?.();
   if (!native) return 0;
 
-  const shortestSide = Math.min(
-    window.innerWidth || 0,
-    window.innerHeight || 0,
-  );
+  const shortestSide = Math.min(window.innerWidth || 0, window.innerHeight || 0);
   const isTabletLike = shortestSide >= 700;
   return isTabletLike ? 24 : 0;
 }
@@ -135,14 +132,12 @@ function getTabletNativeFallbackTopPx() {
 function getAdTopInsetPx() {
   const safeTop = getCssSafeTopPx();
   const vvTop = getVisualViewportTopPx();
-  const fallback =
-    safeTop < 1 && vvTop < 1 ? getTabletNativeFallbackTopPx() : 0;
+  const fallback = safeTop < 1 && vvTop < 1 ? getTabletNativeFallbackTopPx() : 0;
   const raw = Math.max(safeTop, vvTop, fallback);
   return Math.round(clamp(raw, 0, MAX_AD_TOP_INSET_PX));
 }
 
 function getBannerPlacement() {
-  // Native WebView tablets are more stable with inline placement.
   if (isNative()) return "inline_top_banner";
   return isDesktopAdLayout() ? "fixed_top_banner" : "inline_top_banner";
 }
@@ -151,7 +146,8 @@ function applyNativeInlineSlotOverride(slot, adTopInsetPx) {
   if (!slot) return;
 
   if (isNative()) {
-    // Override desktop CSS fixed-top behavior on native.
+    document.documentElement.classList.add("native-app");
+
     slot.style.position = "relative";
     slot.style.top = "auto";
     slot.style.left = "auto";
@@ -160,11 +156,15 @@ function applyNativeInlineSlotOverride(slot, adTopInsetPx) {
     slot.style.transform = "none";
     slot.style.width = "100%";
     slot.style.maxWidth = "100%";
+
+    // Reserve visible area in webview so native overlay doesn't overlap content.
     slot.style.marginTop = `${adTopInsetPx}px`;
+    slot.style.minHeight = "52px";
     return;
   }
 
-  // Reset overrides for web.
+  document.documentElement.classList.remove("native-app");
+
   slot.style.position = "";
   slot.style.top = "";
   slot.style.left = "";
@@ -174,6 +174,17 @@ function applyNativeInlineSlotOverride(slot, adTopInsetPx) {
   slot.style.width = "";
   slot.style.maxWidth = "";
   slot.style.marginTop = "";
+  slot.style.minHeight = "";
+}
+
+function getSlotRectPx(slot) {
+  const rect = slot.getBoundingClientRect();
+  return {
+    x: Math.max(0, Math.round(rect.left)),
+    y: Math.max(0, Math.round(rect.top)),
+    width: Math.max(1, Math.round(rect.width)),
+    height: Math.max(1, Math.round(rect.height)),
+  };
 }
 
 export const adsManager = {
@@ -443,6 +454,7 @@ export const adsManager = {
     applyNativeInlineSlotOverride(slot, adTopInsetPx);
 
     const placement = getBannerPlacement();
+    const slotRect = getSlotRectPx(slot);
 
     const signature = JSON.stringify({
       visible,
@@ -451,7 +463,8 @@ export const adsManager = {
       placement,
       bannerMode: this.bannerMode,
       adTopInset: adTopInsetPx,
-      nativeInlineOverride: isNative(),
+      slotY: slotRect.y,
+      slotW: slotRect.width,
     });
 
     if (!force && signature === this._lastBannerSignature) {
@@ -486,13 +499,19 @@ export const adsManager = {
     if (!isNative()) {
       slot.appendChild(createWebPlaceholder(this.provider));
     } else {
+      // Multiple aliases for different AdsBridge implementations.
       getAdsPlugin()
         ?.showBanner?.({
           placement,
           provider: this.provider,
           topInsetPx: adTopInsetPx,
-          y: adTopInsetPx,
-          offsetTop: adTopInsetPx,
+          y: slotRect.y,
+          top: slotRect.y,
+          offsetTop: slotRect.y,
+          slotTopPx: slotRect.y,
+          slotLeftPx: slotRect.x,
+          slotWidthPx: slotRect.width,
+          slotHeightPx: slotRect.height,
           anchor: "top",
         })
         .catch(() => {});
