@@ -38,6 +38,9 @@ export function bindUiSettingsEvents(state) {
   let fontApplyTimer = 0;
   let pendingFontSize = state.fontSize;
 
+  let ringApplyRaf = 0;
+  let pendingRingWidth = state.ringWidth;
+
   bind(document, APP_EVENTS.LANGUAGE_CHANGED, () => syncSliderUIs(state));
   bind(document, APP_EVENTS.VIBRO_TOGGLED, (e) =>
     updateVibroSliderUI(e.detail.enabled),
@@ -153,13 +156,27 @@ export function bindUiSettingsEvents(state) {
   if (ringWidthSlider) {
     const onRingChange = (e) => {
       const val = Number(e.target.value);
+      pendingRingWidth = val;
+
+      if (ringApplyRaf) {
+        cancelAnimationFrame(ringApplyRaf);
+        ringApplyRaf = 0;
+      }
+
       setRingWidth(state, val);
       persistRingWidth(val);
       updateRangeValueByDataset(e.target);
     };
+
     const onRingInput = (e) => {
-      setRingWidth(state, Number(e.target.value));
+      pendingRingWidth = Number(e.target.value);
       updateRangeValueByDataset(e.target);
+
+      if (ringApplyRaf) return;
+      ringApplyRaf = requestAnimationFrame(() => {
+        ringApplyRaf = 0;
+        setRingWidth(state, pendingRingWidth);
+      });
     };
 
     bind(ringWidthSlider, "change", onRingChange);
@@ -252,6 +269,11 @@ export function bindUiSettingsEvents(state) {
     if (fontApplyTimer) {
       clearTimeout(fontApplyTimer);
       fontApplyTimer = 0;
+    }
+
+    if (ringApplyRaf) {
+      cancelAnimationFrame(ringApplyRaf);
+      ringApplyRaf = 0;
     }
 
     disposers.forEach((off) => {

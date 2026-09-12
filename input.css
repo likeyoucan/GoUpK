@@ -1045,6 +1045,12 @@
       visibility 0.28s var(--ease-standard);
   }
 
+  @media (prefers-color-scheme: dark) {
+    #app-preloader {
+      background-color: #0b0b0b;
+    }
+  }
+
   #app-preloader.is-hidden {
     opacity: 0;
     visibility: hidden;
@@ -3240,6 +3246,7 @@
     align-self: center;
     min-height: 24px;
     line-height: 1.2;
+    font-variant-numeric: tabular-nums;
   }
 
   .range-row-half {
@@ -4157,6 +4164,22 @@
     flex: 0 0 auto;
   }
 
+  html.native-app #app-ad-slot {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    transform: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    margin-bottom: 0 !important;
+  }
+
   /* default: hidden slot removed */
   #app-ad-slot.hidden {
     display: none;
@@ -4198,18 +4221,6 @@
       width: min(96vw, 960px);
       max-width: min(96vw, 960px);
       z-index: 140;
-    }
-
-    /* Native app: never use desktop fixed ad-slot mode */
-    html.native-app #app-ad-slot {
-      position: relative !important;
-      top: auto !important;
-      left: auto !important;
-      right: auto !important;
-      bottom: auto !important;
-      transform: none !important;
-      width: 100% !important;
-      max-width: 100% !important;
     }
 
     #app-ad-slot > * {

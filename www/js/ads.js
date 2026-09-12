@@ -167,8 +167,9 @@ function applyNativeInlineSlotOverride(slot, adTopInsetPx) {
     slot.style.transform = "none";
     slot.style.width = "100%";
     slot.style.maxWidth = "100%";
-    slot.style.marginTop = `${adTopInsetPx}px`;
-    slot.style.minHeight = "52px";
+    slot.style.marginTop = "0px";
+    slot.style.minHeight = "0px";
+    slot.style.padding = "0";
     return;
   }
 
@@ -184,6 +185,7 @@ function applyNativeInlineSlotOverride(slot, adTopInsetPx) {
   slot.style.maxWidth = "";
   slot.style.marginTop = "";
   slot.style.minHeight = "";
+  slot.style.padding = "";
 }
 
 function getSlotRectPx(slot) {

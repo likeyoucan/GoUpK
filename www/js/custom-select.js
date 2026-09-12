@@ -74,7 +74,7 @@ function bindGlobalHandlersOnce() {
     }
   };
 
-  const onAccentChanged = () => {
+  const refreshSelectedOptionContrast = () => {
     forEachActiveSelect((select) => {
       const selectedEl = select.optionsPanel?.querySelector(".is-selected");
       if (selectedEl) select.updateSelectedTextColor(selectedEl);
@@ -83,14 +83,25 @@ function bindGlobalHandlersOnce() {
 
   document.addEventListener("click", onDocClick);
   document.addEventListener("keydown", onDocKeydown);
-  document.addEventListener(APP_EVENTS.ACCENT_COLOR_CHANGED, onAccentChanged);
+  document.addEventListener(
+    APP_EVENTS.ACCENT_COLOR_CHANGED,
+    refreshSelectedOptionContrast,
+  );
+  document.addEventListener(
+    APP_EVENTS.ADAPTIVE_BG_CHANGED,
+    refreshSelectedOptionContrast,
+  );
 
   unbindGlobalHandlers = () => {
     document.removeEventListener("click", onDocClick);
     document.removeEventListener("keydown", onDocKeydown);
     document.removeEventListener(
       APP_EVENTS.ACCENT_COLOR_CHANGED,
-      onAccentChanged,
+      refreshSelectedOptionContrast,
+    );
+    document.removeEventListener(
+      APP_EVENTS.ADAPTIVE_BG_CHANGED,
+      refreshSelectedOptionContrast,
     );
   };
 }
@@ -712,9 +723,18 @@ export class CustomSelect {
   updateSelectedTextColor(selectedEl) {
     if (!selectedEl) return;
 
+    const root = document.documentElement;
+    const isNoAdaptive = root.classList.contains("no-adaptive");
+
+    if (!isNoAdaptive) {
+      selectedEl.classList.remove("needs-dark-text");
+      return;
+    }
+
     const primaryColor = getCssVariable("--primary-color");
     const { r, g, b } = hexToRGB(primaryColor);
     const luminance = getLuminance(r, g, b);
+
     selectedEl.classList.toggle("needs-dark-text", luminance > 0.55);
   }
 }
