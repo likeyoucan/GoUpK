@@ -2799,22 +2799,30 @@
   .glass-effect .color-action-btn[data-action="delete"] {
     background: color-mix(
       in srgb,
-      var(--alert-color) 78%,
+      var(--alert-color) 76%,
       transparent
     ) !important;
     color: #ffffff !important;
-    border: 1px solid color-mix(in srgb, var(--alert-color) 56%, #ffffff 44%);
-    backdrop-filter: blur(10px) saturate(140%);
+    border: 1px solid color-mix(in srgb, var(--alert-color) 58%, #ffffff 42%);
+    backdrop-filter: blur(16px) saturate(165%);
+    -webkit-backdrop-filter: blur(16px) saturate(165%);
     box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.22),
-      0 6px 14px rgb(0 0 0 / 0.2);
+      inset 0 1px 0 rgb(255 255 255 / 0.28),
+      0 10px 22px rgb(0 0 0 / 0.24);
   }
 
   html.dark.glass-effect .color-action-btn[data-action="delete"] {
-    border-color: color-mix(in srgb, var(--alert-color) 52%, #ffffff 48%);
+    background: color-mix(
+      in srgb,
+      var(--alert-color) 70%,
+      #120708 30%
+    ) !important;
+    border-color: color-mix(in srgb, var(--alert-color) 54%, #ffffff 46%);
+    backdrop-filter: blur(18px) saturate(180%);
+    -webkit-backdrop-filter: blur(18px) saturate(180%);
     box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.12),
-      0 8px 16px rgb(0 0 0 / 0.34);
+      inset 0 1px 0 rgb(255 255 255 / 0.16),
+      0 12px 26px rgb(0 0 0 / 0.4);
   }
 
   /* Toggles in glass mode */
