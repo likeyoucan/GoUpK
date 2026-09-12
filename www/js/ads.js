@@ -28,8 +28,6 @@ const DEFAULT_INTERSTITIAL_TRIGGERS = {
 const DEFAULT_INTERSTITIAL_MIN_COOLDOWN_MS = 30_000;
 const DESKTOP_FIXED_MIN_WIDTH = 1281;
 
-// In practice status/system top inset on mobile/tablet should stay in a sane range.
-// Clamp avoids rare viewport glitches that can push banner off-screen.
 const MAX_AD_TOP_INSET_PX = 64;
 const MAX_REASONABLE_VV_TOP_PX = 80;
 
@@ -112,14 +110,11 @@ function getCssSafeTopPx() {
   const rootStyles = getComputedStyle(document.documentElement);
   const fromVar = parsePx(rootStyles.getPropertyValue("--safe-top"));
   if (fromVar > 0) return fromVar;
-
-  // Fallback for runtimes where --safe-top is not resolved.
   return parsePx(rootStyles.getPropertyValue("padding-top"));
 }
 
 function getVisualViewportTopPx() {
   const raw = Math.max(0, Number(window.visualViewport?.offsetTop) || 0);
-  // Ignore suspiciously large values that may happen during transient viewport states.
   if (raw > MAX_REASONABLE_VV_TOP_PX) return 0;
   return raw;
 }
@@ -140,20 +135,45 @@ function getTabletNativeFallbackTopPx() {
 function getAdTopInsetPx() {
   const safeTop = getCssSafeTopPx();
   const vvTop = getVisualViewportTopPx();
-
-  // Use fallback only when primary signals are absent.
   const fallback =
     safeTop < 1 && vvTop < 1 ? getTabletNativeFallbackTopPx() : 0;
   const raw = Math.max(safeTop, vvTop, fallback);
-
   return Math.round(clamp(raw, 0, MAX_AD_TOP_INSET_PX));
 }
 
 function getBannerPlacement() {
-  // Native tablet/webview often handles inline placement more reliably
-  // than fixed top placement with system overlays.
+  // Native WebView tablets are more stable with inline placement.
   if (isNative()) return "inline_top_banner";
   return isDesktopAdLayout() ? "fixed_top_banner" : "inline_top_banner";
+}
+
+function applyNativeInlineSlotOverride(slot, adTopInsetPx) {
+  if (!slot) return;
+
+  if (isNative()) {
+    // Override desktop CSS fixed-top behavior on native.
+    slot.style.position = "relative";
+    slot.style.top = "auto";
+    slot.style.left = "auto";
+    slot.style.right = "auto";
+    slot.style.bottom = "auto";
+    slot.style.transform = "none";
+    slot.style.width = "100%";
+    slot.style.maxWidth = "100%";
+    slot.style.marginTop = `${adTopInsetPx}px`;
+    return;
+  }
+
+  // Reset overrides for web.
+  slot.style.position = "";
+  slot.style.top = "";
+  slot.style.left = "";
+  slot.style.right = "";
+  slot.style.bottom = "";
+  slot.style.transform = "";
+  slot.style.width = "";
+  slot.style.maxWidth = "";
+  slot.style.marginTop = "";
 }
 
 export const adsManager = {
@@ -205,12 +225,6 @@ export const adsManager = {
     }
 
     this._bindViewportListener();
-
-    const slot = $("app-ad-slot");
-    if (slot) {
-      slot.style.setProperty("--ad-top-inset", `${getAdTopInsetPx()}px`);
-    }
-
     this.renderBanner({ force: true });
   },
 
@@ -426,6 +440,7 @@ export const adsManager = {
 
     const adTopInsetPx = getAdTopInsetPx();
     slot.style.setProperty("--ad-top-inset", `${adTopInsetPx}px`);
+    applyNativeInlineSlotOverride(slot, adTopInsetPx);
 
     const placement = getBannerPlacement();
 
@@ -436,6 +451,7 @@ export const adsManager = {
       placement,
       bannerMode: this.bannerMode,
       adTopInset: adTopInsetPx,
+      nativeInlineOverride: isNative(),
     });
 
     if (!force && signature === this._lastBannerSignature) {
@@ -470,12 +486,14 @@ export const adsManager = {
     if (!isNative()) {
       slot.appendChild(createWebPlaceholder(this.provider));
     } else {
-      // Pass top inset as optional hint for native bridges that support it.
       getAdsPlugin()
         ?.showBanner?.({
           placement,
           provider: this.provider,
           topInsetPx: adTopInsetPx,
+          y: adTopInsetPx,
+          offsetTop: adTopInsetPx,
+          anchor: "top",
         })
         .catch(() => {});
     }
