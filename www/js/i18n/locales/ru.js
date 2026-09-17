@@ -135,7 +135,7 @@ export const ru = {
   vibro_max: "макс",
   vibro_medium: "срд",
   vibro_min: "мин",
-  vignette: "Затемнение по краям",
+  vignette: "Эффект затемнения по краям",
   vignette_depth: "Интенсивность",
   vignette_high: "выс",
   vignette_low: "низ",
