@@ -4151,11 +4151,24 @@
 
   #sw-modal-handler,
   #tb-modal-handler {
-    touch-action: pan-y;
+    touch-action: none;
     overscroll-behavior: contain;
     display: flex;
     align-items: center;
     justify-content: center;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  body.is-dragging-sheet,
+  body.is-dragging-sheet * {
+    -webkit-user-select: none !important;
+    user-select: none !important;
+  }
+
+  #sw-sessions-modal.is-dragging-sheet,
+  #tb-modal.is-dragging-sheet {
+    cursor: grabbing;
   }
 
   .modal-drag-pill {
