@@ -2984,6 +2984,11 @@
     box-shadow: 0 1px 3px rgb(0 0 0 / 0.28);
   }
 
+  html:not(.dark).glass-effect input:not(:checked) + .custom-toggle::after {
+    background: color-mix(in srgb, var(--surface-color) 90%, #9ca3af 10%);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.14);
+  }
+
   .glass-effect input:checked + .custom-toggle {
     background: var(--primary-color);
     border-color: color-mix(in srgb, var(--primary-color) 78%, #ffffff 22%);
