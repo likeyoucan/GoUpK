@@ -2772,37 +2772,26 @@
       0 0 8px color-mix(in srgb, var(--primary-color) 26%, transparent);
   }
 
-  /* iOS-like glass thumb for ranges */
   .glass-effect .tr-thumb {
-    background: color-mix(in srgb, var(--surface-color) 54%, transparent);
-    border: 1px solid color-mix(in srgb, #ffffff 52%, var(--primary-color) 48%);
-    backdrop-filter: blur(14px) saturate(185%) contrast(1.04);
-    -webkit-backdrop-filter: blur(14px) saturate(185%) contrast(1.04);
+    background: color-mix(
+      in srgb,
+      var(--surface-color) 26%,
+      transparent
+    ) !important;
+    border: 1px solid color-mix(in srgb, var(--primary-color) 62%, #ffffff 38%) !important;
+
+    backdrop-filter: blur(24px) saturate(215%) contrast(1.06) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(215%) contrast(1.06) !important;
 
     box-shadow:
-      inset 0 1px 1px rgb(255 255 255 / 0.52),
-      inset 0 -1px 1px rgb(255 255 255 / 0.18),
-      0 6px 14px rgb(0 0 0 / 0.2),
-      0 0 0 1px color-mix(in srgb, var(--primary-color) 44%, transparent);
+      0 8px 18px rgb(0 0 0 / 0.26),
+      0 0 0 1px color-mix(in srgb, var(--primary-color) 46%, transparent) !important;
 
     transition:
       border-color var(--dur-short) ease,
       background-color var(--dur-short) ease,
-      box-shadow var(--dur-short) ease;
-  }
-
-  .glass-effect .tr-thumb::before {
-    content: "";
-    position: absolute;
-    inset: 2px;
-    border-radius: 9999px;
-    pointer-events: none;
-    background: linear-gradient(
-      180deg,
-      rgb(255 255 255 / 0.48) 0%,
-      rgb(255 255 255 / 0.1) 55%,
-      rgb(255 255 255 / 0.02) 100%
-    );
+      box-shadow var(--dur-short) ease,
+      opacity var(--dur-short) ease !important;
   }
 
   .glass-effect .tr-wrap.tr-dragging .tr-thumb {
@@ -2822,20 +2811,46 @@
   html.dark.glass-effect .tr-wrap:focus-within .tr-thumb,
   html.dark.glass-effect .tr-wrap.tr-focused .tr-thumb,
   html.dark.glass-effect .tr-wrap.tr-dragging .tr-thumb {
-    opacity: 0.82;
+    opacity: 0.86;
+    box-shadow:
+      0 12px 24px rgb(0 0 0 / 0.44),
+      0 0 0 2px color-mix(in srgb, var(--primary-color) 62%, transparent) !important;
   }
 
   html.dark.glass-effect .tr-thumb {
-    background: color-mix(in srgb, var(--surface-color) 42%, transparent);
-    border-color: color-mix(in srgb, #ffffff 38%, var(--primary-color) 62%);
-    backdrop-filter: blur(16px) saturate(195%) contrast(1.06);
-    -webkit-backdrop-filter: blur(16px) saturate(195%) contrast(1.06);
+    background: color-mix(
+      in srgb,
+      var(--surface-color) 22%,
+      transparent
+    ) !important;
+    border-color: color-mix(
+      in srgb,
+      var(--primary-color) 66%,
+      #ffffff 34%
+    ) !important;
+
+    backdrop-filter: blur(26px) saturate(225%) contrast(1.08) !important;
+    -webkit-backdrop-filter: blur(26px) saturate(225%) contrast(1.08) !important;
 
     box-shadow:
-      inset 0 1px 1px rgb(255 255 255 / 0.2),
-      inset 0 -1px 1px rgb(0 0 0 / 0.16),
-      0 8px 16px rgb(0 0 0 / 0.36),
-      0 0 0 1px color-mix(in srgb, var(--primary-color) 52%, transparent);
+      0 10px 20px rgb(0 0 0 / 0.4),
+      0 0 0 1px color-mix(in srgb, var(--primary-color) 50%, transparent) !important;
+  }
+
+  /* Убираем любые старые псевдо-градиенты, если остались */
+  .glass-effect .tr-thumb::before,
+  .glass-effect .tr-thumb::after {
+    content: none !important;
+  }
+
+  /* Перетираем дефолтный active/focus shadow из touch-range.js */
+  .glass-effect .tr-wrap:focus-within .tr-thumb,
+  .glass-effect .tr-wrap.tr-focused .tr-thumb,
+  .glass-effect .tr-wrap.tr-dragging .tr-thumb {
+    opacity: 0.9;
+    box-shadow:
+      0 10px 22px rgb(0 0 0 / 0.28),
+      0 0 0 2px color-mix(in srgb, var(--primary-color) 58%, transparent) !important;
   }
 
   /* no-adaptive contrast safety */
