@@ -2772,23 +2772,25 @@
       0 0 8px color-mix(in srgb, var(--primary-color) 26%, transparent);
   }
 
-  /* Thumb base: плотнее, без лишней прозрачности в покое */
+  /* Thumb base: almost solid in idle (no strong transparency) */
   .glass-effect .tr-thumb {
     background: color-mix(
       in srgb,
-      var(--surface-color) 62%,
-      transparent
+      var(--surface-color) 92%,
+      #ffffff 8%
     ) !important;
-    border: 1px solid color-mix(in srgb, var(--primary-color) 58%, #ffffff 42%) !important;
+    border: 1px solid color-mix(in srgb, var(--primary-color) 44%, #ffffff 56%) !important;
 
-    backdrop-filter: blur(24px) saturate(205%) contrast(1.05) !important;
-    -webkit-backdrop-filter: blur(24px) saturate(205%) contrast(1.05) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
 
     box-shadow:
-      0 6px 14px rgb(0 0 0 / 0.18),
-      0 0 0 1px color-mix(in srgb, var(--primary-color) 42%, transparent) !important;
+      0 3px 8px rgb(0 0 0 / 0.16),
+      0 0 0 1px color-mix(in srgb, var(--primary-color) 30%, transparent) !important;
 
-    opacity: 1;
+    opacity: 1 !important;
+    transform: translate(-50%, -50%) scale(1) !important;
+
     transition:
       border-color var(--dur-short) ease,
       background-color var(--dur-short) ease,
@@ -2800,59 +2802,76 @@
   html.dark.glass-effect .tr-thumb {
     background: color-mix(
       in srgb,
-      var(--surface-color) 56%,
-      #0b0b0c 44%
+      var(--surface-color) 90%,
+      #000000 10%
     ) !important;
     border-color: color-mix(
       in srgb,
-      var(--primary-color) 60%,
-      #ffffff 40%
+      var(--primary-color) 48%,
+      #ffffff 52%
     ) !important;
 
-    backdrop-filter: blur(26px) saturate(215%) contrast(1.07) !important;
-    -webkit-backdrop-filter: blur(26px) saturate(215%) contrast(1.07) !important;
-
     box-shadow:
-      0 7px 16px rgb(0 0 0 / 0.28),
-      0 0 0 1px color-mix(in srgb, var(--primary-color) 46%, transparent) !important;
+      0 4px 10px rgb(0 0 0 / 0.3),
+      0 0 0 1px color-mix(in srgb, var(--primary-color) 34%, transparent) !important;
   }
 
-  /* Удаляем любые псевдо-градиенты */
+  /* Remove any pseudo highlight/gradient artifacts */
   .glass-effect .tr-thumb::before,
   .glass-effect .tr-thumb::after {
     content: none !important;
   }
 
-  /* Focus: без смены прозрачности, без огромной рамки */
+  /* Focus state: keep stable, no extra transparency */
   .glass-effect .tr-wrap:focus-within .tr-thumb,
   .glass-effect .tr-wrap.tr-focused .tr-thumb {
-    opacity: 1;
+    opacity: 1 !important;
+    transform: translate(-50%, -50%) scale(1.02) !important;
     box-shadow:
-      0 7px 16px rgb(0 0 0 / 0.2),
-      0 0 0 1px color-mix(in srgb, var(--primary-color) 50%, transparent) !important;
+      0 4px 10px rgb(0 0 0 / 0.2),
+      0 0 0 1px color-mix(in srgb, var(--primary-color) 48%, transparent) !important;
   }
 
-  /* Drag only: прозрачность включается только при перетаскивании */
+  /* Drag state only: glass transparency + strong blur */
   .glass-effect .tr-wrap.tr-dragging .tr-thumb {
-    opacity: 0.9;
     background: color-mix(
       in srgb,
-      var(--surface-color) 44%,
+      var(--surface-color) 46%,
       transparent
     ) !important;
+    border-color: color-mix(
+      in srgb,
+      var(--primary-color) 62%,
+      #ffffff 38%
+    ) !important;
+
+    backdrop-filter: blur(26px) saturate(210%) contrast(1.06) !important;
+    -webkit-backdrop-filter: blur(26px) saturate(210%) contrast(1.06) !important;
+
+    opacity: 0.88 !important;
     transform: translate(-50%, -50%) scale(1.06) !important;
+
     box-shadow:
       0 8px 18px rgb(0 0 0 / 0.24),
-      0 0 0 1.5px color-mix(in srgb, var(--primary-color) 56%, transparent) !important;
+      0 0 0 1.5px color-mix(in srgb, var(--primary-color) 58%, transparent) !important;
   }
 
   html.dark.glass-effect .tr-wrap.tr-dragging .tr-thumb {
-    opacity: 0.9;
     background: color-mix(
       in srgb,
-      var(--surface-color) 38%,
+      var(--surface-color) 42%,
       transparent
     ) !important;
+    border-color: color-mix(
+      in srgb,
+      var(--primary-color) 64%,
+      #ffffff 36%
+    ) !important;
+
+    backdrop-filter: blur(28px) saturate(220%) contrast(1.08) !important;
+    -webkit-backdrop-filter: blur(28px) saturate(220%) contrast(1.08) !important;
+
+    opacity: 0.88 !important;
     box-shadow:
       0 10px 20px rgb(0 0 0 / 0.36),
       0 0 0 1.5px color-mix(in srgb, var(--primary-color) 60%, transparent) !important;
