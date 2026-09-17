@@ -13,6 +13,7 @@ export class BottomSheetDragController {
     this.currentY = 0;
     this.sheetEl = null;
     this.modalId = null;
+    this.handleEl = null;
 
     this.DRAG_START_THRESHOLD = 8;
     this.CLOSE_THRESHOLD = 100;
@@ -25,13 +26,19 @@ export class BottomSheetDragController {
     if (!handleEl) return;
 
     const onTouchStart = (e) => {
-      this._start(e.touches?.[0]?.clientY, "touch", modalId, getSheetEl);
+      this._start(
+        e.touches?.[0]?.clientY,
+        "touch",
+        modalId,
+        getSheetEl,
+        handleEl,
+      );
     };
 
     const onMouseDown = (e) => {
       if (e.button !== 0) return;
       e.preventDefault();
-      this._start(e.clientY, "mouse", modalId, getSheetEl);
+      this._start(e.clientY, "mouse", modalId, getSheetEl, handleEl);
     };
 
     handleEl.addEventListener("touchstart", onTouchStart, { passive: true });
@@ -60,7 +67,7 @@ export class BottomSheetDragController {
     this._reset();
   }
 
-  _start(y, pointerType, modalId, getSheetEl) {
+  _start(y, pointerType, modalId, getSheetEl, handleEl) {
     if (typeof y !== "number") return;
     if (this.isDragging) return;
 
@@ -76,8 +83,13 @@ export class BottomSheetDragController {
     this.currentY = y;
     this.sheetEl = sheet;
     this.modalId = modalId;
+    this.handleEl = handleEl || null;
 
     this.sheetEl.style.transition = "none";
+    this.sheetEl.classList.add("is-dragging-sheet");
+    this.handleEl?.classList.add("is-dragging");
+    document.body.classList.add("is-dragging-sheet");
+
     this._addDocListeners(pointerType);
   }
 
@@ -88,7 +100,7 @@ export class BottomSheetDragController {
     this._onEnd = () => this._end();
 
     if (pointerType === "touch") {
-      document.addEventListener("touchmove", this._onMove, { passive: true });
+      document.addEventListener("touchmove", this._onMove, { passive: false });
       document.addEventListener("touchend", this._onEnd);
       document.addEventListener("touchcancel", this._onEnd);
     } else {
@@ -126,6 +138,10 @@ export class BottomSheetDragController {
 
     this.currentY = y;
     const deltaY = this.currentY - this.startY;
+
+    if (this.pointerType === "touch") {
+      e.preventDefault();
+    }
 
     if (deltaY <= 0) return;
     if (deltaY < this.DRAG_START_THRESHOLD) return;
@@ -169,11 +185,16 @@ export class BottomSheetDragController {
   }
 
   _reset() {
+    this.sheetEl?.classList.remove("is-dragging-sheet");
+    this.handleEl?.classList.remove("is-dragging");
+    document.body.classList.remove("is-dragging-sheet");
+
     this.isDragging = false;
     this.pointerType = null;
     this.startY = 0;
     this.currentY = 0;
     this.sheetEl = null;
     this.modalId = null;
+    this.handleEl = null;
   }
 }
