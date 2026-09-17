@@ -67,6 +67,15 @@ export class BottomSheetDragController {
     this._reset();
   }
 
+  _clearSelection() {
+    try {
+      const sel = window.getSelection?.();
+      if (sel && sel.rangeCount > 0) {
+        sel.removeAllRanges();
+      }
+    } catch {}
+  }
+
   _start(y, pointerType, modalId, getSheetEl, handleEl) {
     if (typeof y !== "number") return;
     if (this.isDragging) return;
@@ -89,6 +98,7 @@ export class BottomSheetDragController {
     this.sheetEl.classList.add("is-dragging-sheet");
     this.handleEl?.classList.add("is-dragging");
     document.body.classList.add("is-dragging-sheet");
+    this._clearSelection();
 
     this._addDocListeners(pointerType);
   }
@@ -143,6 +153,8 @@ export class BottomSheetDragController {
       e.preventDefault();
     }
 
+    this._clearSelection();
+
     if (deltaY <= 0) return;
     if (deltaY < this.DRAG_START_THRESHOLD) return;
 
@@ -163,6 +175,7 @@ export class BottomSheetDragController {
     const currentModalId = this.modalId;
 
     this._removeDocListeners();
+    this._clearSelection();
     this._reset();
 
     const top = this.getTopModal?.();

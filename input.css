@@ -4158,6 +4158,7 @@
     justify-content: center;
     -webkit-user-select: none;
     user-select: none;
+    -webkit-touch-callout: none;
   }
 
   body.is-dragging-sheet,
@@ -4192,7 +4193,8 @@
     }
   }
 
-  :is(#sw-modal-handler, #tb-modal-handler):active .modal-drag-pill {
+  :is(#sw-modal-handler, #tb-modal-handler):active .modal-drag-pill,
+  :is(#sw-modal-handler, #tb-modal-handler).is-dragging .modal-drag-pill {
     opacity: 1;
     background: color-mix(in srgb, var(--primary-color) 70%, var(--text-color));
     transform: scale(1.05);
