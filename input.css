@@ -2816,13 +2816,13 @@
   .glass-effect .tr-wrap:focus-within .tr-thumb,
   .glass-effect .tr-wrap.tr-focused .tr-thumb,
   .glass-effect .tr-wrap.tr-dragging .tr-thumb {
-    opacity: 0.9;
+    opacity: 0.86;
   }
 
   html.dark.glass-effect .tr-wrap:focus-within .tr-thumb,
   html.dark.glass-effect .tr-wrap.tr-focused .tr-thumb,
   html.dark.glass-effect .tr-wrap.tr-dragging .tr-thumb {
-    opacity: 0.86;
+    opacity: 0.82;
   }
 
   html.dark.glass-effect .tr-thumb {
