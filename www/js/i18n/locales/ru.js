@@ -110,7 +110,7 @@ export const ru = {
   split_time: "Интервал",
   stop: "ЗАВЕРШИТЬ",
   stopwatch: "Секундомер",
-  sw_minute_beep: "Звук каждую минуту в секундомере",
+  sw_minute_beep: "Минутный сигнал секундомера",
   tabata: "Табата",
   tabata_complete: "Тренировка завершена!",
   tabata_interval: "Табата Интервалы",
