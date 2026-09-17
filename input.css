@@ -2859,21 +2859,21 @@
   html.dark.glass-effect .tr-wrap.tr-dragging .tr-thumb {
     background: color-mix(
       in srgb,
-      var(--surface-color) 42%,
+      var(--surface-color) 30%,
       transparent
     ) !important;
     border-color: color-mix(
       in srgb,
-      var(--primary-color) 64%,
-      #ffffff 36%
+      var(--primary-color) 66%,
+      #ffffff 34%
     ) !important;
 
-    backdrop-filter: blur(28px) saturate(220%) contrast(1.08) !important;
-    -webkit-backdrop-filter: blur(28px) saturate(220%) contrast(1.08) !important;
+    backdrop-filter: blur(34px) saturate(230%) contrast(1.1) !important;
+    -webkit-backdrop-filter: blur(34px) saturate(230%) contrast(1.1) !important;
 
-    opacity: 0.88 !important;
+    opacity: 0.84 !important;
     box-shadow:
-      0 10px 20px rgb(0 0 0 / 0.36),
+      0 10px 20px rgb(0 0 0 / 0.34),
       0 0 0 1.5px color-mix(in srgb, var(--primary-color) 60%, transparent) !important;
   }
 
@@ -2977,6 +2977,11 @@
     box-shadow:
       inset 0 1px 1px rgb(255 255 255 / 0.26),
       0 1px 4px rgb(0 0 0 / 0.14);
+  }
+
+  html.dark.glass-effect input:not(:checked) + .custom-toggle::after {
+    background: color-mix(in srgb, var(--surface-color) 82%, #ffffff 18%);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.28);
   }
 
   .glass-effect input:checked + .custom-toggle {
