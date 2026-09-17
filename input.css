@@ -2772,77 +2772,86 @@
       0 0 8px color-mix(in srgb, var(--primary-color) 26%, transparent);
   }
 
-  /* Thumb: dense liquid glass, closer to delete color button */
+  /* Thumb: liquid glass (balanced for light/dark) */
   .glass-effect .tr-thumb {
     background: color-mix(
       in srgb,
-      var(--surface-color) 58%,
+      var(--surface-color) 50%,
       transparent
     ) !important;
-    border: 1px solid color-mix(in srgb, var(--primary-color) 64%, #ffffff 36%) !important;
+    border: 1px solid color-mix(in srgb, var(--primary-color) 60%, #ffffff 40%) !important;
 
-    backdrop-filter: blur(28px) saturate(220%) contrast(1.08) !important;
-    -webkit-backdrop-filter: blur(28px) saturate(220%) contrast(1.08) !important;
+    backdrop-filter: blur(24px) saturate(205%) contrast(1.05) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(205%) contrast(1.05) !important;
 
     box-shadow:
-      0 10px 22px rgb(0 0 0 / 0.28),
-      0 0 0 1px color-mix(in srgb, var(--primary-color) 52%, transparent) !important;
+      0 6px 14px rgb(0 0 0 / 0.18),
+      0 0 0 1px color-mix(in srgb, var(--primary-color) 42%, transparent) !important;
 
+    opacity: 1;
     transition:
       border-color var(--dur-short) ease,
       background-color var(--dur-short) ease,
       box-shadow var(--dur-short) ease,
-      opacity var(--dur-short) ease !important;
+      opacity var(--dur-short) ease,
+      transform var(--dur-short) ease !important;
   }
 
+  /* Dark: slightly more transparent base, similar visual density */
   html.dark.glass-effect .tr-thumb {
     background: color-mix(
       in srgb,
-      var(--surface-color) 52%,
-      #0b0b0c 48%
+      var(--surface-color) 40%,
+      transparent
     ) !important;
     border-color: color-mix(
       in srgb,
-      var(--primary-color) 66%,
-      #ffffff 34%
+      var(--primary-color) 62%,
+      #ffffff 38%
     ) !important;
 
-    backdrop-filter: blur(30px) saturate(230%) contrast(1.1) !important;
-    -webkit-backdrop-filter: blur(30px) saturate(230%) contrast(1.1) !important;
+    backdrop-filter: blur(26px) saturate(215%) contrast(1.07) !important;
+    -webkit-backdrop-filter: blur(26px) saturate(215%) contrast(1.07) !important;
 
     box-shadow:
-      0 12px 24px rgb(0 0 0 / 0.42),
-      0 0 0 1px color-mix(in srgb, var(--primary-color) 56%, transparent) !important;
+      0 7px 16px rgb(0 0 0 / 0.28),
+      0 0 0 1px color-mix(in srgb, var(--primary-color) 46%, transparent) !important;
   }
 
-  /* Remove any pseudo highlight/gradient artifacts */
+  /* Remove pseudo highlights/gradients completely */
   .glass-effect .tr-thumb::before,
   .glass-effect .tr-thumb::after {
     content: none !important;
   }
 
-  /* Single active/focus block (no duplicates) */
+  /* Focus state: no opacity change, no aggressive ring growth */
   .glass-effect .tr-wrap:focus-within .tr-thumb,
-  .glass-effect .tr-wrap.tr-focused .tr-thumb,
-  .glass-effect .tr-wrap.tr-dragging .tr-thumb {
-    opacity: 0.94;
+  .glass-effect .tr-wrap.tr-focused .tr-thumb {
+    opacity: 1;
     box-shadow:
-      0 12px 24px rgb(0 0 0 / 0.3),
-      0 0 0 2px color-mix(in srgb, var(--primary-color) 60%, transparent) !important;
+      0 7px 16px rgb(0 0 0 / 0.2),
+      0 0 0 1px color-mix(in srgb, var(--primary-color) 52%, transparent) !important;
   }
 
-  html.dark.glass-effect .tr-wrap:focus-within .tr-thumb,
-  html.dark.glass-effect .tr-wrap.tr-focused .tr-thumb,
-  html.dark.glass-effect .tr-wrap.tr-dragging .tr-thumb {
-    opacity: 0.92;
+  /* Drag state only: transparency appears ONLY while dragging */
+  .glass-effect .tr-wrap.tr-dragging .tr-thumb {
+    opacity: 0.88;
+    transform: translate(-50%, -50%) scale(1.08) !important;
     box-shadow:
-      0 14px 28px rgb(0 0 0 / 0.46),
-      0 0 0 2px color-mix(in srgb, var(--primary-color) 64%, transparent) !important;
+      0 8px 18px rgb(0 0 0 / 0.24),
+      0 0 0 1.5px color-mix(in srgb, var(--primary-color) 58%, transparent) !important;
+  }
+
+  html.dark.glass-effect .tr-wrap.tr-dragging .tr-thumb {
+    opacity: 0.86;
+    box-shadow:
+      0 10px 20px rgb(0 0 0 / 0.36),
+      0 0 0 1.5px color-mix(in srgb, var(--primary-color) 60%, transparent) !important;
   }
 
   /* no-adaptive contrast safety */
   html.no-adaptive.glass-effect body.force-light-text .tr-thumb {
-    border-color: rgb(255 255 255 / 0.9);
+    border-color: rgb(255 255 255 / 0.88);
   }
 
   html.no-adaptive.glass-effect body.force-dark-text .tr-thumb {
