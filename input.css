@@ -2772,14 +2772,14 @@
       0 0 8px color-mix(in srgb, var(--primary-color) 26%, transparent);
   }
 
-  /* Thumb: liquid glass (balanced for light/dark) */
+  /* Thumb base: плотнее, без лишней прозрачности в покое */
   .glass-effect .tr-thumb {
     background: color-mix(
       in srgb,
-      var(--surface-color) 50%,
+      var(--surface-color) 62%,
       transparent
     ) !important;
-    border: 1px solid color-mix(in srgb, var(--primary-color) 60%, #ffffff 40%) !important;
+    border: 1px solid color-mix(in srgb, var(--primary-color) 58%, #ffffff 42%) !important;
 
     backdrop-filter: blur(24px) saturate(205%) contrast(1.05) !important;
     -webkit-backdrop-filter: blur(24px) saturate(205%) contrast(1.05) !important;
@@ -2797,17 +2797,16 @@
       transform var(--dur-short) ease !important;
   }
 
-  /* Dark: slightly more transparent base, similar visual density */
   html.dark.glass-effect .tr-thumb {
     background: color-mix(
       in srgb,
-      var(--surface-color) 40%,
-      transparent
+      var(--surface-color) 56%,
+      #0b0b0c 44%
     ) !important;
     border-color: color-mix(
       in srgb,
-      var(--primary-color) 62%,
-      #ffffff 38%
+      var(--primary-color) 60%,
+      #ffffff 40%
     ) !important;
 
     backdrop-filter: blur(26px) saturate(215%) contrast(1.07) !important;
@@ -2818,32 +2817,42 @@
       0 0 0 1px color-mix(in srgb, var(--primary-color) 46%, transparent) !important;
   }
 
-  /* Remove pseudo highlights/gradients completely */
+  /* Удаляем любые псевдо-градиенты */
   .glass-effect .tr-thumb::before,
   .glass-effect .tr-thumb::after {
     content: none !important;
   }
 
-  /* Focus state: no opacity change, no aggressive ring growth */
+  /* Focus: без смены прозрачности, без огромной рамки */
   .glass-effect .tr-wrap:focus-within .tr-thumb,
   .glass-effect .tr-wrap.tr-focused .tr-thumb {
     opacity: 1;
     box-shadow:
       0 7px 16px rgb(0 0 0 / 0.2),
-      0 0 0 1px color-mix(in srgb, var(--primary-color) 52%, transparent) !important;
+      0 0 0 1px color-mix(in srgb, var(--primary-color) 50%, transparent) !important;
   }
 
-  /* Drag state only: transparency appears ONLY while dragging */
+  /* Drag only: прозрачность включается только при перетаскивании */
   .glass-effect .tr-wrap.tr-dragging .tr-thumb {
-    opacity: 0.88;
-    transform: translate(-50%, -50%) scale(1.08) !important;
+    opacity: 0.9;
+    background: color-mix(
+      in srgb,
+      var(--surface-color) 44%,
+      transparent
+    ) !important;
+    transform: translate(-50%, -50%) scale(1.06) !important;
     box-shadow:
       0 8px 18px rgb(0 0 0 / 0.24),
-      0 0 0 1.5px color-mix(in srgb, var(--primary-color) 58%, transparent) !important;
+      0 0 0 1.5px color-mix(in srgb, var(--primary-color) 56%, transparent) !important;
   }
 
   html.dark.glass-effect .tr-wrap.tr-dragging .tr-thumb {
-    opacity: 0.86;
+    opacity: 0.9;
+    background: color-mix(
+      in srgb,
+      var(--surface-color) 38%,
+      transparent
+    ) !important;
     box-shadow:
       0 10px 20px rgb(0 0 0 / 0.36),
       0 0 0 1.5px color-mix(in srgb, var(--primary-color) 60%, transparent) !important;
