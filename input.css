@@ -2781,9 +2781,6 @@
     ) !important;
     border: 1px solid color-mix(in srgb, var(--primary-color) 44%, #ffffff 56%) !important;
 
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-
     box-shadow:
       0 3px 8px rgb(0 0 0 / 0.16),
       0 0 0 1px color-mix(in srgb, var(--primary-color) 30%, transparent) !important;
