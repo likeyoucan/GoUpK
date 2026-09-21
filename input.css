@@ -917,7 +917,7 @@
 
   .app-modal-overlay {
     backdrop-filter: blur(8px);
-    background-color: rgb(0 0 0 / 0.6);
+    background-color: rgb(0 0 0 / 0.18);
   }
 
   .app-modal-content {
