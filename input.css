@@ -2796,6 +2796,10 @@
       transform var(--dur-short) ease !important;
   }
 
+.tr-thumb{
+  
+}
+
   html.dark.glass-effect .tr-thumb {
     background: color-mix(
       in srgb,
