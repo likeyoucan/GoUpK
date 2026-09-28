@@ -5116,15 +5116,3 @@
     font-weight: 600;
   }
 }
-
-
-.tr-thumb::after {
-  content: "" !important;
-  margin: auto !important;
-  display: block !important;
-  width: 100px !important;
-  height: 100px !important;
-  position: absolute !important;
-  inset: 0 !important;
-  background-color: #cc4b4b !important;
-}
