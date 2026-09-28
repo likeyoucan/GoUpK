@@ -2796,16 +2796,6 @@
       transform var(--dur-short) ease !important;
   }
 
-.tr-thumb::after {
-  content: "";
-  display: block;
-  width: 100px;
-  height: 100px;
-  position: absolute;
-  inset: 0;
-  background-color: #eb2828;
-}
-
   html.dark.glass-effect .tr-thumb {
     background: color-mix(
       in srgb,
@@ -5125,4 +5115,16 @@
   #__erudaBar button {
     font-weight: 600;
   }
+}
+
+
+.tr-thumb::after {
+  content: "" !important;
+  margin: auto !important;
+  display: block !important;
+  width: 100px !important;
+  height: 100px !important;
+  position: absolute !important;
+  inset: 0 !important;
+  background-color: #cc4b4b !important;
 }
