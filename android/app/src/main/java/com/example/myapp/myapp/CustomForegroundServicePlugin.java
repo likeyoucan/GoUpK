@@ -8,7 +8,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.PackageManager;
 import android.os.Build;
 
 import androidx.core.content.ContextCompat;
@@ -186,7 +185,21 @@ public class CustomForegroundServicePlugin extends Plugin {
 
         JSObject runtimeState = call.getObject("runtimeState");
         if (runtimeState != null) {
-            new ForegroundStateStore(getContext()).updateFromJson(runtimeState);
+            ForegroundStateStore store = new ForegroundStateStore(getContext());
+            store.updateFromJson(runtimeState);
+
+            // Re-read normalized runtime state from native store to keep
+            // notification payload and service extras fully consistent.
+            ForegroundStateStore.RuntimeState normalized = store.read();
+
+            if (!isBlank(normalized.notifTitle)) title = normalized.notifTitle;
+            if (!isBlank(normalized.notifBody)) body = normalized.notifBody;
+
+            if (!isBlank(normalized.channelId)) channelId = normalized.channelId;
+            isDarkTheme = normalized.isDarkTheme;
+
+            if (!isBlank(normalized.accentColor)) accentColor = normalized.accentColor;
+            if (!isBlank(normalized.onAccentColor)) onAccentColor = normalized.onAccentColor;
         }
 
         getContext().getSharedPreferences(ACTION_PREFS, Context.MODE_PRIVATE)
@@ -275,6 +288,12 @@ public class CustomForegroundServicePlugin extends Plugin {
 
         long eventAt = context.getSharedPreferences(ACTION_PREFS, Context.MODE_PRIVATE)
             .getLong(KEY_PENDING_EVENT_AT, 0L);
+
+        // If event timestamp is missing but id exists, normalize timestamp now
+        // to avoid losing a real pending action.
+        if (id > 0 && eventAt <= 0L) {
+            eventAt = System.currentTimeMillis();
+        }
 
         context.getSharedPreferences(ACTION_PREFS, Context.MODE_PRIVATE)
             .edit()
@@ -419,5 +438,9 @@ public class CustomForegroundServicePlugin extends Plugin {
             getPermissionState("notifications") == PermissionState.GRANTED ? "granted" : "denied"
         );
         call.resolve(result);
+    }
+
+    private boolean isBlank(String v) {
+        return v == null || v.trim().isEmpty();
     }
 }

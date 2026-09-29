@@ -37,6 +37,7 @@ public class ForegroundStateStore {
         public int tbRounds = 1;
         public String tbWorkoutName = "Tabata";
         public long tbRemainingMs = 0L;
+        public long tbPhaseDuration = 0L;
         public long tbEndsAt = 0L;
 
         public String notifTitle = "Stopwatch";
@@ -79,6 +80,7 @@ public class ForegroundStateStore {
         s.tbRounds = prefs.getInt("tbRounds", 1);
         s.tbWorkoutName = prefs.getString("tbWorkoutName", "Tabata");
         s.tbRemainingMs = prefs.getLong("tbRemainingMs", 0L);
+        s.tbPhaseDuration = prefs.getLong("tbPhaseDuration", 0L);
         s.tbEndsAt = prefs.getLong("tbEndsAt", 0L);
 
         s.notifTitle = prefs.getString("notifTitle", "Stopwatch");
@@ -112,6 +114,7 @@ public class ForegroundStateStore {
             .putInt("tbRounds", s.tbRounds)
             .putString("tbWorkoutName", s.tbWorkoutName)
             .putLong("tbRemainingMs", s.tbRemainingMs)
+            .putLong("tbPhaseDuration", s.tbPhaseDuration)
             .putLong("tbEndsAt", s.tbEndsAt)
 
             .putString("notifTitle", s.notifTitle)
@@ -153,6 +156,7 @@ public class ForegroundStateStore {
         s.tbRounds = Math.max(1, runtime.optInt("tbRounds", s.tbRounds));
         s.tbWorkoutName = runtime.optString("tbWorkoutName", s.tbWorkoutName);
         s.tbRemainingMs = Math.max(0L, runtime.optLong("tbRemainingMs", s.tbRemainingMs));
+        s.tbPhaseDuration = Math.max(0L, runtime.optLong("tbPhaseDuration", s.tbPhaseDuration));
 
         s.notifTitle = runtime.optString("notifTitle", s.notifTitle);
         s.notifBody = runtime.optString("notifBody", s.notifBody);

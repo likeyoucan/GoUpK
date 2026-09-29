@@ -106,18 +106,21 @@ public class AppForegroundService extends Service {
             ForegroundStateStore.NotificationPayload payload = store.computeDisplayNow();
 
             String sig = buildSignature(payload);
-            Notification notification = buildNotification(
-                payload.channelId,
-                payload.title,
-                payload.body,
-                payload.toggleTitle,
-                payload.isDarkTheme,
-                payload.accentColor,
-                payload.onAccentColor
-            );
 
-            startForeground(NOTIFICATION_ID, notification);
-            lastNotifSignature = sig;
+            // Avoid heavy restart of foreground notification when payload did not change.
+            if (lastNotifSignature.isEmpty() || !sig.equals(lastNotifSignature)) {
+                Notification notification = buildNotification(
+                    payload.channelId,
+                    payload.title,
+                    payload.body,
+                    payload.toggleTitle,
+                    payload.isDarkTheme,
+                    payload.accentColor,
+                    payload.onAccentColor
+                );
+                startForeground(NOTIFICATION_ID, notification);
+                lastNotifSignature = sig;
+            }
 
             ForegroundStateStore.RuntimeState nowState = store.read();
             if (nowState.running) {
