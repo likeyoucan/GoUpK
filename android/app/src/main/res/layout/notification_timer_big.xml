@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/notif_root"
+    android:id="@+id/notif_root_big"
     android:layout_width="match_parent"
-    android:layout_height="92dp"
+    android:layout_height="88dp"
     android:paddingStart="12dp"
     android:paddingEnd="12dp"
     android:paddingTop="10dp"
@@ -11,8 +11,8 @@
 
     <FrameLayout
         android:id="@+id/notif_btn_toggle_wrap"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
+        android:layout_width="52dp"
+        android:layout_height="52dp"
         android:layout_alignParentEnd="true"
         android:layout_centerVertical="true"
         android:clickable="true"
@@ -20,15 +20,15 @@
 
         <ImageView
             android:id="@+id/notif_btn_toggle_bg"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:layout_width="52dp"
+            android:layout_height="52dp"
             android:layout_gravity="center"
             android:src="@drawable/ic_notif_btn_circle" />
 
         <ImageView
             android:id="@+id/notif_btn_toggle_icon"
-            android:layout_width="22dp"
-            android:layout_height="22dp"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
             android:layout_gravity="center"
             android:src="@drawable/ic_notif_play" />
     </FrameLayout>
@@ -39,8 +39,8 @@
         android:layout_height="wrap_content"
         android:layout_toStartOf="@id/notif_btn_toggle_wrap"
         android:layout_alignParentTop="true"
-        android:layout_marginEnd="8dp"
-        android:text="Секундомер"
+        android:layout_marginEnd="10dp"
+        android:text="Stopwatch"
         android:textSize="13sp"
         android:textColor="#BFC7D9"
         android:maxLines="1"
@@ -53,10 +53,10 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/notif_title"
         android:layout_toStartOf="@id/notif_btn_toggle_wrap"
-        android:layout_marginTop="4dp"
-        android:layout_marginEnd="8dp"
+        android:layout_marginTop="3dp"
+        android:layout_marginEnd="10dp"
         android:text="00:00"
-        android:textSize="34sp"
+        android:textSize="32sp"
         android:fontFamily="monospace"
         android:maxLines="1"
         android:ellipsize="end"

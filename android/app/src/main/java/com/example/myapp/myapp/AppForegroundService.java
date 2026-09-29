@@ -40,7 +40,7 @@ public class AppForegroundService extends Service {
     private static final String ACTION_PREFS = "fg_actions";
     private static final String KEY_NOTIFICATION_SUPPRESSED = "notification_suppressed";
 
-    private static final long TICK_MS = 750L;
+    private static final long TICK_MS = 1000L;
 
     private Handler tickerHandler;
     private Runnable tickerRunnable;
