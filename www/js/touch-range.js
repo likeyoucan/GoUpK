@@ -87,6 +87,14 @@ function unmarkEnhanced(input) {
   enhancedInputs.delete(input);
 }
 
+function findTouchById(touchList, id) {
+  for (let i = 0; i < touchList.length; i += 1) {
+    const t = touchList[i];
+    if (t.identifier === id) return t;
+  }
+  return null;
+}
+
 export function enhanceNativeRange(input) {
   if (!input || input.type !== "range") return null;
 
@@ -190,6 +198,11 @@ export function enhanceNativeRange(input) {
     input.dispatchEvent(new Event("change", { bubbles: true }));
   };
 
+  // Touch lock tuning: protects vertical page scroll while keeping horizontal drag stable.
+  const TOUCH_DECISION_THRESHOLD = 9;
+  const TOUCH_HORIZONTAL_RATIO = 1.25;
+  const TOUCH_CANCEL_VERTICAL_PX = 16;
+
   let touchState = {
     active: false,
     decided: false,
@@ -200,11 +213,12 @@ export function enhanceNativeRange(input) {
     startY: 0,
   };
 
-  const DECISION_THRESHOLD = 6;
-
   const onTouchStart = (e) => {
     if (touchState.active) return;
+
     const touch = e.changedTouches[0];
+    if (!touch) return;
+
     touchState = {
       active: true,
       decided: false,
@@ -219,33 +233,37 @@ export function enhanceNativeRange(input) {
   const onTouchMove = (e) => {
     if (!touchState.active) return;
 
-    let touch = null;
-    for (let i = 0; i < e.changedTouches.length; i++) {
-      if (e.changedTouches[i].identifier === touchState.id) {
-        touch = e.changedTouches[i];
-        break;
-      }
-    }
+    const touch = findTouchById(e.changedTouches, touchState.id);
     if (!touch) return;
 
     const dx = touch.clientX - touchState.startX;
     const dy = touch.clientY - touchState.startY;
+    const absX = Math.abs(dx);
+    const absY = Math.abs(dy);
     const dist = Math.hypot(dx, dy);
 
     if (!touchState.decided) {
-      if (dist < DECISION_THRESHOLD) return;
-      touchState.decided = true;
-      touchState.isHoriz = Math.abs(dx) >= Math.abs(dy);
+      if (dist < TOUCH_DECISION_THRESHOLD) return;
 
-      if (touchState.isHoriz) {
-        wrap.classList.add("tr-dragging");
-      } else {
+      if (absY >= TOUCH_CANCEL_VERTICAL_PX && absY > absX) {
         touchState.active = false;
         return;
       }
+
+      const horizontalDominates = absX > absY * TOUCH_HORIZONTAL_RATIO;
+      if (!horizontalDominates) {
+        touchState.active = false;
+        return;
+      }
+
+      touchState.decided = true;
+      touchState.isHoriz = true;
+      wrap.classList.add("tr-dragging");
     }
 
     if (!touchState.isHoriz) return;
+
+    e.preventDefault();
 
     const changed = applyValue(valueFromX(touch.clientX), "input");
     if (changed) {
@@ -270,7 +288,7 @@ export function enhanceNativeRange(input) {
   };
 
   wrap.addEventListener("touchstart", onTouchStart, { passive: true });
-  wrap.addEventListener("touchmove", onTouchMove, { passive: true });
+  wrap.addEventListener("touchmove", onTouchMove, { passive: false });
   wrap.addEventListener("touchend", onTouchEnd, { passive: true });
   wrap.addEventListener("touchcancel", onTouchEnd, { passive: true });
 
