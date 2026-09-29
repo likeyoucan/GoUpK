@@ -43,11 +43,15 @@ import {
 
 const FG_ID = 101;
 const ACTION_TOGGLE = 1;
-const POLL_MS = 700;
+
+/* Reduced polling pressure */
+const POLL_MS = 1400;
+
 const FOREGROUND_STOP_DEBOUNCE_MS = 1200;
 const TOGGLE_DEBOUNCE_MS = 120;
-const EVENT_SYNC_DELAY_MS = 60;
-const EVENT_SYNC_TRAIL_DELAY_MS = 220;
+const EVENT_SYNC_DELAY_MS = 70;
+const EVENT_SYNC_TRAIL_DELAY_MS = 260;
+const SYNC_COALESCE_MS = 140;
 
 const CHANNEL = {
   id: "stopwatch_channel_silent_v2",
@@ -82,6 +86,8 @@ let runtimePullQueued = false;
 let eventSyncTimer = 0;
 let eventSyncTrailTimer = 0;
 let eventSyncReason = "";
+let lastScheduledStateSig = "";
+let lastScheduledAt = 0;
 
 let notificationSuppressed = false;
 
@@ -99,6 +105,11 @@ function fgDebug(...args) {
   } catch {}
 }
 
+function stateToSig(state) {
+  if (!state) return "none";
+  return `${state.mode}|${state.running ? "1" : "0"}|${state.metaKey || ""}`;
+}
+
 function clearEventSyncTimer() {
   if (eventSyncTimer) {
     clearTimeout(eventSyncTimer);
@@ -112,6 +123,20 @@ function clearEventSyncTimer() {
 }
 
 function scheduleStateSync(reason = "event") {
+  const state = getResolvedForegroundState();
+  const sig = stateToSig(state);
+  const now = performance.now();
+
+  if (
+    sig === lastScheduledStateSig &&
+    now - lastScheduledAt < SYNC_COALESCE_MS &&
+    !reason.includes("force")
+  ) {
+    return;
+  }
+
+  lastScheduledStateSig = sig;
+  lastScheduledAt = now;
   eventSyncReason = reason;
 
   if (eventSyncTimer) {
@@ -126,18 +151,16 @@ function scheduleStateSync(reason = "event") {
   eventSyncTimer = setTimeout(async () => {
     eventSyncTimer = 0;
     const r = eventSyncReason || reason;
-
     await pushRuntimeStateToNative(`${r}:push_fast`);
-    await syncNotification({ reason: `${r}:notify_fast`, force: true });
+    await syncNotification({ reason: `${r}:notify_fast`, force: false });
   }, EVENT_SYNC_DELAY_MS);
 
   eventSyncTrailTimer = setTimeout(async () => {
     eventSyncTrailTimer = 0;
     const r = eventSyncReason || reason;
     eventSyncReason = "";
-
     await pushRuntimeStateToNative(`${r}:push_trail`);
-    await syncNotification({ reason: `${r}:notify_trail`, force: true });
+    await syncNotification({ reason: `${r}:notify_trail`, force: false });
   }, EVENT_SYNC_TRAIL_DELAY_MS);
 }
 
@@ -145,7 +168,6 @@ async function readNativeSuppressedFlag() {
   const plugins = getPlugins();
   const api = plugins?.FgService?.isNotificationSuppressed;
   if (typeof api !== "function") return false;
-
   try {
     const res = await api();
     return !!res?.suppressed;
@@ -158,28 +180,17 @@ async function clearNativeSuppressedFlag() {
   const plugins = getPlugins();
   const api = plugins?.FgService?.clearNotificationSuppressed;
   if (typeof api !== "function") return;
-
   try {
     await api();
   } catch {}
 }
 
-// Some native runtimes may send epoch timestamp instead of remainingMs.
 function normalizeRemainingMsFromNative(value) {
   const raw = Math.max(0, Number(value) || 0);
   if (!Number.isFinite(raw) || raw <= 0) return 0;
-
-  // Epoch in milliseconds
-  if (raw > 1_000_000_000_000) {
-    return Math.max(0, raw - Date.now());
-  }
-
-  // Epoch in seconds (10-digit style)
-  if (raw > 1_000_000_000 && raw < 1_000_000_000_000) {
+  if (raw > 1_000_000_000_000) return Math.max(0, raw - Date.now());
+  if (raw > 1_000_000_000 && raw < 1_000_000_000_000)
     return Math.max(0, raw * 1000 - Date.now());
-  }
-
-  // Normal remaining ms
   return raw;
 }
 
@@ -223,20 +234,17 @@ function getFallbackForegroundState() {
     };
   }
 
-  if (sw.isRunning) {
-    return { mode: "stopwatch", running: true, metaKey: "" };
-  }
+  if (sw.isRunning) return { mode: "stopwatch", running: true, metaKey: "" };
 
   if (tm.isPaused) {
     const rem = getTimerRemainingMs();
     const total = tm.totalDuration || tm.initialDurationMs || 0;
-    if (rem > 0) {
+    if (rem > 0)
       return {
         mode: "timer",
         running: false,
         metaKey: `${total}|${Math.floor(rem / 1000)}|p`,
       };
-    }
   }
 
   if (tb.status !== "STOPPED") {
@@ -248,10 +256,8 @@ function getFallbackForegroundState() {
     };
   }
 
-  if (sw.elapsedTime > 0) {
+  if (sw.elapsedTime > 0)
     return { mode: "stopwatch", running: false, metaKey: "" };
-  }
-
   return null;
 }
 
@@ -267,25 +273,31 @@ function cancelPendingStop() {
   if (!pendingStopTimer) return;
   clearTimeout(pendingStopTimer);
   pendingStopTimer = null;
-  fgDebug("pending stop canceled");
+}
+
+async function stopForeground() {
+  const plugins = getPlugins();
+  if (!plugins || !isForegroundShown) return;
+
+  await plugins.stop?.().catch(() => {});
+  isForegroundShown = false;
+  lastSignature = "";
 }
 
 function scheduleForegroundStop(delay = FOREGROUND_STOP_DEBOUNCE_MS) {
   cancelPendingStop();
-
   pendingStopTimer = setTimeout(async () => {
     pendingStopTimer = null;
-
     const state = getResolvedForegroundState();
     if (!state) {
       await stopForeground();
       return;
     }
-
-    await syncNotification({ reason: "stop_debounce_state_active" });
+    await syncNotification({
+      reason: "stop_debounce_state_active",
+      force: false,
+    });
   }, delay);
-
-  fgDebug("pending stop scheduled", { delay });
 }
 
 async function ensurePermissionIfNeeded(force = false) {
@@ -304,22 +316,7 @@ async function ensurePermissionIfNeeded(force = false) {
   const granted = await ensureNotificationPermission(plugins.FgService);
   permissionGranted = !!granted;
   permissionCheckedAt = now;
-
-  fgDebug("permission state", { granted: permissionGranted, force });
   return permissionGranted;
-}
-
-async function stopForeground() {
-  const plugins = getPlugins();
-  if (!plugins || !isForegroundShown) return;
-
-  await plugins.stop?.().catch((err) => {
-    console.warn("[fg] stop failed", err);
-  });
-
-  isForegroundShown = false;
-  lastSignature = "";
-  fgDebug("foreground stopped");
 }
 
 function buildRuntimeStateFromJs(payload, state, theme, accent) {
@@ -385,42 +382,37 @@ async function pushRuntimeStateToNative(reason = "unknown") {
   const plugins = getPlugins();
   const api = plugins?.FgService?.setRuntimeState;
   if (typeof api !== "function") return;
-
   if (document.visibilityState !== "visible") return;
 
   const state = getResolvedForegroundState();
   const theme = getThemeSnapshot();
   const accent = getAccentSnapshot();
 
-  let runtimeState;
-
-  if (state) {
-    const payload = buildForegroundPayload({
-      state,
-      sw,
-      tm,
-      tb,
-      t,
-      $,
-      formatTime,
-    });
-
-    runtimeState = buildRuntimeStateFromJs(payload, state, theme, accent);
-  } else {
-    runtimeState = buildClearedRuntimeState(theme, accent);
-  }
+  const runtimeState = state
+    ? buildRuntimeStateFromJs(
+        buildForegroundPayload({ state, sw, tm, tb, t, $, formatTime }),
+        state,
+        theme,
+        accent,
+      )
+    : buildClearedRuntimeState(theme, accent);
 
   try {
     await api({ runtimeState });
-    fgDebug("setRuntimeState ok", { reason, runtimeState });
+    fgDebug("setRuntimeState ok", reason, runtimeState);
   } catch (err) {
     console.warn("[fg] setRuntimeState failed", err);
   }
 }
 
+function updateText(el, text) {
+  if (!el) return;
+  const next = String(text);
+  if (el.textContent !== next) el.textContent = next;
+}
+
 function applyStopwatchRuntimeToJs(nativeState) {
   const elapsed = Math.max(0, Number(nativeState.swElapsedMs) || 0);
-
   sw.elapsedTime = elapsed;
   sw.startEpochMs = Date.now() - elapsed;
   sw.pauseTime = Date.now();
@@ -428,10 +420,8 @@ function applyStopwatchRuntimeToJs(nativeState) {
   if (nativeState.running) {
     sw.stopwatchEngine?.start?.(elapsed);
     sw.isRunning = true;
-
     sw.els.display?.classList.remove("is-go");
     if (sw.els.display) sw.els.display.style.transform = "translateX(0px)";
-
     sw.els.status?.classList.add("hidden");
     sw.els.lapBtn?.classList.remove("hidden");
     if (sw.els.lapBtn) {
@@ -439,7 +429,6 @@ function applyStopwatchRuntimeToJs(nativeState) {
       sw.els.lapBtn.classList.add("main_btn");
       sw.els.lapBtn.textContent = t("lap");
     }
-
     requestWakeLock();
     bgWorker.postMessage({ command: "start" });
     sw.lastRender = 0;
@@ -448,12 +437,10 @@ function applyStopwatchRuntimeToJs(nativeState) {
     sw.stopwatchEngine?.setElapsed?.(elapsed);
     sw.stopwatchEngine?.pause?.();
     sw.isRunning = false;
-
     if (sw.rAF) {
       cancelAnimationFrame(sw.rAF);
       sw.rAF = null;
     }
-
     bgWorker.postMessage({ command: "stop" });
     releaseWakeLock();
 
@@ -490,26 +477,21 @@ function applyTimerRuntimeToJs(nativeState) {
 
   if (rem <= 0 || total <= 0) {
     tm.countdownEngine?.stop?.();
-
     tm.totalDuration = 0;
     tm.initialDurationMs = 0;
     tm.timeRemainingMs = 0;
     tm.remainingAtPause = 0;
     tm.targetEpochMs = 0;
-
     tm.isRunning = false;
     tm.isPaused = false;
     tm.isFinished = false;
     tm.lastUiRem = 0;
     tm._lastUiPaintTs = 0;
-
     tm.stopUiLoop?.();
     tm.bgWorker?.postMessage?.({ command: "stop" });
     releaseWakeLock();
-
     tm.updateUIState?.();
     tm.updateAdjustButtons?.();
-
     if (tm.ringCtrl) tm.ringCtrl.snap(tm.ringLength);
     if (tm.els?.display) {
       tm.els.display.style.transform = "";
@@ -526,7 +508,6 @@ function applyTimerRuntimeToJs(nativeState) {
   tm.remainingAtPause = rem;
 
   const nextStatus = nativeState.running ? "running" : "paused";
-
   const snap = tm.countdownEngine?.hydrate?.({
     status: nextStatus,
     totalMs: total,
@@ -537,7 +518,6 @@ function applyTimerRuntimeToJs(nativeState) {
   if (snap) {
     tm.timeRemainingMs = Math.max(0, Number(snap.remainingMs) || rem);
     tm.targetEpochMs = Number(snap.targetEpochMs) || 0;
-
     if ((Number(snap.totalMs) || 0) > 0) {
       tm.totalDuration = Number(snap.totalMs);
       tm.initialDurationMs = Number(snap.totalMs);
@@ -552,7 +532,6 @@ function applyTimerRuntimeToJs(nativeState) {
     tm.isFinished = false;
     tm.lastUiRem = rem;
     tm._lastUiPaintTs = 0;
-
     requestWakeLock();
     tm.bgWorker?.postMessage?.({ command: "start", time: rem });
     tm.startUiLoop?.();
@@ -560,7 +539,6 @@ function applyTimerRuntimeToJs(nativeState) {
     tm.isRunning = false;
     tm.isPaused = true;
     tm.isFinished = false;
-
     tm.stopUiLoop?.();
     tm.bgWorker?.postMessage?.({ command: "stop" });
     releaseWakeLock();
@@ -599,16 +577,12 @@ function applyTabataRuntimeToJs(nativeState) {
     incomingPhaseDuration || tb.phaseDuration || 0,
   );
 
-  // Guard against stale/invalid paused snapshot from native:
-  // if timer is "not running" but remaining is wildly larger than phase duration,
-  // this is usually epoch-like/stale payload, so treat as STOPPED.
   const invalidPausedSnapshot =
     !nativeState.running &&
     tb.status !== "STOPPED" &&
     ((knownPhaseDuration > 0 && rem > knownPhaseDuration * 2) ||
       (knownPhaseDuration === 0 && rem > LARGE_INVALID_REMAINING_MS));
 
-  // If running payload is invalidly large, clamp to phase duration.
   if (
     nativeState.running &&
     knownPhaseDuration > 0 &&
@@ -629,13 +603,12 @@ function applyTabataRuntimeToJs(nativeState) {
     tb.remainingAtPause = 0;
     tb.phaseEndTime = 0;
     tb.phaseDuration = 0;
-
     tb.phaseClosing = false;
+
     if (tb.phaseCloseTimer) {
       clearTimeout(tb.phaseCloseTimer);
       tb.phaseCloseTimer = null;
     }
-
     if (tb.rAF) {
       cancelAnimationFrame(tb.rAF);
       tb.rAF = null;
@@ -660,12 +633,10 @@ function applyTabataRuntimeToJs(nativeState) {
     }
 
     tb.ringCtrl?.snap(tb.ringLength);
-
     document.dispatchEvent(new Event(APP_EVENTS.MS_CHANGED));
     return;
   }
 
-  // Time value should never stay in GO visual mode.
   if (tb.els.timer) {
     tb.els.timer.classList.remove("is-go");
     tb.els.timer.style.removeProperty("--go-font-dynamic");
@@ -695,7 +666,6 @@ function applyTabataRuntimeToJs(nativeState) {
     tb.remainingAtPause = 0;
     tb.phaseEndTime = Date.now() + rem;
     tb.lastRender = 0;
-
     tb.phaseClosing = false;
     if (tb.phaseCloseTimer) {
       clearTimeout(tb.phaseCloseTimer);
@@ -704,20 +674,17 @@ function applyTabataRuntimeToJs(nativeState) {
 
     requestWakeLock();
     bgWorker.postMessage({ command: "start" });
-
     tb.updatePhaseStyles?.();
     tb.tick?.();
   } else {
     tb.paused = true;
     tb.remainingAtPause = rem;
     tb.phaseEndTime = 0;
-
     tb.phaseClosing = false;
     if (tb.phaseCloseTimer) {
       clearTimeout(tb.phaseCloseTimer);
       tb.phaseCloseTimer = null;
     }
-
     if (tb.rAF) {
       cancelAnimationFrame(tb.rAF);
       tb.rAF = null;
@@ -725,17 +692,8 @@ function applyTabataRuntimeToJs(nativeState) {
 
     bgWorker.postMessage({ command: "stop" });
     releaseWakeLock();
-
     tb.updatePhaseStyles?.();
     tb.render?.(rem);
-  }
-}
-
-function updateText(el, text) {
-  if (!el) return;
-  const next = String(text);
-  if (el.textContent !== next) {
-    el.textContent = next;
   }
 }
 
@@ -753,7 +711,6 @@ async function pullRuntimeStateIntoJs(reason = "unknown") {
   try {
     do {
       runtimePullQueued = false;
-
       let nativeState;
       try {
         nativeState = await api();
@@ -765,9 +722,6 @@ async function pullRuntimeStateIntoJs(reason = "unknown") {
       if (!nativeState || typeof nativeState !== "object") return false;
 
       const mode = String(nativeState.mode || "none");
-      const running = !!nativeState.running;
-
-      fgDebug("pull runtime state", { reason, mode, running, nativeState });
 
       if (mode === "stopwatch") {
         applyStopwatchRuntimeToJs(nativeState);
@@ -802,36 +756,22 @@ async function processButtonAction(
 ) {
   const id = Number(buttonId);
   const ts = Number(eventAt) || Date.now();
-
   if (!id) return;
-  if (ts <= lastHandledActionAt) {
-    fgDebug("skip duplicated action", { id, ts, source, lastHandledActionAt });
-    return;
-  }
 
+  if (ts <= lastHandledActionAt) return;
   lastHandledActionAt = ts;
-  fgDebug("process action", { id, ts, source });
 
   if (id === ACTION_TOGGLE) {
     const nowTs = Date.now();
-    if (shouldSkipToggleByDebounce(nowTs)) {
-      fgDebug("skip toggle by debounce/in-flight", {
-        source,
-        nowTs,
-        lastToggleProcessedAt,
-        toggleInFlight,
-      });
-      return;
-    }
+    if (shouldSkipToggleByDebounce(nowTs)) return;
 
     toggleInFlight = true;
     lastToggleProcessedAt = nowTs;
-
     try {
       await pullRuntimeStateIntoJs(`button:${source}`);
       await syncNotification({
         reason: "button_toggle_synced_from_native",
-        force: true,
+        force: false,
       });
     } finally {
       setTimeout(() => {
@@ -848,7 +788,6 @@ async function drainPendingButtonActions(reason = "unknown") {
 
   if (pendingReadInFlight) {
     pendingRerunRequested = true;
-    fgDebug("pending read already in flight; rerun requested", { reason });
     return;
   }
 
@@ -856,8 +795,8 @@ async function drainPendingButtonActions(reason = "unknown") {
   try {
     do {
       pendingRerunRequested = false;
-
       let pending = null;
+
       try {
         pending = await api();
       } catch (err) {
@@ -868,19 +807,9 @@ async function drainPendingButtonActions(reason = "unknown") {
       if (!pending?.hasPending) continue;
 
       const eventAt = Number(pending.eventAt) || 0;
-      if (eventAt > 0 && eventAt <= lastPendingEventAt) {
-        fgDebug("skip stale pending action", {
-          reason,
-          eventAt,
-          lastPendingEventAt,
-        });
-        continue;
-      }
+      if (eventAt > 0 && eventAt <= lastPendingEventAt) continue;
 
-      if (eventAt > 0) {
-        lastPendingEventAt = eventAt;
-      }
-
+      if (eventAt > 0) lastPendingEventAt = eventAt;
       await processButtonAction(
         pending.buttonId,
         pending.eventAt,
@@ -899,12 +828,7 @@ export async function syncNotification({
   const plugins = getPlugins();
   if (!plugins) return;
 
-  if (notificationSuppressed) {
-    await stopForeground();
-    return;
-  }
-
-  if (!shouldShowForegroundBanner()) {
+  if (notificationSuppressed || !shouldShowForegroundBanner()) {
     await stopForeground();
     return;
   }
@@ -930,7 +854,6 @@ export async function syncNotification({
     $,
     formatTime,
   });
-
   const { isDarkTheme, themeToken } = getThemeSnapshot();
   const { accentColor, onAccentColor, accentToken } = getAccentSnapshot();
 
@@ -956,17 +879,6 @@ export async function syncNotification({
     { accentColor, onAccentColor },
   );
 
-  fgDebug("sync notification", {
-    reason,
-    mode: state.mode,
-    running: state.running,
-    payload,
-    isDarkTheme,
-    accentColor,
-    onAccentColor,
-    force,
-  });
-
   if (!isForegroundShown) {
     try {
       await plugins.start?.(options);
@@ -985,18 +897,14 @@ export async function syncNotification({
     .then(() => {
       lastSignature = signature;
     })
-    .catch(async (err) => {
-      console.warn("[fg] update failed, fallback to restart", err);
-
+    .catch(async () => {
       await plugins.stop?.().catch(() => {});
       isForegroundShown = false;
-
       try {
         await plugins.start?.(options);
         isForegroundShown = true;
         lastSignature = signature;
-      } catch (startErr) {
-        console.warn("[fg] restart start failed", startErr);
+      } catch {
         isForegroundShown = false;
       }
     });
@@ -1005,7 +913,7 @@ export async function syncNotification({
 function startPolling() {
   if (poller) return;
   poller = setInterval(() => {
-    syncNotification({ reason: "poll" });
+    void syncNotification({ reason: "poll", force: false });
   }, POLL_MS);
 }
 
@@ -1017,29 +925,23 @@ function stopPolling() {
 
 function bindDocumentEvents() {
   listeners.unsubs.push(
-    onAppEvent(APP_EVENTS.ACTIVE_TIMER_CHANGED, () => {
-      scheduleStateSync("active_timer_changed");
-    }),
+    onAppEvent(APP_EVENTS.ACTIVE_TIMER_CHANGED, () =>
+      scheduleStateSync("active_timer_changed"),
+    ),
   );
-
   listeners.unsubs.push(
-    onAppEvent(APP_EVENTS.TIMER_STARTED, () => {
-      scheduleStateSync("timer_started_event");
-    }),
+    onAppEvent(APP_EVENTS.TIMER_STARTED, () =>
+      scheduleStateSync("timer_started_event"),
+    ),
   );
-
   listeners.unsubs.push(
-    onAppEvent(APP_EVENTS.MS_CHANGED, () => {
-      scheduleStateSync("ms_changed");
-    }),
+    onAppEvent(APP_EVENTS.MS_CHANGED, () => scheduleStateSync("ms_changed")),
   );
-
   listeners.unsubs.push(
     onAppEvent(APP_EVENTS.LANGUAGE_CHANGED, () =>
       syncNotification({ reason: "language_changed", force: true }),
     ),
   );
-
   listeners.unsubs.push(
     onAppEvent(APP_EVENTS.FOREGROUND_NOTIFICATION_SETTING_CHANGED, () =>
       syncNotification({ reason: "foreground_setting_changed", force: true }),
@@ -1051,24 +953,19 @@ function unbindDocumentEvents() {
   listeners.unsubs.forEach((off) => {
     try {
       off?.();
-    } catch (err) {
-      console.error("[fg.unbind]", err);
-    }
+    } catch {}
   });
   listeners.unsubs = [];
 }
 
 async function handleAppBecameForeground(reason) {
   stopPolling();
-
   notificationSuppressed = false;
   await clearNativeSuppressedFlag();
-
   await pullRuntimeStateIntoJs(`${reason}:pull_runtime`);
   await drainPendingButtonActions(`${reason}:pending`);
-
   scheduleForegroundStop();
-  await syncNotification({ reason, force: true });
+  await syncNotification({ reason, force: false });
   releaseWakeLock();
 }
 
@@ -1083,7 +980,7 @@ async function handleAppBecameBackground(reason) {
   }
 
   await ensurePermissionIfNeeded(true);
-  await syncNotification({ reason });
+  await syncNotification({ reason, force: false });
   startPolling();
 }
 
@@ -1092,12 +989,10 @@ function bindVisibilityFallback() {
 
   listeners.appVisibility = async () => {
     const isActive = document.visibilityState === "visible";
-
     if (!isActive) {
       await handleAppBecameBackground("visibility_hidden");
       return;
     }
-
     await handleAppBecameForeground("visibility_visible");
   };
 
@@ -1139,10 +1034,8 @@ export async function initForegroundService() {
         await handleAppBecameBackground("appstate_background");
         return;
       }
-
       await handleAppBecameForeground("appstate_foreground");
     };
-
     rememberHandle(
       plugins.App.addListener("appStateChange", listeners.appState),
     );
@@ -1177,7 +1070,7 @@ export async function initForegroundService() {
 
   if (!notificationSuppressed) {
     await pushRuntimeStateToNative("init");
-    await syncNotification({ reason: "init", force: true });
+    await syncNotification({ reason: "init", force: false });
   }
 }
 
@@ -1203,15 +1096,14 @@ export async function destroyForegroundService() {
   toggleInFlight = false;
   lastHandledActionAt = 0;
   lastToggleProcessedAt = 0;
-
   pendingReadInFlight = false;
   pendingRerunRequested = false;
   lastPendingEventAt = 0;
-
   runtimePullInFlight = false;
   runtimePullQueued = false;
-
   notificationSuppressed = false;
+  lastScheduledStateSig = "";
+  lastScheduledAt = 0;
 
   isInitialized = false;
 }

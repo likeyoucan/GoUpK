@@ -46,6 +46,8 @@ public class AppForegroundService extends Service {
     private Runnable tickerRunnable;
     private boolean tickerStarted = false;
 
+    private String lastNotifSignature = "";
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -66,7 +68,6 @@ public class AppForegroundService extends Service {
                 return START_NOT_STICKY;
             }
 
-            // If user dismissed notification, do not recreate it in background.
             if (isNotificationSuppressed()) {
                 stopTicker();
                 stopServiceSafe();
@@ -102,9 +103,9 @@ public class AppForegroundService extends Service {
             store.write(state);
 
             ensureChannel(channelId, "Stopwatch Pro", "Foreground timer controls");
-
             ForegroundStateStore.NotificationPayload payload = store.computeDisplayNow();
 
+            String sig = buildSignature(payload);
             Notification notification = buildNotification(
                 payload.channelId,
                 payload.title,
@@ -116,6 +117,7 @@ public class AppForegroundService extends Service {
             );
 
             startForeground(NOTIFICATION_ID, notification);
+            lastNotifSignature = sig;
 
             ForegroundStateStore.RuntimeState nowState = store.read();
             if (nowState.running) {
@@ -176,20 +178,24 @@ public class AppForegroundService extends Service {
                         }
 
                         ForegroundStateStore.NotificationPayload payload = store.computeDisplayNow();
+                        String nextSig = buildSignature(payload);
 
-                        Notification n = buildNotification(
-                            payload.channelId,
-                            payload.title,
-                            payload.body,
-                            payload.toggleTitle,
-                            payload.isDarkTheme,
-                            payload.accentColor,
-                            payload.onAccentColor
-                        );
+                        if (!nextSig.equals(lastNotifSignature)) {
+                            Notification n = buildNotification(
+                                payload.channelId,
+                                payload.title,
+                                payload.body,
+                                payload.toggleTitle,
+                                payload.isDarkTheme,
+                                payload.accentColor,
+                                payload.onAccentColor
+                            );
 
-                        NotificationManager nm = getSystemService(NotificationManager.class);
-                        if (nm != null) {
-                            nm.notify(NOTIFICATION_ID, n);
+                            NotificationManager nm = getSystemService(NotificationManager.class);
+                            if (nm != null) {
+                                nm.notify(NOTIFICATION_ID, n);
+                                lastNotifSignature = nextSig;
+                            }
                         }
 
                         tickerHandler.postDelayed(this, TICK_MS);
@@ -202,6 +208,16 @@ public class AppForegroundService extends Service {
         }
 
         tickerHandler.postDelayed(tickerRunnable, TICK_MS);
+    }
+
+    private String buildSignature(ForegroundStateStore.NotificationPayload payload) {
+        return String.valueOf(payload.channelId) + "|" +
+            String.valueOf(payload.title) + "|" +
+            String.valueOf(payload.body) + "|" +
+            String.valueOf(payload.toggleTitle) + "|" +
+            (payload.isDarkTheme ? "1" : "0") + "|" +
+            String.valueOf(payload.accentColor) + "|" +
+            String.valueOf(payload.onAccentColor);
     }
 
     private void stopTicker() {
@@ -296,27 +312,15 @@ public class AppForegroundService extends Service {
         RemoteViews expanded = new RemoteViews(getPackageName(), R.layout.notification_timer_big);
 
         applyRemoteViewsState(
-            compact,
-            title,
-            body,
-            isPlay,
-            textSecondaryColor,
-            timeColor,
-            accentColor,
-            onAccentColor,
-            togglePi
+            compact, title, body, isPlay,
+            textSecondaryColor, timeColor,
+            accentColor, onAccentColor, togglePi
         );
 
         applyRemoteViewsState(
-            expanded,
-            title,
-            body,
-            isPlay,
-            textSecondaryColor,
-            timeColor,
-            accentColor,
-            onAccentColor,
-            togglePi
+            expanded, title, body, isPlay,
+            textSecondaryColor, timeColor,
+            accentColor, onAccentColor, togglePi
         );
 
         return new NotificationCompat.Builder(this, channelId)
@@ -374,7 +378,6 @@ public class AppForegroundService extends Service {
                 stopForeground(true);
             }
         } catch (Exception ignored) {}
-
         stopSelf();
     }
 

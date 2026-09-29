@@ -24,17 +24,14 @@ public class ForegroundStateStore {
         public boolean running = false;
         public long updatedAt = 0L;
 
-        // Stopwatch
         public long swElapsedMs = 0L;
         public long swStartedAt = 0L;
         public long swBaseElapsedMs = 0L;
 
-        // Timer
         public long tmRemainingMs = 0L;
         public long tmTotalMs = 0L;
         public long tmEndsAt = 0L;
 
-        // Tabata
         public String tbStatus = "STOPPED";
         public int tbRound = 1;
         public int tbRounds = 1;
@@ -42,12 +39,10 @@ public class ForegroundStateStore {
         public long tbRemainingMs = 0L;
         public long tbEndsAt = 0L;
 
-        // Notification
         public String notifTitle = "Stopwatch";
         public String notifBody = "00:00";
         public String toggleTitle = "▶";
 
-        // Style/channel
         public String channelId = AppForegroundService.CHANNEL_ID;
         public boolean isDarkTheme = false;
         public String accentColor = "#3399ff";
@@ -140,8 +135,7 @@ public class ForegroundStateStore {
         RuntimeState s = read();
 
         long incomingUpdatedAt = runtime.optLong("updatedAt", 0L);
-        if (incomingUpdatedAt > 0L && incomingUpdatedAt + 120L < s.updatedAt) {
-            // Ignore stale JS snapshot; keep fresher native runtime state.
+        if (incomingUpdatedAt > 0L && incomingUpdatedAt + 180L < s.updatedAt) {
             return;
         }
 
@@ -149,16 +143,16 @@ public class ForegroundStateStore {
         s.running = runtime.has("running") ? runtime.optBoolean("running", s.running) : s.running;
         s.updatedAt = incomingUpdatedAt > 0L ? incomingUpdatedAt : System.currentTimeMillis();
 
-        s.swElapsedMs = runtime.optLong("swElapsedMs", s.swElapsedMs);
+        s.swElapsedMs = Math.max(0L, runtime.optLong("swElapsedMs", s.swElapsedMs));
 
-        s.tmRemainingMs = runtime.optLong("tmRemainingMs", s.tmRemainingMs);
-        s.tmTotalMs = runtime.optLong("tmTotalMs", s.tmTotalMs);
+        s.tmRemainingMs = Math.max(0L, runtime.optLong("tmRemainingMs", s.tmRemainingMs));
+        s.tmTotalMs = Math.max(0L, runtime.optLong("tmTotalMs", s.tmTotalMs));
 
         s.tbStatus = runtime.optString("tbStatus", s.tbStatus);
-        s.tbRound = runtime.optInt("tbRound", s.tbRound);
-        s.tbRounds = runtime.optInt("tbRounds", s.tbRounds);
+        s.tbRound = Math.max(1, runtime.optInt("tbRound", s.tbRound));
+        s.tbRounds = Math.max(1, runtime.optInt("tbRounds", s.tbRounds));
         s.tbWorkoutName = runtime.optString("tbWorkoutName", s.tbWorkoutName);
-        s.tbRemainingMs = runtime.optLong("tbRemainingMs", s.tbRemainingMs);
+        s.tbRemainingMs = Math.max(0L, runtime.optLong("tbRemainingMs", s.tbRemainingMs));
 
         s.notifTitle = runtime.optString("notifTitle", s.notifTitle);
         s.notifBody = runtime.optString("notifBody", s.notifBody);
@@ -231,12 +225,10 @@ public class ForegroundStateStore {
                 s.tmEndsAt = 0L;
                 s.running = false;
                 s.toggleTitle = "▶";
-            } else {
-                if (s.tmRemainingMs > 0L) {
-                    s.tmEndsAt = now + s.tmRemainingMs;
-                    s.running = true;
-                    s.toggleTitle = "⏸";
-                }
+            } else if (s.tmRemainingMs > 0L) {
+                s.tmEndsAt = now + s.tmRemainingMs;
+                s.running = true;
+                s.toggleTitle = "⏸";
             }
 
             if (isBlank(s.notifTitle)) s.notifTitle = "Timer";
@@ -249,12 +241,10 @@ public class ForegroundStateStore {
                 s.tbEndsAt = 0L;
                 s.running = false;
                 s.toggleTitle = "▶";
-            } else {
-                if (s.tbRemainingMs > 0L && !"STOPPED".equals(s.tbStatus)) {
-                    s.tbEndsAt = now + s.tbRemainingMs;
-                    s.running = true;
-                    s.toggleTitle = "⏸";
-                }
+            } else if (s.tbRemainingMs > 0L && !"STOPPED".equals(s.tbStatus)) {
+                s.tbEndsAt = now + s.tbRemainingMs;
+                s.running = true;
+                s.toggleTitle = "⏸";
             }
 
             String workout = isBlank(s.tbWorkoutName) ? "Tabata" : s.tbWorkoutName;
@@ -277,9 +267,7 @@ public class ForegroundStateStore {
         long now = System.currentTimeMillis();
 
         boolean changed = normalizeCompletionIfNeeded(s, now);
-        if (changed) {
-            write(s);
-        }
+        if (changed) write(s);
 
         NotificationPayload p = new NotificationPayload();
         p.channelId = isBlank(s.channelId) ? AppForegroundService.CHANNEL_ID : s.channelId;
@@ -316,7 +304,6 @@ public class ForegroundStateStore {
 
     private boolean normalizeCompletionIfNeeded(RuntimeState s, long now) {
         boolean changed = false;
-
         if (MODE_TIMER.equals(s.mode) && s.running) {
             long rem = Math.max(0L, s.tmEndsAt - now);
             if (rem <= 0L) {
@@ -328,28 +315,21 @@ public class ForegroundStateStore {
                 changed = true;
             }
         }
-
         return changed;
     }
 
     private long getStopwatchElapsedNow(RuntimeState s, long now) {
-        if (s.running) {
-            return Math.max(0L, s.swBaseElapsedMs + (now - s.swStartedAt));
-        }
+        if (s.running) return Math.max(0L, s.swBaseElapsedMs + (now - s.swStartedAt));
         return Math.max(0L, s.swElapsedMs);
     }
 
     private long getTimerRemainingNow(RuntimeState s, long now) {
-        if (s.running) {
-            return Math.max(0L, s.tmEndsAt - now);
-        }
+        if (s.running) return Math.max(0L, s.tmEndsAt - now);
         return Math.max(0L, s.tmRemainingMs);
     }
 
     private long getTabataRemainingNow(RuntimeState s, long now) {
-        if (s.running) {
-            return Math.max(0L, s.tbEndsAt - now);
-        }
+        if (s.running) return Math.max(0L, s.tbEndsAt - now);
         return Math.max(0L, s.tbRemainingMs);
     }
 
@@ -363,9 +343,7 @@ public class ForegroundStateStore {
         long m = (totalSec % 3600L) / 60L;
         long s = totalSec % 60L;
 
-        if (h > 0L || forceHours) {
-            return h + ":" + pad2(m) + ":" + pad2(s);
-        }
+        if (h > 0L || forceHours) return h + ":" + pad2(m) + ":" + pad2(s);
         return pad2(m) + ":" + pad2(s);
     }
 
