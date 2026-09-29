@@ -2782,37 +2782,63 @@
 
   /* Unified Glass Range Thumb (single source of truth) */
   .glass-effect .tr-thumb {
-    background: rgb(255 255 255 / 0.34) !important;
-    border: 1px solid rgb(255 255 255 / 0.62) !important;
+    background: linear-gradient(
+      180deg,
+      rgb(255 255 255 / 0.52) 0%,
+      rgb(255 255 255 / 0.28) 100%
+    ) !important;
+    border: 1px solid rgb(255 255 255 / 0.72) !important;
+    backdrop-filter: blur(16px) saturate(175%) contrast(1.05) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(175%) contrast(1.05) !important;
     box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.55),
-      inset 0 -1px 0 rgb(255 255 255 / 0.18),
-      0 4px 10px rgb(0 0 0 / 0.16),
-      0 0 0 1px color-mix(in srgb, var(--primary-color) 26%, transparent) !important;
-    backdrop-filter: blur(16px) saturate(170%) !important;
-    -webkit-backdrop-filter: blur(16px) saturate(170%) !important;
+      inset 0 1px 0 rgb(255 255 255 / 0.62),
+      inset 0 -1px 0 rgb(255 255 255 / 0.2),
+      0 4px 12px rgb(0 0 0 / 0.18),
+      0 0 0 1px color-mix(in srgb, var(--primary-color) 30%, transparent) !important;
   }
 
   html.dark.glass-effect .tr-thumb {
-    background: rgb(24 24 27 / 0.42) !important;
-    border-color: rgb(255 255 255 / 0.24) !important;
+    background: linear-gradient(
+      180deg,
+      rgb(255 255 255 / 0.18) 0%,
+      rgb(255 255 255 / 0.08) 100%
+    ) !important;
+    border-color: rgb(255 255 255 / 0.3) !important;
     box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.16),
-      0 5px 12px rgb(0 0 0 / 0.34),
-      0 0 0 1px color-mix(in srgb, var(--primary-color) 34%, transparent) !important;
+      inset 0 1px 0 rgb(255 255 255 / 0.2),
+      inset 0 -1px 0 rgb(255 255 255 / 0.08),
+      0 5px 13px rgb(0 0 0 / 0.34),
+      0 0 0 1px color-mix(in srgb, var(--primary-color) 36%, transparent) !important;
   }
 
   .glass-effect .tr-wrap.tr-dragging .tr-thumb {
-    background: rgb(255 255 255 / 0.26) !important;
-    backdrop-filter: blur(24px) saturate(200%) contrast(1.06) !important;
-    -webkit-backdrop-filter: blur(24px) saturate(200%) contrast(1.06) !important;
-    transform: translate(-50%, -50%) scale(1.06) !important;
+    background: linear-gradient(
+      180deg,
+      rgb(255 255 255 / 0.42) 0%,
+      rgb(255 255 255 / 0.2) 100%
+    ) !important;
+    backdrop-filter: blur(24px) saturate(210%) contrast(1.08) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(210%) contrast(1.08) !important;
+    transform: translate(-50%, -50%) scale(1.07) !important;
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.7),
+      0 8px 20px rgb(0 0 0 / 0.24),
+      0 0 0 1.5px color-mix(in srgb, var(--primary-color) 55%, transparent) !important;
   }
 
   html.dark.glass-effect .tr-wrap.tr-dragging .tr-thumb {
-    background: rgb(24 24 27 / 0.34) !important;
-    backdrop-filter: blur(30px) saturate(220%) contrast(1.08) !important;
-    -webkit-backdrop-filter: blur(30px) saturate(220%) contrast(1.08) !important;
+    background: linear-gradient(
+      180deg,
+      rgb(255 255 255 / 0.24) 0%,
+      rgb(255 255 255 / 0.1) 100%
+    ) !important;
+    backdrop-filter: blur(30px) saturate(230%) contrast(1.1) !important;
+    -webkit-backdrop-filter: blur(30px) saturate(230%) contrast(1.1) !important;
+  }
+
+  .glass-effect .tr-thumb::before,
+  .glass-effect .tr-thumb::after {
+    content: none !important;
   }
 
   .glass-effect .tr-thumb::before,
