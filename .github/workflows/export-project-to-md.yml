@@ -5,7 +5,6 @@ on:
     paths-ignore:
       - project-files.md
       - project-files.html
-      - project-export.zip
   workflow_dispatch:
 
 jobs:
@@ -19,7 +18,7 @@ jobs:
       # Space-separated folders to exclude from export.
       EXCLUDE_DIRS: ".git node_modules dist build .next .cache www/js/eruda"
       # Space-separated files to exclude from export.
-      EXCLUDE_FILES: "artifact.tar project-export.tar project-export.tgz www/styles.css www/js/debug-eruda-toggle.js www/js/eruda.js"
+      EXCLUDE_FILES: "artifact.tar www/styles.css www/js/debug-eruda-toggle.js www/js/eruda.js"
 
     steps:
       - name: Checkout repository
@@ -42,9 +41,11 @@ jobs:
 
           def normalize_rel(value: str) -> str:
               value = value.strip().replace("\\", "/")
-              while value.startswith("./"):
-                  value = value[2:]
-              return value.rstrip("/")
+              parts = [p for p in value.split("/") if p and p != "."]
+              return "/".join(parts)
+
+          output_md_norm = normalize_rel(output_md)
+          output_html_norm = normalize_rel(output_html)
 
           include_dirs = [normalize_rel(x) for x in os.getenv("INCLUDE_DIRS", "").split() if x.strip()]
           exclude_dirs = [normalize_rel(x) for x in os.getenv("EXCLUDE_DIRS", "").split() if x.strip()]
@@ -54,10 +55,21 @@ jobs:
 
           def should_skip(rel_path: str) -> bool:
               rel_path = normalize_rel(rel_path)
-              if rel_path in {output_md, output_html}:
+              if rel_path in {output_md_norm, output_html_norm}:
                   return True
               if rel_path.startswith(".git/"):
                   return True
+
+              # Hard guard for paths that must never be exported.
+              if rel_path in {
+                  "www/styles.css",
+                  "www/js/debug-eruda-toggle.js",
+                  "www/js/eruda.js",
+              }:
+                  return True
+              if rel_path.startswith("www/js/eruda/"):
+                  return True
+
               for pattern in exclude_file_patterns:
                   # Supports exact paths and wildcard patterns like *.css.
                   if fnmatch(rel_path, pattern) or fnmatch(Path(rel_path).name, pattern):
@@ -106,7 +118,7 @@ jobs:
               "",
           ]
 
-          chunk_limit = 100000
+          chunk_limit = 12000
           entries = []
 
           for file_path, rel in candidate_files():
@@ -296,6 +308,8 @@ jobs:
           set -euo pipefail
           test -f "$OUTPUT_MD"
           test -f "$OUTPUT_HTML"
+          # Ensure we do not create nested archives.
+          test ! -f project-export.zip
 
       - name: Validate excluded paths are not in export
         shell: bash
