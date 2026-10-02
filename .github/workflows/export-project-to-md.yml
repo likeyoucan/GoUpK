@@ -5,7 +5,7 @@ on:
     paths-ignore:
       - project-files.md
       - project-files.html
-      - project-export.tgz
+      - project-export.zip
   workflow_dispatch:
 
 jobs:
@@ -14,13 +14,13 @@ jobs:
     env:
       OUTPUT_MD: "project-files.md"
       OUTPUT_HTML: "project-files.html"
-      ARCHIVE_FILE: "project-export.tgz"
+      ARCHIVE_FILE: "project-export.zip"
       # Space-separated folders to include. Leave empty to include the whole repo.
       INCLUDE_DIRS: ""
       # Space-separated folders to exclude from export.
       EXCLUDE_DIRS: ".git node_modules dist build .next .cache"
       # Space-separated files to exclude from export.
-      EXCLUDE_FILES: "artifact.tar project-export.tar project-export.tgz"
+      EXCLUDE_FILES: "artifact.tar project-export.tar project-export.tgz project-export.zip"
 
     steps:
       - name: Checkout repository
@@ -279,13 +279,28 @@ jobs:
           set -euo pipefail
           test -f "$OUTPUT_MD"
           test -f "$OUTPUT_HTML"
-          tar -czf "$ARCHIVE_FILE" "$OUTPUT_MD" "$OUTPUT_HTML"
-          tar -tzf "$ARCHIVE_FILE"
+          python3 - << 'PY'
+          import os
+          import zipfile
+
+          archive = os.environ["ARCHIVE_FILE"]
+          output_md = os.environ["OUTPUT_MD"]
+          output_html = os.environ["OUTPUT_HTML"]
+
+          with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+              zf.write(output_md)
+              zf.write(output_html)
+
+          with zipfile.ZipFile(archive, "r") as zf:
+              print("Archive content:")
+              for name in zf.namelist():
+                  print(name)
+          PY
 
       - name: Upload safe archive
         uses: actions/upload-artifact@v5
         with:
           name: project-export
-          path: project-export.tgz
+          path: project-export.zip
           if-no-files-found: error
           retention-days: 14
