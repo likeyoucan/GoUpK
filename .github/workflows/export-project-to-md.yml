@@ -14,13 +14,12 @@ jobs:
     env:
       OUTPUT_MD: "project-files.md"
       OUTPUT_HTML: "project-files.html"
-      ARCHIVE_FILE: "project-export.zip"
       # Space-separated folders to include. Leave empty to include the whole repo.
       INCLUDE_DIRS: ""
       # Space-separated folders to exclude from export.
       EXCLUDE_DIRS: ".git node_modules dist build .next .cache www/js/eruda"
       # Space-separated files to exclude from export.
-      EXCLUDE_FILES: "artifact.tar project-export.tar project-export.tgz project-export.zip www/js/debug-eruda-toggle.js www/js/eruda.js"
+      EXCLUDE_FILES: "artifact.tar project-export.tar project-export.tgz www/styles.css www/js/debug-eruda-toggle.js www/js/eruda.js"
 
     steps:
       - name: Checkout repository
@@ -35,6 +34,7 @@ jobs:
           import hashlib
           import html
           import os
+          from fnmatch import fnmatch
           from pathlib import Path
 
           output_md = os.getenv("OUTPUT_MD", "project-files.md")
@@ -42,7 +42,7 @@ jobs:
 
           include_dirs = [x.strip() for x in os.getenv("INCLUDE_DIRS", "").split() if x.strip()]
           exclude_dirs = [x.strip().lstrip("./").rstrip("/") for x in os.getenv("EXCLUDE_DIRS", "").split() if x.strip()]
-          exclude_files = {x.strip().lstrip("./") for x in os.getenv("EXCLUDE_FILES", "").split() if x.strip()}
+          exclude_file_patterns = [x.strip().lstrip("./") for x in os.getenv("EXCLUDE_FILES", "").split() if x.strip()]
 
           root = Path(".").resolve()
 
@@ -51,8 +51,10 @@ jobs:
                   return True
               if rel_path.startswith(".git/"):
                   return True
-              if rel_path in exclude_files:
-                  return True
+              for pattern in exclude_file_patterns:
+                  # Supports exact paths and wildcard patterns like *.css.
+                  if fnmatch(rel_path, pattern) or fnmatch(Path(rel_path).name, pattern):
+                      return True
               for folder in exclude_dirs:
                   if rel_path == folder or rel_path.startswith(folder + "/"):
                       return True
@@ -273,34 +275,19 @@ jobs:
           Path(output_html).write_text("\n".join(html_lines) + "\n", encoding="utf-8")
           PY
 
-      - name: Upload markdown and html files
+      - name: Validate export files
         shell: bash
         run: |
           set -euo pipefail
           test -f "$OUTPUT_MD"
           test -f "$OUTPUT_HTML"
-          python3 - << 'PY'
-          import os
-          import zipfile
 
-          archive = os.environ["ARCHIVE_FILE"]
-          output_md = os.environ["OUTPUT_MD"]
-          output_html = os.environ["OUTPUT_HTML"]
-
-          with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as zf:
-              zf.write(output_md)
-              zf.write(output_html)
-
-          with zipfile.ZipFile(archive, "r") as zf:
-              print("Archive content:")
-              for name in zf.namelist():
-                  print(name)
-          PY
-
-      - name: Upload safe archive
+      - name: Upload export artifact
         uses: actions/upload-artifact@v5
         with:
-          name: project-export
-          path: project-export.zip
+          name: project-files-md-html
+          path: |
+            ${{ env.OUTPUT_MD }}
+            ${{ env.OUTPUT_HTML }}
           if-no-files-found: error
           retention-days: 14
