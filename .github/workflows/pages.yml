@@ -258,16 +258,17 @@ jobs:
 
           for index, part in enumerate(parts, start=1):
               part_id = f"part-{index}"
+              copy_id = f"copy-source-{index}"
               part_text = "\n\n".join(item["plain"] for item in part["entries"])
               html_lines.append(f"  <section id=\"{part_id}\" class=\"part\">")
               html_lines.append("    <div class=\"part-header\">")
               html_lines.append(f"      <h2>Part {index}</h2>")
-              html_lines.append(f"      <button class=\"copy-btn\" onclick=\"copyPart('{part_id}')\">Copy Part {index}</button>")
+              html_lines.append(f"      <button class=\"copy-btn\" onclick=\"copyPart('{copy_id}')\">Copy Part {index}</button>")
               html_lines.append("    </div>")
               html_lines.append(f"    <p class=\"meta\">Approx chars: {part['length']}</p>")
               if part["note"]:
                   html_lines.append(f"    <p class=\"note\">{html.escape(part['note'])}</p>")
-              html_lines.append(f"    <textarea id=\"{part_id}\" class=\"copy-source\">{html.escape(part_text)}</textarea>")
+              html_lines.append(f"    <textarea id=\"{copy_id}\" class=\"copy-source\">{html.escape(part_text)}</textarea>")
 
               for item in part["entries"]:
                   html_lines.append(item["html"])
