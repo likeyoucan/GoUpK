@@ -118,7 +118,7 @@ jobs:
               "",
           ]
 
-          chunk_limit = 12000
+          chunk_limit = 100000
           entries = []
 
           for file_path, rel in candidate_files():
