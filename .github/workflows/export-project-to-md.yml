@@ -14,12 +14,13 @@ jobs:
     env:
       OUTPUT_MD: "project-files.md"
       OUTPUT_HTML: "project-files.html"
+      ARCHIVE_FILE: "project-export.zip"
       # Space-separated folders to include. Leave empty to include the whole repo.
       INCLUDE_DIRS: ""
       # Space-separated folders to exclude from export.
-      EXCLUDE_DIRS: ".git node_modules dist build .next .cache www/js/eruda"
+      EXCLUDE_DIRS: ".git node_modules dist build .next .cache"
       # Space-separated files to exclude from export.
-      EXCLUDE_FILES: "artifact.tar project-export.tar project-export.tgz www/styles.css www/js/debug-eruda-toggle.js www/js/eruda.js"
+      EXCLUDE_FILES: "artifact.tar project-export.tar project-export.tgz project-export.zip"
 
     steps:
       - name: Checkout repository
@@ -34,34 +35,24 @@ jobs:
           import hashlib
           import html
           import os
-          from fnmatch import fnmatch
           from pathlib import Path
 
           output_md = os.getenv("OUTPUT_MD", "project-files.md")
           output_html = os.getenv("OUTPUT_HTML", "project-files.html")
 
-          def normalize_rel(value: str) -> str:
-              value = value.strip().replace("\\", "/")
-              while value.startswith("./"):
-                  value = value[2:]
-              return value.rstrip("/")
-
-          include_dirs = [normalize_rel(x) for x in os.getenv("INCLUDE_DIRS", "").split() if x.strip()]
-          exclude_dirs = [normalize_rel(x) for x in os.getenv("EXCLUDE_DIRS", "").split() if x.strip()]
-          exclude_file_patterns = [normalize_rel(x) for x in os.getenv("EXCLUDE_FILES", "").split() if x.strip()]
+          include_dirs = [x.strip() for x in os.getenv("INCLUDE_DIRS", "").split() if x.strip()]
+          exclude_dirs = [x.strip().lstrip("./").rstrip("/") for x in os.getenv("EXCLUDE_DIRS", "").split() if x.strip()]
+          exclude_files = {x.strip().lstrip("./") for x in os.getenv("EXCLUDE_FILES", "").split() if x.strip()}
 
           root = Path(".").resolve()
 
           def should_skip(rel_path: str) -> bool:
-              rel_path = normalize_rel(rel_path)
               if rel_path in {output_md, output_html}:
                   return True
               if rel_path.startswith(".git/"):
                   return True
-              for pattern in exclude_file_patterns:
-                  # Supports exact paths and wildcard patterns like *.css.
-                  if fnmatch(rel_path, pattern) or fnmatch(Path(rel_path).name, pattern):
-                      return True
+              if rel_path in exclude_files:
+                  return True
               for folder in exclude_dirs:
                   if rel_path == folder or rel_path.startswith(folder + "/"):
                       return True
@@ -71,7 +62,7 @@ jobs:
               found = []
               if include_dirs:
                   for folder in include_dirs:
-                      p = Path(folder)
+                      p = Path(folder.lstrip("./"))
                       if p.is_dir():
                           found.extend(x for x in p.rglob("*") if x.is_file())
               else:
@@ -106,7 +97,7 @@ jobs:
               "",
           ]
 
-          chunk_limit = 15000
+          chunk_limit = 100000
           entries = []
 
           for file_path, rel in candidate_files():
@@ -226,6 +217,8 @@ jobs:
               "    h1 { margin-top: 0; }",
               "    h2 { margin: 0; font-size: 20px; }",
               "    h3 { margin-bottom: 8px; }",
+              "    .parts-nav { position: sticky; top: 0; z-index: 10; background: #ffffff; border-bottom: 1px solid #d0d7de; padding: 10px 0; margin-bottom: 14px; }",
+              "    .parts-nav a { margin-right: 12px; text-decoration: none; color: #0969da; font-size: 14px; }",
               "    .part { border-top: 2px solid #d0d7de; padding-top: 20px; margin-top: 24px; }",
               "    .part-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }",
               "    .copy-btn { border: 1px solid #1f2328; background: #1f2328; color: #fff; padding: 6px 12px; cursor: pointer; }",
@@ -258,18 +251,24 @@ jobs:
               f"  <p>HTML content is split into parts of about {chunk_limit} characters without splitting single files.</p>",
           ]
 
+          html_lines.append("  <nav class=\"parts-nav\"><strong>Quick parts:</strong> ")
+          for i in range(1, len(parts) + 1):
+              html_lines.append(f"    <a href=\"#part-{i}\">Part {i}</a>")
+          html_lines.append("  </nav>")
+
           for index, part in enumerate(parts, start=1):
               part_id = f"part-{index}"
+              copy_id = f"copy-source-{index}"
               part_text = "\n\n".join(item["plain"] for item in part["entries"])
-              html_lines.append("  <section class=\"part\">")
+              html_lines.append(f"  <section id=\"{part_id}\" class=\"part\">")
               html_lines.append("    <div class=\"part-header\">")
               html_lines.append(f"      <h2>Part {index}</h2>")
-              html_lines.append(f"      <button class=\"copy-btn\" onclick=\"copyPart('{part_id}')\">Copy Part {index}</button>")
+              html_lines.append(f"      <button class=\"copy-btn\" onclick=\"copyPart('{copy_id}')\">Copy Part {index}</button>")
               html_lines.append("    </div>")
               html_lines.append(f"    <p class=\"meta\">Approx chars: {part['length']}</p>")
               if part["note"]:
                   html_lines.append(f"    <p class=\"note\">{html.escape(part['note'])}</p>")
-              html_lines.append(f"    <textarea id=\"{part_id}\" class=\"copy-source\">{html.escape(part_text)}</textarea>")
+              html_lines.append(f"    <textarea id=\"{copy_id}\" class=\"copy-source\">{html.escape(part_text)}</textarea>")
 
               for item in part["entries"]:
                   html_lines.append(item["html"])
@@ -282,43 +281,34 @@ jobs:
           Path(output_html).write_text("\n".join(html_lines) + "\n", encoding="utf-8")
           PY
 
-      - name: Validate export files
+      - name: Upload markdown and html files
         shell: bash
         run: |
           set -euo pipefail
           test -f "$OUTPUT_MD"
           test -f "$OUTPUT_HTML"
+          python3 - << 'PY'
+          import os
+          import zipfile
 
-      - name: Validate excluded paths are not in export
-        shell: bash
-        run: |
-          set -euo pipefail
-          blocked=(
-            "www/styles.css"
-            "www/js/debug-eruda-toggle.js"
-            "www/js/eruda.js"
-            "www/js/eruda/plugins.js"
-            "www/js/eruda/vendor/eruda.min.js"
-          )
+          archive = os.environ["ARCHIVE_FILE"]
+          output_md = os.environ["OUTPUT_MD"]
+          output_html = os.environ["OUTPUT_HTML"]
 
-          for path in "${blocked[@]}"; do
-            # Match only exported file-entry markers, not incidental mentions
-            # (for example inside workflow source code blocks).
-            md_marker=$(printf '## `%s`' "$path")
-            if grep -Fq "$md_marker" "$OUTPUT_MD" \
-              || grep -Fq "Path: $path" "$OUTPUT_HTML" \
-              || grep -Fq "Path: <code>$path</code>" "$OUTPUT_HTML"; then
-              echo "Excluded path leaked into export: $path"
-              exit 1
-            fi
-          done
+          with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+              zf.write(output_md)
+              zf.write(output_html)
 
-      - name: Upload export artifact
+          with zipfile.ZipFile(archive, "r") as zf:
+              print("Archive content:")
+              for name in zf.namelist():
+                  print(name)
+          PY
+
+      - name: Upload safe archive
         uses: actions/upload-artifact@v5
         with:
-          name: project-files-md-html
-          path: |
-            ${{ env.OUTPUT_MD }}
-            ${{ env.OUTPUT_HTML }}
+          name: project-export
+          path: project-export.zip
           if-no-files-found: error
           retention-days: 14
