@@ -14,13 +14,12 @@ jobs:
     env:
       OUTPUT_MD: "project-files.md"
       OUTPUT_HTML: "project-files.html"
-      ARCHIVE_FILE: "project-export.zip"
       # Space-separated folders to include. Leave empty to include the whole repo.
       INCLUDE_DIRS: ""
       # Space-separated folders to exclude from export.
-      EXCLUDE_DIRS: ".git node_modules dist build .next .cache"
+      EXCLUDE_DIRS: ".git node_modules dist build .next .cache www/js/eruda"
       # Space-separated files to exclude from export.
-      EXCLUDE_FILES: "artifact.tar project-export.tar project-export.tgz project-export.zip"
+      EXCLUDE_FILES: "artifact.tar project-export.tar project-export.tgz www/styles.css www/js/debug-eruda-toggle.js www/js/eruda.js"
 
     steps:
       - name: Checkout repository
@@ -35,24 +34,34 @@ jobs:
           import hashlib
           import html
           import os
+          from fnmatch import fnmatch
           from pathlib import Path
 
           output_md = os.getenv("OUTPUT_MD", "project-files.md")
           output_html = os.getenv("OUTPUT_HTML", "project-files.html")
 
-          include_dirs = [x.strip() for x in os.getenv("INCLUDE_DIRS", "").split() if x.strip()]
-          exclude_dirs = [x.strip().lstrip("./").rstrip("/") for x in os.getenv("EXCLUDE_DIRS", "").split() if x.strip()]
-          exclude_files = {x.strip().lstrip("./") for x in os.getenv("EXCLUDE_FILES", "").split() if x.strip()}
+          def normalize_rel(value: str) -> str:
+              value = value.strip().replace("\\", "/")
+              while value.startswith("./"):
+                  value = value[2:]
+              return value.rstrip("/")
+
+          include_dirs = [normalize_rel(x) for x in os.getenv("INCLUDE_DIRS", "").split() if x.strip()]
+          exclude_dirs = [normalize_rel(x) for x in os.getenv("EXCLUDE_DIRS", "").split() if x.strip()]
+          exclude_file_patterns = [normalize_rel(x) for x in os.getenv("EXCLUDE_FILES", "").split() if x.strip()]
 
           root = Path(".").resolve()
 
           def should_skip(rel_path: str) -> bool:
+              rel_path = normalize_rel(rel_path)
               if rel_path in {output_md, output_html}:
                   return True
               if rel_path.startswith(".git/"):
                   return True
-              if rel_path in exclude_files:
-                  return True
+              for pattern in exclude_file_patterns:
+                  # Supports exact paths and wildcard patterns like *.css.
+                  if fnmatch(rel_path, pattern) or fnmatch(Path(rel_path).name, pattern):
+                      return True
               for folder in exclude_dirs:
                   if rel_path == folder or rel_path.startswith(folder + "/"):
                       return True
@@ -62,7 +71,7 @@ jobs:
               found = []
               if include_dirs:
                   for folder in include_dirs:
-                      p = Path(folder.lstrip("./"))
+                      p = Path(folder)
                       if p.is_dir():
                           found.extend(x for x in p.rglob("*") if x.is_file())
               else:
@@ -97,7 +106,7 @@ jobs:
               "",
           ]
 
-          chunk_limit = 100000
+          chunk_limit = 15000
           entries = []
 
           for file_path, rel in candidate_files():
@@ -281,34 +290,43 @@ jobs:
           Path(output_html).write_text("\n".join(html_lines) + "\n", encoding="utf-8")
           PY
 
-      - name: Upload markdown and html files
+      - name: Validate export files
         shell: bash
         run: |
           set -euo pipefail
           test -f "$OUTPUT_MD"
           test -f "$OUTPUT_HTML"
-          python3 - << 'PY'
-          import os
-          import zipfile
 
-          archive = os.environ["ARCHIVE_FILE"]
-          output_md = os.environ["OUTPUT_MD"]
-          output_html = os.environ["OUTPUT_HTML"]
+      - name: Validate excluded paths are not in export
+        shell: bash
+        run: |
+          set -euo pipefail
+          blocked=(
+            "www/styles.css"
+            "www/js/debug-eruda-toggle.js"
+            "www/js/eruda.js"
+            "www/js/eruda/plugins.js"
+            "www/js/eruda/vendor/eruda.min.js"
+          )
 
-          with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as zf:
-              zf.write(output_md)
-              zf.write(output_html)
+          for path in "${blocked[@]}"; do
+            # Match only exported file-entry markers, not incidental mentions
+            # (for example inside workflow source code blocks).
+            md_marker=$(printf '## `%s`' "$path")
+            if grep -Fq "$md_marker" "$OUTPUT_MD" \
+              || grep -Fq "Path: $path" "$OUTPUT_HTML" \
+              || grep -Fq "Path: <code>$path</code>" "$OUTPUT_HTML"; then
+              echo "Excluded path leaked into export: $path"
+              exit 1
+            fi
+          done
 
-          with zipfile.ZipFile(archive, "r") as zf:
-              print("Archive content:")
-              for name in zf.namelist():
-                  print(name)
-          PY
-
-      - name: Upload safe archive
+      - name: Upload export artifact
         uses: actions/upload-artifact@v5
         with:
-          name: project-export
-          path: project-export.zip
+          name: project-files-md-html
+          path: |
+            ${{ env.OUTPUT_MD }}
+            ${{ env.OUTPUT_HTML }}
           if-no-files-found: error
           retention-days: 14
