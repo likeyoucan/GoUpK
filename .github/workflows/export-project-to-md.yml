@@ -276,15 +276,26 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          test -f "$OUTPUT_MD"
+          test -f "$OUTPUT_HTML"
+          ls -lh "$OUTPUT_MD" "$OUTPUT_HTML"
           tar -cf artifact.tar "$OUTPUT_MD" "$OUTPUT_HTML"
 
-      - name: Upload export files as downloadable artifact
+      - name: Upload markdown and html files
         uses: actions/upload-artifact@v5
         with:
           name: project-export
           path: |
             project-files.md
             project-files.html
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload tar archive
+        uses: actions/upload-artifact@v5
+        with:
+          name: project-export-tar
+          path: |
             artifact.tar
           if-no-files-found: error
           retention-days: 14
