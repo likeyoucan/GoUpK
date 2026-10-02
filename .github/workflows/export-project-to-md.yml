@@ -40,13 +40,20 @@ jobs:
           output_md = os.getenv("OUTPUT_MD", "project-files.md")
           output_html = os.getenv("OUTPUT_HTML", "project-files.html")
 
-          include_dirs = [x.strip() for x in os.getenv("INCLUDE_DIRS", "").split() if x.strip()]
-          exclude_dirs = [x.strip().lstrip("./").rstrip("/") for x in os.getenv("EXCLUDE_DIRS", "").split() if x.strip()]
-          exclude_file_patterns = [x.strip().lstrip("./") for x in os.getenv("EXCLUDE_FILES", "").split() if x.strip()]
+          def normalize_rel(value: str) -> str:
+              value = value.strip().replace("\\", "/")
+              while value.startswith("./"):
+                  value = value[2:]
+              return value.rstrip("/")
+
+          include_dirs = [normalize_rel(x) for x in os.getenv("INCLUDE_DIRS", "").split() if x.strip()]
+          exclude_dirs = [normalize_rel(x) for x in os.getenv("EXCLUDE_DIRS", "").split() if x.strip()]
+          exclude_file_patterns = [normalize_rel(x) for x in os.getenv("EXCLUDE_FILES", "").split() if x.strip()]
 
           root = Path(".").resolve()
 
           def should_skip(rel_path: str) -> bool:
+              rel_path = normalize_rel(rel_path)
               if rel_path in {output_md, output_html}:
                   return True
               if rel_path.startswith(".git/"):
@@ -64,7 +71,7 @@ jobs:
               found = []
               if include_dirs:
                   for folder in include_dirs:
-                      p = Path(folder.lstrip("./"))
+                      p = Path(folder)
                       if p.is_dir():
                           found.extend(x for x in p.rglob("*") if x.is_file())
               else:
@@ -281,6 +288,25 @@ jobs:
           set -euo pipefail
           test -f "$OUTPUT_MD"
           test -f "$OUTPUT_HTML"
+
+      - name: Validate excluded paths are not in export
+        shell: bash
+        run: |
+          set -euo pipefail
+          blocked=(
+            "www/styles.css"
+            "www/js/debug-eruda-toggle.js"
+            "www/js/eruda.js"
+            "www/js/eruda/plugins.js"
+            "www/js/eruda/vendor/eruda.min.js"
+          )
+
+          for path in "${blocked[@]}"; do
+            if grep -Fq "$path" "$OUTPUT_HTML" || grep -Fq "$path" "$OUTPUT_MD"; then
+              echo "Excluded path leaked into export: $path"
+              exit 1
+            fi
+          done
 
       - name: Upload export artifact
         uses: actions/upload-artifact@v5
