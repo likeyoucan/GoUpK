@@ -273,11 +273,18 @@ jobs:
           PY
 
       - name: Upload md and html as downloadable artifact
-        uses: actions/upload-artifact@v4
+        shell: bash
+        run: |
+          set -euo pipefail
+          tar -cf artifact.tar "$OUTPUT_MD" "$OUTPUT_HTML"
+
+      - name: Upload export files as downloadable artifact
+        uses: actions/upload-artifact@v5
         with:
           name: project-export
           path: |
             project-files.md
             project-files.html
+            artifact.tar
           if-no-files-found: error
           retention-days: 14
