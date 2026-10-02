@@ -97,7 +97,7 @@ jobs:
               "",
           ]
 
-          chunk_limit = 40000
+          chunk_limit = 100000
           entries = []
 
           for file_path, rel in candidate_files():
@@ -217,6 +217,8 @@ jobs:
               "    h1 { margin-top: 0; }",
               "    h2 { margin: 0; font-size: 20px; }",
               "    h3 { margin-bottom: 8px; }",
+              "    .parts-nav { position: sticky; top: 0; z-index: 10; background: #ffffff; border-bottom: 1px solid #d0d7de; padding: 10px 0; margin-bottom: 14px; }",
+              "    .parts-nav a { margin-right: 12px; text-decoration: none; color: #0969da; font-size: 14px; }",
               "    .part { border-top: 2px solid #d0d7de; padding-top: 20px; margin-top: 24px; }",
               "    .part-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }",
               "    .copy-btn { border: 1px solid #1f2328; background: #1f2328; color: #fff; padding: 6px 12px; cursor: pointer; }",
@@ -249,10 +251,15 @@ jobs:
               f"  <p>HTML content is split into parts of about {chunk_limit} characters without splitting single files.</p>",
           ]
 
+          html_lines.append("  <nav class=\"parts-nav\"><strong>Quick parts:</strong> ")
+          for i in range(1, len(parts) + 1):
+              html_lines.append(f"    <a href=\"#part-{i}\">Part {i}</a>")
+          html_lines.append("  </nav>")
+
           for index, part in enumerate(parts, start=1):
               part_id = f"part-{index}"
               part_text = "\n\n".join(item["plain"] for item in part["entries"])
-              html_lines.append("  <section class=\"part\">")
+              html_lines.append(f"  <section id=\"{part_id}\" class=\"part\">")
               html_lines.append("    <div class=\"part-header\">")
               html_lines.append(f"      <h2>Part {index}</h2>")
               html_lines.append(f"      <button class=\"copy-btn\" onclick=\"copyPart('{part_id}')\">Copy Part {index}</button>")
