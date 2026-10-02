@@ -302,7 +302,11 @@ jobs:
           )
 
           for path in "${blocked[@]}"; do
-            if grep -Fq "$path" "$OUTPUT_HTML" || grep -Fq "$path" "$OUTPUT_MD"; then
+            # Match only exported file-entry markers, not incidental mentions
+            # (for example inside workflow source code blocks).
+            if grep -Fq "## \\`$path\\`" "$OUTPUT_MD" \
+              || grep -Fq "Path: $path" "$OUTPUT_HTML" \
+              || grep -Fq "Path: <code>$path</code>" "$OUTPUT_HTML"; then
               echo "Excluded path leaked into export: $path"
               exit 1
             fi
