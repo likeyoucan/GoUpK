@@ -258,9 +258,23 @@ export const createSVGIcon = (pathData, classes = []) => {
   return svg;
 };
 
+function isAllowedExternalHref(href) {
+  const v = String(href || "").trim();
+  if (!v) return false;
+
+  return (
+    /^https?:\/\//i.test(v) || v.startsWith("mailto:") || v.startsWith("tel:")
+  );
+}
+
 export async function openExternalUrl(url) {
   const href = String(url || "").trim();
   if (!href) return;
+
+  if (!isAllowedExternalHref(href)) {
+    console.warn("[external-links] blocked unsafe url:", href);
+    return;
+  }
 
   const isMail = href.startsWith("mailto:");
   const isTel = href.startsWith("tel:");

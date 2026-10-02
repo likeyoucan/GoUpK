@@ -45,7 +45,7 @@ const FG_ID = 101;
 const ACTION_TOGGLE = 1;
 
 /* Reduced polling pressure */
-const POLL_MS = 1400;
+const POLL_MS = 2500;
 
 const FOREGROUND_STOP_DEBOUNCE_MS = 1200;
 const TOGGLE_DEBOUNCE_MS = 120;
@@ -90,6 +90,7 @@ let lastScheduledStateSig = "";
 let lastScheduledAt = 0;
 
 let notificationSuppressed = false;
+let appIsBackground = document.visibilityState !== "visible";
 
 const listeners = {
   appState: null,
@@ -959,6 +960,9 @@ function unbindDocumentEvents() {
 }
 
 async function handleAppBecameForeground(reason) {
+  if (!appIsBackground) return;
+  appIsBackground = false;
+
   stopPolling();
   notificationSuppressed = false;
   await clearNativeSuppressedFlag();
@@ -970,6 +974,9 @@ async function handleAppBecameForeground(reason) {
 }
 
 async function handleAppBecameBackground(reason) {
+  if (appIsBackground) return;
+  appIsBackground = true;
+
   cancelPendingStop();
   sm.unlock();
   requestWakeLock();
@@ -981,7 +988,11 @@ async function handleAppBecameBackground(reason) {
 
   await ensurePermissionIfNeeded(true);
   await syncNotification({ reason, force: false });
-  startPolling();
+
+  const state = getResolvedForegroundState();
+  // Poll only while a running session exists in background.
+  if (state?.running) startPolling();
+  else stopPolling();
 }
 
 function bindVisibilityFallback() {
@@ -1072,6 +1083,8 @@ export async function initForegroundService() {
     await pushRuntimeStateToNative("init");
     await syncNotification({ reason: "init", force: false });
   }
+
+  appIsBackground = document.visibilityState !== "visible";
 }
 
 export async function destroyForegroundService() {
@@ -1104,6 +1117,7 @@ export async function destroyForegroundService() {
   notificationSuppressed = false;
   lastScheduledStateSig = "";
   lastScheduledAt = 0;
+  appIsBackground = document.visibilityState !== "visible";
 
   isInitialized = false;
 }

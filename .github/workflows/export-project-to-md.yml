@@ -18,9 +18,9 @@ jobs:
       # Space-separated folders to include. Leave empty to include the whole repo.
       INCLUDE_DIRS: ""
       # Space-separated folders to exclude from export.
-      EXCLUDE_DIRS: ".git node_modules dist build .next .cache"
+      EXCLUDE_DIRS: ".git node_modules dist build .next .cache www/js/eruda"
       # Space-separated files to exclude from export.
-      EXCLUDE_FILES: "artifact.tar project-export.tar project-export.tgz project-export.zip"
+      EXCLUDE_FILES: "artifact.tar project-export.tar project-export.tgz project-export.zip www/js/debug-eruda-toggle.js www/js/eruda.js"
 
     steps:
       - name: Checkout repository
