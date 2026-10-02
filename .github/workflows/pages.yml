@@ -1,6 +1,11 @@
 name: Export Project To Markdown And HTML
 
 on:
+  push:
+    paths-ignore:
+      - project-files.md
+      - project-files.html
+      - project-export.zip
   workflow_dispatch:
 
 jobs:
@@ -9,6 +14,7 @@ jobs:
     env:
       OUTPUT_MD: "project-files.md"
       OUTPUT_HTML: "project-files.html"
+      ARCHIVE_FILE: "project-export.zip"
       # Space-separated folders to include. Leave empty to include the whole repo.
       INCLUDE_DIRS: ""
       # Space-separated folders to exclude from export.
@@ -91,7 +97,7 @@ jobs:
               "",
           ]
 
-          chunk_limit = 15000
+          chunk_limit = 40000
           entries = []
 
           for file_path, rel in candidate_files():
@@ -267,19 +273,34 @@ jobs:
           Path(output_html).write_text("\n".join(html_lines) + "\n", encoding="utf-8")
           PY
 
-      - name: Validate export files
+      - name: Upload markdown and html files
         shell: bash
         run: |
           set -euo pipefail
           test -f "$OUTPUT_MD"
           test -f "$OUTPUT_HTML"
+          python3 - << 'PY'
+          import os
+          import zipfile
 
-      - name: Upload export artifact
+          archive = os.environ["ARCHIVE_FILE"]
+          output_md = os.environ["OUTPUT_MD"]
+          output_html = os.environ["OUTPUT_HTML"]
+
+          with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+              zf.write(output_md)
+              zf.write(output_html)
+
+          with zipfile.ZipFile(archive, "r") as zf:
+              print("Archive content:")
+              for name in zf.namelist():
+                  print(name)
+          PY
+
+      - name: Upload safe archive
         uses: actions/upload-artifact@v5
         with:
           name: project-export
-          path: |
-            ${{ env.OUTPUT_MD }}
-            ${{ env.OUTPUT_HTML }}
+          path: project-export.zip
           if-no-files-found: error
           retention-days: 14
