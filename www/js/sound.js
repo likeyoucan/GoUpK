@@ -42,10 +42,10 @@ export const sm = {
 
   THEME_VOL_MULTIPLIERS: {
     classic: 1,
-    sport: 1,
-    vibe: 1,
-    work: 1,
-    life: 1,
+    sport: 1.2,
+    vibe: 1.2,
+    work: 1.2,
+    life: 1.2,
   },
 
   vibroIntensities: { light: 0.5, medium: 1, strong: 1.5, tactile: 0.8 },
