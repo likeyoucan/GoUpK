@@ -2789,6 +2789,15 @@
       0 0 0 1px color-mix(in srgb, var(--primary-color) 18%, transparent) inset !important;
     opacity: 1 !important;
     transform: translate(-50%, -50%) scale(1) !important;
+    transition:
+      left 0.05s linear,
+      transform 180ms var(--ease-standard),
+      background-color 220ms var(--ease-standard),
+      border-color 220ms var(--ease-standard),
+      box-shadow 220ms var(--ease-standard),
+      backdrop-filter 240ms var(--ease-standard),
+      -webkit-backdrop-filter 240ms var(--ease-standard),
+      opacity 220ms var(--ease-standard) !important;
   }
 
   html.dark.glass-effect .tr-thumb {
