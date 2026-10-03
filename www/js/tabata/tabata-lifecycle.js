@@ -83,13 +83,20 @@ export function setupTabataLifecycle(tb, deps) {
   }
 
   tb.toggle = () => {
-    vibrateLifecycle(40, "light");
-    sm.play("click");
-    sm.unlock();
+if (tb.status === "STOPPED") {
+  vibrateLifecycle([18, 20, 28], "medium");
+} else if (tb.paused) {
+  vibrateLifecycle([14, 18, 22], "medium");
+} else {
+  vibrateLifecycle([12, 22, 16], "medium");
+}
 
-    if (tb.status === "STOPPED") tb.start();
-    else if (tb.paused) tb.resume();
-    else tb.pause();
+sm.play("click");
+sm.unlock();
+
+if (tb.status === "STOPPED") tb.start();
+else if (tb.paused) tb.resume();
+else tb.pause();
   };
 
   tb.start = () => {
@@ -176,7 +183,7 @@ export function setupTabataLifecycle(tb, deps) {
 
   tb.stop = ({ resetRing = true, silent = false } = {}) => {
     if (!silent) {
-      vibrateLifecycle(30, "medium");
+      vibrateLifecycle([16, 18, 24], "medium");
       sm.play("click");
     }
 

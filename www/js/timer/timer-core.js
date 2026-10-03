@@ -182,9 +182,19 @@ export function setupTimerCore(tm, { showToast, updateText }) {
   }
 
   tm.toggle = async () => {
-    tm.sm.vibrate(40, "light");
-    tm.sm.play("click");
-    tm.sm.unlock();
+const wasRunning = tm.isRunning;
+const wasPaused = tm.isPaused;
+
+tm.sm.vibrate(
+  wasRunning
+    ? [12, 22, 16]   // pause
+    : wasPaused
+      ? [14, 18, 22] // resume
+      : [18, 20, 28],// start
+  "medium",
+);
+tm.sm.play("click");
+tm.sm.unlock();
 
     if (tm.isRunning) {
       tm.store.clearActiveTimer();
@@ -276,7 +286,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
   };
 
   tm.restart = async () => {
-    tm.sm.vibrate(30, "medium");
+    tm.sm.vibrate([16, 18, 24], "medium");
     tm.sm.play("click");
 
     let duration = tm.initialDurationMs;
@@ -325,7 +335,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
   };
 
   tm.reset = async (clearInputs = true) => {
-    tm.sm.vibrate(30, "medium");
+    tm.sm.vibrate([16, 18, 24], "medium");
     tm.sm.play("click");
 
     tm.countdownEngine.stop();
@@ -425,7 +435,7 @@ export function setupTimerCore(tm, { showToast, updateText }) {
 
     const onAdjustPlus = () => {
       tm.sm.play("tick");
-      tm.sm.vibrate(50, "medium");
+      tm.sm.vibrate([7, 10, 9], "tactile");
 
       const adjustmentMs = tm.currentAdjustmentSec * 1000;
       const snap = tm.countdownEngine.adjust(adjustmentMs);

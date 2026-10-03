@@ -217,7 +217,8 @@ const stopwatchModule = {
   },
 
   toggle() {
-    sm.vibrate(40, "light");
+    const wasRunning = this.isRunning;
+    sm.vibrate(wasRunning ? [12, 22, 16] : [18, 20, 28], "medium");
     sm.play("click");
     sm.unlock();
 
@@ -335,7 +336,11 @@ const stopwatchModule = {
   },
 
   recordLapOrReset() {
-    sm.vibrate(30, "medium");
+    const lapMode = this.isRunning;
+    sm.vibrate(
+      lapMode ? [8, 12, 10] : [16, 18, 24],
+      lapMode ? "tactile" : "medium",
+    );
     sm.play("click");
 
     if (this.isRunning) {

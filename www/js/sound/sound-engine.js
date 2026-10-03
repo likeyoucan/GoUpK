@@ -49,18 +49,18 @@ export function vibrate(sm, basePattern, intensityKey = "medium") {
 
   try {
     const typeMultiplierMap = {
-      tactile: 0.42,
-      light: 0.58,
-      medium: 0.9,
-      strong: 1.25,
+      tactile: 0.34,
+      light: 0.55,
+      medium: 0.95,
+      strong: 1.45,
     };
 
     const levelProfileMap = {
-      0.5: { amp: 0.5, minPulse: 6 },
-      0.75: { amp: 0.7, minPulse: 8 },
-      1: { amp: 0.92, minPulse: 10 },
-      1.5: { amp: 1.28, minPulse: 14 },
-      2: { amp: 1.7, minPulse: 18 },
+      0.5: { amp: 0.42, minPulse: 4 },
+      0.75: { amp: 0.62, minPulse: 7 },
+      1: { amp: 1.0, minPulse: 11 },
+      1.5: { amp: 1.55, minPulse: 16 },
+      2: { amp: 2.15, minPulse: 22 },
     };
 
     const lvl = pickNearestLevel(sm.vibroLevel);
