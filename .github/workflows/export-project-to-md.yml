@@ -1,10 +1,15 @@
 name: Export Project To Markdown And HTML
 
+concurrency:
+  group: export-project-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
     paths-ignore:
       - project-files.md
       - project-files.html
+      - project-export.zip
   workflow_dispatch:
 
 jobs:
@@ -18,7 +23,7 @@ jobs:
       # Space-separated folders to exclude from export.
       EXCLUDE_DIRS: ".git node_modules dist build .next .cache www/js/eruda"
       # Space-separated files to exclude from export.
-      EXCLUDE_FILES: "artifact.tar www/styles.css www/js/debug-eruda-toggle.js www/js/eruda.js"
+      EXCLUDE_FILES: "artifact.tar project-export.tar project-export.tgz project-export.zip www/styles.css www/js/debug-eruda-toggle.js www/js/eruda.js"
 
     steps:
       - name: Checkout repository
@@ -55,6 +60,7 @@ jobs:
 
           def should_skip(rel_path: str) -> bool:
               rel_path = normalize_rel(rel_path)
+
               if rel_path in {output_md_norm, output_html_norm}:
                   return True
               if rel_path.startswith(".git/"):
@@ -74,13 +80,16 @@ jobs:
                   # Supports exact paths and wildcard patterns like *.css.
                   if fnmatch(rel_path, pattern) or fnmatch(Path(rel_path).name, pattern):
                       return True
+
               for folder in exclude_dirs:
                   if rel_path == folder or rel_path.startswith(folder + "/"):
                       return True
+
               return False
 
           def candidate_files():
               found = []
+
               if include_dirs:
                   for folder in include_dirs:
                       p = Path(folder)
@@ -103,8 +112,10 @@ jobs:
                   chunk = path.read_bytes()[:8192]
               except OSError:
                   return False
+
               if b"\x00" in chunk:
                   return False
+
               try:
                   chunk.decode("utf-8")
                   return True
@@ -190,6 +201,7 @@ jobs:
 
           for entry in entries:
               e_len = entry["length"]
+
               if e_len > chunk_limit:
                   if current_entries:
                       parts.append({
@@ -281,6 +293,7 @@ jobs:
               part_id = f"part-{index}"
               copy_id = f"copy-source-{index}"
               part_text = "\n\n".join(item["plain"] for item in part["entries"])
+
               html_lines.append(f"  <section id=\"{part_id}\" class=\"part\">")
               html_lines.append("    <div class=\"part-header\">")
               html_lines.append(f"      <h2>Part {index}</h2>")
@@ -289,6 +302,7 @@ jobs:
               html_lines.append(f"    <p class=\"meta\">Approx chars: {part['length']}</p>")
               if part["note"]:
                   html_lines.append(f"    <p class=\"note\">{html.escape(part['note'])}</p>")
+
               html_lines.append(f"    <textarea id=\"{copy_id}\" class=\"copy-source\">{html.escape(part_text)}</textarea>")
 
               for item in part["entries"]:
