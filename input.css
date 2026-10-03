@@ -2813,35 +2813,36 @@
   .glass-effect .tr-wrap:focus-within .tr-thumb,
   .glass-effect .tr-wrap.tr-focused .tr-thumb,
   .glass-effect .tr-wrap:active .tr-thumb {
-    background: rgb(255 255 255 / 0.94) !important;
-    border-color: color-mix(
-      in srgb,
-      var(--primary-color) 84%,
-      #ffffff 16%
-    ) !important;
+    background: rgb(255 255 255 / 0.22) !important;
+    border-color: transparent !important;
     border-width: 2px !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    transform: translate(-50%, -50%) scale(1.03) !important;
+    backdrop-filter: blur(28px) saturate(210%) contrast(1.1) !important;
+    -webkit-backdrop-filter: blur(28px) saturate(210%) contrast(1.1) !important;
+    transform: translate(-50%, -50%) scale(1.05) !important;
     box-shadow:
-      0 2px 6px rgb(0 0 0 / 0.2),
-      0 0 0 2px color-mix(in srgb, var(--primary-color) 58%, transparent) !important;
+      inset 0 1px 0 rgb(255 255 255 / 0.72),
+      0 8px 16px rgb(0 0 0 / 0.24) !important;
   }
 
   html.dark.glass-effect .tr-wrap:focus-within .tr-thumb,
   html.dark.glass-effect .tr-wrap.tr-focused .tr-thumb,
   html.dark.glass-effect .tr-wrap:active .tr-thumb {
-    background: rgb(34 39 46 / 0.94) !important;
-    border-color: color-mix(
-      in srgb,
-      var(--primary-color) 82%,
-      #ffffff 18%
-    ) !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
+    background: rgb(34 39 46 / 0.28) !important;
+    border-color: transparent !important;
+    border-width: 2px !important;
+    backdrop-filter: blur(30px) saturate(220%) contrast(1.12) !important;
+    -webkit-backdrop-filter: blur(30px) saturate(220%) contrast(1.12) !important;
+    transform: translate(-50%, -50%) scale(1.05) !important;
     box-shadow:
-      0 3px 10px rgb(0 0 0 / 0.38),
-      0 0 0 2px color-mix(in srgb, var(--primary-color) 58%, transparent) !important;
+      inset 0 1px 0 rgb(255 255 255 / 0.14),
+      0 10px 20px rgb(0 0 0 / 0.42) !important;
+  }
+
+  .glass-effect .tr-wrap:focus,
+  .glass-effect .tr-wrap:focus-visible,
+  .glass-effect .tr-wrap.tr-focused {
+    outline: none !important;
+    box-shadow: none !important;
   }
 
   .glass-effect .tr-wrap.tr-dragging .tr-thumb {
