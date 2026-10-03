@@ -11,7 +11,7 @@ export function bindBottomNav({ navigation, modalManager, sm }) {
       if (!targetView || targetView === navigation.activeView) return;
 
       const switched = navigation.switchView(targetView, { source: "tap" });
-      if (switched) sm.vibrate([8, 14, 12], "tactile");
+      if (switched) sm.vibrate(14, "ui");
     };
 
     btn.addEventListener("click", handler);

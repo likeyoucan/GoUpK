@@ -49,6 +49,7 @@ export function vibrate(sm, basePattern, intensityKey = "medium") {
 
   try {
     const typeMultiplierMap = {
+      ui: 1,
       tactile: 0.34,
       light: 0.55,
       medium: 0.95,
