@@ -1358,26 +1358,47 @@
     transform: translateX(var(--split-pill-nudge-x, 0px)) scale(1.05);
   }
 
-  .glass-effect .resizer_handler:focus-visible::before,
-  .glass-effect .resizer_handler.is-dragging::before,
-  .glass-effect .resizer_handler:active::before {
-    background: rgb(255 255 255 / 0.22);
-    backdrop-filter: blur(10px) saturate(140%);
-    -webkit-backdrop-filter: blur(10px) saturate(140%);
+  /* Glass handler: solid when idle, more transparent only while dragging/active */
+  .glass-effect .resizer_handler::before {
+    opacity: 0.96;
+    background: color-mix(in srgb, var(--surface-color) 72%, #ffffff 28%);
+    backdrop-filter: blur(8px) saturate(130%);
+    -webkit-backdrop-filter: blur(8px) saturate(130%);
     box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.34),
+      inset 0 1px 0 rgb(255 255 255 / 0.3),
+      0 1px 4px rgb(0 0 0 / 0.14);
+  }
+
+  .glass-effect .resizer_handler.is-dragging::before,
+  .glass-effect .resizer_handler:active::before,
+  .glass-effect .resizer_handler:focus-visible::before {
+    opacity: 0.42;
+    background: color-mix(in srgb, var(--surface-color) 30%, transparent);
+    backdrop-filter: blur(12px) saturate(145%);
+    -webkit-backdrop-filter: blur(12px) saturate(145%);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.22),
       0 2px 8px rgb(0 0 0 / 0.16);
   }
 
-  html.dark.glass-effect .resizer_handler:focus-visible::before,
-  html.dark.glass-effect .resizer_handler.is-dragging::before,
-  html.dark.glass-effect .resizer_handler:active::before {
-    background: rgb(24 24 27 / 0.3);
-    backdrop-filter: blur(12px) saturate(150%);
-    -webkit-backdrop-filter: blur(12px) saturate(150%);
+  html.dark.glass-effect .resizer_handler::before {
+    opacity: 0.96;
+    background: color-mix(in srgb, var(--surface-color) 54%, #0b0b0c 46%);
     box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.14),
-      0 3px 10px rgb(0 0 0 / 0.28);
+      inset 0 1px 0 rgb(255 255 255 / 0.12),
+      0 2px 6px rgb(0 0 0 / 0.26);
+  }
+
+  html.dark.glass-effect .resizer_handler.is-dragging::before,
+  html.dark.glass-effect .resizer_handler:active::before,
+  html.dark.glass-effect .resizer_handler:focus-visible::before {
+    opacity: 0.38;
+    background: color-mix(in srgb, var(--surface-color) 26%, transparent);
+    backdrop-filter: blur(14px) saturate(150%);
+    -webkit-backdrop-filter: blur(14px) saturate(150%);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.1),
+      0 3px 10px rgb(0 0 0 / 0.3);
   }
 
   .resizer_handler:active,
@@ -2779,6 +2800,28 @@
   }
 
   /* Glass polish: ranges, color delete action, toggles */
+
+  .glass-effect .tr-track {
+    background: color-mix(in srgb, var(--surface-color) 46%, transparent);
+    border: 1px solid color-mix(in srgb, var(--border-color) 58%, #ffffff 42%);
+    backdrop-filter: blur(8px) saturate(130%);
+    -webkit-backdrop-filter: blur(8px) saturate(130%);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.22);
+  }
+
+  html.dark.glass-effect .tr-track {
+    background: color-mix(in srgb, var(--surface-color) 24%, transparent);
+    border-color: color-mix(in srgb, var(--border-color) 68%, #ffffff 32%);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08);
+  }
+
+  .glass-effect .tr-fill {
+    background: var(--primary-color);
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--primary-color) 54%, transparent) inset,
+      0 0 8px color-mix(in srgb, var(--primary-color) 26%, transparent);
+  }
+
   .glass-effect .tr-thumb {
     background: rgb(255 255 255 / 0.22) !important;
     border: 2px solid color-mix(in srgb, var(--primary-color) 84%, #ffffff 16%) !important;
