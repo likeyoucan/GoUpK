@@ -1,5 +1,7 @@
 // Файл: www/js/sound/sound-engine.js
 
+// Файл: www/js/sound/sound-engine.js
+
 export function initAudio(sm) {
   if (sm.audioCtx || !sm.soundEnabled) return;
 
@@ -25,6 +27,14 @@ const VIBRATE_MIN_INTERVAL_BY_TYPE = {
   strong: 0,
 };
 
+function pickNearestLevel(level) {
+  const levels = [0.5, 0.75, 1, 1.5, 2];
+  const raw = Number(level || 1);
+  return levels.reduce((prev, cur) =>
+    Math.abs(cur - raw) < Math.abs(prev - raw) ? cur : prev,
+  );
+}
+
 export function vibrate(sm, basePattern, intensityKey = "medium") {
   if (!sm.vibroEnabled || !navigator.vibrate) return;
   if (window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) return;
@@ -38,40 +48,36 @@ export function vibrate(sm, basePattern, intensityKey = "medium") {
   __lastVibrateAt = now;
 
   try {
-    const intensityMap = {
-      light: 0.52,
-      medium: 0.7,
-      strong: 0.98,
+    const typeMultiplierMap = {
       tactile: 0.42,
+      light: 0.58,
+      medium: 0.9,
+      strong: 1.25,
     };
 
-    const typeMultiplier = intensityMap[intensityKey] || 0.7;
+    const levelProfileMap = {
+      0.5: { amp: 0.5, minPulse: 6 },
+      0.75: { amp: 0.7, minPulse: 8 },
+      1: { amp: 0.92, minPulse: 10 },
+      1.5: { amp: 1.28, minPulse: 14 },
+      2: { amp: 1.7, minPulse: 18 },
+    };
 
-    const rawLevel = Number(sm.vibroLevel || 1);
-    const levelMap = new Map([
-      [0.5, 0.44],
-      [0.75, 0.62],
-      [1, 0.82],
-      [1.5, 1.14],
-      [2, 1.52],
-    ]);
+    const lvl = pickNearestLevel(sm.vibroLevel);
+    const levelProfile = levelProfileMap[lvl] || levelProfileMap[1];
+    const typeMul = typeMultiplierMap[intensityKey] || typeMultiplierMap.medium;
 
-    const nearestLevel = [0.5, 0.75, 1, 1.5, 2].reduce((prev, cur) =>
-      Math.abs(cur - rawLevel) < Math.abs(prev - rawLevel) ? cur : prev,
-    );
-    const levelMultiplier = levelMap.get(nearestLevel) ?? 0.82;
-
-    const globalSoftness = 0.72;
-    const finalMultiplier = typeMultiplier * levelMultiplier * globalSoftness;
+    const finalMul = typeMul * levelProfile.amp;
+    const minPulse = levelProfile.minPulse;
 
     const scalePulse = (duration) => {
-      const d = Math.round((Number(duration) || 0) * finalMultiplier);
-      return Math.max(1, Math.min(90, d));
+      const raw = Math.round((Number(duration) || 0) * finalMul);
+      return Math.max(minPulse, Math.min(120, raw));
     };
 
     const scalePause = (duration) => {
-      const d = Math.round((Number(duration) || 0) * 1.05);
-      return Math.max(1, Math.min(140, d));
+      const raw = Math.round((Number(duration) || 0) * 1.05);
+      return Math.max(1, Math.min(180, raw));
     };
 
     const pattern = Array.isArray(basePattern)

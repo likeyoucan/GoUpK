@@ -1,5 +1,7 @@
 // Файл: www/js/foreground-service.js
 
+// Файл: www/js/foreground-service.js
+
 import {
   $,
   formatTime,
@@ -829,6 +831,15 @@ export async function syncNotification({
   const plugins = getPlugins();
   if (!plugins) return;
 
+  if (
+    notificationSuppressed &&
+    shouldShowForegroundBanner() &&
+    !appIsBackground
+  ) {
+    notificationSuppressed = false;
+    await clearNativeSuppressedFlag();
+  }
+
   if (notificationSuppressed || !shouldShowForegroundBanner()) {
     await stopForeground();
     return;
@@ -944,9 +955,21 @@ function bindDocumentEvents() {
     ),
   );
   listeners.unsubs.push(
-    onAppEvent(APP_EVENTS.FOREGROUND_NOTIFICATION_SETTING_CHANGED, () =>
-      syncNotification({ reason: "foreground_setting_changed", force: true }),
-    ),
+    onAppEvent(APP_EVENTS.FOREGROUND_NOTIFICATION_SETTING_CHANGED, async () => {
+      if (shouldShowForegroundBanner()) {
+        notificationSuppressed = false;
+        await clearNativeSuppressedFlag();
+        scheduleStateSync("foreground_setting_changed_enable");
+      } else {
+        cancelPendingStop();
+        await stopForeground();
+      }
+
+      await syncNotification({
+        reason: "foreground_setting_changed",
+        force: true,
+      });
+    }),
   );
 }
 

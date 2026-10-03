@@ -2777,38 +2777,34 @@
 
   .glass-effect .tr-wrap:focus-within .tr-thumb,
   .glass-effect .tr-wrap.tr-focused .tr-thumb {
-    border-width: 2.5px !important;
+    border-color: transparent !important;
+    border-width: 2px !important;
     transform: translate(-50%, -50%) scale(1.03) !important;
     box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.7),
-      0 5px 12px rgb(0 0 0 / 0.2) !important;
+      inset 0 1px 0 rgb(255 255 255 / 0.68),
+      0 5px 12px rgb(0 0 0 / 0.2),
+      0 0 0 2px color-mix(in srgb, var(--primary-color) 58%, transparent) !important;
   }
 
   .glass-effect .tr-wrap.tr-dragging .tr-thumb {
     background: rgb(255 255 255 / 0.3) !important;
-    border-width: 3px !important;
-    border-color: color-mix(
-      in srgb,
-      var(--primary-color) 92%,
-      #ffffff 8%
-    ) !important;
-    backdrop-filter: blur(30px) saturate(225%) contrast(1.1) !important;
-    -webkit-backdrop-filter: blur(30px) saturate(225%) contrast(1.1) !important;
+    border-color: transparent !important;
+    border-width: 2px !important;
+    backdrop-filter: blur(24px) saturate(185%) contrast(1.08) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(185%) contrast(1.08) !important;
     transform: translate(-50%, -50%) scale(1.07) !important;
     box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.78),
-      0 8px 16px rgb(0 0 0 / 0.24) !important;
+      inset 0 1px 0 rgb(255 255 255 / 0.76),
+      0 8px 16px rgb(0 0 0 / 0.24),
+      0 0 0 2px color-mix(in srgb, var(--primary-color) 72%, transparent) !important;
   }
 
   html.dark.glass-effect .tr-wrap.tr-dragging .tr-thumb {
-    background: rgb(24 24 27 / 0.36) !important;
-    border-color: color-mix(
-      in srgb,
-      var(--primary-color) 88%,
-      #ffffff 12%
-    ) !important;
-    backdrop-filter: blur(34px) saturate(240%) contrast(1.12) !important;
-    -webkit-backdrop-filter: blur(34px) saturate(240%) contrast(1.12) !important;
+    background: rgb(24 24 27 / 0.38) !important;
+    border-color: transparent !important;
+    border-width: 2px !important;
+    backdrop-filter: blur(26px) saturate(200%) contrast(1.1) !important;
+    -webkit-backdrop-filter: blur(26px) saturate(200%) contrast(1.1) !important;
   }
 
   /* Keep pseudo artifacts off */
