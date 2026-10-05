@@ -43,8 +43,8 @@ export const sm = {
   THEME_VOL_MULTIPLIERS: {
     classic: 1,
     sport: 1.3,
-    vibe: 1.3,
-    work: 1.3,
+    vibe: 1.5,
+    work: 1.4,
     life: 1.3,
   },
 
