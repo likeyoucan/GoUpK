@@ -2613,7 +2613,7 @@
       background-color var(--dur-short) ease,
       border-color var(--dur-short) ease,
       box-shadow var(--dur-short) ease;
-    box-shadow: none; /* убрали блик в светлой теме */
+    box-shadow: none;
   }
 
   html.dark .custom-toggle {
@@ -2622,29 +2622,22 @@
     box-shadow: none;
   }
 
-  /* Light + Liquid Glass: делаем рамку заметнее и трек более серым с оттенком акцента */
+  /* Light + Glass: стекло без блика */
   html:not(.dark).glass-effect .custom-toggle {
     background-color: color-mix(in srgb, var(--primary-color) 9%, #b8c0cd 91%);
     border-color: color-mix(in srgb, #111827 36%, #ffffff 64%);
-    box-shadow: none; /* убрали glass-блик в светлой теме */
+    backdrop-filter: blur(10px) saturate(135%);
+    -webkit-backdrop-filter: blur(10px) saturate(135%);
+    box-shadow: none;
   }
 
-.custom-toggle::after {
-  content: "";
-  position: absolute;
-  top: 1px;
-  left: 1px;
-  width: 20px;
-  height: 20px;
-  background-color: #ffffff;
-  border-radius: 50%;
-  box-shadow: none; /* убрали блик/подсветку */
-  transition: transform var(--dur-short) var(--ease-standard);
-}
-
-  input[type="checkbox"]:focus-visible + .custom-toggle {
-    outline: 2px solid var(--primary-color);
-    outline-offset: 2px;
+  /* Dark + Glass: стекло без блика */
+  html.dark.glass-effect .custom-toggle {
+    background-color: color-mix(in srgb, var(--surface-color) 22%, transparent);
+    border-color: color-mix(in srgb, #ffffff 20%, transparent);
+    backdrop-filter: blur(10px) saturate(135%);
+    -webkit-backdrop-filter: blur(10px) saturate(135%);
+    box-shadow: none;
   }
 
   .custom-toggle::after {
@@ -2656,8 +2649,14 @@
     height: 20px;
     background-color: #ffffff;
     border-radius: 50%;
-    box-shadow: 0 1px 3px rgb(0 0 0 / 0.26);
+    box-shadow: none;
     transition: transform var(--dur-short) var(--ease-standard);
+  }
+
+  /* Темная тема: бегунок чуть темнее, тоже без блика */
+  html.dark .custom-toggle::after {
+    background-color: #dbe3f4;
+    box-shadow: none;
   }
 
   input[type="checkbox"]:focus-visible + .custom-toggle {
