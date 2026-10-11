@@ -2518,6 +2518,16 @@
     overflow-y: auto;
   }
 
+  /* Tabata modal: keep save button shadow inside container */
+  #tb-modal-form {
+    overflow-x: clip;
+  }
+
+  #tb-saveModalBtn {
+    box-shadow: 0 6px 12px
+      color-mix(in srgb, var(--primary-color) 24%, transparent);
+  }
+
   #sw-sessionsList [data-template="lapsContainer"] {
     touch-action: pan-y;
     -webkit-overflow-scrolling: touch;
@@ -2822,9 +2832,9 @@
     -webkit-backdrop-filter: blur(28px) saturate(210%) contrast(1.1) !important;
     transform: translate(-50%, -50%) scale(1.05) !important;
     box-shadow:
-  inset 0 1px 0 rgb(255 255 255 / 0.72),
-  0 8px 16px rgb(0 0 0 / 0.24),
-  0 0 0 2px color-mix(in srgb, var(--primary-color) 70%, transparent) !important;
+      inset 0 1px 0 rgb(255 255 255 / 0.72),
+      0 8px 16px rgb(0 0 0 / 0.24),
+      0 0 0 2px color-mix(in srgb, var(--primary-color) 70%, transparent) !important;
   }
 
   html.dark.glass-effect .tr-wrap:focus-within .tr-thumb,
@@ -2832,7 +2842,11 @@
   html.dark.glass-effect .tr-wrap:active .tr-thumb {
     /* Матовый dark thumb без блика */
     background: #2a3240 !important;
-    border-color: color-mix(in srgb, var(--primary-color) 72%, #ffffff 28%) !important;
+    border-color: color-mix(
+      in srgb,
+      var(--primary-color) 72%,
+      #ffffff 28%
+    ) !important;
     border-width: 2px !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
@@ -2865,7 +2879,11 @@
   html.dark.glass-effect .tr-wrap.tr-dragging .tr-thumb {
     /* Матовый dark thumb в drag */
     background: #2a3240 !important;
-    border-color: color-mix(in srgb, var(--primary-color) 74%, #ffffff 26%) !important;
+    border-color: color-mix(
+      in srgb,
+      var(--primary-color) 74%,
+      #ffffff 26%
+    ) !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
     box-shadow:
@@ -3410,6 +3428,49 @@
 
   .nav-btn svg {
     vector-effect: non-scaling-stroke;
+  }
+
+  /* Nav focus and icon geometry normalization */
+  nav .nav-btn {
+    position: relative;
+    min-width: 64px;
+    overflow: visible;
+  }
+
+  nav .nav-btn > div {
+    width: 1.75rem;
+    height: 1.75rem;
+    min-width: 1.75rem;
+    min-height: 1.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+
+  nav .nav-btn svg {
+    width: 1.25rem;
+    height: 1.25rem;
+    flex: 0 0 1.25rem;
+  }
+
+  nav .nav-btn::after {
+    content: "";
+    position: absolute;
+    inset: 2px;
+    border-radius: 0.7rem;
+    border: 1px solid transparent;
+    pointer-events: none;
+    transition: border-color var(--dur-short) ease;
+  }
+
+  nav .nav-btn.custom-focus:focus-visible {
+    box-shadow: none !important;
+    outline: none;
+  }
+
+  nav .nav-btn.custom-focus:focus-visible::after {
+    border-color: color-mix(in srgb, var(--primary-color) 78%, #ffffff 22%);
   }
 
   @media (hover: hover) {
