@@ -194,20 +194,20 @@ export const APP_MONETIZATION_CONFIG = {
     },
 
     appIcons: {
-      fallbackImage: "img/app_img.png",
+      fallbackImage: "img/app_icon_theme_light.png",
       preloadTimeoutMs: 3000,
       options: [
         {
           id: "default",
           nativeName: "default",
-          image: "img/app_img.png",
+          image: "img/app_icon_theme_light.png",
           labelKey: "app_icon_default",
           proRequired: false,
         },
         {
           id: "pro",
           nativeName: "pro",
-          image: "img/app_img.png",
+          image: "img/app_icon_theme_dark.png",
           labelKey: "app_icon_pro",
           proRequired: true,
         },
