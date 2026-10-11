@@ -194,7 +194,7 @@ export const APP_MONETIZATION_CONFIG = {
     },
 
     appIcons: {
-      fallbackImage: "img/app_icon_theme_light.png",
+      fallbackImage: "img/app_img.png",
       preloadTimeoutMs: 3000,
       options: [
         {
