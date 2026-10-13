@@ -3,7 +3,7 @@
 const PRELOADER_ID = "app-preloader";
 const PRELOADER_ICON_ID = "app-preloader-icon";
 const PRELOADER_ICON_NAME_ID = "app-preloader-icon-name";
-const MIN_PRELOADER_VISIBLE_MS = 1000;
+const MIN_PRELOADER_VISIBLE_MS = 1500;
 
 export const preload = {
   el: null,

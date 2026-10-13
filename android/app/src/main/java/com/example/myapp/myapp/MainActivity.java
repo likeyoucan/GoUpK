@@ -10,6 +10,7 @@ public class MainActivity extends BridgeActivity {
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(TimerAlarmBridgePlugin.class);
         registerPlugin(CustomForegroundServicePlugin.class);
+        registerPlugin(AppIconSwitcherPlugin.class);
         super.onCreate(savedInstanceState);
 
         getWindow().setFlags(
