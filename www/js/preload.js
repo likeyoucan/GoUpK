@@ -7,6 +7,7 @@ const PRELOADER_ICON_NAME_ID = "app-preloader-icon-name";
 export const preload = {
   el: null,
   isVisible: false,
+  _iconLoadToken: 0,
 
   _ensureElement() {
     if (!this.el) {
@@ -28,7 +29,26 @@ export const preload = {
     const iconName = this._ensureIconName();
 
     if (icon && src) {
-      icon.src = src;
+      const token = ++this._iconLoadToken;
+
+      icon.classList.add("is-loading-icon");
+
+      const preloaderImg = new Image();
+      preloaderImg.decoding = "async";
+
+      preloaderImg.onload = () => {
+        if (token !== this._iconLoadToken) return;
+        icon.src = src;
+        icon.classList.remove("is-loading-icon");
+      };
+
+      preloaderImg.onerror = () => {
+        if (token !== this._iconLoadToken) return;
+        // Keep current icon source; just leave loading state.
+        icon.classList.remove("is-loading-icon");
+      };
+
+      preloaderImg.src = src;
     }
 
     if (iconName) {

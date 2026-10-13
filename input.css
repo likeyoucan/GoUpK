@@ -1061,7 +1061,12 @@
     width: clamp(56px, 16vmin, 112px);
     height: clamp(56px, 16vmin, 112px);
     object-fit: contain;
-    animation: preloader-pulse 1.4s ease-in-out infinite;
+    opacity: 1;
+    transition: opacity 180ms ease;
+  }
+
+  #app-preloader-icon.is-loading-icon {
+    opacity: 0;
   }
 
   .app-preloader-icon-name {
@@ -1091,18 +1096,6 @@
     #app-preloader-icon {
       width: 180px;
       height: 180px;
-    }
-  }
-
-  @keyframes preloader-pulse {
-    0%,
-    100% {
-      transform: scale(0.96);
-      opacity: 0.8;
-    }
-    50% {
-      transform: scale(1);
-      opacity: 1;
     }
   }
 

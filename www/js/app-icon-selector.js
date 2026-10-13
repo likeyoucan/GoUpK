@@ -12,7 +12,7 @@ const ICON_OPTIONS = Array.isArray(ICON_CFG.options) ? ICON_CFG.options : [];
 const FALLBACK_IMAGE = ICON_CFG.fallbackImage || "img/app_img.png";
 const PRELOAD_TIMEOUT_MS = Number(ICON_CFG.preloadTimeoutMs) || 3000;
 
-// Cache resolved preview state per icon id to avoid visual reload on rerender.
+// Cache resolved preview state per icon id+theme-source to avoid visual reload on rerender.
 const ICON_PREVIEW_CACHE = new Map();
 let disposeAppIconSelector = null;
 
@@ -42,6 +42,26 @@ function getOptionById(id) {
 function getCurrentLang() {
   const lang = (document.documentElement.lang || "en").toLowerCase();
   return lang.startsWith("ru") ? "ru" : "en";
+}
+
+function resolveOptionImageSrc(option) {
+  const image = option?.image;
+
+  if (typeof image === "string") {
+    return image;
+  }
+
+  if (image && typeof image === "object") {
+    const isDark = document.documentElement.classList.contains("dark");
+
+    if (isDark) {
+      return image.dark || image.default || image.light || FALLBACK_IMAGE;
+    }
+
+    return image.light || image.default || image.dark || FALLBACK_IMAGE;
+  }
+
+  return FALLBACK_IMAGE;
 }
 
 function resolveOptionLabel(option, t) {
@@ -90,10 +110,10 @@ function loadImageWithFallback(src, fallbackSrc, timeoutMs) {
 }
 
 async function resolvePreviewForOption(option) {
-  const desiredSrc = option?.image || FALLBACK_IMAGE;
+  const desiredSrc = resolveOptionImageSrc(option);
 
-  if (!option?.image) {
-    return { src: FALLBACK_IMAGE, missing: true };
+  if (!desiredSrc) {
+    return { src: FALLBACK_IMAGE, missing: true, desiredSrc: "" };
   }
 
   const readySrc = await loadImageWithFallback(
@@ -103,7 +123,7 @@ async function resolvePreviewForOption(option) {
   );
 
   const missing = readySrc === FALLBACK_IMAGE && desiredSrc !== FALLBACK_IMAGE;
-  return { src: readySrc, missing };
+  return { src: readySrc, missing, desiredSrc };
 }
 
 function ensureVisibleNoJump(container, target) {
@@ -277,7 +297,7 @@ export function getResolvedAppIconMeta(t, appProManager) {
 
   return {
     id,
-    src: option.image || FALLBACK_IMAGE,
+    src: resolveOptionImageSrc(option),
     nativeName: option.nativeName || option.id,
     label: resolveOptionLabel(option, t),
     labelKey: option.labelKey || "",
@@ -314,6 +334,23 @@ export function initAppIconSelector({ t, appProManager }) {
   if (!ICON_OPTIONS.find((x) => x.id === current)) {
     current = ICON_OPTIONS[0]?.id;
   }
+
+  const rootObserver = new MutationObserver((mutations) => {
+    const changedClass = mutations.some(
+      (m) => m.type === "attributes" && m.attributeName === "class",
+    );
+    if (!changedClass) return;
+
+    render();
+    dispatchIconChanged(t, appProManager);
+  });
+
+  rootObserver.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["class"],
+  });
+
+  unsubs.push(() => rootObserver.disconnect());
 
   const saveAndApply = async (id, { dispatch = true } = {}) => {
     const option = getOptionById(id);
@@ -356,12 +393,14 @@ export function initAppIconSelector({ t, appProManager }) {
         btn.classList.toggle("is-img-missing", !!flag);
       };
 
+      const desiredSrc = resolveOptionImageSrc(opt);
       const cached = ICON_PREVIEW_CACHE.get(opt.id);
-      if (cached) {
+
+      if (cached && cached.desiredSrc === desiredSrc) {
         img.src = cached.src;
         setMissing(!!cached.missing);
       } else {
-        img.src = opt.image || FALLBACK_IMAGE;
+        img.src = desiredSrc || FALLBACK_IMAGE;
         setMissing(false);
 
         resolvePreviewForOption(opt)
@@ -372,7 +411,11 @@ export function initAppIconSelector({ t, appProManager }) {
             setMissing(!!resolved.missing);
           })
           .catch(() => {
-            const fallbackState = { src: FALLBACK_IMAGE, missing: true };
+            const fallbackState = {
+              src: FALLBACK_IMAGE,
+              missing: true,
+              desiredSrc,
+            };
             ICON_PREVIEW_CACHE.set(opt.id, fallbackState);
             if (!img.isConnected) return;
             img.src = FALLBACK_IMAGE;

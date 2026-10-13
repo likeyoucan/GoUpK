@@ -200,14 +200,22 @@ export const APP_MONETIZATION_CONFIG = {
         {
           id: "default",
           nativeName: "default",
-          image: "img/app_icon_theme_light.png",
+          image: {
+            default: "img/app_img.png",
+            light: "img/app_icon_theme_light.png",
+            dark: "img/app_icon_theme_dark.png",
+          },
           labelKey: "app_icon_default",
           proRequired: false,
         },
         {
           id: "pro",
           nativeName: "pro",
-          image: "img/app_icon_theme_dark.png",
+          image: {
+            default: "img/app_img.png",
+            light: "img/app_icon_theme_light.png",
+            dark: "img/app_icon_theme_dark.png",
+          },
           labelKey: "app_icon_pro",
           proRequired: true,
         },
