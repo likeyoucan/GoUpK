@@ -2836,11 +2836,23 @@
       0 0 0 2px color-mix(in srgb, var(--primary-color) 45%, transparent) !important;
   }
 
+  .glass-effect .tr-wrap,
   .glass-effect .tr-wrap:focus,
   .glass-effect .tr-wrap:focus-visible,
-  .glass-effect .tr-wrap.tr-focused {
+  .glass-effect .tr-wrap:focus-within,
+  .glass-effect .tr-wrap.tr-focused,
+  .glass-effect .tr-wrap.tr-dragging {
     outline: none !important;
     box-shadow: none !important;
+  }
+
+  .glass-effect .tr-wrap .tr-native,
+  .glass-effect .tr-wrap .tr-native:focus,
+  .glass-effect .tr-wrap .tr-native:focus-visible,
+  .glass-effect .tr-wrap .tr-native:active {
+    outline: none !important;
+    box-shadow: none !important;
+    -webkit-tap-highlight-color: transparent !important;
   }
 
   /* Keep pseudo artifacts off */
