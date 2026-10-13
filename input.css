@@ -2815,9 +2815,9 @@
   html.dark.glass-effect .tr-wrap.tr-focused .tr-thumb,
   html.dark.glass-effect .tr-wrap:active .tr-thumb,
   html.dark.glass-effect .tr-wrap.tr-dragging .tr-thumb {
-    background: color-mix(in srgb, var(--surface-color) 42%, transparent);
+    background: rgb(255 255 255 / 0.28);
     border-color: color-mix(in srgb, var(--primary-color) 70%, #ffffff 30%);
-    opacity: 0.62;
+    opacity: 1;
     transform: translate(-50%, -50%) scale(1.05);
     box-shadow:
       inset 0 1px 0 rgb(255 255 255 / 0.52),
@@ -2874,10 +2874,19 @@
         0 0 0 1px color-mix(in srgb, var(--primary-color) 46%, transparent) !important;
     }
 
-    .glass-effect .tr-wrap.tr-dragging .tr-thumb {
+    .glass-effect .tr-wrap.tr-dragging .tr-thumb,
+    .glass-effect .tr-wrap:active .tr-thumb,
+    .glass-effect .tr-wrap:focus-within .tr-thumb,
+    .glass-effect .tr-wrap.tr-focused .tr-thumb {
+      background: rgb(255 255 255 / 0.28) !important;
+      border-color: color-mix(
+        in srgb,
+        var(--primary-color) 70%,
+        #ffffff 30%
+      ) !important;
       transform: translate(-50%, -50%) scale(1.06) !important;
       box-shadow:
-        inset 0 1px 0 rgb(255 255 255 / 0.6),
+        inset 0 1px 0 rgb(255 255 255 / 0.52),
         0 6px 14px rgb(0 0 0 / 0.26),
         0 0 0 2px color-mix(in srgb, var(--primary-color) 68%, transparent) !important;
     }
@@ -4525,7 +4534,7 @@
   #app-ad-slot > .ad-placeholder {
     min-height: 36px;
     padding: 0 12px;
-    border-radius: 10px;
+    border-radius: 0;
     border: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
     background-color: color-mix(in srgb, var(--surface-color) 94%, transparent);
     color: var(--text-secondary);
@@ -4536,12 +4545,6 @@
     justify-content: center;
     box-shadow: 0 1px 2px rgb(0 0 0 / 0.06);
     backdrop-filter: blur(4px);
-  }
-
-  @media (max-width: 767px) {
-    #app-ad-slot > .ad-placeholder {
-      border-radius: 0 !important;
-    }
   }
 
   html.dark #app-ad-slot > .ad-placeholder {
@@ -4569,6 +4572,10 @@
     #app-ad-slot > * {
       width: 100% !important;
       max-width: 100% !important;
+    }
+
+    #app-ad-slot > .ad-placeholder {
+      border-radius: 10px;
     }
   }
 
