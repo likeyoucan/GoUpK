@@ -156,7 +156,9 @@ export async function initMonetizationBootstrap({
   await appProManager.init();
 
   syncPreloaderIconMeta({ preload, t, config: validatedConfig });
+
   await applyMonetizationConfig(validatedConfig);
+  syncPreloaderIconMeta({ preload, t, config: validatedConfig });
 
   adsManager.init();
   adsManager.bindAutoRefresh();

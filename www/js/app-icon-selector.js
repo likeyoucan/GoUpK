@@ -44,6 +44,15 @@ function getCurrentLang() {
   return lang.startsWith("ru") ? "ru" : "en";
 }
 
+function isDarkThemeForIconChoice() {
+  const mode = (safeGetLS(STORAGE_KEYS.THEME_MODE) || "system").toLowerCase();
+
+  if (mode === "dark") return true;
+  if (mode === "light") return false;
+
+  return window.matchMedia?.("(prefers-color-scheme: dark)")?.matches === true;
+}
+
 function resolveOptionImageSrc(option) {
   const image = option?.image;
 
@@ -52,7 +61,7 @@ function resolveOptionImageSrc(option) {
   }
 
   if (image && typeof image === "object") {
-    const isDark = document.documentElement.classList.contains("dark");
+    const isDark = isDarkThemeForIconChoice();
 
     if (isDark) {
       return image.dark || image.default || image.light || FALLBACK_IMAGE;
