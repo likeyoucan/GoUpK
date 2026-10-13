@@ -2610,13 +2610,13 @@
   }
 
   html:not(.glass-effect) .custom-toggle {
-    box-shadow: none !important;
-    background-image: none !important;
+    box-shadow: none;
+    background-image: none;
   }
 
   html:not(.glass-effect) .custom-toggle::after {
-    box-shadow: none !important;
-    background-image: none !important;
+    box-shadow: none;
+    background-image: none;
   }
 
   input[type="checkbox"]:focus-visible + .custom-toggle {
@@ -3398,13 +3398,9 @@
     will-change: transform;
   }
 
-  nav .nav-btn:active {
-    transform: translate3d(0, 0, 0) scale(0.94) !important;
-  }
-
-  nav .nav-btn:active > div,
-  nav .nav-btn:active > span {
-    transform: none !important;
+  nav .nav-btn-press:active {
+    transform: scale(0.94);
+    transform-origin: 50% 50%;
   }
 
   nav .nav-btn > div {
