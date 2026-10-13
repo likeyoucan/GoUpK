@@ -236,7 +236,9 @@ export const APP_MONETIZATION_CONFIG = {
         {
           id: "pro_3",
           nativeName: "pro_3",
-          image: "img/app_icon_theme_dark.png",
+          default: "img/app_img.png",
+          light: "img/app_icon_theme_dark.png",
+          dark: "img/app_icon_theme_dark.png",
           labelKey: "app_icon_pro",
           proRequired: true,
         },
