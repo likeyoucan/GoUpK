@@ -2610,13 +2610,13 @@
   }
 
   html:not(.glass-effect) .custom-toggle {
-    box-shadow: none;
-    background-image: none;
+    box-shadow: none !important;
+    background-image: none !important;
   }
 
   html:not(.glass-effect) .custom-toggle::after {
-    box-shadow: none;
-    background-image: none;
+    box-shadow: none !important;
+    background-image: none !important;
   }
 
   input[type="checkbox"]:focus-visible + .custom-toggle {
