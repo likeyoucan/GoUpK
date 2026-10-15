@@ -11,6 +11,7 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.widget.RemoteViews;
 
 import androidx.core.app.NotificationCompat;
@@ -40,7 +41,8 @@ public class AppForegroundService extends Service {
     private static final String ACTION_PREFS = "fg_actions";
     private static final String KEY_NOTIFICATION_SUPPRESSED = "notification_suppressed";
 
-    private static final long TICK_MS = 1000L;
+    // Short aligned granularity keeps second transitions smooth in notification UI.
+    private static final long TICK_GRANULARITY_MS = 250L;
 
     private Handler tickerHandler;
     private Runnable tickerRunnable;
@@ -107,7 +109,7 @@ public class AppForegroundService extends Service {
 
             String sig = buildSignature(payload);
 
-            // Avoid heavy restart of foreground notification when payload did not change.
+            // Avoid heavy foreground restart when payload did not change.
             if (lastNotifSignature.isEmpty() || !sig.equals(lastNotifSignature)) {
                 Notification notification = buildNotification(
                     payload.channelId,
@@ -157,6 +159,16 @@ public class AppForegroundService extends Service {
         super.onDestroy();
     }
 
+    private void postNextTickAligned() {
+        if (tickerHandler == null || tickerRunnable == null) return;
+
+        long now = SystemClock.elapsedRealtime();
+        long delay = TICK_GRANULARITY_MS - (now % TICK_GRANULARITY_MS);
+        if (delay <= 0L) delay = TICK_GRANULARITY_MS;
+
+        tickerHandler.postDelayed(tickerRunnable, delay);
+    }
+
     private void startTicker() {
         if (tickerStarted) return;
         tickerStarted = true;
@@ -201,7 +213,7 @@ public class AppForegroundService extends Service {
                             }
                         }
 
-                        tickerHandler.postDelayed(this, TICK_MS);
+                        postNextTickAligned();
                     } catch (Throwable t) {
                         saveLastError(t);
                         tickerStarted = false;
@@ -210,7 +222,9 @@ public class AppForegroundService extends Service {
             };
         }
 
-        tickerHandler.postDelayed(tickerRunnable, TICK_MS);
+        tickerHandler.removeCallbacks(tickerRunnable);
+        // Run first pass immediately for snappy UI response.
+        tickerHandler.post(tickerRunnable);
     }
 
     private String buildSignature(ForegroundStateStore.NotificationPayload payload) {
