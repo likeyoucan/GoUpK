@@ -2818,8 +2818,8 @@
     ) !important;
     border-color: color-mix(
       in srgb,
-      var(--primary-color) 70%,
-      #ffffff 30%
+      var(--primary-color) 48%,
+      #ffffff 52%
     ) !important;
     opacity: 0.96 !important;
     transform: translate(-50%, -50%) scale(1.06) !important;
@@ -2829,8 +2829,7 @@
 
     box-shadow:
       inset 0 1px 0 rgb(255 255 255 / 0.52),
-      0 2px 10px rgb(0 0 0 / 0.24),
-      0 0 0 2px color-mix(in srgb, var(--primary-color) 45%, transparent) !important;
+      0 2px 10px rgb(0 0 0 / 0.24) !important;
   }
 
   .glass-effect .tr-wrap,
