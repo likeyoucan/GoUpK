@@ -109,6 +109,8 @@
     --split: 65%;
     --split-snap-duration: 260ms;
     --handler-size: clamp(20px, 3.2dvh, 30px);
+    --split-handler-glass-alpha: 0.18;
+    --split-handler-glass-alpha-active: 0.34;
     --collapse-top-k: 0;
     --collapse-bottom-k: 0;
     --title-gap: clamp(8px, 1.5vmin, 20px);
@@ -1341,6 +1343,15 @@
       opacity: 0.88;
       background: color-mix(in srgb, var(--text-color) 40%, transparent);
     }
+    .glass-effect .resizer_handler:hover::before {
+      opacity: 0.9;
+      background: color-mix(
+        in srgb,
+        var(--surface-color)
+          calc((1 - (var(--split-handler-glass-alpha) + 0.08)) * 100%),
+        transparent
+      );
+    }
   }
 
   .resizer_handler:focus-visible::before,
@@ -1349,6 +1360,40 @@
     opacity: 1;
     background: color-mix(in srgb, var(--primary-color) 70%, var(--text-color));
     transform: translateX(var(--split-pill-nudge-x, 0px)) scale(1.05);
+  }
+
+  .glass-effect .resizer_handler::before {
+    height: 7px;
+    width: clamp(34px, 20vw, 84px);
+    border-radius: 999px;
+    background: color-mix(
+      in srgb,
+      var(--surface-color) calc((1 - var(--split-handler-glass-alpha)) * 100%),
+      transparent
+    );
+    border: 1px solid color-mix(in srgb, #ffffff 52%, var(--border-color) 48%);
+    backdrop-filter: blur(14px) saturate(155%);
+    -webkit-backdrop-filter: blur(14px) saturate(155%);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.34),
+      0 4px 12px rgb(0 0 0 / 0.12);
+    opacity: 0.72;
+  }
+
+  .glass-effect .resizer_handler:focus-visible::before,
+  .glass-effect .resizer_handler.is-dragging::before,
+  .glass-effect .resizer_handler:active::before {
+    opacity: 1;
+    background: color-mix(
+      in srgb,
+      var(--surface-color)
+        calc((1 - var(--split-handler-glass-alpha-active)) * 100%),
+      transparent
+    );
+    border-color: color-mix(in srgb, var(--primary-color) 42%, #ffffff 58%);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.48),
+      0 8px 18px rgb(0 0 0 / 0.18);
   }
 
   .resizer_handler:active,
