@@ -14,19 +14,70 @@ const PRELOAD_TIMEOUT_MS = Number(ICON_CFG.preloadTimeoutMs) || 3000;
 
 // Cache resolved preview state per icon id+theme-source to avoid visual reload on rerender.
 const ICON_PREVIEW_CACHE = new Map();
+
+const NATIVE_ICON_SUPPORT = {
+  loaded: false,
+  names: new Set(["default", "pro"]),
+};
+
 let disposeAppIconSelector = null;
 
 function getNativePlugin() {
   return window.Capacitor?.Plugins?.AppIconSwitcher || null;
 }
 
+async function loadNativeIconSupport() {
+  if (NATIVE_ICON_SUPPORT.loaded) return NATIVE_ICON_SUPPORT.names;
+
+  const plugin = getNativePlugin();
+  if (!plugin?.getAvailableIcons) {
+    NATIVE_ICON_SUPPORT.loaded = true;
+    return NATIVE_ICON_SUPPORT.names;
+  }
+
+  try {
+    const res = await plugin.getAvailableIcons();
+    const incoming = Array.isArray(res?.names) ? res.names : [];
+    const normalized = incoming
+      .map((x) =>
+        String(x || "")
+          .trim()
+          .toLowerCase(),
+      )
+      .filter(Boolean);
+
+    if (normalized.length > 0) {
+      NATIVE_ICON_SUPPORT.names = new Set(normalized);
+    }
+  } catch (e) {
+    console.warn("[app-icon] getAvailableIcons failed, use fallback", e);
+  }
+
+  NATIVE_ICON_SUPPORT.loaded = true;
+  return NATIVE_ICON_SUPPORT.names;
+}
+
+function isOptionSupportedByNative(option, supportedNames) {
+  if (!option) return false;
+  const nativeName = String(option.nativeName || option.id || "")
+    .trim()
+    .toLowerCase();
+
+  if (!nativeName) return true;
+  if (nativeName.startsWith("pro")) return supportedNames.has("pro");
+  return supportedNames.has("default");
+}
+
 async function applyNativeIcon(nativeName) {
   const plugin = getNativePlugin();
-  if (!plugin?.setIconName) return;
+  if (!plugin?.setIconName) return { ok: true, skipped: true };
+
   try {
     await plugin.setIconName({ name: nativeName });
+    return { ok: true };
   } catch (e) {
     console.warn("[app-icon] failed to set native icon", e);
+    return { ok: false, error: e };
   }
 }
 
@@ -344,6 +395,8 @@ export function initAppIconSelector({ t, appProManager }) {
     current = ICON_OPTIONS[0]?.id;
   }
 
+  let supportedNativeNames = new Set(["default", "pro"]);
+
   const rootObserver = new MutationObserver((mutations) => {
     const changedClass = mutations.some(
       (m) => m.type === "attributes" && m.attributeName === "class",
@@ -363,25 +416,49 @@ export function initAppIconSelector({ t, appProManager }) {
 
   const saveAndApply = async (id, { dispatch = true } = {}) => {
     const option = getOptionById(id);
+    if (!option) return false;
+
+    if (!isOptionSupportedByNative(option, supportedNativeNames)) {
+      showToast("App icon is not available in this build");
+      return false;
+    }
+
+    const prev = current;
+    const prevOption = getOptionById(prev);
 
     current = option.id;
     safeSetLS(STORAGE_KEYS.APP_ICON_NAME, current);
-    await applyNativeIcon(option.nativeName || option.id);
+
+    const nativeResult = await applyNativeIcon(option.nativeName || option.id);
+
+    if (!nativeResult?.ok) {
+      // Rollback local state if native switch failed.
+      current = prevOption?.id || ICON_OPTIONS[0]?.id || "default";
+      safeSetLS(STORAGE_KEYS.APP_ICON_NAME, current);
+      showToast(resolveToastText(t, "share_failed"));
+      return false;
+    }
 
     if (dispatch) dispatchIconChanged(t, appProManager);
+    return true;
   };
 
   const render = () => {
     container.replaceChildren();
 
     ICON_OPTIONS.forEach((opt) => {
-      const locked = !!opt.proRequired && !appProManager.canUse("app_icon");
+      const proLocked = !!opt.proRequired && !appProManager.canUse("app_icon");
+      const nativeUnsupported = !isOptionSupportedByNative(
+        opt,
+        supportedNativeNames,
+      );
 
       const btn = document.createElement("button");
       btn.type = "button";
       btn.className = "app-icon-option";
       if (current === opt.id) btn.classList.add("is-selected");
-      if (locked) btn.classList.add("is-locked");
+      if (proLocked || nativeUnsupported) btn.classList.add("is-locked");
+      if (nativeUnsupported) btn.dataset.nativeUnsupported = "1";
 
       const optionLabel = resolveOptionLabel(opt, t);
       btn.setAttribute("aria-label", optionLabel);
@@ -393,7 +470,7 @@ export function initAppIconSelector({ t, appProManager }) {
       img.alt = optionLabel;
       img.className = "app-icon-preview";
       img.decoding = "async";
-      img.draggable = false; // prevent browser drag ghost while horizontal drag-scroll
+      img.draggable = false;
 
       const missingOverlay = document.createElement("span");
       missingOverlay.className = "app-icon-missing";
@@ -450,7 +527,12 @@ export function initAppIconSelector({ t, appProManager }) {
       btn.append(previewWrap, label);
 
       btn.addEventListener("click", async () => {
-        if (locked) {
+        if (nativeUnsupported) {
+          showToast("App icon is not available in this build");
+          return;
+        }
+
+        if (proLocked) {
           showToast(resolveToastText(t, "pro_required"));
           emitAppEvent(APP_EVENTS.PRO_PAYWALL_REQUESTED, {
             feature: "app_icon",
@@ -458,8 +540,9 @@ export function initAppIconSelector({ t, appProManager }) {
           return;
         }
 
-        await saveAndApply(opt.id);
-        render();
+        const ok = await saveAndApply(opt.id);
+        if (ok) render();
+        else render();
       });
 
       container.appendChild(btn);
@@ -477,7 +560,18 @@ export function initAppIconSelector({ t, appProManager }) {
         ICON_OPTIONS.find((x) => !x.proRequired) || ICON_OPTIONS[0];
       await saveAndApply(fallback.id, { dispatch: false });
     } else {
-      await applyNativeIcon(option.nativeName || option.id);
+      if (option && isOptionSupportedByNative(option, supportedNativeNames)) {
+        await applyNativeIcon(option.nativeName || option.id);
+      } else {
+        const fallback = ICON_OPTIONS.find(
+          (x) =>
+            !x.proRequired &&
+            isOptionSupportedByNative(x, supportedNativeNames),
+        );
+        if (fallback) {
+          await saveAndApply(fallback.id, { dispatch: false });
+        }
+      }
     }
 
     render();
@@ -511,5 +605,8 @@ export function initAppIconSelector({ t, appProManager }) {
     unsubs.length = 0;
   };
 
-  syncByProState();
+  (async () => {
+    supportedNativeNames = await loadNativeIconSupport();
+    await syncByProState();
+  })();
 }

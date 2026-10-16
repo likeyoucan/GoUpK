@@ -1,7 +1,5 @@
 // Файл: www/js/foreground-service.js
 
-// Файл: www/js/foreground-service.js
-
 import {
   $,
   formatTime,
@@ -93,6 +91,15 @@ let lastScheduledAt = 0;
 
 let notificationSuppressed = false;
 let appIsBackground = document.visibilityState !== "visible";
+
+// Guard against stale JS snapshots that can rewind native runtime.
+let runtimePushGuard = {
+  mode: "none",
+  running: false,
+  swElapsedMs: 0,
+  tmRemainingMs: 0,
+  tbRemainingMs: 0,
+};
 
 const listeners = {
   appState: null,
@@ -198,12 +205,19 @@ function normalizeRemainingMsFromNative(value) {
 }
 
 function getTimerRemainingMs() {
+  const engineRem = Number(tm?.countdownEngine?.getRemaining?.());
+  if (Number.isFinite(engineRem)) return Math.max(0, engineRem);
+
   if (tm.isRunning) return Math.max(0, (tm.targetEpochMs || 0) - Date.now());
   return Math.max(0, tm.remainingAtPause || tm.timeRemainingMs || 0);
 }
 
 function getTabataRemainingMs() {
   if (tb.status === "STOPPED") return 0;
+
+  const engineRem = Number(tb?.tabataEngine?.getRemaining?.());
+  if (Number.isFinite(engineRem)) return Math.max(0, engineRem);
+
   if (tb.paused) return Math.max(0, tb.remainingAtPause || 0);
   return Math.max(0, (tb.phaseEndTime || 0) - Date.now());
 }
@@ -323,15 +337,28 @@ async function ensurePermissionIfNeeded(force = false) {
 }
 
 function buildRuntimeStateFromJs(payload, state, theme, accent) {
+  const swElapsedNow = Math.max(
+    0,
+    Number(sw?.stopwatchEngine?.getElapsed?.() ?? sw.elapsedTime) || 0,
+  );
+
+  const timerRemNow = Math.max(0, Number(getTimerRemainingMs()) || 0);
+  const timerTotalNow = Math.max(
+    0,
+    Number(tm.totalDuration || tm.initialDurationMs || 0) || 0,
+  );
+
+  const tabataRemNow = Math.max(0, Number(getTabataRemainingMs()) || 0);
+
   return {
     mode: state?.mode || "none",
     running: !!state?.running,
     updatedAt: Date.now(),
 
-    swElapsedMs: Math.max(0, sw.elapsedTime || 0),
+    swElapsedMs: swElapsedNow,
 
-    tmRemainingMs: getTimerRemainingMs(),
-    tmTotalMs: tm.totalDuration || tm.initialDurationMs || 0,
+    tmRemainingMs: timerRemNow,
+    tmTotalMs: timerTotalNow,
 
     tbStatus: tb.status || "STOPPED",
     tbRound: tb.currentRound || 1,
@@ -341,7 +368,7 @@ function buildRuntimeStateFromJs(payload, state, theme, accent) {
       $("tb-runningWorkoutName")?.textContent?.trim() ||
       $("tb-activeName")?.textContent?.trim() ||
       t("tabata"),
-    tbRemainingMs: getTabataRemainingMs(),
+    tbRemainingMs: tabataRemNow,
 
     notifTitle: payload?.title || "Stopwatch",
     notifBody: payload?.body || "00:00",
@@ -381,6 +408,67 @@ function buildClearedRuntimeState(theme, accent) {
   };
 }
 
+function applyRuntimePushGuard(runtimeState) {
+  if (!runtimeState || typeof runtimeState !== "object") return runtimeState;
+
+  const mode = String(runtimeState.mode || "none");
+  const running = !!runtimeState.running;
+
+  if (mode !== runtimePushGuard.mode || running !== runtimePushGuard.running) {
+    runtimePushGuard = {
+      mode,
+      running,
+      swElapsedMs: 0,
+      tmRemainingMs: 0,
+      tbRemainingMs: 0,
+    };
+  }
+
+  if (!running) {
+    return runtimeState;
+  }
+
+  if (mode === "stopwatch") {
+    const nextElapsed = Math.max(0, Number(runtimeState.swElapsedMs) || 0);
+    runtimeState.swElapsedMs = Math.max(
+      runtimePushGuard.swElapsedMs,
+      nextElapsed,
+    );
+    runtimePushGuard.swElapsedMs = runtimeState.swElapsedMs;
+    return runtimeState;
+  }
+
+  if (mode === "timer") {
+    const nextRem = Math.max(0, Number(runtimeState.tmRemainingMs) || 0);
+    if (runtimePushGuard.tmRemainingMs > 0) {
+      runtimeState.tmRemainingMs = Math.min(
+        runtimePushGuard.tmRemainingMs,
+        nextRem,
+      );
+    } else {
+      runtimeState.tmRemainingMs = nextRem;
+    }
+    runtimePushGuard.tmRemainingMs = runtimeState.tmRemainingMs;
+    return runtimeState;
+  }
+
+  if (mode === "tabata") {
+    const nextRem = Math.max(0, Number(runtimeState.tbRemainingMs) || 0);
+    if (runtimePushGuard.tbRemainingMs > 0) {
+      runtimeState.tbRemainingMs = Math.min(
+        runtimePushGuard.tbRemainingMs,
+        nextRem,
+      );
+    } else {
+      runtimeState.tbRemainingMs = nextRem;
+    }
+    runtimePushGuard.tbRemainingMs = runtimeState.tbRemainingMs;
+    return runtimeState;
+  }
+
+  return runtimeState;
+}
+
 async function pushRuntimeStateToNative(reason = "unknown") {
   const plugins = getPlugins();
   const api = plugins?.FgService?.setRuntimeState;
@@ -391,7 +479,7 @@ async function pushRuntimeStateToNative(reason = "unknown") {
   const theme = getThemeSnapshot();
   const accent = getAccentSnapshot();
 
-  const runtimeState = state
+  let runtimeState = state
     ? buildRuntimeStateFromJs(
         buildForegroundPayload({ state, sw, tm, tb, t, $, formatTime }),
         state,
@@ -399,6 +487,8 @@ async function pushRuntimeStateToNative(reason = "unknown") {
         accent,
       )
     : buildClearedRuntimeState(theme, accent);
+
+  runtimeState = applyRuntimePushGuard(runtimeState);
 
   try {
     await api({ runtimeState });
@@ -890,6 +980,7 @@ export async function syncNotification({
     { isDarkTheme },
     { accentColor, onAccentColor },
   );
+  options.runtimeState = applyRuntimePushGuard(options.runtimeState);
 
   if (!isForegroundShown) {
     try {
@@ -1141,6 +1232,14 @@ export async function destroyForegroundService() {
   lastScheduledStateSig = "";
   lastScheduledAt = 0;
   appIsBackground = document.visibilityState !== "visible";
+
+  runtimePushGuard = {
+    mode: "none",
+    running: false,
+    swElapsedMs: 0,
+    tmRemainingMs: 0,
+    tbRemainingMs: 0,
+  };
 
   isInitialized = false;
 }

@@ -4,6 +4,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.PackageManager;
 
+import com.getcapacitor.JSArray;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
@@ -20,20 +21,32 @@ public class AppIconSwitcherPlugin extends Plugin {
         if (name == null) return DEFAULT_ALIAS;
         String n = name.trim().toLowerCase();
 
-        if (n.equals("default")) return DEFAULT_ALIAS;
+        if ("default".equals(n)) return DEFAULT_ALIAS;
 
-        // Все pro* варианты направляем на pro alias
-        // (pro, pro_1 ... pro_9 и т.д.)
+        // Map all pro* variants to one pro alias.
         if (n.startsWith("pro")) return PRO_ALIAS;
 
         return DEFAULT_ALIAS;
     }
 
-    private void setAliasEnabled(Context context, String aliasSimpleName, boolean enabled) {
+    private ComponentName buildAliasComponent(Context context, String aliasSimpleName) {
         String packageName = context.getPackageName();
         String fullName = packageName + "." + aliasSimpleName;
+        return new ComponentName(packageName, fullName);
+    }
 
-        ComponentName componentName = new ComponentName(packageName, fullName);
+    private boolean isAliasDeclared(Context context, String aliasSimpleName) {
+        try {
+            ComponentName componentName = buildAliasComponent(context, aliasSimpleName);
+            context.getPackageManager().getActivityInfo(componentName, 0);
+            return true;
+        } catch (Exception ignored) {
+            return false;
+        }
+    }
+
+    private void setAliasEnabled(Context context, String aliasSimpleName, boolean enabled) {
+        ComponentName componentName = buildAliasComponent(context, aliasSimpleName);
         PackageManager pm = context.getPackageManager();
 
         int state = enabled
@@ -44,45 +57,75 @@ public class AppIconSwitcherPlugin extends Plugin {
     }
 
     private String getCurrentAlias(Context context) {
-        String packageName = context.getPackageName();
+        boolean hasDefault = isAliasDeclared(context, DEFAULT_ALIAS);
+        boolean hasPro = isAliasDeclared(context, PRO_ALIAS);
+
+        if (!hasDefault) {
+            // Broken manifest state: keep a safe semantic fallback.
+            return "default";
+        }
+
         PackageManager pm = context.getPackageManager();
 
-        ComponentName def = new ComponentName(packageName, packageName + "." + DEFAULT_ALIAS);
-        ComponentName pro = new ComponentName(packageName, packageName + "." + PRO_ALIAS);
-
+        ComponentName def = buildAliasComponent(context, DEFAULT_ALIAS);
         int defState = pm.getComponentEnabledSetting(def);
-        int proState = pm.getComponentEnabledSetting(pro);
 
-        boolean isProEnabled = proState == PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
         boolean isDefEnabled = defState == PackageManager.COMPONENT_ENABLED_STATE_ENABLED
             || defState == PackageManager.COMPONENT_ENABLED_STATE_DEFAULT;
 
-        if (isProEnabled) return "pro";
+        if (hasPro) {
+            ComponentName pro = buildAliasComponent(context, PRO_ALIAS);
+            int proState = pm.getComponentEnabledSetting(pro);
+            boolean isProEnabled = proState == PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
+            if (isProEnabled) return "pro";
+        }
+
         if (isDefEnabled) return "default";
         return "default";
     }
 
     @PluginMethod
     public void setIconName(PluginCall call) {
-        String name = call.getString("name", "default");
+        String requestedName = call.getString("name", "default");
         Context context = getContext();
 
         try {
-            String alias = mapToAlias(name);
+            boolean hasDefault = isAliasDeclared(context, DEFAULT_ALIAS);
+            boolean hasPro = isAliasDeclared(context, PRO_ALIAS);
 
-            if (PRO_ALIAS.equals(alias)) {
-                setAliasEnabled(context, DEFAULT_ALIAS, false);
+            if (!hasDefault) {
+                call.reject("Default launcher alias is not declared in AndroidManifest.xml");
+                return;
+            }
+
+            String mappedAlias = mapToAlias(requestedName);
+
+            // If pro alias is absent in this build, force default without crashing.
+            if (PRO_ALIAS.equals(mappedAlias) && !hasPro) {
+                mappedAlias = DEFAULT_ALIAS;
+            }
+
+            if (PRO_ALIAS.equals(mappedAlias)) {
+                // Safe order: enable target first, then disable the other alias.
                 setAliasEnabled(context, PRO_ALIAS, true);
+                setAliasEnabled(context, DEFAULT_ALIAS, false);
             } else {
-                setAliasEnabled(context, PRO_ALIAS, false);
                 setAliasEnabled(context, DEFAULT_ALIAS, true);
+                if (hasPro) {
+                    setAliasEnabled(context, PRO_ALIAS, false);
+                }
             }
 
             JSObject result = new JSObject();
             result.put("ok", true);
-            result.put("name", name);
-            result.put("applied", PRO_ALIAS.equals(alias) ? "pro" : "default");
+            result.put("requested", requestedName);
+            result.put("applied", PRO_ALIAS.equals(mappedAlias) ? "pro" : "default");
+            result.put("hasProAlias", hasPro);
             call.resolve(result);
+        } catch (SecurityException e) {
+            call.reject("Failed to set icon: security exception", e);
+        } catch (IllegalArgumentException e) {
+            call.reject("Failed to set icon: invalid component alias", e);
         } catch (Exception e) {
             call.reject("Failed to set icon", e);
         }
@@ -97,6 +140,28 @@ public class AppIconSwitcherPlugin extends Plugin {
             call.resolve(result);
         } catch (Exception e) {
             call.reject("Failed to get icon name", e);
+        }
+    }
+
+    @PluginMethod
+    public void getAvailableIcons(PluginCall call) {
+        try {
+            Context context = getContext();
+            boolean hasDefault = isAliasDeclared(context, DEFAULT_ALIAS);
+            boolean hasPro = isAliasDeclared(context, PRO_ALIAS);
+
+            JSArray names = new JSArray();
+            if (hasDefault) names.put("default");
+            if (hasPro) names.put("pro");
+
+            JSObject result = new JSObject();
+            result.put("names", names);
+            result.put("hasDefaultAlias", hasDefault);
+            result.put("hasProAlias", hasPro);
+
+            call.resolve(result);
+        } catch (Exception e) {
+            call.reject("Failed to get available icons", e);
         }
     }
 }

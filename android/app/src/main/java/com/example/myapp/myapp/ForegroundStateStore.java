@@ -137,6 +137,15 @@ public class ForegroundStateStore {
 
         RuntimeState s = read();
 
+        long now = System.currentTimeMillis();
+
+        String prevMode = s.mode;
+        boolean prevRunning = s.running;
+
+        long nativeSwElapsedNow = getStopwatchElapsedNow(s, now);
+        long nativeTimerRemainingNow = getTimerRemainingNow(s, now);
+        long nativeTabataRemainingNow = getTabataRemainingNow(s, now);
+
         long incomingUpdatedAt = runtime.optLong("updatedAt", 0L);
         if (incomingUpdatedAt > 0L && incomingUpdatedAt + 180L < s.updatedAt) {
             return;
@@ -144,18 +153,17 @@ public class ForegroundStateStore {
 
         s.mode = runtime.optString("mode", s.mode);
         s.running = runtime.has("running") ? runtime.optBoolean("running", s.running) : s.running;
-        s.updatedAt = incomingUpdatedAt > 0L ? incomingUpdatedAt : System.currentTimeMillis();
+        s.updatedAt = incomingUpdatedAt > 0L ? incomingUpdatedAt : now;
 
-        s.swElapsedMs = Math.max(0L, runtime.optLong("swElapsedMs", s.swElapsedMs));
-
-        s.tmRemainingMs = Math.max(0L, runtime.optLong("tmRemainingMs", s.tmRemainingMs));
-        s.tmTotalMs = Math.max(0L, runtime.optLong("tmTotalMs", s.tmTotalMs));
+        long incomingSwElapsed = Math.max(0L, runtime.optLong("swElapsedMs", s.swElapsedMs));
+        long incomingTimerRemaining = Math.max(0L, runtime.optLong("tmRemainingMs", s.tmRemainingMs));
+        long incomingTimerTotal = Math.max(0L, runtime.optLong("tmTotalMs", s.tmTotalMs));
+        long incomingTabataRemaining = Math.max(0L, runtime.optLong("tbRemainingMs", s.tbRemainingMs));
 
         s.tbStatus = runtime.optString("tbStatus", s.tbStatus);
         s.tbRound = Math.max(1, runtime.optInt("tbRound", s.tbRound));
         s.tbRounds = Math.max(1, runtime.optInt("tbRounds", s.tbRounds));
         s.tbWorkoutName = runtime.optString("tbWorkoutName", s.tbWorkoutName);
-        s.tbRemainingMs = Math.max(0L, runtime.optLong("tbRemainingMs", s.tbRemainingMs));
         s.tbPhaseDuration = Math.max(0L, runtime.optLong("tbPhaseDuration", s.tbPhaseDuration));
 
         s.notifTitle = runtime.optString("notifTitle", s.notifTitle);
@@ -166,35 +174,88 @@ public class ForegroundStateStore {
         s.accentColor = runtime.optString("accentColor", s.accentColor);
         s.onAccentColor = runtime.optString("onAccentColor", s.onAccentColor);
 
-        long now = System.currentTimeMillis();
-
         if (MODE_STOPWATCH.equals(s.mode)) {
             if (s.running) {
-                s.swBaseElapsedMs = s.swElapsedMs;
-                s.swStartedAt = now;
+                if (MODE_STOPWATCH.equals(prevMode) && prevRunning) {
+                    // Keep monotonic elapsed; do not let stale JS rewind runtime.
+                    long mergedElapsed = Math.max(nativeSwElapsedNow, incomingSwElapsed);
+                    s.swElapsedMs = mergedElapsed;
+
+                    // Rebase anchor only when JS is meaningfully ahead.
+                    if (mergedElapsed > nativeSwElapsedNow + 150L) {
+                        s.swBaseElapsedMs = mergedElapsed;
+                        s.swStartedAt = now;
+                    }
+                } else {
+                    // Transition to running.
+                    long startElapsed = Math.max(0L, incomingSwElapsed);
+                    s.swElapsedMs = startElapsed;
+                    s.swBaseElapsedMs = startElapsed;
+                    s.swStartedAt = now;
+                }
                 s.toggleTitle = "⏸";
             } else {
-                s.swStartedAt = 0L;
+                long pausedElapsed;
+                if (MODE_STOPWATCH.equals(prevMode) && prevRunning) {
+                    pausedElapsed = nativeSwElapsedNow;
+                } else {
+                    pausedElapsed = Math.max(s.swElapsedMs, incomingSwElapsed);
+                }
+                s.swElapsedMs = Math.max(0L, pausedElapsed);
                 s.swBaseElapsedMs = s.swElapsedMs;
+                s.swStartedAt = 0L;
                 s.toggleTitle = "▶";
             }
         } else if (MODE_TIMER.equals(s.mode)) {
+            s.tmTotalMs = incomingTimerTotal;
+
             if (s.running) {
-                s.tmEndsAt = now + Math.max(0L, s.tmRemainingMs);
+                long mergedRemaining;
+                if (MODE_TIMER.equals(prevMode) && prevRunning) {
+                    // While running, remaining time must not increase.
+                    mergedRemaining = Math.min(nativeTimerRemainingNow, incomingTimerRemaining);
+                } else {
+                    mergedRemaining = incomingTimerRemaining;
+                }
+                s.tmRemainingMs = Math.max(0L, mergedRemaining);
+                s.tmEndsAt = now + s.tmRemainingMs;
                 s.toggleTitle = "⏸";
             } else {
+                long pausedRemaining;
+                if (MODE_TIMER.equals(prevMode) && prevRunning) {
+                    pausedRemaining = Math.min(nativeTimerRemainingNow, incomingTimerRemaining);
+                } else {
+                    pausedRemaining = incomingTimerRemaining;
+                }
+                s.tmRemainingMs = Math.max(0L, pausedRemaining);
                 s.tmEndsAt = 0L;
                 s.toggleTitle = "▶";
             }
         } else if (MODE_TABATA.equals(s.mode)) {
             if (s.running) {
-                s.tbEndsAt = now + Math.max(0L, s.tbRemainingMs);
+                long mergedRemaining;
+                if (MODE_TABATA.equals(prevMode) && prevRunning) {
+                    // While running, remaining time must not increase.
+                    mergedRemaining = Math.min(nativeTabataRemainingNow, incomingTabataRemaining);
+                } else {
+                    mergedRemaining = incomingTabataRemaining;
+                }
+                s.tbRemainingMs = Math.max(0L, mergedRemaining);
+                s.tbEndsAt = now + s.tbRemainingMs;
                 s.toggleTitle = "⏸";
             } else {
+                long pausedRemaining;
+                if (MODE_TABATA.equals(prevMode) && prevRunning) {
+                    pausedRemaining = Math.min(nativeTabataRemainingNow, incomingTabataRemaining);
+                } else {
+                    pausedRemaining = incomingTabataRemaining;
+                }
+                s.tbRemainingMs = Math.max(0L, pausedRemaining);
                 s.tbEndsAt = 0L;
                 s.toggleTitle = "▶";
             }
         } else {
+            s.running = false;
             s.toggleTitle = "▶";
         }
 

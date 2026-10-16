@@ -21,6 +21,117 @@ function getShareFileFailedText() {
   return resolveToastText(t, "share_file_failed");
 }
 
+function getShareTextFailedText() {
+  return resolveToastText(t, "share_failed");
+}
+
+function isNativePlatform() {
+  try {
+    return !!window.Capacitor?.isNativePlatform?.();
+  } catch {
+    return false;
+  }
+}
+
+function getPlugins() {
+  return window.Capacitor?.Plugins || {};
+}
+
+function getSharePlugin() {
+  const p = getPlugins();
+  return p.Share || null;
+}
+
+function getFilesystemPlugin() {
+  const p = getPlugins();
+  return p.Filesystem || null;
+}
+
+function normalizeShareText(text) {
+  return String(text || "")
+    .replace(/\r\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+async function shareTextNative(payload, text) {
+  const share = getSharePlugin();
+  if (!share?.share) return { ok: false, reason: "share_plugin_missing" };
+
+  try {
+    await share.share({
+      title: `Stopwatch Pro - ${payload.name}`,
+      text,
+      dialogTitle: t("share"),
+    });
+    return { ok: true };
+  } catch (error) {
+    if (isUserShareCancel(error)) return { ok: false, canceled: true };
+    return { ok: false, error };
+  }
+}
+
+async function writeCsvToNativeCache(fileName, csvText) {
+  const fs = getFilesystemPlugin();
+  if (!fs?.writeFile) return null;
+
+  const path = `share/${fileName}`;
+  const data = "\uFEFF" + csvText;
+
+  const Directory = fs.Directory || { Cache: "CACHE" };
+  const Encoding = fs.Encoding || { UTF8: "utf8" };
+
+  try {
+    await fs.writeFile({
+      path,
+      data,
+      directory: Directory.Cache,
+      encoding: Encoding.UTF8,
+      recursive: true,
+    });
+
+    if (typeof fs.getUri === "function") {
+      const uriRes = await fs.getUri({
+        path,
+        directory: Directory.Cache,
+      });
+      if (uriRes?.uri) return uriRes.uri;
+    }
+
+    const statRes = await fs.stat?.({
+      path,
+      directory: Directory.Cache,
+    });
+
+    if (statRes?.uri) return statRes.uri;
+    return null;
+  } catch (err) {
+    console.warn("[share] writeCsvToNativeCache failed", err);
+    return null;
+  }
+}
+
+async function shareFileNative(payload, fileName, csvText) {
+  const share = getSharePlugin();
+  if (!share?.share) return { ok: false, reason: "share_plugin_missing" };
+
+  const uri = await writeCsvToNativeCache(fileName, csvText);
+  if (!uri) return { ok: false, reason: "file_uri_missing" };
+
+  try {
+    await share.share({
+      title: `Stopwatch Pro - ${payload.name}`,
+      text: payload.totalTimeText,
+      url: uri,
+      dialogTitle: t("share"),
+    });
+    return { ok: true };
+  } catch (error) {
+    if (isUserShareCancel(error)) return { ok: false, canceled: true };
+    return { ok: false, error };
+  }
+}
+
 export const shareResults = {
   canShowShareButton(lapsCount) {
     return Number(lapsCount) > 0;
@@ -31,7 +142,14 @@ export const shareResults = {
   },
 
   async shareAsText(payload) {
-    const text = buildStopwatchText(payload, t);
+    const rawText = buildStopwatchText(payload, t);
+    const text = normalizeShareText(rawText);
+
+    if (isNativePlatform()) {
+      const nativeResult = await shareTextNative(payload, text);
+      if (nativeResult.ok) return true;
+      if (nativeResult.canceled) return false;
+    }
 
     if (navigator.share) {
       try {
@@ -51,7 +169,7 @@ export const shareResults = {
       return true;
     }
 
-    showToast(resolveToastText(t, "share_failed"));
+    showToast(getShareTextFailedText());
     return false;
   },
 
@@ -63,6 +181,12 @@ export const shareResults = {
 
     const csv = buildStopwatchCsv(payload, t);
     const fileName = makeFilename(payload, "csv");
+
+    if (isNativePlatform()) {
+      const nativeResult = await shareFileNative(payload, fileName, csv);
+      if (nativeResult.ok) return true;
+      if (nativeResult.canceled) return false;
+    }
 
     const bom = "\uFEFF";
     const blob = new Blob([bom, csv], { type: "text/csv;charset=utf-8;" });
@@ -80,8 +204,6 @@ export const shareResults = {
         return true;
       } catch (error) {
         if (isUserShareCancel(error)) return false;
-        showToast(getShareFileFailedText());
-        return false;
       }
     }
 

@@ -6,4 +6,10 @@
     <external-cache-path
         name="external_share_cache"
         path="share/" />
+    <files-path
+        name="share_files"
+        path="share/" />
+    <external-files-path
+        name="external_share_files"
+        path="share/" />
 </paths>

@@ -41,8 +41,8 @@ public class AppForegroundService extends Service {
     private static final String ACTION_PREFS = "fg_actions";
     private static final String KEY_NOTIFICATION_SUPPRESSED = "notification_suppressed";
 
-    // Short aligned granularity keeps second transitions smooth in notification UI.
-    private static final long TICK_GRANULARITY_MS = 250L;
+    // Short update granularity keeps state responsive while still cheap on battery.
+    private static final long TICK_GRANULARITY_MS = 200L;
 
     private Handler tickerHandler;
     private Runnable tickerRunnable;
@@ -162,9 +162,17 @@ public class AppForegroundService extends Service {
     private void postNextTickAligned() {
         if (tickerHandler == null || tickerRunnable == null) return;
 
-        long now = SystemClock.elapsedRealtime();
-        long delay = TICK_GRANULARITY_MS - (now % TICK_GRANULARITY_MS);
-        if (delay <= 0L) delay = TICK_GRANULARITY_MS;
+        long nowElapsed = SystemClock.elapsedRealtime();
+        long granularityDelay = TICK_GRANULARITY_MS - (nowElapsed % TICK_GRANULARITY_MS);
+        if (granularityDelay <= 0L) granularityDelay = TICK_GRANULARITY_MS;
+
+        // Also align close to wall-clock second boundary so mm:ss flips are visually smooth.
+        long nowWall = System.currentTimeMillis();
+        long secondDelay = 1000L - (nowWall % 1000L);
+        if (secondDelay <= 0L) secondDelay = 1000L;
+
+        long delay = Math.min(granularityDelay, secondDelay);
+        if (delay < 30L) delay = 30L;
 
         tickerHandler.postDelayed(tickerRunnable, delay);
     }
