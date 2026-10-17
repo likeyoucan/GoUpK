@@ -2414,8 +2414,8 @@
 
   @media (min-width: 600px) and (orientation: landscape) {
     #view-settings > div:first-child {
-      padding-top: 2.4rem;
-      min-height: 80px;
+      padding-top: 2.2rem;
+      min-height: 76px;
     }
   }
 
