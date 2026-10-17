@@ -652,7 +652,8 @@ function applyTimerRuntimeToJs(nativeState) {
 }
 
 function applyTabataRuntimeToJs(nativeState) {
-  const COMPLETION_EPS_MS = 900;
+  // Keep epsilon small to avoid accidental STOPPED transitions caused by minor sync jitter.
+  const COMPLETION_EPS_MS = 120;
   const LARGE_INVALID_REMAINING_MS = 6 * 60 * 60 * 1000;
 
   let rem = normalizeRemainingMsFromNative(nativeState.tbRemainingMs);
@@ -684,10 +685,13 @@ function applyTabataRuntimeToJs(nativeState) {
     rem = knownPhaseDuration;
   }
 
+  const shouldForceStopByRunningCompletion =
+    nativeState.running && tb.status !== "STOPPED" && rem <= COMPLETION_EPS_MS;
+
   const shouldBeStopped =
     tb.status === "STOPPED" ||
-    rem <= COMPLETION_EPS_MS ||
-    invalidPausedSnapshot;
+    invalidPausedSnapshot ||
+    shouldForceStopByRunningCompletion;
 
   if (shouldBeStopped) {
     tb.status = "STOPPED";

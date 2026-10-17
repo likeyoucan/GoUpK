@@ -255,20 +255,30 @@ public class CustomForegroundServicePlugin extends Plugin {
     @PluginMethod
     public void getRuntimeState(PluginCall call) {
         ForegroundStateStore.RuntimeState s = new ForegroundStateStore(getContext()).read();
+        long now = System.currentTimeMillis();
+
+        long swElapsedNow = getStopwatchElapsedNow(s, now);
+        long tmRemainingNow = getTimerRemainingNow(s, now);
+        long tbRemainingNow = getTabataRemainingNow(s, now);
 
         JSObject result = new JSObject();
         result.put("mode", s.mode);
         result.put("running", s.running);
         result.put("updatedAt", s.updatedAt);
-        result.put("swElapsedMs", s.swElapsedMs);
-        result.put("tmRemainingMs", s.tmRemainingMs);
+
+        // Return live values to keep JS and native foreground banner in sync.
+        result.put("swElapsedMs", swElapsedNow);
+
+        result.put("tmRemainingMs", tmRemainingNow);
         result.put("tmTotalMs", s.tmTotalMs);
+
         result.put("tbStatus", s.tbStatus);
         result.put("tbRound", s.tbRound);
         result.put("tbRounds", s.tbRounds);
         result.put("tbPhaseDuration", s.tbPhaseDuration);
         result.put("tbWorkoutName", s.tbWorkoutName);
-        result.put("tbRemainingMs", s.tbRemainingMs);
+        result.put("tbRemainingMs", tbRemainingNow);
+
         result.put("notifTitle", s.notifTitle);
         result.put("notifBody", s.notifBody);
         result.put("channelId", s.channelId);
@@ -438,6 +448,21 @@ public class CustomForegroundServicePlugin extends Plugin {
             getPermissionState("notifications") == PermissionState.GRANTED ? "granted" : "denied"
         );
         call.resolve(result);
+    }
+
+    private long getStopwatchElapsedNow(ForegroundStateStore.RuntimeState s, long now) {
+        if (s.running) return Math.max(0L, s.swBaseElapsedMs + (now - s.swStartedAt));
+        return Math.max(0L, s.swElapsedMs);
+    }
+
+    private long getTimerRemainingNow(ForegroundStateStore.RuntimeState s, long now) {
+        if (s.running) return Math.max(0L, s.tmEndsAt - now);
+        return Math.max(0L, s.tmRemainingMs);
+    }
+
+    private long getTabataRemainingNow(ForegroundStateStore.RuntimeState s, long now) {
+        if (s.running) return Math.max(0L, s.tbEndsAt - now);
+        return Math.max(0L, s.tbRemainingMs);
     }
 
     private boolean isBlank(String v) {

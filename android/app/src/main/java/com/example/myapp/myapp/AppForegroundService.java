@@ -131,11 +131,35 @@ public class AppForegroundService extends Service {
                 stopTicker();
             }
 
-            boolean hasSession =
-                nowState.running
-                    || ForegroundStateStore.MODE_STOPWATCH.equals(nowState.mode)
-                    || ForegroundStateStore.MODE_TIMER.equals(nowState.mode)
-                    || ForegroundStateStore.MODE_TABATA.equals(nowState.mode);
+            long nowMs = System.currentTimeMillis();
+
+            boolean hasStopwatchSession =
+                ForegroundStateStore.MODE_STOPWATCH.equals(nowState.mode)
+                    && (nowState.running || Math.max(0L, nowState.swElapsedMs) > 0L);
+
+            long timerRemainingNow = nowState.running
+                ? Math.max(0L, nowState.tmEndsAt - nowMs)
+                : Math.max(0L, nowState.tmRemainingMs);
+
+            boolean hasTimerSession =
+                ForegroundStateStore.MODE_TIMER.equals(nowState.mode)
+                    && (nowState.running || timerRemainingNow > 0L);
+
+            long tabataRemainingNow = nowState.running
+                ? Math.max(0L, nowState.tbEndsAt - nowMs)
+                : Math.max(0L, nowState.tbRemainingMs);
+
+            boolean hasTabataSession =
+                ForegroundStateStore.MODE_TABATA.equals(nowState.mode)
+                    && (
+                        nowState.running
+                        || (
+                            tabataRemainingNow > 0L
+                            && !"STOPPED".equals(nowState.tbStatus)
+                        )
+                    );
+
+            boolean hasSession = hasStopwatchSession || hasTimerSession || hasTabataSession;
 
             return hasSession ? START_STICKY : START_NOT_STICKY;
         } catch (Throwable t) {

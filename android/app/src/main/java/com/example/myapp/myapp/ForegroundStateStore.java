@@ -369,6 +369,7 @@ public class ForegroundStateStore {
 
     private boolean normalizeCompletionIfNeeded(RuntimeState s, long now) {
         boolean changed = false;
+
         if (MODE_TIMER.equals(s.mode) && s.running) {
             long rem = Math.max(0L, s.tmEndsAt - now);
             if (rem <= 0L) {
@@ -380,6 +381,20 @@ public class ForegroundStateStore {
                 changed = true;
             }
         }
+
+        if (MODE_TABATA.equals(s.mode) && s.running) {
+            long rem = Math.max(0L, s.tbEndsAt - now);
+            if (rem <= 0L) {
+                s.running = false;
+                s.tbRemainingMs = 0L;
+                s.tbEndsAt = 0L;
+                s.tbStatus = "STOPPED";
+                s.toggleTitle = "▶";
+                s.updatedAt = now;
+                changed = true;
+            }
+        }
+
         return changed;
     }
 
