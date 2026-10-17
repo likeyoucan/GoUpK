@@ -369,6 +369,9 @@ function buildRuntimeStateFromJs(payload, state, theme, accent) {
       $("tb-activeName")?.textContent?.trim() ||
       t("tabata"),
     tbRemainingMs: tabataRemNow,
+    tbWorkMs: Math.max(1, Number(tb.work) || 20000),
+    tbRestMs: Math.max(1, Number(tb.rest) || 10000),
+    tbReadyMs: 5000,
 
     notifTitle: payload?.title || "Stopwatch",
     notifBody: payload?.body || "00:00",
@@ -397,6 +400,9 @@ function buildClearedRuntimeState(theme, accent) {
     tbPhaseDuration: 0,
     tbWorkoutName: t("tabata"),
     tbRemainingMs: 0,
+    tbWorkMs: 20000,
+    tbRestMs: 10000,
+    tbReadyMs: 5000,
 
     notifTitle: "Stopwatch",
     notifBody: "00:00",
@@ -1104,7 +1110,6 @@ async function handleAppBecameBackground(reason) {
   await syncNotification({ reason, force: false });
 
   const state = getResolvedForegroundState();
-  // Poll only while a running session exists in background.
   if (state?.running) startPolling();
   else stopPolling();
 }
