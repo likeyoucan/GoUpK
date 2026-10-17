@@ -1,7 +1,7 @@
 @import "tailwindcss";
 @source "./www";
 
-/* Unified cascade architecture */
+/* Unified cascade architecture  */
 @layer theme, base, layout, components, states, utilities, overrides;
 
 /* =========================================
