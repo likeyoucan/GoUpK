@@ -254,21 +254,35 @@ public class CustomForegroundServicePlugin extends Plugin {
 
     @PluginMethod
     public void getRuntimeState(PluginCall call) {
-        ForegroundStateStore.RuntimeState s = new ForegroundStateStore(getContext()).read();
+        ForegroundStateStore store = new ForegroundStateStore(getContext());
+
+        // Нормализуем фазовые переходы/завершение по текущему времени.
+        store.computeDisplayNow();
+
+        ForegroundStateStore.RuntimeState s = store.read();
+        long now = System.currentTimeMillis();
+
+        long tmRemainingNow = s.running && ForegroundStateStore.MODE_TIMER.equals(s.mode)
+            ? Math.max(0L, s.tmEndsAt - now)
+            : Math.max(0L, s.tmRemainingMs);
+
+        long tbRemainingNow = s.running && ForegroundStateStore.MODE_TABATA.equals(s.mode)
+            ? Math.max(0L, s.tbEndsAt - now)
+            : Math.max(0L, s.tbRemainingMs);
 
         JSObject result = new JSObject();
         result.put("mode", s.mode);
         result.put("running", s.running);
         result.put("updatedAt", s.updatedAt);
         result.put("swElapsedMs", s.swElapsedMs);
-        result.put("tmRemainingMs", s.tmRemainingMs);
+        result.put("tmRemainingMs", tmRemainingNow);
         result.put("tmTotalMs", s.tmTotalMs);
         result.put("tbStatus", s.tbStatus);
         result.put("tbRound", s.tbRound);
         result.put("tbRounds", s.tbRounds);
         result.put("tbPhaseDuration", s.tbPhaseDuration);
         result.put("tbWorkoutName", s.tbWorkoutName);
-        result.put("tbRemainingMs", s.tbRemainingMs);
+        result.put("tbRemainingMs", tbRemainingNow);
         result.put("notifTitle", s.notifTitle);
         result.put("notifBody", s.notifBody);
         result.put("channelId", s.channelId);

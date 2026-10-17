@@ -316,12 +316,12 @@ public class ForegroundStateStore {
                                 candidate = nativeTabataRemainingNow;
                             }
 
-                            // Monotonic in same phase: do not allow time to increase.
+                            // Не разрешаем рост remaining внутри одной фазы.
                             if (candidate > nativeTabataRemainingNow) {
                                 candidate = nativeTabataRemainingNow;
                             }
 
-                            // Clamp stale too-low jumps.
+                            // Слишком резкий провал тоже считаем шумом.
                             if (candidate < nativeTabataRemainingNow - 1500L) {
                                 candidate = nativeTabataRemainingNow;
                             }
