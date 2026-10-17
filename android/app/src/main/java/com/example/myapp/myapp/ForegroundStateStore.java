@@ -13,6 +13,10 @@ public class ForegroundStateStore {
     public static final String MODE_TIMER = "timer";
     public static final String MODE_TABATA = "tabata";
 
+    private static final long DEFAULT_TABATA_READY_MS = 5000L;
+    private static final long DEFAULT_TABATA_WORK_MS = 20000L;
+    private static final long DEFAULT_TABATA_REST_MS = 10000L;
+
     private final SharedPreferences prefs;
 
     public ForegroundStateStore(Context context) {
@@ -39,6 +43,11 @@ public class ForegroundStateStore {
         public long tbRemainingMs = 0L;
         public long tbPhaseDuration = 0L;
         public long tbEndsAt = 0L;
+
+        // Cached plan durations so native side can advance phases without JS wake.
+        public long tbWorkDuration = DEFAULT_TABATA_WORK_MS;
+        public long tbRestDuration = DEFAULT_TABATA_REST_MS;
+        public long tbReadyDuration = DEFAULT_TABATA_READY_MS;
 
         public String notifTitle = "Stopwatch";
         public String notifBody = "00:00";
@@ -83,6 +92,10 @@ public class ForegroundStateStore {
         s.tbPhaseDuration = prefs.getLong("tbPhaseDuration", 0L);
         s.tbEndsAt = prefs.getLong("tbEndsAt", 0L);
 
+        s.tbWorkDuration = prefs.getLong("tbWorkDuration", DEFAULT_TABATA_WORK_MS);
+        s.tbRestDuration = prefs.getLong("tbRestDuration", DEFAULT_TABATA_REST_MS);
+        s.tbReadyDuration = prefs.getLong("tbReadyDuration", DEFAULT_TABATA_READY_MS);
+
         s.notifTitle = prefs.getString("notifTitle", "Stopwatch");
         s.notifBody = prefs.getString("notifBody", "00:00");
         s.toggleTitle = prefs.getString("toggleTitle", "▶");
@@ -92,10 +105,14 @@ public class ForegroundStateStore {
         s.accentColor = prefs.getString("accentColor", "#3399ff");
         s.onAccentColor = prefs.getString("onAccentColor", "#ffffff");
 
+        normalizeTabataDurations(s);
+
         return s;
     }
 
     public void write(RuntimeState s) {
+        normalizeTabataDurations(s);
+
         prefs.edit()
             .putString("mode", s.mode)
             .putBoolean("running", s.running)
@@ -116,6 +133,9 @@ public class ForegroundStateStore {
             .putLong("tbRemainingMs", s.tbRemainingMs)
             .putLong("tbPhaseDuration", s.tbPhaseDuration)
             .putLong("tbEndsAt", s.tbEndsAt)
+            .putLong("tbWorkDuration", s.tbWorkDuration)
+            .putLong("tbRestDuration", s.tbRestDuration)
+            .putLong("tbReadyDuration", s.tbReadyDuration)
 
             .putString("notifTitle", s.notifTitle)
             .putString("notifBody", s.notifBody)
@@ -165,6 +185,9 @@ public class ForegroundStateStore {
         s.tbRounds = Math.max(1, runtime.optInt("tbRounds", s.tbRounds));
         s.tbWorkoutName = runtime.optString("tbWorkoutName", s.tbWorkoutName);
         s.tbPhaseDuration = Math.max(0L, runtime.optLong("tbPhaseDuration", s.tbPhaseDuration));
+        s.tbWorkDuration = Math.max(0L, runtime.optLong("tbWorkDuration", s.tbWorkDuration));
+        s.tbRestDuration = Math.max(0L, runtime.optLong("tbRestDuration", s.tbRestDuration));
+        s.tbReadyDuration = Math.max(0L, runtime.optLong("tbReadyDuration", s.tbReadyDuration));
 
         s.notifTitle = runtime.optString("notifTitle", s.notifTitle);
         s.notifBody = runtime.optString("notifBody", s.notifBody);
@@ -174,20 +197,20 @@ public class ForegroundStateStore {
         s.accentColor = runtime.optString("accentColor", s.accentColor);
         s.onAccentColor = runtime.optString("onAccentColor", s.onAccentColor);
 
+        normalizeTabataDurations(s);
+        cacheTabataDurationFromCurrentStatus(s);
+
         if (MODE_STOPWATCH.equals(s.mode)) {
             if (s.running) {
                 if (MODE_STOPWATCH.equals(prevMode) && prevRunning) {
-                    // Keep monotonic elapsed; do not let stale JS rewind runtime.
                     long mergedElapsed = Math.max(nativeSwElapsedNow, incomingSwElapsed);
                     s.swElapsedMs = mergedElapsed;
 
-                    // Rebase anchor only when JS is meaningfully ahead.
                     if (mergedElapsed > nativeSwElapsedNow + 150L) {
                         s.swBaseElapsedMs = mergedElapsed;
                         s.swStartedAt = now;
                     }
                 } else {
-                    // Transition to running.
                     long startElapsed = Math.max(0L, incomingSwElapsed);
                     s.swElapsedMs = startElapsed;
                     s.swBaseElapsedMs = startElapsed;
@@ -212,7 +235,6 @@ public class ForegroundStateStore {
             if (s.running) {
                 long mergedRemaining;
                 if (MODE_TIMER.equals(prevMode) && prevRunning) {
-                    // While running, remaining time must not increase.
                     mergedRemaining = Math.min(nativeTimerRemainingNow, incomingTimerRemaining);
                 } else {
                     mergedRemaining = incomingTimerRemaining;
@@ -235,12 +257,16 @@ public class ForegroundStateStore {
             if (s.running) {
                 long mergedRemaining;
                 if (MODE_TABATA.equals(prevMode) && prevRunning) {
-                    // While running, remaining time must not increase.
                     mergedRemaining = Math.min(nativeTabataRemainingNow, incomingTabataRemaining);
                 } else {
                     mergedRemaining = incomingTabataRemaining;
                 }
                 s.tbRemainingMs = Math.max(0L, mergedRemaining);
+
+                if (s.tbRemainingMs <= 0L) {
+                    s.tbRemainingMs = pickTabataDurationForStatus(s, s.tbStatus);
+                }
+
                 s.tbEndsAt = now + s.tbRemainingMs;
                 s.toggleTitle = "⏸";
             } else {
@@ -250,13 +276,23 @@ public class ForegroundStateStore {
                 } else {
                     pausedRemaining = incomingTabataRemaining;
                 }
+
                 s.tbRemainingMs = Math.max(0L, pausedRemaining);
+                if (!"STOPPED".equals(s.tbStatus) && s.tbRemainingMs <= 0L) {
+                    s.tbRemainingMs = pickTabataDurationForStatus(s, s.tbStatus);
+                }
+
                 s.tbEndsAt = 0L;
                 s.toggleTitle = "▶";
             }
         } else {
             s.running = false;
             s.toggleTitle = "▶";
+        }
+
+        if (MODE_TABATA.equals(s.mode)) {
+            s.notifTitle = buildTabataTitle(s);
+            s.notifBody = formatTime(getTabataRemainingNow(s, now), false);
         }
 
         write(s);
@@ -300,21 +336,37 @@ public class ForegroundStateStore {
             long rem = getTimerRemainingNow(s, now);
             s.notifBody = formatTime(rem, s.tmTotalMs >= 3600000L);
         } else if (MODE_TABATA.equals(s.mode)) {
+            normalizeTabataDurations(s);
+
             if (s.running) {
                 long rem = Math.max(0L, s.tbEndsAt - now);
                 s.tbRemainingMs = rem;
                 s.tbEndsAt = 0L;
                 s.running = false;
                 s.toggleTitle = "▶";
-            } else if (s.tbRemainingMs > 0L && !"STOPPED".equals(s.tbStatus)) {
-                s.tbEndsAt = now + s.tbRemainingMs;
-                s.running = true;
-                s.toggleTitle = "⏸";
+            } else {
+                if ("STOPPED".equals(s.tbStatus)) {
+                    s.tbStatus = "READY";
+                    s.tbRound = Math.max(1, s.tbRound);
+                }
+
+                if (s.tbRemainingMs <= 0L) {
+                    long phaseDur = pickTabataDurationForStatus(s, s.tbStatus);
+                    s.tbPhaseDuration = phaseDur;
+                    s.tbRemainingMs = phaseDur;
+                }
+
+                if (s.tbRemainingMs > 0L && !"STOPPED".equals(s.tbStatus)) {
+                    s.tbEndsAt = now + s.tbRemainingMs;
+                    s.running = true;
+                    s.toggleTitle = "⏸";
+                } else {
+                    s.running = false;
+                    s.toggleTitle = "▶";
+                }
             }
 
-            String workout = isBlank(s.tbWorkoutName) ? "Tabata" : s.tbWorkoutName;
-            String phase = "STOPPED".equals(s.tbStatus) ? "Pause" : s.tbStatus;
-            s.notifTitle = "Tabata - " + workout + " • ROUND " + s.tbRound + "/" + s.tbRounds + " • " + phase;
+            s.notifTitle = buildTabataTitle(s);
             long rem = getTabataRemainingNow(s, now);
             s.notifBody = formatTime(rem, false);
         } else {
@@ -357,7 +409,7 @@ public class ForegroundStateStore {
 
         if (MODE_TABATA.equals(s.mode)) {
             long rem = getTabataRemainingNow(s, now);
-            p.title = isBlank(s.notifTitle) ? "Tabata" : s.notifTitle;
+            p.title = buildTabataTitle(s);
             p.body = formatTime(rem, false);
             return p;
         }
@@ -369,6 +421,7 @@ public class ForegroundStateStore {
 
     private boolean normalizeCompletionIfNeeded(RuntimeState s, long now) {
         boolean changed = false;
+
         if (MODE_TIMER.equals(s.mode) && s.running) {
             long rem = Math.max(0L, s.tmEndsAt - now);
             if (rem <= 0L) {
@@ -380,7 +433,149 @@ public class ForegroundStateStore {
                 changed = true;
             }
         }
+
+        if (MODE_TABATA.equals(s.mode) && s.running) {
+            long rem = Math.max(0L, s.tbEndsAt - now);
+            if (rem > 0L) {
+                s.tbRemainingMs = rem;
+                return changed;
+            }
+
+            // Phase ended: advance natively so Tabata works in notification even when JS is paused.
+            changed = true;
+            boolean completed = advanceTabataPhase(s, now);
+
+            if (completed) {
+                s.running = false;
+                s.tbRemainingMs = 0L;
+                s.tbEndsAt = 0L;
+                s.tbStatus = "STOPPED";
+                s.toggleTitle = "▶";
+            } else {
+                s.running = true;
+                s.toggleTitle = "⏸";
+            }
+
+            s.notifTitle = buildTabataTitle(s);
+            s.notifBody = formatTime(getTabataRemainingNow(s, now), false);
+            s.updatedAt = now;
+        }
+
         return changed;
+    }
+
+    private boolean advanceTabataPhase(RuntimeState s, long now) {
+        normalizeTabataDurations(s);
+
+        String status = normalizeTabataStatus(s.tbStatus);
+
+        if ("READY".equals(status)) {
+            s.tbStatus = "WORK";
+            s.tbRound = Math.max(1, s.tbRound);
+            long dur = pickTabataDurationForStatus(s, "WORK");
+            s.tbPhaseDuration = dur;
+            s.tbRemainingMs = dur;
+            s.tbEndsAt = now + dur;
+            return false;
+        }
+
+        if ("WORK".equals(status)) {
+            if (s.tbRound >= Math.max(1, s.tbRounds)) {
+                return true; // completed all rounds
+            }
+
+            s.tbStatus = "REST";
+            long dur = pickTabataDurationForStatus(s, "REST");
+            s.tbPhaseDuration = dur;
+            s.tbRemainingMs = dur;
+            s.tbEndsAt = now + dur;
+            return false;
+        }
+
+        if ("REST".equals(status)) {
+            s.tbRound = Math.min(Math.max(1, s.tbRounds), Math.max(1, s.tbRound) + 1);
+            s.tbStatus = "WORK";
+            long dur = pickTabataDurationForStatus(s, "WORK");
+            s.tbPhaseDuration = dur;
+            s.tbRemainingMs = dur;
+            s.tbEndsAt = now + dur;
+            return false;
+        }
+
+        // STOPPED/unknown fallback: start from READY
+        s.tbStatus = "READY";
+        s.tbRound = Math.max(1, s.tbRound);
+        long dur = pickTabataDurationForStatus(s, "READY");
+        s.tbPhaseDuration = dur;
+        s.tbRemainingMs = dur;
+        s.tbEndsAt = now + dur;
+        return false;
+    }
+
+    private String buildTabataTitle(RuntimeState s) {
+        String workout = isBlank(s.tbWorkoutName) ? "Tabata" : s.tbWorkoutName;
+        int round = Math.max(1, s.tbRound);
+        int rounds = Math.max(1, s.tbRounds);
+
+        String phase = phaseLabel(s.tbStatus);
+        return "Tabata - " + workout + " • ROUND " + round + "/" + rounds + " • " + phase;
+    }
+
+    private String phaseLabel(String status) {
+        String s = normalizeTabataStatus(status);
+        if ("READY".equals(s)) return "READY";
+        if ("WORK".equals(s)) return "WORK";
+        if ("REST".equals(s)) return "REST";
+        return "PAUSE";
+    }
+
+    private String normalizeTabataStatus(String status) {
+        if (status == null) return "STOPPED";
+        String s = status.trim().toUpperCase();
+        if ("READY".equals(s) || "WORK".equals(s) || "REST".equals(s) || "STOPPED".equals(s)) {
+            return s;
+        }
+        return "STOPPED";
+    }
+
+    private void normalizeTabataDurations(RuntimeState s) {
+        if (s.tbWorkDuration <= 0L) s.tbWorkDuration = DEFAULT_TABATA_WORK_MS;
+        if (s.tbRestDuration <= 0L) s.tbRestDuration = DEFAULT_TABATA_REST_MS;
+        if (s.tbReadyDuration <= 0L) s.tbReadyDuration = DEFAULT_TABATA_READY_MS;
+
+        s.tbRounds = Math.max(1, s.tbRounds);
+        s.tbRound = Math.max(1, s.tbRound);
+
+        if (s.tbPhaseDuration > 0L) {
+            cacheTabataDurationFromCurrentStatus(s);
+        }
+    }
+
+    private void cacheTabataDurationFromCurrentStatus(RuntimeState s) {
+        String status = normalizeTabataStatus(s.tbStatus);
+        if (s.tbPhaseDuration <= 0L) return;
+
+        if ("WORK".equals(status)) s.tbWorkDuration = s.tbPhaseDuration;
+        else if ("REST".equals(status)) s.tbRestDuration = s.tbPhaseDuration;
+        else if ("READY".equals(status)) s.tbReadyDuration = s.tbPhaseDuration;
+    }
+
+    private long pickTabataDurationForStatus(RuntimeState s, String status) {
+        String st = normalizeTabataStatus(status);
+
+        if ("READY".equals(st)) {
+            return Math.max(1L, s.tbReadyDuration > 0L ? s.tbReadyDuration : DEFAULT_TABATA_READY_MS);
+        }
+        if ("WORK".equals(st)) {
+            long candidate = s.tbWorkDuration > 0L ? s.tbWorkDuration : DEFAULT_TABATA_WORK_MS;
+            return Math.max(1L, candidate);
+        }
+        if ("REST".equals(st)) {
+            long candidate = s.tbRestDuration > 0L ? s.tbRestDuration : DEFAULT_TABATA_REST_MS;
+            return Math.max(1L, candidate);
+        }
+
+        return Math.max(1L, DEFAULT_TABATA_READY_MS);
     }
 
     private long getStopwatchElapsedNow(RuntimeState s, long now) {

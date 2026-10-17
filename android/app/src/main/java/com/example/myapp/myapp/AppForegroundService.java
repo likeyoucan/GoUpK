@@ -9,8 +9,8 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.IBinder;
-import android.os.Looper;
 import android.os.SystemClock;
 import android.widget.RemoteViews;
 
@@ -41,9 +41,10 @@ public class AppForegroundService extends Service {
     private static final String ACTION_PREFS = "fg_actions";
     private static final String KEY_NOTIFICATION_SUPPRESSED = "notification_suppressed";
 
-    // Short update granularity keeps state responsive while still cheap on battery.
+    // Frequent enough for smooth mm:ss updates, still battery-cheap.
     private static final long TICK_GRANULARITY_MS = 200L;
 
+    private HandlerThread tickerThread;
     private Handler tickerHandler;
     private Runnable tickerRunnable;
     private boolean tickerStarted = false;
@@ -54,7 +55,10 @@ public class AppForegroundService extends Service {
     public void onCreate() {
         super.onCreate();
         ensureChannel(CHANNEL_ID, "Stopwatch Pro", "Foreground timer controls");
-        tickerHandler = new Handler(Looper.getMainLooper());
+
+        tickerThread = new HandlerThread("fg-notif-ticker");
+        tickerThread.start();
+        tickerHandler = new Handler(tickerThread.getLooper());
     }
 
     @Override
@@ -109,7 +113,6 @@ public class AppForegroundService extends Service {
 
             String sig = buildSignature(payload);
 
-            // Avoid heavy foreground restart when payload did not change.
             if (lastNotifSignature.isEmpty() || !sig.equals(lastNotifSignature)) {
                 Notification notification = buildNotification(
                     payload.channelId,
@@ -125,11 +128,8 @@ public class AppForegroundService extends Service {
             }
 
             ForegroundStateStore.RuntimeState nowState = store.read();
-            if (nowState.running) {
-                startTicker();
-            } else {
-                stopTicker();
-            }
+            if (nowState.running) startTicker();
+            else stopTicker();
 
             boolean hasSession =
                 nowState.running
@@ -156,6 +156,13 @@ public class AppForegroundService extends Service {
     @Override
     public void onDestroy() {
         stopTicker();
+
+        if (tickerThread != null) {
+            tickerThread.quitSafely();
+            tickerThread = null;
+        }
+        tickerHandler = null;
+
         super.onDestroy();
     }
 
@@ -163,22 +170,15 @@ public class AppForegroundService extends Service {
         if (tickerHandler == null || tickerRunnable == null) return;
 
         long nowElapsed = SystemClock.elapsedRealtime();
-        long granularityDelay = TICK_GRANULARITY_MS - (nowElapsed % TICK_GRANULARITY_MS);
-        if (granularityDelay <= 0L) granularityDelay = TICK_GRANULARITY_MS;
-
-        // Also align close to wall-clock second boundary so mm:ss flips are visually smooth.
-        long nowWall = System.currentTimeMillis();
-        long secondDelay = 1000L - (nowWall % 1000L);
-        if (secondDelay <= 0L) secondDelay = 1000L;
-
-        long delay = Math.min(granularityDelay, secondDelay);
-        if (delay < 30L) delay = 30L;
+        long delay = TICK_GRANULARITY_MS - (nowElapsed % TICK_GRANULARITY_MS);
+        if (delay <= 0L) delay = TICK_GRANULARITY_MS;
+        if (delay < 24L) delay = 24L;
 
         tickerHandler.postDelayed(tickerRunnable, delay);
     }
 
     private void startTicker() {
-        if (tickerStarted) return;
+        if (tickerStarted || tickerHandler == null) return;
         tickerStarted = true;
 
         if (tickerRunnable == null) {
@@ -231,7 +231,6 @@ public class AppForegroundService extends Service {
         }
 
         tickerHandler.removeCallbacks(tickerRunnable);
-        // Run first pass immediately for snappy UI response.
         tickerHandler.post(tickerRunnable);
     }
 
