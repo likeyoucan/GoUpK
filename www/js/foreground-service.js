@@ -350,6 +350,20 @@ function buildRuntimeStateFromJs(payload, state, theme, accent) {
 
   const tabataRemNow = Math.max(0, Number(getTabataRemainingMs()) || 0);
 
+  const domRound = Number($("tb-currentRound")?.textContent || 0) || 0;
+  const domRounds = Number($("tb-totalRounds")?.textContent || 0) || 0;
+
+  const statusNow = tb.status || "STOPPED";
+  const roundNow = Math.max(1, Number(tb.currentRound || domRound || 1));
+  const roundsNow = Math.max(1, Number(tb.rounds || domRounds || 1));
+
+  const phaseDurationFallback =
+    statusNow === "WORK"
+      ? Math.max(1, Number(tb.work) || 20000)
+      : statusNow === "REST"
+        ? Math.max(1, Number(tb.rest) || 10000)
+        : 5000;
+
   return {
     mode: state?.mode || "none",
     running: !!state?.running,
@@ -360,15 +374,20 @@ function buildRuntimeStateFromJs(payload, state, theme, accent) {
     tmRemainingMs: timerRemNow,
     tmTotalMs: timerTotalNow,
 
-    tbStatus: tb.status || "STOPPED",
-    tbRound: tb.currentRound || 1,
-    tbRounds: tb.rounds || 1,
-    tbPhaseDuration: Math.max(0, Number(tb.phaseDuration) || 0),
+    tbStatus: statusNow,
+    tbRound: roundNow,
+    tbRounds: roundsNow,
+    tbPhaseDuration: Math.max(
+      1,
+      Number(tb.phaseDuration) || Number(phaseDurationFallback) || 1,
+    ),
     tbWorkoutName:
       $("tb-runningWorkoutName")?.textContent?.trim() ||
       $("tb-activeName")?.textContent?.trim() ||
       t("tabata"),
     tbRemainingMs: tabataRemNow,
+
+    // Native phase progression plan for background mode
     tbWorkMs: Math.max(1, Number(tb.work) || 20000),
     tbRestMs: Math.max(1, Number(tb.rest) || 10000),
     tbReadyMs: 5000,

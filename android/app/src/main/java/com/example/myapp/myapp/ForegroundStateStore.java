@@ -5,6 +5,8 @@ import android.content.SharedPreferences;
 
 import org.json.JSONObject;
 
+import java.util.Locale;
+
 public class ForegroundStateStore {
     private static final String PREFS = "fg_runtime_state";
 
@@ -40,7 +42,7 @@ public class ForegroundStateStore {
         public long tbPhaseDuration = 0L;
         public long tbEndsAt = 0L;
 
-        // Tabata plan durations (native phase switching in background)
+        // Native phase plan for background Tabata progression
         public long tbWorkMs = 20000L;
         public long tbRestMs = 10000L;
         public long tbReadyMs = 5000L;
@@ -149,7 +151,6 @@ public class ForegroundStateStore {
         if (runtime == null) return;
 
         RuntimeState s = read();
-
         long now = System.currentTimeMillis();
 
         String prevMode = s.mode;
@@ -199,7 +200,6 @@ public class ForegroundStateStore {
                 if (MODE_STOPWATCH.equals(prevMode) && prevRunning) {
                     long mergedElapsed = Math.max(nativeSwElapsedNow, incomingSwElapsed);
                     s.swElapsedMs = mergedElapsed;
-
                     if (mergedElapsed > nativeSwElapsedNow + 150L) {
                         s.swBaseElapsedMs = mergedElapsed;
                         s.swStartedAt = now;
@@ -251,16 +251,32 @@ public class ForegroundStateStore {
             if (s.running) {
                 long mergedRemaining;
                 if (MODE_TABATA.equals(prevMode) && prevRunning) {
-                    // Tabata can jump up on phase switch (00:00 -> 00:10).
                     boolean phaseChanged =
                         !stringEq(prevTbStatus, s.tbStatus)
                             || prevTbRound != s.tbRound
                             || prevTbPhaseDuration != s.tbPhaseDuration;
 
                     if (phaseChanged) {
-                        mergedRemaining = incomingTabataRemaining;
+                        long phaseDefault = phaseDurationForStatus(s, s.tbStatus);
+                        mergedRemaining = incomingTabataRemaining > 0L ? incomingTabataRemaining : phaseDefault;
                     } else {
-                        mergedRemaining = Math.min(nativeTabataRemainingNow, incomingTabataRemaining);
+                        // Protection against stale JS values that can suddenly force 00:00.
+                        long candidate = incomingTabataRemaining;
+
+                        if (candidate <= 0L && nativeTabataRemainingNow > 1200L) {
+                            candidate = nativeTabataRemainingNow;
+                        }
+
+                        if (nativeTabataRemainingNow > 0L) {
+                            if (candidate > nativeTabataRemainingNow + 1200L) {
+                                candidate = nativeTabataRemainingNow;
+                            }
+                            if (candidate < nativeTabataRemainingNow - 3500L) {
+                                candidate = nativeTabataRemainingNow;
+                            }
+                        }
+
+                        mergedRemaining = Math.min(nativeTabataRemainingNow, candidate);
                     }
                 } else {
                     mergedRemaining = incomingTabataRemaining;
@@ -276,7 +292,6 @@ public class ForegroundStateStore {
                 } else {
                     pausedRemaining = incomingTabataRemaining;
                 }
-
                 s.tbRemainingMs = Math.max(0L, pausedRemaining);
                 s.tbEndsAt = 0L;
                 s.toggleTitle = "▶";
@@ -339,9 +354,7 @@ public class ForegroundStateStore {
                 s.toggleTitle = "⏸";
             }
 
-            String workout = isBlank(s.tbWorkoutName) ? "Tabata" : s.tbWorkoutName;
-            String phase = "STOPPED".equals(s.tbStatus) ? "Pause" : s.tbStatus;
-            s.notifTitle = "Tabata - " + workout + " • ROUND " + s.tbRound + "/" + s.tbRounds + " • " + phase;
+            s.notifTitle = buildTabataTitle(s);
             long rem = getTabataRemainingNow(s, now);
             s.notifBody = formatTime(rem, false);
         } else {
@@ -384,10 +397,7 @@ public class ForegroundStateStore {
 
         if (MODE_TABATA.equals(s.mode)) {
             long rem = getTabataRemainingNow(s, now);
-            String workout = isBlank(s.tbWorkoutName) ? "Tabata" : s.tbWorkoutName;
-            String phase = "STOPPED".equals(s.tbStatus) ? "Pause" : s.tbStatus;
-
-            p.title = "Tabata - " + workout + " • ROUND " + s.tbRound + "/" + s.tbRounds + " • " + phase;
+            p.title = buildTabataTitle(s);
             p.body = formatTime(rem, false);
             return p;
         }
@@ -499,6 +509,42 @@ public class ForegroundStateStore {
         s.tbEndsAt = 0L;
         s.toggleTitle = "▶";
         return false;
+    }
+
+    private String buildTabataTitle(RuntimeState s) {
+        String workout = isBlank(s.tbWorkoutName) ? "Tabata" : s.tbWorkoutName;
+        boolean ru = isRussianLocale();
+
+        String phase = localizeTabataStatus(s.tbStatus, ru);
+        String roundWord = ru ? "РАУНД" : "ROUND";
+
+        return "Tabata - " + workout + " • " + roundWord + " " + s.tbRound + "/" + s.tbRounds + " • " + phase;
+    }
+
+    private String localizeTabataStatus(String status, boolean ru) {
+        String v = status == null ? "STOPPED" : status;
+        if (!ru) {
+            if ("READY".equals(v)) return "Get Ready";
+            if ("WORK".equals(v)) return "Work";
+            if ("REST".equals(v)) return "Rest";
+            if ("STOPPED".equals(v)) return "Pause";
+            return v;
+        }
+
+        if ("READY".equals(v)) return "ПРИГОТОВЬТЕСЬ";
+        if ("WORK".equals(v)) return "РАБОТА";
+        if ("REST".equals(v)) return "ОТДЫХ";
+        if ("STOPPED".equals(v)) return "ПАУЗА";
+        return v;
+    }
+
+    private boolean isRussianLocale() {
+        try {
+            String lang = Locale.getDefault().getLanguage();
+            return lang != null && lang.toLowerCase().startsWith("ru");
+        } catch (Throwable ignored) {
+            return false;
+        }
     }
 
     private long getStopwatchElapsedNow(RuntimeState s, long now) {
