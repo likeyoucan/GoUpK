@@ -1,7 +1,7 @@
 @import "tailwindcss";
 @source "./www";
 
-/* Unified cascade architecture  */
+/* Unified cascade architecture */
 @layer theme, base, layout, components, states, utilities, overrides;
 
 /* =========================================
@@ -2400,15 +2400,22 @@
   }
 
   #view-settings > div:first-child {
-    padding-top: calc(var(--safe-top) + 0.5rem);
+    padding-top: calc(var(--safe-top) + 1.25rem);
     height: auto;
-    min-height: calc(55px + var(--safe-top));
+    min-height: calc(72px + var(--safe-top));
   }
 
   @media (min-width: 768px) {
     #view-settings > div:first-child {
-      padding-top: 1.5rem;
-      min-height: auto;
+      padding-top: 2.25rem;
+      min-height: 76px;
+    }
+  }
+
+  @media (min-width: 600px) and (orientation: landscape) {
+    #view-settings > div:first-child {
+      padding-top: 2.4rem;
+      min-height: 80px;
     }
   }
 
