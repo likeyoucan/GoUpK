@@ -310,11 +310,6 @@ function scheduleForegroundStop(delay = FOREGROUND_STOP_DEBOUNCE_MS) {
       await stopForeground();
       return;
     }
-    const skipRuntimePushForTabataTransition =
-      state.mode === "tabata" &&
-      state.running &&
-      tb.status !== "STOPPED" &&
-      tb.phaseClosing;
     await syncNotification({
       reason: "stop_debounce_state_active",
       force: false,
@@ -982,6 +977,12 @@ export async function syncNotification({
     await stopForeground();
     return;
   }
+
+  const skipRuntimePushForTabataTransition =
+    state.mode === "tabata" &&
+    state.running &&
+    tb.status !== "STOPPED" &&
+    tb.phaseClosing;
 
   const granted = await ensurePermissionIfNeeded(false);
   if (!granted) {
