@@ -14,9 +14,16 @@ public class ForegroundActionReceiver extends BroadcastReceiver {
     private static final String KEY_PENDING_EVENT_AT = "pending_event_at";
     private static final String KEY_LAST_TOGGLE_AT = "last_toggle_at";
 
-    // Very small debounce: protects from accidental double-dispatch,
-    // while keeping rapid user taps responsive.
+    // Shared with AppForegroundService: temporarily suppress visual notification refresh
+    // right after tap to avoid OEM "re-click" side effects during rebind/re-layout.
+    private static final String KEY_SUPPRESS_NOTIFICATION_REFRESH_UNTIL =
+        "suppress_notification_refresh_until";
+
+    // Keep very small debounce so fast user taps remain responsive.
     private static final long TOGGLE_DEBOUNCE_MS = 60L;
+
+    // Short suppression window for notification redraw after real tap.
+    private static final long NOTIFICATION_REFRESH_SUPPRESS_MS = 420L;
 
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -39,6 +46,10 @@ public class ForegroundActionReceiver extends BroadcastReceiver {
             .putLong(KEY_LAST_TOGGLE_AT, now)
             .putInt(KEY_PENDING_BUTTON_ID, 1)
             .putLong(KEY_PENDING_EVENT_AT, now)
+            .putLong(
+                KEY_SUPPRESS_NOTIFICATION_REFRESH_UNTIL,
+                now + NOTIFICATION_REFRESH_SUPPRESS_MS
+            )
             .apply();
 
         // Native-first toggle so notification controls remain responsive

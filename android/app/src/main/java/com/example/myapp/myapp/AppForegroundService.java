@@ -40,6 +40,7 @@ public class AppForegroundService extends Service {
 
     private static final String ACTION_PREFS = "fg_actions";
     private static final String KEY_NOTIFICATION_SUPPRESSED = "notification_suppressed";
+    private static final String KEY_SUPPRESS_NOTIFICATION_REFRESH_UNTIL = "suppress_notification_refresh_until";
 
     // Short update granularity keeps state responsive while still cheap on battery.
     private static final long TICK_GRANULARITY_MS = 200L;
@@ -110,7 +111,11 @@ public class AppForegroundService extends Service {
             String sig = buildSignature(payload);
 
             // Avoid heavy foreground restart when payload did not change.
-            if (lastNotifSignature.isEmpty() || !sig.equals(lastNotifSignature)) {
+            // During short post-tap guard window we avoid immediate notification
+            // rebind to prevent phantom extra toggle on some OEM implementations.
+            boolean refreshSuppressed = isNotificationRefreshSuppressedNow();
+            if ((!refreshSuppressed || lastNotifSignature.isEmpty())
+                && (lastNotifSignature.isEmpty() || !sig.equals(lastNotifSignature))) {
                 Notification notification = buildNotification(
                     payload.channelId,
                     payload.title,
@@ -228,20 +233,24 @@ public class AppForegroundService extends Service {
                         String nextSig = buildSignature(payload);
 
                         if (!nextSig.equals(lastNotifSignature)) {
-                            Notification n = buildNotification(
-                                payload.channelId,
-                                payload.title,
-                                payload.body,
-                                payload.toggleTitle,
-                                payload.isDarkTheme,
-                                payload.accentColor,
-                                payload.onAccentColor
-                            );
+                            // Do not refresh notification immediately after tap dispatch:
+                            // this avoids accidental duplicated toggle on some devices.
+                            if (!isNotificationRefreshSuppressedNow()) {
+                                Notification n = buildNotification(
+                                    payload.channelId,
+                                    payload.title,
+                                    payload.body,
+                                    payload.toggleTitle,
+                                    payload.isDarkTheme,
+                                    payload.accentColor,
+                                    payload.onAccentColor
+                                );
 
-                            NotificationManager nm = getSystemService(NotificationManager.class);
-                            if (nm != null) {
-                                nm.notify(NOTIFICATION_ID, n);
-                                lastNotifSignature = nextSig;
+                                NotificationManager nm = getSystemService(NotificationManager.class);
+                                if (nm != null) {
+                                    nm.notify(NOTIFICATION_ID, n);
+                                    lastNotifSignature = nextSig;
+                                }
                             }
                         }
 
@@ -393,6 +402,15 @@ public class AppForegroundService extends Service {
     private boolean isNotificationSuppressed() {
         return getSharedPreferences(ACTION_PREFS, MODE_PRIVATE)
             .getBoolean(KEY_NOTIFICATION_SUPPRESSED, false);
+    }
+
+    private long getNotificationRefreshSuppressedUntil() {
+        return getSharedPreferences(ACTION_PREFS, MODE_PRIVATE)
+            .getLong(KEY_SUPPRESS_NOTIFICATION_REFRESH_UNTIL, 0L);
+    }
+
+    private boolean isNotificationRefreshSuppressedNow() {
+        return System.currentTimeMillis() < getNotificationRefreshSuppressedUntil();
     }
 
     private int pendingFlags() {

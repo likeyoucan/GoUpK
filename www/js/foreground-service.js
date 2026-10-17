@@ -53,6 +53,9 @@ const EVENT_SYNC_DELAY_MS = 70;
 const EVENT_SYNC_TRAIL_DELAY_MS = 260;
 const SYNC_COALESCE_MS = 140;
 
+// Drop stale pending/live button actions that arrive too late.
+const PENDING_EVENT_MAX_AGE_MS = 2000;
+
 const CHANNEL = {
   id: "stopwatch_channel_silent_v2",
   name: "Stopwatch Pro",
@@ -846,6 +849,12 @@ function shouldSkipToggleByDebounce(nowTs) {
   return false;
 }
 
+function isFreshPendingEvent(eventAt) {
+  const ts = Number(eventAt) || 0;
+  if (ts <= 0) return true;
+  return Date.now() - ts <= PENDING_EVENT_MAX_AGE_MS;
+}
+
 async function processButtonAction(
   buttonId,
   eventAt = Date.now(),
@@ -854,6 +863,12 @@ async function processButtonAction(
   const id = Number(buttonId);
   const ts = Number(eventAt) || Date.now();
   if (!id) return;
+
+  // Drop stale events that can arrive late from restored process/broadcast queue.
+  if (!isFreshPendingEvent(ts)) {
+    fgDebug("drop stale button event", { source, buttonId: id, eventAt: ts });
+    return;
+  }
 
   if (ts <= lastHandledActionAt) return;
   lastHandledActionAt = ts;
@@ -905,6 +920,15 @@ async function drainPendingButtonActions(reason = "unknown") {
 
       const eventAt = Number(pending.eventAt) || 0;
       if (eventAt > 0 && eventAt <= lastPendingEventAt) continue;
+
+      if (!isFreshPendingEvent(eventAt)) {
+        fgDebug("drop stale pending button event", {
+          reason,
+          buttonId: pending.buttonId,
+          eventAt,
+        });
+        continue;
+      }
 
       if (eventAt > 0) lastPendingEventAt = eventAt;
       await processButtonAction(

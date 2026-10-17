@@ -161,8 +161,18 @@ public class ForegroundStateStore {
         long incomingTabataRemaining = Math.max(0L, runtime.optLong("tbRemainingMs", s.tbRemainingMs));
 
         s.tbStatus = runtime.optString("tbStatus", s.tbStatus);
-        s.tbRound = Math.max(1, runtime.optInt("tbRound", s.tbRound));
-        s.tbRounds = Math.max(1, runtime.optInt("tbRounds", s.tbRounds));
+
+        int incomingTbRound = Math.max(1, runtime.optInt("tbRound", s.tbRound));
+        int incomingTbRounds = Math.max(1, runtime.optInt("tbRounds", s.tbRounds));
+
+        if (MODE_TABATA.equals(prevMode) && prevRunning && MODE_TABATA.equals(s.mode) && s.running) {
+            // Keep monotonic round while running to avoid race-based rewinds.
+            s.tbRound = Math.max(s.tbRound, incomingTbRound);
+        } else {
+            s.tbRound = incomingTbRound;
+        }
+
+        s.tbRounds = incomingTbRounds;
         s.tbWorkoutName = runtime.optString("tbWorkoutName", s.tbWorkoutName);
         s.tbPhaseDuration = Math.max(0L, runtime.optLong("tbPhaseDuration", s.tbPhaseDuration));
 
@@ -357,7 +367,15 @@ public class ForegroundStateStore {
 
         if (MODE_TABATA.equals(s.mode)) {
             long rem = getTabataRemainingNow(s, now);
-            p.title = isBlank(s.notifTitle) ? "Tabata" : s.notifTitle;
+
+            String workout = isBlank(s.tbWorkoutName) ? "Tabata" : s.tbWorkoutName;
+            String phase;
+            if ("WORK".equals(s.tbStatus)) phase = "WORK";
+            else if ("REST".equals(s.tbStatus)) phase = "REST";
+            else if ("READY".equals(s.tbStatus)) phase = "GET READY";
+            else phase = "PAUSE";
+
+            p.title = "Tabata - " + workout + " • ROUND " + s.tbRound + "/" + s.tbRounds + " • " + phase;
             p.body = formatTime(rem, false);
             return p;
         }
