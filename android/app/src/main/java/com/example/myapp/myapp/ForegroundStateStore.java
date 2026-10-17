@@ -157,6 +157,7 @@ public class ForegroundStateStore {
         boolean prevRunning = s.running;
         String prevTbStatus = s.tbStatus;
         int prevTbRound = s.tbRound;
+        int prevTbRounds = s.tbRounds;
         long prevTbPhaseDuration = s.tbPhaseDuration;
 
         long nativeSwElapsedNow = getStopwatchElapsedNow(s, now);
@@ -250,8 +251,37 @@ public class ForegroundStateStore {
         } else if (MODE_TABATA.equals(s.mode)) {
             final boolean incomingPhaseOpen = !"STOPPED".equals(s.tbStatus);
 
+            boolean incomingRegression = false;
+            if (MODE_TABATA.equals(prevMode) && prevRunning) {
+                incomingRegression = isTabataRegression(
+                    prevTbStatus,
+                    prevTbRound,
+                    prevTbRounds,
+                    s.tbStatus,
+                    s.tbRound,
+                    s.tbRounds
+                );
+
+                // Protect native progress: ignore stale JS phase/round rollback.
+                if (incomingRegression) {
+                    s.tbStatus = prevTbStatus;
+                    s.tbRound = Math.max(1, prevTbRound);
+                    s.tbRounds = Math.max(1, Math.max(prevTbRounds, s.tbRounds));
+                    if (prevTbPhaseDuration > 0L) {
+                        s.tbPhaseDuration = prevTbPhaseDuration;
+                    }
+                }
+            }
+
             if (s.running) {
                 long mergedRemaining;
+                long incomingRemainingSafe = incomingTabataRemaining;
+
+                if (incomingRegression) {
+                    incomingRemainingSafe = nativeTabataRemainingNow > 0L
+                        ? nativeTabataRemainingNow
+                        : Math.max(1L, s.tbPhaseDuration);
+                }
 
                 if (MODE_TABATA.equals(prevMode) && prevRunning) {
                     boolean phaseChanged =
@@ -262,15 +292,15 @@ public class ForegroundStateStore {
                     if (phaseChanged) {
                         long phaseDefault = phaseDurationForStatus(s, s.tbStatus);
 
-                        if (incomingTabataRemaining > 0L) {
-                            mergedRemaining = incomingTabataRemaining;
+                        if (incomingRemainingSafe > 0L) {
+                            mergedRemaining = incomingRemainingSafe;
                         } else if (nativeTabataRemainingNow > 0L) {
                             mergedRemaining = nativeTabataRemainingNow;
                         } else {
                             mergedRemaining = phaseDefault;
                         }
                     } else {
-                        long candidate = incomingTabataRemaining;
+                        long candidate = incomingRemainingSafe;
 
                         // Protect against stale zero from JS that can force 00:00 mid-phase.
                         if (candidate <= 0L && incomingPhaseOpen) {
@@ -296,7 +326,7 @@ public class ForegroundStateStore {
                         mergedRemaining = candidate;
                     }
                 } else {
-                    mergedRemaining = incomingTabataRemaining;
+                    mergedRemaining = incomingRemainingSafe;
                 }
 
                 if (incomingPhaseOpen) {
@@ -489,6 +519,40 @@ public class ForegroundStateStore {
         if ("WORK".equals(status)) return Math.max(1L, s.tbWorkMs);
         if ("REST".equals(status)) return Math.max(1L, s.tbRestMs);
         return Math.max(1L, s.tbPhaseDuration);
+    }
+
+    private int tabataPhaseOrder(String status) {
+        if ("READY".equals(status)) return 0;
+        if ("WORK".equals(status)) return 1;
+        if ("REST".equals(status)) return 2;
+        if ("STOPPED".equals(status)) return -1;
+        return -1;
+    }
+
+    private int tabataProgressOrdinal(String status, int round, int rounds) {
+        int safeRound = Math.max(1, round);
+        int safeRounds = Math.max(1, rounds);
+        int boundedRound = Math.min(safeRounds, safeRound);
+
+        int phaseOrder = tabataPhaseOrder(status);
+        if (phaseOrder < 0) return -1;
+
+        return (boundedRound - 1) * 3 + phaseOrder;
+    }
+
+    private boolean isTabataRegression(
+        String prevStatus,
+        int prevRound,
+        int prevRounds,
+        String incomingStatus,
+        int incomingRound,
+        int incomingRounds
+    ) {
+        int prevOrd = tabataProgressOrdinal(prevStatus, prevRound, prevRounds);
+        int incomingOrd = tabataProgressOrdinal(incomingStatus, incomingRound, incomingRounds);
+
+        if (prevOrd < 0 || incomingOrd < 0) return false;
+        return incomingOrd < prevOrd;
     }
 
     private boolean advanceTabataPhase(RuntimeState s, long now) {
