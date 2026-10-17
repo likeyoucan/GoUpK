@@ -14,9 +14,9 @@ public class ForegroundActionReceiver extends BroadcastReceiver {
     private static final String KEY_PENDING_EVENT_AT = "pending_event_at";
     private static final String KEY_LAST_TOGGLE_AT = "last_toggle_at";
 
-    // Very small debounce: protects from accidental double-dispatch,
+    // Small debounce: protects from accidental double-dispatch,
     // while keeping rapid user taps responsive.
-    private static final long TOGGLE_DEBOUNCE_MS = 60L;
+    private static final long TOGGLE_DEBOUNCE_MS = 140L;
 
     @Override
     public void onReceive(Context context, Intent intent) {

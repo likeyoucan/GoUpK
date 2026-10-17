@@ -141,6 +141,9 @@ public class ForegroundStateStore {
 
         String prevMode = s.mode;
         boolean prevRunning = s.running;
+        String prevTbStatus = s.tbStatus;
+        int prevTbRound = s.tbRound;
+        long prevTbPhaseDuration = s.tbPhaseDuration;
 
         long nativeSwElapsedNow = getStopwatchElapsedNow(s, now);
         long nativeTimerRemainingNow = getTimerRemainingNow(s, now);
@@ -235,8 +238,18 @@ public class ForegroundStateStore {
             if (s.running) {
                 long mergedRemaining;
                 if (MODE_TABATA.equals(prevMode) && prevRunning) {
-                    // While running, remaining time must not increase.
-                    mergedRemaining = Math.min(nativeTabataRemainingNow, incomingTabataRemaining);
+                    // Tabata can legitimately jump up on phase switch (00:00 -> 00:10).
+                    // Keep monotonic behavior only inside same phase.
+                    boolean phaseChanged =
+                        !stringEq(prevTbStatus, s.tbStatus)
+                            || prevTbRound != s.tbRound
+                            || prevTbPhaseDuration != s.tbPhaseDuration;
+
+                    if (phaseChanged) {
+                        mergedRemaining = incomingTabataRemaining;
+                    } else {
+                        mergedRemaining = Math.min(nativeTabataRemainingNow, incomingTabataRemaining);
+                    }
                 } else {
                     mergedRemaining = incomingTabataRemaining;
                 }
@@ -400,6 +413,11 @@ public class ForegroundStateStore {
 
     private static boolean isBlank(String v) {
         return v == null || v.trim().isEmpty();
+    }
+
+    private static boolean stringEq(String a, String b) {
+        if (a == null) return b == null;
+        return a.equals(b);
     }
 
     private static String formatTime(long ms, boolean forceHours) {
