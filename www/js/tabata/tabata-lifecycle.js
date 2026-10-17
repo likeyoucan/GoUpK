@@ -83,20 +83,20 @@ export function setupTabataLifecycle(tb, deps) {
   }
 
   tb.toggle = () => {
-if (tb.status === "STOPPED") {
-  vibrateLifecycle([18, 20, 28], "medium");
-} else if (tb.paused) {
-  vibrateLifecycle([14, 18, 22], "medium");
-} else {
-  vibrateLifecycle([12, 22, 16], "medium");
-}
+    if (tb.status === "STOPPED" || tb.status === "COMPLETED") {
+      vibrateLifecycle([18, 20, 28], "medium");
+    } else if (tb.paused) {
+      vibrateLifecycle([14, 18, 22], "medium");
+    } else {
+      vibrateLifecycle([12, 22, 16], "medium");
+    }
 
-sm.play("click");
-sm.unlock();
+    sm.play("click");
+    sm.unlock();
 
-if (tb.status === "STOPPED") tb.start();
-else if (tb.paused) tb.resume();
-else tb.pause();
+    if (tb.status === "STOPPED" || tb.status === "COMPLETED") tb.start();
+    else if (tb.paused) tb.resume();
+    else tb.pause();
   };
 
   tb.start = () => {
@@ -151,7 +151,7 @@ else tb.pause();
   };
 
   tb.resume = () => {
-    if (tb.status === "STOPPED") return;
+    if (tb.status === "STOPPED" || tb.status === "COMPLETED") return;
 
     store.activate("tabata");
     tb.paused = false;
@@ -181,7 +181,11 @@ else tb.pause();
     requestAnimationFrame(() => tb.tick());
   };
 
-  tb.stop = ({ resetRing = true, silent = false } = {}) => {
+  tb.stop = ({
+    resetRing = true,
+    silent = false,
+    preserveCompletionStatus = false,
+  } = {}) => {
     if (!silent) {
       vibrateLifecycle([16, 18, 24], "medium");
       sm.play("click");
@@ -199,7 +203,13 @@ else tb.pause();
     clearPhaseClose(tb);
     tb.phaseClosing = false;
 
-    applyTabataEngineSnapshot(tb, tb.tabataEngine.stop());
+    const stoppedSnap = tb.tabataEngine.stop();
+    applyTabataEngineSnapshot(tb, stoppedSnap);
+
+    if (preserveCompletionStatus) {
+      tb.status = "COMPLETED";
+    }
+
     tb.paused = false;
     tb.remainingAtPause = 0;
     tb.completionHandled = true;

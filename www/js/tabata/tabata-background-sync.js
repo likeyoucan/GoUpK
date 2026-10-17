@@ -53,7 +53,7 @@ export function setupTabataBackgroundSync(
         if (canTick()) {
           tb.nextPhase(0);
         }
-      }, 120);
+      }, 40);
 
       return;
     }

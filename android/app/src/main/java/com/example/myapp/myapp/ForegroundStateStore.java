@@ -249,7 +249,7 @@ public class ForegroundStateStore {
                 s.toggleTitle = "▶";
             }
         } else if (MODE_TABATA.equals(s.mode)) {
-            final boolean incomingPhaseOpen = !"STOPPED".equals(s.tbStatus);
+            final boolean incomingPhaseOpen = isTabataOpenStatus(s.tbStatus);
 
             boolean incomingRegression = false;
             if (MODE_TABATA.equals(prevMode) && prevRunning) {
@@ -315,10 +315,14 @@ public class ForegroundStateStore {
                             if (candidate <= 0L) {
                                 candidate = nativeTabataRemainingNow;
                             }
-                            if (candidate > nativeTabataRemainingNow + 1200L) {
+
+                            // Monotonic in same phase: do not allow time to increase.
+                            if (candidate > nativeTabataRemainingNow) {
                                 candidate = nativeTabataRemainingNow;
                             }
-                            if (candidate < nativeTabataRemainingNow - 1200L) {
+
+                            // Clamp stale too-low jumps.
+                            if (candidate < nativeTabataRemainingNow - 1500L) {
                                 candidate = nativeTabataRemainingNow;
                             }
                         }
@@ -405,7 +409,9 @@ public class ForegroundStateStore {
                 s.tbEndsAt = 0L;
                 s.running = false;
                 s.toggleTitle = "▶";
-            } else if (s.tbRemainingMs > 0L && !"STOPPED".equals(s.tbStatus)) {
+            } else if (s.tbRemainingMs > 0L
+                && !"STOPPED".equals(s.tbStatus)
+                && !"COMPLETED".equals(s.tbStatus)) {
                 s.tbEndsAt = now + s.tbRemainingMs;
                 s.running = true;
                 s.toggleTitle = "⏸";
@@ -526,6 +532,7 @@ public class ForegroundStateStore {
         if ("WORK".equals(status)) return 1;
         if ("REST".equals(status)) return 2;
         if ("STOPPED".equals(status)) return -1;
+        if ("COMPLETED".equals(status)) return 3;
         return -1;
     }
 
@@ -537,7 +544,7 @@ public class ForegroundStateStore {
         int phaseOrder = tabataPhaseOrder(status);
         if (phaseOrder < 0) return -1;
 
-        return (boundedRound - 1) * 3 + phaseOrder;
+        return (boundedRound - 1) * 4 + phaseOrder;
     }
 
     private boolean isTabataRegression(
@@ -555,6 +562,10 @@ public class ForegroundStateStore {
         return incomingOrd < prevOrd;
     }
 
+    private boolean isTabataOpenStatus(String status) {
+        return "READY".equals(status) || "WORK".equals(status) || "REST".equals(status);
+    }
+
     private boolean advanceTabataPhase(RuntimeState s, long now) {
         if ("READY".equals(s.tbStatus)) {
             s.tbStatus = "WORK";
@@ -569,7 +580,7 @@ public class ForegroundStateStore {
         if ("WORK".equals(s.tbStatus)) {
             if (s.tbRound >= s.tbRounds) {
                 s.running = false;
-                s.tbStatus = "STOPPED";
+                s.tbStatus = "COMPLETED";
                 s.tbRemainingMs = 0L;
                 s.tbEndsAt = 0L;
                 s.toggleTitle = "▶";
@@ -619,6 +630,7 @@ public class ForegroundStateStore {
             if ("WORK".equals(v)) return "Work";
             if ("REST".equals(v)) return "Rest";
             if ("STOPPED".equals(v)) return "Pause";
+            if ("COMPLETED".equals(v)) return "Completed";
             return v;
         }
 
@@ -626,6 +638,7 @@ public class ForegroundStateStore {
         if ("WORK".equals(v)) return "РАБОТА";
         if ("REST".equals(v)) return "ОТДЫХ";
         if ("STOPPED".equals(v)) return "ПАУЗА";
+        if ("COMPLETED".equals(v)) return "ЗАВЕРШЕНО";
         return v;
     }
 

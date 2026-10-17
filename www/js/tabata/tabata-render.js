@@ -39,6 +39,22 @@ export function setupTabataRender(tb) {
       "primary-stroke",
     );
 
+    // Pause has priority over phase labels
+    if (tb.paused) {
+      updateText(statusEl, t("pause"));
+      statusEl.classList.add("app-text-sec");
+      tb.els.ring.classList.add("primary-stroke");
+      return;
+    }
+
+    // Completion status
+    if (tb.status === "COMPLETED") {
+      updateText(statusEl, t("tabata_complete"));
+      statusEl.classList.add("primary-text");
+      tb.els.ring.classList.add("primary-stroke");
+      return;
+    }
+
     if (tb.status === "WORK") {
       updateText(statusEl, t("work"));
       statusEl.classList.add("primary-text");
