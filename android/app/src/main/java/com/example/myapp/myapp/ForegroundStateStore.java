@@ -249,7 +249,29 @@ public class ForegroundStateStore {
                 s.toggleTitle = "▶";
             }
         } else if (MODE_TABATA.equals(s.mode)) {
-            final boolean incomingPhaseOpen = isTabataOpenStatus(s.tbStatus);
+            boolean incomingPhaseOpen = isTabataOpenStatus(s.tbStatus);
+
+            final boolean prevTerminalTabata =
+                MODE_TABATA.equals(prevMode)
+                    && !prevRunning
+                    && ("COMPLETED".equals(prevTbStatus) || "STOPPED".equals(prevTbStatus));
+
+            final boolean likelyFreshStart =
+                "READY".equals(s.tbStatus)
+                    && s.tbRound <= 1
+                    && incomingTabataRemaining > 0L;
+
+            // Block stale JS rollback after terminal state.
+            if (prevTerminalTabata && incomingPhaseOpen && !likelyFreshStart) {
+                s.running = false;
+                s.tbStatus = prevTbStatus;
+                s.tbRound = Math.max(1, prevTbRound);
+                s.tbRemainingMs = 0L;
+                s.tbEndsAt = 0L;
+                s.toggleTitle = "▶";
+            }
+
+            incomingPhaseOpen = isTabataOpenStatus(s.tbStatus);
 
             boolean incomingRegression = false;
             if (MODE_TABATA.equals(prevMode) && prevRunning) {
@@ -316,12 +338,12 @@ public class ForegroundStateStore {
                                 candidate = nativeTabataRemainingNow;
                             }
 
-                            // Не разрешаем рост remaining внутри одной фазы.
+                            // Do not allow remaining to increase within one phase.
                             if (candidate > nativeTabataRemainingNow) {
                                 candidate = nativeTabataRemainingNow;
                             }
 
-                            // Слишком резкий провал тоже считаем шумом.
+                            // Too sharp drop is treated as noise.
                             if (candidate < nativeTabataRemainingNow - 1500L) {
                                 candidate = nativeTabataRemainingNow;
                             }
@@ -344,7 +366,9 @@ public class ForegroundStateStore {
             } else {
                 long pausedRemaining;
                 if (MODE_TABATA.equals(prevMode) && prevRunning) {
-                    pausedRemaining = Math.min(nativeTabataRemainingNow, incomingTabataRemaining);
+                    pausedRemaining = nativeTabataRemainingNow > 0L
+                        ? nativeTabataRemainingNow
+                        : incomingTabataRemaining;
                 } else {
                     pausedRemaining = incomingTabataRemaining;
                 }

@@ -689,7 +689,6 @@ function applyTimerRuntimeToJs(nativeState) {
 }
 
 function applyTabataRuntimeToJs(nativeState) {
-  const COMPLETION_EPS_MS = 900;
   const LARGE_INVALID_REMAINING_MS = 6 * 60 * 60 * 1000;
 
   let rem = normalizeRemainingMsFromNative(nativeState.tbRemainingMs);
@@ -721,10 +720,14 @@ function applyTabataRuntimeToJs(nativeState) {
     rem = knownPhaseDuration;
   }
 
-  const shouldBeStopped =
-    tb.status === "STOPPED" ||
-    rem <= COMPLETION_EPS_MS ||
-    invalidPausedSnapshot;
+  const isTerminal = tb.status === "STOPPED" || tb.status === "COMPLETED";
+
+  // While phase is active, transient native 0 should not force STOPPED in JS.
+  if (!isTerminal && nativeState.running && rem <= 0) {
+    rem = Math.max(1, knownPhaseDuration || 1);
+  }
+
+  const shouldBeStopped = isTerminal || invalidPausedSnapshot;
 
   if (shouldBeStopped) {
     tb.status = "STOPPED";
@@ -1119,7 +1122,7 @@ function unbindDocumentEvents() {
 }
 
 async function handleAppBecameForeground(reason) {
-  if (!appIsBackground) return;
+  const wasBackground = appIsBackground;
   appIsBackground = false;
 
   stopPolling();
@@ -1127,7 +1130,11 @@ async function handleAppBecameForeground(reason) {
   await clearNativeSuppressedFlag();
   await pullRuntimeStateIntoJs(`${reason}:pull_runtime`);
   await drainPendingButtonActions(`${reason}:pending`);
-  scheduleForegroundStop();
+
+  if (wasBackground) {
+    scheduleForegroundStop();
+  }
+
   await syncNotification({ reason, force: false });
   releaseWakeLock();
 }
