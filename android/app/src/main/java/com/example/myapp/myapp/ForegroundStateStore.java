@@ -614,13 +614,18 @@ public class ForegroundStateStore {
     }
 
     private String buildTabataTitle(RuntimeState s) {
-        String workout = isBlank(s.tbWorkoutName) ? "Tabata" : s.tbWorkoutName;
         boolean ru = isRussianLocale();
+
+        String defaultTabataWord = ru ? "Табата" : "Tabata";
+        String workoutRaw = isBlank(s.tbWorkoutName) ? defaultTabataWord : s.tbWorkoutName;
+
+        // If workout name stayed as default English literal, localize it too.
+        String workout = "Tabata".equalsIgnoreCase(workoutRaw) ? defaultTabataWord : workoutRaw;
 
         String phase = localizeTabataStatus(s.tbStatus, ru);
         String roundWord = ru ? "РАУНД" : "ROUND";
 
-        return "Tabata - " + workout + " • " + roundWord + " " + s.tbRound + "/" + s.tbRounds + " • " + phase;
+        return defaultTabataWord + " - " + workout + " • " + roundWord + " " + s.tbRound + "/" + s.tbRounds + " • " + phase;
     }
 
     private String localizeTabataStatus(String status, boolean ru) {

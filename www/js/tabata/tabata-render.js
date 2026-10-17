@@ -6,6 +6,10 @@ import { sm } from "../sound.js?v=VERSION";
 import { getProgressOffset } from "../core/timers-runtime.js?v=VERSION";
 
 export function setupTabataRender(tb) {
+  // Monotonic guard for displayed remaining time within the same phase.
+  let lastRenderedPhaseStamp = -1;
+  let lastRenderedRemMs = 0;
+
   tb.enforceDisplayState = () => {
     if (!tb.els?.timer) return;
 
@@ -39,7 +43,7 @@ export function setupTabataRender(tb) {
       "primary-stroke",
     );
 
-    // Pause has priority over phase labels
+    // Pause must override WORK/REST labels
     if (tb.paused) {
       updateText(statusEl, t("pause"));
       statusEl.classList.add("app-text-sec");
@@ -47,7 +51,6 @@ export function setupTabataRender(tb) {
       return;
     }
 
-    // Completion status
     if (tb.status === "COMPLETED") {
       updateText(statusEl, t("tabata_complete"));
       statusEl.classList.add("primary-text");
@@ -71,9 +74,23 @@ export function setupTabataRender(tb) {
   };
 
   tb.render = (rem) => {
-    const safeRem = Math.max(0, rem);
+    let safeRem = Math.max(0, rem);
 
     tb.enforceDisplayState?.();
+
+    // Keep time monotonic inside the same phase while running.
+    if (!tb.paused && tb.status !== "STOPPED") {
+      if (lastRenderedPhaseStamp !== tb.phaseStamp) {
+        lastRenderedPhaseStamp = tb.phaseStamp;
+        lastRenderedRemMs = safeRem;
+      } else if (lastRenderedRemMs > 0 && safeRem > lastRenderedRemMs) {
+        safeRem = lastRenderedRemMs;
+      }
+      lastRenderedRemMs = safeRem;
+    } else {
+      lastRenderedPhaseStamp = tb.phaseStamp;
+      lastRenderedRemMs = safeRem;
+    }
 
     const sTotal = Math.ceil(safeRem / 1000);
     if (sTotal <= 3 && sTotal > 0 && tb.lastBeepSec !== sTotal) {

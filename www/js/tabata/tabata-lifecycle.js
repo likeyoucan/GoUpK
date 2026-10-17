@@ -144,6 +144,9 @@ export function setupTabataLifecycle(tb, deps) {
     tb.rAF = null;
 
     tb.remainingAtPause = tb.tabataEngine.pause();
+
+    // Ensure pause text is stable and not overridden by old phase label.
+    tb.updatePhaseStyles();
     updateText(tb.els.status, t("pause"));
 
     stopTimerContext();

@@ -31,11 +31,13 @@ export function setupTabataBackgroundSync(
     if (rem <= 0) {
       const missed = Math.abs(rem);
 
-      if (document.hidden || missed > 2000) {
+      // In background or huge lag: fast-forward immediately.
+      if (document.hidden || missed > 1200) {
         tb.nextPhase(missed);
         return;
       }
 
+      // Foreground: minimal hold to show 00:00 but avoid audible lag.
       tb.phaseClosing = true;
 
       if (!isBackground) tb.render(0);
@@ -53,7 +55,7 @@ export function setupTabataBackgroundSync(
         if (canTick()) {
           tb.nextPhase(0);
         }
-      }, 40);
+      }, 35);
 
       return;
     }
