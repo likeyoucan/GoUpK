@@ -5,8 +5,6 @@ import android.content.SharedPreferences;
 
 import org.json.JSONObject;
 
-import java.util.Locale;
-
 public class ForegroundStateStore {
     private static final String PREFS = "fg_runtime_state";
 
@@ -41,11 +39,6 @@ public class ForegroundStateStore {
         public long tbRemainingMs = 0L;
         public long tbPhaseDuration = 0L;
         public long tbEndsAt = 0L;
-
-        // Native phase plan for background Tabata progression
-        public long tbWorkMs = 20000L;
-        public long tbRestMs = 10000L;
-        public long tbReadyMs = 5000L;
 
         public String notifTitle = "Stopwatch";
         public String notifBody = "00:00";
@@ -90,10 +83,6 @@ public class ForegroundStateStore {
         s.tbPhaseDuration = prefs.getLong("tbPhaseDuration", 0L);
         s.tbEndsAt = prefs.getLong("tbEndsAt", 0L);
 
-        s.tbWorkMs = prefs.getLong("tbWorkMs", 20000L);
-        s.tbRestMs = prefs.getLong("tbRestMs", 10000L);
-        s.tbReadyMs = prefs.getLong("tbReadyMs", 5000L);
-
         s.notifTitle = prefs.getString("notifTitle", "Stopwatch");
         s.notifBody = prefs.getString("notifBody", "00:00");
         s.toggleTitle = prefs.getString("toggleTitle", "▶");
@@ -128,10 +117,6 @@ public class ForegroundStateStore {
             .putLong("tbPhaseDuration", s.tbPhaseDuration)
             .putLong("tbEndsAt", s.tbEndsAt)
 
-            .putLong("tbWorkMs", s.tbWorkMs)
-            .putLong("tbRestMs", s.tbRestMs)
-            .putLong("tbReadyMs", s.tbReadyMs)
-
             .putString("notifTitle", s.notifTitle)
             .putString("notifBody", s.notifBody)
             .putString("toggleTitle", s.toggleTitle)
@@ -151,13 +136,11 @@ public class ForegroundStateStore {
         if (runtime == null) return;
 
         RuntimeState s = read();
+
         long now = System.currentTimeMillis();
 
         String prevMode = s.mode;
         boolean prevRunning = s.running;
-        String prevTbStatus = s.tbStatus;
-        int prevTbRound = s.tbRound;
-        long prevTbPhaseDuration = s.tbPhaseDuration;
 
         long nativeSwElapsedNow = getStopwatchElapsedNow(s, now);
         long nativeTimerRemainingNow = getTimerRemainingNow(s, now);
@@ -183,10 +166,6 @@ public class ForegroundStateStore {
         s.tbWorkoutName = runtime.optString("tbWorkoutName", s.tbWorkoutName);
         s.tbPhaseDuration = Math.max(0L, runtime.optLong("tbPhaseDuration", s.tbPhaseDuration));
 
-        s.tbWorkMs = Math.max(1L, runtime.optLong("tbWorkMs", s.tbWorkMs));
-        s.tbRestMs = Math.max(1L, runtime.optLong("tbRestMs", s.tbRestMs));
-        s.tbReadyMs = Math.max(1L, runtime.optLong("tbReadyMs", s.tbReadyMs));
-
         s.notifTitle = runtime.optString("notifTitle", s.notifTitle);
         s.notifBody = runtime.optString("notifBody", s.notifBody);
 
@@ -198,13 +177,17 @@ public class ForegroundStateStore {
         if (MODE_STOPWATCH.equals(s.mode)) {
             if (s.running) {
                 if (MODE_STOPWATCH.equals(prevMode) && prevRunning) {
+                    // Keep monotonic elapsed; do not let stale JS rewind runtime.
                     long mergedElapsed = Math.max(nativeSwElapsedNow, incomingSwElapsed);
                     s.swElapsedMs = mergedElapsed;
+
+                    // Rebase anchor only when JS is meaningfully ahead.
                     if (mergedElapsed > nativeSwElapsedNow + 150L) {
                         s.swBaseElapsedMs = mergedElapsed;
                         s.swStartedAt = now;
                     }
                 } else {
+                    // Transition to running.
                     long startElapsed = Math.max(0L, incomingSwElapsed);
                     s.swElapsedMs = startElapsed;
                     s.swBaseElapsedMs = startElapsed;
@@ -229,6 +212,7 @@ public class ForegroundStateStore {
             if (s.running) {
                 long mergedRemaining;
                 if (MODE_TIMER.equals(prevMode) && prevRunning) {
+                    // While running, remaining time must not increase.
                     mergedRemaining = Math.min(nativeTimerRemainingNow, incomingTimerRemaining);
                 } else {
                     mergedRemaining = incomingTimerRemaining;
@@ -248,8 +232,11 @@ public class ForegroundStateStore {
                 s.toggleTitle = "▶";
             }
         } else if (MODE_TABATA.equals(s.mode)) {
+            final boolean incomingPhaseOpen = !"STOPPED".equals(s.tbStatus);
+
             if (s.running) {
                 long mergedRemaining;
+
                 if (MODE_TABATA.equals(prevMode) && prevRunning) {
                     boolean phaseChanged =
                         !stringEq(prevTbStatus, s.tbStatus)
@@ -258,31 +245,50 @@ public class ForegroundStateStore {
 
                     if (phaseChanged) {
                         long phaseDefault = phaseDurationForStatus(s, s.tbStatus);
-                        mergedRemaining = incomingTabataRemaining > 0L ? incomingTabataRemaining : phaseDefault;
+
+                        if (incomingTabataRemaining > 0L) {
+                            mergedRemaining = incomingTabataRemaining;
+                        } else if (nativeTabataRemainingNow > 0L) {
+                            mergedRemaining = nativeTabataRemainingNow;
+                        } else {
+                            mergedRemaining = phaseDefault;
+                        }
                     } else {
-                        // Protection against stale JS values that can suddenly force 00:00.
                         long candidate = incomingTabataRemaining;
 
-                        if (candidate <= 0L && nativeTabataRemainingNow > 1200L) {
-                            candidate = nativeTabataRemainingNow;
+                        // Do not allow stale zero from JS to collapse active phase to 00:00.
+                        if (candidate <= 0L && incomingPhaseOpen) {
+                            if (nativeTabataRemainingNow > 0L) {
+                                candidate = nativeTabataRemainingNow;
+                            } else {
+                                candidate = Math.max(1L, s.tbPhaseDuration);
+                            }
                         }
 
                         if (nativeTabataRemainingNow > 0L) {
+                            if (candidate <= 0L) {
+                                candidate = nativeTabataRemainingNow;
+                            }
                             if (candidate > nativeTabataRemainingNow + 1200L) {
                                 candidate = nativeTabataRemainingNow;
                             }
-                            if (candidate < nativeTabataRemainingNow - 3500L) {
+                            if (candidate < nativeTabataRemainingNow - 1200L) {
                                 candidate = nativeTabataRemainingNow;
                             }
                         }
 
-                        mergedRemaining = Math.min(nativeTabataRemainingNow, candidate);
+                        mergedRemaining = candidate;
                     }
                 } else {
                     mergedRemaining = incomingTabataRemaining;
                 }
 
-                s.tbRemainingMs = Math.max(0L, mergedRemaining);
+                if (incomingPhaseOpen) {
+                    s.tbRemainingMs = Math.max(1L, mergedRemaining);
+                } else {
+                    s.tbRemainingMs = Math.max(0L, mergedRemaining);
+                }
+
                 s.tbEndsAt = now + s.tbRemainingMs;
                 s.toggleTitle = "⏸";
             } else {
@@ -292,6 +298,11 @@ public class ForegroundStateStore {
                 } else {
                     pausedRemaining = incomingTabataRemaining;
                 }
+
+                if (pausedRemaining <= 0L && incomingPhaseOpen) {
+                    pausedRemaining = Math.max(1L, s.tbPhaseDuration);
+                }
+
                 s.tbRemainingMs = Math.max(0L, pausedRemaining);
                 s.tbEndsAt = 0L;
                 s.toggleTitle = "▶";
@@ -354,7 +365,9 @@ public class ForegroundStateStore {
                 s.toggleTitle = "⏸";
             }
 
-            s.notifTitle = buildTabataTitle(s);
+            String workout = isBlank(s.tbWorkoutName) ? "Tabata" : s.tbWorkoutName;
+            String phase = "STOPPED".equals(s.tbStatus) ? "Pause" : s.tbStatus;
+            s.notifTitle = "Tabata - " + workout + " • ROUND " + s.tbRound + "/" + s.tbRounds + " • " + phase;
             long rem = getTabataRemainingNow(s, now);
             s.notifBody = formatTime(rem, false);
         } else {
@@ -397,7 +410,7 @@ public class ForegroundStateStore {
 
         if (MODE_TABATA.equals(s.mode)) {
             long rem = getTabataRemainingNow(s, now);
-            p.title = buildTabataTitle(s);
+            p.title = isBlank(s.notifTitle) ? "Tabata" : s.notifTitle;
             p.body = formatTime(rem, false);
             return p;
         }
@@ -409,7 +422,6 @@ public class ForegroundStateStore {
 
     private boolean normalizeCompletionIfNeeded(RuntimeState s, long now) {
         boolean changed = false;
-
         if (MODE_TIMER.equals(s.mode) && s.running) {
             long rem = Math.max(0L, s.tmEndsAt - now);
             if (rem <= 0L) {
@@ -421,130 +433,7 @@ public class ForegroundStateStore {
                 changed = true;
             }
         }
-
-        if (MODE_TABATA.equals(s.mode) && s.running) {
-            long rem = Math.max(0L, s.tbEndsAt - now);
-            if (rem <= 0L) {
-                long overdue = Math.max(0L, now - s.tbEndsAt);
-
-                if (advanceTabataPhase(s, now)) {
-                    changed = true;
-
-                    while (overdue > 0L && s.running) {
-                        long phaseLen = Math.max(1L, s.tbPhaseDuration);
-
-                        if (overdue >= phaseLen) {
-                            overdue -= phaseLen;
-                            if (!advanceTabataPhase(s, now)) {
-                                break;
-                            }
-                        } else {
-                            long remaining = Math.max(1L, phaseLen - overdue);
-                            s.tbRemainingMs = remaining;
-                            s.tbEndsAt = now + remaining;
-                            changed = true;
-                            overdue = 0L;
-                        }
-                    }
-                } else {
-                    changed = true;
-                }
-
-                s.updatedAt = now;
-            }
-        }
-
         return changed;
-    }
-
-    private long phaseDurationForStatus(RuntimeState s, String status) {
-        if ("READY".equals(status)) return Math.max(1L, s.tbReadyMs);
-        if ("WORK".equals(status)) return Math.max(1L, s.tbWorkMs);
-        if ("REST".equals(status)) return Math.max(1L, s.tbRestMs);
-        return Math.max(1L, s.tbPhaseDuration);
-    }
-
-    private boolean advanceTabataPhase(RuntimeState s, long now) {
-        if ("READY".equals(s.tbStatus)) {
-            s.tbStatus = "WORK";
-            s.tbRound = Math.max(1, s.tbRound);
-            s.tbPhaseDuration = phaseDurationForStatus(s, "WORK");
-            s.tbRemainingMs = s.tbPhaseDuration;
-            s.tbEndsAt = now + s.tbRemainingMs;
-            s.toggleTitle = "⏸";
-            return true;
-        }
-
-        if ("WORK".equals(s.tbStatus)) {
-            if (s.tbRound >= s.tbRounds) {
-                s.running = false;
-                s.tbStatus = "STOPPED";
-                s.tbRemainingMs = 0L;
-                s.tbEndsAt = 0L;
-                s.toggleTitle = "▶";
-                return false;
-            }
-
-            s.tbStatus = "REST";
-            s.tbPhaseDuration = phaseDurationForStatus(s, "REST");
-            s.tbRemainingMs = s.tbPhaseDuration;
-            s.tbEndsAt = now + s.tbRemainingMs;
-            s.toggleTitle = "⏸";
-            return true;
-        }
-
-        if ("REST".equals(s.tbStatus)) {
-            s.tbRound = Math.min(s.tbRounds, Math.max(1, s.tbRound + 1));
-            s.tbStatus = "WORK";
-            s.tbPhaseDuration = phaseDurationForStatus(s, "WORK");
-            s.tbRemainingMs = s.tbPhaseDuration;
-            s.tbEndsAt = now + s.tbRemainingMs;
-            s.toggleTitle = "⏸";
-            return true;
-        }
-
-        s.running = false;
-        s.tbStatus = "STOPPED";
-        s.tbRemainingMs = 0L;
-        s.tbEndsAt = 0L;
-        s.toggleTitle = "▶";
-        return false;
-    }
-
-    private String buildTabataTitle(RuntimeState s) {
-        String workout = isBlank(s.tbWorkoutName) ? "Tabata" : s.tbWorkoutName;
-        boolean ru = isRussianLocale();
-
-        String phase = localizeTabataStatus(s.tbStatus, ru);
-        String roundWord = ru ? "РАУНД" : "ROUND";
-
-        return "Tabata - " + workout + " • " + roundWord + " " + s.tbRound + "/" + s.tbRounds + " • " + phase;
-    }
-
-    private String localizeTabataStatus(String status, boolean ru) {
-        String v = status == null ? "STOPPED" : status;
-        if (!ru) {
-            if ("READY".equals(v)) return "Get Ready";
-            if ("WORK".equals(v)) return "Work";
-            if ("REST".equals(v)) return "Rest";
-            if ("STOPPED".equals(v)) return "Pause";
-            return v;
-        }
-
-        if ("READY".equals(v)) return "ПРИГОТОВЬТЕСЬ";
-        if ("WORK".equals(v)) return "РАБОТА";
-        if ("REST".equals(v)) return "ОТДЫХ";
-        if ("STOPPED".equals(v)) return "ПАУЗА";
-        return v;
-    }
-
-    private boolean isRussianLocale() {
-        try {
-            String lang = Locale.getDefault().getLanguage();
-            return lang != null && lang.toLowerCase().startsWith("ru");
-        } catch (Throwable ignored) {
-            return false;
-        }
     }
 
     private long getStopwatchElapsedNow(RuntimeState s, long now) {
@@ -566,19 +455,14 @@ public class ForegroundStateStore {
         return v == null || v.trim().isEmpty();
     }
 
-    private static boolean stringEq(String a, String b) {
-        if (a == null) return b == null;
-        return a.equals(b);
-    }
-
     private static String formatTime(long ms, boolean forceHours) {
         long totalSec = Math.max(0L, ms) / 1000L;
         long h = totalSec / 3600L;
         long m = (totalSec % 3600L) / 60L;
-        long sSec = totalSec % 60L;
+        long s = totalSec % 60L;
 
-        if (h > 0L || forceHours) return h + ":" + pad2(m) + ":" + pad2(sSec);
-        return pad2(m) + ":" + pad2(sSec);
+        if (h > 0L || forceHours) return h + ":" + pad2(m) + ":" + pad2(s);
+        return pad2(m) + ":" + pad2(s);
     }
 
     private static String pad2(long n) {

@@ -310,6 +310,11 @@ function scheduleForegroundStop(delay = FOREGROUND_STOP_DEBOUNCE_MS) {
       await stopForeground();
       return;
     }
+    const skipRuntimePushForTabataTransition =
+      state.mode === "tabata" &&
+      state.running &&
+      tb.status !== "STOPPED" &&
+      tb.phaseClosing;
     await syncNotification({
       reason: "stop_debounce_state_active",
       force: false,
@@ -348,7 +353,19 @@ function buildRuntimeStateFromJs(payload, state, theme, accent) {
     Number(tm.totalDuration || tm.initialDurationMs || 0) || 0,
   );
 
-  const tabataRemNow = Math.max(0, Number(getTabataRemainingMs()) || 0);
+  let tabataRemNow = Math.max(0, Number(getTabataRemainingMs()) || 0);
+
+  // During short phase-closing window JS can transiently report 0.
+  // Do not push 0 to native for active Tabata phase.
+  if (
+    state?.mode === "tabata" &&
+    state?.running &&
+    tb.status !== "STOPPED" &&
+    tb.phaseClosing &&
+    tabataRemNow <= 0
+  ) {
+    tabataRemNow = Math.max(1, Number(tb.phaseDuration) || 1);
+  }
 
   const domRound = Number($("tb-currentRound")?.textContent || 0) || 0;
   const domRounds = Number($("tb-totalRounds")?.textContent || 0) || 0;
@@ -999,13 +1016,15 @@ export async function syncNotification({
     onAccentColor,
   });
 
-  options.runtimeState = buildRuntimeStateFromJs(
-    payload,
-    state,
-    { isDarkTheme },
-    { accentColor, onAccentColor },
-  );
-  options.runtimeState = applyRuntimePushGuard(options.runtimeState);
+  if (!skipRuntimePushForTabataTransition) {
+    options.runtimeState = buildRuntimeStateFromJs(
+      payload,
+      state,
+      { isDarkTheme },
+      { accentColor, onAccentColor },
+    );
+    options.runtimeState = applyRuntimePushGuard(options.runtimeState);
+  }
 
   if (!isForegroundShown) {
     try {
