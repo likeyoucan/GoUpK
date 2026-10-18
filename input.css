@@ -3428,10 +3428,38 @@
     backface-visibility: hidden;
     will-change: auto;
     transition: color var(--dur-short) ease;
+    position: relative;
   }
 
-  nav .nav-btn-press:active {
+  nav .nav-btn::before {
+    content: "";
+    position: absolute;
+    inset: 6px 8px;
+    border-radius: 0.75rem;
+    background: transparent;
+    box-shadow: inset 0 0 0 0 rgb(0 0 0 / 0);
+    opacity: 0;
+    transform: translateY(0);
+    transition:
+      opacity 120ms var(--ease-standard),
+      transform 120ms var(--ease-standard),
+      box-shadow 120ms var(--ease-standard),
+      background-color 120ms var(--ease-standard);
+    pointer-events: none;
+  }
+
+  nav .nav-btn-press:active,
+  .nav-btn:hover > div:not(.primary-text) {
     transform: none;
+  }
+
+  nav .nav-btn-press:active::before {
+    opacity: 1;
+    transform: translateY(1px);
+    background: color-mix(in srgb, var(--text-color) 8%, transparent);
+    box-shadow:
+      inset 0 2px 6px rgb(0 0 0 / 0.18),
+      inset 0 1px 1px rgb(0 0 0 / 0.12);
   }
 
   nav .nav-btn > div {
@@ -3459,7 +3487,7 @@
 
   nav .nav-btn svg,
   nav .nav-btn svg * {
-    transform: none;
+    transform: none !important;
     transform-box: fill-box;
   }
 
