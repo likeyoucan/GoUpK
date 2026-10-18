@@ -3451,11 +3451,6 @@
     position: relative;
   }
 
-  nav .nav-btn-press:active,
-  .nav-btn:hover > div:not(.primary-text) {
-    transform: none;
-  }
-
   nav .nav-btn > div {
     width: 1.75rem;
     height: 1.75rem;
