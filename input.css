@@ -893,6 +893,15 @@
     text-transform: uppercase;
   }
 
+  .view-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    line-height: 1;
+    text-align: center;
+  }
+
   .settings-row {
     min-height: var(--control-h);
   }
@@ -1668,8 +1677,9 @@
 
     .top_content {
       --top-pad: var(--space-4);
-      --title-rail: 44px;
+      --title-rail: 40px;
       --action-rail: 52px;
+      --ring-gap: var(--space-2);
       max-height: min(62.5dvw, 620px);
     }
 
@@ -2399,16 +2409,22 @@
     }
   }
 
-  #view-settings > div:first-child {
-    padding-top: calc(var(--safe-top) + 0.5rem);
-    height: auto;
-    min-height: calc(55px + var(--safe-top));
+  #view-settings .settings-title-rail {
+    min-height: 48px;
+    padding-top: calc(var(--safe-top) + var(--space-2));
+    padding-bottom: var(--space-2);
+    margin: 0;
+  }
+
+  #view-settings .settings-content-wrap {
+    padding-top: var(--space-2);
   }
 
   @media (min-width: 768px) {
-    #view-settings > div:first-child {
-      padding-top: 1.5rem;
-      min-height: auto;
+    #view-settings .settings-title-rail {
+      min-height: 44px;
+      padding-top: var(--space-4);
+      padding-bottom: var(--space-2);
     }
   }
 
