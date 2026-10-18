@@ -2409,9 +2409,10 @@
     }
   }
 
+  /* Settings title spacing: intentionally larger than stopwatch/timer/tabata */
   #view-settings .settings-title-rail {
     min-height: 58px;
-    padding-top: calc(var(--safe-top) + 0.9rem);
+    padding-top: calc(var(--safe-top) + 1.15rem);
     padding-bottom: 0.35rem;
     margin: 0;
   }
@@ -2420,11 +2421,30 @@
     padding-top: 0.2rem;
   }
 
+  /* Mobile */
   @media (max-width: 767px) {
     #view-settings .settings-title-rail {
-      min-height: 70px;
-      padding-top: calc(var(--safe-top) + 1.35rem);
-      padding-bottom: 0.45rem;
+      min-height: 74px;
+      padding-top: calc(var(--safe-top) + 1.95rem);
+      padding-bottom: 0.5rem;
+    }
+  }
+
+  /* Tablet portrait / small desktop */
+  @media (min-width: 768px) and (max-width: 1279px) {
+    #view-settings .settings-title-rail {
+      min-height: 84px;
+      padding-top: calc(var(--safe-top) + 2rem);
+      padding-bottom: 0.55rem;
+    }
+  }
+
+  /* Desktop */
+  @media (min-width: 1280px) {
+    #view-settings .settings-title-rail {
+      min-height: 92px;
+      padding-top: calc(var(--safe-top) + 2.25rem);
+      padding-bottom: 0.6rem;
     }
   }
 
