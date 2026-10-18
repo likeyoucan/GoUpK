@@ -2425,7 +2425,7 @@
   @media (max-width: 767px) {
     #view-settings .settings-title-rail {
       min-height: 74px;
-      padding-top: calc(var(--safe-top) + 1.95rem);
+      padding-top: calc(var(--safe-top) + 2.6rem);
       padding-bottom: 0.5rem;
     }
   }
