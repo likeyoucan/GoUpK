@@ -4843,6 +4843,14 @@
 
   /* Neutral contrast boost for captions and nav on extreme backgrounds */
   .section-caption {
+    color: color-mix(in srgb, var(--text-color) 86%, transparent);
+  }
+
+  #view-settings .section-caption {
+    color: color-mix(in srgb, var(--text-color) 58%, transparent);
+  }
+
+  html.dark #view-settings .section-caption {
     color: color-mix(in srgb, var(--text-color) 62%, transparent);
   }
 
