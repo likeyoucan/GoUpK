@@ -1676,11 +1676,16 @@
     }
 
     .top_content {
-      --top-pad: var(--space-4);
-      --title-rail: 40px;
-      --action-rail: 52px;
-      --ring-gap: var(--space-2);
+      --top-pad: var(--space-2);
+      --title-rail: 34px;
+      --action-rail: 46px;
+      --ring-gap: var(--space-1);
       max-height: min(62.5dvw, 620px);
+      align-content: start;
+    }
+
+    .view-top-half {
+      align-items: flex-start;
     }
 
     .mid_content {
@@ -2409,16 +2414,16 @@
     }
   }
 
-  #view-settings .settings-title-rail {
-    min-height: 48px;
-    padding-top: calc(var(--safe-top) + var(--space-2));
-    padding-bottom: var(--space-2);
-    margin: 0;
-  }
+#view-settings .settings-title-rail {
+  min-height: 48px;
+  padding-top: calc(var(--safe-top) + var(--space-4));
+  padding-bottom: var(--space-1);
+  margin: 0;
+}
 
-  #view-settings .settings-content-wrap {
-    padding-top: var(--space-2);
-  }
+#view-settings .settings-content-wrap {
+  padding-top: var(--space-1);
+}
 
   @media (min-width: 768px) {
     #view-settings .settings-title-rail {
@@ -3427,6 +3432,7 @@
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
     will-change: auto;
+    transition: color var(--dur-short) ease;
   }
 
   nav .nav-btn-press:active {
@@ -3454,6 +3460,9 @@
     width: 100%;
     height: 100%;
     flex: 0 0 auto;
+    transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
   }
 
   nav .nav-btn::after {
@@ -3476,10 +3485,6 @@
   }
 
   @media (hover: hover) {
-    .nav-btn:hover > div:not(.primary-text) {
-      transform: scale(1.08);
-    }
-
     .nav-btn:hover > div:not(.primary-text),
     .nav-btn:hover > span:not(.primary-text) {
       color: var(--primary-color);
