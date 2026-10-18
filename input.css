@@ -4847,7 +4847,7 @@
   }
 
   #view-settings .section-caption {
-    color: color-mix(in srgb, var(--text-color) 58%, transparent);
+    color: color-mix(in srgb, var(--text-color) 54%, transparent);
   }
 
   html.dark #view-settings .section-caption {
