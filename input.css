@@ -2408,9 +2408,9 @@
   }
 
   #view-settings .settings-title-rail {
-    min-height: calc(55px + var(--safe-top));
-    padding-top: calc(var(--safe-top) + 0.5rem);
-    padding-bottom: 0.25rem;
+    min-height: 56px;
+    padding-top: calc(var(--safe-top) + 14px);
+    padding-bottom: 6px;
     margin: 0;
   }
 
@@ -2420,9 +2420,9 @@
 
   @media (min-width: 768px) {
     #view-settings .settings-title-rail {
-      min-height: 44px;
-      padding-top: 1.5rem;
-      padding-bottom: 0.5rem;
+      min-height: 64px;
+      padding-top: 26px;
+      padding-bottom: 8px;
     }
   }
 
