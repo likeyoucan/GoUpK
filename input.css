@@ -4846,7 +4846,7 @@
   }
 
   html.dark #view-settings .section-caption {
-    color: color-mix(in srgb, var(--text-color) 62%, transparent);
+    color: color-mix(in srgb, var(--text-color) 60%, transparent);
   }
 
   .nav-btn > div,
