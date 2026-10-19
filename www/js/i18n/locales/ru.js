@@ -100,6 +100,7 @@ export const ru = {
   share_as_file: "Поделиться файлом CSV",
   share_as_text: "Поделиться текстом",
   share_copied: "Скопировано в буфер",
+  copy_text: "Скопировать текст",
   share_failed: "Не удалось поделиться",
   share_file_failed: "Не удалось поделиться файлом",
   share_file_saved: "CSV файл загружен",

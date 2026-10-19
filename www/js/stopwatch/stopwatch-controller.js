@@ -83,6 +83,7 @@ const stopwatchModule = {
       lapFlash: $("sw-lapFlash"),
       currentLapsHeader: $("sw-currentLapsHeader"),
       shareModeTextBtn: $("sw-share-text-btn"),
+      shareModeCopyBtn: $("sw-copy-text-btn"),
       shareModeCsvBtn: $("sw-share-csv-btn"),
     };
 

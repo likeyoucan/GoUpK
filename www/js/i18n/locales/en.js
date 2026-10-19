@@ -99,6 +99,7 @@ export const en = {
   share_as_file: "Share as CSV",
   share_as_text: "Share as Text",
   share_copied: "Copied to clipboard",
+  copy_text: "Copy Text",
   share_failed: "Unable to share",
   share_file_failed: "Failed to share file",
   share_file_saved: "CSV file downloaded",

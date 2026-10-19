@@ -70,6 +70,7 @@ export function setupStopwatchShareController(sw) {
   const onSaveClick = () => sw.prepareSaveSession();
   const onShareClick = () => sw.shareCurrentResult();
 
+  // Поделиться текстом (через нативный share / navigator.share)
   const onShareTextClick = async () => {
     const session = sw.pendingShareSession;
     if (!session) return;
@@ -79,6 +80,22 @@ export function setupStopwatchShareController(sw) {
     });
 
     const ok = await sw.shareResults.shareAsText(payload);
+    if (ok) {
+      sw.pendingShareSession = null;
+      modalManager.closeCurrent();
+    }
+  };
+
+  // Скопировать текст (всегда без системного confirm)
+  const onCopyTextClick = async () => {
+    const session = sw.pendingShareSession;
+    if (!session) return;
+
+    const payload = sw.shareResults.buildStopwatchPayload(session, {
+      showMs: uiSettingsManager.showMs,
+    });
+
+    const ok = await sw.shareResults.copyAsText(payload);
     if (ok) {
       sw.pendingShareSession = null;
       modalManager.closeCurrent();
@@ -104,6 +121,7 @@ export function setupStopwatchShareController(sw) {
     bind(sw.els.saveBtn, "click", onSaveClick);
     bind(sw.els.shareBtn, "click", onShareClick);
     bind(sw.els.shareModeTextBtn, "click", onShareTextClick);
+    bind(sw.els.shareModeCopyBtn, "click", onCopyTextClick);
     bind(sw.els.shareModeCsvBtn, "click", onShareCsvClick);
   };
 
