@@ -100,7 +100,7 @@ export const en = {
   share_failed: "Unable to share",
   share_file_failed: "Failed to share file",
   share_file_saved: "CSV file downloaded",
-  share_mode_hint: "Choose how you want to share this session.",
+  share_mode_hint: "Choose text action: Share or Copy.",
   show_foreground_banner: "Show Notification Banner",
   show_ms: "Show Milliseconds",
   sort_by: "Sort by:",

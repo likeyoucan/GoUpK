@@ -159,12 +159,31 @@ async function shareFileNative(payload, fileName, csvText) {
 }
 
 function openManualCopyPrompt(text) {
-  // Последний fallback: пользователь копирует вручную
   try {
     window.prompt(t("share_as_text"), text);
     return true;
   } catch {
     return false;
+  }
+}
+
+function canUseShareTransport() {
+  if (isNativePlatform() && getSharePlugin()?.share) return true;
+  return typeof navigator.share === "function";
+}
+
+function chooseTextAction() {
+  // true = share, false = copy
+  const okText = t("share");
+  const cancelText = t("share_copied");
+  const hint = t("share_mode_hint");
+
+  const msg = `${hint}\n\nOK — ${okText}\nCancel — ${cancelText}`;
+
+  try {
+    return window.confirm(msg) ? "share" : "copy";
+  } catch {
+    return "copy";
   }
 }
 
@@ -181,34 +200,36 @@ export const shareResults = {
     const rawText = buildStopwatchText(payload, t);
     const text = normalizeShareText(rawText);
 
-    // Приоритет: копирование в буфер, чтобы пользователь сам вставил куда нужно
+    const sharePossible = canUseShareTransport();
+    const action = sharePossible ? chooseTextAction() : "copy";
+
+    if (action === "share") {
+      if (isNativePlatform()) {
+        const nativeResult = await shareTextNative(payload, text);
+        if (nativeResult.ok) return true;
+        if (nativeResult.canceled) return false;
+      }
+
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: `Stopwatch Pro - ${payload.name}`,
+            text,
+          });
+          return true;
+        } catch (error) {
+          if (isUserShareCancel(error)) return false;
+        }
+      }
+    }
+
+    // Copy flow
     const copied = await copyToClipboard(text);
     if (copied) {
       showToast(t("share_copied"));
       return true;
     }
 
-    // Если буфер недоступен, пробуем нативный share (android/capacitor)
-    if (isNativePlatform()) {
-      const nativeResult = await shareTextNative(payload, text);
-      if (nativeResult.ok) return true;
-      if (nativeResult.canceled) return false;
-    }
-
-    // Web Share fallback
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: `Stopwatch Pro - ${payload.name}`,
-          text,
-        });
-        return true;
-      } catch (error) {
-        if (isUserShareCancel(error)) return false;
-      }
-    }
-
-    // Жесткий fallback: prompt с текстом для ручного копирования
     const prompted = openManualCopyPrompt(text);
     if (prompted) return true;
 

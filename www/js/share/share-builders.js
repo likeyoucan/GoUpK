@@ -63,6 +63,7 @@ function buildStopwatchText(payload, t) {
 
   return [
     `${t("name")}: ${payload.name}`,
+    `${t("date_new")}: ${payload.dateText}`,
     `${t("total_time")}: ${payload.totalTimeText}`,
     "",
     ...table,
@@ -72,7 +73,17 @@ function buildStopwatchText(payload, t) {
 function buildStopwatchCsv(payload, t) {
   const rows = [];
 
-  // Только таблица, без служебных строк и метаданных
+  // Заголовок сохранения
+  rows.push([t("name"), payload.name].map(escapeCsv).join(CSV_SEPARATOR));
+  rows.push(
+    [t("date_new"), payload.dateText].map(escapeCsv).join(CSV_SEPARATOR),
+  );
+  rows.push(
+    [t("total_time"), payload.totalTimeText].map(escapeCsv).join(CSV_SEPARATOR),
+  );
+  rows.push("");
+
+  // Таблица кругов
   rows.push(
     [t("lap_text"), t("total_time"), t("split_time")]
       .map(escapeCsv)
