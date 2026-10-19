@@ -178,6 +178,11 @@ export function setupStopwatchRender(sw) {
       sw.els.shareBtn.classList.toggle("hidden", !canShare);
       sw.els.shareBtn.classList.toggle("flex", canShare);
     }
+
+    if (sw.els.saveCsvBtn) {
+      sw.els.saveCsvBtn.classList.toggle("hidden", !canShare);
+      sw.els.saveCsvBtn.classList.toggle("flex", canShare);
+    }
   };
 
   sw._hydrateSessionDetails = (id) => {
