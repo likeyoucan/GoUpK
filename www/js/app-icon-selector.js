@@ -419,7 +419,7 @@ export function initAppIconSelector({ t, appProManager }) {
     if (!option) return false;
 
     if (!isOptionSupportedByNative(option, supportedNativeNames)) {
-      showToast("App icon is not available in this build");
+      showToast(resolveToastText(t, "app_icon_not_available"));
       return false;
     }
 
@@ -528,7 +528,19 @@ export function initAppIconSelector({ t, appProManager }) {
 
       btn.addEventListener("click", async () => {
         if (nativeUnsupported) {
-          showToast("App icon is not available in this build");
+          showToast(resolveToastText(t, "app_icon_not_available"));
+          return;
+        }
+
+        // Если файл иконки не найден/не загрузился — локализованный тост.
+        if (btn.classList.contains("is-img-missing")) {
+          showToast(resolveToastText(t, "app_icon_file_missing"));
+          return;
+        }
+
+        const previewState = ICON_PREVIEW_CACHE.get(opt.id);
+        if (previewState?.missing) {
+          showToast(resolveToastText(t, "app_icon_file_missing"));
           return;
         }
 

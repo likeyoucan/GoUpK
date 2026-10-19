@@ -61,9 +61,10 @@ function buildStopwatchText(payload, t) {
     sep,
   ];
 
+  // По требованию: без служебных названий полей в шапке (name/date labels).
   return [
-    `${t("name")}: ${payload.name}`,
-    `${t("date_new")}: ${payload.dateText}`,
+    payload.name,
+    payload.dateText,
     `${t("total_time")}: ${payload.totalTimeText}`,
     "",
     ...table,

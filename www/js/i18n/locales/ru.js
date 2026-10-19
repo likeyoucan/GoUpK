@@ -13,6 +13,8 @@ export const ru = {
   app_icon_setting: "Иконка приложения",
   app_icon_default: "Стандарт",
   app_icon_pro: "Pro",
+  app_icon_file_missing: "Файл иконки не найден",
+  app_icon_not_available: "Иконка недоступна в этой сборке",
   bg_color: "Цвет фона",
   bg_limit_msg: "Максимум 50 своих цветов фона",
   buy_pro: "Купить Pro",

@@ -10,6 +10,10 @@ export const TOAST_FALLBACKS_BY_KEY = Object.freeze({
   share_failed: "Unable to share",
   share_file_failed: "Failed to share file",
   pro_already_active: "PRO is already active",
+
+  // App icon related fallbacks
+  app_icon_file_missing: "Icon file not found",
+  app_icon_not_available: "App icon is not available in this build",
 });
 
 export function resolveI18nOrFallback(t, key, explicitFallback = "") {

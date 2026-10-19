@@ -13,6 +13,8 @@ export const en = {
   app_icon_setting: "App Icon",
   app_icon_default: "Default",
   app_icon_pro: "Pro",
+  app_icon_file_missing: "Icon file not found",
+  app_icon_not_available: "App icon is not available in this build",
   bg_color: "Background",
   bg_limit_msg: "Max 50 custom background colors",
   buy_pro: "Buy Pro",
