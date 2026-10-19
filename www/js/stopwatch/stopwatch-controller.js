@@ -1,119 +1,426 @@
-// Файл: www/js/stopwatch/stopwatch-share-controller.js
+// Файл: www/js/stopwatch/stopwatch-controller.js
 
+import {
+  $,
+  formatTime,
+  updateText,
+  updateTitle,
+  requestWakeLock,
+  releaseWakeLock,
+  bgWorker,
+  announceToScreenReader,
+  animateGoEnter,
+} from "../utils.js?v=VERSION";
+import { sm } from "../sound.js?v=VERSION";
 import { t } from "../i18n.js?v=VERSION";
-import { modalManager } from "../modal.js?v=VERSION";
 import { uiSettingsManager } from "../ui-settings.js?v=VERSION";
-import { adsManager } from "../ads.js?v=VERSION";
+import { store } from "../store.js?v=VERSION";
+import { shareResults } from "../share-results.js?v=VERSION";
+import { APP_EVENTS } from "../constants/events.js?v=VERSION";
+import { emitAppEvent } from "../events/app-events.js?v=VERSION";
 
-export function setupStopwatchShareController(sw) {
-  sw._unbindShareController?.();
-  sw._unbindShareController = null;
+import { createRingController } from "../ring/ring-controller.js?v=VERSION";
+import { createStopwatchEngine } from "../core/stopwatch-engine.js?v=VERSION";
+import { applyStopwatchEngineSnapshot } from "../core/engine-adapters.js?v=VERSION";
+import { setupStopwatchRender } from "./stopwatch-render.js?v=VERSION";
+import { setupStopwatchSessions } from "./stopwatch-sessions.js?v=VERSION";
+import { setupStopwatchShareController } from "./stopwatch-share-controller.js?v=VERSION";
 
-  const disposers = [];
-  const bind = (el, event, handler, options) => {
-    if (!el) return;
-    el.addEventListener(event, handler, options);
-    disposers.push(() => el.removeEventListener(event, handler, options));
-  };
+/** @typedef {import("../types/app-contracts.js").StopwatchModule} StopwatchModule */
 
-  sw._buildSessionLapsForSave = () => {
-    let sessionLaps = [...sw.laps];
-    const lastLapTotal = sw.laps.length > 0 ? sw.laps[0].total : 0;
+/** @type {StopwatchModule} */
+const stopwatchModule = {
+  startEpochMs: 0,
 
-    if (sw.elapsedTime > lastLapTotal) {
-      const diff = sw.elapsedTime - lastLapTotal;
-      if (diff > 10) {
-        sessionLaps.unshift({
-          total: sw.elapsedTime,
-          diff,
-          index: sessionLaps.length + 1,
-        });
-      }
+  elapsedTime: 0,
+  isRunning: false,
+  laps: [],
+  rAF: null,
+  lastRender: 0,
+  els: {},
+  savedSessions: [],
+  currentSort: "date_desc",
+  pauseTime: 0,
+  nameModalState: { action: null, targetId: null, pendingSession: null },
+  ringLength: 282.74,
+  ringCtrl: null,
+  lastMinuteBeep: 0,
+  sortSelect: null,
+  pendingShareSession: null,
+  pendingLapsRerender: false,
+  shareResults,
+  stopwatchEngine: null,
+
+  _unbindCore: null,
+  _unbindSessions: null,
+  _unbindShareController: null,
+
+  init() {
+    this._unbindCore?.();
+    this._unbindCore = null;
+
+    if (!this.stopwatchEngine) {
+      this.stopwatchEngine = createStopwatchEngine({
+        now: () => Date.now(),
+      });
     }
 
-    return sessionLaps;
-  };
-
-  sw.getCurrentSessionForShare = () => {
-    if (sw.laps.length === 0) return null;
-
-    return {
-      id: Date.now(),
-      name: t("stopwatch"),
-      date: sw.isRunning ? Date.now() : sw.pauseTime || Date.now(),
-      totalTime: sw.elapsedTime,
-      laps: sw._buildSessionLapsForSave(),
+    this.els = {
+      display: $("sw-mainDisplay"),
+      extendedDisplay: $("sw-extendedDisplay"),
+      status: $("sw-statusText"),
+      btn: $("sw-startStopBtn"),
+      lapBtn: $("sw-lapBtn"),
+      lapsContainer: $("sw-lapsContainer"),
+      ring: $("sw-progressRing"),
+      saveBtn: $("sw-saveBtn"),
+      shareBtn: $("sw-shareBtn"),
+      sessionsList: $("sw-sessionsList"),
+      swSortWrapper: $("sw-sort-wrapper"),
+      nameTitle: $("sw-name-title"),
+      nameInput: $("sw-name-input"),
+      nameError: $("sw-name-error"),
+      lapFlash: $("sw-lapFlash"),
+      currentLapsHeader: $("sw-currentLapsHeader"),
+      shareModeTextBtn: $("sw-share-text-btn"),
+      shareModeCsvBtn: $("sw-share-csv-btn"),
     };
-  };
 
-  sw.shareSessionWithChoice = async (session) => {
-    sw.pendingShareSession = session;
-    modalManager.open("sw-share-mode-modal");
-  };
-
-  sw.shareCurrentResult = async () => {
-    const session = sw.getCurrentSessionForShare();
-    if (!session) return;
-
-    adsManager.showInterstitialIfAllowed("share");
-    await sw.shareSessionWithChoice(session);
-  };
-
-  sw.shareSavedSession = async (id) => {
-    const session = sw.savedSessions.find((s) => s.id === id);
-    if (!session) return;
-
-    adsManager.showInterstitialIfAllowed("share");
-    await sw.shareSessionWithChoice(session);
-  };
-
-  const onSaveClick = () => sw.prepareSaveSession();
-  const onShareClick = () => sw.shareCurrentResult();
-
-  const onShareTextClick = async () => {
-    const session = sw.pendingShareSession;
-    if (!session) return;
-
-    const payload = sw.shareResults.buildStopwatchPayload(session, {
-      showMs: uiSettingsManager.showMs,
-    });
-
-    const ok = await sw.shareResults.shareAsText(payload);
-    if (ok) {
-      sw.pendingShareSession = null;
-      modalManager.closeCurrent();
+    if (this.els.lapBtn) {
+      this.els.lapBtn.classList.add("main_btn");
+      this.els.lapBtn.classList.remove(
+        "main_btn_red",
+        "is-reset",
+        "app-surface",
+        "app-text",
+        "bg-red-500",
+        "text-white",
+      );
     }
-  };
 
-  const onShareCsvClick = async () => {
-    const session = sw.pendingShareSession;
-    if (!session) return;
+    if (this.els.ring) {
+      this.els.ring.style.strokeDasharray = this.ringLength;
+      this.els.ring.style.strokeDashoffset = this.ringLength;
 
-    const payload = sw.shareResults.buildStopwatchPayload(session, {
-      showMs: uiSettingsManager.showMs,
-    });
-
-    const ok = await sw.shareResults.shareAsFile(payload, { format: "csv" });
-    if (ok) {
-      sw.pendingShareSession = null;
-      modalManager.closeCurrent();
+      this.ringCtrl?.stop?.();
+      this.ringCtrl = createRingController({
+        ringEl: this.els.ring,
+        initialOffset: this.ringLength,
+        alpha: 0.22,
+      });
+      this.ringCtrl.start();
     }
-  };
 
-  sw.bindShareButtons = () => {
-    bind(sw.els.saveBtn, "click", onSaveClick);
-    bind(sw.els.shareBtn, "click", onShareClick);
-    bind(sw.els.shareModeTextBtn, "click", onShareTextClick);
-    bind(sw.els.shareModeCsvBtn, "click", onShareCsvClick);
-  };
+    setupStopwatchRender(this);
+    setupStopwatchSessions(this);
+    setupStopwatchShareController(this);
 
-  sw._unbindShareController = () => {
-    disposers.forEach((off) => {
-      try {
-        off?.();
-      } catch (err) {
-        console.error("[stopwatch-share-controller.dispose]", err);
+    const disposers = [];
+    const bind = (el, event, handler, options) => {
+      if (!el) return;
+      el.addEventListener(event, handler, options);
+      disposers.push(() => el.removeEventListener(event, handler, options));
+    };
+
+    const onStartStopClick = () => this.toggle();
+    bind(this.els.btn, "click", onStartStopClick);
+
+    const onLapClick = () => this.recordLapOrReset();
+    bind(this.els.lapBtn, "click", onLapClick);
+
+    this.bindShareButtons();
+
+    const onTimerStarted = (e) => {
+      if (e.detail !== "stopwatch" && this.isRunning) this.toggle();
+    };
+    document.addEventListener(APP_EVENTS.TIMER_STARTED, onTimerStarted);
+    disposers.push(() =>
+      document.removeEventListener(APP_EVENTS.TIMER_STARTED, onTimerStarted),
+    );
+
+    const onWorkerMessage = (e) => {
+      if (e.data?.type === "heartbeat" && this.isRunning && document.hidden) {
+        this.tick(true);
       }
+    };
+    bgWorker.addEventListener("message", onWorkerMessage);
+    disposers.push(() =>
+      bgWorker.removeEventListener("message", onWorkerMessage),
+    );
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState !== "visible") return;
+
+      if (this.stopwatchEngine?.getElapsed) {
+        this.elapsedTime = this.stopwatchEngine.getElapsed();
+      }
+
+      if (this.elapsedTime > 0) {
+        const snap = this.stopwatchEngine.setElapsed(this.elapsedTime);
+        applyStopwatchEngineSnapshot(this, snap);
+      }
+
+      if (this.isRunning) {
+        this.lastRender = 0;
+        this.tick();
+        return;
+      }
+
+      if (this.elapsedTime > 0) {
+        this.updateDisplay();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    disposers.push(() =>
+      document.removeEventListener("visibilitychange", onVisibilityChange),
+    );
+
+    const onMsChanged = () => {
+      if (!this.isRunning && this.elapsedTime > 0) this.updateDisplay();
+
+      if (this.laps.length === 0) return;
+
+      if (this.isRunning) {
+        this.pendingLapsRerender = true;
+        return;
+      }
+
+      this.reRenderCurrentLaps();
+    };
+    document.addEventListener(APP_EVENTS.MS_CHANGED, onMsChanged);
+    disposers.push(() =>
+      document.removeEventListener(APP_EVENTS.MS_CHANGED, onMsChanged),
+    );
+
+    this.updateSaveButtonVisibility();
+
+    this._unbindCore = () => {
+      if (this.rAF) {
+        cancelAnimationFrame(this.rAF);
+        this.rAF = null;
+      }
+
+      disposers.forEach((off) => {
+        try {
+          off?.();
+        } catch (err) {
+          console.error("[stopwatch.dispose]", err);
+        }
+      });
+
+      this._unbindSessions?.();
+      this._unbindSessions = null;
+
+      this._unbindShareController?.();
+      this._unbindShareController = null;
+    };
+  },
+
+  toggle() {
+    const wasRunning = this.isRunning;
+    sm.vibrate(wasRunning ? [12, 22, 16] : [18, 20, 28], "medium");
+    sm.play("click");
+    sm.unlock();
+
+    if (this.isRunning) {
+      store.clearActiveTimer();
+
+      const snap = this.stopwatchEngine.pause();
+      applyStopwatchEngineSnapshot(this, snap);
+      this.updateDisplay();
+
+      this.isRunning = false;
+      this.startEpochMs = 0;
+
+      this.pauseTime = Date.now();
+      bgWorker.postMessage({ command: "stop" });
+
+      if (this.rAF) cancelAnimationFrame(this.rAF);
+      this.rAF = null;
+
+      releaseWakeLock();
+      updateTitle("");
+
+      this.els.status.classList.remove("hidden");
+      updateText(this.els.lapBtn, t("reset"));
+
+      this.els.lapBtn.classList.remove("main_btn");
+      this.els.lapBtn.classList.add("main_btn_red");
+
+      announceToScreenReader(
+        `${t("stopwatch")} ${t("pause")}. ${formatTime(this.elapsedTime, {
+          showMs: false,
+          forceHours: this.elapsedTime >= 3600000,
+        })}`,
+      );
+
+      if (this.pendingLapsRerender) {
+        this.reRenderCurrentLaps();
+        this.pendingLapsRerender = false;
+      }
+    } else {
+      store.activate("stopwatch");
+
+      const snap = this.stopwatchEngine.start(this.elapsedTime);
+      applyStopwatchEngineSnapshot(this, snap);
+      this.lastMinuteBeep = Math.floor(this.elapsedTime / 60000);
+
+      this.isRunning = true;
+      this.pauseTime = 0;
+
+      requestWakeLock();
+      bgWorker.postMessage({ command: "start" });
+      requestAnimationFrame(() => this.tick());
+
+      this.els.status.classList.add("hidden");
+      this.els.display.classList.remove("is-go");
+      this.els.lapBtn.classList.remove("hidden");
+
+      updateText(this.els.lapBtn, t("lap"));
+
+      this.els.lapBtn.classList.remove("main_btn_red");
+      this.els.lapBtn.classList.add("main_btn");
+    }
+
+    // Force post-state sync signal for foreground notification bridge.
+    emitAppEvent(APP_EVENTS.ACTIVE_TIMER_CHANGED, {
+      activeTimer: this.isRunning ? "stopwatch" : null,
     });
-  };
-}
+
+    this.updateSaveButtonVisibility();
+  },
+
+  tick(isBackground = false) {
+    if (!this.isRunning) return;
+
+    this.elapsedTime = this.stopwatchEngine.getElapsed();
+
+    const currentMinute = Math.floor(this.elapsedTime / 60000);
+    if (
+      uiSettingsManager.swMinuteBeep &&
+      currentMinute > this.lastMinuteBeep &&
+      this.elapsedTime > 1000
+    ) {
+      this.lastMinuteBeep = currentMinute;
+      sm.play("minute_beep");
+      sm.vibrate(40, "light");
+    }
+
+    const nowPerf = performance.now();
+    if (nowPerf - this.lastRender >= 16 || isBackground) {
+      if (!isBackground) {
+        this.updateDisplay();
+
+        if (this.ringCtrl) {
+          const targetOffset =
+            this.ringLength -
+            ((this.elapsedTime % 60000) / 60000) * this.ringLength;
+          this.ringCtrl.setTarget(targetOffset);
+        }
+      } else {
+        updateTitle(
+          formatTime(this.elapsedTime, {
+            showMs: false,
+            forceHours: this.elapsedTime >= 3600000,
+          }),
+        );
+      }
+
+      this.lastRender = nowPerf;
+    }
+
+    if (!isBackground) {
+      if (this.rAF) cancelAnimationFrame(this.rAF);
+      this.rAF = requestAnimationFrame(() => this.tick());
+    }
+  },
+
+  recordLapOrReset() {
+    const lapMode = this.isRunning;
+    sm.vibrate(
+      lapMode ? [8, 12, 10] : [16, 18, 24],
+      lapMode ? "tactile" : "medium",
+    );
+    sm.play("click");
+
+    if (this.isRunning) {
+      const lastLapTotal = this.laps.length > 0 ? this.laps[0].total : 0;
+      const diff = this.elapsedTime - lastLapTotal;
+
+      this.laps.unshift({
+        total: this.elapsedTime,
+        diff,
+        index: this.laps.length + 1,
+      });
+
+      if (this.laps.length === 1) {
+        this.els.lapsContainer.replaceChildren();
+        this.els.currentLapsHeader.classList.remove("hidden");
+        this.els.currentLapsHeader.classList.add("flex");
+      } else {
+        const prevLatest = this.els.lapsContainer.firstElementChild;
+        if (prevLatest) {
+          prevLatest.classList.remove("is-latest");
+          const splitTimeEl = prevLatest.querySelector(".split-time");
+          splitTimeEl?.classList.remove("split-time-latest");
+        }
+      }
+
+      this.els.lapsContainer.prepend(this.createLapElement(this.laps[0], true));
+
+      if (this.els.lapFlash) {
+        this.els.lapFlash.classList.remove("flash-active");
+        void this.els.lapFlash.offsetWidth;
+        this.els.lapFlash.classList.add("flash-active");
+      }
+
+      this.updateSaveButtonVisibility();
+      return;
+    }
+
+    if (this.elapsedTime > 0) {
+      if (store.isActive("stopwatch")) store.clearActiveTimer();
+
+      applyStopwatchEngineSnapshot(this, this.stopwatchEngine.reset());
+
+      this.elapsedTime = 0;
+      this.startEpochMs = 0;
+      this.isRunning = false;
+      this.laps = [];
+      this.pauseTime = 0;
+      this.lastMinuteBeep = 0;
+      this.pendingLapsRerender = false;
+
+      updateText(this.els.display, "GO");
+      this.els.display.classList.add("is-go");
+      animateGoEnter(this.els.display);
+      this.els.display.style.transform = "";
+      this.els.status.classList.add("hidden");
+      this.els.extendedDisplay?.classList.add("hidden");
+
+      if (this.ringCtrl) this.ringCtrl.snap(this.ringLength);
+      else if (this.els.ring)
+        this.els.ring.style.strokeDashoffset = this.ringLength;
+
+      this.els.lapBtn.classList.add("hidden");
+
+      this.els.lapBtn.classList.remove("main_btn_red");
+      this.els.lapBtn.classList.add("main_btn");
+
+      this.els.currentLapsHeader.classList.add("hidden");
+      this.els.currentLapsHeader.classList.remove("flex");
+
+      const noLapsDiv = document.createElement("div");
+      noLapsDiv.className = "text-center app-text-sec opacity-50 mt-4 text-sm";
+      noLapsDiv.setAttribute("data-i18n", "no_laps");
+      noLapsDiv.textContent = t("no_laps");
+      this.els.lapsContainer.replaceChildren(noLapsDiv);
+
+      emitAppEvent(APP_EVENTS.ACTIVE_TIMER_CHANGED, { activeTimer: null });
+
+      this.updateSaveButtonVisibility();
+    }
+  },
+};
+
+export const sw = stopwatchModule;
