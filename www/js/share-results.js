@@ -25,6 +25,32 @@ function getShareTextFailedText() {
   return resolveToastText(t, "share_failed");
 }
 
+async function saveCsvWithPicker(fileName, csvText) {
+  if (typeof window.showSaveFilePicker !== "function") return false;
+
+  try {
+    const handle = await window.showSaveFilePicker({
+      suggestedName: fileName,
+      types: [
+        {
+          description: "CSV file",
+          accept: { "text/csv": [".csv"] },
+        },
+      ],
+    });
+
+    const writable = await handle.createWritable();
+    await writable.write(
+      new Blob(["\uFEFF", csvText], { type: "text/csv;charset=utf-8;" }),
+    );
+    await writable.close();
+    return true;
+  } catch (error) {
+    if (isUserShareCancel(error)) return false;
+    throw error;
+  }
+}
+
 function isNativePlatform() {
   try {
     return !!window.Capacitor?.isNativePlatform?.();
@@ -205,6 +231,16 @@ export const shareResults = {
       } catch (error) {
         if (isUserShareCancel(error)) return false;
       }
+    }
+
+    try {
+      const saved = await saveCsvWithPicker(fileName, csv);
+      if (saved) {
+        showToast(t("share_file_saved"));
+        return true;
+      }
+    } catch {
+      // Continue with classic download fallback
     }
 
     try {

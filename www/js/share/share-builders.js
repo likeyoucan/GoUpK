@@ -2,6 +2,20 @@
 
 const CSV_SEPARATOR = ";";
 
+function padRight(value, width) {
+  const text = String(value ?? "");
+  if (text.length >= width) return text;
+  return text + " ".repeat(width - text.length);
+}
+
+function makeSeparator(widths) {
+  return `+${widths.map((w) => "-".repeat(w + 2)).join("+")}+`;
+}
+
+function makeRow(cells, widths) {
+  return `| ${cells.map((c, i) => padRight(c, widths[i])).join(" | ")} |`;
+}
+
 function escapeCsv(value) {
   const str = String(value ?? "");
   if (str.includes('"') || str.includes(CSV_SEPARATOR) || str.includes("\n")) {
@@ -28,19 +42,35 @@ function makeFilename(payload, ext) {
 }
 
 function buildStopwatchText(payload, t) {
-  const lines = [];
-  lines.push(`Stopwatch Pro - ${t("stopwatch")}`);
-  lines.push(`${t("name")}: ${payload.name}`);
-  lines.push(`${t("date_new")}: ${payload.dateText}`);
-  lines.push(`${t("total_time")}: ${payload.totalTimeText}`);
-  lines.push("");
-  lines.push(`${t("lap_text")}\t${t("total_time")}\t${t("split_time")}`);
+  const header = [t("lap_text"), t("total_time"), t("split_time")];
+  const rows = payload.rows.map((r) => [r.index, r.total, r.split]);
 
-  payload.rows.forEach((r) => {
-    lines.push(`${r.index}\t${r.total}\t${r.split}`);
+  const widths = [header[0].length, header[1].length, header[2].length];
+  rows.forEach((r) => {
+    widths[0] = Math.max(widths[0], String(r[0]).length);
+    widths[1] = Math.max(widths[1], String(r[1]).length);
+    widths[2] = Math.max(widths[2], String(r[2]).length);
   });
 
-  return lines.join("\n");
+  const sep = makeSeparator(widths);
+  const table = [
+    sep,
+    makeRow(header, widths),
+    sep,
+    ...rows.map((r) => makeRow(r, widths)),
+    sep,
+  ];
+
+  return [
+    "==================================",
+    `Stopwatch Pro - ${t("stopwatch")}`,
+    "----------------------------------",
+    `${t("name")}: ${payload.name}`,
+    `${t("date_new")}: ${payload.dateText}`,
+    `${t("total_time")}: ${payload.totalTimeText}`,
+    "",
+    ...table,
+  ].join("\n");
 }
 
 function buildStopwatchCsv(payload, t) {
