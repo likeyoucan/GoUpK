@@ -62,11 +62,7 @@ function buildStopwatchText(payload, t) {
   ];
 
   return [
-    "==================================",
-    `Stopwatch Pro - ${t("stopwatch")}`,
-    "----------------------------------",
     `${t("name")}: ${payload.name}`,
-    `${t("date_new")}: ${payload.dateText}`,
     `${t("total_time")}: ${payload.totalTimeText}`,
     "",
     ...table,
@@ -76,7 +72,7 @@ function buildStopwatchText(payload, t) {
 function buildStopwatchCsv(payload, t) {
   const rows = [];
 
-  rows.push(`sep=${CSV_SEPARATOR}`);
+  // Только таблица, без служебных строк и метаданных
   rows.push(
     [t("lap_text"), t("total_time"), t("split_time")]
       .map(escapeCsv)
@@ -87,15 +83,7 @@ function buildStopwatchCsv(payload, t) {
     rows.push([r.index, r.total, r.split].map(escapeCsv).join(CSV_SEPARATOR));
   });
 
-  const header = [
-    `Stopwatch Pro - ${t("stopwatch")}`,
-    `${t("name")}: ${payload.name}`,
-    `${t("date_new")}: ${payload.dateText}`,
-    `${t("total_time")}: ${payload.totalTimeText}`,
-    "",
-  ];
-
-  return [...header, ...rows].join("\r\n") + "\r\n";
+  return rows.join("\r\n") + "\r\n";
 }
 
 function buildStopwatchPayload(session, formatTime, t, { showMs = true } = {}) {

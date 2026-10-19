@@ -158,6 +158,16 @@ async function shareFileNative(payload, fileName, csvText) {
   }
 }
 
+function openManualCopyPrompt(text) {
+  // Последний fallback: пользователь копирует вручную
+  try {
+    window.prompt(t("share_as_text"), text);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export const shareResults = {
   canShowShareButton(lapsCount) {
     return Number(lapsCount) > 0;
@@ -171,12 +181,21 @@ export const shareResults = {
     const rawText = buildStopwatchText(payload, t);
     const text = normalizeShareText(rawText);
 
+    // Приоритет: копирование в буфер, чтобы пользователь сам вставил куда нужно
+    const copied = await copyToClipboard(text);
+    if (copied) {
+      showToast(t("share_copied"));
+      return true;
+    }
+
+    // Если буфер недоступен, пробуем нативный share (android/capacitor)
     if (isNativePlatform()) {
       const nativeResult = await shareTextNative(payload, text);
       if (nativeResult.ok) return true;
       if (nativeResult.canceled) return false;
     }
 
+    // Web Share fallback
     if (navigator.share) {
       try {
         await navigator.share({
@@ -189,11 +208,9 @@ export const shareResults = {
       }
     }
 
-    const copied = await copyToClipboard(text);
-    if (copied) {
-      showToast(t("share_copied"));
-      return true;
-    }
+    // Жесткий fallback: prompt с текстом для ручного копирования
+    const prompted = openManualCopyPrompt(text);
+    if (prompted) return true;
 
     showToast(getShareTextFailedText());
     return false;
@@ -214,7 +231,7 @@ export const shareResults = {
       if (nativeResult.canceled) return false;
     }
 
-    // Web: prefer explicit save dialog (where supported), then fallback to download.
+    // Web: сначала явный диалог сохранения, затем обычная загрузка
     try {
       const saved = await saveCsvWithPicker(fileName, csv);
       if (saved) {
