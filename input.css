@@ -2875,23 +2875,23 @@
   .glass-effect .tr-wrap:focus-within,
   .glass-effect .tr-wrap.tr-focused,
   .glass-effect .tr-wrap.tr-dragging {
-    outline: none !important;
-    box-shadow: none !important;
+    outline: none;
+    box-shadow: none;
   }
 
   .glass-effect .tr-wrap .tr-native,
   .glass-effect .tr-wrap .tr-native:focus,
   .glass-effect .tr-wrap .tr-native:focus-visible,
   .glass-effect .tr-wrap .tr-native:active {
-    outline: none !important;
-    box-shadow: none !important;
-    -webkit-tap-highlight-color: transparent !important;
+    outline: none;
+    box-shadow: none;
+    -webkit-tap-highlight-color: transparent;
   }
 
   /* Keep pseudo artifacts off */
   .glass-effect .tr-thumb::before,
   .glass-effect .tr-thumb::after {
-    content: none !important;
+    content: none;
   }
 
   /* Fallback when backdrop-filter is not supported by current WebView */
