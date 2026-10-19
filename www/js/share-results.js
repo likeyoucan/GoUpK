@@ -214,25 +214,7 @@ export const shareResults = {
       if (nativeResult.canceled) return false;
     }
 
-    const bom = "\uFEFF";
-    const blob = new Blob([bom, csv], { type: "text/csv;charset=utf-8;" });
-    const file = new File([blob], fileName, {
-      type: "text/csv;charset=utf-8;",
-    });
-
-    if (navigator.share && navigator.canShare?.({ files: [file] })) {
-      try {
-        await navigator.share({
-          title: `Stopwatch Pro - ${payload.name}`,
-          text: payload.totalTimeText,
-          files: [file],
-        });
-        return true;
-      } catch (error) {
-        if (isUserShareCancel(error)) return false;
-      }
-    }
-
+    // Web: prefer explicit save dialog (where supported), then fallback to download.
     try {
       const saved = await saveCsvWithPicker(fileName, csv);
       if (saved) {
@@ -240,10 +222,13 @@ export const shareResults = {
         return true;
       }
     } catch {
-      // Continue with classic download fallback
+      // Continue to classic download fallback
     }
 
     try {
+      const blob = new Blob(["\uFEFF", csv], {
+        type: "text/csv;charset=utf-8;",
+      });
       downloadFile(blob, fileName);
       showToast(t("share_file_saved"));
       return true;

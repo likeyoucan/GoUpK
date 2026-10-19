@@ -280,5 +280,5 @@ export function setupStopwatchSessions(sw) {
   };
 
   // Initial paint: show already saved sessions immediately after init.
-  sw.sortSessions(sw.currentSort);
+  flushSessionsRender();
 }
