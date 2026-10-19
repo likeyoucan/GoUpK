@@ -78,9 +78,11 @@ export function setupStopwatchShareController(sw) {
       showMs: uiSettingsManager.showMs,
     });
 
-    await sw.shareResults.shareAsText(payload);
-    sw.pendingShareSession = null;
-    modalManager.closeCurrent();
+    const ok = await sw.shareResults.shareAsText(payload);
+    if (ok) {
+      sw.pendingShareSession = null;
+      modalManager.closeCurrent();
+    }
   };
 
   const onShareCsvClick = async () => {
@@ -91,9 +93,11 @@ export function setupStopwatchShareController(sw) {
       showMs: uiSettingsManager.showMs,
     });
 
-    await sw.shareResults.shareAsFile(payload, { format: "csv" });
-    sw.pendingShareSession = null;
-    modalManager.closeCurrent();
+    const ok = await sw.shareResults.shareAsFile(payload, { format: "csv" });
+    if (ok) {
+      sw.pendingShareSession = null;
+      modalManager.closeCurrent();
+    }
   };
 
   sw.bindShareButtons = () => {
