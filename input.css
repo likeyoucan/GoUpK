@@ -3720,7 +3720,7 @@
 
   .custom-select-container.is-open .custom-select-trigger {
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 2px
+    box-shadow: 0 0 0 1px
       color-mix(in srgb, var(--primary-color) 40%, transparent);
   }
 
