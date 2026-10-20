@@ -1,13 +1,24 @@
 // Файл: www/js/sound/sound-engine.js
 
-// Файл: www/js/sound/sound-engine.js
-
 export function initAudio(sm) {
   if (sm.audioCtx || !sm.soundEnabled) return;
 
   try {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
-    if (AudioContext) sm.audioCtx = new AudioContext();
+    if (!AudioContext) return;
+
+    sm.audioCtx = new AudioContext();
+
+    // Master bus for smooth global mix control (ducking).
+    sm.masterGain = sm.audioCtx.createGain();
+    sm.masterGain.gain.value = 1;
+    sm.masterGain.connect(sm.audioCtx.destination);
+
+    sm._activeVoices = 0;
+    sm._maxVoices = 14;
+    sm._lastPlayAt = Object.create(null);
+    sm._duckReleaseTimer = 0;
+    sm._busyUntil = 0;
   } catch {
     sm.soundEnabled = false;
   }
@@ -99,14 +110,21 @@ export function playNote(
   slideToFreq = null,
   sustain = false,
 ) {
-  if (!sm.audioCtx) return;
+  if (!sm.audioCtx || !sm.masterGain) return;
+
+  const maxVoices = Number(sm._maxVoices || 14);
+  const activeVoices = Number(sm._activeVoices || 0);
+
+  // Soft polyphony guard: keep space for important long cues.
+  const isLongCue = sustain || duration >= 0.35;
+  if (activeVoices >= maxVoices && !isLongCue) return;
 
   const osc = sm.audioCtx.createOscillator();
   const gainNode = sm.audioCtx.createGain();
 
   osc.type = type;
   osc.connect(gainNode);
-  gainNode.connect(sm.audioCtx.destination);
+  gainNode.connect(sm.masterGain);
 
   const now = sm.audioCtx.currentTime;
   const startTime = now + startTimeOffset;
@@ -148,26 +166,92 @@ export function playNote(
     }
   }
 
+  sm._activeVoices = activeVoices + 1;
+
   osc.onended = () => {
     osc.disconnect();
     gainNode.disconnect();
+    sm._activeVoices = Math.max(0, (sm._activeVoices || 1) - 1);
   };
 
   osc.start(startTime);
   osc.stop(startTime + duration);
 }
 
+function shouldThrottleType(sm, type) {
+  const now = performance.now();
+  const minGapMsByType = {
+    click: 55,
+    tick: 90,
+    minute_beep: 400,
+    work_start: 220,
+    rest_start: 220,
+    complete: 600,
+  };
+
+  const minGap = minGapMsByType[type] ?? 0;
+  const last = Number(sm._lastPlayAt?.[type] || 0);
+
+  if (minGap > 0 && now - last < minGap) {
+    return true;
+  }
+
+  if (!sm._lastPlayAt) sm._lastPlayAt = Object.create(null);
+  sm._lastPlayAt[type] = now;
+  return false;
+}
+
+function applySoftDucking(sm, type) {
+  if (!sm.audioCtx || !sm.masterGain) return;
+
+  const nowCtx = sm.audioCtx.currentTime;
+  const isPriority =
+    type === "work_start" || type === "rest_start" || type === "complete";
+  if (!isPriority) return;
+
+  if (sm._duckReleaseTimer) {
+    clearTimeout(sm._duckReleaseTimer);
+    sm._duckReleaseTimer = 0;
+  }
+
+  const g = sm.masterGain.gain;
+  const current = g.value;
+
+  // Soft dip and smooth return
+  g.cancelScheduledValues(nowCtx);
+  g.setValueAtTime(current, nowCtx);
+  g.linearRampToValueAtTime(0.82, nowCtx + 0.035);
+  g.linearRampToValueAtTime(0.92, nowCtx + 0.18);
+
+  sm._duckReleaseTimer = setTimeout(() => {
+    if (!sm.audioCtx || !sm.masterGain) return;
+    const t = sm.audioCtx.currentTime;
+    const gg = sm.masterGain.gain;
+    gg.cancelScheduledValues(t);
+    gg.setValueAtTime(gg.value, t);
+    gg.linearRampToValueAtTime(1, t + 0.14);
+    sm._duckReleaseTimer = 0;
+  }, 170);
+}
+
 export function play(sm, type, options = {}) {
   if (!sm.soundEnabled || !sm.audioCtx || sm.volume === 0) return;
 
+  if (shouldThrottleType(sm, type)) return;
+
   unlockAudio(sm);
+  applySoftDucking(sm, type);
 
   const activeTheme = options.theme || sm.theme;
   const vol = sm.THEME_VOL_MULTIPLIERS[activeTheme] || 1.0;
 
+  const now = performance.now();
+  const isBusy = now < Number(sm._busyUntil || 0);
+  const uiClickMix = isBusy && type === "click" ? 0.45 : 1;
+
   if (activeTheme === "classic") {
     if (type === "click") {
-      playNote(sm, 2000, "sine", 0, 0.05, 0.4);
+      playNote(sm, 2000, "sine", 0, 0.05, 0.4 * uiClickMix);
     } else if (type === "tick") {
       playNote(sm, 2500, "square", 0, 0.05, 0.3);
     } else if (type === "work_start") {
@@ -193,7 +277,7 @@ export function play(sm, type, options = {}) {
     }
   } else if (activeTheme === "sport") {
     if (type === "click") {
-      playNote(sm, 1200, "sine", 0, 0.05, 0.2 * vol, 200, true);
+      playNote(sm, 1200, "sine", 0, 0.05, 0.2 * vol * uiClickMix, 200, true);
     } else if (type === "tick") {
       playNote(sm, 1500, "sine", 0, 0.1, 0.2 * vol, 300, true);
     } else if (type === "work_start") {
@@ -215,7 +299,7 @@ export function play(sm, type, options = {}) {
     }
   } else if (activeTheme === "vibe") {
     if (type === "click") {
-      playNote(sm, 300, "sine", 0, 0.1, 0.5 * vol);
+      playNote(sm, 300, "sine", 0, 0.1, 0.5 * vol * uiClickMix);
     } else if (type === "tick") {
       playNote(sm, 400, "sine", 0, 0.15, 0.5 * vol);
     } else if (type === "work_start") {
@@ -236,7 +320,7 @@ export function play(sm, type, options = {}) {
     }
   } else if (activeTheme === "work") {
     if (type === "click") {
-      playNote(sm, 500, "sine", 0, 0.03, 0.4 * vol);
+      playNote(sm, 500, "sine", 0, 0.03, 0.4 * vol * uiClickMix);
     } else if (type === "tick") {
       playNote(sm, 700, "sine", 0, 0.05, 0.3 * vol);
     } else if (type === "work_start") {
@@ -254,7 +338,7 @@ export function play(sm, type, options = {}) {
     }
   } else if (activeTheme === "life") {
     if (type === "click") {
-      playNote(sm, 440, "sine", 0, 0.08, 0.4 * vol);
+      playNote(sm, 440, "sine", 0, 0.08, 0.4 * vol * uiClickMix);
     } else if (type === "tick") {
       playNote(sm, 523.25, "sine", 0, 0.1, 0.4 * vol);
     } else if (type === "work_start") {
@@ -275,5 +359,12 @@ export function play(sm, type, options = {}) {
     } else if (type === "minute_beep") {
       playNote(sm, 783.99, "sine", 0, 0.15, 0.4 * vol);
     }
+  }
+
+  if (type === "work_start" || type === "rest_start") {
+    sm._busyUntil = performance.now() + 520;
+  }
+  if (type === "complete") {
+    sm._busyUntil = performance.now() + 1300;
   }
 }
