@@ -286,7 +286,11 @@ public class AppForegroundService extends Service {
             isPlay ? R.drawable.ic_notif_play : R.drawable.ic_notif_pause
         );
 
+        // Bind click to the whole circular area and direct icon/bg targets
+        // so OEM RemoteViews behavior cannot limit tap to icon pixels only.
         views.setOnClickPendingIntent(R.id.notif_btn_toggle_wrap, togglePi);
+        views.setOnClickPendingIntent(R.id.notif_btn_toggle_bg, togglePi);
+        views.setOnClickPendingIntent(R.id.notif_btn_toggle_icon, togglePi);
     }
 
     private Notification buildNotification(

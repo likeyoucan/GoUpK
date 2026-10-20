@@ -11,8 +11,8 @@
 
     <FrameLayout
         android:id="@+id/notif_btn_toggle_wrap"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
         android:layout_alignParentEnd="true"
         android:layout_centerVertical="true"
         android:clickable="true"

@@ -322,34 +322,17 @@ public class ForegroundStateStore {
                             mergedRemaining = phaseDefault;
                         }
                     } else {
-                        long candidate = incomingRemainingSafe;
-
-                        // Protect against stale zero from JS that can force 00:00 mid-phase.
-                        if (candidate <= 0L && incomingPhaseOpen) {
-                            if (nativeTabataRemainingNow > 0L) {
-                                candidate = nativeTabataRemainingNow;
-                            } else {
-                                candidate = Math.max(1L, s.tbPhaseDuration);
-                            }
-                        }
-
+                        // Keep native phase clock authoritative while phase did not change.
+                        // This prevents cumulative countdown acceleration from frequent JS updates.
                         if (nativeTabataRemainingNow > 0L) {
-                            if (candidate <= 0L) {
-                                candidate = nativeTabataRemainingNow;
-                            }
-
-                            // Do not allow remaining to increase within one phase.
-                            if (candidate > nativeTabataRemainingNow) {
-                                candidate = nativeTabataRemainingNow;
-                            }
-
-                            // Too sharp drop is treated as noise.
-                            if (candidate < nativeTabataRemainingNow - 1500L) {
-                                candidate = nativeTabataRemainingNow;
-                            }
+                            mergedRemaining = nativeTabataRemainingNow;
+                        } else if (incomingRemainingSafe > 0L) {
+                            mergedRemaining = incomingRemainingSafe;
+                        } else if (incomingPhaseOpen) {
+                            mergedRemaining = Math.max(1L, s.tbPhaseDuration);
+                        } else {
+                            mergedRemaining = 0L;
                         }
-
-                        mergedRemaining = candidate;
                     }
                 } else {
                     mergedRemaining = incomingRemainingSafe;

@@ -43,11 +43,17 @@ export function setupTabataRender(tb) {
       "primary-stroke",
     );
 
-    // Pause must override WORK/REST labels
+    // Pause must override WORK/REST labels.
+    // Keep REST ring color when paused on REST phase.
     if (tb.paused) {
       updateText(statusEl, t("pause"));
       statusEl.classList.add("app-text-sec");
-      tb.els.ring.classList.add("primary-stroke");
+
+      if (tb.status === "REST") {
+        tb.els.ring.classList.add("secondary-accent-stroke");
+      } else {
+        tb.els.ring.classList.add("primary-stroke");
+      }
       return;
     }
 
