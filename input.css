@@ -2413,7 +2413,7 @@
   #view-settings .settings-title-rail {
     min-height: 58px;
     padding-top: calc(var(--safe-top) + 1.15rem);
-    padding-bottom: 0.35rem;
+    padding-bottom: 0.32rem;
     margin: 0;
   }
 
