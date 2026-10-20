@@ -9,21 +9,10 @@ export function initAudio(sm) {
 
     sm.audioCtx = new AudioContext();
 
-    // Master bus for smooth global mix control.
+    // Master bus for smooth global mix control (ducking).
     sm.masterGain = sm.audioCtx.createGain();
     sm.masterGain.gain.value = 1;
-
-    // Soft compressor to prevent harsh peaks/click-like overload artifacts.
-    sm.masterCompressor = sm.audioCtx.createDynamicsCompressor();
-    const now = sm.audioCtx.currentTime;
-    sm.masterCompressor.threshold.setValueAtTime(-18, now);
-    sm.masterCompressor.knee.setValueAtTime(18, now);
-    sm.masterCompressor.ratio.setValueAtTime(3.5, now);
-    sm.masterCompressor.attack.setValueAtTime(0.003, now);
-    sm.masterCompressor.release.setValueAtTime(0.12, now);
-
-    sm.masterGain.connect(sm.masterCompressor);
-    sm.masterCompressor.connect(sm.audioCtx.destination);
+    sm.masterGain.connect(sm.audioCtx.destination);
 
     sm._activeVoices = 0;
     sm._maxVoices = 14;
@@ -43,9 +32,9 @@ export function unlockAudio(sm) {
 
 let __lastVibrateAt = 0;
 const VIBRATE_MIN_INTERVAL_BY_TYPE = {
-  tactile: 95,
-  light: 55,
-  medium: 36,
+  tactile: 85,
+  light: 40,
+  medium: 24,
   strong: 0,
 };
 
@@ -71,19 +60,19 @@ export function vibrate(sm, basePattern, intensityKey = "medium") {
 
   try {
     const typeMultiplierMap = {
-      ui: 0.82,
-      tactile: 0.26,
-      light: 0.42,
-      medium: 0.72,
-      strong: 1.15,
+      ui: 1,
+      tactile: 0.34,
+      light: 0.55,
+      medium: 0.95,
+      strong: 1.45,
     };
 
     const levelProfileMap = {
-      0.5: { amp: 0.36, minPulse: 3 },
-      0.75: { amp: 0.52, minPulse: 5 },
-      1: { amp: 0.8, minPulse: 8 },
-      1.5: { amp: 1.2, minPulse: 12 },
-      2: { amp: 1.65, minPulse: 16 },
+      0.5: { amp: 0.42, minPulse: 4 },
+      0.75: { amp: 0.62, minPulse: 7 },
+      1: { amp: 1.0, minPulse: 11 },
+      1.5: { amp: 1.55, minPulse: 16 },
+      2: { amp: 2.15, minPulse: 22 },
     };
 
     const lvl = pickNearestLevel(sm.vibroLevel);
@@ -95,12 +84,12 @@ export function vibrate(sm, basePattern, intensityKey = "medium") {
 
     const scalePulse = (duration) => {
       const raw = Math.round((Number(duration) || 0) * finalMul);
-      return Math.max(minPulse, Math.min(90, raw));
+      return Math.max(minPulse, Math.min(120, raw));
     };
 
     const scalePause = (duration) => {
-      const raw = Math.round((Number(duration) || 0) * 1.02);
-      return Math.max(1, Math.min(120, raw));
+      const raw = Math.round((Number(duration) || 0) * 1.05);
+      return Math.max(1, Math.min(180, raw));
     };
 
     const pattern = Array.isArray(basePattern)
@@ -126,11 +115,9 @@ export function playNote(
   const maxVoices = Number(sm._maxVoices || 14);
   const activeVoices = Number(sm._activeVoices || 0);
 
-  const isUiFx = type === "sine" || type === "square" || type === "triangle";
+  // Soft polyphony guard: keep space for important long cues.
   const isLongCue = sustain || duration >= 0.35;
-
   if (activeVoices >= maxVoices && !isLongCue) return;
-  if (activeVoices >= maxVoices - 2 && !isLongCue && isUiFx) return;
 
   const osc = sm.audioCtx.createOscillator();
   const gainNode = sm.audioCtx.createGain();
@@ -143,19 +130,24 @@ export function playNote(
   const startTime = now + startTimeOffset;
   const peakVol = 0.95 * sm.volume * volMultiplier;
 
-  // Softer envelope to reduce click artifacts under high event density.
-  const safeDuration = Math.max(0.035, Number(duration) || 0.05);
-  const attack = Math.min(0.012, safeDuration * 0.18);
-  const release = Math.min(0.02, safeDuration * 0.28);
-  const sustainFrom = startTime + attack;
-  const releaseAt = startTime + safeDuration - release;
-  const stopAt = startTime + safeDuration + 0.008;
+  gainNode.gain.setValueAtTime(0, startTime);
 
-  gainNode.gain.cancelScheduledValues(startTime);
-  gainNode.gain.setValueAtTime(0.0001, startTime);
-  gainNode.gain.linearRampToValueAtTime(peakVol, sustainFrom);
-  gainNode.gain.setValueAtTime(peakVol, Math.max(sustainFrom, releaseAt));
-  gainNode.gain.linearRampToValueAtTime(0.0001, startTime + safeDuration);
+  if (sustain) {
+    const attackTime = Math.min(0.05, duration * 0.1);
+    const releaseTime = Math.min(0.05, duration * 0.1);
+    gainNode.gain.linearRampToValueAtTime(peakVol, startTime + attackTime);
+    gainNode.gain.linearRampToValueAtTime(
+      peakVol,
+      startTime + duration - releaseTime,
+    );
+    gainNode.gain.linearRampToValueAtTime(0.001, startTime + duration);
+  } else {
+    gainNode.gain.linearRampToValueAtTime(
+      peakVol,
+      startTime + Math.min(0.02, duration * 0.1),
+    );
+    gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+  }
 
   osc.frequency.setValueAtTime(freq, startTime);
 
@@ -163,16 +155,13 @@ export function playNote(
     if (sustain) {
       osc.frequency.linearRampToValueAtTime(
         slideToFreq,
-        startTime + safeDuration * 0.4,
+        startTime + duration * 0.4,
       );
-      osc.frequency.linearRampToValueAtTime(
-        slideToFreq,
-        startTime + safeDuration,
-      );
+      osc.frequency.linearRampToValueAtTime(slideToFreq, startTime + duration);
     } else {
       osc.frequency.exponentialRampToValueAtTime(
         slideToFreq,
-        startTime + safeDuration,
+        startTime + duration,
       );
     }
   }
@@ -186,7 +175,7 @@ export function playNote(
   };
 
   osc.start(startTime);
-  osc.stop(stopAt);
+  osc.stop(startTime + duration);
 }
 
 function shouldThrottleType(sm, type) {
@@ -228,6 +217,7 @@ function applySoftDucking(sm, type) {
   const g = sm.masterGain.gain;
   const current = g.value;
 
+  // Soft dip and smooth return
   g.cancelScheduledValues(nowCtx);
   g.setValueAtTime(current, nowCtx);
   g.linearRampToValueAtTime(0.82, nowCtx + 0.035);
