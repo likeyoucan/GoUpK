@@ -78,14 +78,16 @@ export function setupTabataRender(tb) {
     } else if (tb.status === "REST") {
       updateText(statusEl, t("rest"));
       statusEl.classList.add("secondary-accent-text");
-      tb.els.ring.classList.add("secondary-accent-stroke");
+      tb.els.ring.classList.add(
+        "if (tb.lastRenderedPhaseStamp !== tb.phaseStamp) {secondary-accent-stroke",
+      );
       tb.els.ring.style.strokeOpacity = "1";
     } else {
       // READY: чуть мягче, но хорошо видно
       updateText(statusEl, t("get_ready"));
       statusEl.classList.add("app-text-sec");
       tb.els.ring.classList.add("primary-stroke");
-      tb.els.ring.style.strokeOpacity = "0.6";
+      tb.els.ring.style.strokeOpacity = "0.65";
     }
   };
 
@@ -133,16 +135,7 @@ export function setupTabataRender(tb) {
 
     if (tb.lastRenderedPhaseStamp !== tb.phaseStamp) {
       tb.lastRenderedPhaseStamp = tb.phaseStamp;
-      const visual = tb.ringCtrl.getVisual
-        ? tb.ringCtrl.getVisual()
-        : tb.ringLength;
-      const jump = Math.abs(targetOffset - visual);
-
-      if (jump > tb.ringLength * 0.45) {
-        tb.ringCtrl.snap(targetOffset);
-      } else {
-        tb.ringCtrl.setTarget(targetOffset);
-      }
+      tb.ringCtrl.setTarget(targetOffset);
       return;
     }
 
