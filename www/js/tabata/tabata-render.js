@@ -30,6 +30,7 @@ export function setupTabataRender(tb) {
 
     updateText(tb.els.roundDisplay, tb.currentRound);
     const statusEl = tb.els.status;
+    const ringEl = tb.els.ring;
 
     statusEl.classList.remove(
       "primary-vivid-text",
@@ -37,57 +38,61 @@ export function setupTabataRender(tb) {
       "app-text-sec",
       "primary-text",
     );
-    tb.els.ring.classList.remove(
+    ringEl.classList.remove(
       "primary-vivid-stroke",
       "secondary-accent-stroke",
       "primary-stroke",
     );
 
-    // Сбрасываем soft-альфу перед новой установкой
-    tb.els.ring.style.removeProperty("stroke-opacity");
+    // Сбрасываем инлайн-настройки перед установкой нового состояния
+    ringEl.style.removeProperty("stroke-opacity");
+    ringEl.style.removeProperty("stroke");
 
-    // Pause: мягкий, но видимый цвет.
-    // REST на паузе сохраняем в цвете отдыха.
+    // PAUSE: мягко, но видно; на REST сохраняем цвет отдыха
     if (tb.paused) {
       updateText(statusEl, t("pause"));
       statusEl.classList.add("app-text-sec");
 
       if (tb.status === "REST") {
-        tb.els.ring.classList.add("secondary-accent-stroke");
+        ringEl.classList.add("secondary-accent-stroke");
+        ringEl.style.stroke = "var(--secondary-accent-color)";
       } else {
-        tb.els.ring.classList.add("primary-stroke");
+        ringEl.classList.add("primary-stroke");
+        ringEl.style.stroke = "var(--primary-color)";
       }
 
-      tb.els.ring.style.strokeOpacity = "0.82";
+      ringEl.style.strokeOpacity = "0.9";
       return;
     }
 
     if (tb.status === "COMPLETED") {
       updateText(statusEl, t("tabata_complete"));
       statusEl.classList.add("primary-text");
-      tb.els.ring.classList.add("primary-stroke");
-      tb.els.ring.style.strokeOpacity = "1";
+      ringEl.classList.add("primary-stroke");
+      ringEl.style.stroke = "var(--primary-color)";
+      ringEl.style.strokeOpacity = "1";
       return;
     }
 
     if (tb.status === "WORK") {
       updateText(statusEl, t("work"));
       statusEl.classList.add("primary-text");
-      tb.els.ring.classList.add("primary-stroke");
-      tb.els.ring.style.strokeOpacity = "1";
+      ringEl.classList.add("primary-stroke");
+      ringEl.style.stroke = "var(--primary-color)";
+      ringEl.style.strokeOpacity = "1";
     } else if (tb.status === "REST") {
       updateText(statusEl, t("rest"));
       statusEl.classList.add("secondary-accent-text");
-      tb.els.ring.classList.add(
-        "if (tb.lastRenderedPhaseStamp !== tb.phaseStamp) {secondary-accent-stroke",
-      );
-      tb.els.ring.style.strokeOpacity = "1";
+      ringEl.classList.add("secondary-accent-stroke");
+      ringEl.style.stroke = "var(--secondary-accent-color)";
+      ringEl.style.strokeOpacity = "1";
     } else {
-      // READY: чуть мягче, но хорошо видно
+      // READY
       updateText(statusEl, t("get_ready"));
       statusEl.classList.add("app-text-sec");
-      tb.els.ring.classList.add("primary-stroke");
-      tb.els.ring.style.strokeOpacity = "0.65";
+      ringEl.classList.add("primary-stroke");
+      ringEl.style.stroke = "var(--primary-color)";
+      ringEl.style.strokeOpacity = "0.65";
     }
   };
 
