@@ -1,7 +1,7 @@
 @import "tailwindcss";
 @source "./www";
 
-/* Unified cascade architecture  */
+/* Unified cascade architecture */
 @layer theme, base, layout, components, states, utilities, overrides;
 
 /* =========================================
@@ -4486,7 +4486,7 @@
     background-color: color-mix(in srgb, var(--text-color) 4%, transparent);
     margin: 0;
     border-bottom: 1px solid
-      color-mix(in srgb, var(--border-color) 55%, transparent) !important;
+      color-mix(in srgb, var(--border-color) 55%, transparent);
   }
 
   /* MODAL: saved sessions table (keep as table) */

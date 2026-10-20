@@ -93,14 +93,22 @@ function shouldApplyMobileOffsetWhenAdsOff() {
     .matches;
 }
 
-function updateMobileOffsetClass(isBannerVisible) {
+function updateMobileOffsetClass(
+  isBannerVisible,
+  { reserveWhenHidden = false } = {},
+) {
   const app = $("app");
   const viewsContainer = $("viewsContainer");
 
   if (!app) return;
 
   viewsContainer?.classList.remove("ads-mobile-offset");
-  const shouldOffset = !isBannerVisible && shouldApplyMobileOffsetWhenAdsOff();
+
+  const shouldOffset =
+    reserveWhenHidden &&
+    !isBannerVisible &&
+    shouldApplyMobileOffsetWhenAdsOff();
+
   app.classList.toggle("ads-mobile-offset-var", shouldOffset);
 }
 

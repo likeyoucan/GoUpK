@@ -224,17 +224,24 @@ export const shareResults = {
       if (nativeResult.canceled) return false;
     }
 
-    // Web: сначала явный диалог сохранения, затем обычная загрузка
-    try {
-      const saved = await saveCsvWithPicker(fileName, csv);
-      if (saved) {
-        showToast(t("share_file_saved"));
-        return true;
+    // Web: если есть picker, то при Cancel ничего не скачиваем fallback-ом
+    if (typeof window.showSaveFilePicker === "function") {
+      try {
+        const saved = await saveCsvWithPicker(fileName, csv);
+        if (saved) {
+          showToast(t("share_file_saved"));
+          return true;
+        }
+
+        // Пользователь отменил выбор места сохранения
+        return false;
+      } catch {
+        showToast(getShareFileFailedText());
+        return false;
       }
-    } catch {
-      // Continue to classic download fallback
     }
 
+    // Старый fallback только для браузеров без File Picker API
     try {
       const blob = new Blob(["\uFEFF", csv], {
         type: "text/csv;charset=utf-8;",

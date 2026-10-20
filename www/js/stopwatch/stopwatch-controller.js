@@ -75,7 +75,6 @@ const stopwatchModule = {
       ring: $("sw-progressRing"),
       saveBtn: $("sw-saveBtn"),
       shareBtn: $("sw-shareBtn"),
-      saveCsvBtn: $("sw-save-csv-btn"),
       sessionsList: $("sw-sessionsList"),
       swSortWrapper: $("sw-sort-wrapper"),
       nameTitle: $("sw-name-title"),

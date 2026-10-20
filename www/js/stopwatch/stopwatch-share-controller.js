@@ -59,20 +59,6 @@ export function setupStopwatchShareController(sw) {
     await sw.shareSessionWithChoice(session);
   };
 
-  sw.saveCurrentAsCsv = async () => {
-    const session = sw.getCurrentSessionForShare();
-    if (!session) return;
-
-    const payload = sw.shareResults.buildStopwatchPayload(session, {
-      showMs: uiSettingsManager.showMs,
-    });
-
-    const ok = await sw.shareResults.shareAsFile(payload, { format: "csv" });
-    if (ok) {
-      adsManager.showInterstitialIfAllowed("share");
-    }
-  };
-
   sw.shareSavedSession = async (id) => {
     const session = sw.savedSessions.find((s) => s.id === id);
     if (!session) return;
@@ -83,7 +69,6 @@ export function setupStopwatchShareController(sw) {
 
   const onSaveClick = () => sw.prepareSaveSession();
   const onShareClick = () => sw.shareCurrentResult();
-  const onSaveCsvClick = () => sw.saveCurrentAsCsv();
 
   const onShareTextClick = async () => {
     const session = sw.pendingShareSession;
@@ -115,12 +100,28 @@ export function setupStopwatchShareController(sw) {
     }
   };
 
+  const onShareCsvClick = async () => {
+    const session = sw.pendingShareSession;
+    if (!session) return;
+
+    const payload = sw.shareResults.buildStopwatchPayload(session, {
+      showMs: uiSettingsManager.showMs,
+    });
+
+    const ok = await sw.shareResults.shareAsFile(payload, { format: "csv" });
+    if (ok) {
+      adsManager.showInterstitialIfAllowed("share");
+      sw.pendingShareSession = null;
+      modalManager.closeCurrent();
+    }
+  };
+
   sw.bindShareButtons = () => {
     bind(sw.els.saveBtn, "click", onSaveClick);
     bind(sw.els.shareBtn, "click", onShareClick);
-    bind(sw.els.saveCsvBtn, "click", onSaveCsvClick);
     bind(sw.els.shareModeTextBtn, "click", onShareTextClick);
     bind(sw.els.shareModeCopyBtn, "click", onCopyTextClick);
+    bind(sw.els.shareModeCsvBtn, "click", onShareCsvClick);
   };
 
   sw._unbindShareController = () => {
