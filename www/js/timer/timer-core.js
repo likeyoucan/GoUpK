@@ -435,7 +435,7 @@ tm.sm.unlock();
 
     const onAdjustPlus = () => {
       tm.sm.play("click");
-      tm.sm.vibrate([7, 10, 9], "tactile");
+      tm.sm.vibrate([5, 8, 6], "light");
 
       const adjustmentMs = tm.currentAdjustmentSec * 1000;
       const snap = tm.countdownEngine.adjust(adjustmentMs);
@@ -469,7 +469,7 @@ tm.sm.unlock();
 
     const onAdjustMinus = () => {
       tm.sm.play("click");
-      tm.sm.vibrate(50, "medium");
+      tm.sm.vibrate([5, 8, 6], "light");
 
       const adjustmentMs = -tm.currentAdjustmentSec * 1000;
       const snap = tm.countdownEngine.adjust(adjustmentMs);
