@@ -64,6 +64,7 @@ export const en = {
   name_exists: "Name already exists",
   name_too_long: "Name cannot exceed 50 characters",
   name_za: "Name (Z-A)",
+  new_timer: "New Timer",
   no_laps: "No laps recorded",
   pro_status_subscription_active: "Subscription active",
   pro_status_lifetime_active: "Pro version active",

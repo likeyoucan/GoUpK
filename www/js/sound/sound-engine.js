@@ -181,12 +181,12 @@ export function playNote(
 function shouldThrottleType(sm, type) {
   const now = performance.now();
   const minGapMsByType = {
-    click: 55,
-    tick: 90,
-    minute_beep: 400,
-    work_start: 220,
-    rest_start: 220,
-    complete: 600,
+    click: 80,
+    tick: 140,
+    minute_beep: 500,
+    work_start: 450,
+    rest_start: 450,
+    complete: 1800,
   };
 
   const minGap = minGapMsByType[type] ?? 0;
@@ -237,6 +237,12 @@ function applySoftDucking(sm, type) {
 export function play(sm, type, options = {}) {
   if (!sm.soundEnabled || !sm.audioCtx || sm.volume === 0) return;
 
+  const now = performance.now();
+  const isUiFx = type === "click" || type === "tick" || type === "minute_beep";
+
+  // During priority cues, skip UI FX to avoid noisy overlap.
+  if (isUiFx && now < Number(sm._busyUntil || 0)) return;
+
   if (shouldThrottleType(sm, type)) return;
 
   unlockAudio(sm);
@@ -245,7 +251,6 @@ export function play(sm, type, options = {}) {
   const activeTheme = options.theme || sm.theme;
   const vol = sm.THEME_VOL_MULTIPLIERS[activeTheme] || 1.0;
 
-  const now = performance.now();
   const isBusy = now < Number(sm._busyUntil || 0);
   const uiClickMix = isBusy && type === "click" ? 0.45 : 1;
 
@@ -362,9 +367,9 @@ export function play(sm, type, options = {}) {
   }
 
   if (type === "work_start" || type === "rest_start") {
-    sm._busyUntil = performance.now() + 520;
+    sm._busyUntil = performance.now() + 800;
   }
   if (type === "complete") {
-    sm._busyUntil = performance.now() + 1300;
+    sm._busyUntil = performance.now() + 1800;
   }
 }

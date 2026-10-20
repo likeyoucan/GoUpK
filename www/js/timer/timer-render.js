@@ -18,7 +18,7 @@ export function setupTimerRender(tm, { updateText, updateTitle }) {
   tm.updateUIState = () => {
     if (!tm.els.form) return;
 
-    const showResetWrap = tm.isPaused;
+    const showResetWrap = tm.isPaused || tm.isFinished;
     const showRestartWrap = tm.isPaused || tm.isFinished;
 
     tm.els.resetBtnWrap?.classList.toggle("hidden", !showResetWrap);
@@ -26,6 +26,14 @@ export function setupTimerRender(tm, { updateText, updateTitle }) {
 
     tm.els.restartBtnWrap?.classList.toggle("hidden", !showRestartWrap);
     tm.els.restartBtnWrap?.classList.toggle("flex", showRestartWrap);
+
+    // Button label: paused -> Reset, finished -> New Timer
+    if (tm.els.resetBtn) {
+      updateText(
+        tm.els.resetBtn,
+        tm.isFinished ? tm.t("new_timer") : tm.t("reset"),
+      );
+    }
 
     if (tm.isRunning) {
       tm.els.form.classList.add("hidden");

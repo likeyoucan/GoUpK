@@ -65,6 +65,7 @@ export const ru = {
   name_exists: "Имя уже существует",
   name_too_long: "Название не может превышать 50 символов",
   name_za: "По имени (Я-А)",
+  new_timer: "Новый таймер",
   no_laps: "Нет записей",
   pro_status_subscription_active: "Подписка активна",
   pro_status_lifetime_active: "Pro-версия активна",
