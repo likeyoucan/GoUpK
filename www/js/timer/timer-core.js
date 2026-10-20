@@ -434,7 +434,7 @@ tm.sm.unlock();
     );
 
     const onAdjustPlus = () => {
-      tm.sm.play("click");
+      tm.sm.play("tick");
       tm.sm.vibrate([7, 10, 9], "tactile");
 
       const adjustmentMs = tm.currentAdjustmentSec * 1000;
@@ -468,7 +468,7 @@ tm.sm.unlock();
     );
 
     const onAdjustMinus = () => {
-      tm.sm.play("click");
+      tm.sm.play("tick");
       tm.sm.vibrate(50, "medium");
 
       const adjustmentMs = -tm.currentAdjustmentSec * 1000;
