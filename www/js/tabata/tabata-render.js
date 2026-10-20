@@ -74,8 +74,8 @@ export function setupTabataRender(tb) {
       tb.els.ring.classList.add("secondary-accent-stroke");
     } else {
       updateText(statusEl, t("get_ready"));
-      statusEl.classList.add("primary-text");
-      tb.els.ring.classList.add("primary-stroke");
+      statusEl.classList.add("app-text-sec");
+      tb.els.ring.classList.add("app-text-sec");
     }
   };
 
