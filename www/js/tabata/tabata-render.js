@@ -85,7 +85,7 @@ export function setupTabataRender(tb) {
       updateText(statusEl, t("get_ready"));
       statusEl.classList.add("app-text-sec");
       tb.els.ring.classList.add("primary-stroke");
-      tb.els.ring.style.strokeOpacity = "0.78";
+      tb.els.ring.style.strokeOpacity = "0.6";
     }
   };
 
