@@ -43,8 +43,11 @@ export function setupTabataRender(tb) {
       "primary-stroke",
     );
 
-    // Pause must override WORK/REST labels.
-    // Keep REST ring color when paused on REST phase.
+    // Сбрасываем soft-альфу перед новой установкой
+    tb.els.ring.style.removeProperty("stroke-opacity");
+
+    // Pause: мягкий, но видимый цвет.
+    // REST на паузе сохраняем в цвете отдыха.
     if (tb.paused) {
       updateText(statusEl, t("pause"));
       statusEl.classList.add("app-text-sec");
@@ -54,6 +57,8 @@ export function setupTabataRender(tb) {
       } else {
         tb.els.ring.classList.add("primary-stroke");
       }
+
+      tb.els.ring.style.strokeOpacity = "0.82";
       return;
     }
 
@@ -61,6 +66,7 @@ export function setupTabataRender(tb) {
       updateText(statusEl, t("tabata_complete"));
       statusEl.classList.add("primary-text");
       tb.els.ring.classList.add("primary-stroke");
+      tb.els.ring.style.strokeOpacity = "1";
       return;
     }
 
@@ -68,14 +74,18 @@ export function setupTabataRender(tb) {
       updateText(statusEl, t("work"));
       statusEl.classList.add("primary-text");
       tb.els.ring.classList.add("primary-stroke");
+      tb.els.ring.style.strokeOpacity = "1";
     } else if (tb.status === "REST") {
       updateText(statusEl, t("rest"));
       statusEl.classList.add("secondary-accent-text");
       tb.els.ring.classList.add("secondary-accent-stroke");
+      tb.els.ring.style.strokeOpacity = "1";
     } else {
+      // READY: чуть мягче, но хорошо видно
       updateText(statusEl, t("get_ready"));
       statusEl.classList.add("app-text-sec");
-      tb.els.ring.classList.add("app-text-sec");
+      tb.els.ring.classList.add("primary-stroke");
+      tb.els.ring.style.strokeOpacity = "0.78";
     }
   };
 
