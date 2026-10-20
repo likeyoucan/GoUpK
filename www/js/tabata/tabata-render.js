@@ -135,7 +135,16 @@ export function setupTabataRender(tb) {
 
     if (tb.lastRenderedPhaseStamp !== tb.phaseStamp) {
       tb.lastRenderedPhaseStamp = tb.phaseStamp;
-      tb.ringCtrl.setTarget(targetOffset);
+      const visual = tb.ringCtrl.getVisual
+        ? tb.ringCtrl.getVisual()
+        : tb.ringLength;
+      const jump = Math.abs(targetOffset - visual);
+
+      if (jump > tb.ringLength * 0.45) {
+        tb.ringCtrl.snap(targetOffset);
+      } else {
+        tb.ringCtrl.setTarget(targetOffset);
+      }
       return;
     }
 
