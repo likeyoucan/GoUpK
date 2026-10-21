@@ -38,13 +38,22 @@ export function setupTimerRender(tm, { updateText, updateTitle }) {
         tm.isFinished ? tm.t("new_timer") : tm.t("reset"),
       );
 
-      tm.els.resetBtn.classList.remove("tm-new-timer-btn");
+      tm.els.resetBtn.classList.remove(
+        "main_btn_red",
+        "main_btn",
+        "tm-new-timer-btn",
+        "primary-bg",
+        "text-white",
+      );
 
       if (tm.isFinished) {
-        tm.els.resetBtn.classList.remove("main_btn_red");
-        tm.els.resetBtn.classList.add("main_btn", "tm-new-timer-btn");
+        tm.els.resetBtn.classList.add(
+          "main_btn",
+          "tm-new-timer-btn",
+          "primary-bg",
+          "text-white",
+        );
       } else {
-        tm.els.resetBtn.classList.remove("main_btn", "tm-new-timer-btn");
         tm.els.resetBtn.classList.add("main_btn_red");
       }
     }
