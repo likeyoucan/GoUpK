@@ -18,6 +18,10 @@ export function setupTimerRender(tm, { updateText, updateTitle }) {
   tm.updateUIState = () => {
     if (!tm.els.form) return;
 
+    if (tm.els.ring) {
+      tm.els.ring.style.strokeOpacity = tm.isRunning ? "1" : "0.55";
+    }
+
     const showResetWrap = tm.isPaused || tm.isFinished;
     const showRestartWrap = tm.isPaused || tm.isFinished;
 
@@ -34,7 +38,6 @@ export function setupTimerRender(tm, { updateText, updateTitle }) {
         tm.isFinished ? tm.t("new_timer") : tm.t("reset"),
       );
 
-      // New Timer should be neutral, pause Reset should stay danger
       if (tm.isFinished) {
         tm.els.resetBtn.classList.remove("main_btn_red");
         tm.els.resetBtn.classList.add("main_btn");
