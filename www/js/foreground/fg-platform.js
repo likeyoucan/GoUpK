@@ -47,6 +47,30 @@ function hasGrantedValue(statusObj) {
   );
 }
 
+function getNotificationPermissionProviders(FgService) {
+  const allPlugins = getCapacitorPlugins();
+  const LocalNotifications = allPlugins?.LocalNotifications || null;
+  const PushNotifications = allPlugins?.PushNotifications || null;
+
+  return [
+    {
+      name: "ForegroundService",
+      check: FgService?.checkPermissions?.bind(FgService),
+      request: FgService?.requestPermissions?.bind(FgService),
+    },
+    {
+      name: "LocalNotifications",
+      check: LocalNotifications?.checkPermissions?.bind(LocalNotifications),
+      request: LocalNotifications?.requestPermissions?.bind(LocalNotifications),
+    },
+    {
+      name: "PushNotifications",
+      check: PushNotifications?.checkPermissions?.bind(PushNotifications),
+      request: PushNotifications?.requestPermissions?.bind(PushNotifications),
+    },
+  ].filter((p) => p.check && p.request);
+}
+
 export function isNative() {
   return isNativePlatform();
 }
@@ -98,28 +122,30 @@ export function getPlugins() {
   return pluginsRef;
 }
 
-export async function ensureNotificationPermission(FgService) {
-  const allPlugins = getCapacitorPlugins();
-  const LocalNotifications = allPlugins?.LocalNotifications || null;
-  const PushNotifications = allPlugins?.PushNotifications || null;
+export async function checkNotificationPermissionOnly(FgService) {
+  const providers = getNotificationPermissionProviders(FgService);
 
-  const providers = [
-    {
-      name: "ForegroundService",
-      check: FgService?.checkPermissions?.bind(FgService),
-      request: FgService?.requestPermissions?.bind(FgService),
-    },
-    {
-      name: "LocalNotifications",
-      check: LocalNotifications?.checkPermissions?.bind(LocalNotifications),
-      request: LocalNotifications?.requestPermissions?.bind(LocalNotifications),
-    },
-    {
-      name: "PushNotifications",
-      check: PushNotifications?.checkPermissions?.bind(PushNotifications),
-      request: PushNotifications?.requestPermissions?.bind(PushNotifications),
-    },
-  ].filter((p) => p.check && p.request);
+  if (!providers.length) {
+    debugLog("no notification permission providers found (check-only)");
+    return false;
+  }
+
+  for (const p of providers) {
+    try {
+      const checked = await p.check();
+      debugLog(`${p.name}.checkPermissions (check-only)`, checked);
+
+      if (hasGrantedValue(checked)) return true;
+    } catch (err) {
+      console.warn(`[fg-platform] ${p.name} checkPermissions failed`, err);
+    }
+  }
+
+  return false;
+}
+
+export async function ensureNotificationPermission(FgService) {
+  const providers = getNotificationPermissionProviders(FgService);
 
   if (!providers.length) {
     debugLog("no notification permission providers found");

@@ -67,6 +67,11 @@ export const ru = {
   name_za: "По имени (Я-А)",
   new_timer: "Новый",
   no_laps: "Нет записей",
+  notif_permission_required:
+    "Включите уведомления в настройках телефона, чтобы использовать баннер уведомления",
+  notif_permission_denied: "Разрешение на уведомления отклонено",
+  notif_banner_disabled: "Баннер уведомления выключен",
+  notif_banner_enabled: "Баннер уведомления включен",
   pro_status_subscription_active: "Подписка активна",
   pro_status_lifetime_active: "Pro-версия активна",
   pro_already_active: "PRO уже активен",
