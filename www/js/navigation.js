@@ -38,6 +38,16 @@ export const navigation = {
     this.isTransitioning = false;
   },
 
+  _restoreStopwatchLapsScroll() {
+    const container = $("sw-lapsContainer");
+    if (!container) return;
+
+    // Defensive restore for occasional touch-scroll lock after timer reset flows.
+    container.style.overflowY = "auto";
+    container.style.touchAction = "pan-y";
+    container.style.pointerEvents = "auto";
+  },
+
   /**
    * @param {AppView} viewId
    * @param {{source?: "tap" | "swipe"}} [options]
@@ -172,6 +182,10 @@ export const navigation = {
     });
 
     this.updateIcons(viewId);
+
+    if (viewId === "stopwatch") {
+      this._restoreStopwatchLapsScroll();
+    }
 
     if (instant && viewId === "settings") {
       themeManager.syncSliderUIs();

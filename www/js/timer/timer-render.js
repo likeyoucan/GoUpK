@@ -33,6 +33,14 @@ export function setupTimerRender(tm, { updateText, updateTitle }) {
         tm.els.resetBtn,
         tm.isFinished ? tm.t("new_timer") : tm.t("reset"),
       );
+
+      if (tm.isFinished) {
+        tm.els.resetBtn.classList.remove("main_btn_red");
+        tm.els.resetBtn.classList.add("main_btn");
+      } else {
+        tm.els.resetBtn.classList.remove("main_btn");
+        tm.els.resetBtn.classList.add("main_btn_red");
+      }
     }
 
     if (tm.isRunning) {
