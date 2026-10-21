@@ -67,6 +67,10 @@ export const ru = {
   name_za: "По имени (Я-А)",
   new_timer: "Новый",
   no_laps: "Нет записей",
+  notifications_unsupported_web: "В веб-версии баннер не поддерживается",
+  notifications_permission_denied:
+    "Разрешите уведомления в Android, чтобы включить баннер",
+  notifications_permission_requested: "Запрос разрешения уведомлений отправлен",
   pro_status_subscription_active: "Подписка активна",
   pro_status_lifetime_active: "Pro-версия активна",
   pro_already_active: "PRO уже активен",

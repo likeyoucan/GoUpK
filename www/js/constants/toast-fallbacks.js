@@ -14,6 +14,12 @@ export const TOAST_FALLBACKS_BY_KEY = Object.freeze({
   // App icon related fallbacks
   app_icon_file_missing: "Icon file not found",
   app_icon_not_available: "App icon is not available in this build",
+
+  // Foreground banner / notifications
+  notifications_unsupported_web: "Banner is not supported in web version",
+  notifications_permission_denied:
+    "Allow Android notifications to enable the banner",
+  notifications_permission_requested: "Notification permission requested",
 });
 
 export function resolveI18nOrFallback(t, key, explicitFallback = "") {

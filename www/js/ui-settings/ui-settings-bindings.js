@@ -25,6 +25,50 @@ import {
   persistVignetteAlpha,
 } from "./ui-settings-apply.js?v=VERSION";
 
+function isNativePlatform() {
+  return !!window.Capacitor?.isNativePlatform?.();
+}
+
+function getNotificationPermissionApis() {
+  const plugins = window.Capacitor?.Plugins || {};
+  return [
+    plugins.CustomForegroundService,
+    plugins.LocalNotifications,
+    plugins.PushNotifications,
+  ].filter(Boolean);
+}
+
+async function checkNotificationsGrantedOnly() {
+  const apis = getNotificationPermissionApis();
+  for (const api of apis) {
+    try {
+      const res = await api?.checkPermissions?.();
+      if (String(res?.notifications || "").toLowerCase() === "granted") {
+        return true;
+      }
+    } catch {}
+  }
+  return false;
+}
+
+async function requestNotificationsIfNeeded() {
+  const apis = getNotificationPermissionApis();
+  for (const api of apis) {
+    try {
+      const checked = await api?.checkPermissions?.();
+      if (String(checked?.notifications || "").toLowerCase() === "granted") {
+        return true;
+      }
+
+      const requested = await api?.requestPermissions?.();
+      if (String(requested?.notifications || "").toLowerCase() === "granted") {
+        return true;
+      }
+    } catch {}
+  }
+  return false;
+}
+
 export function bindUiSettingsEvents(state) {
   const disposers = [];
 
@@ -52,9 +96,56 @@ export function bindUiSettingsEvents(state) {
       safeSetLS(STORAGE_KEYS.APP_SHOW_MS, val);
       emitAppEvent(APP_EVENTS.MS_CHANGED, undefined);
     },
-    "toggle-foreground-banner": (val) => {
-      state.showForegroundBanner = val;
-      safeSetLS(STORAGE_KEYS.APP_SHOW_FOREGROUND_BANNER, val);
+    "toggle-foreground-banner": async (val) => {
+      if (!isNativePlatform()) {
+        state.showForegroundBanner = false;
+        safeSetLS(STORAGE_KEYS.APP_SHOW_FOREGROUND_BANNER, false);
+
+        const toggle = $("toggle-foreground-banner");
+        if (toggle) toggle.checked = false;
+
+        showToast(t("notifications_unsupported_web"));
+        emitAppEvent(
+          APP_EVENTS.FOREGROUND_NOTIFICATION_SETTING_CHANGED,
+          undefined,
+        );
+        return;
+      }
+
+      if (!val) {
+        state.showForegroundBanner = false;
+        safeSetLS(STORAGE_KEYS.APP_SHOW_FOREGROUND_BANNER, false);
+        emitAppEvent(
+          APP_EVENTS.FOREGROUND_NOTIFICATION_SETTING_CHANGED,
+          undefined,
+        );
+        return;
+      }
+
+      const alreadyGranted = await checkNotificationsGrantedOnly();
+      if (alreadyGranted) {
+        state.showForegroundBanner = true;
+        safeSetLS(STORAGE_KEYS.APP_SHOW_FOREGROUND_BANNER, true);
+        emitAppEvent(
+          APP_EVENTS.FOREGROUND_NOTIFICATION_SETTING_CHANGED,
+          undefined,
+        );
+        return;
+      }
+
+      const granted = await requestNotificationsIfNeeded();
+      state.showForegroundBanner = !!granted;
+      safeSetLS(STORAGE_KEYS.APP_SHOW_FOREGROUND_BANNER, !!granted);
+
+      const toggle = $("toggle-foreground-banner");
+      if (toggle) toggle.checked = !!granted;
+
+      if (!granted) {
+        showToast(t("notifications_permission_denied"));
+      } else {
+        showToast(t("notifications_permission_requested"));
+      }
+
       emitAppEvent(
         APP_EVENTS.FOREGROUND_NOTIFICATION_SETTING_CHANGED,
         undefined,
@@ -113,7 +204,10 @@ export function bindUiSettingsEvents(state) {
     const el = $(id);
     if (!el) return;
 
-    const onChange = (e) => callback(e.target.checked);
+    const onChange = async (e) => {
+      await callback(e.target.checked);
+    };
+
     bind(el, "change", onChange);
   });
 

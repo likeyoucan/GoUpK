@@ -23,6 +23,7 @@ import {
   isNative,
   getPlugins,
   ensureNotificationPermission,
+  checkNotificationPermission,
   ensureNotificationChannel,
   rememberHandle,
   removeAllHandles,
@@ -317,20 +318,23 @@ function scheduleForegroundStop(delay = FOREGROUND_STOP_DEBOUNCE_MS) {
   }, delay);
 }
 
-async function ensurePermissionIfNeeded(force = false) {
+async function ensurePermissionIfNeeded(requestIfDenied = false) {
   const plugins = getPlugins();
   if (!plugins) return false;
 
   const now = Date.now();
   if (
-    !force &&
+    !requestIfDenied &&
     permissionGranted !== null &&
     now - permissionCheckedAt < PERMISSION_CHECK_TTL_MS
   ) {
     return permissionGranted;
   }
 
-  const granted = await ensureNotificationPermission(plugins.FgService);
+  const granted = requestIfDenied
+    ? await ensureNotificationPermission(plugins.FgService)
+    : await checkNotificationPermission(plugins.FgService);
+
   permissionGranted = !!granted;
   permissionCheckedAt = now;
   return permissionGranted;
@@ -350,8 +354,6 @@ function buildRuntimeStateFromJs(payload, state, theme, accent) {
 
   let tabataRemNow = Math.max(0, Number(getTabataRemainingMs()) || 0);
 
-  // During short phase-closing window JS can transiently report 0.
-  // Do not push 0 to native for active Tabata phase.
   if (
     state?.mode === "tabata" &&
     state?.running &&
@@ -399,7 +401,6 @@ function buildRuntimeStateFromJs(payload, state, theme, accent) {
       t("tabata"),
     tbRemainingMs: tabataRemNow,
 
-    // Native phase progression plan for background mode
     tbWorkMs: Math.max(1, Number(tb.work) || 20000),
     tbRestMs: Math.max(1, Number(tb.rest) || 10000),
     tbReadyMs: 5000,
@@ -722,7 +723,6 @@ function applyTabataRuntimeToJs(nativeState) {
 
   const isTerminal = tb.status === "STOPPED" || tb.status === "COMPLETED";
 
-  // While phase is active, transient native 0 should not force STOPPED in JS.
   if (!isTerminal && nativeState.running && rem <= 0) {
     rem = Math.max(1, knownPhaseDuration || 1);
   }
@@ -1152,7 +1152,7 @@ async function handleAppBecameBackground(reason) {
     return;
   }
 
-  await ensurePermissionIfNeeded(true);
+  await ensurePermissionIfNeeded(false);
   await syncNotification({ reason, force: false });
 
   const state = getResolvedForegroundState();
@@ -1193,6 +1193,7 @@ export async function initForegroundService() {
 
   notificationSuppressed = await readNativeSuppressedFlag();
 
+  // Startup path keeps request behavior as before.
   const permissionOk = await ensurePermissionIfNeeded(true);
   await ensureNotificationChannel(plugins.FgService, CHANNEL);
 
