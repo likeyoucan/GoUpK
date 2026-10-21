@@ -66,10 +66,6 @@ export const en = {
   name_za: "Name (Z-A)",
   new_timer: "New",
   no_laps: "No laps recorded",
-  notifications_unsupported_web: "Banner is not supported in web version",
-  notifications_permission_denied:
-    "Allow Android notifications to enable the banner",
-  notifications_permission_requested: "Notification permission requested",
   pro_status_subscription_active: "Subscription active",
   pro_status_lifetime_active: "Pro version active",
   pro_already_active: "PRO is already active",

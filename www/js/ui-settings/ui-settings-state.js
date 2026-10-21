@@ -24,7 +24,7 @@ export const UI_SETTINGS_KEYS = {
 export function createUiSettingsState() {
   return {
     showMs: true,
-    showForegroundBanner: false,
+    showForegroundBanner: true,
     isAdaptiveBg: true,
     hasVignette: false,
     isLiquidGlass: false,
@@ -65,7 +65,7 @@ export function loadUiSettingsFromStorage(state) {
   state.hideNavLabels = safeGetLS(UI_SETTINGS_KEYS.hideNavLabels) === "true";
   state.showMs = safeGetLS(UI_SETTINGS_KEYS.showMs) !== "false";
   state.showForegroundBanner =
-    safeGetLS(UI_SETTINGS_KEYS.showForegroundBanner) === "true";
+    safeGetLS(UI_SETTINGS_KEYS.showForegroundBanner) !== "false";
   state.swMinuteBeep = safeGetLS(UI_SETTINGS_KEYS.swMinuteBeep) !== "false";
 
   state.fontSize = Number(safeGetLS(UI_SETTINGS_KEYS.fontSize)) || 16;

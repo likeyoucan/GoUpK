@@ -12,21 +12,9 @@ export function applyUiSettingsToControls(state) {
   if ($("toggle-nav-labels"))
     $("toggle-nav-labels").checked = state.hideNavLabels;
   if ($("toggle-ms")) $("toggle-ms").checked = state.showMs;
-
-  const fgToggle = $("toggle-foreground-banner");
-  if (fgToggle) {
-    const isNative = !!window.Capacitor?.isNativePlatform?.();
-
-    fgToggle.checked = isNative ? state.showForegroundBanner : false;
-    fgToggle.dataset.webUnsupported = isNative ? "0" : "1";
-
-    const uiToggle = fgToggle.nextElementSibling;
-    uiToggle?.classList.toggle("opacity-50", !isNative);
-
-    const labelWrap = fgToggle.closest("label");
-    labelWrap?.classList.toggle("cursor-not-allowed", !isNative);
+  if ($("toggle-foreground-banner")) {
+    $("toggle-foreground-banner").checked = state.showForegroundBanner;
   }
-
   if ($("toggle-sw-minute-beep")) {
     $("toggle-sw-minute-beep").checked = state.swMinuteBeep;
   }
@@ -171,6 +159,7 @@ export function updateRangeValueByDataset(input) {
   valueEl.textContent = `${input.value}${unit}`;
 }
 
+// Backward-compatible helper for current code paths.
 export function updateRangeValueRight(sliderId, valueId, labelsArray) {
   const slider = $(sliderId);
   if (!slider) return;
