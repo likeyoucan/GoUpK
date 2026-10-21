@@ -6,8 +6,6 @@ import {
   requestWakeLock,
   releaseWakeLock,
   bgWorker,
-  safeSetLS,
-  showToast,
 } from "./utils.js?v=VERSION";
 import { sw } from "./stopwatch.js?v=VERSION";
 import { tm } from "./timer.js?v=VERSION";
@@ -18,8 +16,6 @@ import { sm } from "./sound.js?v=VERSION";
 import { t } from "./i18n.js?v=VERSION";
 import { store } from "./store.js?v=VERSION";
 import { APP_EVENTS } from "./constants/events.js?v=VERSION";
-import { STORAGE_KEYS } from "./constants/storage-keys.js?v=VERSION";
-import { resolveToastText } from "./constants/toast-fallbacks.js?v=VERSION";
 import { onAppEvent } from "./events/app-events.js?v=VERSION";
 import { getProgressOffset } from "./core/timers-runtime.js?v=VERSION";
 
@@ -27,7 +23,6 @@ import {
   isNative,
   getPlugins,
   ensureNotificationPermission,
-  checkNotificationPermissionOnly,
   ensureNotificationChannel,
   rememberHandle,
   removeAllHandles,
@@ -177,18 +172,6 @@ function scheduleStateSync(reason = "event") {
     await pushRuntimeStateToNative(`${r}:push_trail`);
     await syncNotification({ reason: `${r}:notify_trail`, force: false });
   }, EVENT_SYNC_TRAIL_DELAY_MS);
-}
-
-function forceDisableForegroundBannerSetting(toastKey = "") {
-  uiSettingsManager.showForegroundBanner = false;
-  safeSetLS(STORAGE_KEYS.APP_SHOW_FOREGROUND_BANNER, "false");
-
-  const toggle = $("toggle-foreground-banner");
-  if (toggle) toggle.checked = false;
-
-  if (toastKey) {
-    showToast(resolveToastText(t, toastKey));
-  }
 }
 
 async function readNativeSuppressedFlag() {
@@ -347,27 +330,8 @@ async function ensurePermissionIfNeeded(force = false) {
     return permissionGranted;
   }
 
-  // Fast path: check-only, no system prompt.
-  const checkedGranted = await checkNotificationPermissionOnly(
-    plugins.FgService,
-  );
-  if (checkedGranted) {
-    permissionGranted = true;
-    permissionCheckedAt = now;
-    return true;
-  }
-
-  if (!force) {
-    permissionGranted = false;
-    permissionCheckedAt = now;
-    return false;
-  }
-
-  // Force path: user explicitly enabled banner toggle -> request permission.
-  const requestedGranted = await ensureNotificationPermission(
-    plugins.FgService,
-  );
-  permissionGranted = !!requestedGranted;
+  const granted = await ensureNotificationPermission(plugins.FgService);
+  permissionGranted = !!granted;
   permissionCheckedAt = now;
   return permissionGranted;
 }
@@ -1132,15 +1096,6 @@ function bindDocumentEvents() {
   listeners.unsubs.push(
     onAppEvent(APP_EVENTS.FOREGROUND_NOTIFICATION_SETTING_CHANGED, async () => {
       if (shouldShowForegroundBanner()) {
-        const granted = await ensurePermissionIfNeeded(true);
-
-        if (!granted) {
-          forceDisableForegroundBannerSetting("notif_permission_required");
-          cancelPendingStop();
-          await stopForeground();
-          return;
-        }
-
         notificationSuppressed = false;
         await clearNativeSuppressedFlag();
         scheduleStateSync("foreground_setting_changed_enable");
@@ -1238,11 +1193,10 @@ export async function initForegroundService() {
 
   notificationSuppressed = await readNativeSuppressedFlag();
 
-  const permissionOk = await ensurePermissionIfNeeded(false);
+  const permissionOk = await ensurePermissionIfNeeded(true);
   await ensureNotificationChannel(plugins.FgService, CHANNEL);
 
   if (!permissionOk) {
-    forceDisableForegroundBannerSetting("notif_permission_required");
     console.warn("[fg] notification permission denied. Foreground disabled.");
     return;
   }

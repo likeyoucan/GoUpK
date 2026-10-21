@@ -66,11 +66,6 @@ export const en = {
   name_za: "Name (Z-A)",
   new_timer: "New",
   no_laps: "No laps recorded",
-  notif_permission_required:
-    "Enable notifications in system settings to use notification banner",
-  notif_permission_denied: "Notification permission denied",
-  notif_banner_disabled: "Notification banner disabled",
-  notif_banner_enabled: "Notification banner enabled",
   pro_status_subscription_active: "Subscription active",
   pro_status_lifetime_active: "Pro version active",
   pro_already_active: "PRO is already active",

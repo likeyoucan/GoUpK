@@ -14,13 +14,6 @@ export const TOAST_FALLBACKS_BY_KEY = Object.freeze({
   // App icon related fallbacks
   app_icon_file_missing: "Icon file not found",
   app_icon_not_available: "App icon is not available in this build",
-
-  // Foreground notification permission
-  notif_permission_required:
-    "Enable notifications in system settings to use notification banner",
-  notif_permission_denied: "Notification permission denied",
-  notif_banner_disabled: "Notification banner disabled",
-  notif_banner_enabled: "Notification banner enabled",
 });
 
 export function resolveI18nOrFallback(t, key, explicitFallback = "") {

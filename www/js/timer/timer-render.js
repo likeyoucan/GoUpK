@@ -32,7 +32,6 @@ export function setupTimerRender(tm, { updateText, updateTitle }) {
     tm.els.restartBtnWrap?.classList.toggle("flex", showRestartWrap);
 
     // Button label: paused -> Reset, finished -> New Timer
-    // Button label + style: paused -> Reset (danger), finished -> New Timer (accent)
     if (tm.els.resetBtn) {
       updateText(
         tm.els.resetBtn,
