@@ -56,12 +56,18 @@ export function setupTabataRender(tb) {
       if (tb.status === "REST") {
         ringEl.classList.add("secondary-accent-stroke");
         ringEl.style.stroke = "var(--secondary-accent-color)";
+        ringEl.style.strokeOpacity = "0.9";
+      } else if (tb.status === "READY") {
+        ringEl.classList.add("primary-stroke");
+        ringEl.style.stroke = "var(--primary-color)";
+        // сохраняем мягкость как в "Приготовьтесь"
+        ringEl.style.strokeOpacity = "0.54";
       } else {
         ringEl.classList.add("primary-stroke");
         ringEl.style.stroke = "var(--primary-color)";
+        ringEl.style.strokeOpacity = "0.9";
       }
 
-      ringEl.style.strokeOpacity = "0.9";
       return;
     }
 
