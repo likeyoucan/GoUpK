@@ -681,6 +681,14 @@
       transform var(--dur-micro) var(--ease-standard);
   }
 
+  .tm-new-timer-btn {
+    background-color: var(--primary-color);
+    color: #ffffff;
+    border-color: color-mix(in srgb, var(--primary-color) 58%, transparent);
+    box-shadow: 0 1px 3px
+      color-mix(in srgb, var(--primary-color) 20%, transparent);
+  }
+
   /* Unified public classes */
   .main_btn,
   .main_btn_red {
@@ -3072,7 +3080,8 @@
   }
 
   .glass-effect #sw-name-confirm,
-  .glass-effect #tb-saveModalBtn {
+  .glass-effect #tb-saveModalBtn,
+  .glass-effect #tm-resetBtn.tm-new-timer-btn {
     background: color-mix(in srgb, var(--primary-color) 70%, transparent);
     backdrop-filter: blur(16px) saturate(150%);
     box-shadow:
@@ -3504,6 +3513,23 @@
     .nav-btn:hover > div:not(.primary-text),
     .nav-btn:hover > span:not(.primary-text) {
       color: var(--primary-color);
+    }
+
+    .tm-new-timer-btn:hover {
+      background-color: color-mix(
+        in srgb,
+        var(--primary-color) 86%,
+        #ffffff 14%
+      );
+      border-color: color-mix(in srgb, var(--primary-color) 72%, #ffffff 28%);
+    }
+
+    html.dark.glass-effect #tm-resetBtn.tm-new-timer-btn:hover {
+      background-color: color-mix(
+        in srgb,
+        var(--primary-color) 92%,
+        #000000 8%
+      );
     }
   }
 
