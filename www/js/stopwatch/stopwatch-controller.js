@@ -102,7 +102,6 @@ const stopwatchModule = {
     if (this.els.ring) {
       this.els.ring.style.strokeDasharray = this.ringLength;
       this.els.ring.style.strokeDashoffset = this.ringLength;
-      this.els.ring.style.strokeOpacity = "0.55";
 
       this.ringCtrl?.stop?.();
       this.ringCtrl = createRingController({
@@ -232,7 +231,6 @@ const stopwatchModule = {
       this.updateDisplay();
 
       this.isRunning = false;
-      if (this.els.ring) this.els.ring.style.strokeOpacity = "0.55";
       this.startEpochMs = 0;
 
       this.pauseTime = Date.now();
@@ -269,7 +267,6 @@ const stopwatchModule = {
       this.lastMinuteBeep = Math.floor(this.elapsedTime / 60000);
 
       this.isRunning = true;
-      if (this.els.ring) this.els.ring.style.strokeOpacity = "1";
       this.pauseTime = 0;
 
       requestWakeLock();
@@ -396,7 +393,6 @@ const stopwatchModule = {
       this.pendingLapsRerender = false;
 
       updateText(this.els.display, "GO");
-      if (this.els.ring) this.els.ring.style.strokeOpacity = "0.55";
       this.els.display.classList.add("is-go");
       animateGoEnter(this.els.display);
       this.els.display.style.transform = "";
