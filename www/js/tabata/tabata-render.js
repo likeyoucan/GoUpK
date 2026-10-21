@@ -1,164 +1,114 @@
 // Файл: www/js/tabata/tabata-render.js
 
-import { updateText, updateTitle, formatTime } from "../utils.js?v=VERSION";
-import { t } from "../i18n.js?v=VERSION";
-import { sm } from "../sound.js?v=VERSION";
-import { getProgressOffset } from "../core/timers-runtime.js?v=VERSION";
+export function setupTimerRender(tm, { updateText, updateTitle }) {
+  function getAdjustmentAmount(remainingSeconds) {
+    if (remainingSeconds > 3600) return 900;
+    if (remainingSeconds > 1800) return 300;
+    if (remainingSeconds > 900) return 60;
+    if (remainingSeconds > 300) return 30;
+    if (remainingSeconds > 60) return 15;
+    return 5;
+  }
 
-export function setupTabataRender(tb) {
-  // Monotonic guard for displayed remaining time within the same phase.
-  let lastRenderedPhaseStamp = -1;
-  let lastRenderedRemMs = 0;
+  function formatAdjustmentText(seconds) {
+    if (seconds < 60) return `${seconds}s`;
+    return `${seconds / 60}m`;
+  }
 
-  tb.enforceDisplayState = () => {
-    if (!tb.els?.timer) return;
+  tm.updateUIState = () => {
+    if (!tm.els.form) return;
 
-    if (tb.status === "STOPPED") {
-      if (tb.els.timer.textContent !== "GO") {
-        updateText(tb.els.timer, "GO");
+    if (tm.els.ring) {
+      tm.els.ring.style.strokeOpacity = tm.isRunning ? "1" : "0.55";
+    }
+
+    const showResetWrap = tm.isPaused || tm.isFinished;
+    const showRestartWrap = tm.isPaused || tm.isFinished;
+
+    tm.els.resetBtnWrap?.classList.toggle("hidden", !showResetWrap);
+    tm.els.resetBtnWrap?.classList.toggle("flex", showResetWrap);
+
+    tm.els.restartBtnWrap?.classList.toggle("hidden", !showRestartWrap);
+    tm.els.restartBtnWrap?.classList.toggle("flex", showRestartWrap);
+
+    // Button label: paused -> Reset, finished -> New Timer
+    if (tm.els.resetBtn) {
+      updateText(
+        tm.els.resetBtn,
+        tm.isFinished ? tm.t("new_timer") : tm.t("reset"),
+      );
+
+      if (tm.isFinished) {
+        tm.els.resetBtn.classList.remove("main_btn_red");
+        tm.els.resetBtn.classList.add("main_btn");
+      } else {
+        tm.els.resetBtn.classList.remove("main_btn");
+        tm.els.resetBtn.classList.add("main_btn_red");
       }
-      tb.els.timer.classList.add("is-go");
-      tb.els.timer.style.transform = "";
+    }
+
+    if (tm.isRunning) {
+      tm.els.form.classList.add("hidden");
+      tm.els.status?.classList.add("hidden");
+      tm.els.display?.classList.remove("is-go");
+      tm.els.adjustControls?.classList.remove("hidden");
+      tm.els.adjustControls?.classList.add("flex");
       return;
     }
 
-    tb.els.timer.classList.remove("is-go");
+    if (tm.isPaused) {
+      tm.els.form.classList.add("hidden");
+      tm.els.status?.classList.remove("hidden");
+      updateText(tm.els.status, tm.t("pause"));
+      tm.els.adjustControls?.classList.add("hidden");
+      tm.els.adjustControls?.classList.remove("flex");
+      return;
+    }
+
+    if (tm.isFinished) {
+      tm.els.form.classList.add("hidden");
+      tm.els.status?.classList.remove("hidden");
+      updateText(tm.els.status, tm.t("timer_finished"));
+      tm.els.display?.classList.remove("is-go");
+      tm.els.adjustControls?.classList.add("hidden");
+      tm.els.adjustControls?.classList.remove("flex");
+      return;
+    }
+
+    tm.els.form.classList.remove("hidden");
+    tm.els.status?.classList.add("hidden");
+    tm.els.display?.classList.add("is-go");
+    updateText(tm.els.display, "GO");
+    tm.els.adjustControls?.classList.add("hidden");
+    tm.els.adjustControls?.classList.remove("flex");
   };
 
-  tb.updatePhaseStyles = () => {
-    if (!tb.els.ring) return;
+  tm.updateAdjustButtons = () => {
+    if (!tm.isRunning) return;
 
-    updateText(tb.els.roundDisplay, tb.currentRound);
-    const statusEl = tb.els.status;
-    const ringEl = tb.els.ring;
+    const remainingSeconds = Math.ceil(tm.timeRemainingMs / 1000);
+    const newAdjustmentSec = getAdjustmentAmount(remainingSeconds);
 
-    statusEl.classList.remove(
-      "primary-vivid-text",
-      "secondary-accent-text",
-      "app-text-sec",
-      "primary-text",
-    );
-    ringEl.classList.remove(
-      "primary-vivid-stroke",
-      "secondary-accent-stroke",
-      "primary-stroke",
-    );
+    if (newAdjustmentSec === tm.currentAdjustmentSec) return;
 
-    // Сбрасываем инлайн-настройки перед установкой нового состояния
-    ringEl.style.removeProperty("stroke-opacity");
-    ringEl.style.removeProperty("stroke");
-
-    // PAUSE: мягко, но видно; на REST сохраняем цвет отдыха
-    if (tb.paused) {
-      updateText(statusEl, t("pause"));
-      statusEl.classList.add("app-text-sec");
-
-      if (tb.status === "REST") {
-        ringEl.classList.add("secondary-accent-stroke");
-        ringEl.style.stroke = "var(--secondary-accent-color)";
-        ringEl.style.strokeOpacity = "0.9";
-      } else if (tb.status === "READY") {
-        ringEl.classList.add("primary-stroke");
-        ringEl.style.stroke = "var(--primary-color)";
-        // сохраняем мягкость как в "Приготовьтесь"
-        ringEl.style.strokeOpacity = "0.54";
-      } else {
-        ringEl.classList.add("primary-stroke");
-        ringEl.style.stroke = "var(--primary-color)";
-        ringEl.style.strokeOpacity = "0.9";
-      }
-
-      return;
-    }
-
-    if (tb.status === "COMPLETED") {
-      updateText(statusEl, t("tabata_complete"));
-      statusEl.classList.add("primary-text");
-      ringEl.classList.add("primary-stroke");
-      ringEl.style.stroke = "var(--primary-color)";
-      ringEl.style.strokeOpacity = "1";
-      return;
-    }
-
-    if (tb.status === "WORK") {
-      updateText(statusEl, t("work"));
-      statusEl.classList.add("primary-text");
-      ringEl.classList.add("primary-stroke");
-      ringEl.style.stroke = "var(--primary-color)";
-      ringEl.style.strokeOpacity = "1";
-    } else if (tb.status === "REST") {
-      updateText(statusEl, t("rest"));
-      statusEl.classList.add("secondary-accent-text");
-      ringEl.classList.add("secondary-accent-stroke");
-      ringEl.style.stroke = "var(--secondary-accent-color)";
-      ringEl.style.strokeOpacity = "1";
-    } else {
-      // READY
-      updateText(statusEl, t("get_ready"));
-      statusEl.classList.add("app-text-sec");
-      ringEl.classList.add("primary-stroke");
-      ringEl.style.stroke = "var(--primary-color)";
-      ringEl.style.strokeOpacity = "0.65";
-    }
+    tm.currentAdjustmentSec = newAdjustmentSec;
+    const text = formatAdjustmentText(tm.currentAdjustmentSec);
+    updateText(tm.els.plusValueSpan, `+ ${text}`);
+    updateText(tm.els.minusValueSpan, `- ${text}`);
   };
 
-  tb.render = (rem) => {
-    let safeRem = Math.max(0, rem);
+  tm.updateDisplay = (rem) => {
+    const hInput = parseInt(tm.els.h?.value, 10) || 0;
+    const forceHours = hInput > 0 || tm.totalDuration >= 3600000;
 
-    tb.enforceDisplayState?.();
+    const timeStr = tm.formatTime(rem, { forceHours });
+    updateText(tm.els.display, timeStr);
 
-    // Keep time monotonic inside the same phase while running.
-    if (!tb.paused && tb.status !== "STOPPED") {
-      if (lastRenderedPhaseStamp !== tb.phaseStamp) {
-        lastRenderedPhaseStamp = tb.phaseStamp;
-        lastRenderedRemMs = safeRem;
-      } else if (lastRenderedRemMs > 0 && safeRem > lastRenderedRemMs) {
-        safeRem = lastRenderedRemMs;
-      }
-      lastRenderedRemMs = safeRem;
-    } else {
-      lastRenderedPhaseStamp = tb.phaseStamp;
-      lastRenderedRemMs = safeRem;
+    if (!tm.els.display.classList.contains("is-go")) {
+      tm.els.display.style.transform = "translateX(0px)";
     }
 
-    const sTotal = Math.ceil(safeRem / 1000);
-    if (sTotal <= 3 && sTotal > 0 && tb.lastBeepSec !== sTotal) {
-      sm.play("tick");
-      tb.lastBeepSec = sTotal;
-    }
-
-    const timeStr = formatTime(safeRem);
-    updateText(tb.els.timer, timeStr);
-
-    if (!tb.els.timer.classList.contains("is-go")) {
-      tb.els.timer.style.transform = "translateX(0px)";
-    }
-
-    if (document.hidden) updateTitle(`${tb.status}: ${timeStr}`);
-
-    if (!tb.ringCtrl) return;
-
-    const targetOffset = getProgressOffset({
-      remainingMs: safeRem,
-      totalMs: tb.phaseDuration,
-      ringLength: tb.ringLength,
-    });
-
-    if (tb.lastRenderedPhaseStamp !== tb.phaseStamp) {
-      tb.lastRenderedPhaseStamp = tb.phaseStamp;
-      const visual = tb.ringCtrl.getVisual
-        ? tb.ringCtrl.getVisual()
-        : tb.ringLength;
-      const jump = Math.abs(targetOffset - visual);
-
-      if (jump > tb.ringLength * 0.45) {
-        tb.ringCtrl.snap(targetOffset);
-      } else {
-        tb.ringCtrl.setTarget(targetOffset);
-      }
-      return;
-    }
-
-    tb.ringCtrl.setTarget(targetOffset);
+    // Keep title updates out of hot path on active screen
+    if (document.hidden) updateTitle(timeStr);
   };
 }
