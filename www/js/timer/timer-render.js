@@ -19,7 +19,7 @@ export function setupTimerRender(tm, { updateText, updateTitle }) {
     if (!tm.els.form) return;
 
     if (tm.els.ring) {
-      tm.els.ring.style.strokeOpacity = tm.isRunning ? "1" : "0.55";
+      tm.els.ring.style.strokeOpacity = tm.isRunning ? "1" : "0.9";
     }
 
     const showResetWrap = tm.isPaused || tm.isFinished;
