@@ -330,9 +330,11 @@ async function ensurePermissionIfNeeded(force = false) {
     return permissionGranted;
   }
 
+  // В foreground-service только check (без вызова системного prompt).
   const granted = await ensureNotificationPermission(plugins.FgService, {
     requestIfNeeded: false,
   });
+
   permissionGranted = !!granted;
   permissionCheckedAt = now;
   return permissionGranted;
@@ -1097,6 +1099,9 @@ function bindDocumentEvents() {
   );
   listeners.unsubs.push(
     onAppEvent(APP_EVENTS.FOREGROUND_NOTIFICATION_SETTING_CHANGED, async () => {
+      // Принудительно сбрасываем TTL-кэш permission, чтобы сразу увидеть новое состояние.
+      await ensurePermissionIfNeeded(true);
+
       if (shouldShowForegroundBanner()) {
         notificationSuppressed = false;
         await clearNativeSuppressedFlag();
@@ -1198,9 +1203,12 @@ export async function initForegroundService() {
   const permissionOk = await ensurePermissionIfNeeded(true);
   await ensureNotificationChannel(plugins.FgService, CHANNEL);
 
+  // Важно: даже без permission продолжаем init, чтобы потом корректно
+  // отреагировать на выдачу permission и переключатель в настройках.
   if (!permissionOk) {
-    console.warn("[fg] notification permission denied. Foreground disabled.");
-    return;
+    console.warn(
+      "[fg] notification permission denied on init. Waiting for grant.",
+    );
   }
 
   bindDocumentEvents();
@@ -1246,10 +1254,13 @@ export async function initForegroundService() {
   await pullRuntimeStateIntoJs("init:pull_runtime");
   await drainPendingButtonActions("init:pending");
 
-  if (!notificationSuppressed) {
+  // Стартуем баннер только если реально есть permission.
+  if (!notificationSuppressed && permissionOk) {
     await pushRuntimeStateToNative("init");
     await syncNotification({ reason: "init", force: false });
   }
+
+  appIsBackground = document.visibilityState !== "visible";
 
   appIsBackground = document.visibilityState !== "visible";
 }
