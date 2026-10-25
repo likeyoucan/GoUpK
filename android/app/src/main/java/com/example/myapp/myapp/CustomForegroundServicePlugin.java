@@ -266,6 +266,10 @@ public class CustomForegroundServicePlugin extends Plugin {
         ForegroundStateStore.RuntimeState s = store.read();
         long now = System.currentTimeMillis();
 
+        long swElapsedNow = s.running && ForegroundStateStore.MODE_STOPWATCH.equals(s.mode)
+            ? Math.max(0L, s.swBaseElapsedMs + (now - s.swStartedAt))
+            : Math.max(0L, s.swElapsedMs);
+
         long tmRemainingNow = s.running && ForegroundStateStore.MODE_TIMER.equals(s.mode)
             ? Math.max(0L, s.tmEndsAt - now)
             : Math.max(0L, s.tmRemainingMs);
@@ -278,7 +282,7 @@ public class CustomForegroundServicePlugin extends Plugin {
         result.put("mode", s.mode);
         result.put("running", s.running);
         result.put("updatedAt", s.updatedAt);
-        result.put("swElapsedMs", s.swElapsedMs);
+        result.put("swElapsedMs", swElapsedNow);
         result.put("tmRemainingMs", tmRemainingNow);
         result.put("tmTotalMs", s.tmTotalMs);
         result.put("tbStatus", s.tbStatus);

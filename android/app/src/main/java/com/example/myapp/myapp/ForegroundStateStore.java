@@ -153,6 +153,10 @@ public class ForegroundStateStore {
         RuntimeState s = read();
         long now = System.currentTimeMillis();
 
+        // Bring native timeline to "now" before merging JS snapshot.
+        // This avoids phase/time rollback near boundaries when JS is late.
+        normalizeCompletionIfNeeded(s, now);
+
         String prevMode = s.mode;
         boolean prevRunning = s.running;
         String prevTbStatus = s.tbStatus;
@@ -230,7 +234,15 @@ public class ForegroundStateStore {
             if (s.running) {
                 long mergedRemaining;
                 if (MODE_TIMER.equals(prevMode) && prevRunning) {
-                    mergedRemaining = Math.min(nativeTimerRemainingNow, incomingTimerRemaining);
+                    long timerDelta = incomingTimerRemaining - nativeTimerRemainingNow;
+
+                    // Keep countdown monotonic by default, but allow explicit timer increase
+                    // from app controls (incoming remaining becomes meaningfully larger).
+                    if (timerDelta > 250L) {
+                        mergedRemaining = incomingTimerRemaining;
+                    } else {
+                        mergedRemaining = Math.min(nativeTimerRemainingNow, incomingTimerRemaining);
+                    }
                 } else {
                     mergedRemaining = incomingTimerRemaining;
                 }
@@ -302,7 +314,7 @@ public class ForegroundStateStore {
                 if (incomingRegression) {
                     incomingRemainingSafe = nativeTabataRemainingNow > 0L
                         ? nativeTabataRemainingNow
-                        : Math.max(1L, s.tbPhaseDuration);
+                        : 1L;
                 }
 
                 if (MODE_TABATA.equals(prevMode) && prevRunning) {
@@ -329,7 +341,9 @@ public class ForegroundStateStore {
                         } else if (incomingRemainingSafe > 0L) {
                             mergedRemaining = incomingRemainingSafe;
                         } else if (incomingPhaseOpen) {
-                            mergedRemaining = Math.max(1L, s.tbPhaseDuration);
+                            // Never restore full phase when clock already reached boundary.
+                            // Keep 1ms so native phase advancement happens immediately.
+                            mergedRemaining = 1L;
                         } else {
                             mergedRemaining = 0L;
                         }
@@ -357,7 +371,7 @@ public class ForegroundStateStore {
                 }
 
                 if (pausedRemaining <= 0L && incomingPhaseOpen) {
-                    pausedRemaining = Math.max(1L, s.tbPhaseDuration);
+                    pausedRemaining = 1L;
                 }
 
                 s.tbRemainingMs = Math.max(0L, pausedRemaining);
