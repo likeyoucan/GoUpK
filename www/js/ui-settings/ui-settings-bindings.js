@@ -8,6 +8,7 @@ import { appProManager } from "../app-pro.js?v=VERSION";
 import { APP_EVENTS } from "../constants/events.js?v=VERSION";
 import { STORAGE_KEYS } from "../constants/storage-keys.js?v=VERSION";
 import { emitAppEvent } from "../events/app-events.js?v=VERSION";
+import { isNativePlatform } from "../platform/capacitor-adapter.js?v=VERSION";
 
 import {
   setFontSize,
@@ -23,6 +24,7 @@ import {
   persistFontSize,
   persistRingWidth,
   persistVignetteAlpha,
+  applyForegroundBannerAvailabilityState,
 } from "./ui-settings-apply.js?v=VERSION";
 
 export function bindUiSettingsEvents(state) {
@@ -51,14 +53,6 @@ export function bindUiSettingsEvents(state) {
       state.showMs = val;
       safeSetLS(STORAGE_KEYS.APP_SHOW_MS, val);
       emitAppEvent(APP_EVENTS.MS_CHANGED, undefined);
-    },
-    "toggle-foreground-banner": (val) => {
-      state.showForegroundBanner = val;
-      safeSetLS(STORAGE_KEYS.APP_SHOW_FOREGROUND_BANNER, val);
-      emitAppEvent(
-        APP_EVENTS.FOREGROUND_NOTIFICATION_SETTING_CHANGED,
-        undefined,
-      );
     },
     "toggle-nav-labels": (val) => {
       state.hideNavLabels = val;
@@ -116,6 +110,33 @@ export function bindUiSettingsEvents(state) {
     const onChange = (e) => callback(e.target.checked);
     bind(el, "change", onChange);
   });
+
+  // Отдельная обработка баннера шторки:
+  // web -> всегда OFF + тост "не поддерживается", native -> обычная логика
+  const fgBannerToggle = $("toggle-foreground-banner");
+  if (fgBannerToggle) {
+    const onForegroundBannerChange = (e) => {
+      const checked = !!e.target.checked;
+
+      if (!isNativePlatform()) {
+        state.showForegroundBanner = false;
+        fgBannerToggle.checked = false;
+        safeSetLS(STORAGE_KEYS.APP_SHOW_FOREGROUND_BANNER, "false");
+        applyForegroundBannerAvailabilityState(state);
+        showToast(t("foreground_banner_unsupported_web"));
+        return;
+      }
+
+      state.showForegroundBanner = checked;
+      safeSetLS(STORAGE_KEYS.APP_SHOW_FOREGROUND_BANNER, checked);
+      emitAppEvent(
+        APP_EVENTS.FOREGROUND_NOTIFICATION_SETTING_CHANGED,
+        undefined,
+      );
+    };
+
+    bind(fgBannerToggle, "change", onForegroundBannerChange);
+  }
 
   const fontSlider = $("fontSlider");
   if (fontSlider) {

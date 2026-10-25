@@ -31,7 +31,6 @@ export function setupTimerRender(tm, { updateText, updateTitle }) {
     tm.els.restartBtnWrap?.classList.toggle("hidden", !showRestartWrap);
     tm.els.restartBtnWrap?.classList.toggle("flex", showRestartWrap);
 
-    // Button label: paused -> Reset, finished -> New Timer
     if (tm.els.resetBtn) {
       updateText(
         tm.els.resetBtn,
@@ -41,21 +40,11 @@ export function setupTimerRender(tm, { updateText, updateTitle }) {
       tm.els.resetBtn.classList.remove(
         "main_btn_red",
         "main_btn",
-        "tm-new-timer-btn",
         "primary-bg",
         "text-white",
       );
 
-      if (tm.isFinished) {
-        tm.els.resetBtn.classList.add(
-          "main_btn",
-          "tm-new-timer-btn",
-          "primary-bg",
-          "text-white",
-        );
-      } else {
-        tm.els.resetBtn.classList.add("main_btn_red");
-      }
+      tm.els.resetBtn.classList.add("tm-new-timer-btn", "text-white");
     }
 
     if (tm.isRunning) {

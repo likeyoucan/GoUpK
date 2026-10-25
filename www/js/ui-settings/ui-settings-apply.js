@@ -4,6 +4,33 @@ import { $, safeSetLS } from "../utils.js?v=VERSION";
 import { t } from "../i18n.js?v=VERSION";
 import { STORAGE_KEYS } from "../constants/storage-keys.js?v=VERSION";
 
+function isNativePlatform() {
+  try {
+    return !!window.Capacitor?.isNativePlatform?.();
+  } catch {
+    return false;
+  }
+}
+
+export function applyForegroundBannerAvailabilityState(state) {
+  const row = document.getElementById("setting-row-foreground-banner");
+  const toggle = $("toggle-foreground-banner");
+  if (!row || !toggle) return;
+
+  const supported = isNativePlatform();
+
+  row.classList.toggle("is-web-disabled", !supported);
+  row.setAttribute("aria-disabled", String(!supported));
+
+  toggle.disabled = !supported;
+
+  if (!supported) {
+    state.showForegroundBanner = false;
+    toggle.checked = false;
+    safeSetLS(STORAGE_KEYS.APP_SHOW_FOREGROUND_BANNER, "false");
+  }
+}
+
 export function applyUiSettingsToControls(state) {
   if ($("toggle-adaptive-bg"))
     $("toggle-adaptive-bg").checked = state.isAdaptiveBg;
@@ -37,6 +64,9 @@ export function applyUiSettingsToControls(state) {
     );
     $("vignetteSlider").value = closestVignetteIndex;
   }
+
+  // Веб: визуально + функционально отключаем переключатель баннера
+  applyForegroundBannerAvailabilityState(state);
 }
 
 export function setFontSize(state, size) {

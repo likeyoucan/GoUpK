@@ -5253,6 +5253,31 @@
     }
   }
 
+  /* Foreground banner toggle: web unsupported visual disabled state */
+  #setting-row-foreground-banner.is-web-disabled {
+    opacity: 0.56;
+  }
+
+  #setting-row-foreground-banner.is-web-disabled,
+  #setting-row-foreground-banner.is-web-disabled * {
+    cursor: not-allowed !important;
+  }
+
+  #setting-row-foreground-banner.is-web-disabled .custom-toggle {
+    background-color: color-mix(in srgb, var(--text-color) 10%, transparent);
+    border-color: color-mix(in srgb, var(--border-color) 72%, transparent);
+    box-shadow: none;
+  }
+
+  #setting-row-foreground-banner.is-web-disabled .custom-toggle::after {
+    background-color: color-mix(in srgb, var(--surface-color) 88%, transparent);
+    box-shadow: none;
+  }
+
+  #setting-row-foreground-banner.is-web-disabled input[type="checkbox"] {
+    pointer-events: none;
+  }
+
   /* ERUDA */
   #__erudaBar {
     backdrop-filter: blur(10px);

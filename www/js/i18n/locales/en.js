@@ -108,6 +108,7 @@ export const en = {
   share_file_saved: "CSV file downloaded",
   share_mode_hint: "Choose text action: Share or Copy.",
   show_foreground_banner: "Show Notification Banner",
+  foreground_banner_unsupported_web: "Not supported in web version",
   show_ms: "Show Milliseconds",
   sort_by: "Sort by:",
   sound: "Sound",

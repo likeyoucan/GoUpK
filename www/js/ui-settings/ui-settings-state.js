@@ -21,10 +21,21 @@ export const UI_SETTINGS_KEYS = {
   adsProvider: STORAGE_KEYS.APP_ADS_PROVIDER,
 };
 
+function isNativePlatform() {
+  try {
+    return !!window.Capacitor?.isNativePlatform?.();
+  } catch {
+    return false;
+  }
+}
+
 export function createUiSettingsState() {
   return {
     showMs: true,
-    showForegroundBanner: true,
+
+    // Для web по умолчанию OFF, для native ON (фактическое значение загрузится в loadUiSettingsFromStorage)
+    showForegroundBanner: false,
+
     isAdaptiveBg: true,
     hasVignette: false,
     isLiquidGlass: false,
@@ -64,8 +75,13 @@ export function loadUiSettingsFromStorage(state) {
   state.isLiquidGlass = safeGetLS(UI_SETTINGS_KEYS.liquidGlass) === "true";
   state.hideNavLabels = safeGetLS(UI_SETTINGS_KEYS.hideNavLabels) === "true";
   state.showMs = safeGetLS(UI_SETTINGS_KEYS.showMs) !== "false";
+
+  // Если пользователь явно сохранял значение — используем его.
+  // Если ключа нет: native -> true, web -> false.
+  const storedBanner = safeGetLS(UI_SETTINGS_KEYS.showForegroundBanner);
   state.showForegroundBanner =
-    safeGetLS(UI_SETTINGS_KEYS.showForegroundBanner) !== "false";
+    storedBanner !== null ? storedBanner !== "false" : isNativePlatform();
+
   state.swMinuteBeep = safeGetLS(UI_SETTINGS_KEYS.swMinuteBeep) !== "false";
 
   state.fontSize = Number(safeGetLS(UI_SETTINGS_KEYS.fontSize)) || 16;

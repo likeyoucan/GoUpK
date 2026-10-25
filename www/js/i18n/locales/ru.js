@@ -109,6 +109,7 @@ export const ru = {
   share_file_saved: "CSV файл загружен",
   share_mode_hint: "Выберите действие для текста: Поделиться или Скопировать.",
   show_foreground_banner: "Показывать баннер в шторке",
+  foreground_banner_unsupported_web: "В веб-версии не поддерживается",
   show_ms: "Показывать миллисекунды",
   sort_by: "Сортировка:",
   sound: "Звук",
