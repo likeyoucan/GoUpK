@@ -1,6 +1,6 @@
 // Файл: www/js/ui-settings.js
 
-import { $, safeSetLS } from "./utils.js?v=VERSION";
+import { $, safeSetLS, safeGetLS } from "./utils.js?v=VERSION";
 import {
   createUiSettingsState,
   loadUiSettingsFromStorage,
@@ -21,6 +21,7 @@ import { adsManager } from "./ads.js?v=VERSION";
 import {
   isNativeNotificationsRuntime,
   checkNotificationsGranted,
+  requestNotificationsPermission,
 } from "./foreground/notification-permission.js?v=VERSION";
 import { APP_EVENTS } from "./constants/events.js?v=VERSION";
 import { STORAGE_KEYS } from "./constants/storage-keys.js?v=VERSION";
@@ -172,14 +173,33 @@ export const uiSettingsManager = {
       return;
     }
 
+    const toggle = $("toggle-foreground-banner");
+    const storedBanner = safeGetLS(STORAGE_KEYS.APP_SHOW_FOREGROUND_BANNER);
+
+    // Первый запуск: обязательно спросить системное разрешение.
+    if (storedBanner === null) {
+      const granted = await requestNotificationsPermission();
+
+      state.showForegroundBanner = !!granted;
+      if (toggle) toggle.checked = !!granted;
+      safeSetLS(
+        STORAGE_KEYS.APP_SHOW_FOREGROUND_BANNER,
+        granted ? "true" : "false",
+      );
+      emitAppEvent(
+        APP_EVENTS.FOREGROUND_NOTIFICATION_SETTING_CHANGED,
+        undefined,
+      );
+      return;
+    }
+
+    // Если баннер выключен пользователем, просто выходим.
     if (!state.showForegroundBanner) return;
 
-    // На старте только синхронизируем состояние, без повторного системного prompt.
+    // Если в storage включен, но в системе permission уже снят — синхронизируем OFF.
     const granted = await checkNotificationsGranted();
-
     if (!granted) {
       state.showForegroundBanner = false;
-      const toggle = $("toggle-foreground-banner");
       if (toggle) toggle.checked = false;
       safeSetLS(STORAGE_KEYS.APP_SHOW_FOREGROUND_BANNER, "false");
       emitAppEvent(

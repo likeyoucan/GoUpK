@@ -62,18 +62,7 @@ function getPreferredRequestProvider(providers) {
   );
 }
 
-export function isNativeNotificationsRuntime() {
-  return isNativePlatform();
-}
-
-export async function checkNotificationsGranted() {
-  if (!isNativeNotificationsRuntime()) return false;
-
-  const providers = getPermissionProviders();
-
-  // На нестандартных сборках не блокируем UX.
-  if (!providers.length) return true;
-
+async function checkWithProviders(providers) {
   for (const provider of providers) {
     try {
       const res = await provider.check();
@@ -85,8 +74,22 @@ export async function checkNotificationsGranted() {
       );
     }
   }
-
   return false;
+}
+
+export function isNativeNotificationsRuntime() {
+  return isNativePlatform();
+}
+
+export async function checkNotificationsGranted() {
+  if (!isNativeNotificationsRuntime()) return false;
+
+  const providers = getPermissionProviders();
+
+  // Если нет провайдеров, не блокируем UI.
+  if (!providers.length) return true;
+
+  return checkWithProviders(providers);
 }
 
 export async function requestNotificationsPermission() {
@@ -99,20 +102,10 @@ export async function requestNotificationsPermission() {
     const providers = getPermissionProviders();
     if (!providers.length) return true;
 
-    // Быстрый путь: уже выдано.
-    for (const provider of providers) {
-      try {
-        const checkRes = await provider.check();
-        if (normalizePermissionResult(checkRes)) return true;
-      } catch (err) {
-        console.warn(
-          `[notifications] ${provider.name}.checkPermissions failed`,
-          err,
-        );
-      }
-    }
+    // Быстрый путь: уже есть разрешение.
+    if (await checkWithProviders(providers)) return true;
 
-    // Запрос только через один приоритетный провайдер.
+    // Запрос только через один провайдер.
     const requestProvider = getPreferredRequestProvider(providers);
     if (!requestProvider) return false;
 
@@ -126,20 +119,8 @@ export async function requestNotificationsPermission() {
       );
     }
 
-    // Финальная проверка статуса после запроса.
-    for (const provider of providers) {
-      try {
-        const checkRes = await provider.check();
-        if (normalizePermissionResult(checkRes)) return true;
-      } catch (err) {
-        console.warn(
-          `[notifications] ${provider.name}.checkPermissions failed`,
-          err,
-        );
-      }
-    }
-
-    return false;
+    // Финальная проверка после request.
+    return checkWithProviders(providers);
   })();
 
   try {

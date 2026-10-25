@@ -9,10 +9,7 @@ import { APP_EVENTS } from "../constants/events.js?v=VERSION";
 import { STORAGE_KEYS } from "../constants/storage-keys.js?v=VERSION";
 import { emitAppEvent } from "../events/app-events.js?v=VERSION";
 import { isNativePlatform } from "../platform/capacitor-adapter.js?v=VERSION";
-import {
-  checkNotificationsGranted,
-  requestNotificationsPermission,
-} from "../foreground/notification-permission.js?v=VERSION";
+import { requestNotificationsPermission } from "../foreground/notification-permission.js?v=VERSION";
 
 import {
   setFontSize,
@@ -115,9 +112,9 @@ export function bindUiSettingsEvents(state) {
     bind(el, "change", onChange);
   });
 
-  // Специальная логика для баннера уведомления:
+  // Логика для баннера уведомления:
   // - web: всегда OFF + тост
-  // - native: при включении запрашиваем permission при необходимости
+  // - native: при каждом включении руками снова дергаем системный request
   const fgBannerToggle = $("toggle-foreground-banner");
   let fgBannerPermissionFlowInFlight = false;
 
@@ -152,11 +149,8 @@ export function bindUiSettingsEvents(state) {
           return;
         }
 
-        // checked = true -> запрашиваем только по явному действию пользователя
-        let granted = await checkNotificationsGranted();
-        if (!granted) {
-          granted = await requestNotificationsPermission();
-        }
+        // Важно: повторный системный запрос по явному действию пользователя.
+        const granted = await requestNotificationsPermission();
 
         if (!granted) {
           state.showForegroundBanner = false;
