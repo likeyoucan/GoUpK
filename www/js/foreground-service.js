@@ -96,9 +96,17 @@ let appIsBackground = document.visibilityState !== "visible";
 let runtimePushGuard = {
   mode: "none",
   running: false,
+
   swElapsedMs: 0,
+
   tmRemainingMs: 0,
+  tmTotalMs: 0,
+
   tbRemainingMs: 0,
+  tbStatus: "STOPPED",
+  tbRound: 1,
+  tbRounds: 1,
+  tbPhaseDuration: 0,
 };
 
 const listeners = {
@@ -461,7 +469,12 @@ function applyRuntimePushGuard(runtimeState) {
       running,
       swElapsedMs: 0,
       tmRemainingMs: 0,
+      tmTotalMs: 0,
       tbRemainingMs: 0,
+      tbStatus: "STOPPED",
+      tbRound: 1,
+      tbRounds: 1,
+      tbPhaseDuration: 0,
     };
   }
 
@@ -481,7 +494,18 @@ function applyRuntimePushGuard(runtimeState) {
 
   if (mode === "timer") {
     const nextRem = Math.max(0, Number(runtimeState.tmRemainingMs) || 0);
-    if (runtimePushGuard.tmRemainingMs > 0) {
+    const nextTotal = Math.max(0, Number(runtimeState.tmTotalMs) || 0);
+
+    // Разрешаем явное увеличение времени (кнопка + в приложении),
+    // если total вырос или remaining вырос заметно.
+    const totalIncreased = nextTotal > runtimePushGuard.tmTotalMs;
+    const remIncreased = nextRem > runtimePushGuard.tmRemainingMs + 250;
+
+    if (
+      runtimePushGuard.tmRemainingMs > 0 &&
+      !totalIncreased &&
+      !remIncreased
+    ) {
       runtimeState.tmRemainingMs = Math.min(
         runtimePushGuard.tmRemainingMs,
         nextRem,
@@ -489,21 +513,44 @@ function applyRuntimePushGuard(runtimeState) {
     } else {
       runtimeState.tmRemainingMs = nextRem;
     }
+
     runtimePushGuard.tmRemainingMs = runtimeState.tmRemainingMs;
+    runtimePushGuard.tmTotalMs = nextTotal;
     return runtimeState;
   }
 
   if (mode === "tabata") {
     const nextRem = Math.max(0, Number(runtimeState.tbRemainingMs) || 0);
-    if (runtimePushGuard.tbRemainingMs > 0) {
+    const nextStatus = String(runtimeState.tbStatus || "STOPPED");
+    const nextRound = Math.max(1, Number(runtimeState.tbRound) || 1);
+    const nextRounds = Math.max(1, Number(runtimeState.tbRounds) || 1);
+    const nextPhaseDuration = Math.max(
+      0,
+      Number(runtimeState.tbPhaseDuration) || 0,
+    );
+
+    const phaseChanged =
+      nextStatus !== runtimePushGuard.tbStatus ||
+      nextRound !== runtimePushGuard.tbRound ||
+      nextRounds !== runtimePushGuard.tbRounds ||
+      nextPhaseDuration !== runtimePushGuard.tbPhaseDuration;
+
+    if (!phaseChanged && runtimePushGuard.tbRemainingMs > 0) {
+      // Внутри одной и той же фазы держим монотонность.
       runtimeState.tbRemainingMs = Math.min(
         runtimePushGuard.tbRemainingMs,
         nextRem,
       );
     } else {
+      // На смене фазы/раунда принимаем новое время полностью.
       runtimeState.tbRemainingMs = nextRem;
     }
+
     runtimePushGuard.tbRemainingMs = runtimeState.tbRemainingMs;
+    runtimePushGuard.tbStatus = nextStatus;
+    runtimePushGuard.tbRound = nextRound;
+    runtimePushGuard.tbRounds = nextRounds;
+    runtimePushGuard.tbPhaseDuration = nextPhaseDuration;
     return runtimeState;
   }
 
@@ -1302,7 +1349,12 @@ export async function destroyForegroundService() {
     running: false,
     swElapsedMs: 0,
     tmRemainingMs: 0,
+    tmTotalMs: 0,
     tbRemainingMs: 0,
+    tbStatus: "STOPPED",
+    tbRound: 1,
+    tbRounds: 1,
+    tbPhaseDuration: 0,
   };
 
   isInitialized = false;
