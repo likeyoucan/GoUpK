@@ -1,6 +1,6 @@
 // Файл: www/js/ui-settings.js
 
-import { $ } from "./utils.js?v=VERSION";
+import { $, safeSetLS } from "./utils.js?v=VERSION";
 import {
   createUiSettingsState,
   loadUiSettingsFromStorage,
@@ -21,8 +21,10 @@ import { adsManager } from "./ads.js?v=VERSION";
 import {
   isNativeNotificationsRuntime,
   checkNotificationsGranted,
-  requestNotificationsPermission,
 } from "./foreground/notification-permission.js?v=VERSION";
+import { APP_EVENTS } from "./constants/events.js?v=VERSION";
+import { STORAGE_KEYS } from "./constants/storage-keys.js?v=VERSION";
+import { emitAppEvent } from "./events/app-events.js?v=VERSION";
 
 /** @typedef {import("./types/managers-contracts.js").UiSettingsManagerContract} UiSettingsManagerContract */
 
@@ -31,6 +33,7 @@ const state = createUiSettingsState();
 /** @type {UiSettingsManagerContract} */
 export const uiSettingsManager = {
   _unbindEvents: null,
+  _unbindBannerPermissionWatcher: null,
   _isInitialized: false,
 
   get showMs() {
@@ -139,6 +142,7 @@ export const uiSettingsManager = {
 
     this.applySettings();
     this._unbindEvents = bindUiSettingsEvents(state);
+    this.bindForegroundBannerPermissionWatcher();
     this._isInitialized = true;
   },
 
@@ -151,7 +155,14 @@ export const uiSettingsManager = {
       console.error("[ui-settings.destroy]", err);
     }
 
+    try {
+      this._unbindBannerPermissionWatcher?.();
+    } catch (err) {
+      console.error("[ui-settings.destroy.permission-watcher]", err);
+    }
+
     this._unbindEvents = null;
+    this._unbindBannerPermissionWatcher = null;
     this._isInitialized = false;
   },
 
@@ -163,20 +174,56 @@ export const uiSettingsManager = {
 
     if (!state.showForegroundBanner) return;
 
-    // Если тумблер сохранен как ON, а права нет, запрашиваем снова на старте.
-    // Это покрывает кейс, когда permission было снято системой.
-    let granted = await checkNotificationsGranted();
-    if (!granted) {
-      granted = await requestNotificationsPermission();
-    }
+    // На старте только синхронизируем состояние, без повторного системного prompt.
+    const granted = await checkNotificationsGranted();
 
     if (!granted) {
       state.showForegroundBanner = false;
       const toggle = $("toggle-foreground-banner");
       if (toggle) toggle.checked = false;
-      // Сохраняем OFF в storage через binding-файл при следующем действии пользователя,
-      // здесь только состояние in-memory + UI.
+      safeSetLS(STORAGE_KEYS.APP_SHOW_FOREGROUND_BANNER, "false");
+      emitAppEvent(
+        APP_EVENTS.FOREGROUND_NOTIFICATION_SETTING_CHANGED,
+        undefined,
+      );
     }
+  },
+
+  bindForegroundBannerPermissionWatcher() {
+    this._unbindBannerPermissionWatcher?.();
+    this._unbindBannerPermissionWatcher = null;
+
+    let inFlight = false;
+
+    const onVisibilityChange = async () => {
+      if (document.visibilityState !== "visible") return;
+      if (!isNativeNotificationsRuntime()) return;
+      if (!state.showForegroundBanner) return;
+      if (inFlight) return;
+
+      inFlight = true;
+      try {
+        const granted = await checkNotificationsGranted();
+        if (!granted) {
+          state.showForegroundBanner = false;
+          const toggle = $("toggle-foreground-banner");
+          if (toggle) toggle.checked = false;
+          safeSetLS(STORAGE_KEYS.APP_SHOW_FOREGROUND_BANNER, "false");
+          emitAppEvent(
+            APP_EVENTS.FOREGROUND_NOTIFICATION_SETTING_CHANGED,
+            undefined,
+          );
+        }
+      } finally {
+        inFlight = false;
+      }
+    };
+
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    this._unbindBannerPermissionWatcher = () => {
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
   },
 
   applySettings() {

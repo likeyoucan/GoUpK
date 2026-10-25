@@ -5,6 +5,8 @@ import {
   getPlugins,
 } from "../platform/capacitor-adapter.js?v=VERSION";
 
+let permissionRequestInFlight = null;
+
 function normalizePermissionResult(result) {
   if (!result || typeof result !== "object") return false;
 
@@ -48,6 +50,18 @@ function getPermissionProviders() {
   return providers;
 }
 
+function getPreferredRequestProvider(providers) {
+  if (!Array.isArray(providers) || providers.length === 0) return null;
+
+  // Один источник request -> нет дублей системного диалога.
+  return (
+    providers.find((p) => p.name === "CustomForegroundService") ||
+    providers.find((p) => p.name === "LocalNotifications") ||
+    providers.find((p) => p.name === "PushNotifications") ||
+    providers[0]
+  );
+}
+
 export function isNativeNotificationsRuntime() {
   return isNativePlatform();
 }
@@ -57,8 +71,7 @@ export async function checkNotificationsGranted() {
 
   const providers = getPermissionProviders();
 
-  // Если нет доступного провайдера, не ломаем UX.
-  // Считаем granted, чтобы не блокировать функционал на нестандартных сборках.
+  // На нестандартных сборках не блокируем UX.
   if (!providers.length) return true;
 
   for (const provider of providers) {
@@ -79,23 +92,59 @@ export async function checkNotificationsGranted() {
 export async function requestNotificationsPermission() {
   if (!isNativeNotificationsRuntime()) return false;
 
-  const providers = getPermissionProviders();
-  if (!providers.length) return true;
+  // Дедупликация параллельных запросов.
+  if (permissionRequestInFlight) return permissionRequestInFlight;
 
-  for (const provider of providers) {
+  permissionRequestInFlight = (async () => {
+    const providers = getPermissionProviders();
+    if (!providers.length) return true;
+
+    // Быстрый путь: уже выдано.
+    for (const provider of providers) {
+      try {
+        const checkRes = await provider.check();
+        if (normalizePermissionResult(checkRes)) return true;
+      } catch (err) {
+        console.warn(
+          `[notifications] ${provider.name}.checkPermissions failed`,
+          err,
+        );
+      }
+    }
+
+    // Запрос только через один приоритетный провайдер.
+    const requestProvider = getPreferredRequestProvider(providers);
+    if (!requestProvider) return false;
+
     try {
-      const checkRes = await provider.check();
-      if (normalizePermissionResult(checkRes)) return true;
-
-      const reqRes = await provider.request();
+      const reqRes = await requestProvider.request();
       if (normalizePermissionResult(reqRes)) return true;
     } catch (err) {
       console.warn(
-        `[notifications] ${provider.name}.requestPermissions failed`,
+        `[notifications] ${requestProvider.name}.requestPermissions failed`,
         err,
       );
     }
-  }
 
-  return false;
+    // Финальная проверка статуса после запроса.
+    for (const provider of providers) {
+      try {
+        const checkRes = await provider.check();
+        if (normalizePermissionResult(checkRes)) return true;
+      } catch (err) {
+        console.warn(
+          `[notifications] ${provider.name}.checkPermissions failed`,
+          err,
+        );
+      }
+    }
+
+    return false;
+  })();
+
+  try {
+    return await permissionRequestInFlight;
+  } finally {
+    permissionRequestInFlight = null;
+  }
 }

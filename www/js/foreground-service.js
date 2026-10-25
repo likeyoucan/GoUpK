@@ -330,7 +330,9 @@ async function ensurePermissionIfNeeded(force = false) {
     return permissionGranted;
   }
 
-  const granted = await ensureNotificationPermission(plugins.FgService);
+  const granted = await ensureNotificationPermission(plugins.FgService, {
+    requestIfNeeded: false,
+  });
   permissionGranted = !!granted;
   permissionCheckedAt = now;
   return permissionGranted;

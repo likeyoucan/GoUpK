@@ -119,56 +119,67 @@ export function bindUiSettingsEvents(state) {
   // - web: всегда OFF + тост
   // - native: при включении запрашиваем permission при необходимости
   const fgBannerToggle = $("toggle-foreground-banner");
+  let fgBannerPermissionFlowInFlight = false;
+
   if (fgBannerToggle) {
     const onForegroundBannerChange = async (e) => {
       const checked = !!e.target.checked;
 
-      if (!isNativePlatform()) {
-        state.showForegroundBanner = false;
-        fgBannerToggle.checked = false;
-        safeSetLS(STORAGE_KEYS.APP_SHOW_FOREGROUND_BANNER, "false");
-        applyForegroundBannerAvailabilityState(state);
-        showToast(t("foreground_banner_unsupported_web"));
+      if (fgBannerPermissionFlowInFlight) {
+        e.preventDefault();
+        fgBannerToggle.checked = !!state.showForegroundBanner;
         return;
       }
 
-      if (!checked) {
-        state.showForegroundBanner = false;
-        safeSetLS(STORAGE_KEYS.APP_SHOW_FOREGROUND_BANNER, "false");
+      fgBannerPermissionFlowInFlight = true;
+      try {
+        if (!isNativePlatform()) {
+          state.showForegroundBanner = false;
+          fgBannerToggle.checked = false;
+          safeSetLS(STORAGE_KEYS.APP_SHOW_FOREGROUND_BANNER, "false");
+          applyForegroundBannerAvailabilityState(state);
+          showToast(t("foreground_banner_unsupported_web"));
+          return;
+        }
+
+        if (!checked) {
+          state.showForegroundBanner = false;
+          safeSetLS(STORAGE_KEYS.APP_SHOW_FOREGROUND_BANNER, "false");
+          emitAppEvent(
+            APP_EVENTS.FOREGROUND_NOTIFICATION_SETTING_CHANGED,
+            undefined,
+          );
+          return;
+        }
+
+        // checked = true -> запрашиваем только по явному действию пользователя
+        let granted = await checkNotificationsGranted();
+        if (!granted) {
+          granted = await requestNotificationsPermission();
+        }
+
+        if (!granted) {
+          state.showForegroundBanner = false;
+          fgBannerToggle.checked = false;
+          safeSetLS(STORAGE_KEYS.APP_SHOW_FOREGROUND_BANNER, "false");
+          showToast(t("notifications_permission_required"));
+          emitAppEvent(
+            APP_EVENTS.FOREGROUND_NOTIFICATION_SETTING_CHANGED,
+            undefined,
+          );
+          return;
+        }
+
+        state.showForegroundBanner = true;
+        fgBannerToggle.checked = true;
+        safeSetLS(STORAGE_KEYS.APP_SHOW_FOREGROUND_BANNER, "true");
         emitAppEvent(
           APP_EVENTS.FOREGROUND_NOTIFICATION_SETTING_CHANGED,
           undefined,
         );
-        return;
+      } finally {
+        fgBannerPermissionFlowInFlight = false;
       }
-
-      // checked = true
-      const alreadyGranted = await checkNotificationsGranted();
-      let granted = alreadyGranted;
-
-      if (!alreadyGranted) {
-        granted = await requestNotificationsPermission();
-      }
-
-      if (!granted) {
-        state.showForegroundBanner = false;
-        fgBannerToggle.checked = false;
-        safeSetLS(STORAGE_KEYS.APP_SHOW_FOREGROUND_BANNER, "false");
-        showToast(t("notifications_permission_required"));
-        emitAppEvent(
-          APP_EVENTS.FOREGROUND_NOTIFICATION_SETTING_CHANGED,
-          undefined,
-        );
-        return;
-      }
-
-      state.showForegroundBanner = true;
-      fgBannerToggle.checked = true;
-      safeSetLS(STORAGE_KEYS.APP_SHOW_FOREGROUND_BANNER, "true");
-      emitAppEvent(
-        APP_EVENTS.FOREGROUND_NOTIFICATION_SETTING_CHANGED,
-        undefined,
-      );
     };
 
     bind(fgBannerToggle, "change", onForegroundBannerChange);

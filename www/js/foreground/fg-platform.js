@@ -98,7 +98,10 @@ export function getPlugins() {
   return pluginsRef;
 }
 
-export async function ensureNotificationPermission(FgService) {
+export async function ensureNotificationPermission(
+  FgService,
+  { requestIfNeeded = false } = {},
+) {
   const allPlugins = getCapacitorPlugins();
   const LocalNotifications = allPlugins?.LocalNotifications || null;
   const PushNotifications = allPlugins?.PushNotifications || null;
@@ -126,19 +129,44 @@ export async function ensureNotificationPermission(FgService) {
     return false;
   }
 
+  // 1) check-only pass
   for (const p of providers) {
     try {
       const checked = await p.check();
       debugLog(`${p.name}.checkPermissions`, checked);
 
       if (hasGrantedValue(checked)) return true;
-
-      const requested = await p.request();
-      debugLog(`${p.name}.requestPermissions`, requested);
-
-      if (hasGrantedValue(requested)) return true;
     } catch (err) {
-      console.warn(`[fg-platform] ${p.name} permission flow failed`, err);
+      console.warn(`[fg-platform] ${p.name} check failed`, err);
+    }
+  }
+
+  // 2) background/startup-safe mode: no system dialogs
+  if (!requestIfNeeded) return false;
+
+  // 3) request from a single canonical provider to avoid duplicate prompts
+  const requestProvider =
+    providers.find((p) => p.name === "ForegroundService") ||
+    providers.find((p) => p.name === "LocalNotifications") ||
+    providers.find((p) => p.name === "PushNotifications") ||
+    providers[0];
+
+  try {
+    const requested = await requestProvider.request();
+    debugLog(`${requestProvider.name}.requestPermissions`, requested);
+
+    if (hasGrantedValue(requested)) return true;
+  } catch (err) {
+    console.warn(`[fg-platform] ${requestProvider.name} request failed`, err);
+  }
+
+  // 4) final check
+  for (const p of providers) {
+    try {
+      const checked = await p.check();
+      if (hasGrantedValue(checked)) return true;
+    } catch (err) {
+      console.warn(`[fg-platform] ${p.name} final check failed`, err);
     }
   }
 
