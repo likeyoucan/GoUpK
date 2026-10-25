@@ -1,0 +1,18 @@
+{
+  "static": {
+    "app_name": "GoUp",
+    "title_activity_main": "GoUp",
+    "package_name": "com.example.myapp",
+    "custom_url_scheme": "com.example.myapp",
+    "notif_time_zero": "00:00"
+  },
+  "map": {
+    "notif_title_stopwatch": "stopwatch",
+    "notif_title_timer": "timer",
+    "notif_channel_name": "notif_channel_name",
+    "notif_channel_desc": "notif_channel_desc",
+    "notif_timer_finished_title": "timer_finished",
+    "notif_timer_alerts_channel_name": "notif_timer_alerts_channel_name",
+    "notif_timer_alerts_channel_desc": "notif_timer_alerts_channel_desc"
+  }
+}

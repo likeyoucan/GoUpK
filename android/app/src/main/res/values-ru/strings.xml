@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">GoUp</string>
+    <string name="custom_url_scheme">com.example.myapp</string>
+    <string name="notif_channel_desc">Фоновое управление секундомером, таймером и табатой</string>
+    <string name="notif_channel_name">Stopwatch Pro</string>
+    <string name="notif_time_zero">00:00</string>
+    <string name="notif_timer_alerts_channel_desc">Оповещения о завершении таймера</string>
+    <string name="notif_timer_alerts_channel_name">Оповещения таймера</string>
+    <string name="notif_timer_finished_title">Таймер завершен!</string>
+    <string name="notif_title_stopwatch">Секундомер</string>
+    <string name="notif_title_timer">Таймер</string>
+    <string name="package_name">com.example.myapp</string>
+    <string name="title_activity_main">GoUp</string>
+</resources>

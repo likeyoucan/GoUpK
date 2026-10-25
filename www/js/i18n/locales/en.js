@@ -66,6 +66,12 @@ export const en = {
   name_za: "Name (Z-A)",
   new_timer: "New",
   no_laps: "No laps recorded",
+  notif_channel_name: "Stopwatch Pro",
+  notif_channel_desc: "Foreground timer controls",
+  notif_timer_alerts_channel_name: "Timer Alerts",
+  notif_timer_alerts_channel_desc: "Timer completion alerts",
+  notifications_permission_required:
+    "Please allow notifications to enable banner",
   pro_status_subscription_active: "Subscription active",
   pro_status_lifetime_active: "Pro version active",
   pro_already_active: "PRO is already active",

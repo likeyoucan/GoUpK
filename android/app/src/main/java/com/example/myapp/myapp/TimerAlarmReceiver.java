@@ -39,7 +39,6 @@ public class TimerAlarmReceiver extends BroadcastReceiver {
 
         long now = System.currentTimeMillis();
 
-        // 1) Persist fired flag for JS bridge reconciliation.
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .edit()
             .putBoolean(KEY_FIRED, true)
@@ -47,7 +46,6 @@ public class TimerAlarmReceiver extends BroadcastReceiver {
             .putInt(KEY_FIRED_REQUEST_CODE, requestCode)
             .apply();
 
-        // 2) Normalize native runtime timer state so foreground banner does not keep stale "running" timer.
         ForegroundStateStore store = new ForegroundStateStore(context);
         ForegroundStateStore.RuntimeState state = store.read();
 
@@ -58,15 +56,13 @@ public class TimerAlarmReceiver extends BroadcastReceiver {
             state.toggleTitle = "▶";
             state.updatedAt = now;
 
-            // Keep title if it was custom; ensure body is reset.
             if (isBlank(state.notifTitle)) {
-                state.notifTitle = "Timer";
+                state.notifTitle = tr(context, R.string.notif_title_timer, "Timer");
             }
-            state.notifBody = "00:00";
+            state.notifBody = tr(context, R.string.notif_time_zero, "00:00");
 
             store.write(state);
 
-            // Ask foreground service to refresh notification immediately from updated state.
             Intent serviceIntent = new Intent(context, AppForegroundService.class);
             serviceIntent.setAction(AppForegroundService.ACTION_START_OR_UPDATE);
             serviceIntent.putExtra(AppForegroundService.EXTRA_TITLE, state.notifTitle);
@@ -84,7 +80,6 @@ public class TimerAlarmReceiver extends BroadcastReceiver {
             }
         }
 
-        // 3) Local completion notification fallback (works even if WebView is sleeping).
         showTimerFinishedNotification(context);
     }
 
@@ -108,8 +103,8 @@ public class TimerAlarmReceiver extends BroadcastReceiver {
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, FINISH_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_name)
-            .setContentTitle("Timer Finished")
-            .setContentText("00:00")
+            .setContentTitle(tr(context, R.string.notif_timer_finished_title, "Timer Finished"))
+            .setContentText(tr(context, R.string.notif_time_zero, "00:00"))
             .setAutoCancel(true)
             .setContentIntent(contentIntent)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
@@ -130,13 +125,21 @@ public class TimerAlarmReceiver extends BroadcastReceiver {
 
         NotificationChannel channel = new NotificationChannel(
             FINISH_CHANNEL_ID,
-            "Timer Alerts",
+            tr(context, R.string.notif_timer_alerts_channel_name, "Timer Alerts"),
             NotificationManager.IMPORTANCE_HIGH
         );
-        channel.setDescription("Timer completion alerts");
+        channel.setDescription(tr(context, R.string.notif_timer_alerts_channel_desc, "Timer completion alerts"));
         channel.enableVibration(true);
 
         nm.createNotificationChannel(channel);
+    }
+
+    private static String tr(Context context, int resId, String fallback) {
+        try {
+            return context.getString(resId);
+        } catch (Exception ignored) {
+            return fallback;
+        }
     }
 
     private static boolean isBlank(String v) {

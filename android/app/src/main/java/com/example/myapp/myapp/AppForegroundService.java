@@ -41,7 +41,6 @@ public class AppForegroundService extends Service {
     private static final String ACTION_PREFS = "fg_actions";
     private static final String KEY_NOTIFICATION_SUPPRESSED = "notification_suppressed";
 
-    // Short update granularity keeps state responsive while still cheap on battery.
     private static final long TICK_GRANULARITY_MS = 200L;
 
     private Handler tickerHandler;
@@ -53,7 +52,11 @@ public class AppForegroundService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        ensureChannel(CHANNEL_ID, "Stopwatch Pro", "Foreground timer controls");
+        ensureChannel(
+            CHANNEL_ID,
+            getString(R.string.notif_channel_name),
+            getString(R.string.notif_channel_desc)
+        );
         tickerHandler = new Handler(Looper.getMainLooper());
     }
 
@@ -104,12 +107,15 @@ public class AppForegroundService extends Service {
             state.updatedAt = System.currentTimeMillis();
             store.write(state);
 
-            ensureChannel(channelId, "Stopwatch Pro", "Foreground timer controls");
+            ensureChannel(
+                channelId,
+                getString(R.string.notif_channel_name),
+                getString(R.string.notif_channel_desc)
+            );
             ForegroundStateStore.NotificationPayload payload = store.computeDisplayNow();
 
             String sig = buildSignature(payload);
 
-            // Avoid heavy foreground restart when payload did not change.
             if (lastNotifSignature.isEmpty() || !sig.equals(lastNotifSignature)) {
                 Notification notification = buildNotification(
                     payload.channelId,
@@ -166,7 +172,6 @@ public class AppForegroundService extends Service {
         long granularityDelay = TICK_GRANULARITY_MS - (nowElapsed % TICK_GRANULARITY_MS);
         if (granularityDelay <= 0L) granularityDelay = TICK_GRANULARITY_MS;
 
-        // Also align close to wall-clock second boundary so mm:ss flips are visually smooth.
         long nowWall = System.currentTimeMillis();
         long secondDelay = 1000L - (nowWall % 1000L);
         if (secondDelay <= 0L) secondDelay = 1000L;
@@ -231,7 +236,6 @@ public class AppForegroundService extends Service {
         }
 
         tickerHandler.removeCallbacks(tickerRunnable);
-        // Run first pass immediately for snappy UI response.
         tickerHandler.post(tickerRunnable);
     }
 
@@ -286,8 +290,6 @@ public class AppForegroundService extends Service {
             isPlay ? R.drawable.ic_notif_play : R.drawable.ic_notif_pause
         );
 
-        // Bind click to the whole circular area and direct icon/bg targets
-        // so OEM RemoteViews behavior cannot limit tap to icon pixels only.
         views.setOnClickPendingIntent(R.id.notif_btn_toggle_wrap, togglePi);
         views.setOnClickPendingIntent(R.id.notif_btn_toggle_bg, togglePi);
         views.setOnClickPendingIntent(R.id.notif_btn_toggle_icon, togglePi);

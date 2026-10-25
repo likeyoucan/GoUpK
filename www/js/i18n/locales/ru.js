@@ -67,6 +67,12 @@ export const ru = {
   name_za: "По имени (Я-А)",
   new_timer: "Новый",
   no_laps: "Нет записей",
+  notif_channel_name: "Stopwatch Pro",
+  notif_channel_desc: "Фоновое управление секундомером, таймером и табатой",
+  notif_timer_alerts_channel_name: "Оповещения таймера",
+  notif_timer_alerts_channel_desc: "Оповещения о завершении таймера",
+  notifications_permission_required:
+    "Разрешите уведомления, чтобы включить баннер",
   pro_status_subscription_active: "Подписка активна",
   pro_status_lifetime_active: "Pro-версия активна",
   pro_already_active: "PRO уже активен",

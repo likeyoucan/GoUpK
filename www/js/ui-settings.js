@@ -18,6 +18,11 @@ import {
 } from "./ui-settings/ui-settings-apply.js?v=VERSION";
 import { bindUiSettingsEvents } from "./ui-settings/ui-settings-bindings.js?v=VERSION";
 import { adsManager } from "./ads.js?v=VERSION";
+import {
+  isNativeNotificationsRuntime,
+  checkNotificationsGranted,
+  requestNotificationsPermission,
+} from "./foreground/notification-permission.js?v=VERSION";
 
 /** @typedef {import("./types/managers-contracts.js").UiSettingsManagerContract} UiSettingsManagerContract */
 
@@ -150,6 +155,30 @@ export const uiSettingsManager = {
     this._isInitialized = false;
   },
 
+  async reconcileForegroundBannerPermissionAtStartup() {
+    if (!isNativeNotificationsRuntime()) {
+      state.showForegroundBanner = false;
+      return;
+    }
+
+    if (!state.showForegroundBanner) return;
+
+    // Если тумблер сохранен как ON, а права нет, запрашиваем снова на старте.
+    // Это покрывает кейс, когда permission было снято системой.
+    let granted = await checkNotificationsGranted();
+    if (!granted) {
+      granted = await requestNotificationsPermission();
+    }
+
+    if (!granted) {
+      state.showForegroundBanner = false;
+      const toggle = $("toggle-foreground-banner");
+      if (toggle) toggle.checked = false;
+      // Сохраняем OFF в storage через binding-файл при следующем действии пользователя,
+      // здесь только состояние in-memory + UI.
+    }
+  },
+
   applySettings() {
     loadUiSettingsFromStorage(state);
     applyUiSettingsToControls(state);
@@ -172,13 +201,16 @@ export const uiSettingsManager = {
     if (adsProviderSelect) {
       adsProviderSelect.value = state.adsProvider;
     }
+
+    // Не блокируем инициализацию UI, но сразу запускаем reconcile.
+    void this.reconcileForegroundBannerPermissionAtStartup();
   },
 
   resetSettings() {
     resetUiSettingsStorage();
 
     state.showMs = true;
-    state.showForegroundBanner = true;
+    state.showForegroundBanner = false;
     state.isAdaptiveBg = true;
     state.hasVignette = false;
     state.isLiquidGlass = false;

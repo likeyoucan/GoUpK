@@ -9,6 +9,10 @@ import { APP_EVENTS } from "../constants/events.js?v=VERSION";
 import { STORAGE_KEYS } from "../constants/storage-keys.js?v=VERSION";
 import { emitAppEvent } from "../events/app-events.js?v=VERSION";
 import { isNativePlatform } from "../platform/capacitor-adapter.js?v=VERSION";
+import {
+  checkNotificationsGranted,
+  requestNotificationsPermission,
+} from "../foreground/notification-permission.js?v=VERSION";
 
 import {
   setFontSize,
@@ -111,11 +115,12 @@ export function bindUiSettingsEvents(state) {
     bind(el, "change", onChange);
   });
 
-  // Отдельная обработка баннера шторки:
-  // web -> всегда OFF + тост "не поддерживается", native -> обычная логика
+  // Специальная логика для баннера уведомления:
+  // - web: всегда OFF + тост
+  // - native: при включении запрашиваем permission при необходимости
   const fgBannerToggle = $("toggle-foreground-banner");
   if (fgBannerToggle) {
-    const onForegroundBannerChange = (e) => {
+    const onForegroundBannerChange = async (e) => {
       const checked = !!e.target.checked;
 
       if (!isNativePlatform()) {
@@ -127,8 +132,39 @@ export function bindUiSettingsEvents(state) {
         return;
       }
 
-      state.showForegroundBanner = checked;
-      safeSetLS(STORAGE_KEYS.APP_SHOW_FOREGROUND_BANNER, checked);
+      if (!checked) {
+        state.showForegroundBanner = false;
+        safeSetLS(STORAGE_KEYS.APP_SHOW_FOREGROUND_BANNER, "false");
+        emitAppEvent(
+          APP_EVENTS.FOREGROUND_NOTIFICATION_SETTING_CHANGED,
+          undefined,
+        );
+        return;
+      }
+
+      // checked = true
+      const alreadyGranted = await checkNotificationsGranted();
+      let granted = alreadyGranted;
+
+      if (!alreadyGranted) {
+        granted = await requestNotificationsPermission();
+      }
+
+      if (!granted) {
+        state.showForegroundBanner = false;
+        fgBannerToggle.checked = false;
+        safeSetLS(STORAGE_KEYS.APP_SHOW_FOREGROUND_BANNER, "false");
+        showToast(t("notifications_permission_required"));
+        emitAppEvent(
+          APP_EVENTS.FOREGROUND_NOTIFICATION_SETTING_CHANGED,
+          undefined,
+        );
+        return;
+      }
+
+      state.showForegroundBanner = true;
+      fgBannerToggle.checked = true;
+      safeSetLS(STORAGE_KEYS.APP_SHOW_FOREGROUND_BANNER, "true");
       emitAppEvent(
         APP_EVENTS.FOREGROUND_NOTIFICATION_SETTING_CHANGED,
         undefined,

@@ -1,7 +1,15 @@
-<?xml version='1.0' encoding='utf-8'?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">GoUp</string>
-    <string name="title_activity_main">GoUp</string>
-    <string name="package_name">com.example.myapp</string>
     <string name="custom_url_scheme">com.example.myapp</string>
+    <string name="notif_channel_desc">Foreground timer controls</string>
+    <string name="notif_channel_name">Stopwatch Pro</string>
+    <string name="notif_time_zero">00:00</string>
+    <string name="notif_timer_alerts_channel_desc">Timer completion alerts</string>
+    <string name="notif_timer_alerts_channel_name">Timer Alerts</string>
+    <string name="notif_timer_finished_title">Timer Finished!</string>
+    <string name="notif_title_stopwatch">Stopwatch</string>
+    <string name="notif_title_timer">Timer</string>
+    <string name="package_name">com.example.myapp</string>
+    <string name="title_activity_main">GoUp</string>
 </resources>

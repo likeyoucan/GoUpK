@@ -21,19 +21,11 @@ export const UI_SETTINGS_KEYS = {
   adsProvider: STORAGE_KEYS.APP_ADS_PROVIDER,
 };
 
-function isNativePlatform() {
-  try {
-    return !!window.Capacitor?.isNativePlatform?.();
-  } catch {
-    return false;
-  }
-}
-
 export function createUiSettingsState() {
   return {
     showMs: true,
 
-    // Для web по умолчанию OFF, для native ON (фактическое значение загрузится в loadUiSettingsFromStorage)
+    // Важно: по умолчанию false, чтобы не было "ложного ON" без permission
     showForegroundBanner: false,
 
     isAdaptiveBg: true,
@@ -76,11 +68,9 @@ export function loadUiSettingsFromStorage(state) {
   state.hideNavLabels = safeGetLS(UI_SETTINGS_KEYS.hideNavLabels) === "true";
   state.showMs = safeGetLS(UI_SETTINGS_KEYS.showMs) !== "false";
 
-  // Если пользователь явно сохранял значение — используем его.
-  // Если ключа нет: native -> true, web -> false.
+  // Только сохраненное значение. Никаких авто-ON на native.
   const storedBanner = safeGetLS(UI_SETTINGS_KEYS.showForegroundBanner);
-  state.showForegroundBanner =
-    storedBanner !== null ? storedBanner !== "false" : isNativePlatform();
+  state.showForegroundBanner = storedBanner === "true";
 
   state.swMinuteBeep = safeGetLS(UI_SETTINGS_KEYS.swMinuteBeep) !== "false";
 

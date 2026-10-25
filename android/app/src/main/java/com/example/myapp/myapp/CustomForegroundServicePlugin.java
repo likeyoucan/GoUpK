@@ -56,6 +56,14 @@ public class CustomForegroundServicePlugin extends Plugin {
         super.handleOnDestroy();
     }
 
+    private String tr(int resId, String fallback) {
+        try {
+            return getContext().getString(resId);
+        } catch (Exception ignored) {
+            return fallback;
+        }
+    }
+
     private void bindBridgeReceivers() {
         if (buttonReceiver == null) {
             buttonReceiver = new BroadcastReceiver() {
@@ -174,8 +182,8 @@ public class CustomForegroundServicePlugin extends Plugin {
     }
 
     private void startOrUpdateService(PluginCall call) {
-        String title = call.getString("title", "Stopwatch");
-        String body = call.getString("body", "00:00");
+        String title = call.getString("title", tr(R.string.notif_title_stopwatch, "Stopwatch"));
+        String body = call.getString("body", tr(R.string.notif_time_zero, "00:00"));
         String channelId = call.getString("notificationChannelId", AppForegroundService.CHANNEL_ID);
         boolean isDarkTheme = call.getBoolean("isDarkTheme", false);
         String accentColor = call.getString("color", "#3399ff");
@@ -188,8 +196,6 @@ public class CustomForegroundServicePlugin extends Plugin {
             ForegroundStateStore store = new ForegroundStateStore(getContext());
             store.updateFromJson(runtimeState);
 
-            // Re-read normalized runtime state from native store to keep
-            // notification payload and service extras fully consistent.
             ForegroundStateStore.RuntimeState normalized = store.read();
 
             if (!isBlank(normalized.notifTitle)) title = normalized.notifTitle;
@@ -255,8 +261,6 @@ public class CustomForegroundServicePlugin extends Plugin {
     @PluginMethod
     public void getRuntimeState(PluginCall call) {
         ForegroundStateStore store = new ForegroundStateStore(getContext());
-
-        // Нормализуем фазовые переходы/завершение по текущему времени.
         store.computeDisplayNow();
 
         ForegroundStateStore.RuntimeState s = store.read();
@@ -303,8 +307,6 @@ public class CustomForegroundServicePlugin extends Plugin {
         long eventAt = context.getSharedPreferences(ACTION_PREFS, Context.MODE_PRIVATE)
             .getLong(KEY_PENDING_EVENT_AT, 0L);
 
-        // If event timestamp is missing but id exists, normalize timestamp now
-        // to avoid losing a real pending action.
         if (id > 0 && eventAt <= 0L) {
             eventAt = System.currentTimeMillis();
         }
@@ -372,8 +374,8 @@ public class CustomForegroundServicePlugin extends Plugin {
         }
 
         String id = call.getString("id", AppForegroundService.CHANNEL_ID);
-        String name = call.getString("name", "Stopwatch Pro");
-        String description = call.getString("description", "Foreground timer controls");
+        String name = call.getString("name", tr(R.string.notif_channel_name, "Stopwatch Pro"));
+        String description = call.getString("description", tr(R.string.notif_channel_desc, "Foreground timer controls"));
         int importance = call.getInt("importance", NotificationManager.IMPORTANCE_LOW);
 
         NotificationManager nm = getContext().getSystemService(NotificationManager.class);
