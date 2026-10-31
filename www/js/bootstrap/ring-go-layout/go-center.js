@@ -150,6 +150,20 @@ export function centerGoDisplay(displayEl) {
   dx -= optical.x;
   dy -= optical.y;
 
+  // Extra baseline compensation: uppercase text often looks lower in line box.
+  const style = getComputedStyle(displayEl);
+  const fontPx = parseFloat(style.fontSize) || 0;
+
+  // Adaptive upward shift by font size (safe range).
+  const baselineLift = clamp(fontPx * 0.045, 1, 6);
+  dy -= baselineLift;
+
+  // Tiny perceptual compensation when GO is skewed.
+  const skewRaw = style.getPropertyValue("--go-skew-deg") || "0";
+  const skewDeg = Number.parseFloat(skewRaw) || 0;
+  const skewLift = clamp(Math.abs(skewDeg) * 0.06, 0, 1.4);
+  dy -= skewLift;
+
   const nextX = snap2(clamp(dx, -36, 36));
   const nextY = snap2(clamp(dy, -36, 36));
 
