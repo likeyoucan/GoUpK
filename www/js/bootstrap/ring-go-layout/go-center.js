@@ -156,13 +156,16 @@ export function centerGoDisplay(displayEl) {
 
   // Adaptive upward shift by font size (safe range).
   const isCoarse = window.matchMedia("(pointer: coarse)").matches;
-  const baselineLift = clamp(fontPx * (isCoarse ? 0.065 : 0.05), 1, 7);
+
+  // ПК оставляем как есть (0.05), на мобильном уменьшаем подъем,
+  // чтобы GO опустился чуть ниже к центру.
+  const baselineLift = clamp(fontPx * (isCoarse ? 0.032 : 0.05), 1, 7);
   dy -= baselineLift;
 
-  // Tiny perceptual compensation when GO is skewed.
+  // Для мобильного уменьшаем вклад skew-компенсации, чтобы не тянуло вверх.
   const skewRaw = style.getPropertyValue("--go-skew-deg") || "0";
   const skewDeg = Number.parseFloat(skewRaw) || 0;
-  const skewLift = clamp(Math.abs(skewDeg) * 0.06, 0, 1.4);
+  const skewLift = clamp(Math.abs(skewDeg) * (isCoarse ? 0.03 : 0.06), 0, 1.4);
   dy -= skewLift;
 
   const nextX = snap2(clamp(dx, -36, 36));

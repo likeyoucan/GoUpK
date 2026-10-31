@@ -2224,6 +2224,13 @@
     font-synthesis-weight: none;
   }
 
+  @media (pointer: coarse) {
+    .timer-display.is-go {
+      font-weight: 800;
+      -webkit-text-stroke: 0.18px currentColor;
+    }
+  }
+
   #sw-mainDisplay.is-go,
   #tm-mainDisplay.is-go,
   #tb-mainTimer.is-go {
