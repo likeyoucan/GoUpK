@@ -2231,6 +2231,12 @@
     }
   }
 
+    @media (pointer: fine) {
+    .timer-display.is-go {
+      -webkit-text-stroke: 0;
+    }
+  }
+
   #sw-mainDisplay.is-go,
   #tm-mainDisplay.is-go,
   #tb-mainTimer.is-go {
