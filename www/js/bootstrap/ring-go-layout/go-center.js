@@ -156,7 +156,7 @@ export function centerGoDisplay(displayEl) {
   if (isCoarse) {
     dy += 1;
   } else {
-    dy -= 2;
+    dy -= 1;
   }
 
   const nextX = snap2(clamp(dx, -36, 36));
