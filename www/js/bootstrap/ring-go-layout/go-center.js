@@ -159,13 +159,13 @@ export function centerGoDisplay(displayEl) {
 
   // ПК оставляем как есть (0.05), на мобильном уменьшаем подъем,
   // чтобы GO опустился чуть ниже к центру.
-  const baselineLift = clamp(fontPx * (isCoarse ? 0.032 : 0.05), 1, 7);
+  const baselineLift = clamp(fontPx * (isCoarse ? 0.022 : 0.05), 1, 7);
   dy -= baselineLift;
 
   // Для мобильного уменьшаем вклад skew-компенсации, чтобы не тянуло вверх.
   const skewRaw = style.getPropertyValue("--go-skew-deg") || "0";
   const skewDeg = Number.parseFloat(skewRaw) || 0;
-  const skewLift = clamp(Math.abs(skewDeg) * (isCoarse ? 0.03 : 0.06), 0, 1.4);
+  const skewLift = clamp(Math.abs(skewDeg) * (isCoarse ? 0.015 : 0.06), 0, 1.4);
   dy -= skewLift;
 
   const nextX = snap2(clamp(dx, -36, 36));
