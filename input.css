@@ -112,6 +112,7 @@
     --collapse-top-k: 0;
     --collapse-bottom-k: 0;
     --title-gap: clamp(8px, 1.5vmin, 20px);
+    --settings-title-bottom-gap: var(--title-gap);
 
     --tr-track-height: 4px;
     --tr-thumb-size: 24px;
@@ -1267,8 +1268,8 @@
 
   .top_content {
     --top-pad: var(--space-4);
-    --title-rail: var(--view-title-rail);
---ring-gap: var(--view-title-gap);
+    --title-rail: 48px;
+    --action-rail: 52px;
     --ring-gap: var(--space-3);
 
     height: 100%;
@@ -2417,20 +2418,44 @@
     }
   }
 
-/* Settings title aligned to stopwatch/timer/tabata title geometry */
-#view-settings .settings-title-rail {
-  min-height: var(--view-title-rail);
-  padding-top: 0;
-  padding-bottom: 0;
-  margin: 0;
-  display: flex;
-  align-items: end;
-  justify-content: center;
-}
+  /* Settings title spacing: intentionally larger than stopwatch/timer/tabata */
+  #view-settings .settings-title-rail {
+    min-height: 58px;
+    padding-top: calc(var(--safe-top) + 1.15rem);
+    padding-bottom: var(--settings-title-bottom-gap);
+    margin: 0;
+  }
 
 #view-settings .settings-content-wrap {
-  padding-top: var(--view-title-gap);
+  padding-top: 0.4rem;
 }
+
+  /* Mobile */
+  @media (max-width: 767px) {
+    #view-settings .settings-title-rail {
+      min-height: 74px;
+      padding-top: calc(var(--safe-top) + 2.6rem);
+      padding-bottom: var(--settings-title-bottom-gap);
+    }
+  }
+
+  /* Tablet portrait / small desktop */
+  @media (min-width: 768px) and (max-width: 1279px) {
+    #view-settings .settings-title-rail {
+      min-height: 84px;
+      padding-top: calc(var(--safe-top) + 2rem);
+      padding-bottom: var(--settings-title-bottom-gap);
+    }
+  }
+
+  /* Desktop */
+  @media (min-width: 1280px) {
+    #view-settings .settings-title-rail {
+      min-height: 92px;
+      padding-top: calc(var(--safe-top) + 2.25rem);
+      padding-bottom: var(--settings-title-bottom-gap);
+    }
+  }
 
   .settings-scroll-safe {
     padding-bottom: calc(7rem + env(safe-area-inset-bottom, 0px));
