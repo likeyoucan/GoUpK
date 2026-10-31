@@ -1267,8 +1267,8 @@
 
   .top_content {
     --top-pad: var(--space-4);
-    --title-rail: 48px;
-    --action-rail: 52px;
+    --title-rail: var(--view-title-rail);
+--ring-gap: var(--view-title-gap);
     --ring-gap: var(--space-3);
 
     height: 100%;
@@ -2417,17 +2417,20 @@
     }
   }
 
-  /* Settings title aligned with other tabs */
-  #view-settings .settings-title-rail {
-    min-height: clamp(40px, 6dvh, 52px);
-    padding-top: 0;
-    padding-bottom: 0;
-    margin: 0;
-  }
+/* Settings title aligned to stopwatch/timer/tabata title geometry */
+#view-settings .settings-title-rail {
+  min-height: var(--view-title-rail);
+  padding-top: 0;
+  padding-bottom: 0;
+  margin: 0;
+  display: flex;
+  align-items: end;
+  justify-content: center;
+}
 
-  #view-settings .settings-content-wrap {
-    padding-top: 0.25rem;
-  }
+#view-settings .settings-content-wrap {
+  padding-top: var(--view-title-gap);
+}
 
   .settings-scroll-safe {
     padding-bottom: calc(7rem + env(safe-area-inset-bottom, 0px));
