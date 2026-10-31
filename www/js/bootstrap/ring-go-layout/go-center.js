@@ -155,7 +155,7 @@ export function centerGoDisplay(displayEl) {
   const fontPx = parseFloat(style.fontSize) || 0;
 
   // Adaptive upward shift by font size (safe range).
-  const baselineLift = clamp(fontPx * 0.045, 1, 6);
+  const baselineLift = clamp(fontPx * 0.05, 1, 6);
   dy -= baselineLift;
 
   // Tiny perceptual compensation when GO is skewed.
