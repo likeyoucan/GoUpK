@@ -2224,16 +2224,17 @@
     font-synthesis-weight: none;
   }
 
-  @media (pointer: coarse) {
+  @media (pointer: coarse) and (hover: none) {
     .timer-display.is-go {
       font-weight: 800;
-      -webkit-text-stroke: 0.35px currentColor;
+      -webkit-text-stroke: 0.26px currentColor;
+      text-rendering: geometricPrecision;
     }
   }
 
-    @media (pointer: fine) {
+  @media (pointer: coarse) and (hover: none) and (max-width: 420px) {
     .timer-display.is-go {
-      -webkit-text-stroke: 0;
+      -webkit-text-stroke: 0.3px currentColor;
     }
   }
 

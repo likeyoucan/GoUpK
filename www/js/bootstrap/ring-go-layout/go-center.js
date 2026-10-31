@@ -154,7 +154,7 @@ export function centerGoDisplay(displayEl) {
   const fontPx = parseFloat(style.fontSize) || 0;
   const isCoarse = window.matchMedia("(pointer: coarse)").matches;
 
-  const baselineLift = clamp(fontPx * (isCoarse ? 0.008 : 0.05), 0, 7);
+  const baselineLift = clamp(fontPx * (isCoarse ? 0.012 : 0.05), 0, 7);
   dy -= baselineLift;
 
   const skewRaw = style.getPropertyValue("--go-skew-deg") || "0";
@@ -163,7 +163,7 @@ export function centerGoDisplay(displayEl) {
   dy -= skewLift;
 
   if (isCoarse) {
-    dy += clamp(fontPx * 0.02, 0.6, 2.2);
+    dy -= clamp(fontPx * 0.008, 0.4, 1.2);
   }
 
   const nextX = snap2(clamp(dx, -36, 36));
