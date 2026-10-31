@@ -2222,19 +2222,28 @@
     -webkit-text-stroke: 0;
     text-rendering: geometricPrecision;
     font-synthesis-weight: none;
+    text-shadow: none;
   }
 
-  @media (pointer: coarse) and (hover: none) and (max-width: 767px) {
+  @media (max-width: 767px) and ((pointer: coarse) or (any-pointer: coarse) or (hover: none)) {
     .timer-display.is-go {
-      font-weight: 800;
-      -webkit-text-stroke: 0.38px currentColor;
-      text-rendering: geometricPrecision;
+      font-weight: 800 !important;
+      -webkit-text-stroke: 0.34px currentColor !important;
+
+      text-shadow:
+        0 0 0 currentColor,
+        0.22px 0 currentColor,
+        -0.22px 0 currentColor !important;
     }
   }
 
-  @media (pointer: coarse) and (hover: none) and (max-width: 420px) {
+  @media (max-width: 420px) and ((pointer: coarse) or (any-pointer: coarse) or (hover: none)) {
     .timer-display.is-go {
-      -webkit-text-stroke: 0.42px currentColor;
+      -webkit-text-stroke: 0.38px currentColor !important;
+      text-shadow:
+        0 0 0 currentColor,
+        0.26px 0 currentColor,
+        -0.26px 0 currentColor !important;
     }
   }
 
