@@ -2227,14 +2227,18 @@
   @media (pointer: coarse) and (hover: none) {
     .timer-display.is-go {
       font-weight: 800;
-      -webkit-text-stroke: 0.26px currentColor;
+      -webkit-text-stroke: 0.18px currentColor;
       text-rendering: geometricPrecision;
+    }
+
+    html.native-app .timer-display.is-go {
+      -webkit-text-stroke: 0.28px currentColor;
     }
   }
 
   @media (pointer: coarse) and (hover: none) and (max-width: 420px) {
-    .timer-display.is-go {
-      -webkit-text-stroke: 0.3px currentColor;
+    html.native-app .timer-display.is-go {
+      -webkit-text-stroke: 0.32px currentColor;
     }
   }
 
