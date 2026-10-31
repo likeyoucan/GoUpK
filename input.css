@@ -2223,16 +2223,13 @@
     text-rendering: geometricPrecision;
     font-synthesis-weight: none;
   }
-
+  
+  /* Extra density only in real native app (iOS/Android build) */
   @media (pointer: coarse) and (hover: none) {
-    .timer-display.is-go {
-      font-weight: 800;
-      -webkit-text-stroke: 0.18px currentColor;
-      text-rendering: geometricPrecision;
-    }
-
     html.native-app .timer-display.is-go {
+      font-weight: 800;
       -webkit-text-stroke: 0.28px currentColor;
+      text-rendering: geometricPrecision;
     }
   }
 
