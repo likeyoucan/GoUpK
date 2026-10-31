@@ -111,7 +111,6 @@ export function centerGoDisplay(displayEl) {
   const wrapRect = wrap.getBoundingClientRect();
   if (!wrapRect || !wrapRect.width || !wrapRect.height) return;
 
-  // Always center against ring geometry.
   const targetCx = wrapRect.left + wrapRect.width / 2;
   const targetCy = wrapRect.top + wrapRect.height / 2;
 
@@ -150,23 +149,22 @@ export function centerGoDisplay(displayEl) {
   dx -= optical.x;
   dy -= optical.y;
 
-  // Extra baseline compensation: uppercase text often looks lower in line box.
+  // Mobile/desktop specific visual compensation.
   const style = getComputedStyle(displayEl);
   const fontPx = parseFloat(style.fontSize) || 0;
-
-  // Adaptive upward shift by font size (safe range).
   const isCoarse = window.matchMedia("(pointer: coarse)").matches;
 
-  // ПК оставляем как есть (0.05), на мобильном уменьшаем подъем,
-  // чтобы GO опустился чуть ниже к центру.
-  const baselineLift = clamp(fontPx * (isCoarse ? 0.022 : 0.05), 1, 7);
+  const baselineLift = clamp(fontPx * (isCoarse ? 0.008 : 0.05), 0, 7);
   dy -= baselineLift;
 
-  // Для мобильного уменьшаем вклад skew-компенсации, чтобы не тянуло вверх.
   const skewRaw = style.getPropertyValue("--go-skew-deg") || "0";
   const skewDeg = Number.parseFloat(skewRaw) || 0;
-  const skewLift = clamp(Math.abs(skewDeg) * (isCoarse ? 0.015 : 0.06), 0, 1.4);
+  const skewLift = clamp(Math.abs(skewDeg) * (isCoarse ? 0 : 0.06), 0, 1.4);
   dy -= skewLift;
+
+  if (isCoarse) {
+    dy += clamp(fontPx * 0.02, 0.6, 2.2);
+  }
 
   const nextX = snap2(clamp(dx, -36, 36));
   const nextY = snap2(clamp(dy, -36, 36));

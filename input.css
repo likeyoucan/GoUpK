@@ -2226,9 +2226,8 @@
 
   @media (pointer: coarse) {
     .timer-display.is-go {
-      font-weight: 820;
-      -webkit-text-stroke: 0.22px currentColor;
-      font-size: calc(var(--go-font-dynamic, 64px) * 1.06);
+      font-weight: 800;
+      -webkit-text-stroke: 0.35px currentColor;
     }
   }
 
