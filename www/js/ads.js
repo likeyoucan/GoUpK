@@ -26,7 +26,8 @@ const DEFAULT_INTERSTITIAL_TRIGGERS = {
 };
 
 const DEFAULT_INTERSTITIAL_MIN_COOLDOWN_MS = 30_000;
-const DESKTOP_FIXED_MIN_WIDTH = 1281;
+const DESKTOP_AD_MEDIA_QUERY =
+  "(min-width: 1440px) and (min-aspect-ratio: 13/8) and (orientation: landscape)";
 
 const MAX_AD_TOP_INSET_PX = 64;
 const MAX_REASONABLE_VV_TOP_PX = 80;
@@ -85,7 +86,7 @@ function normalizeTriggers(map) {
 }
 
 function isDesktopAdLayout() {
-  return window.matchMedia(`(min-width: ${DESKTOP_FIXED_MIN_WIDTH}px)`).matches;
+  return window.matchMedia(DESKTOP_AD_MEDIA_QUERY).matches;
 }
 
 function shouldApplyMobileOffsetWhenAdsOff() {

@@ -2064,23 +2064,46 @@
   }
 
   @media (min-width: 1440px) and (min-aspect-ratio: 13/8) and (orientation: landscape) {
-    #app-ad-slot {
-      position: fixed;
-      top: calc(var(--ad-top-inset, var(--safe-top)) + 8px);
-      left: 50%;
-      transform: translateX(-50%);
-      width: min(96vw, 960px);
-      max-width: min(96vw, 960px);
-      z-index: 140;
+    :is(#view-stopwatch, #view-timer, #view-tabata) {
+      --landscape-bottom-offset: 0px;
     }
 
-    #app-ad-slot > * {
-      width: 100% !important;
-      max-width: 100% !important;
+    #app {
+      width: 960px;
+      max-width: 960px;
+      height: 86dvh;
+      max-height: 720px;
+      border-radius: 2.5rem;
+      box-shadow:
+        0 0 0 1px rgb(255 255 255 / 0.08),
+        0 10px 30px rgb(17 17 17 / 0.3);
+      padding: 0;
     }
 
-    #app-ad-slot > .ad-placeholder {
-      border-radius: 10px;
+    #view-stopwatch,
+    #view-timer,
+    #view-tabata {
+      padding-bottom: 0;
+    }
+
+    .top_content {
+      max-height: min(37.5dvw, 500px);
+    }
+
+    :is(#view-stopwatch, #view-timer, #view-tabata).split-bottom-hidden
+      .view-bottom-half {
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: var(--handler-size);
+      min-width: var(--handler-size);
+      height: auto;
+      flex: 0 0 auto;
+      overflow: visible;
+      z-index: 45;
+      pointer-events: none;
+      padding-bottom: 0;
     }
   }
 
@@ -4614,7 +4637,7 @@
     max-width: 100% !important;
   }
 
-  @media (min-width: 1281px) {
+  @media (min-width: 1440px) and (min-aspect-ratio: 13/8) and (orientation: landscape) {
     #app-ad-slot {
       position: fixed;
       top: calc(var(--ad-top-inset, var(--safe-top)) + 8px);
