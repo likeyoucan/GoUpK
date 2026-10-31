@@ -2217,21 +2217,11 @@
     font-size: var(--go-font-dynamic, 64px);
     max-inline-size: 100%;
     letter-spacing: -0.02em;
-    font-family: "Segoe UI", Roboto, "Noto Sans", Arial, sans-serif;
+    font-family: "Inter", "Segoe UI", Roboto, "Noto Sans", Arial, sans-serif;
     font-weight: 760;
-  }
-
-  @media (pointer: coarse) {
-    .timer-display.is-go {
-      font-weight: 740;
-      -webkit-text-stroke: 0.35px currentColor;
-    }
-  }
-
-  @media (pointer: fine) {
-    .timer-display.is-go {
-      -webkit-text-stroke: 0;
-    }
+    -webkit-text-stroke: 0;
+    text-rendering: geometricPrecision;
+    font-synthesis-weight: none;
   }
 
   #sw-mainDisplay.is-go,
