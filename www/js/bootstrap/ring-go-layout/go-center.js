@@ -29,17 +29,13 @@ function getOpticalTextShift(displayEl, text) {
 
   if (!hasBox || !m.width) return { x: 0, y: 0 };
 
-  // Horizontal optical center relative to advance width center.
   const inkCenterFromStartX =
     (m.actualBoundingBoxRight - m.actualBoundingBoxLeft) / 2;
   const advanceCenterFromStartX = m.width / 2;
   const shiftX = inkCenterFromStartX - advanceCenterFromStartX;
 
-  // Vertical optical center relative to baseline.
   const inkCenterYFromBaseline =
     (m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2;
-
-  // Mild correction to keep GO visually centered across devices.
   const shiftY = inkCenterYFromBaseline * 0.08;
 
   return { x: shiftX, y: shiftY };
@@ -68,7 +64,6 @@ export function triggerGoEnter(displayEl) {
   if (displayEl.classList.contains("go-enter")) return;
 
   displayEl.classList.remove("go-enter");
-  // Controlled reflow only on real state transition
   void displayEl.offsetWidth;
   displayEl.classList.add("go-enter");
 }
@@ -84,7 +79,6 @@ export function triggerTimeEnter(displayEl) {
   if (displayEl.classList.contains("time-enter")) return;
 
   displayEl.classList.remove("time-enter");
-  // Controlled reflow only on real state transition
   void displayEl.offsetWidth;
   displayEl.classList.add("time-enter");
 }
@@ -117,7 +111,6 @@ export function centerGoDisplay(displayEl) {
   const prevX = displayEl.style.getPropertyValue("--go-nudge-x");
   const prevY = displayEl.style.getPropertyValue("--go-nudge-y");
 
-  // Measure in neutral position to avoid drift accumulation.
   displayEl.style.setProperty("--go-nudge-x", "0px");
   displayEl.style.setProperty("--go-nudge-y", "0px");
   void displayEl.offsetWidth;
@@ -144,17 +137,15 @@ export function centerGoDisplay(displayEl) {
   let dx = targetCx - (txtRect.left + txtRect.width / 2);
   let dy = targetCy - (txtRect.top + txtRect.height / 2);
 
-  // Font-aware optical correction.
   const optical = getOpticalTextShift(displayEl, "GO");
   dx -= optical.x;
   dy -= optical.y;
 
-  // Mobile/desktop specific visual compensation.
   const style = getComputedStyle(displayEl);
   const fontPx = parseFloat(style.fontSize) || 0;
   const isCoarse = window.matchMedia("(pointer: coarse)").matches;
 
-  const baselineLift = clamp(fontPx * (isCoarse ? 0.012 : 0.05), 0, 7);
+  const baselineLift = clamp(fontPx * (isCoarse ? 0.008 : 0.05), 0, 7);
   dy -= baselineLift;
 
   const skewRaw = style.getPropertyValue("--go-skew-deg") || "0";
@@ -163,7 +154,9 @@ export function centerGoDisplay(displayEl) {
   dy -= skewLift;
 
   if (isCoarse) {
-    dy -= clamp(fontPx * 0.008, 0.4, 1.2);
+    dy += 1;
+  } else {
+    dy -= 2;
   }
 
   const nextX = snap2(clamp(dx, -36, 36));

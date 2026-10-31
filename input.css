@@ -2223,19 +2223,18 @@
     text-rendering: geometricPrecision;
     font-synthesis-weight: none;
   }
-  
-  /* Extra density only in real native app (iOS/Android build) */
-  @media (pointer: coarse) and (hover: none) {
-    html.native-app .timer-display.is-go {
+
+  @media (pointer: coarse) and (hover: none) and (max-width: 767px) {
+    .timer-display.is-go {
       font-weight: 800;
-      -webkit-text-stroke: 0.28px currentColor;
+      -webkit-text-stroke: 0.38px currentColor;
       text-rendering: geometricPrecision;
     }
   }
 
   @media (pointer: coarse) and (hover: none) and (max-width: 420px) {
-    html.native-app .timer-display.is-go {
-      -webkit-text-stroke: 0.32px currentColor;
+    .timer-display.is-go {
+      -webkit-text-stroke: 0.42px currentColor;
     }
   }
 
