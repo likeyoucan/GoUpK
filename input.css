@@ -2213,17 +2213,16 @@
     will-change: transform;
   }
 
-  .timer-display.is-go {
-    font-size: var(--go-font-dynamic, 64px);
-    max-inline-size: 100%;
-    letter-spacing: -0.02em;
-    font-family: "Segoe UI", Roboto, "Noto Sans", Arial, sans-serif;
-    font-weight: 760;
-    -webkit-text-stroke: 0;
-    text-rendering: geometricPrecision;
-    font-synthesis-weight: none;
-    text-shadow: none;
-  }
+.timer-display.is-go {
+  font-size: var(--go-font-dynamic, 64px);
+  max-inline-size: 100%;
+  letter-spacing: -0.02em;
+  font-family: "Segoe UI", Roboto, "Noto Sans", Arial, sans-serif;
+  font-weight: 760;
+  -webkit-text-stroke: 0;
+  text-shadow: none;
+  text-rendering: geometricPrecision;
+}
 
   @media (max-width: 767px) and ((pointer: coarse) or (any-pointer: coarse) or (hover: none)) {
     .timer-display.is-go {

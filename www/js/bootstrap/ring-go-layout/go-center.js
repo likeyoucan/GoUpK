@@ -4,6 +4,39 @@ import { clamp, snap2, getRingWrapForDisplay } from "./geometry.js?v=VERSION";
 
 const displayState = new WeakMap();
 
+function isRealMobileOS() {
+  const ua = navigator.userAgent || "";
+  const isAndroidOrIOS = /Android|iPhone|iPad|iPod/i.test(ua);
+  const hasTouch = (navigator.maxTouchPoints || 0) > 0;
+  return isAndroidOrIOS && hasTouch;
+}
+
+function applyGoDensityStyle(displayEl, isGo) {
+  if (!displayEl) return;
+
+  if (!isGo || !isRealMobileOS()) {
+    displayEl.style.removeProperty("font-family");
+    displayEl.style.removeProperty("font-weight");
+    displayEl.style.removeProperty("-webkit-text-stroke");
+    displayEl.style.removeProperty("paint-order");
+    return;
+  }
+
+  // На реальном Android/iOS включаем тяжелое системное начертание + масштабируемую обводку
+  displayEl.style.setProperty(
+    "font-family",
+    '"sans-serif-black", "Roboto Black", "Segoe UI", Roboto, sans-serif',
+    "important",
+  );
+  displayEl.style.setProperty("font-weight", "900", "important");
+  displayEl.style.setProperty(
+    "-webkit-text-stroke",
+    "0.026em currentColor",
+    "important",
+  );
+  displayEl.style.setProperty("paint-order", "stroke fill", "important");
+}
+
 function getOpticalTextShift(displayEl, text) {
   const style = getComputedStyle(displayEl);
   const fontStyle = style.fontStyle || "normal";
@@ -91,6 +124,9 @@ export function centerGoDisplay(displayEl) {
     .toUpperCase();
   const isGo = displayEl.classList.contains("is-go") && text === "GO";
 
+  // Сначала применяем (или сбрасываем) мобильную плотность до замера геометрии
+  applyGoDensityStyle(displayEl, isGo);
+
   if (!isGo) {
     displayEl.style.setProperty("--go-nudge-x", "0px");
     displayEl.style.setProperty("--go-nudge-y", "0px");
@@ -143,17 +179,17 @@ export function centerGoDisplay(displayEl) {
 
   const style = getComputedStyle(displayEl);
   const fontPx = parseFloat(style.fontSize) || 0;
-  const isCoarse = window.matchMedia("(pointer: coarse)").matches;
+  const isMobile = isRealMobileOS();
 
-  const baselineLift = clamp(fontPx * (isCoarse ? 0.008 : 0.05), 0, 7);
+  const baselineLift = clamp(fontPx * (isMobile ? 0.008 : 0.05), 0, 7);
   dy -= baselineLift;
 
   const skewRaw = style.getPropertyValue("--go-skew-deg") || "0";
   const skewDeg = Number.parseFloat(skewRaw) || 0;
-  const skewLift = clamp(Math.abs(skewDeg) * (isCoarse ? 0 : 0.06), 0, 1.4);
+  const skewLift = clamp(Math.abs(skewDeg) * (isMobile ? 0 : 0.06), 0, 1.4);
   dy -= skewLift;
 
-  if (isCoarse) {
+  if (isMobile) {
     dy += 1;
   } else {
     dy -= 1;
@@ -171,6 +207,7 @@ export function centerGoDisplay(displayEl) {
 export function resetGoNudges(displays) {
   displays.forEach((displayEl) => {
     if (!displayEl) return;
+    applyGoDensityStyle(displayEl, false);
     displayEl.style.setProperty("--go-nudge-x", "0px");
     displayEl.style.setProperty("--go-nudge-y", "0px");
     displayEl.dataset.goNudgeX = "0";
